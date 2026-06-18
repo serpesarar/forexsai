@@ -657,7 +657,8 @@ async def log_smc_signals_if_needed():
 async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
                            entry_price: float, model_type: str, strategy: str,
                            timeframe: str = "5m",
-                           ta: dict = None, extra: dict = None):
+                           ta: dict = None, extra: dict = None,
+                           bypass_quality_filters: bool = False):
     """Helper: log a Pulse/EMEL signal to prediction_logs via log_prediction()."""
     try:
         from services.prediction_logger import log_prediction
@@ -695,6 +696,7 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
             timeframe=timeframe,
             strategy=strategy,
             model_type=model_type,
+            bypass_quality_filters=bypass_quality_filters,
         )
         if pred_id:
             logger.info(f"✅ {symbol} {model_type} sinyali kaydedildi: {direction} (id={pred_id[:8]})")
@@ -817,6 +819,10 @@ async def _maybe_log_pulse_inversion_shadow(
                 "shadow_source_model": model_type,
                 "shadow_source_direction": direction,
             },
+            # Shadow experiment must record the raw inverted outcome, so it
+            # bypasses the precision-veto / entry-quality filters that would
+            # otherwise reject every counter-structure (inverted) signal.
+            bypass_quality_filters=True,
         )
         logger.info(
             f"[PULSE-SHADOW-INV] {symbol} {model_type} {direction} "

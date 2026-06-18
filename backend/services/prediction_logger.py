@@ -634,6 +634,7 @@ async def log_prediction(
     strategy: Optional[str] = None,
     model_type: Optional[str] = None,
     allow_parallel_active: bool = False,
+    bypass_quality_filters: bool = False,  # shadow experiments: skip entry-quality + precision veto
 ) -> Optional[str]:
     """
     Log a prediction to the database with session, correlation and news filters.
@@ -911,7 +912,7 @@ async def log_prediction(
             if eq.get("model_available"):
                 factors["entry_quality_p_sl"] = eq.get("p_sl")
                 factors["entry_quality_threshold"] = eq.get("threshold")
-                if eq.get("should_block"):
+                if eq.get("should_block") and not bypass_quality_filters:
                     logger.info(
                         f"[EntryQuality] BLOCKED {symbol} {direction} — {eq.get('reason')}"
                     )
@@ -947,10 +948,11 @@ async def log_prediction(
         if stored_strategy:
             record["strategy"] = stored_strategy
 
-        if not await _apply_precision_veto(record):
-            return None
-        # Entry Optimizer — shadow/enforce moduna göre çağrılır
-        record = await _apply_entry_optimizer(record)
+        if not bypass_quality_filters:
+            if not await _apply_precision_veto(record):
+                return None
+            # Entry Optimizer — shadow/enforce moduna göre çağrılır
+            record = await _apply_entry_optimizer(record)
         result = client.table("prediction_logs").insert_ignore(record)
 
         if safe_get_error(result):
