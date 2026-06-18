@@ -62,25 +62,45 @@ PANEL_MACRO_KEYS = {
 }
 
 
+def _preferred_history(name: str):
+    """Return the best available history for a macro name: H1 if present,
+    else D1. On some hosts (e.g. Railway IPs) yfinance's 60m interval returns
+    empty while daily works, so callers must not assume H1 exists."""
+    h1 = _history_h1.get(name)
+    if h1 is not None and not h1.empty:
+        return h1, "H1"
+    d1 = _history_d1.get(name)
+    if d1 is not None and not d1.empty:
+        return d1, "D1"
+    return None, None
+
+
 def get_macro_dict() -> dict:
     """Legacy-shape macro dict for the panel/context builders:
         {"dxy": {"symbol": "DXY", "price": <float|None>, "change_1h_pct": ..}, ...}
-    Reads from the yfinance snapshot (get_snapshot). Keys that have not been
-    fetched yet return price=None so callers degrade gracefully.
+    Reads H1 history, falling back to D1 (matches the macro-gauges panel which
+    is D1-based). Keys not fetched yet return price=None so callers degrade.
     """
-    snap = get_snapshot()
     out: dict = {}
     for panel_key, macro_name in PANEL_MACRO_KEYS.items():
-        ms = snap.get(macro_name)
-        if ms is not None:
-            out[panel_key] = {
-                "symbol": macro_name,
-                "price": ms.price,
-                "change_1h_pct": ms.change_1h_pct,
-                "change_1d_pct": ms.change_1d_pct,
-            }
-        else:
+        df, tf = _preferred_history(macro_name)
+        if df is None:
             out[panel_key] = {"symbol": macro_name, "price": None}
+            continue
+        close = df["close"]
+        price = float(close.iloc[-1])
+        chg = ((price - float(close.iloc[-2])) / float(close.iloc[-2]) * 100) \
+            if len(close) >= 2 and float(close.iloc[-2]) else None
+        d1 = _history_d1.get(macro_name)
+        chg_1d = None
+        if d1 is not None and len(d1) >= 2 and float(d1["close"].iloc[-2]):
+            chg_1d = (price - float(d1["close"].iloc[-2])) / float(d1["close"].iloc[-2]) * 100
+        out[panel_key] = {
+            "symbol": macro_name,
+            "price": price,
+            "change_1h_pct": chg if tf == "H1" else None,
+            "change_1d_pct": chg_1d,
+        }
     return out
 
 REFRESH_INTERVAL_SECONDS = 3600   # 1 hour
@@ -241,7 +261,10 @@ def get_candles_list(symbol: str, timeframe: str = "H1", limit: int = 240) -> li
     Note: macro history is H1/D1 only (yfinance), so 5m requests are served at H1.
     """
     name = _resolve_macro_name(symbol) or (symbol or "").upper().strip()
-    df = get_history(name, "D1" if timeframe.upper() in ("D1", "1D") else "H1")
+    if timeframe.upper() in ("D1", "1D"):
+        df = get_history(name, "D1")
+    else:
+        df, _ = _preferred_history(name)  # H1, else D1 fallback
     if df is None or df.empty:
         return []
     out = []
@@ -264,7 +287,7 @@ def macro_ta_snapshot(symbol: str) -> dict:
     for the fields consumers actually read: trend / confidence / current_price.
     """
     name = _resolve_macro_name(symbol) or (symbol or "").upper().strip()
-    df = get_history(name, "H1")
+    df, _ = _preferred_history(name)  # H1, else D1 fallback
     if df is None or df.empty:
         return {"trend": "NEUTRAL", "confidence": 50.0, "current_price": None}
     close = df["close"]
