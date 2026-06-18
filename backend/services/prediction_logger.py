@@ -719,7 +719,7 @@ async def log_prediction(
         
         # 1. Session Filter
         should_filter, reason = _check_session_filter(symbol)
-        if should_filter:
+        if should_filter and not bypass_quality_filters:
             logger.info(f"FILTERED: {reason}")
             return None
         
@@ -734,7 +734,7 @@ async def log_prediction(
         
         # 3. News Filter
         should_filter, reason = _check_news_filter(context)
-        if should_filter:
+        if should_filter and not bypass_quality_filters:
             logger.info(f"FILTERED: {reason}")
             return None
         
@@ -774,7 +774,7 @@ async def log_prediction(
         normalized_timeframe = _normalize_timeframe(timeframe)
         new_signal_entry_price = ml.get("entry_price")
         entry_price = new_signal_entry_price or 0
-        if not allow_parallel_active:
+        if not allow_parallel_active and not bypass_quality_filters:
             has_active, active_signal_id, active_direction = _has_active_signal(
                 client,
                 symbol,
