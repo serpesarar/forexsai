@@ -462,8 +462,10 @@ class COMEXNewsService:
                     # Parse date
                     pub_date = self._normalize_news_datetime(item.get("pub_date", ""))
                     
-                    # Filter old news (>24h)
-                    if datetime.now(timezone.utc) - pub_date > timedelta(hours=24):
+                    # Filter old news (>24h). pub_date is naive-UTC (see
+                    # _normalize_news_datetime); compare against a naive now to
+                    # avoid "can't subtract offset-naive and offset-aware".
+                    if datetime.now(timezone.utc).replace(tzinfo=None) - pub_date > timedelta(hours=24):
                         continue
                     
                     # Create news item
@@ -552,8 +554,9 @@ class COMEXNewsService:
             analyzed = await self.analyze_news_item(news, use_ai=use_ai)
             analyzed_news.append(analyzed)
         
-        # Calculate time-weighted impact
-        now = datetime.now(timezone.utc)
+        # Calculate time-weighted impact. _normalize_news_datetime returns
+        # naive-UTC, so use a naive now to avoid naive/aware subtraction errors.
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         total_impact = 0.0
         total_weight = 0.0
         high_impact_news = []

@@ -79,26 +79,36 @@ def iso(dt: datetime) -> str:
 # ---------------------------------------------------------------------------
 
 def fetch_resolved(days: int) -> pd.DataFrame:
-    since = NOW - timedelta(days=days)
+    since_iso = iso(NOW - timedelta(days=days))
     rows: list[dict] = []
+    cursor: str | None = None  # keyset cursor: created_at upper bound (exclusive)
+    select = ("id,symbol,model_type,ml_direction,ml_confidence,"
+              "status,resolution_reason,factors,created_at,timeframe")
     with httpx.Client(timeout=60) as c:
-        offset = 0
         while True:
-            r = c.get(f"{URL}/rest/v1/prediction_logs", headers=HEADERS,
-                      params={
-                          "select": "id,symbol,model_type,ml_direction,ml_confidence,"
-                                    "status,resolution_reason,factors,created_at,timeframe",
-                          "created_at": f"gte.{iso(since)}",
-                          "status": "in.(completed,stopped)",
-                          "order": "created_at.desc",
-                          "limit": "1000", "offset": str(offset),
-                      })
+            params = {
+                "select": select,
+                "status": "in.(completed,stopped)",
+                "order": "created_at.desc",
+                "limit": "1000",
+            }
+            # Keyset pagination (created_at cursor) instead of offset — deep
+            # offsets (>~30k) make PostgREST time out with a 500. Order is
+            # created_at.desc so the next page is older than the last row seen.
+            if cursor is None:
+                params["created_at"] = f"gte.{since_iso}"
+            else:
+                params["and"] = f"(created_at.gte.{since_iso},created_at.lt.{cursor})"
+            r = c.get(f"{URL}/rest/v1/prediction_logs", headers=HEADERS, params=params)
             r.raise_for_status()
             batch = r.json()
-            rows.extend(batch)
-            if len(batch) < 1000 or len(rows) >= 50000:
+            if not batch:
                 break
-            offset += 1000
+            rows.extend(batch)
+            new_cursor = batch[-1].get("created_at")
+            if len(batch) < 1000 or len(rows) >= 50000 or not new_cursor or new_cursor == cursor:
+                break
+            cursor = new_cursor
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)

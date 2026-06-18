@@ -244,7 +244,7 @@ async def check_prediction_outcome(
             "claude_correct": claude_correct,
         }
         
-        result = client.table("outcome_results").insert(outcome).execute()
+        result = client.table("outcome_results").insert(outcome)  # wrapper insert() auto-executes
         
         if safe_get_data(result):
             logger.info(f"Recorded outcome for prediction {prediction.get('id')}: ML {'✓' if ml_correct else '✗'}, Targets: {targets_hit}")
@@ -556,7 +556,7 @@ async def check_multi_target_outcome(
             "claude_correct": claude_correct,
         }
         
-        client.table("outcome_results").insert(db_outcome).execute()
+        client.table("outcome_results").insert(db_outcome)  # wrapper insert() auto-executes
         
         return outcome
         
