@@ -7,60 +7,16 @@ import httpx
 
 from config import settings
 
-ECONOMIC_EVENTS_URL = "https://eodhistoricaldata.com/api/economic-events"
-FINANCIAL_NEWS_URL = "https://eodhistoricaldata.com/api/news"
-
-
 async def fetch_economic_events(days: int = 7) -> List[Dict[str, str]]:
-    if not settings.eodhd_api_key:
-        return _sample_economic_events()
-
-    end_date = datetime.now(timezone.utc).date()
-    start_date = end_date - timedelta(days=days)
-    params = {
-        "api_token": settings.eodhd_api_key,
-        "from": start_date.isoformat(),
-        "to": end_date.isoformat(),
-        "fmt": "json",
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(ECONOMIC_EVENTS_URL, params=params)
-            response.raise_for_status()
-            payload = response.json()
-    except Exception:
-        return _sample_economic_events()
-
-    if not isinstance(payload, list):
-        return _sample_economic_events()
-
-    return payload
+    # Vendor economic-events API retired. Returns sample data until a new
+    # economic-calendar source is wired (see economic_calendar_service).
+    return _sample_economic_events()
 
 
 async def fetch_market_news(limit: int = 30) -> List[Dict[str, str]]:
-    if not settings.eodhd_api_key:
-        return _sample_market_news()
-
-    params = {
-        "api_token": settings.eodhd_api_key,
-        "limit": limit,
-        "fmt": "json",
-        "s": "NDX.INDX,XAUUSD",
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(FINANCIAL_NEWS_URL, params=params)
-            response.raise_for_status()
-            payload = response.json()
-    except Exception:
-        return _sample_market_news()
-
-    if not isinstance(payload, list):
-        return _sample_market_news()
-
-    return payload
+    # Vendor news API retired. Live news now comes from the RSS aggregator /
+    # Telegram news detector (coming later); this fallback returns sample data.
+    return _sample_market_news()
 
 
 def classify_sentiment(event: Dict[str, str]) -> str:

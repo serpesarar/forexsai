@@ -31,7 +31,7 @@ def _get_ny_now() -> datetime:
 
 
 def _parse_candle_date(candle: dict) -> Optional[date_type]:
-    """Extract date from candle dict. Handles EODHD ('2026-04-18') and Yahoo ISO ('2026-04-18T16:00:00')."""
+    """Extract date from candle dict. Handles upstream vendor ('2026-04-18') and Yahoo ISO ('2026-04-18T16:00:00')."""
     raw = candle.get("date", "")
     if not raw:
         # Fallback: use timestamp field (ms since epoch)

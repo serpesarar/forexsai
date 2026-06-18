@@ -703,6 +703,12 @@ async def log_prediction(
                 f"[ML-INVERT] {symbol} {model_type}: BUY → SELL (asymmetric, BUY-only)"
             )
 
+        # NOTE: Pulse inversion is NOT applied in-place here — the original
+        # pulse signal is logged untouched. The inverted variant is emitted as
+        # a SEPARATE shadow signal (model_type pulse1_inv/pulse2_inv, indices
+        # only) by background_scheduler._maybe_log_pulse_inversion_shadow so we
+        # can measure real inverted WR without altering the main system.
+
         effective_model_type, resolved_strategy = _resolve_logging_identity(model_type, strategy)
         raw_confidence = float(ml.get("confidence", 0.0))
         

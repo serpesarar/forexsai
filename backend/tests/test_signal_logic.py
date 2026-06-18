@@ -7,7 +7,7 @@ Tests the core trading signal generation logic:
 - TP/SL level calculations (must never be negative, must be > entry price for BUY)
 - Signal confidence score range (0.0 to 1.0)
 - Edge cases: flat market, extreme volatility, missing candle data
-Use pytest + mock. Do NOT call real EODHD API.
+Use pytest + mock. Do NOT call real upstream API.
 """
 import pytest
 import numpy as np

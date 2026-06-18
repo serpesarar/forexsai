@@ -313,7 +313,7 @@
     "macro": "Macro: inflation easing narrative"
   },
   "news": {
-    "title": "MarketAux",
+    "title": "Live News",
     "subtitle": "Live News Feed",
     "headlines": "headlines",
     "emptyTitle": "No news available right now",
@@ -914,8 +914,8 @@
       "tips": "Extreme sentiment readings often precede reversals. When everyone is bullish, look for bearish divergences. When everyone is bearish, look for bullish setups."
     },
     "news": {
-      "title": "MarketAux Live News",
-      "description": "Live news feed from MarketAux delivering real-time market headlines with sentiment classification. Each headline is tagged as bullish, bearish, or neutral for quick scanning.",
+      "title": "Live News",
+      "description": "Live news feed delivering real-time market headlines with sentiment classification. Each headline is tagged as bullish, bearish, or neutral for quick scanning.",
       "dataPoints": "News headlines, source, publication time, sentiment tag (bullish/bearish/neutral).",
       "usage": "Scan headlines before and during trading sessions. Focus on news that directly affects your trading instruments (NASDAQ, XAU/USD, DAX). Use sentiment tags for quick assessment.",
       "tips": "Be cautious of trading immediately after major news — wait for the initial volatility to settle. News creates opportunities but also traps for impulsive traders."

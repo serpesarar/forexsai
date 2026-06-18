@@ -180,7 +180,7 @@ class TestSignalLifecycleCircuitBreaker:
 
 
 class TestDataHubPriceFreeze:
-    """REGRESSION: DataHub price freeze - mock EODHD failure and verify fallback"""
+    """REGRESSION: DataHub price freeze - mock upstream failure and verify fallback"""
     
     @pytest.mark.asyncio
     async def test_price_fetch_handles_slow_response(self):

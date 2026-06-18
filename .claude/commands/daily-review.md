@@ -13,7 +13,7 @@ Projenin günlük sağlık kontrolünü yap:
 
 ## Sistem Sağlığı
 8. Cache TTL'leri doğru çalışıyor mu?
-9. EODHD API kullanımı (100K limit'e göre yüzde kaç?)
+9. MT5 bridge + yfinance kullanımı (100K limit'e göre yüzde kaç?)
 10. Supabase bağlantı durumu
 
 ## Öneriler

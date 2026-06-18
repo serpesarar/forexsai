@@ -44,7 +44,44 @@ TICKERS = {
     "BTC":    "BTC-USD",      # Bitcoin — became correlated tech-beta proxy
     "USDJPY": "JPY=X",        # USD/JPY — carry trade barometer (Aug-2024 unwind)
     "COPPER": "HG=F",         # Copper futures — global growth/China demand
+    # — FX pairs used by the panel macro-context block —
+    "EURUSD": "EURUSD=X",     # Euro / USD — DAX export sensitivity
+    "USDTRY": "USDTRY=X",     # USD / Turkish Lira — local context
 }
+
+# Legacy panel keys → macro_data_service snapshot names. Used by the context
+# builders (background_scheduler / data_hub) that previously queried dead
+# vendor symbols like DXY.INDX/VIX.INDX. vdax (VDAX-NEW) has no reliable Yahoo
+# ticker, so the panel now surfaces US10Y (10-yr yield) in its place.
+PANEL_MACRO_KEYS = {
+    "dxy": "DXY",
+    "vix": "VIX",
+    "us10y": "US10Y",
+    "eurusd": "EURUSD",
+    "usdtry": "USDTRY",
+}
+
+
+def get_macro_dict() -> dict:
+    """Legacy-shape macro dict for the panel/context builders:
+        {"dxy": {"symbol": "DXY", "price": <float|None>, "change_1h_pct": ..}, ...}
+    Reads from the yfinance snapshot (get_snapshot). Keys that have not been
+    fetched yet return price=None so callers degrade gracefully.
+    """
+    snap = get_snapshot()
+    out: dict = {}
+    for panel_key, macro_name in PANEL_MACRO_KEYS.items():
+        ms = snap.get(macro_name)
+        if ms is not None:
+            out[panel_key] = {
+                "symbol": macro_name,
+                "price": ms.price,
+                "change_1h_pct": ms.change_1h_pct,
+                "change_1d_pct": ms.change_1d_pct,
+            }
+        else:
+            out[panel_key] = {"symbol": macro_name, "price": None}
+    return out
 
 REFRESH_INTERVAL_SECONDS = 3600   # 1 hour
 H1_LOOKBACK_DAYS = 90              # rolling 90-day H1 window kept in memory
@@ -179,3 +216,66 @@ def get_snapshot() -> dict[str, MacroSnapshot]:
 def is_ready() -> bool:
     """True if at least one macro has been fetched at least once."""
     return any(name in _history_h1 for name in TICKERS)
+
+
+# Panel/legacy symbol → macro snapshot name (e.g. "DXY.INDX" → "DXY").
+_PANEL_SYMBOL_TO_MACRO = {
+    "DXY.INDX": "DXY", "DXY": "DXY",
+    "VIX.INDX": "VIX", "VIX": "VIX",
+    "V1X.INDX": "VIX",            # VDAX unavailable on Yahoo — fall back to VIX
+    "US10Y": "US10Y", "^TNX": "US10Y",
+    "EURUSD": "EURUSD", "EURUSD.FOREX": "EURUSD",
+    "USDTRY": "USDTRY", "USDTRY.FOREX": "USDTRY",
+}
+
+
+def _resolve_macro_name(symbol: str) -> Optional[str]:
+    return _PANEL_SYMBOL_TO_MACRO.get((symbol or "").upper().strip())
+
+
+def get_candles_list(symbol: str, timeframe: str = "H1", limit: int = 240) -> list[dict]:
+    """Macro candles as a list of OHLCV dicts (yfinance-backed), for callers that
+    previously fetched DXY.INDX/VIX.INDX intraday candles. Accepts panel symbols
+    (e.g. 'DXY.INDX') or macro names ('DXY'). Returns [] if not loaded yet.
+
+    Note: macro history is H1/D1 only (yfinance), so 5m requests are served at H1.
+    """
+    name = _resolve_macro_name(symbol) or (symbol or "").upper().strip()
+    df = get_history(name, "D1" if timeframe.upper() in ("D1", "1D") else "H1")
+    if df is None or df.empty:
+        return []
+    out = []
+    for ts, row in df.tail(limit).iterrows():
+        out.append({
+            "date": ts.isoformat(),
+            "timestamp": int(ts.timestamp() * 1000),
+            "open": float(row.get("open", row["close"])),
+            "high": float(row.get("high", row["close"])),
+            "low": float(row.get("low", row["close"])),
+            "close": float(row["close"]),
+            "volume": float(row.get("volume", 0) or 0),
+        })
+    return out
+
+
+def macro_ta_snapshot(symbol: str) -> dict:
+    """Lightweight TA snapshot for a macro instrument, derived from the yfinance
+    H1 history. Drop-in replacement for compute_ta_snapshot('DXY.INDX'/'VIX.INDX')
+    for the fields consumers actually read: trend / confidence / current_price.
+    """
+    name = _resolve_macro_name(symbol) or (symbol or "").upper().strip()
+    df = get_history(name, "H1")
+    if df is None or df.empty:
+        return {"trend": "NEUTRAL", "confidence": 50.0, "current_price": None}
+    close = df["close"]
+    price = float(close.iloc[-1])
+    ema = float(close.ewm(span=20, adjust=False).mean().iloc[-1])
+    dist_pct = ((price - ema) / ema * 100) if ema else 0.0
+    if dist_pct > 0.15:
+        trend = "BULLISH"
+    elif dist_pct < -0.15:
+        trend = "BEARISH"
+    else:
+        trend = "NEUTRAL"
+    confidence = max(50.0, min(95.0, 50.0 + abs(dist_pct) * 10.0))
+    return {"trend": trend, "confidence": round(confidence, 1), "current_price": price}

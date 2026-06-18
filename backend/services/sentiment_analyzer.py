@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from datetime import UTC
 
 from config import settings
-from services.marketaux_service import fetch_marketaux_headlines
 from services.data_fetcher import fetch_latest_price
 from utils.market_hours import is_new_york_market_open
 import httpx
@@ -133,7 +132,7 @@ async def _call_deepseek_sentiment(prompt: str) -> dict:
 async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> dict:
     """
     Uses cached RSS sentiment when available.
-    If cache is cold, it falls back to Claude (Anthropic) or DeepSeek using Marketaux headlines.
+    If cache is cold, it falls back to Claude (Anthropic) or DeepSeek using available headlines.
     """
     # Normalize symbol for price lookup
     sym = (symbol or "NDX.INDX").strip()
@@ -172,19 +171,17 @@ async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> di
             "headlines": [],
         }
 
-    # Fetch headlines if needed for provider analysis
-    if not headlines:
-        try:
-            headlines = await fetch_marketaux_headlines([sym])
-        except Exception:
-            headlines = []
+    # News provider removed — a Telegram news detector will be wired in later.
+    # Provider sentiment runs on whatever headlines the caller supplied (often none).
+    if headlines is None:
+        headlines = []
 
     prompt = _build_prompt(sym, current_price, headlines, lang)
 
     anthropic_error = "ANTHROPIC_API_KEY missing"
     if settings.anthropic_api_key:
         try:
-            market_data_summary["news_source"] = "marketaux+anthropic"
+            market_data_summary["news_source"] = "anthropic"
             parsed = await _call_anthropic_sentiment(prompt)
             return _attach_metadata(parsed, market_data_summary, headlines, None)
         except Exception as exc:
@@ -193,7 +190,7 @@ async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> di
     deepseek_error = "DEEP_SEEKR1 missing"
     if settings.deepseek_api_key:
         try:
-            market_data_summary["news_source"] = "marketaux+deepseek"
+            market_data_summary["news_source"] = "deepseek"
             parsed = await _call_deepseek_sentiment(prompt)
             return _attach_metadata(parsed, market_data_summary, headlines, None)
         except Exception as exc:

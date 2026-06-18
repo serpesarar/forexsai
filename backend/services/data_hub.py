@@ -5,7 +5,7 @@ Single source of truth for all market data in the system.
 
 Default mode: mt5_redis (MT5 Bridge → Redis → DataHub)
   All price and OHLCV data flows exclusively from the MT5 bridge.
-  EODHD is NOT used for price/candle data in this mode.
+  No external market-data vendor API is used for price/candle data.
 
 Architecture (mt5_redis mode):
   Startup:  Supabase (candle_cache) → DataHub (in-memory)
@@ -24,11 +24,10 @@ Derived (0 API calls — pure resample):
   XAUUSD:        5m→15m, 5m→30m, 30m→1h, 30m→4h
 
 Macro data (DXY, VIX, USDTRY, EURUSD — context only, not trading data):
-  Fetched from EODHD every 5 min regardless of mode.
+  Fetched from yfinance (see macro_data_service), independent of this module.
 
 Other modes (set MARKET_DATA_SOURCE env var):
-  hybrid    → MT5 primary; EODHD fallback when MT5 is stale (>2 min price, >15 min candle)
-  eodhd     → Legacy EODHD-only mode (not recommended)
+  hybrid    → MT5 primary; Yahoo Finance fallback for commodities when MT5 is stale
 """
 
 from __future__ import annotations
@@ -61,7 +60,7 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 # ═══════════════════════════════════════════════════════════════
 # FETCH INTERVALS (seconds)
 # ═══════════════════════════════════════════════════════════════
-PRICE_INTERVAL = 5        # Fetch live price every 5 seconds (WS fallback since EODHD premium missing)
+PRICE_INTERVAL = 5        # Fetch live price every 5 seconds (WS fallback since upstream premium missing)
 CANDLE_5M_INTERVAL = 300  # Fetch 5m candles every 5 minutes
 CANDLE_30M_INTERVAL = 300 # Fetch 30m candles every 5 minutes (XAUUSD only)
 CANDLE_1H_INTERVAL = 300  # Fetch 1h candles every 5 minutes
@@ -82,7 +81,7 @@ MACRO_SYMBOLS = {
 # ═══════════════════════════════════════════════════════════════
 _lock = Lock()
 
-# Raw data from EODHD (fetched via API)
+# Raw data from upstream (fetched via API)
 _prices: Dict[str, Dict[str, Any]] = {}        # symbol -> {price, timestamp}
 _candles_1m: Dict[str, Dict[str, Any]] = {}     # symbol -> {candles, timestamp} — MT5 Redis / XAUUSD
 _candles_5m: Dict[str, Dict[str, Any]] = {}     # symbol -> {candles, timestamp}
@@ -113,10 +112,10 @@ _last_fetch: Dict[str, float] = {}
 _hub_running = False
 
 # ── Hybrid-mode MT5 freshness thresholds ─────────────────────────────────────
-# If MT5 has pushed data more recently than these thresholds, skip the EODHD
-# poll so that stale EODHD data cannot overwrite correct live MT5 prices/candles.
-MT5_PRICE_FRESHNESS_THRESHOLD = 120    # 2 min — skip EODHD price if MT5 is fresher
-MT5_CANDLES_FRESHNESS_THRESHOLD = 900  # 15 min — skip EODHD candle fetch if MT5 is fresher
+# If MT5 has pushed data more recently than these thresholds, skip the upstream
+# poll so that stale upstream data cannot overwrite correct live MT5 prices/candles.
+MT5_PRICE_FRESHNESS_THRESHOLD = 120    # 2 min — skip upstream price if MT5 is fresher
+MT5_CANDLES_FRESHNESS_THRESHOLD = 900  # 15 min — skip upstream candle fetch if MT5 is fresher
 
 # ── Persistent-cache staleness gate ──────────────────────────────────────────
 # If the most recent candle in a Supabase cache is older than this threshold,
@@ -182,14 +181,16 @@ async def _fire_candle_close_events(symbol: str, timeframe: str, candles: List[D
 
 
 def get_market_data_source() -> str:
-    source = (settings.market_data_source or "eodhd").strip().lower()
-    if source not in {"eodhd", "mt5_redis", "hybrid"}:
-        return "eodhd"
+    source = (settings.market_data_source or "mt5_redis").strip().lower()
+    if source not in {"mt5_redis", "hybrid"}:
+        return "mt5_redis"
     return source
 
 
 def _upstream_market_fetch_enabled() -> bool:
-    return get_market_data_source() in {"eodhd", "hybrid"}
+    # Only "hybrid" allows the upstream poll (Yahoo fallback for commodities);
+    # "mt5_redis" relies solely on the MT5 -> Redis bridge.
+    return get_market_data_source() == "hybrid"
 
 
 def _canonical_symbol(symbol: str) -> str:
@@ -220,7 +221,7 @@ def _normalize_symbol(symbol: str) -> str:
     s = (symbol or "").strip()
     if not s:
         return s
-    # Explicit commodity mappings - EODHD uses specific formats
+    # Explicit commodity mappings - upstream uses specific formats
     if s.upper() in ("WTI", "USOIL.FOREX", "CL"):
         return "CL"
     if s.upper() == "BRENT":
@@ -314,7 +315,7 @@ def _get_latest_candle_age_hours(candles: List[Dict]) -> Optional[float]:
 def _mt5_price_is_fresh(symbol: str) -> bool:
     """Return True when a recent MT5 price exists and is newer than the threshold.
 
-    Used in hybrid mode to prevent EODHD polls from overwriting live MT5 data.
+    Used in hybrid mode to prevent upstream polls from overwriting live MT5 data.
     """
     entry = _prices.get(symbol, {})
     if entry.get("source") != "mt5_redis":
@@ -330,7 +331,7 @@ def _mt5_candles_are_fresh(symbol: str, timeframe: str) -> bool:
     """Return True when MT5 has recently written candles for symbol/timeframe.
 
     Checks the `_last_fetch` stamp set by `ingest_candles` as well as the
-    source tag on the candle store so that EODHD does not overwrite fresh
+    source tag on the candle store so that upstream does not overwrite fresh
     MT5 intraday data in hybrid mode.
     """
     tf, store = _get_store_for_timeframe(timeframe)
@@ -345,7 +346,7 @@ def _mt5_candles_are_fresh(symbol: str, timeframe: str) -> bool:
 
 
 # ═══════════════════════════════════════════════════════════════
-# YAHOO FINANCE FALLBACK (Commodities/Forex bypassing EODHD)
+# YAHOO FINANCE FALLBACK (Commodities/Forex bypassing upstream)
 # ═══════════════════════════════════════════════════════════════
 def _is_us_market_open() -> bool:
     """Check if it's currently US Market Hours (09:30 - 16:00 EST/EDT, Mon-Fri)."""
@@ -507,180 +508,50 @@ async def _fetch_yahoo_candles(yahoo_symbol: str, interval: str, limit: int) -> 
 
 
 # ═══════════════════════════════════════════════════════════════
-# EODHD API FETCHERS (only called by DataHub pump)
+# UPSTREAM PRICE/CANDLE FETCHERS (only called by DataHub pump)
+# Indices (NDX, GDAXI) arrive via the MT5 -> Redis bridge. Commodities
+# (USOIL/XAUUSD) keep a Yahoo Finance fallback. No external market-data
+# vendor API is used here.
 # ═══════════════════════════════════════════════════════════════
 async def _fetch_price_from_api(symbol: str) -> Optional[float]:
-    """Fetch real-time price. Intercepts Commodities for Yahoo, else EODHD."""
+    """Fetch real-time price — Yahoo for commodities, else nothing (MT5 feeds indices)."""
     eod_symbol = _normalize_symbol(symbol)
-    
-    # --- YAHOO FINANCE FALLBACK ---
-    if eod_symbol == "CL": # USOil / WTI
+
+    # --- YAHOO FINANCE FALLBACK (commodities) ---
+    if eod_symbol == "CL":  # USOil / WTI
         return await _fetch_yahoo_price("CL=F")
-    if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"): # Gold
+    if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"):  # Gold
         return await _fetch_yahoo_price("GC=F")
 
-    if not settings.eodhd_api_key:
-        return None
-    eod_symbol = _normalize_symbol(symbol)
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                f"https://eodhistoricaldata.com/api/real-time/{eod_symbol}",
-                params={"api_token": settings.eodhd_api_key, "fmt": "json"},
-            )
-            if resp.status_code == 402:
-                return None  # Quota exceeded
-            resp.raise_for_status()
-            data = resp.json()
-            if isinstance(data, list) and data:
-                data = data[0]
-            if isinstance(data, dict):
-                # Prioritize real-time keys over 'close' which may be stale after-hours
-                # 'last' and 'price' are more likely to be actual current quotes
-                # Fallback chain: last → price → close → value → previousClose
-                for key in ("last", "price", "close", "value"):
-                    if key in data and data[key] is not None:
-                        val = data[key]
-                        # Skip "NA", "N/A", empty strings, or other non-numeric values
-                        if isinstance(val, str):
-                            val_stripped = val.strip().upper()
-                            if val_stripped in ("NA", "N/A", "", "NULL", "NONE"):
-                                continue
-                        try:
-                            return float(val)
-                        except (TypeError, ValueError):
-                            continue
-                # Final fallback: previousClose (useful when market is closed)
-                if "previousClose" in data and data["previousClose"] is not None:
-                    val = data["previousClose"]
-                    if isinstance(val, str):
-                        val_stripped = val.strip().upper()
-                        if val_stripped not in ("NA", "N/A", "", "NULL", "NONE"):
-                            try:
-                                return float(val)
-                            except (TypeError, ValueError):
-                                pass
-                    else:
-                        try:
-                            return float(val)
-                        except (TypeError, ValueError):
-                            pass
-    except Exception as e:
-        logger.debug(f"Price fetch failed for {symbol}: {e}")
+    # Indices come from the MT5 -> Redis bridge; no upstream HTTP fetch.
     return None
 
 
 async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) -> List[Dict]:
-    """Fetch intraday candles. Intercepts Commodities for Yahoo, else EODHD."""
+    """Fetch intraday candles — Yahoo for commodities, else nothing (MT5 feeds indices)."""
     eod_symbol = _normalize_symbol(symbol)
-    
-    # --- YAHOO FINANCE FALLBACK ---
+
+    # --- YAHOO FINANCE FALLBACK (commodities) ---
     if eod_symbol == "CL":
         return await _fetch_yahoo_candles("CL=F", interval, limit)
     if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"):
         return await _fetch_yahoo_candles("GC=F", interval, limit)
 
-    if not settings.eodhd_api_key:
-        return []
-    
-    # Calculate how far back we need to go based on interval and limit
-    # EODHD requires 'from' param for historical intraday data
-    # Use CONSERVATIVE (stock market) estimates so we always fetch enough days
-    import math
-    candles_per_day = {"1m": 390, "5m": 78, "15m": 26, "30m": 13, "1h": 7}.get(interval, 78)
-    trading_days_needed = math.ceil(limit / max(candles_per_day, 1))
-    # Buffer for weekends/holidays (×2 to be safe)
-    calendar_days = max(int(trading_days_needed * 2) + 7, 14)
-    from_ts = int((datetime.now(timezone.utc) - timedelta(days=calendar_days)).timestamp())
-    
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(
-                f"https://eodhistoricaldata.com/api/intraday/{eod_symbol}",
-                params={
-                    "api_token": settings.eodhd_api_key,
-                    "fmt": "json",
-                    "interval": interval,
-                    "from": from_ts,
-                },
-            )
-            if resp.status_code == 402:
-                return []
-            resp.raise_for_status()
-            data = resp.json()
-            if not isinstance(data, list):
-                return []
-            cleaned = []
-            for row in data:
-                if not isinstance(row, dict) or row.get("close") is None:
-                    continue
-                dt_str = row.get("datetime", "")
-                try:
-                    dt = datetime.fromisoformat(dt_str.replace("Z", "+00:00"))
-                    ts = int(dt.timestamp() * 1000)
-                except Exception:
-                    ts = 0
-                cleaned.append({
-                    "timestamp": ts,
-                    "date": dt_str,
-                    "open": float(row.get("open") or 0.0),
-                    "high": float(row.get("high") or 0.0),
-                    "low": float(row.get("low") or 0.0),
-                    "close": float(row.get("close") or 0.0),
-                    "volume": float(row.get("volume") or 0.0),
-                })
-            logger.info(f"[DataHub] Fetched {len(cleaned)} {interval} candles for {symbol} (requested {limit}, from {calendar_days}d ago)")
-            return cleaned  # Return ALL candles — _merge_candles handles dedup & limit
-    except Exception as e:
-        logger.debug(f"Candle fetch failed for {symbol} {interval}: {e}")
+    # Indices come from the MT5 -> Redis bridge; no upstream HTTP fetch.
     return []
 
 
 async def _fetch_eod_from_api(symbol: str, limit: int = 300) -> List[Dict]:
-    """Fetch EOD candles. Intercepts Commodities for Yahoo, else EODHD."""
+    """Fetch EOD candles — Yahoo for commodities, else nothing (MT5 feeds indices)."""
     eod_symbol = _normalize_symbol(symbol)
-    
-    # --- YAHOO FINANCE FALLBACK ---
+
+    # --- YAHOO FINANCE FALLBACK (commodities) ---
     if eod_symbol == "CL":
         return await _fetch_yahoo_candles("CL=F", "1d", limit)
     if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"):
         return await _fetch_yahoo_candles("GC=F", "1d", limit)
 
-    if not settings.eodhd_api_key:
-        return []
-    from_date = (datetime.now(timezone.utc) - timedelta(days=max(30, limit * 2))).date().isoformat()
-    try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.get(
-                f"https://eodhistoricaldata.com/api/eod/{eod_symbol}",
-                params={
-                    "api_token": settings.eodhd_api_key,
-                    "fmt": "json",
-                    "period": "d",
-                    "from": from_date,
-                },
-            )
-            if resp.status_code == 402:
-                return []
-            resp.raise_for_status()
-            data = resp.json()
-            if not isinstance(data, list):
-                return []
-            cleaned = []
-            for row in data:
-                if not isinstance(row, dict) or row.get("close") is None:
-                    continue
-                cleaned.append({
-                    "date": row.get("date"),
-                    "open": float(row.get("open") or 0.0),
-                    "high": float(row.get("high") or 0.0),
-                    "low": float(row.get("low") or 0.0),
-                    "close": float(row.get("close") or 0.0),
-                    "volume": float(row.get("volume") or 0.0),
-                })
-            return cleaned[-limit:]
-    except Exception as e:
-        logger.debug(f"EOD fetch failed for {symbol}: {e}")
+    # Indices come from the MT5 -> Redis bridge; no upstream HTTP fetch.
     return []
 
 
@@ -757,7 +628,7 @@ def _rebuild_derived(symbol: str):
     """
     now = datetime.now(timezone.utc).timestamp()
     market_data_source = get_market_data_source()
-    use_direct_30m = symbol in _30M_DIRECT_SYMBOLS and market_data_source == "eodhd"
+    use_direct_30m = False  # direct upstream 30m fetch retired with the vendor API
     derive_from_30m = symbol in _30M_DIRECT_SYMBOLS
     
     raw_5m = _candles_5m.get(symbol, {}).get("candles", [])
@@ -837,7 +708,7 @@ FULL_SEED_LIMIT_30M = 1600  # ~54 days of 30m candles (XAUUSD max 1h limit capac
 FULL_SEED_LIMIT_1H = 2400   # ~200+ days of 1h candles → 4h derived = ~600 candles (~100 days)
 FULL_SEED_LIMIT_EOD = 730   # ~2 years of daily candles
 
-# EODHD interval support varies by symbol:
+# upstream interval support varies by symbol:
 #   XAUUSD.FOREX: supports 1m, 15m, 30m (NOT 5m, 1h)
 #   NDX.INDX:     supports 5m, 1h
 #   GDAXI.INDX:   supports 5m, 1h (same as NDX)
@@ -938,8 +809,8 @@ def _has_sufficient_cached_history(
 async def _pump_cycle():
     """One pump cycle: fetch what's due, rebuild derived data."""
     now_ts = datetime.now(timezone.utc).timestamp()
-    allow_upstream_market_fetch = get_market_data_source() in {"eodhd", "hybrid"}
-    allow_upstream_direct_30m_fetch = get_market_data_source() == "eodhd"
+    allow_upstream_market_fetch = get_market_data_source() == "hybrid"
+    allow_upstream_direct_30m_fetch = False
 
     for symbol in TRACKED_SYMBOLS:
         seed_key = symbol
@@ -949,16 +820,16 @@ async def _pump_cycle():
 
         # ── Price (every 5s) ──
         if allow_upstream_market_fetch and _should_fetch(f"price:{symbol}", PRICE_INTERVAL):
-            # In hybrid mode, skip EODHD poll when MT5 has pushed a fresh price
-            # recently — prevents stale EODHD data from overwriting live MT5 quotes.
+            # In hybrid mode, skip upstream poll when MT5 has pushed a fresh price
+            # recently — prevents stale upstream data from overwriting live MT5 quotes.
             if is_hybrid and _mt5_price_is_fresh(symbol):
                 _mark_fetched(f"price:{symbol}")
-                logger.debug("[DataHub] %s price: MT5 fresh — skipping EODHD poll", symbol)
+                logger.debug("[DataHub] %s price: MT5 fresh — skipping upstream poll", symbol)
             else:
                 price = await _fetch_price_from_api(symbol)
                 if price is not None:
                     with _lock:
-                        _prices[symbol] = {"price": price, "timestamp": now_ts, "source": "eodhd_poll"}
+                        _prices[symbol] = {"price": price, "timestamp": now_ts, "source": "upstream_poll"}
                     _mark_fetched(f"price:{symbol}")
                     try:
                         from services.ws_manager import manager
@@ -973,10 +844,10 @@ async def _pump_cycle():
 
         # ── 5m candles (every 5min) ──
         if allow_upstream_market_fetch and _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
-            # In hybrid mode, skip EODHD if MT5 has been actively feeding 5m bars.
+            # In hybrid mode, skip upstream if MT5 has been actively feeding 5m bars.
             if is_hybrid and _mt5_candles_are_fresh(symbol, "5m"):
                 _mark_fetched(f"5m:{symbol}")
-                logger.debug("[DataHub] %s 5m: MT5 fresh — skipping EODHD candle fetch", symbol)
+                logger.debug("[DataHub] %s 5m: MT5 fresh — skipping upstream candle fetch", symbol)
             else:
                 is_seed = not is_seeded
 
@@ -993,7 +864,7 @@ async def _pump_cycle():
                     with _lock:
                         existing = (_candles_5m.get(symbol) or {}).get("candles", [])
                         merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_5M)
-                        _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
+                        _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                         _rebuild_derived(symbol)
                     _mark_fetched(f"5m:{symbol}")
                     _persist_async(symbol, "5m", merged if is_seed else candles)
@@ -1005,7 +876,7 @@ async def _pump_cycle():
                     if d30:
                         await _fire_candle_close_events(symbol, "30m", d30)
 
-        # ── 30m candles (XAUUSD only — direct upstream only in pure eodhd mode) ──
+        # ── 30m candles (XAUUSD only — direct upstream only in pure upstream mode) ──
         if allow_upstream_direct_30m_fetch and symbol in _30M_DIRECT_SYMBOLS and _should_fetch(f"30m:{symbol}", CANDLE_30M_INTERVAL):
             is_seed = not is_seeded
             fetch_limit = FULL_SEED_LIMIT_30M if is_seed else DELTA_LIMIT_30M
@@ -1014,7 +885,7 @@ async def _pump_cycle():
                 with _lock:
                     existing = (_candles_30m.get(symbol) or {}).get("candles", [])
                     merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_30M)
-                    _candles_30m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
+                    _candles_30m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                     _rebuild_derived(symbol)
                 _mark_fetched(f"30m:{symbol}")
                 _persist_async(symbol, "30m", merged if is_seed else candles)
@@ -1034,10 +905,10 @@ async def _pump_cycle():
             if symbol in _30M_DIRECT_SYMBOLS:
                 _mark_fetched(f"1h:{symbol}")
             else:
-                # In hybrid mode, skip EODHD if MT5 has been feeding 1h bars.
+                # In hybrid mode, skip upstream if MT5 has been feeding 1h bars.
                 if is_hybrid and _mt5_candles_are_fresh(symbol, "1h"):
                     _mark_fetched(f"1h:{symbol}")
-                    logger.debug("[DataHub] %s 1h: MT5 fresh — skipping EODHD candle fetch", symbol)
+                    logger.debug("[DataHub] %s 1h: MT5 fresh — skipping upstream candle fetch", symbol)
                 else:
                     fetch_limit = FULL_SEED_LIMIT_1H if is_seed else DELTA_LIMIT_1H
                     candles = await _fetch_candles_from_api(symbol, "1h", limit=fetch_limit)
@@ -1045,7 +916,7 @@ async def _pump_cycle():
                         with _lock:
                             existing = (_candles_1h.get(symbol) or {}).get("candles", [])
                             merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H)
-                            _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
+                            _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                             _rebuild_derived(symbol)
                         _mark_fetched(f"1h:{symbol}")
                         _persist_async(symbol, "1h", merged if is_seed else candles)
@@ -1063,7 +934,7 @@ async def _pump_cycle():
                 with _lock:
                     existing = (_candles_eod.get(symbol) or {}).get("candles", [])
                     merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_EOD)
-                    _candles_eod[symbol] = {"candles": merged, "timestamp": now_ts, "source": "eodhd_poll"}
+                    _candles_eod[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                 _mark_fetched(f"eod:{symbol}")
                 _persist_async(symbol, "eod", merged if is_seed else candles)
 
@@ -1117,10 +988,10 @@ def _load_from_persistent_cache():
                 loaded_any = True
                 logger.info(f"[DataHub] Loaded {len(cached_5m)} cached 5m candles for {symbol} (age={age_5m}h)")
 
-        # ── 30m candles (XAUUSD: fetched directly from EODHD only in eodhd mode) ──
+        # ── 30m candles (XAUUSD: fetched directly from upstream only in upstream mode) ──
         # In mt5_redis/hybrid mode, XAUUSD 30m is derived from 5m - skip loading stale cache
         cached_30m: Optional[List[Dict]] = None
-        if get_market_data_source() == "eodhd" or symbol not in _30M_DIRECT_SYMBOLS:
+        if symbol not in _30M_DIRECT_SYMBOLS:
             cached_30m_raw = load_candles(symbol, "30m", limit=FULL_SEED_LIMIT_30M)
             if cached_30m_raw:
                 age_30m = _get_latest_candle_age_hours(cached_30m_raw)
@@ -1141,7 +1012,7 @@ def _load_from_persistent_cache():
 
         # ── 1h candles ──────────────────────────────────────────────────────────
         cached_1h: Optional[List[Dict]] = None
-        if get_market_data_source() == "eodhd" or symbol not in _30M_DIRECT_SYMBOLS:
+        if symbol not in _30M_DIRECT_SYMBOLS:
             cached_1h_raw = load_candles(symbol, "1h", limit=FULL_SEED_LIMIT_1H)
             if cached_1h_raw:
                 age_1h = _get_latest_candle_age_hours(cached_1h_raw)
@@ -1208,12 +1079,12 @@ def _load_from_persistent_cache():
         if get_market_data_source() == "mt5_redis":
             logger.info("[DataHub] Persistent cache loaded — waiting for MT5 Redis live updates")
         else:
-            logger.info("[DataHub] Persistent cache loaded — will only fetch delta from EODHD")
+            logger.info("[DataHub] Persistent cache loaded — will only fetch delta from upstream")
     else:
         if get_market_data_source() == "mt5_redis":
             logger.info("[DataHub] No persistent cache found — MT5 Redis must seed live candles")
         else:
-            logger.info("[DataHub] No persistent cache found — will do full seed from EODHD")
+            logger.info("[DataHub] No persistent cache found — will do full seed from upstream")
 
 
 async def start_data_hub():
@@ -1419,7 +1290,18 @@ def build_subminute_candles(
 
 
 def get_macro() -> Dict[str, Any]:
-    """Get cached macro data (DXY, VIX, USDTRY)."""
+    """Get macro context (DXY, VIX, US10Y, EURUSD, USDTRY).
+
+    Sourced from the yfinance-backed macro_data_service snapshot. Falls back to
+    any locally cached values if the snapshot is not ready yet.
+    """
+    try:
+        from services import macro_data_service
+        macro = macro_data_service.get_macro_dict()
+        if macro and any(v.get("price") for v in macro.values()):
+            return macro
+    except Exception as exc:
+        logger.debug("[DataHub] macro snapshot unavailable: %s", exc)
     with _lock:
         return {k: {"symbol": v.get("symbol"), "price": v.get("price")} for k, v in _macro_data.items()}
 

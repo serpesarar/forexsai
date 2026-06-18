@@ -41,7 +41,7 @@ _diag = {
 
 
 def _source_mode_enabled() -> bool:
-    source = (settings.market_data_source or "eodhd").strip().lower()
+    source = (settings.market_data_source or "mt5_redis").strip().lower()
     return source in {"mt5_redis", "hybrid"}
 
 
@@ -327,7 +327,7 @@ async def get_mt5_redis_diagnostics() -> Dict[str, Any]:
     redis_url = get_redis_url()
     result: Dict[str, Any] = {
         "source_mode_enabled": _source_mode_enabled(),
-        "market_data_source": (settings.market_data_source or "eodhd").strip().lower(),
+        "market_data_source": (settings.market_data_source or "mt5_redis").strip().lower(),
         "listener_running": _listener_running,
         "redis_url_configured": bool(redis_url),
         "redis_url_prefix": (redis_url or "")[:30] + "..." if redis_url else None,

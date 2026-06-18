@@ -328,15 +328,11 @@ async def test_rerank_with_ai_applies_order_and_metadata(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_run_claude_sentiment_fetches_marketaux_using_symbol_list(monkeypatch):
-    captured: dict[str, object] = {}
-
+async def test_run_claude_sentiment_falls_back_to_deepseek_when_rss_cold(monkeypatch):
+    # External news provider removed — with a cold RSS cache the analyzer
+    # should fall back to the DeepSeek provider path with no fetched headlines.
     async def fake_fetch_latest_price(_symbol):
         return 123.45
-
-    async def fake_fetch_marketaux_headlines(symbols):
-        captured["symbols"] = symbols
-        return [{"title": "Gold steady", "source": "Reuters"}]
 
     async def fake_deepseek(prompt):
         assert "Instrument: XAUUSD" in prompt
@@ -352,7 +348,6 @@ async def test_run_claude_sentiment_fetches_marketaux_using_symbol_list(monkeypa
         }
 
     monkeypatch.setattr(sentiment_module, "fetch_latest_price", fake_fetch_latest_price)
-    monkeypatch.setattr(sentiment_module, "fetch_marketaux_headlines", fake_fetch_marketaux_headlines)
     monkeypatch.setattr(sentiment_module, "_call_deepseek_sentiment", fake_deepseek)
     monkeypatch.setattr(sentiment_module.settings, "anthropic_api_key", None, raising=False)
     monkeypatch.setattr(sentiment_module.settings, "deepseek_api_key", "test-key", raising=False)
@@ -362,9 +357,8 @@ async def test_run_claude_sentiment_fetches_marketaux_using_symbol_list(monkeypa
 
     result = await sentiment_module.run_claude_sentiment(symbol="XAUUSD", lang="en")
 
-    assert captured["symbols"] == ["XAUUSD"]
     assert result["sentiment"] == "NEUTRAL"
-    assert result["market_data_summary"]["news_source"] == "marketaux+deepseek"
+    assert result["market_data_summary"]["news_source"] == "deepseek"
 
 
 @pytest.mark.asyncio

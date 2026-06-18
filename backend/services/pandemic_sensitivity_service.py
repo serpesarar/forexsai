@@ -16,7 +16,7 @@ The PSI score (0-100) is consumed by:
   - ML feature pipeline (psi_z_score as auxiliary feature)
 
 Data source: Yahoo Finance (yfinance) — daily EOD only.
-Refresh cadence: 6 hours. Negligible cost (~30 calls/day, no EODHD impact).
+Refresh cadence: 6 hours. Negligible cost (~30 calls/day, no upstream vendor impact).
 
 The service is intentionally read-only and side-effect-free for the rest of
 the system; downstream consumers must opt in by importing get_snapshot().

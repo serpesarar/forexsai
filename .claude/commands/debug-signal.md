@@ -7,7 +7,7 @@ $ARGUMENTS sembolü için sinyal pipeline'ını baştan sona debug et.
 4. Bar verisi beklenen formatta mı? (symbol, open, high, low, close, volume, timestamp, closed=true)
 
 ## 2. DataHub Katmanı
-5. DataHub'da bu sembol için `_prices` kaydı var mı? Source etiketi ne? (`mt5_redis` / `eodhd_fallback`)
+5. DataHub'da bu sembol için `_prices` kaydı var mı? Source etiketi ne? (`mt5_redis` / `yahoo_fallback`)
 6. `_candles_5m` dolu mu? Kaç bar var? Son bar timestamp'i güncel mi?
 7. Türetilmiş timeframe'ler kontrol et:
    - 15m → `derived_from_5m` mi?
@@ -19,7 +19,7 @@ $ARGUMENTS sembolü için sinyal pipeline'ını baştan sona debug et.
 ## 3. data_fetcher.py & market_data_service.py
 9. `fetch_latest_price(symbol)` → DataHub'dan doğru fiyat dönüyor mu?
 10. `fetch_ohlc_data(symbol, "5m", 300)` → 300 bar dolu mu, eksik/boş slot var mı?
-11. Herhangi bir EODHD çağrısı tetikleniyor mu? (Olmamalı — fiyat/mum için EODHD kullanılmıyor)
+11. Herhangi bir MT5/yfinance çağrısı tetikleniyor mu? (Olmamalı — fiyat/mum için MT5/yfinance kullanılmıyor)
 
 ## 4. Model Katmanı — Her model için ayrı ayrı
 12. ML: Feature hesaplaması (150+ indikatör) hatasız mı? Prediction olasılıkları nedir?

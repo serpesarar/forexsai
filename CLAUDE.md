@@ -25,8 +25,9 @@ Sen ForexSAI projesinin **Lead Architect & Senior Full-Stack Developer**'ısın.
 - **Backend:** FastAPI + Python 3.11
 - **Database:** Supabase PostgreSQL (tüm persistence)
 - **ML:** LightGBM (joblib), 150+ feature
-- **Data Source (Primary):** MetaTrader 5 Bridge → Redis (pub/sub + streams) → DataHub
-- **Data Source (Secondary):** EODHD API — sadece COT raporları, Whale Tracker, Macro (DXY/VIX)
+- **Data Source (Fiyat/Mum):** MetaTrader 5 Bridge → Redis (pub/sub + streams) → DataHub (tek kaynak)
+- **Data Source (Makro):** yfinance — DXY, VIX, US10Y, EURUSD, USDTRY (`macro_data_service`, saatlik)
+- **Haber:** Yakında Telegram haber dedektörü bağlanacak (şu an RSS aggregator). Harici haber vendor'ları sistemden tamamen kaldırıldı (2026-06).
 - **Veri Modu:** `MARKET_DATA_SOURCE=mt5_redis` (.env)
 - **Redis Host:** Railway (uzak sunucu)
 - **Deployment:** Railway (backend), Vercel/Netlify (frontend)
@@ -65,13 +66,14 @@ forexsai/
 │   │   ├── signal_lifecycle.py           # Sinyal yaşam döngüsü (2dk interval)
 │   │   ├── prediction_logger.py          # Supabase loglama
 │   │   ├── ml_scope_policy.py            # Risk/scope presets
-│   │   ├── cot_report_service.py         # CFTC COT raporları (EODHD)
-│   │   ├── whale_tracker_service.py      # Whale pressure hesaplama (EODHD)
-│   │   └── data_fetcher.py               # DataHub proxy (EODHD çağrısı YOK, DataHub'a yönlendirir)
+│   │   ├── cot_report_service.py         # CFTC COT raporları
+│   │   ├── whale_tracker_service.py      # Whale pressure hesaplama
+│   │   ├── macro_data_service.py         # ⭐ Makro (DXY/VIX/US10Y...) — yfinance, saatlik
+│   │   └── data_fetcher.py               # DataHub proxy (harici vendor çağrısı YOK, DataHub'a yönlendirir)
 │   ├── models/                  # ML model dosyaları
 │   │   ├── model_lgbm_nasdaq.joblib      # NDX + GDAXI
 │   │   └── model_lgbm_xauusd.joblib      # XAUUSD + USOIL
-│   └── data_hub.py              # ⭐ In-memory cache merkezi + WebSocket broadcast
+│   └── services/data_hub.py    # ⭐ In-memory cache merkezi + WebSocket broadcast (services/ altında, import: services.data_hub)
 └── supabase/
     └── migrations/              # SQL migration dosyaları
 ```
@@ -91,8 +93,8 @@ forexsai/
 └─────────────┘    └──────────────────────────┘    │     DataHub         │
                                                     │  (in-memory cache)  │
                    ┌──────────────────────────┐    │         │           │
-                   │  EODHD API (Secondary)   │    │  _prices, _candles  │
-                   │  COT / Whale / Macro only │───▶│  _candles_5m→4h    │
+                   │  yfinance (Makro)        │    │  _prices, _candles  │
+                   │  DXY / VIX / US10Y / FX   │───▶│  _candles_5m→4h    │
                    └──────────────────────────┘    │         │           │
                                                     │         ▼           │
                                                     │  data_fetcher.py    │
@@ -177,10 +179,11 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 | Tablo | Amaç | Kritik Kolonlar |
 |-------|-------|-----------------|
 | `prediction_logs` | Tüm sinyallerin kaydı | symbol, model_type, direction, confidence, status, entry_price, tp1-tp4, sl |
-| `signal_checks` | Lifecycle kontrol ping'leri | signal_id, check_time, current_price, status |
+| `signal_checks` | ⚠️ DEPRECATED — 2026-06-10'da donduruldu (commit 4a1bbd6). Per-check snapshot artık `signal_trajectory_snapshots`'a yazılıyor (deterioration skoru + features ile daha zengin). | signal_id, check_time, current_price, status |
+| `signal_trajectory_snapshots` | Aktif sinyallerin periyodik snapshot'ı (signal_checks'in yerini aldı) | signal_id, current_price, current_profit_pips, current_drawdown_pips, deterioration_score |
 | `outcome_results` | Sonuç analizleri | signal_id, outcome, highest_profit_pips, lowest_drawdown_pips, exit_price |
 | `candle_cache` | Kalıcı OHLCV cache | symbol, timeframe, timestamp, o, h, l, c, v |
-| `cot_data` | COT rapor verisi | symbol, report_date, commercials_net, speculators_net |
+| `cot_data` | ⚠️ Bu tablo Supabase'de YOK. COT verisi `cot_report_service` tarafından canlı çekilip in-memory tutuluyor, persist EDİLMİYOR. | (tablo mevcut değil) |
 
 **Supabase kuralları:**
 - Tüm veritabanı işlemleri `supabase-py` client üzerinden
@@ -348,7 +351,7 @@ Sen düşün:
 - Frontend: React.memo, useMemo, useCallback uygun yerlerde
 - Backend: asyncio.gather ile paralel istekler
 - Supabase: composite index'ler, materialized view'lar düşün
-- EODHD: Sadece COT/Whale/Macro için — 100K/gün limit düşük risk
+- Makro: yfinance saatlik (`macro_data_service`) — düşük çağrı hacmi, harici trading-veri vendor'ı yok
 - Redis: MT5 bridge bağlantısı kopunca DataHub donabilir — reconnect logic'i kontrol et
 - MT5 Bridge: Tick pub/sub (`mt5:tick`) + Bar stream (`mt5:bar:5m`, `mt5:bar:1h`, `mt5:bar:1d`) ayrı dinlenir
 
@@ -359,7 +362,7 @@ Sen düşün:
 1. **MT5 Bridge Kesintisi:** Redis bağlantısı koparsa DataHub'daki veriler eskir — `mt5_redis_client.py` reconnect logic'ini koru
 2. **Redis Stream Lag:** MT5 bar kapanışı ile Redis'e yazılması arasında küçük gecikme olabilir (genellikle <500ms)
 3. **DataHub Türetme:** XAUUSD 1h/4h verileri 30m'den türetilir; 30m verisi eksikse üst timeframe'ler boş kalır
-4. **EODHD (Sadece COT/Whale/Macro):** Fiyat/mum verisi için KULLANILMIYOR — COT, Whale Tracker, DXY/VIX için hâlâ aktif; 100K/gün limit
+4. **Makro (yfinance):** DXY/VIX/US10Y/EURUSD/USDTRY `macro_data_service` üzerinden yfinance'tan saatlik gelir. Harici trading-veri ve haber vendor'ları sistemden tamamen kaldırıldı (2026-06); hiçbiri kullanılmıyor.
 5. **DeepSeek API:** Rate limit değişken (R1 model)
 6. **CFTC COT:** Haftalık, Cuma yayınlanır
 7. **Signal Lifecycle:** 2dk interval (main.py asyncio.sleep(120)) — daha sık kontrol CPU yükü artırır
@@ -394,13 +397,16 @@ REDIS_PORT=6379
 REDIS_PASSWORD=
 
 # Veri Modu
-MARKET_DATA_SOURCE=mt5_redis      # mt5_redis (default) | hybrid | eodhd
+MARKET_DATA_SOURCE=mt5_redis      # mt5_redis (default) | hybrid (commodity Yahoo fallback)
 
-# EODHD (Sadece COT / Whale / Macro için)
-EODHD_API_KEY=
+# Makro: yfinance (API key gerekmez). Haber: yakında Telegram dedektörü.
 
 # DeepSeek (AI Analiz)
 DEEPSEEK_API_KEY=
+
+# Pulse inversion SHADOW deneyi (indeksler) — ana sistemi etkilemez
+PULSE_SHADOW_INVERSION_ENABLED=1
+PULSE_SHADOW_INVERSION_SYMBOLS=NDX.INDX,GDAXI.INDX
 
 # App Config
 ENVIRONMENT=development|production
@@ -410,11 +416,10 @@ WEBSOCKET_HEARTBEAT_INTERVAL=30
 
 ### Veri Kaynağı Seçim Mantığı
 ```
-MARKET_DATA_SOURCE=mt5_redis → ✅ DEFAULT — Fiyat/Mum: Sadece MT5 Redis, EODHD fallback yok
-                               COT/Whale/Macro: Her zaman EODHD (bağımsız servisler)
-MARKET_DATA_SOURCE=hybrid   → Fiyat/Mum: MT5 Redis (primary), EODHD fallback (MT5 stale ise)
-                               COT/Whale/Macro: Her zaman EODHD
-MARKET_DATA_SOURCE=eodhd    → Legacy — Sadece EODHD (MT5 bridge kullanılmaz)
+MARKET_DATA_SOURCE=mt5_redis → ✅ DEFAULT — Fiyat/Mum: Sadece MT5 Redis (harici vendor fallback yok)
+                               Makro: yfinance (bağımsız servis)
+MARKET_DATA_SOURCE=hybrid   → Fiyat/Mum: MT5 Redis (primary), emtia için Yahoo Finance fallback (MT5 stale ise)
+                               Makro: yfinance
 ```
 
 ---

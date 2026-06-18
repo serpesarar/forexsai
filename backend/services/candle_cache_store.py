@@ -5,10 +5,10 @@ Bridges DataHub (in-memory) ↔ Supabase (persistent).
 
 Flow:
   1. On startup: Load historical candles from Supabase → DataHub memory
-  2. On fetch:   EODHD API → DataHub memory → persist new candles to Supabase
-  3. On restart:  Skip EODHD for historical data, only fetch latest delta
+  2. On fetch:   upstream vendor API → DataHub memory → persist new candles to Supabase
+  3. On restart:  Skip upstream vendor for historical data, only fetch latest delta
 
-This reduces EODHD API usage by ~90% after the initial seed.
+This reduces upstream vendor API usage by ~90% after the initial seed.
 """
 
 from __future__ import annotations

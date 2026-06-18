@@ -536,29 +536,12 @@ def detect_conflicts(articles: List[NewsArticle]) -> List[str]:
 # =============================================================================
 
 async def fetch_gold_news_v2(limit: int = 50) -> List[Dict]:
-    """Fetch news relevant to gold/XAUUSD with source info"""
-    
-    if not settings.eodhd_api_key:
-        return _sample_gold_news_v2()
-    
-    params = {
-        "api_token": settings.eodhd_api_key,
-        "limit": limit,
-        "fmt": "json",
-        "s": "GOLD,GLD.US,GC.CMX,DXY.INDX,SPY.US",  # Gold + Dollar + Market
-    }
-    
-    try:
-        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-            response = await client.get(
-                "https://eodhistoricaldata.com/api/news",
-                params=params
-            )
-            response.raise_for_status()
-            return response.json() or []
-    except Exception as e:
-        logger.warning(f"Failed to fetch gold news: {e}")
-        return _sample_gold_news_v2()
+    """Fetch news relevant to gold/XAUUSD with source info.
+
+    Vendor news API retired — live news flows through the RSS aggregator /
+ Telegram news detector (coming later). Returns sample data as a fallback.
+    """
+    return _sample_gold_news_v2()
 
 
 async def analyze_gold_news_impact_v2() -> GoldNewsImpactV2:

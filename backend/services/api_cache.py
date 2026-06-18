@@ -21,7 +21,7 @@ class APICache:
     - economic events: 600s (10 min)
     """
     
-    # Optimized for 100K daily EODHD API call limit
+    # Optimized for 100K daily upstream vendor API call limit
     # Each intraday request = 5 API calls, real-time = 1 API call
     TTL_REALTIME = 60      # Real-time price (1 API call each)
     TTL_INTRADAY = 300     # Intraday candles (5 API calls each)

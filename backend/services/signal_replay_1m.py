@@ -691,7 +691,7 @@ async def inspect_signal(prediction_id: str) -> dict:
     """Re-run the replay for ONE signal with full bar-by-bar trace.
 
     Lets a human audit a correction: see the recorded entry, the measured
-    EODHD→MT5 price offset, every TP/SL price, and each 1m bar's decision
+    upstream vendor→MT5 price offset, every TP/SL price, and each 1m bar's decision
     until resolution. Used by GET /api/replay/inspect/{id}."""
     from database.supabase_client import get_supabase_client, is_db_available
     if not is_db_available():

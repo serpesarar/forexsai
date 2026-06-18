@@ -313,7 +313,7 @@
     "macro": "Makro: enflasyon yumuşama anlatısı"
   },
   "news": {
-    "title": "MarketAux",
+    "title": "Canlı Haberler",
     "subtitle": "Canlı Haber Akışı",
     "headlines": "başlık",
     "emptyTitle": "Şu anda haber bulunamadı",
@@ -914,8 +914,8 @@
       "tips": "Aşırı duyarlılık okumaları genellikle dönüşlerden önce gelir. Herkes yükseliş yönündeyken düşüş uyumsuzlukları arayın. Herkes düşüş yönündeyken yükseliş kurulumları arayın."
     },
     "news": {
-      "title": "MarketAux Canlı Haberler",
-      "description": "MarketAux'dan duyarlılık sınıflandırmasıyla gerçek zamanlı piyasa başlıkları sunan canlı haber akışı. Her başlık hızlı tarama için yükseliş, düşüş veya nötr olarak etiketlenir.",
+      "title": "Canlı Haberler",
+      "description": "Duyarlılık sınıflandırmasıyla gerçek zamanlı piyasa başlıkları sunan canlı haber akışı. Her başlık hızlı tarama için yükseliş, düşüş veya nötr olarak etiketlenir.",
       "dataPoints": "Haber başlıkları, kaynak, yayın zamanı, duyarlılık etiketi (yükseliş/düşüş/nötr).",
       "usage": "İşlem seansları öncesinde ve sırasında başlıkları tarayın. İşlem yaptığınız araçları (NASDAQ, XAU/USD, DAX) doğrudan etkileyen haberlere odaklanın. Hızlı değerlendirme için duyarlılık etiketlerini kullanın.",
       "tips": "Büyük haberlerden hemen sonra işlem yapma konusunda dikkatli olun — ilk volatilitenin yatışmasını bekleyin. Haberler fırsatlar yaratır ama dürtüsel tüccarlar için tuzaklar da oluşturur."

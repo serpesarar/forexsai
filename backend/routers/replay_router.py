@@ -163,7 +163,7 @@ async def sample_ids(
 async def inspect(prediction_id: str):
     """Audit one signal's correction — full bar-by-bar walk.
 
-    Returns: original vs corrected outcome, the measured EODHD→MT5 price
+    Returns: original vs corrected outcome, the measured upstream vendor→MT5 price
     offset, every TP/SL price level, and each 1m bar's decision (which TP
     crossed, whether SL was touched, in-bar ambiguity flag) until the
     signal resolved. Use this to verify a correction is sound."""

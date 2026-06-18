@@ -129,68 +129,21 @@ def analyze_headline(headline: str) -> Tuple[float, str]:
 
 
 async def fetch_gold_news(limit: int = 30) -> List[Dict]:
-    """Fetch news relevant to gold/XAUUSD"""
-    
-    if not settings.eodhd_api_key:
-        return _sample_gold_news()
-    
-    params = {
-        "api_token": settings.eodhd_api_key,
-        "limit": limit,
-        "fmt": "json",
-        "s": "XAUUSD,GLD.US,GC.CMX",  # Gold symbols
-    }
-    
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(
-                "https://eodhistoricaldata.com/api/news",
-                params=params
-            )
-            response.raise_for_status()
-            return response.json() or []
-    except Exception as e:
-        logger.warning(f"Failed to fetch gold news: {e}")
-        return _sample_gold_news()
+    """Fetch news relevant to gold/XAUUSD.
+
+    Vendor news API retired — live news now flows through the RSS aggregator /
+ Telegram news detector (coming later). This returns sample data as a fallback.
+    """
+    return _sample_gold_news()
 
 
 async def fetch_economic_calendar() -> List[Dict]:
-    """Fetch upcoming economic events that impact gold"""
-    
-    if not settings.eodhd_api_key:
-        return []
-    
-    end_date = datetime.now(timezone.utc).date() + timedelta(days=7)
-    start_date = datetime.now(timezone.utc).date() - timedelta(days=1)
-    
-    params = {
-        "api_token": settings.eodhd_api_key,
-        "from": start_date.isoformat(),
-        "to": end_date.isoformat(),
-        "fmt": "json",
-    }
-    
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(
-                "https://eodhistoricaldata.com/api/economic-events",
-                params=params
-            )
-            response.raise_for_status()
-            events = response.json() or []
-            
-            # Filter high-impact events
-            gold_relevant = []
-            for event in events:
-                event_name = (event.get("event") or "").lower()
-                if any(kw in event_name for kw in HIGH_IMPACT_EVENTS):
-                    gold_relevant.append(event)
-            
-            return gold_relevant
-            
-    except Exception as e:
-        logger.warning(f"Failed to fetch economic calendar: {e}")
-        return []
+    """Upcoming economic events impacting gold.
+
+    Vendor economic-events API retired; returns empty until a new
+    economic-calendar source is wired (see economic_calendar_service).
+    """
+    return []
 
 
 async def analyze_gold_news_impact() -> GoldNewsImpact:

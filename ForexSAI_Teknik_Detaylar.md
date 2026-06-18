@@ -567,6 +567,6 @@ Zamanlayıcı: Her 1 dakikada bir (veya 30sn)
 | **EMA Hesaplama** | Manuel, TradingView formülü (alpha = 2/(period+1)) |
 | **TP/SL Sistemi** | Fixed pip + ATR clamping hybrid |
 | **Cache Stratejisi** | Redis 60sn (panel), 30sn (5m), 30dk (regime) |
-| **Veri Kaynağı** | EODHD API → DataHub (30sn polling) |
+| **Veri Kaynağı** | MT5 bridge + yfinance → DataHub (30sn polling) |
 | **Sinyal Ömrü** | 15 dakika (lifecycle), 30dk cooldown |
 | **En Çok Kullanılan Kolonlar** | symbol, ml_direction, ml_confidence, created_at, status |

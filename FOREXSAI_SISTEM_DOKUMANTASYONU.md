@@ -11,7 +11,7 @@
 ForexSAI, yapay zeka destekli, gerçek zamanlı piyasa analizi ve trading sinyalleri sunan uçtan uca (end-to-end) bir trading dashboard sistemidir. NASDAQ (NDX.INDX), Altın (XAUUSD), DAX (GDAXI.INDX) ve Ham Petrol (USOIL.FOREX) için ML tabanlı tahminler, pattern analizi, sentiment analizi ve Smart Money Concepts (SMC) sinyalleri sağlar.
 
 ### Ana Özellikler
-- **Gerçek Zamanlı Piyasa Verisi:** EODHD WebSocket entegrasyonu ile canlı fiyatlar
+- **Gerçek Zamanlı Piyasa Verisi:** MT5/yfinance WebSocket entegrasyonu ile canlı fiyatlar
 - **ML Tahmin Pipeline:** 150+ teknik özellik ile LightGBM modelleri
 - **Çoklu Zaman Dilimi Analizi:** 5m, 15m, 30m, 1h, 4h, 1d
 - **AI Destekli Analiz:** DeepSeek, Anthropic, Groq, xAI entegrasyonları
@@ -35,7 +35,7 @@ ForexSAI, yapay zeka destekli, gerçek zamanlı piyasa analizi ve trading sinyal
 ├─────────────────────────────────────────────────────────────────┤
 │  BACKEND (FastAPI)                             [Railway]        │
 │  ├─ main.py (31 router, lifespan yönetimi)                    │
-│  ├─ DataHub (merkezi EODHD veri pompası)                        │
+│  ├─ DataHub (merkezi MT5/yfinance veri pompası)                        │
 │  ├─ BackgroundScheduler (periyodik güncellemeler)             │
 │  ├─ ML Prediction Service (LightGBM modeller)                   │
 │  ├─ Signal Lifecycle (aktif sinyal takibi)                    │
@@ -98,7 +98,7 @@ ForexSAI, yapay zeka destekli, gerçek zamanlı piyasa analizi ve trading sinyal
 
 ```
 Başlangıç:  Supabase (candle_cache) → DataHub (bellek)
-Çalışma:    EODHD API (delta sadece) → DataHub (bellek) → persist Supabase
+Çalışma:    MT5 bridge + yfinance (delta sadece) → DataHub (bellek) → persist Supabase
 Restart:   Supabase'ten yükle (0 API çağrısı) → sadece yeni mumları çek
 ```
 
@@ -147,7 +147,7 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 
 ### 4.4 Veri Kaynakları
 
-**EODHD API (Birincil):**
+**MT5 bridge + yfinance (Birincil):**
 - Gerçek zamanlı fiyatlar
 - Intraday mumlar (5m, 1h)
 - EOD günlük mumlar
@@ -158,7 +158,7 @@ TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 - ABD saatleri dışında kullanılır
 
 **MT5 Redis (Opsiyonel):**
-- `MARKET_DATA_SOURCE=eodhd|mt5_redis|hybrid`
+- `MARKET_DATA_SOURCE=mt5_redis|hybrid`
 - Redis pub/sub kanalları: `mt5:tick`, `mt5:bar`
 - MT5_redis_client.py ile DataHub'a besleme
 
@@ -608,7 +608,7 @@ CREATE TABLE candle_cache_meta (
     timeframe VARCHAR(8),
     last_update TIMESTAMPTZ,
     candle_count INT,
-    source VARCHAR(16),  -- 'eodhd', 'mt5_redis', 'derived'
+    source VARCHAR(16),  -- 'mt5_redis', 'derived'
     PRIMARY KEY (symbol, timeframe)
 );
 ```
@@ -826,7 +826,6 @@ MIN_PRICE_CHANGE_PCT = 0.15
 ### Kritik (Uygulama çalışmadan önce gerekli)
 | Değişken | Kaynak | Açıklama |
 |----------|--------|----------|
-| `EODHD_API_KEY` | EODHD | Piyasa verisi API anahtarı |
 | `SUPABASE_URL` | Supabase | Database URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Service role key |
 
@@ -842,7 +841,7 @@ MIN_PRICE_CHANGE_PCT = 0.15
 | Değişken | Açıklama |
 |----------|----------|
 | `REDIS_URL` | WebSocket broadcast cache |
-| `MARKET_DATA_SOURCE` | `eodhd`, `mt5_redis`, veya `hybrid` |
+| `MARKET_DATA_SOURCE` | `mt5_redis` veya `hybrid` |
 | `MT5_REDIS_TICK_CHANNEL` | MT5 tick kanalı (varsayılan: mt5:tick) |
 | `MT5_REDIS_BAR_CHANNEL` | MT5 bar kanalı (varsayılan: mt5:bar) |
 | `TELEGRAM_BOT_TOKEN` | Telegram bildirimleri |
@@ -911,11 +910,11 @@ npx tsc --noEmit
 ## 15. ÖNEMLİ NOTLAR ve SINIRLILIKLAR
 
 ### XAUUSD Intraday Verisi
-- EODHD XAUUSD.FOREX için sadece `1m` interval destekler
+- MT5/yfinance XAUUSD.FOREX için sadece `1m` interval destekler
 - 5m ve 1h boş array döndürür
 - Çözüm: 1m'den 5m'ye resample, sonra türet
 
-### EODHD WebSocket
+### MT5/yfinance WebSocket
 - Kullanıcının API tier'ı forex/indices WebSocket'ine izin vermiyor
 - ETF proxy'ler yanlış fiyat gösteriyor
 - Çözüm: DataHub 5s REST polling kullanılıyor

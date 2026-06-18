@@ -176,7 +176,7 @@ async def evaluate_signal_chronologically(sig):
     candle_limit = max(30, int(age_minutes) + 10)
     
     candles = []
-    # Only fetch 1m if signal is recent (under 5 days) to avoid EODHD limit exhaustion
+    # Only fetch 1m if signal is recent (under 5 days) to avoid upstream vendor limit exhaustion
     if age_minutes < 7200: 
         try:
             candles = await fetch_intraday_candles(symbol, interval="1m", limit=candle_limit)

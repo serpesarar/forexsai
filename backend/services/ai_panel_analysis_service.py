@@ -1146,10 +1146,13 @@ async def _collect_physical_oil_context() -> Dict[str, Any]:
 
 
 async def _collect_oil_analysis(symbol: str, market_state: Dict[str, Any]) -> Dict[str, Any]:
+    from services import macro_data_service
     candles_task = fetch_intraday_candles(symbol, "5m", 240)
-    dxy_task = fetch_intraday_candles("DXY.INDX", "5m", 240)
     ndx_task = fetch_intraday_candles("NDX.INDX", "5m", 240)
-    wti_candles, dxy_candles, ndx_candles = await asyncio.gather(candles_task, dxy_task, ndx_task)
+    wti_candles, ndx_candles = await asyncio.gather(candles_task, ndx_task)
+    # DXY now comes from the yfinance macro service (H1) rather than a dead
+    # DXY.INDX intraday feed; used only for directional correlation context.
+    dxy_candles = macro_data_service.get_candles_list("DXY", "H1", 240)
     if not wti_candles:
         logger.warning("Oil analysis DataHub cache unavailable for %s 5m candles", symbol)
     if not wti_candles:

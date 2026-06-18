@@ -21,7 +21,6 @@ def _load_background_scheduler_module(module_name: str):
             "services.ml_prediction_service": SimpleNamespace(get_ml_prediction=AsyncMock()),
             "services.ta_service": SimpleNamespace(compute_ta_snapshot=AsyncMock()),
             "services.data_fetcher": SimpleNamespace(fetch_eod_candles=AsyncMock(), fetch_latest_price=AsyncMock()),
-            "services.marketaux_service": SimpleNamespace(fetch_marketaux_headlines=AsyncMock()),
             "services.outcome_tracker": SimpleNamespace(check_pending_outcomes=AsyncMock(), check_multi_target_outcome=AsyncMock()),
             "services.error_analysis_service": SimpleNamespace(
                 check_and_analyze_failed_predictions=AsyncMock(),

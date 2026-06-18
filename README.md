@@ -41,9 +41,9 @@ Returns `{ "ok": true }`.
 
 ## Data Sources
 
-- **EODHD WebSocket**: `wss://ws.eodhistoricaldata.com/ws/forex?api_token=YOUR_API_KEY`
+- **MT5/yfinance WebSocket**: `wss://ws.eodhistoricaldata.com/ws/forex?api_token=YOUR_API_KEY`
   - Used for NASDAQ and XAU/USD live prices.
-- **Marketaux**: `https://api.marketaux.com/v1/news/all`
+- **RSS/Telegram haber**: `https://api.rss.com/v1/news/all`
   - Used for fundamental/news sentiment context.
 
 ## Dashboard Extensions
@@ -85,5 +85,3 @@ See the integration guide: `docs/rtyhiim.md`
 - **Model not found**: Verify `.env` paths to model files.
 - **Claude errors**: Confirm `ANTHROPIC_API_KEY` is set.
 - **Pattern engine runtime missing**: Update `PATTERN_ENGINE_PATH`.
-- **EODHD WebSocket**: Set `EODHD_API_KEY` and verify your symbol subscription (e.g. `XAUUSD`).
-- **Marketaux errors**: Set `MARKETAUX_API_KEY` for sentiment news ingestion.

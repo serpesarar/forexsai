@@ -1,7 +1,7 @@
-"""Data Fetcher - ALL reads go through DataHub (0 direct EODHD calls).
+"""Data Fetcher - ALL reads go through DataHub (0 direct upstream vendor calls).
 
 Every function here reads from the in-memory DataHub cache.
-DataHub is the ONLY component that talks to EODHD API.
+DataHub is the ONLY component that talks to upstream vendor API.
 This eliminates duplicate API calls from 20+ services.
 """
 from __future__ import annotations
@@ -41,7 +41,7 @@ async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int =
             
             if cache_stale:
                 from services.data_hub import _fetch_candles_from_api, ingest_candles
-                # Fetch 1m candles directly from API (EODHD or Yahoo Finance fallback)
+                # Fetch 1m candles directly from API (upstream vendor or Yahoo Finance fallback)
                 fetched = await _fetch_candles_from_api(symbol, "1m", limit=limit)
                 if fetched:
                     # Ingest them into DataHub store so they are cached

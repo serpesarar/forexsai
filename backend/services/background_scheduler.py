@@ -18,7 +18,6 @@ from services.order_block_service import service as order_block_service
 from services.signal_analytics import parse_datetime, timeframe_cadence_minutes
 from services.ta_service import compute_ta_snapshot
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
-from services.marketaux_service import fetch_marketaux_headlines
 from services.outcome_tracker import check_pending_outcomes, check_multi_target_outcome
 from services.error_analysis_service import check_and_analyze_failed_predictions
 from services.signal_lifecycle import check_lifecycle_if_needed
@@ -30,7 +29,7 @@ logger = logging.getLogger(__name__)
 TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 
 # Update intervals (seconds) - OPTIMIZED for 100K daily API call limit
-# Each EODHD intraday/real-time request = 5 API calls
+# Each upstream intraday/real-time request = 5 API calls
 DATA_UPDATE_INTERVAL = 10    # Update price/TA data every 10 seconds for live prices
 MACRO_UPDATE_INTERVAL = 300  # Update macro data (DXY, VIX, USDTRY) every 5 minutes
 NEWS_UPDATE_INTERVAL = 600   # Update news every 10 minutes
@@ -125,32 +124,26 @@ _scheduler_running = False
 
 
 async def _get_macro_data() -> Dict[str, Any]:
-    """Get macro data from DataHub (0 API calls). DataHub fetches every 5min."""
-    try:
-        from services.data_hub import get_macro
-        macro = get_macro()
-        if macro and any(v.get("price") for v in macro.values()):
-            return macro
-    except ImportError:
-        pass
-    
-    # Fallback: direct fetch with local cache (only before DataHub populates)
+    """Get macro context (DXY/VIX/US10Y/EURUSD/USDTRY) from the yfinance-backed
+    macro_data_service snapshot (0 extra API calls — it refreshes hourly).
+    Caches the last good dict so a momentary empty snapshot doesn't blank out
+    the panel."""
     global _last_macro_update, _cached_macro
-    now = datetime.now(timezone.utc)
-    if _last_macro_update and (now - _last_macro_update).total_seconds() < MACRO_UPDATE_INTERVAL and _cached_macro:
-        return _cached_macro
-    
-    macro = {}
-    for key, sym in [("dxy", "DXY.INDX"), ("vix", "VIX.INDX"), ("vdax", "V1X.INDX"), ("eurusd", "EURUSD"), ("usdtry", "USDTRY")]:
-        try:
-            price = await fetch_latest_price(sym)
-            macro[key] = {"symbol": sym, "price": float(price) if price else None}
-        except Exception:
-            macro[key] = _cached_macro.get(key, {"symbol": sym, "price": None})
-    
-    _cached_macro = macro
-    _last_macro_update = now
-    return macro
+    try:
+        from services import macro_data_service
+        await macro_data_service.ensure_started()
+        macro = macro_data_service.get_macro_dict()
+        if macro and any(v.get("price") for v in macro.values()):
+            _cached_macro = macro
+            _last_macro_update = datetime.now(timezone.utc)
+            return macro
+    except Exception as exc:
+        logger.debug("macro snapshot fetch failed: %s", exc)
+    # Degrade gracefully to the last good snapshot (or empty placeholders).
+    return _cached_macro or {
+        k: {"symbol": k.upper(), "price": None}
+        for k in ("dxy", "vix", "us10y", "eurusd", "usdtry")
+    }
 
 
 async def update_symbol_data(symbol: str) -> Optional[Dict[str, Any]]:
@@ -298,8 +291,10 @@ async def update_news_if_needed(symbol: str) -> Optional[Dict[str, Any]]:
             news_symbols = ["DAX", "GER40", "GDAXI", "EURUSD", "ECB", "SAP", "Siemens", "Allianz", "BASF", "Deutsche Bank", "German IFO", "ZEW", "Bundesbank", "German GDP"]
         else:
             news_symbols = ["NDX", "NASDAQ", "VIX", "DXY"]
-        headlines = await fetch_marketaux_headlines(news_symbols)
-        
+        # News provider removed — a Telegram news detector will be wired in later.
+        # Until then there are no scheduler-fetched headlines.
+        headlines: List[Dict[str, Any]] = []
+
         # Create hash to detect changes
         news_hash = json.dumps([h.get("title", "") for h in headlines[:5]], sort_keys=True)
         
@@ -761,8 +756,73 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: 
         final_model_type = model_type
         await _log_pulse_signal(symbol, sig, conf, entry, final_model_type, strategy, timeframe)
 
+        # Shadow inversion experiment (indices only): log the INVERTED variant
+        # as a separate model_type so we can verify real inverted WR without
+        # touching the original pulse signal above. Gated, default off.
+        await _maybe_log_pulse_inversion_shadow(
+            symbol, sig, conf, entry, model_type, strategy, timeframe
+        )
+
     except Exception as e:
         logger.error(f"{model_type} log error {symbol}: {e}")
+
+
+# Pulse inversion shadow experiment — see PROMPT_SYSTEM_AUDIT / memory
+# [[pulse-anti-edge-inversion]]. Indices only by default.
+async def _maybe_log_pulse_inversion_shadow(
+    symbol: str, direction: str, confidence: float, entry_price: float,
+    model_type: str, strategy: str, timeframe: str,
+):
+    """Log the INVERTED pulse signal as a SEPARATE shadow row (model_type
+    pulse1_inv / pulse2_inv) for index symbols. The original pulse signal is
+    logged untouched by the caller; this parallel signal lets us measure real
+    inverted win-rate in prediction_logs (filter model_type LIKE '%_inv')
+    before deciding whether to apply inversion to the main system.
+
+    Flips direction only — log_prediction recomputes the static TP/SL ladder
+    mirrored around entry for the new side. Reversible; off by default:
+        PULSE_SHADOW_INVERSION_ENABLED=1
+        PULSE_SHADOW_INVERSION_MODELS=pulse1,pulse2   (default)
+        PULSE_SHADOW_INVERSION_SYMBOLS=NDX.INDX,GDAXI.INDX  (default)
+    """
+    import os
+    if os.getenv("PULSE_SHADOW_INVERSION_ENABLED", "0") != "1":
+        return
+    if direction not in ("BUY", "SELL"):
+        return
+    models = {
+        m.strip().lower()
+        for m in os.getenv("PULSE_SHADOW_INVERSION_MODELS", "pulse1,pulse2").split(",")
+        if m.strip()
+    }
+    if (model_type or "").lower() not in models:
+        return
+    symbols = {
+        s.strip().upper()
+        for s in os.getenv("PULSE_SHADOW_INVERSION_SYMBOLS", "NDX.INDX,GDAXI.INDX").split(",")
+        if s.strip()
+    }
+    if symbol.upper() not in symbols:
+        return
+
+    inv_direction = "SELL" if direction == "BUY" else "BUY"
+    inv_model_type = f"{model_type}_inv"
+    try:
+        await _log_pulse_signal(
+            symbol, inv_direction, confidence, entry_price,
+            inv_model_type, strategy, timeframe,
+            extra={
+                "shadow_inversion": True,
+                "shadow_source_model": model_type,
+                "shadow_source_direction": direction,
+            },
+        )
+        logger.info(
+            f"[PULSE-SHADOW-INV] {symbol} {model_type} {direction} "
+            f"→ shadow {inv_model_type} {inv_direction}"
+        )
+    except Exception as e:
+        logger.error(f"pulse shadow inversion log error {symbol} {model_type}: {e}")
 
 
 # RSS Aggregation tracking

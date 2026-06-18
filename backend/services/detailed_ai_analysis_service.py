@@ -12,7 +12,6 @@ import httpx
 import numpy as np
 
 from services.data_fetcher import fetch_eod_candles, fetch_latest_price
-from services.marketaux_service import fetch_marketaux_headlines
 from services.ml_prediction_service import get_ml_prediction, _compute_technical_indicators
 from services.ta_service import compute_ta_snapshot
 from utils.market_hours import is_new_york_market_open
@@ -590,7 +589,8 @@ async def build_context_pack(symbol: str) -> Dict[str, Any]:
         "USOIL.FOREX": ["WTI", "USOIL", "CRUDE OIL", "OPEC", "EIA", "DXY"],
     }
     news_symbols = news_symbol_map.get(normalized_symbol, [normalized_symbol, "DXY"])
-    headlines = await fetch_marketaux_headlines(news_symbols)
+    # News provider removed — Telegram news detector to be wired in later.
+    headlines: list = []
 
     prediction_dict = {
         "symbol": ml_prediction.symbol,

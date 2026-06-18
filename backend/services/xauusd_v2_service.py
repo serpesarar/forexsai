@@ -329,7 +329,7 @@ def _hold_result(symbol: str, reason: str, current_price: float = 0.0):
     from services.ml_prediction_service import PredictionResult
     return PredictionResult(
         symbol=symbol, direction="HOLD", confidence=0.0,
-        probability_up=0.5, probability_down=0.5,
+        probability_up=50.0, probability_down=50.0,  # 0-100 scale (see live return site)
         target_pips=0.0, stop_pips=0.0, risk_reward=0.0,
         entry_price=current_price, target_price=current_price, stop_price=current_price,
         technical_score=0.0, momentum_score=0.0, trend_score=0.0,
@@ -484,8 +484,11 @@ async def predict_xauusd_v2(strategy: str = "balanced", **_ignored):
         symbol="XAUUSD",
         direction=direction,
         confidence=confidence_pct,
-        probability_up=p_buy,
-        probability_down=p_sell,
+        # PredictionResult uses a 0-100 probability scale (see ml_prediction_service
+        # which returns round(prob*100,1)). p_buy/p_sell are raw 0-1 probabilities,
+        # so scale them here to stay consistent with the nasdaq/main model output.
+        probability_up=round(p_buy * 100, 1),
+        probability_down=round(p_sell * 100, 1),
         target_pips=_TP_PIPS,
         stop_pips=_SL_PIPS,
         risk_reward=_TP_DOLLARS / _SL_DOLLARS,

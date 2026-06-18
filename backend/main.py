@@ -233,16 +233,8 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Lifecycle hatası: {e}")
 
-    # 5. EODHD REAL-TIME WEBSOCKET (Anlık fiyat verisi)
-    # Disabled by user request: API tier does not allow forex/indices WebSockets, 
-    # and using ETF proxies shows incorrect absolute price values. 
-    # Relying entirely on DataHub 5s REST polling instead.
-    # try:
-    #     from services.eodhd_websocket_client import start_eodhd_websocket
-    #     asyncio.create_task(start_eodhd_websocket())
-    #     print("✅ EODHD WebSocket client başlatıldı - Gerçek zamanlı fiyat verisi")
-    # except Exception as e:
-    #     print(f"⚠️ EODHD WebSocket başlatılamadı: {e}")
+    # 5. Real-time prices come from the MT5 -> Redis bridge (DataHub ingest).
+    #    No external market-data vendor WebSocket is used.
 
     # 5.5 META INTELLIGENCE ENGINE (Her dakika kontrol/log)
     try:
@@ -576,7 +568,6 @@ async def debug_info():
         "registered_routes_count": len(routes),
         "sample_routes": routes[:20],  # First 20 routes
         "env_vars_os": {
-            "EODHD_API_KEY": "set" if os.getenv("EODHD_API_KEY") else "not set",
             "ANTHROPIC_API_KEY": "set" if os.getenv("ANTHROPIC_API_KEY") else "not set",
             "DEEP_SEEKR1": "set" if os.getenv("DEEP_SEEKR1") else "not set",
             "SUPABASE_URL": "set" if os.getenv("SUPABASE_URL") else "not set",
@@ -585,7 +576,6 @@ async def debug_info():
         "settings_config": {
             "anthropic_api_key": "set" if settings.anthropic_api_key else "not set",
             "deepseek_api_key": "set" if settings.deepseek_api_key else "not set",
-            "eodhd_api_key": "set" if settings.eodhd_api_key else "not set",
         }
     }
 
@@ -660,89 +650,6 @@ async def debug_ml_model(symbol: str):
             result["errors"].append(f"Insufficient EOD candles: {len(candles_eod) if candles_eod else 0}")
     except Exception as e:
         result["errors"].append(f"Data fetch error: {str(e)}")
-    
-    return result
-
-
-@app.get("/api/debug/news-test")
-async def debug_news_test():
-    """Test news API sources."""
-    import httpx
-    from config import settings
-    
-    result = {"eodhd_news": None}
-    
-    # Test EODHD News API
-    if settings.eodhd_api_key:
-        try:
-            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-                resp = await client.get(
-                    "https://eodhistoricaldata.com/api/news",
-                    params={
-                        "api_token": settings.eodhd_api_key,
-                        "s": "GOLD,GLD.US,DXY.INDX",
-                        "limit": 5,
-                        "fmt": "json",
-                    },
-                )
-                result["eodhd_status"] = resp.status_code
-                if resp.status_code == 200:
-                    data = resp.json()
-                    result["eodhd_news"] = [{"title": n.get("title", "")[:80], "date": n.get("date", "")} for n in (data or [])[:3]]
-                else:
-                    result["eodhd_error"] = resp.text[:200]
-        except Exception as e:
-            result["eodhd_error"] = str(e)
-    
-    return result
-
-
-@app.get("/api/debug/intraday-test/{symbol}")
-async def debug_intraday_test(symbol: str):
-    """Test EODHD intraday API directly."""
-    import httpx
-    from config import settings
-    
-    result = {"symbol": symbol, "tests": []}
-    
-    # Normalize symbol
-    if symbol.upper() == "XAUUSD":
-        test_symbols = ["XAUUSD.FOREX", "XAU.FOREX", "XAUUSD", "GC.COMEX"]
-    else:
-        test_symbols = [symbol]
-    
-    for test_sym in test_symbols:
-        test_result = {"symbol": test_sym}
-        url = f"https://eodhistoricaldata.com/api/intraday/{test_sym}"
-        
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                # Use 1m for forex (EODHD only provides 1m for forex)
-                interval = "1m" if ".FOREX" in test_sym.upper() else "5m"
-                resp = await client.get(
-                    url,
-                    params={
-                        "api_token": settings.eodhd_api_key,
-                        "fmt": "json",
-                        "interval": interval,
-                    },
-                )
-                test_result["status_code"] = resp.status_code
-                if resp.status_code == 200:
-                    data = resp.json()
-                    if isinstance(data, list):
-                        test_result["count"] = len(data)
-                        if data:
-                            test_result["sample"] = data[-1]
-                    else:
-                        test_result["response_type"] = str(type(data))
-                        test_result["response_preview"] = str(data)[:200]
-                else:
-                    test_result["error"] = resp.text[:200]
-        except Exception as e:
-            test_result["exception"] = str(e)
-        
-        result["tests"].append(test_result)
     
     return result
 
@@ -1034,7 +941,7 @@ async def market_status():
     
     return {
         "current_time_utc": current_time,
-        "note": "Prices only update during market hours. EODHD API returns last close when market is closed.",
+        "note": "Prices only update during market hours; last close is shown when the market is closed.",
         "markets": markets,
     }
 

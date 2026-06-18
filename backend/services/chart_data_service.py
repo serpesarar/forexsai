@@ -22,9 +22,6 @@ _TIMEFRAME_MINUTES = {
 
 async def fetch_ohlcv_data(symbol: str, timeframe: str, limit: int) -> List[ChartCandle]:
     """Fetch OHLCV data using centralized data_fetcher (shared cache)."""
-    if not settings.eodhd_api_key:
-        return _generate_mock_candles(symbol, timeframe, limit)
-
     try:
         from services.data_fetcher import fetch_ohlc_data
         raw_candles = await fetch_ohlc_data(symbol, timeframe=timeframe, limit=limit)

@@ -7,8 +7,12 @@ timeframe-aware signal expiration/cleanup.
 
 Tables used:
   - prediction_logs  (read active, update status/targets_hit/exit)
-  - signal_checks    (insert per-check snapshots)
   - signal_failures  (insert failure autopsy on stop)
+
+Note: per-check audit snapshots are NO LONGER written to `signal_checks`
+(that table is frozen as of 2026-06-10, commit 4a1bbd6). The periodic
+per-active-signal snapshot is now produced by signal_trajectory_service into
+`signal_trajectory_snapshots` (richer: adds deterioration scoring + features).
 """
 from __future__ import annotations
 
@@ -223,7 +227,7 @@ def _get_pip_size(sym: str) -> float:
 def _is_price_stale(symbol: str, current_price: float) -> bool:
     """
     Check if price is stale (hasn't changed in a long time).
-    This detects when market is closed or EODHD is returning old data.
+    This detects when market is closed or upstream vendor is returning old data.
     """
     global _price_last_seen, _price_last_seen_time
     
@@ -639,9 +643,12 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
       2. Calculate profit/drawdown
       3. Check TP hits
       4. Check SL
-      5. Insert signal_check record
-      6. Update prediction_logs
-      7. If stopped -> create failure autopsy
+      5. Update prediction_logs
+      6. If stopped -> create failure autopsy
+
+    (Per-check audit rows are written separately by signal_trajectory_service
+    into signal_trajectory_snapshots — the old signal_checks insert was
+    removed in commit 4a1bbd6.)
 
     Rules:
       - TP1 / TP2 / TP3 hit => signal counts as successful

@@ -12,7 +12,7 @@
 ForexSAI is an end-to-end AI-powered trading dashboard that combines ML predictions, pattern intelligence, sentiment analysis, and Smart Money Concepts (SMC) for trading signals. It provides real-time market analysis for NASDAQ (NDX.INDX), Gold (XAUUSD), DAX (GDAXI.INDX), and WTI Crude Oil (CL.COMM).
 
 ### Key Features
-- **Real-time Market Data**: EODHD WebSocket integration for live prices
+- **Real-time Market Data**: MT5/yfinance WebSocket integration for live prices
 - **ML Prediction Pipeline**: LightGBM models with 150+ technical features
 - **Multi-timeframe Analysis**: 5m, 15m, 30m, 1h, 4h, 1d timeframes
 - **AI-Powered Analysis**: Anthropic Claude, DeepSeek, Groq, xAI integrations
@@ -36,7 +36,7 @@ ForexSAI is an end-to-end AI-powered trading dashboard that combines ML predicti
 ├─────────────────────────────────────────────────────────────────┤
 │  BACKEND (FastAPI)                             [Railway]        │
 │  ├─ main.py (31 routers, lifespan management)                   │
-│  ├─ DataHub (centralized EODHD data pump)                       │
+│  ├─ DataHub (centralized MT5/yfinance data pump)                       │
 │  ├─ BackgroundScheduler (periodic updates)                      │
 │  ├─ ML Prediction Service (LightGBM models)                     │
 │  ├─ Signal Lifecycle (active signal tracking)                   │
@@ -271,7 +271,6 @@ npx tsc --noEmit
 ### Critical (App won't work without these)
 | Variable | Source | Description |
 |----------|--------|-------------|
-| `EODHD_API_KEY` | EODHD | Market data API key |
 | `SUPABASE_URL` | Supabase | Database URL |
 | `SUPABASE_KEY` | Supabase | Service role key |
 
@@ -282,7 +281,6 @@ npx tsc --noEmit
 | `DEEP_SEEKR1` | DeepSeek | DeepSeek analysis |
 | `GROQ_API_KEY` | Groq | Groq LLM |
 | `XAI_API_KEY` | xAI | xAI analysis |
-| `MARKETAUX_API_KEY` | Marketaux | News API |
 
 ### Optional Features
 | Variable | Description |
@@ -423,7 +421,7 @@ npx tsc --noEmit
 | Symptom | Likely Cause | Fix |
 |---------|--------------|-----|
 | All APIs return 404 | Router import failure | Check `/api/debug`, fix broken import |
-| Prices frozen / charts stuck | DataHub pump failure | Check `/health/ready`, verify EODHD key quota |
+| Prices frozen / charts stuck | DataHub pump failure | Check `/health/ready`, verify MT5/yfinance key quota |
 | Panel shows 'Loading...' forever | WebSocket/data hook issue | Check WS status, API response in Network tab |
 | New code not on live site | TypeScript error blocking deploy | Run `npx tsc --noEmit`, fix errors |
 | Chart not loading in Clear Trend | `chart_data` undefined | Guard: `data.chart_data?.closes?.length > 5` |
@@ -436,8 +434,8 @@ npx tsc --noEmit
 ## External Dependencies
 
 ### Data Providers
-- **EODHD** (`api.eod-cloud.com`, `ws.eodhistoricaldata.com`) - Market data, WebSocket
-- **Marketaux** - News sentiment
+- **MT5/yfinance** (`api.eod-cloud.com`, `ws.eodhistoricaldata.com`) - Market data, WebSocket
+- **RSS/Telegram haber** - News sentiment
 
 ### AI Providers
 - **Anthropic Claude** - Pattern analysis, news analysis
@@ -460,7 +458,7 @@ npx tsc --noEmit
 
 3. **Authentication**: JWT-based auth with access/refresh tokens. Tokens stored in memory (not localStorage for security).
 
-4. **Rate Limiting**: EODHD API has rate limits. DataHub implements circuit breakers to prevent quota exhaustion.
+4. **Rate Limiting**: MT5 bridge + yfinance has rate limits. DataHub implements circuit breakers to prevent quota exhaustion.
 
 5. **RLS Policies**: Supabase tables have Row Level Security. Service role key bypasses RLS (backend only).
 

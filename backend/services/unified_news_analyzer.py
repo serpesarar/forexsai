@@ -3,7 +3,7 @@ UNIFIED NEWS ANALYZER
 Tüm haber kaynaklarını birleştirir ve ML modeline sentiment sağlar
 
 Kaynaklar:
-1. EODHD News API - Yazılı haberler
+1. vendor News API - Yazılı haberler
 2. Live TV Transcription - CNN/Fox/CNBC canlı yayın
 3. Twitter/X Monitor - Trump ve Fed tweet'leri
 
@@ -38,7 +38,7 @@ class UnifiedNewsImpact:
     direction_bias: str  # BUY, SELL, NEUTRAL
     
     # Kaynak bazlı sentiment
-    eodhd_sentiment: float
+    vendor_sentiment: float
     live_tv_sentiment: float
     twitter_sentiment: float
     trump_sentiment: float
@@ -76,7 +76,7 @@ class NewsSourceStatus:
 # =============================================================================
 
 SOURCE_WEIGHTS = {
-    'eodhd': 0.25,      # Yazılı haberler - güvenilir ama gecikmeli
+    'vendor': 0.25,      # Yazılı haberler - güvenilir ama gecikmeli
     'live_tv': 0.35,    # Canlı yayın - en hızlı
     'twitter': 0.25,    # Twitter - hızlı ama gürültülü
     'trump': 0.15,      # Trump özel - çok etkili ama volatil
@@ -97,7 +97,7 @@ EVENT_MULTIPLIERS = {
     'default': 1.0,
 }
 
-# Symbol → EODHD news search symbols mapping
+# Symbol → vendor news search symbols mapping
 SYMBOL_NEWS_MAP = {
     'XAUUSD': 'GOLD,GC.CMX,DXY.INDX,SPY.US',
     'NDX.INDX': 'NDX.INDX,SPY.US,QQQ.US,AAPL.US',
@@ -120,52 +120,18 @@ class UnifiedNewsAnalyzer:
     """
     
     def __init__(self):
-        self._last_eodhd_data: List[Dict] = []
-        self._last_eodhd_fetch: Optional[datetime] = None
+        self._last_vendor_data: List[Dict] = []
+        self._last_vendor_fetch: Optional[datetime] = None
         self._cache_duration = timedelta(minutes=5)
         
-    async def _fetch_eodhd_news(self, symbol: str = "GOLD") -> List[Dict]:
-        """EODHD News API'den haber çek"""
-        
-        # Cache kontrolü
-        if (self._last_eodhd_fetch and 
-            datetime.now(timezone.utc) - self._last_eodhd_fetch < self._cache_duration and
-            self._last_eodhd_data):
-            return self._last_eodhd_data
-        
-        if not settings.eodhd_api_key:
-            return []
-        
-        try:
-            async with httpx.AsyncClient(timeout=15.0, follow_redirects=True) as client:
-                # Symbol-specific news search
-                symbols = SYMBOL_NEWS_MAP.get(symbol, "GOLD,GC.CMX,DXY.INDX,SPY.US")
-                
-                response = await client.get(
-                    "https://eodhistoricaldata.com/api/news",
-                    params={
-                        "api_token": settings.eodhd_api_key,
-                        "s": symbols,
-                        "limit": 30,
-                        "fmt": "json"
-                    }
-                )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    if isinstance(data, list):
-                        self._last_eodhd_data = data
-                        self._last_eodhd_fetch = datetime.now(timezone.utc)
-                        return data
-                        
-                return []
-                
-        except Exception as e:
-            logger.error(f"EODHD news fetch error: {e}")
-            return []
+    async def _fetch_vendor_news(self, symbol: str = "GOLD") -> List[Dict]:
+        """Vendor news source retired — live news now comes from the RSS
+        aggregator Telegram news detector (coming later). Kept as a no-op so the unified
+        analyzer keeps working with its other sources."""
+        return []
     
-    def _analyze_eodhd_sentiment(self, news: List[Dict]) -> Dict[str, Any]:
-        """EODHD haberlerinin sentiment analizi"""
+    def _analyze_vendor_sentiment(self, news: List[Dict]) -> Dict[str, Any]:
+        """vendor haberlerinin sentiment analizi"""
         
         if not news:
             return {
@@ -218,11 +184,11 @@ class UnifiedNewsAnalyzer:
         for article in news[:20]:  # Son 20 haber
             title = (article.get('title') or '').lower()
             
-            # EODHD'nin kendi sentiment'i varsa kullan
-            eodhd_sentiment = article.get('sentiment', {})
-            if isinstance(eodhd_sentiment, dict):
-                polarity = eodhd_sentiment.get('polarity', 0)
-                # EODHD polarity'yi gold sentiment'e çevir
+            # vendor'nin kendi sentiment'i varsa kullan
+            vendor_sentiment = article.get('sentiment', {})
+            if isinstance(vendor_sentiment, dict):
+                polarity = vendor_sentiment.get('polarity', 0)
+                # vendor polarity'yi gold sentiment'e çevir
                 # Pozitif market haberi gold için karışık olabilir
                 article_sentiment = polarity * 0.3
             else:
@@ -244,14 +210,14 @@ class UnifiedNewsAnalyzer:
                 article_sentiment *= 1.5
                 high_impact.append({
                     'title': title[:80],
-                    'source': 'eodhd',
+                    'source': 'vendor',
                     'sentiment': 'bullish' if article_sentiment > 0 else 'bearish'
                 })
             
             if 'fed' in title or 'rate' in title:
                 high_impact.append({
                     'title': title[:80],
-                    'source': 'eodhd',
+                    'source': 'vendor',
                     'sentiment': 'bullish' if article_sentiment > 0 else 'bearish'
                 })
             
@@ -318,8 +284,8 @@ class UnifiedNewsAnalyzer:
         """Çakışan sinyalleri tespit et"""
         conflicts = []
         
-        # EODHD vs Live TV
-        if abs(sentiments.get('eodhd', 0) - sentiments.get('live_tv', 0)) > 0.4:
+        # vendor vs Live TV
+        if abs(sentiments.get('vendor', 0) - sentiments.get('live_tv', 0)) > 0.4:
             conflicts.append("⚠️ Written news vs Live TV conflict")
         
         # Trump vs Fed
@@ -329,7 +295,7 @@ class UnifiedNewsAnalyzer:
         return conflicts
     
     def _calculate_ml_features(self, 
-                               eodhd: Dict, 
+                               vendor: Dict, 
                                live_tv: Dict, 
                                twitter: Dict) -> Dict[str, float]:
         """ML modeli için feature'lar hesapla"""
@@ -337,13 +303,13 @@ class UnifiedNewsAnalyzer:
         return {
             # Ana sentiment
             'news_sentiment_combined': (
-                eodhd['sentiment'] * 0.3 +
+                vendor['sentiment'] * 0.3 +
                 live_tv['sentiment'] * 0.35 +
                 twitter['sentiment'] * 0.35
             ),
             
             # Kaynak bazlı
-            'news_sentiment_eodhd': eodhd['sentiment'],
+            'news_sentiment_vendor': vendor['sentiment'],
             'news_sentiment_live': live_tv['sentiment'],
             'news_sentiment_twitter': twitter['sentiment'],
             'news_sentiment_trump': twitter.get('trump_sentiment', 0.0),
@@ -351,7 +317,7 @@ class UnifiedNewsAnalyzer:
             
             # Confidence
             'news_confidence_avg': (
-                eodhd['confidence'] + 
+                vendor['confidence'] + 
                 live_tv['confidence'] + 
                 twitter['confidence']
             ) / 3,
@@ -362,8 +328,8 @@ class UnifiedNewsAnalyzer:
             
             # Volatility indicator (sentiment spread)
             'news_sentiment_spread': abs(
-                max(eodhd['sentiment'], live_tv['sentiment'], twitter['sentiment']) -
-                min(eodhd['sentiment'], live_tv['sentiment'], twitter['sentiment'])
+                max(vendor['sentiment'], live_tv['sentiment'], twitter['sentiment']) -
+                min(vendor['sentiment'], live_tv['sentiment'], twitter['sentiment'])
             ),
         }
     
@@ -379,7 +345,7 @@ class UnifiedNewsAnalyzer:
         """
         
         # Paralel olarak tüm kaynakları çek
-        # Map symbol to EODHD news search term
+        # Map symbol to vendor news search term
         if "XAU" in symbol:
             news_symbol = "XAUUSD"
         elif symbol == "USOIL.FOREX":
@@ -389,17 +355,17 @@ class UnifiedNewsAnalyzer:
         else:
             news_symbol = "NDX.INDX"
         
-        eodhd_news, live_tv_result, twitter_result = await asyncio.gather(
-            self._fetch_eodhd_news(news_symbol),
+        vendor_news, live_tv_result, twitter_result = await asyncio.gather(
+            self._fetch_vendor_news(news_symbol),
             self._get_live_tv_sentiment(),
             self._get_twitter_sentiment(),
             return_exceptions=True
         )
         
         # Hata kontrolü
-        if isinstance(eodhd_news, Exception):
-            logger.error(f"EODHD error: {eodhd_news}")
-            eodhd_news = []
+        if isinstance(vendor_news, Exception):
+            logger.error(f"vendor error: {vendor_news}")
+            vendor_news = []
         if isinstance(live_tv_result, Exception):
             logger.error(f"Live TV error: {live_tv_result}")
             live_tv_result = {'sentiment': 0, 'confidence': 0, 'key_factors': [], 'is_active': False}
@@ -407,12 +373,12 @@ class UnifiedNewsAnalyzer:
             logger.error(f"Twitter error: {twitter_result}")
             twitter_result = {'sentiment': 0, 'confidence': 0, 'trump_sentiment': 0, 'fed_sentiment': 0, 'key_factors': [], 'is_active': False}
         
-        # EODHD analizi
-        eodhd_analysis = self._analyze_eodhd_sentiment(eodhd_news)
+        # vendor analizi
+        vendor_analysis = self._analyze_vendor_sentiment(vendor_news)
         
         # Sentiment'leri topla
         sentiments = {
-            'eodhd': eodhd_analysis['sentiment'],
+            'vendor': vendor_analysis['sentiment'],
             'live_tv': live_tv_result['sentiment'],
             'twitter': twitter_result['sentiment'],
             'trump': twitter_result.get('trump_sentiment', 0.0),
@@ -435,7 +401,7 @@ class UnifiedNewsAnalyzer:
         
         # Birleşik sentiment
         combined_sentiment = (
-            sentiments['eodhd'] * weights['eodhd'] +
+            sentiments['vendor'] * weights['vendor'] +
             sentiments['live_tv'] * weights['live_tv'] +
             sentiments['twitter'] * weights['twitter'] +
             sentiments['trump'] * weights['trump']
@@ -443,7 +409,7 @@ class UnifiedNewsAnalyzer:
         
         # Contribution
         contributions = {
-            'eodhd': sentiments['eodhd'] * weights['eodhd'],
+            'vendor': sentiments['vendor'] * weights['vendor'],
             'live_tv': sentiments['live_tv'] * weights['live_tv'],
             'twitter': sentiments['twitter'] * weights['twitter'],
             'trump': sentiments['trump'] * weights['trump'],
@@ -454,7 +420,7 @@ class UnifiedNewsAnalyzer:
         
         # Confidence
         base_confidence = (
-            eodhd_analysis['confidence'] * 0.3 +
+            vendor_analysis['confidence'] * 0.3 +
             live_tv_result['confidence'] * 0.35 +
             twitter_result['confidence'] * 0.35
         )
@@ -472,22 +438,22 @@ class UnifiedNewsAnalyzer:
         
         # Key factors birleştir
         key_factors = []
-        key_factors.extend(eodhd_analysis.get('key_factors', [])[:2])
+        key_factors.extend(vendor_analysis.get('key_factors', [])[:2])
         key_factors.extend(live_tv_result.get('key_factors', [])[:2])
         key_factors.extend(twitter_result.get('key_factors', [])[:2])
         
         # High impact events
-        high_impact = eodhd_analysis.get('high_impact', [])
+        high_impact = vendor_analysis.get('high_impact', [])
         
         # ML features
         ml_features = self._calculate_ml_features(
-            eodhd_analysis, live_tv_result, twitter_result
+            vendor_analysis, live_tv_result, twitter_result
         )
         
         # Data freshness
         now = datetime.now(timezone.utc)
         freshness = {
-            'eodhd': int((now - self._last_eodhd_fetch).total_seconds() / 60) if self._last_eodhd_fetch else 999,
+            'vendor': int((now - self._last_vendor_fetch).total_seconds() / 60) if self._last_vendor_fetch else 999,
             'live_tv': 0 if live_tv_result.get('is_active') else 999,
             'twitter': 0 if twitter_result.get('is_active') else 999,
         }
@@ -496,7 +462,7 @@ class UnifiedNewsAnalyzer:
             sentiment_score=combined_sentiment,
             confidence=confidence,
             direction_bias=direction,
-            eodhd_sentiment=sentiments['eodhd'],
+            vendor_sentiment=sentiments['vendor'],
             live_tv_sentiment=sentiments['live_tv'],
             twitter_sentiment=sentiments['twitter'],
             trump_sentiment=sentiments['trump'],
@@ -515,18 +481,18 @@ class UnifiedNewsAnalyzer:
         """Tüm haber kaynaklarının durumu"""
         statuses = []
          
-        # EODHD
+        # vendor
         try:
-            news = await self._fetch_eodhd_news()
+            news = await self._fetch_vendor_news()
             statuses.append(NewsSourceStatus(
-                name="EODHD News",
+                name="vendor News",
                 is_active=len(news) > 0,
-                last_data=self._last_eodhd_fetch,
+                last_data=self._last_vendor_fetch,
                 data_count=len(news)
             ))
         except Exception as e:
             statuses.append(NewsSourceStatus(
-                name="EODHD News",
+                name="vendor News",
                 is_active=False,
                 last_data=None,
                 data_count=0,
@@ -645,7 +611,7 @@ if __name__ == "__main__":
         print(f"Direction Bias: {impact.direction_bias}")
         print()
         print("Source Sentiments:")
-        print(f"  EODHD:   {impact.eodhd_sentiment:.3f}")
+        print(f"  vendor:   {impact.vendor_sentiment:.3f}")
         print(f"  Live TV: {impact.live_tv_sentiment:.3f}")
         print(f"  Twitter: {impact.twitter_sentiment:.3f}")
         print(f"  Trump:   {impact.trump_sentiment:.3f}")

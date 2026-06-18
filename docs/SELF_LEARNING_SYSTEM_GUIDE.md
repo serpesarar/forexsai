@@ -403,7 +403,7 @@ CREATE INDEX idx_learning_feedback_active ON learning_feedback(is_active) WHERE 
 - `.env` dosyasında `SUPABASE_URL` ve `SUPABASE_KEY` var mı?
 
 ### Hata: "No candle data"
-- EODHD API key'i kontrol et
+- MT5 bridge + yfinance key'i kontrol et
 - Sembol formatını kontrol et (NDX.INDX)
 
 ### Hata: "Claude analysis failed"

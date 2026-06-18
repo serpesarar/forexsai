@@ -13,7 +13,7 @@
 ```
 MT5 Terminal ──→ Redis (pub/sub) ──→ mt5_redis_client.py ──→ DataHub (bellek)
                                                                 ↓
-EODHD API ─────────────────────────────────────────────────→ DataHub (bellek)
+MT5 bridge + yfinance ─────────────────────────────────────────────────→ DataHub (bellek)
                                                                 ↓
                                                            ┌────┴────┐
                                                       Supabase    WS Manager
@@ -23,7 +23,7 @@ EODHD API ───────────────────────�
 
 ### 1.2 DataHub — Merkezi Veri Deposu (`data_hub.py`)
 
-| Veri Tipi | EODHD Modu Güncelleme | MT5 Redis Modu | Mevcut Durum |
+| Veri Tipi | MT5/yfinance Modu Güncelleme | MT5 Redis Modu | Mevcut Durum |
 |-----------|----------------------|----------------|--------------|
 | **Fiyat (tick)** | 5 saniye (poll) | Anlık (pub/sub) | ✅ MT5 aktif ise anlık |
 | **5m Mum** | 5 dakika (poll) | Anlık (bar event) | ✅ MT5 aktif ise anlık |
@@ -31,9 +31,9 @@ EODHD API ───────────────────────�
 | **30m Mum** | 30 dakika (poll, sadece XAUUSD) | Anlık | ✅ |
 | **EOD Mum** | 30 dakika (poll) | Anlık (bar event) | ✅ |
 | **Türetilmiş (15m, 20m, 4h)** | 5m/1h'den resample | 5m/30m/1h'den resample | ✅ Otomatik |
-| **Makro (DXY, VIX, USDTRY)** | 5 dakika (poll) | — | ⚠️ Sadece EODHD |
+| **Makro (DXY, VIX, USDTRY)** | 5 dakika (poll) | — | ⚠️ Sadece MT5/yfinance |
 
-**Sonuç**: DataHub zaten MT5 Redis üzerinden anlık fiyat ve mum verisi alabiliyor. `market_data_source = "mt5_redis"` veya `"hybrid"` ayarlandığında EODHD poll devre dışı kalıyor, tüm veri MT5'ten geliyor.
+**Sonuç**: DataHub zaten MT5 Redis üzerinden anlık fiyat ve mum verisi alabiliyor. `market_data_source = "mt5_redis"` veya `"hybrid"` ayarlandığında MT5/yfinance poll devre dışı kalıyor, tüm veri MT5'ten geliyor.
 
 ### 1.3 MT5 Redis Client (`mt5_redis_client.py`)
 
@@ -292,7 +292,7 @@ Frontend ←──── /ws/all ←──── ws_manager.broadcast()
                                     ↑
                              background_scheduler (10s)
                                     ↑
-                             DataHub (anlık MT5 veya 5s EODHD poll)
+                             DataHub (anlık MT5 veya 5s MT5/yfinance poll)
 ```
 
 **Mesaj Tipleri**:

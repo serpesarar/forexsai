@@ -47,7 +47,7 @@ def mock_supabase_auth():
 def test_client(mock_supabase_auth):
     """Create FastAPI test client with mocked auth"""
     with patch.dict('os.environ', {
-        'EODHD_API_KEY': 'test_key',
+        'upstream_API_KEY': 'test_key',
         'SUPABASE_URL': 'https://test.supabase.co',
         'SUPABASE_KEY': 'test_key',
     }):

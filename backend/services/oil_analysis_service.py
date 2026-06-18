@@ -140,56 +140,12 @@ async def calculate_dxy_impact(
 
 async def fetch_eia_inventory() -> Optional[Dict[str, Any]]:
     """
-    Fetch latest EIA Crude Oil Inventories from EOD economic-events API.
-    Returns actual, estimate, previous values.
+    EIA Crude Oil Inventories.
+
+    Disabled: the previous economic-events data source has been retired and no
+    replacement is wired yet. Returns None so callers degrade gracefully.
+    TODO: re-wire to a new economic-calendar source if this signal is needed.
     """
-    try:
-        from config import settings
-        import httpx
-
-        if not settings.eodhd_api_key:
-            return None
-
-        now = datetime.now(timezone.utc)
-        from_date = (now - timedelta(days=14)).strftime("%Y-%m-%d")
-        to_date = now.strftime("%Y-%m-%d")
-
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            resp = await client.get(
-                "https://eodhistoricaldata.com/api/economic-events",
-                params={
-                    "api_token": settings.eodhd_api_key,
-                    "fmt": "json",
-                    "country": "US",
-                    "from": from_date,
-                    "to": to_date,
-                    "limit": 100,
-                },
-            )
-            if resp.status_code != 200:
-                logger.warning(f"EIA fetch failed: HTTP {resp.status_code}")
-                return None
-
-            events = resp.json()
-            if not isinstance(events, list):
-                return None
-
-            # Find EIA Crude Oil Inventories
-            for event in events:
-                event_name = (event.get("event") or "").lower()
-                if "crude oil" in event_name and "inventor" in event_name:
-                    return {
-                        "event": event.get("event", ""),
-                        "date": event.get("date", ""),
-                        "actual": _parse_float(event.get("actual")),
-                        "estimate": _parse_float(event.get("estimate")),
-                        "previous": _parse_float(event.get("previous")),
-                        "change": event.get("change"),
-                    }
-
-    except Exception as e:
-        logger.warning(f"EIA inventory fetch error: {e}")
-
     return None
 
 

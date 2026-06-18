@@ -154,7 +154,7 @@ $ARGUMENTS içindeki özelliği ekle. Ekleme yaparken:
 ### `.claude/commands/debug-signal.md`
 ```markdown
 $ARGUMENTS sembolü için sinyal debug yap:
-1. EODHD'den gelen raw veriyi kontrol et
+1. MT5/yfinance'den gelen raw veriyi kontrol et
 2. Her modelin ürettiği skoru ayrı ayrı göster
 3. Regime detection sonucunu göster
 4. Ensemble ağırlıklandırmasını trace et

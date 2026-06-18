@@ -39,7 +39,7 @@ const sections = [
         tag: "04",
         title: "Third Parties",
         items: [
-            { h: "Service Providers", p: "Supabase (database), Railway (hosting), Anthropic (AI analysis), EODHD (market data). All GDPR compliant." },
+            { h: "Service Providers", p: "Supabase (database), Railway (hosting), Anthropic (AI analysis), MetaTrader 5 bridge & Yahoo Finance (market data). All GDPR compliant." },
             { h: "Legal Requirements", p: "We may disclose data if legally required by court order or regulatory authority." },
             { h: "No Data Sales", p: "We never sell, rent, or trade your personal data. Period." },
         ],

@@ -24,7 +24,6 @@ class Settings(BaseSettings):
         default=None,
         validation_alias=AliasChoices("DEEP_SEEKR1", "DEEPSEEK_API_KEY"),
     )
-    eodhd_api_key: str | None = Field(default=None, validation_alias="EODHD_API_KEY")
     groq_api_key: str | None = Field(default=None, validation_alias="GROQ_API_KEY")
     xai_api_key: str | None = Field(default=None, validation_alias="XAI_API_KEY")
     x_bearer_token: str | None = Field(default=None, validation_alias="X_BEARER_TOKEN")

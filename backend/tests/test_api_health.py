@@ -34,7 +34,7 @@ def mock_supabase_for_health():
 def test_client(mock_supabase_for_health):
     """Create FastAPI test client with mocked dependencies"""
     with patch.dict('os.environ', {
-        'EODHD_API_KEY': 'test_key',
+        'upstream_API_KEY': 'test_key',
         'SUPABASE_URL': 'https://test.supabase.co',
         'SUPABASE_KEY': 'test_key',
     }):

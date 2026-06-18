@@ -1181,7 +1181,7 @@ async def get_ml_prediction(symbol: str, enabled_factors: list = None, strategy:
     
     if is_gold:
         try:
-            # Try unified news analyzer first (includes Live TV + Twitter + EODHD)
+            # Try unified news analyzer first (includes Live TV + Twitter + upstream vendor)
             from services.unified_news_analyzer import get_unified_analyzer
             analyzer = get_unified_analyzer()
             unified_impact = await analyzer.get_unified_impact("XAUUSD")

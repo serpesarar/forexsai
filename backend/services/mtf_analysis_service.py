@@ -1644,8 +1644,8 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
                 dxy_trend = "NEUTRAL"
                 dxy_strength = 50.0
                 try:
-                    from services.ta_service import compute_ta_snapshot
-                    dxy_data = await compute_ta_snapshot("DXY.INDX")
+                    from services import macro_data_service
+                    dxy_data = macro_data_service.macro_ta_snapshot("DXY")
                     dxy_trend = dxy_data.get("trend", "NEUTRAL")
                     dxy_strength = dxy_data.get("confidence", 50)
                 except Exception:
@@ -1704,8 +1704,9 @@ async def get_mtf_analysis(symbol: str, timeframe: Optional[Timeframe] = None) -
                 # VIX analysis
                 vix_price = 20.0
                 try:
-                    vix_data = await compute_ta_snapshot("VIX.INDX")
-                    vix_price = vix_data.get("current_price", 20)
+                    from services import macro_data_service
+                    vix_data = macro_data_service.macro_ta_snapshot("VIX")
+                    vix_price = vix_data.get("current_price") or 20
                 except Exception:
                     pass
                 
