@@ -780,13 +780,14 @@ async def _maybe_log_pulse_inversion_shadow(
     before deciding whether to apply inversion to the main system.
 
     Flips direction only — log_prediction recomputes the static TP/SL ladder
-    mirrored around entry for the new side. Reversible; off by default:
-        PULSE_SHADOW_INVERSION_ENABLED=1
-        PULSE_SHADOW_INVERSION_MODELS=pulse1,pulse2   (default)
-        PULSE_SHADOW_INVERSION_SYMBOLS=NDX.INDX,GDAXI.INDX  (default)
+    mirrored around entry for the new side. Enabled by default for indices
+    (so it runs on Railway without depending on the gitignored .env); set
+    PULSE_SHADOW_INVERSION_ENABLED=0 to disable.
+        PULSE_SHADOW_INVERSION_MODELS=pulse1,pulse2          (default)
+        PULSE_SHADOW_INVERSION_SYMBOLS=NDX.INDX,GDAXI.INDX   (default)
     """
     import os
-    if os.getenv("PULSE_SHADOW_INVERSION_ENABLED", "0") != "1":
+    if os.getenv("PULSE_SHADOW_INVERSION_ENABLED", "1") != "1":
         return
     if direction not in ("BUY", "SELL"):
         return

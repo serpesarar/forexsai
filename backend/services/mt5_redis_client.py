@@ -7,10 +7,112 @@ from typing import Any, Dict, Optional
 
 import redis.asyncio as redis
 
+import os as _os
+from datetime import datetime as _dt, timezone as _tz
+
 from config import settings
 from services.redis_client import get_redis_url
 
 logger = logging.getLogger(__name__)
+
+# ── MT5 broker → UTC timezone normalization ───────────────────────────────────
+# MT5 bridges publish bar/tick epochs in *broker server time* (commonly EET,
+# UTC+2/+3) labelled as if UTC, so candles land 2-3h in the future and every
+# time-based check (lifecycle freshness, wick guard, market-open) misfires.
+# We normalize every incoming epoch to true UTC at ingest. The offset is
+# auto-detected from ticks / small-interval (<=15m) bars: their open time is
+# within minutes of "now", so rounding (broker_epoch - now_utc) to the nearest
+# hour yields the exact integer offset and follows DST automatically. Pin it
+# with MT5_BROKER_UTC_OFFSET_HOURS (e.g. "3" or "0") to skip auto-detection.
+_TF_SECONDS = {"1m": 60, "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "4h": 14400, "1d": 86400, "d1": 86400}
+_DETECT_MAX_TRUE_DRIFT = 1800   # only detect from streams whose latest-bar age < 30 min
+_mt5_offset_seconds = 0         # detected broker→UTC offset (subtracted from epochs)
+_mt5_offset_fixed: Optional[int] = None  # env override in seconds, or None
+
+
+def _load_mt5_offset_override() -> None:
+    global _mt5_offset_fixed
+    raw = (_os.getenv("MT5_BROKER_UTC_OFFSET_HOURS", "") or "").strip()
+    if raw:
+        try:
+            _mt5_offset_fixed = int(round(float(raw) * 3600))
+            logger.info("[MT5Redis] broker→UTC offset pinned via env: %+.0fh", _mt5_offset_fixed / 3600.0)
+        except Exception:
+            _mt5_offset_fixed = None
+
+
+_load_mt5_offset_override()
+
+
+def _tf_seconds(timeframe) -> int:
+    return _TF_SECONDS.get(str(timeframe or "").lower().strip(), 0)
+
+
+def _effective_offset() -> int:
+    return _mt5_offset_fixed if _mt5_offset_fixed is not None else _mt5_offset_seconds
+
+
+def _candle_epoch_seconds(c: Dict[str, Any]) -> Optional[float]:
+    if not isinstance(c, dict):
+        return None
+    v = c.get("time")
+    if v is None and c.get("timestamp") is not None:
+        try:
+            ts = float(c["timestamp"])
+            v = ts / 1000.0 if ts > 1e12 else ts
+        except Exception:
+            v = None
+    try:
+        return float(v) if v is not None else None
+    except Exception:
+        return None
+
+
+def _observe_for_offset(epoch_s: Optional[float], max_true_drift: float) -> None:
+    """Update the detected broker offset from an epoch whose true age is small."""
+    global _mt5_offset_seconds
+    if _mt5_offset_fixed is not None or epoch_s is None or max_true_drift > _DETECT_MAX_TRUE_DRIFT:
+        return
+    now = _dt.now(_tz.utc).timestamp()
+    off = int(round((epoch_s - now) / 3600.0)) * 3600
+    if abs(off) > 14 * 3600:
+        return
+    if off != _mt5_offset_seconds:
+        logger.warning(
+            "[MT5Redis] broker→UTC offset detected: %+.0fh (was %+.0fh) — normalizing timestamps",
+            off / 3600.0, _mt5_offset_seconds / 3600.0,
+        )
+        _mt5_offset_seconds = off
+
+
+def _normalize_candle_times(c: Dict[str, Any]) -> Dict[str, Any]:
+    """Subtract the broker offset from a candle's time/timestamp (in place)."""
+    off = _effective_offset()
+    if not off or not isinstance(c, dict):
+        return c
+    if c.get("time") is not None:
+        try:
+            c["time"] = int(float(c["time"]) - off)
+        except Exception:
+            pass
+    if c.get("timestamp") is not None:
+        try:
+            ts = float(c["timestamp"])
+            c["timestamp"] = int(ts - off * (1000.0 if ts > 1e12 else 1.0))
+        except Exception:
+            pass
+    return c
+
+
+def _normalize_tick_timestamp(ts):
+    off = _effective_offset()
+    if not off or ts is None:
+        return ts
+    try:
+        v = float(ts)
+        return int(v - off * (1000.0 if v > 1e12 else 1.0))
+    except Exception:
+        return ts
 
 _listener_running = False
 _listener_client: Optional[redis.Redis] = None
@@ -110,10 +212,19 @@ async def _handle_tick(payload: Dict[str, Any]) -> None:
         logger.debug("[MT5Redis] Tick payload missing price: %s", payload)
         return
 
+    # Ticks are ~"now", so they are the most accurate source for offset detection.
+    raw_ts = payload.get("timestamp") or payload.get("time")
+    if raw_ts is not None:
+        try:
+            _v = float(raw_ts)
+            _observe_for_offset(_v / 1000.0 if _v > 1e12 else _v, 30)
+        except Exception:
+            pass
+
     ingested = await ingest_live_price(
         symbol=symbol,
         price=price,
-        timestamp=payload.get("timestamp") or payload.get("time"),
+        timestamp=_normalize_tick_timestamp(raw_ts),
         bid=payload.get("bid"),
         ask=payload.get("ask"),
         source="mt5_redis",
@@ -141,12 +252,24 @@ async def _handle_bar(payload: Dict[str, Any]) -> None:
     if payload.get("closed") is False or payload.get("is_closed") is False:
         return
 
+    interval = _tf_seconds(timeframe)
     candles = payload.get("candles")
     if isinstance(candles, list):
+        # Detect offset from the newest candle of small-interval streams, then
+        # normalize every candle in the batch to true UTC.
+        if interval and interval <= 900:
+            epochs = [e for e in (_candle_epoch_seconds(c) for c in candles) if e is not None]
+            if epochs:
+                _observe_for_offset(max(epochs), interval)
+        for c in candles:
+            _normalize_candle_times(c)
         await ingest_candles(symbol, timeframe, candles, source="mt5_redis")
         return
 
     candle = _extract_candle_payload(payload)
+    if interval and interval <= 900:
+        _observe_for_offset(_candle_epoch_seconds(candle), interval)
+    _normalize_candle_times(candle)
     await ingest_candle(symbol, timeframe, candle, source="mt5_redis")
     _diag["bars_received"] += 1
     _diag["last_bar_time"] = asyncio.get_event_loop().time()

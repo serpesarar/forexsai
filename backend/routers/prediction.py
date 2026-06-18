@@ -9,9 +9,9 @@ router = APIRouter(prefix="/api/prediction", tags=["prediction"])
 
 
 class KeyLevel(BaseModel):
-    type: str
-    price: float
-    distance: str
+    type: Optional[str] = None
+    price: Optional[float] = None
+    distance: Optional[str] = None  # optional: XAUUSD v2 S/R levels omit distance → was 500
 
 
 class PredictionResponse(BaseModel):

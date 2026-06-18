@@ -2984,7 +2984,8 @@ async def get_rebound_analysis(symbol: str, timeframe: str = Query("5m"), refres
 # MARKET REGIME ENDPOINT - Piyasa Rejimi Algılama
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get("/regime/{symbol}", response_model=RegimeResponse)
+@router.get("/regime/{symbol}")  # raw dict: market_regime_service returns regime as a string + flat fields,
+# which does not match the RegimeResponse(regime: Regime-object) schema and caused a 500 on serialization.
 async def get_market_regime(symbol: str, force_refresh: bool = False):
     """
     Market Regime Detection - Piyasa Rejimi

@@ -215,7 +215,7 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 ### Learning & Performance
 | Endpoint | Açıklama |
 |----------|----------|
-| `GET /api/learning/dashboard-stats` | Tüm model stats |
+| `GET /api/learning/dashboard` | Tüm model stats |
 | `GET /api/learning/model-performance/{model}` | Model detay analizi |
 | `GET /api/learning/smc-performance` | SMC performansı |
 | `GET /api/whale/dashboard` | Whale Tracker |
