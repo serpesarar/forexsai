@@ -504,8 +504,13 @@ async def _persist_proposal(client, cluster_id: Optional[str], cluster: dict,
 # Public entry
 # ---------------------------------------------------------------------------
 
-async def orchestrate_ai_ops(window_days: int = DEFAULT_WINDOW_DAYS) -> dict:
-    """Run the full AI-ops cycle. Safe to call from cron daily."""
+async def orchestrate_ai_ops(window_days: int = DEFAULT_WINDOW_DAYS,
+                             max_clusters: Optional[int] = None) -> dict:
+    """Run the full AI-ops cycle. Safe to call from cron daily.
+
+    max_clusters overrides MAX_LLM_CLUSTERS_PER_RUN for one-off backfills
+    (None → use the default cost cap)."""
+    llm_cap = max_clusters if (max_clusters and max_clusters > 0) else MAX_LLM_CLUSTERS_PER_RUN
     from database.supabase_client import get_supabase_client, is_db_available
     if not is_db_available():
         logger.warning("[ai_ops] supabase unavailable — aborting")
@@ -557,7 +562,7 @@ async def orchestrate_ai_ops(window_days: int = DEFAULT_WINDOW_DAYS) -> dict:
     # 5) Send top clusters to DeepSeek (Layer 2)
     proposals = 0
     sent = 0
-    for cluster in persisted_clusters[:MAX_LLM_CLUSTERS_PER_RUN]:
+    for cluster in persisted_clusters[:llm_cap]:
         # Pull full prediction_log rows for the representative IDs (samples)
         samples: list[dict] = []
         for pid in cluster.get("representative_prediction_ids", [])[:10]:

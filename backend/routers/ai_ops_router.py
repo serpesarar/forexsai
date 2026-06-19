@@ -43,6 +43,7 @@ class RejectRequest(BaseModel):
 
 class ManualRunRequest(BaseModel):
     window_days: int = 7
+    max_clusters: Optional[int] = None  # override cost cap for one-off backfills
 
 
 # ---------------------------------------------------------------------------
@@ -418,13 +419,17 @@ async def manual_run(payload: ManualRunRequest, bg: BackgroundTasks):
 
     async def _run():
         try:
-            summary = await orchestrate_ai_ops(window_days=payload.window_days)
+            summary = await orchestrate_ai_ops(
+                window_days=payload.window_days,
+                max_clusters=payload.max_clusters,
+            )
             logger.info("[ai_ops] manual run complete: %s", summary)
         except Exception as e:
             logger.exception("[ai_ops] manual run failed: %s", e)
 
     bg.add_task(_run)
-    return {"ok": True, "status": "scheduled", "window_days": payload.window_days}
+    return {"ok": True, "status": "scheduled",
+            "window_days": payload.window_days, "max_clusters": payload.max_clusters}
 
 
 @router.post("/proposals/mark-stale")
