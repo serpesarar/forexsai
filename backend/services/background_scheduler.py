@@ -757,13 +757,9 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: 
         
         final_model_type = model_type
         await _log_pulse_signal(symbol, sig, conf, entry, final_model_type, strategy, timeframe)
-
-        # Shadow inversion experiment (indices only): log the INVERTED variant
-        # as a separate model_type so we can verify real inverted WR without
-        # touching the original pulse signal above. Gated, default off.
-        await _maybe_log_pulse_inversion_shadow(
-            symbol, sig, conf, entry, model_type, strategy, timeframe
-        )
+        # NOTE: inverted "<model>_inv" shadow signals are now logged generically
+        # inside prediction_logger.log_prediction (covers all models), so no
+        # pulse-specific inversion hook is needed here anymore.
 
     except Exception as e:
         logger.error(f"{model_type} log error {symbol}: {e}")

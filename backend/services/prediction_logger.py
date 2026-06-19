@@ -612,6 +612,34 @@ async def log_smc_prediction(
                 normalized_timeframe,
                 direction,
             )
+
+            # Shadow inversion for SMC (separate logger path) — mirror via the
+            # generic log_prediction so the inverted "smc_inv" row gets standard
+            # mirrored TP/SL + lifecycle resolution. Filters bypassed (shadow).
+            if (entry_price and direction in ("BUY", "SELL")
+                    and _shadow_inversion_enabled(symbol, SMC_MODEL_TYPE)):
+                try:
+                    inv_dir = "SELL" if direction == "BUY" else "BUY"
+                    inv_ctx = {
+                        "symbol": symbol,
+                        "source": SMC_STRATEGY,
+                        "ml_prediction": {
+                            "direction": inv_dir,
+                            "confidence": float(confidence or 0),
+                            "entry_price": entry_price,
+                            "target_price": None,
+                            "stop_price": None,
+                        },
+                        "_shadow_inverted": True,
+                    }
+                    await log_prediction(
+                        symbol, inv_ctx, {"final_decision": inv_dir}, normalized_timeframe,
+                        SMC_STRATEGY, f"{SMC_MODEL_TYPE}_inv",
+                        allow_parallel_active=True, bypass_quality_filters=True,
+                    )
+                except Exception as _inv_err:
+                    logger.debug("smc shadow inversion failed (%s): %s", symbol, _inv_err)
+
             return prediction_id
 
         return None
@@ -624,6 +652,80 @@ async def log_smc_prediction(
             e,
         )
         return None
+
+
+def _ff_bool(factors: dict, key: str) -> Optional[bool]:
+    v = factors.get(key)
+    if v is None:
+        return None
+    if isinstance(v, bool):
+        return v
+    return str(v).strip().lower() in ("true", "1", "yes")
+
+
+def _ff_float(factors: dict, key: str) -> Optional[float]:
+    v = factors.get(key)
+    try:
+        return float(v) if v is not None and str(v) != "" else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _apply_ai_ops_filters(symbol: str, model_type: str, direction: str, factors: dict) -> Optional[str]:
+    """Robust, OOS-validated AI-Ops filter rules (counterfactual simulator
+    'robust'/OOS-positive verdicts only). Returns a block reason if the signal
+    matches a known systematic-failure pattern, else None. Toggle with
+    AI_OPS_FILTERS_ENABLED=0. Field names verified against live `factors`.
+    """
+    import os as _os
+    if _os.getenv("AI_OPS_FILTERS_ENABLED", "1") != "1":
+        return None
+    s = (symbol or "").upper()
+    m = (model_type or "").lower()
+    d = (direction or "").upper()
+    regime = (factors.get("regime_label") or "").lower()
+
+    # 1) USOIL pulse2: BUY into a clear H4 downtrend  (+25.7pp, robust)
+    if s == "USOIL.FOREX" and m == "pulse2" and d == "BUY" and factors.get("H4_ema_stack") == "down":
+        return "USOIL pulse2 BUY vs H4 downtrend (ema_stack=down)"
+
+    # 2) XAUUSD pulse1: SELL right on top of swing-low support  (+3.8pp OOS+)
+    if s == "XAUUSD" and m == "pulse1" and d == "SELL" and _ff_bool(factors, "near_support"):
+        swlow = _ff_float(factors, "M30_dist_swing_low_30_atr")
+        if swlow is not None and swlow < 0.3 and regime != "strong_trend_down":
+            return "XAUUSD pulse1 SELL into swing-low support (<0.3 ATR)"
+
+    # 3) XAUUSD ml_cross: SELL into support with low RSI in transition/ranging  (+4.8pp, robust)
+    if s == "XAUUSD" and m == "ml_cross_xau_nasdaq" and d == "SELL" and _ff_bool(factors, "near_support"):
+        rsi = _ff_float(factors, "M30_rsi_14")
+        if rsi is not None and rsi < 45 and regime in ("transition", "ranging"):
+            return "XAUUSD ml_cross SELL into support + low RSI (bounce zone)"
+
+    # 4) XAUUSD pulse3: SELL in transition while SAR is not bearish  (robust, big loss-avoid)
+    if s == "XAUUSD" and m == "pulse3" and d == "SELL" and regime == "transition":
+        if _ff_bool(factors, "sar_bearish") is False:
+            return "XAUUSD pulse3 SELL in transition vs non-bearish SAR"
+
+    return None
+
+
+def _shadow_inversion_enabled(symbol: str, model_type: str) -> bool:
+    """Whether to log a parallel inverted '<model>_inv' shadow signal for this
+    (symbol, model). Lets us measure the real reverse win-rate honestly — the
+    inverted row is resolved by the lifecycle with the same candles/spread.
+    Disable with SHADOW_INVERSION_ENABLED=0.
+    """
+    import os as _os
+    if _os.getenv("SHADOW_INVERSION_ENABLED", "1") != "1":
+        return False
+    syms = {s.strip().upper() for s in _os.getenv(
+        "SHADOW_INVERSION_SYMBOLS", "NDX.INDX,GDAXI.INDX,XAUUSD").split(",") if s.strip()}
+    if symbol.upper() not in syms:
+        return False
+    models = {m.strip().lower() for m in _os.getenv(
+        "SHADOW_INVERSION_MODELS",
+        "pulse1,pulse2,pulse3,emel,smc,meta,ml:main,ml_cross_xau_nasdaq").split(",") if m.strip()}
+    return (model_type or "").lower() in models
 
 
 async def log_prediction(
@@ -949,6 +1051,13 @@ async def log_prediction(
             record["strategy"] = stored_strategy
 
         if not bypass_quality_filters:
+            # AI-Ops learned filters (robust, OOS-validated) — block known
+            # systematic-failure patterns. Shadow-inversion signals skip this.
+            _ai_block = _apply_ai_ops_filters(symbol, effective_model_type, direction, factors)
+            if _ai_block:
+                logger.info("[ai-ops-filter] BLOCKED %s %s %s — %s",
+                            symbol, effective_model_type, direction, _ai_block)
+                return None
             if not await _apply_precision_veto(record):
                 return None
             # Entry Optimizer — shadow/enforce moduna göre çağrılır
@@ -1004,7 +1113,37 @@ async def log_prediction(
                 )
             except Exception as snap_err:
                 logger.warning(f"Could not save candle snapshot: {snap_err}")
-            
+
+            # ── Shadow inversion ────────────────────────────────────────────
+            # Log the inverted signal as a parallel "<model>_inv" row so the
+            # real reverse win-rate is measured honestly (lifecycle resolves it
+            # with the same candles/spread/slippage as the original). Re-enters
+            # log_prediction with the flipped direction + filters bypassed; the
+            # "_inv" suffix guards against infinite recursion. Covers every model
+            # that flows through here (pulse/emel/ml/meta/ml_cross); SMC has its
+            # own hook in its logger.
+            if (not (effective_model_type or "").endswith("_inv")
+                    and not (model_type or "").endswith("_inv")
+                    and direction in ("BUY", "SELL")
+                    and _shadow_inversion_enabled(symbol, effective_model_type)):
+                try:
+                    inv_ml = dict(ml)
+                    inv_ml["direction"] = "SELL" if direction == "BUY" else "BUY"
+                    inv_ml["target_price"] = None
+                    inv_ml["stop_price"] = None
+                    inv_ml["probability_up"], inv_ml["probability_down"] = (
+                        inv_ml.get("probability_down"), inv_ml.get("probability_up"))
+                    inv_ctx = {**context, "ml_prediction": inv_ml, "_shadow_inverted": True}
+                    inv_analysis = {**analysis, "final_decision": inv_ml["direction"]}
+                    await log_prediction(
+                        symbol, inv_ctx, inv_analysis, timeframe, stored_strategy,
+                        f"{effective_model_type}_inv",
+                        allow_parallel_active=True, bypass_quality_filters=True,
+                    )
+                except Exception as _inv_err:
+                    logger.debug("shadow inversion log failed (%s %s): %s",
+                                 symbol, effective_model_type, _inv_err)
+
             return prediction_id
         
         return None
