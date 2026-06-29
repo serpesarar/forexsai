@@ -17,8 +17,13 @@ __pycache__
 1mdata/
 1MDATA/
 
-# Demo experiment bot — contains account credentials, never commit
-yeni deneme/
+# Demo bot + Claude decider — KOD 2 makine arası senkronize edilir, ama
+# ŞİFRELER (config) + runtime/log ASLA commit edilmez (__pycache__/*.pyc zaten üstte):
+yeni deneme/config.py
+yeni deneme/*.log
+claude_decider/decider_config.py
+claude_decider/vix_live.json
+claude_decider/memory/journal.jsonl
 
 # Local research documents — never commit
 day_structure_research.md
