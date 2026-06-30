@@ -171,6 +171,22 @@ def append_journal(situation: dict, dec: dict) -> dict:
                      "tp": round(tp, 5), "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2),
                      "entry_bar_time": situation.get("bar_time")}   # MT5-frame (broker-saat tutarlı resolve)
 
+    # KARŞI-OLGU (counterfactual): primary_dir için "açsaydı" trade'i — HER kayda (WAIT dahil).
+    # Recall analizi: açmadığı işlemlerden hangileri kazanırdı? (analyze_missed.py grade eder)
+    cf = None
+    primary = situation.get("primary_dir")
+    if primary:
+        plive = ((situation.get("directions", {}).get(primary)) or {}).get("live") or {}
+        atr, price = plive.get("atr"), situation.get("price")
+        if atr and price:
+            buy = str(primary).upper() == "BUY"
+            tp_atr, sl_atr = stop_mults(sym)
+            tp = price + tp_atr * atr if buy else price - tp_atr * atr
+            sl = price - sl_atr * atr if buy else price + sl_atr * atr
+            cf = {"dir": primary, "entry_price": round(price, 5), "atr": round(atr, 5),
+                  "tp": round(tp, 5), "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2),
+                  "entry_bar_time": situation.get("bar_time"), "live": plive}
+
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "symbol": sym,
@@ -178,6 +194,9 @@ def append_journal(situation: dict, dec: dict) -> dict:
         "trade": trade,
         "live": live or None,
         "evidence_used": used_ev,
+        "counterfactual": cf,        # primary_dir "açsaydı" — analyze_missed grade eder
+        "cf_outcome": None,
+        "dirs_live": {d: (b.get("live") or {}) for d, b in (situation.get("directions") or {}).items()},
         "vix": situation.get("vix"),
         "context": situation.get("context"),
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),

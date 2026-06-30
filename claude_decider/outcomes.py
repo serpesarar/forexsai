@@ -53,26 +53,49 @@ def resolve_journal(fetcher, max_horizon_h: float = MAX_HORIZON_H) -> tuple[int,
         return 0, []
     rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
     now = time.time(); changed = 0
-    for e in rows:
-        if e.get("outcome") is not None:
-            continue
-        act = str(e.get("decision", {}).get("action", "")).upper()
-        if act != "OPEN":
-            e["outcome"] = "WAIT"; changed += 1; continue
-        tr = e.get("trade")
-        if not tr:
-            e["outcome"] = "NO_LEVELS"; changed += 1; continue
+
+    def _bars_after(e):
+        anchor = (e.get("trade") or e.get("counterfactual") or {}).get("entry_bar_time")
         ts = datetime.fromisoformat(e["ts"]).timestamp()
-        since = tr.get("entry_bar_time") or ts   # MT5-frame tercih (broker-saat tutarlı); yoksa UTC ts
-        bars = [b for b in fetcher(e["symbol"], since) if b["time"] > since]
-        outcome, hit = resolve_path(e["decision"]["direction"], tr["tp"], tr["sl"], bars)
-        if outcome:
-            e["outcome"] = outcome
-            e["outcome_at"] = datetime.fromtimestamp(hit, tz=timezone.utc).isoformat() if hit else None
-            e["pnl_r"] = pnl_r(outcome, tr.get("rr", 0.667)); changed += 1
-        elif now - ts > max_horizon_h * 3600:
-            e["outcome"] = "EXPIRE"; e["pnl_r"] = 0.0; changed += 1
-        # aksi halde hâlâ açık → bir sonraki çözümde tekrar bak
+        since = anchor or ts
+        return [b for b in fetcher(e["symbol"], since) if b["time"] > since], ts
+
+    for e in rows:
+        need_real = e.get("outcome") is None
+        # KARŞI-OLGU grade: primary_dir trade "açsaydı" ne olurdu (recall analizi, HER kayıtta)
+        cf = e.get("counterfactual")
+        need_cf = cf is not None and e.get("cf_outcome") is None
+        if not need_real and not need_cf:
+            continue
+        bars = None
+        # 1) gerçek karar (yalnız OPEN'lar P&L sayılır)
+        if need_real:
+            act = str(e.get("decision", {}).get("action", "")).upper()
+            if act != "OPEN":
+                e["outcome"] = "WAIT"; changed += 1
+            else:
+                tr = e.get("trade")
+                if not tr:
+                    e["outcome"] = "NO_LEVELS"; changed += 1
+                else:
+                    bars, ts = _bars_after(e)
+                    outcome, hit = resolve_path(e["decision"]["direction"], tr["tp"], tr["sl"], bars)
+                    if outcome:
+                        e["outcome"] = outcome
+                        e["outcome_at"] = datetime.fromtimestamp(hit, tz=timezone.utc).isoformat() if hit else None
+                        e["pnl_r"] = pnl_r(outcome, tr.get("rr", 0.667)); changed += 1
+                    elif now - datetime.fromisoformat(e["ts"]).timestamp() > max_horizon_h * 3600:
+                        e["outcome"] = "EXPIRE"; e["pnl_r"] = 0.0; changed += 1
+        # 2) karşı-olgu (her kayıtta: primary_dir açsaydı)
+        if need_cf:
+            if bars is None:
+                bars, ts = _bars_after(e)
+            cfo, _ = resolve_path(cf["dir"], cf["tp"], cf["sl"], bars)
+            if cfo:
+                e["cf_outcome"] = cfo
+                e["cf_pnl_r"] = pnl_r(cfo, cf.get("rr", 0.667)); changed += 1
+            elif now - datetime.fromisoformat(e["ts"]).timestamp() > max_horizon_h * 3600:
+                e["cf_outcome"] = "EXPIRE"; e["cf_pnl_r"] = 0.0; changed += 1
     if changed:
         with open(JOURNAL_JSONL, "w", encoding="utf-8") as f:
             for e in rows:

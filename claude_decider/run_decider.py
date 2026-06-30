@@ -164,10 +164,17 @@ def build_situation(symbol: str, bars: list[dict], vix, positions: dict, now: da
         return None
     dirs = [d for d in ("BUY", "SELL") if (symbol, d) not in HARD_BANS]
     directions, interesting = {}, False
+    primary_dir, best_ext = None, -1e9
     for d in dirs:
         lf = ev.live_features(bars, d, vix=vix)
         if lf.get("gate_fired") or (lf.get("rev_chan") or -9) > CONSULT_REV or (lf.get("rev_vwap") or -9) > CONSULT_REV:
             interesting = True
+        # primary_dir = en güçlü mean-rev aşırılığı olan yön (WAIT'te bile karşı-olgu için)
+        ext = max(lf.get("rev_chan") or -9, lf.get("rev_vwap") or -9)
+        if lf.get("gate_fired"):
+            ext += 100        # gate ateşleyen yön öncelikli
+        if ext > best_ext:
+            best_ext, primary_dir = ext, d
         directions[d] = {"live": lf, "evidence": ev.evidence_pack(symbol, d, lf, _TABLES)}
     if not interesting:
         return None
@@ -176,6 +183,7 @@ def build_situation(symbol: str, bars: list[dict], vix, positions: dict, now: da
     return {"symbol": symbol,
             "price": float(bars[-1]["close"]),       # entry referansı (outcome tracking)
             "bar_time": bars[-1].get("time"),        # MT5-frame: outcome resolve broker-saat tutarlılığı
+            "primary_dir": primary_dir,              # WAIT'te bile karşı-olgu (recall analizi)
             "vix": {"value": vix, "regime": label, "favored_ndx": fav, "source": vix_source,
                     "fresh": label in ("stress", "calm"),   # off-hours/neutral → False, Opus güvenmesin
                     "note": ("US RTH kapalı, ^VIX donuk — yön bağlamına güvenme" if label == "stale_offhours"
