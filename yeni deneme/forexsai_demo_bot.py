@@ -175,17 +175,25 @@ def fetch_bot_trade_signal(forexsai_sym: str, direction: str,
     Stage 4 sizing + Entry Optimizer + Precision Veto kararlarını birleştirir.
     None döner = network hatası → bot eski mantıkla fallback yapsın."""
     url = config.FOREXSAI_API.rstrip("/") + "/api/bot/trade-signal"
-    try:
-        r = requests.post(url, json={
-            "symbol": forexsai_sym, "direction": direction,
-            "confidence": confidence, "model_type": model_type,
-            "timeframe": "15m",
-        }, timeout=20)
-        if r.status_code == 200:
-            return r.json()
-        log.warning("[bot-signal] %s %s HTTP %d", forexsai_sym, direction, r.status_code)
-    except Exception as e:
-        log.warning("[bot-signal] %s %s ERR: %s", forexsai_sym, direction, e)
+    body = {"symbol": forexsai_sym, "direction": direction,
+            "confidence": confidence, "model_type": model_type, "timeframe": "15m"}
+    # Railway backend trafik kesilince UYUR; ilk istek cold-start'ta 502/503/504 döner
+    # (~5-15s uyanır). Geçici hatada kısa bekleyip RETRY → 2. istek 200 alır. Yoksa momentum
+    # scope'ları (NDX:BUY dahil) backend uyandığı sırada sürekli atlanır.
+    for attempt in range(3):
+        try:
+            r = requests.post(url, json=body, timeout=25)
+            if r.status_code == 200:
+                return r.json()
+            if r.status_code in (502, 503, 504) and attempt < 2:
+                time.sleep(4 + attempt * 3)        # 4s, 7s — cold-start'ı uyandır
+                continue
+            log.warning("[bot-signal] %s %s HTTP %d", forexsai_sym, direction, r.status_code)
+            return None
+        except Exception as e:
+            if attempt < 2:
+                time.sleep(4); continue
+            log.warning("[bot-signal] %s %s ERR: %s", forexsai_sym, direction, e)
     return None
 
 
