@@ -12,9 +12,12 @@ düşük-ADX ortamda yüksek-öncelik sinyali olarak değerlendir. Önce gözlem
 from __future__ import annotations
 import numpy as np
 
-# Araştırmadan doğrulanmış optimal varsayılanlar (z=2.5 OOS'ta %82-92 WR)
+# Araştırmadan doğrulanmış varsayılanlar. 2026-06-30: re-damıtma (claude_decider, 21.5k
+# deduped sinyal, nested-CV+placebo) z≥2.0/vwap≥1.5'i doğruladı — eski 2.5/2.0 GEREKSİZ
+# sıkıydı (özellikle NASDAQ CHREV hiç tetiklenmiyordu, z genelde 0.5-1.2). 2.0/1.5 hâlâ
+# OOS-doğrulanmış (pulse3 rev>1.1'de bile ~%77) ama çok daha fazla geçerli sinyal verir.
 CHAN_N = 50            # linreg penceresi (bar) — n=30/50/80 hepsi çalışıyor
-Z_THRESH = 2.5         # trend çizgisinden ≥2.5σ = aşırı oversold/overbought (en güçlü)
+Z_THRESH = 2.0         # trend çizgisinden ≥2.0σ aşırılık (re-damıtma doğruladı; eski 2.5)
 ADX_MAX = 25.0         # düşük-ADX'te edge daha da güçlü (opsiyonel kapı)
 # Doğrulanmış en iyi TF: 5m-30m (1m gürültülü/zayıf, 4h az sinyal).
 
@@ -45,8 +48,8 @@ def is_channel_rejection(closes, direction: str, n: int = CHAN_N,
     return ok, z
 
 
-VWAP_Z_THRESH = 2.0       # rolling VWAP'tan ≥2σ — kanala EK değer katar (araştırma: %77.7
-                          # kanalın kaçırdığı kurulumlarda; VP redundant'tı, VWAP additive)
+VWAP_Z_THRESH = 1.5       # rolling VWAP'tan ≥1.5σ (re-damıtma doğruladı; eski 2.0). Kanala
+                          # EK değer (kanalın kaçırdığı kurulumlar; VP redundant, VWAP additive)
 
 
 def vwap_zscore(bars, n: int = CHAN_N) -> float | None:
