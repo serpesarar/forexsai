@@ -19,6 +19,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import decider_config as config  # noqa: E402
 from decide import JOURNAL_JSONL  # noqa: E402
+import exits  # noqa: E402  (çoklu çıkış politikası grade'i)
 
 MAX_HORIZON_H = 48      # bu süre içinde ne TP ne SL → EXPIRE (nötr)
 
@@ -86,16 +87,23 @@ def resolve_journal(fetcher, max_horizon_h: float = MAX_HORIZON_H) -> tuple[int,
                         e["pnl_r"] = pnl_r(outcome, tr.get("rr", 0.667)); changed += 1
                     elif now - datetime.fromisoformat(e["ts"]).timestamp() > max_horizon_h * 3600:
                         e["outcome"] = "EXPIRE"; e["pnl_r"] = 0.0; changed += 1
-        # 2) karşı-olgu (her kayıtta: primary_dir açsaydı)
+        # 2) karşı-olgu (her kayıtta: primary_dir açsaydı) + ÇOKLU ÇIKIŞ grade'i
         if need_cf:
             if bars is None:
                 bars, ts = _bars_after(e)
             cfo, _ = resolve_path(cf["dir"], cf["tp"], cf["sl"], bars)
+            mature = now - datetime.fromisoformat(e["ts"]).timestamp() > max_horizon_h * 3600
             if cfo:
                 e["cf_outcome"] = cfo
                 e["cf_pnl_r"] = pnl_r(cfo, cf.get("rr", 0.667)); changed += 1
-            elif now - datetime.fromisoformat(e["ts"]).timestamp() > max_horizon_h * 3600:
+            elif mature:
                 e["cf_outcome"] = "EXPIRE"; e["cf_pnl_r"] = 0.0; changed += 1
+            # Çıkış politikaları: tam ileri pencere üzerinde 6 çıkışı grade et (sembol başına
+            # en iyi çıkışı öğrenmek için — exit_compare.py analiz eder). cf çözülünce/olgunlaşınca.
+            if e.get("exit_grades") is None and cf.get("atr") and bars and (cfo or mature):
+                eg = exits.grade_all(cf["dir"], cf["entry_price"], cf["atr"], bars)
+                if eg:
+                    e["exit_grades"] = eg; changed += 1
     if changed:
         with open(JOURNAL_JSONL, "w", encoding="utf-8") as f:
             for e in rows:
