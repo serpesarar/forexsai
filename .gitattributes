@@ -1,0 +1,2 @@
+# .bat dosyaları Windows'ta çalışır → CRLF satır sonu zorla (LF bazı cmd'lerde sorun yapar)
+*.bat text eol=crlf
