@@ -22,13 +22,17 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import decider_config as config  # noqa: E402
 from gates import ALLOW, vix_regime  # noqa: E402
-from decide import decide_situation, append_journal, JOURNAL_JSONL, DECIDE_MODEL, HARD_BANS  # noqa: E402
+from decide import (decide_situation, decide_free, append_journal, append_free_journal,  # noqa: E402
+                    JOURNAL_JSONL, DECIDE_MODEL, HARD_BANS)
 import evidence as ev  # noqa: E402
+import free_context as fx  # noqa: E402
 import outcomes  # noqa: E402
 
 CADENCE_SEC = 900        # 15dk
 BARS_N = 120
 CONSULT_REV = 1.0        # Opus'a danışma eşiği: bir yönde rev_chan/rev_vwap > bu (gate'ten geniş)
+FREE_SYMBOL = "XAUUSD"   # serbest-zekâ modu (kanıt-tablosu yok; edge yok, çıplak muhakeme)
+FREE_TFS = {"1m": None, "5m": None, "30m": None, "1h": None}  # MT5 TF sabitleri runtime'da doldurulur
 try:
     import MetaTrader5 as mt5  # noqa: E402
     _HAS_MT5 = True
@@ -90,6 +94,36 @@ def fetch_bars_mt5(n: int = BARS_N) -> dict[str, list[dict]]:
         out[fx_sym] = [{"high": float(r["high"]), "low": float(r["low"]), "close": float(r["close"]),
                         "volume": float(r["tick_volume"]), "time": int(r["time"])} for r in rates]
     return out
+
+
+def fetch_multi_tf(fx_sym: str, n: int = 120) -> dict:
+    """XAU serbest-zekâ için çok-TF bar (1m/5m/30m/1h). Dönüş: {'1m':[...], ...}."""
+    mt5_sym = _SYM_MAP.get(fx_sym)
+    if not mt5_sym:
+        return {}
+    tf_map = {"1m": mt5.TIMEFRAME_M1, "5m": mt5.TIMEFRAME_M5,
+              "30m": mt5.TIMEFRAME_M30, "1h": mt5.TIMEFRAME_H1}
+    out = {}
+    for tf, const in tf_map.items():
+        rates = mt5.copy_rates_from_pos(mt5_sym, const, 0, n)
+        if rates is not None and len(rates):
+            out[tf] = [{"high": float(r["high"]), "low": float(r["low"]), "close": float(r["close"]),
+                        "volume": float(r["tick_volume"]), "time": int(r["time"])} for r in rates]
+    return out
+
+
+def fetch_dxy() -> float | None:
+    """Canlı DXY (dolar endeksi — altına ters). Pepperstone'da varsa oradan; yoksa None."""
+    for cand in ("USDX", "DXY", "USDOLLAR", "DX", "USDIDX"):
+        info = mt5.symbol_info(cand) if _HAS_MT5 else None
+        if info is not None:
+            mt5.symbol_select(cand, True)
+            tick = mt5.symbol_info_tick(cand)
+            if tick:
+                for v in (getattr(tick, "last", 0), getattr(tick, "bid", 0)):
+                    if v and v > 0:
+                        return round(float(v), 3)
+    return None
 
 
 def fetch_bars_after_mt5(symbol: str, since_ts: float) -> list[dict]:
@@ -195,23 +229,39 @@ def build_situation(symbol: str, bars: list[dict], vix, positions: dict, now: da
 
 # ── Çekirdek pass ────────────────────────────────────────────────────────────
 def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
-             model: str = DECIDE_MODEL, vix_source: str = "yfinance"):
+             model: str = DECIDE_MODEL, vix_source: str = "yfinance", dxy=None):
     now = datetime.now(timezone.utc)
+    # Kanıt-temelli semboller (XAU HARİÇ — o serbest-zekâ moduna gider)
     sits = [s for s in (build_situation(sym, bars_by_symbol.get(sym), vix, positions, now, vix_source)
-                        for sym in ALLOW) if s]
-    if not sits:
-        print(f"[{now:%H:%M}] ilginç durum yok — Opus çağrılmadı ({len(bars_by_symbol)} sembol tarandı)."); return []
-    print(f"[{now:%H:%M}] {len(sits)} ilginç sembol → Opus değerlendiriyor ({model})...")
+                        for sym in ALLOW if sym != FREE_SYMBOL) if s]
     out = []
-    for sit in sits:
-        dec = decide_situation(sit, model=model)
-        entry = append_journal(sit, dec); entry["shadow"] = shadow
-        tag = "SHADOW" if shadow else "CANLI"
-        act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
-        print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:95]}")
-        if not shadow and act == "OPEN" and (sf or 0) > 0:
-            execute(sit, dec)
-        out.append({"sit": sit, "dec": dec})
+    tag = "SHADOW" if shadow else "CANLI"
+    if sits:
+        print(f"[{now:%H:%M}] {len(sits)} ilginç sembol → Opus (kanıt-temelli, {model})...")
+        for sit in sits:
+            dec = decide_situation(sit, model=model)
+            append_journal(sit, dec)["shadow"] = shadow
+            act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
+            print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
+            if not shadow and act == "OPEN" and (sf or 0) > 0:
+                execute(sit, dec)
+            out.append({"sit": sit, "dec": dec})
+
+    # XAU SERBEST-ZEKÂ (kanıt-tablosu yok; çok-TF ham bağlam → Opus çıplak muhakeme)
+    if _HAS_MT5 and FREE_SYMBOL in _SYM_MAP:
+        ctx = fx.build_free_context(fetch_multi_tf(FREE_SYMBOL), vix=vix, dxy=dxy)
+        if ctx:
+            print(f"[{now:%H:%M}] {FREE_SYMBOL} → Opus (SERBEST-ZEKÂ, çok-TF)...")
+            dec = decide_free(ctx, model=model)
+            append_free_journal(ctx, dec)["shadow"] = shadow
+            act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
+            print(f"  [{tag}·free] {FREE_SYMBOL}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
+            if not shadow and act == "OPEN" and (sf or 0) > 0:
+                execute({"symbol": FREE_SYMBOL, "price": ctx.get("price")}, dec)
+            out.append({"sit": ctx, "dec": dec})
+
+    if not out:
+        print(f"[{now:%H:%M}] ilginç durum yok — Opus çağrılmadı.")
     return out
 
 
@@ -269,7 +319,7 @@ def main():
             try:
                 vix_val, vix_src = fetch_vix()
                 run_pass(fetch_bars_mt5(), vix_val, open_positions_summary(),
-                         shadow=shadow, model=args.model, vix_source=vix_src)
+                         shadow=shadow, model=args.model, vix_source=vix_src, dxy=fetch_dxy())
             except Exception as e:
                 print("  run_pass hatası (döngü devam):", e)
             if args.once:

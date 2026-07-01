@@ -150,6 +150,79 @@ def decide_situation(situation: dict, model: str = DECIDE_MODEL) -> dict:
     return _enforce_guardrails(situation["symbol"], dec)
 
 
+# ── XAU SERBEST-ZEKÂ modu (kanıt-tablosu YOK, saf muhakeme) ──────────────────
+FREE_SYSTEM = (
+    "Sen 50 yıllık deneyimli bir ALTIN (XAUUSD) trader'ısın. XAUUSD intraday'de bizim "
+    "istatistiksel edge'imiz YOK — o yüzden sana kanıt-tablosu vermiyoruz; kendi piyasa "
+    "okumanı kullan. Sana çok-zaman-dilimli (1m/5m/30m/1h) ham bağlam veriyorum: trend "
+    "dizilimi, trend-channel z (fiyatın kanaldaki yeri; +üst −alt, |z|≈2 sınır), momentum, "
+    "en yakın destek/direnç (ATR mesafesiyle), VIX rejimi, DXY (dolar — altına ters). "
+    "Bir insan trader gibi BÜTÜNE bak: TF'ler uyumlu mu, fiyat anlamlı bir S/R'de mi, makro "
+    "destekliyor mu? Net bir kurulum YOKSA BEKLE (çoğu zaman doğru cevap budur). İşlem açacaksan "
+    "yönünü, güvenini (size 0-1) ve mantığını söyle. Çıktın SADECE tek-satır JSON."
+)
+
+
+def build_free_prompt(ctx: dict) -> str:
+    return f"""{FREE_SYSTEM}
+
+=== XAUUSD ÇOK-TF HAM BAĞLAM (kanıt değil, senin yorumlaman için) ===
+{json.dumps(ctx, ensure_ascii=False, indent=2)}
+
+GÖREV — bir altın uzmanı gibi bu resmi oku:
+- Çok-TF uyum: 1m/5m/30m/1h trendleri hizalı mı, yoksa çelişiyor mu (çelişki=belirsizlik)?
+- Konum: fiyat destek/dirence yakın mı (dönüş fırsatı), yoksa boşlukta mı (kovalama)?
+- channel_z: bir TF'de ±2'ye yakınsa mean-reversion; ortadaysa trend-devamı olabilir.
+- Makro: VIX stres + DXY zayıf = altın güçlü; DXY güçlü = altına baskı.
+- BELİRSİZSEN veya net kurulum yoksa WAIT (disiplin — zorlama).
+SADECE şu tek-satır JSON:
+{{"action":"OPEN","direction":"BUY","size_factor":0.4,"reason":"çok-TF + S/R + makro mantığın","management":"stop/hedef notu"}}
+(açmıyorsan: {{"action":"WAIT","direction":null,"size_factor":0,"reason":"...","management":""}})"""
+
+
+def decide_free(ctx: dict, model: str = DECIDE_MODEL) -> dict:
+    """XAU serbest-zekâ kararı — kanıt-tablosu yok, Opus'un çıplak muhakemesi. Guardrail: XAU
+    SELL yasak (HARD_BANS), size [0,1.0]. Deneysel → çağıran journal'a mode='free' yazar."""
+    dec = call_claude(build_free_prompt(ctx), model=model)
+    dec = _enforce_guardrails("XAUUSD", dec)
+    dec["_mode"] = "free"
+    return dec
+
+
+def append_free_journal(ctx: dict, dec: dict) -> dict:
+    """XAU serbest-zekâ kararını journal'a yaz (mode='free' etiketli, ayrı ölçülür). OPEN ise
+    entry+ATR TP/SL (XAU geniş stop) → outcomes.py grade eder. Kanıt-temelli akıştan ayrı analiz."""
+    d = dec.get("direction")
+    trade = None
+    if str(dec.get("action", "")).upper() == "OPEN" and d:
+        atr, price = ctx.get("atr_5m"), ctx.get("price")
+        if atr and price:
+            buy = str(d).upper() == "BUY"
+            tp_atr, sl_atr = stop_mults("XAUUSD")     # geniş SL (patient WR)
+            tp = price + tp_atr * atr if buy else price - tp_atr * atr
+            sl = price - sl_atr * atr if buy else price + sl_atr * atr
+            # 5m'in en yakın kapanış-zamanı (broker frame) — outcomes filtrelemesi için
+            m5 = (ctx.get("multi_tf") or {}).get("5m")
+            trade = {"entry_price": round(price, 5), "atr": round(atr, 5),
+                     "tp": round(tp, 5), "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2),
+                     "entry_bar_time": ctx.get("bar_time_5m")}
+    entry = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "symbol": "XAUUSD", "mode": "free",
+        "decision": {k: dec.get(k) for k in ("action", "direction", "size_factor", "reason", "management")},
+        "trade": trade,
+        "free_context": {k: ctx.get(k) for k in ("price", "session", "support", "resistance",
+                                                 "dist_to_support_atr", "dist_to_resistance_atr", "macro")},
+        "multi_tf": ctx.get("multi_tf"),
+        "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),
+        "outcome": None,
+    }
+    MEM.mkdir(parents=True, exist_ok=True)
+    with open(JOURNAL_JSONL, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    return entry
+
+
 def append_journal(situation: dict, dec: dict) -> dict:
     """Kararı ham deneyim olarak journal.jsonl'e yaz (re-damıtma yakıtı; outcome sonra dolar)."""
     sym = situation["symbol"]
