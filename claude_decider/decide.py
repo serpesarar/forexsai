@@ -27,7 +27,10 @@ import decider_config as config  # noqa: E402
 
 MEM = HERE / "memory"
 JOURNAL_JSONL = MEM / "journal.jsonl"
-DECIDE_MODEL = "opus"
+DECIDE_MODEL = "opus"                       # asıl (canlı) karar modeli
+# GÖLGE model A/B: aynı veriye paralel karar verir, AYRI grade edilir (canlı değil, kıyas için).
+# model_compare.py Opus vs bunu kıyaslar. None → kapalı. Fable5 ~4× ucuz (0.07 vs 0.30/çağrı).
+SHADOW_MODEL = "claude-fable-5"
 # Per-sembol ATR stop çarpanları (grading + trade). Varsayılan RR~0.67.
 # XAUUSD "patient WR" ([[xauusd-meta-stop-sizing]]): dar stop → dönüş tamamlanmadan SL.
 # Geniş SL ver → sabırlı bounce stop yemeden realize olsun (canlı gözlem: XAU BUY %43/−0.29R dar stopla).
@@ -40,6 +43,29 @@ TP_ATR, SL_ATR = DEFAULT_STOP_ATR   # geriye-uyum (varsayılan)
 
 def stop_mults(symbol: str) -> tuple[float, float]:
     return STOP_ATR.get(symbol, DEFAULT_STOP_ATR)
+
+
+def build_trade(symbol: str, direction: str, atr, price, bar_time=None) -> dict | None:
+    """Entry + per-sembol ATR TP/SL (grade edilebilir trade). Opus/Fable/free ortak kullanır."""
+    if not atr or not price or not direction:
+        return None
+    buy = str(direction).upper() == "BUY"
+    tp_atr, sl_atr = stop_mults(symbol)
+    tp = price + tp_atr * atr if buy else price - tp_atr * atr
+    sl = price - sl_atr * atr if buy else price + sl_atr * atr
+    return {"entry_price": round(price, 5), "atr": round(atr, 5), "tp": round(tp, 5),
+            "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2), "entry_bar_time": bar_time}
+
+
+def _shadow_pack(symbol: str, dec: dict, atr, price, bar_time) -> dict | None:
+    """Gölge-model kararını (Fable) journal-gömülü pakete indir: karar + kendi trade'i + outcome yeri."""
+    if not dec:
+        return None
+    d = dec.get("direction")
+    trade = build_trade(symbol, d, atr, price, bar_time) if str(dec.get("action", "")).upper() == "OPEN" else None
+    return {"model": dec.get("_model"),
+            "decision": {k: dec.get(k) for k in ("action", "direction", "size_factor", "reason")},
+            "trade": trade, "outcome": None, "cost_usd": dec.get("_cost_usd")}
 
 # Sert yasaklar — kanıtlı -EV, Opus ihlal edemez (kod zorlar). config'i de birleştir.
 HARD_BANS: set[tuple[str, str]] = {("XAUUSD", "SELL"), ("USOIL.FOREX", "BUY")} | \
@@ -144,10 +170,16 @@ def _enforce_guardrails(symbol: str, dec: dict) -> dict:
     return dec
 
 
-def decide_situation(situation: dict, model: str = DECIDE_MODEL) -> dict:
-    """Opus sembol durumundan KENDİ kararını verir + sert güvenlik kıskacı."""
-    dec = call_claude(build_prompt(situation), model=model)
-    return _enforce_guardrails(situation["symbol"], dec)
+def decide_situation(situation: dict, model: str = DECIDE_MODEL,
+                     shadow_model: str | None = SHADOW_MODEL) -> dict:
+    """Opus sembol durumundan KENDİ kararını verir + sert güvenlik kıskacı.
+    shadow_model verilirse AYNI prompt'la paralel gölge-karar (A/B, ayrı grade)."""
+    prompt = build_prompt(situation)
+    dec = _enforce_guardrails(situation["symbol"], call_claude(prompt, model=model))
+    if shadow_model:
+        sdec = _enforce_guardrails(situation["symbol"], call_claude(prompt, model=shadow_model))
+        dec["_shadow"] = sdec
+    return dec
 
 
 # ── XAU SERBEST-ZEKÂ modu (kanıt-tablosu YOK, saf muhakeme) ──────────────────
@@ -180,12 +212,16 @@ SADECE şu tek-satır JSON:
 (açmıyorsan: {{"action":"WAIT","direction":null,"size_factor":0,"reason":"...","management":""}})"""
 
 
-def decide_free(ctx: dict, model: str = DECIDE_MODEL) -> dict:
+def decide_free(ctx: dict, model: str = DECIDE_MODEL,
+                shadow_model: str | None = SHADOW_MODEL) -> dict:
     """XAU serbest-zekâ kararı — kanıt-tablosu yok, Opus'un çıplak muhakemesi. Guardrail: XAU
-    SELL yasak (HARD_BANS), size [0,1.0]. Deneysel → çağıran journal'a mode='free' yazar."""
-    dec = call_claude(build_free_prompt(ctx), model=model)
-    dec = _enforce_guardrails("XAUUSD", dec)
+    SELL yasak (HARD_BANS), size [0,1.0]. Deneysel → çağıran journal'a mode='free' yazar.
+    shadow_model verilirse Fable5 AYNI bağlama paralel karar verir (A/B)."""
+    prompt = build_free_prompt(ctx)
+    dec = _enforce_guardrails("XAUUSD", call_claude(prompt, model=model))
     dec["_mode"] = "free"
+    if shadow_model:
+        dec["_shadow"] = _enforce_guardrails("XAUUSD", call_claude(prompt, model=shadow_model))
     return dec
 
 
@@ -193,19 +229,9 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
     """XAU serbest-zekâ kararını journal'a yaz (mode='free' etiketli, ayrı ölçülür). OPEN ise
     entry+ATR TP/SL (XAU geniş stop) → outcomes.py grade eder. Kanıt-temelli akıştan ayrı analiz."""
     d = dec.get("direction")
-    trade = None
-    if str(dec.get("action", "")).upper() == "OPEN" and d:
-        atr, price = ctx.get("atr_5m"), ctx.get("price")
-        if atr and price:
-            buy = str(d).upper() == "BUY"
-            tp_atr, sl_atr = stop_mults("XAUUSD")     # geniş SL (patient WR)
-            tp = price + tp_atr * atr if buy else price - tp_atr * atr
-            sl = price - sl_atr * atr if buy else price + sl_atr * atr
-            # 5m'in en yakın kapanış-zamanı (broker frame) — outcomes filtrelemesi için
-            m5 = (ctx.get("multi_tf") or {}).get("5m")
-            trade = {"entry_price": round(price, 5), "atr": round(atr, 5),
-                     "tp": round(tp, 5), "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2),
-                     "entry_bar_time": ctx.get("bar_time_5m")}
+    atr, price, bt = ctx.get("atr_5m"), ctx.get("price"), ctx.get("bar_time_5m")
+    trade = build_trade("XAUUSD", d, atr, price, bt) if str(dec.get("action", "")).upper() == "OPEN" else None
+    shadow = _shadow_pack("XAUUSD", dec.get("_shadow"), atr, price, bt)
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "symbol": "XAUUSD", "mode": "free",
@@ -215,6 +241,7 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
                                                  "dist_to_support_atr", "dist_to_resistance_atr", "macro")},
         "multi_tf": ctx.get("multi_tf"),
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),
+        "shadow_model": shadow,          # Fable5 A/B kararı (ayrı grade)
         "outcome": None,
     }
     MEM.mkdir(parents=True, exist_ok=True)
@@ -231,34 +258,26 @@ def append_journal(situation: dict, dec: dict) -> dict:
     used_ev = chosen_blk.get("evidence")
     live = chosen_blk.get("live") or {}
 
-    # OPEN ise: entry + ATR-bazlı TP/SL seviyeleri (sonra outcome'da WIN/LOSS taranır)
-    trade = None
-    if str(dec.get("action", "")).upper() == "OPEN" and chosen:
-        atr, price = live.get("atr"), situation.get("price")
-        if atr and price:
-            buy = str(chosen).upper() == "BUY"
-            tp_atr, sl_atr = stop_mults(sym)           # per-sembol (XAU geniş SL)
-            tp = price + tp_atr * atr if buy else price - tp_atr * atr
-            sl = price - sl_atr * atr if buy else price + sl_atr * atr
-            trade = {"entry_price": round(price, 5), "atr": round(atr, 5),
-                     "tp": round(tp, 5), "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2),
-                     "entry_bar_time": situation.get("bar_time")}   # MT5-frame (broker-saat tutarlı resolve)
+    price, bt = situation.get("price"), situation.get("bar_time")
+    dl = situation.get("directions") or {}
+    # ATR yön-bağımsız → chosen live yoksa herhangi bir yönün live'ından al (shadow/WAIT için)
+    atr_any = live.get("atr") or next((b.get("live", {}).get("atr") for b in dl.values() if b.get("live")), None)
 
-    # KARŞI-OLGU (counterfactual): primary_dir için "açsaydı" trade'i — HER kayda (WAIT dahil).
-    # Recall analizi: açmadığı işlemlerden hangileri kazanırdı? (analyze_missed.py grade eder)
+    # OPEN ise: entry + ATR TP/SL (sonra outcome'da WIN/LOSS taranır)
+    trade = build_trade(sym, chosen, live.get("atr"), price, bt) \
+        if str(dec.get("action", "")).upper() == "OPEN" and chosen else None
+
+    # KARŞI-OLGU: primary_dir "açsaydı" — HER kayda (recall/analyze_missed grade eder)
     cf = None
     primary = situation.get("primary_dir")
     if primary:
-        plive = ((situation.get("directions", {}).get(primary)) or {}).get("live") or {}
-        atr, price = plive.get("atr"), situation.get("price")
-        if atr and price:
-            buy = str(primary).upper() == "BUY"
-            tp_atr, sl_atr = stop_mults(sym)
-            tp = price + tp_atr * atr if buy else price - tp_atr * atr
-            sl = price - sl_atr * atr if buy else price + sl_atr * atr
-            cf = {"dir": primary, "entry_price": round(price, 5), "atr": round(atr, 5),
-                  "tp": round(tp, 5), "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2),
-                  "entry_bar_time": situation.get("bar_time"), "live": plive}
+        plive = (dl.get(primary) or {}).get("live") or {}
+        ptrade = build_trade(sym, primary, plive.get("atr"), price, bt)
+        if ptrade:
+            cf = {"dir": primary, **ptrade, "live": plive}
+
+    # GÖLGE model (Fable) — aynı prompt, ayrı grade (A/B). Kendi yön/size'ıyla.
+    shadow = _shadow_pack(sym, dec.get("_shadow"), atr_any, price, bt)
 
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
@@ -273,6 +292,7 @@ def append_journal(situation: dict, dec: dict) -> dict:
         "vix": situation.get("vix"),
         "context": situation.get("context"),
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),
+        "shadow_model": shadow,          # Fable5 A/B kararı (ayrı grade)
         "outcome": None,
     }
     MEM.mkdir(parents=True, exist_ok=True)

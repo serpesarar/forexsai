@@ -66,7 +66,12 @@ def resolve_journal(fetcher, max_horizon_h: float = MAX_HORIZON_H) -> tuple[int,
         # KARŞI-OLGU grade: primary_dir trade "açsaydı" ne olurdu (recall analizi, HER kayıtta)
         cf = e.get("counterfactual")
         need_cf = cf is not None and e.get("cf_outcome") is None
-        if not need_real and not need_cf:
+        # GÖLGE model (Fable) — kendi OPEN trade'ini grade et (A/B kıyas)
+        sm = e.get("shadow_model")
+        sm_tr = (sm or {}).get("trade")
+        need_sm = sm is not None and sm.get("outcome") is None and \
+            (sm_tr is not None or str((sm.get("decision") or {}).get("action", "")).upper() != "OPEN")
+        if not need_real and not need_cf and not need_sm:
             continue
         bars = None
         # 1) gerçek karar (yalnız OPEN'lar P&L sayılır)
@@ -104,6 +109,19 @@ def resolve_journal(fetcher, max_horizon_h: float = MAX_HORIZON_H) -> tuple[int,
                 eg = exits.grade_all(cf["dir"], cf["entry_price"], cf["atr"], bars)
                 if eg:
                     e["exit_grades"] = eg; changed += 1
+        # 3) GÖLGE model (Fable) kararını grade et
+        if need_sm:
+            act = str((sm.get("decision") or {}).get("action", "")).upper()
+            if act != "OPEN":
+                sm["outcome"] = "WAIT"; changed += 1
+            elif sm_tr:
+                if bars is None:
+                    bars, ts = _bars_after(e)
+                smo, _ = resolve_path(sm["decision"]["direction"], sm_tr["tp"], sm_tr["sl"], bars)
+                if smo:
+                    sm["outcome"] = smo; sm["pnl_r"] = pnl_r(smo, sm_tr.get("rr", 0.667)); changed += 1
+                elif now - datetime.fromisoformat(e["ts"]).timestamp() > max_horizon_h * 3600:
+                    sm["outcome"] = "EXPIRE"; sm["pnl_r"] = 0.0; changed += 1
     if changed:
         with open(JOURNAL_JSONL, "w", encoding="utf-8") as f:
             for e in rows:
