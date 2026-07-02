@@ -28,9 +28,12 @@ import evidence as ev  # noqa: E402
 import free_context as fx  # noqa: E402
 import outcomes  # noqa: E402
 
-CADENCE_SEC = 900        # 15dk
+CADENCE_SEC = 1200       # 20dk (maliyet: 15→20dk ~%25 az çağrı; mean-rev bu hızda yeterli)
 BARS_N = 120
-CONSULT_REV = 1.0        # Opus'a danışma eşiği: bir yönde rev_chan/rev_vwap > bu (gate'ten geniş)
+# Opus'a danışma eşiği. 1.6: rev<1.6 "zayıf" durumlar (kanıt: neredeyse hep WAIT, breakeven
+# altı) MEKANİK elenir → maliyet düşer. gate_fired (rev>2.0) her zaman geçer. rev 1.6-2.0
+# "sınırda fırsat" Opus'a gider; prompt gevşediği için orada daha CESUR açar (2026-07-02).
+CONSULT_REV = 1.6
 FREE_SYMBOL = "XAUUSD"   # serbest-zekâ modu (kanıt-tablosu yok; edge yok, çıplak muhakeme)
 FREE_TFS = {"1m": None, "5m": None, "30m": None, "1h": None}  # MT5 TF sabitleri runtime'da doldurulur
 try:
