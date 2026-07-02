@@ -186,20 +186,54 @@ def _close_existing_signal(
     """
     Close existing signal when direction changes.
     This allows new signals to open when model flips direction.
+
+    2026-07-01 (rapor aksiyon #1 — TP1 breakeven semantiği):
+    Sinyal daha önce TP1/TP2/TP3/TP4 vurmuşsa flip-close artık 'stopped' değil
+    'completed' yazar (resolution_reason: {reason}_after_tp). Önceki davranış
+    14 günde 1026 TP-görmüş sinyali kayıp saymıştı (XAUUSD+GDAXI).
+    SIGNAL_BREAKEVEN_AFTER_TP1=0 ile eski davranışa dönülür.
     """
     try:
         existing_factors: Dict[str, Any] = {}
-        existing_result = client.table("prediction_logs").select("factors").eq("id", signal_id).limit(1).execute()
+        tp_already_hit = False
+        existing_result = (
+            client.table("prediction_logs")
+            .select("factors, targets_hit")
+            .eq("id", signal_id)
+            .limit(1)
+            .execute()
+        )
         existing_rows = safe_get_data(existing_result) or []
-        if existing_rows and isinstance(existing_rows[0].get("factors"), dict):
-            existing_factors = dict(existing_rows[0]["factors"])
+        if existing_rows:
+            if isinstance(existing_rows[0].get("factors"), dict):
+                existing_factors = dict(existing_rows[0]["factors"])
+            raw_targets_hit = existing_rows[0].get("targets_hit")
+            if isinstance(raw_targets_hit, str):
+                try:
+                    import json as _json
+                    raw_targets_hit = _json.loads(raw_targets_hit)
+                except Exception:
+                    raw_targets_hit = {}
+            if isinstance(raw_targets_hit, dict):
+                tp_already_hit = any(bool(v) for v in raw_targets_hit.values())
+
+        import os as _os
+        breakeven_enabled = _os.getenv("SIGNAL_BREAKEVEN_AFTER_TP1", "1") != "0"
 
         existing_factors["close_reason"] = reason
         existing_factors["replaced_by_direction"] = new_direction
 
+        if breakeven_enabled and tp_already_hit:
+            final_status = "completed"
+            final_reason = f"{reason}_after_tp"
+            existing_factors["tp_hit_before_flip"] = True
+        else:
+            final_status = "stopped"
+            final_reason = reason
+
         update_data = {
-            "status": "stopped",
-            "resolution_reason": reason,
+            "status": final_status,
+            "resolution_reason": final_reason,
             "reentry_unlocked": True,
             "exit_time": _utc_iso(),
             "exit_price": exit_price,
@@ -207,7 +241,10 @@ def _close_existing_signal(
         }
         result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
         if result and safe_get_data(result):
-            logger.info(f"✅ Closed signal {signal_id[:8]}: {reason} -> {new_direction}")
+            logger.info(
+                f"✅ Closed signal {signal_id[:8]}: {final_reason} -> {new_direction} "
+                f"(status={final_status})"
+            )
             return True
         return False
     except Exception as e:
@@ -814,7 +851,29 @@ async def log_prediction(
 
         effective_model_type, resolved_strategy = _resolve_logging_identity(model_type, strategy)
         raw_confidence = float(ml.get("confidence", 0.0))
-        
+
+        # ═══════════════════════════════════════════════════════════════════════
+        # 0. MERKEZİ SİNYAL KAPILARI (signal_gates) — güvenlik ağı
+        # Panel endpoint'leri kapıları kendi içinde uygular; burası panel dışı
+        # üreticileri (background_scheduler SMC vb.) de kapsayan son savunma
+        # hattıdır. Shadow deneyleri (bypass_quality_filters) kapsam dışıdır.
+        # Rapor aksiyonları #2 (XAU SELL), #3 (GDAXI pulse1), #5 (seans), #9 (takvim).
+        # ═══════════════════════════════════════════════════════════════════════
+        if not bypass_quality_filters:
+            try:
+                from services.signal_gates import apply_signal_gates
+                gated_direction, gate_notes = await apply_signal_gates(
+                    symbol, direction, effective_model_type
+                )
+                if gated_direction != direction:
+                    logger.info(
+                        f"GATED: {symbol} {effective_model_type} {direction} -> HOLD | "
+                        + "; ".join(gate_notes)
+                    )
+                    return None
+            except Exception as gate_err:  # fail-open
+                logger.warning(f"signal_gates safety net skipped (fail-open): {gate_err}")
+
         # ═══════════════════════════════════════════════════════════════════════
         # FILTERS: Session, Correlation, News
         # ═══════════════════════════════════════════════════════════════════════

@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from collections import deque
 from datetime import datetime, timedelta, timezone
@@ -662,13 +663,37 @@ def _rebuild_derived(symbol: str):
     # XAUUSD keeps its 1h/4h chain on top of 30m, whether 30m was fetched or derived.
     if derive_from_30m:
         raw_30m = _candles_30m.get(symbol, {}).get("candles", [])
-        if raw_30m:
+
+        # 2026-07-01 (rapor aksiyon #8): MT5 mt5:bar:1h stream'inden veya
+        # persistent cache'ten gelen GERÇEK 1h barlarını 30m çift-resample
+        # türeviyle EZME. Çift resample (5m→30m→1h) ara swing'leri siliyor ve
+        # PULSE 3 / SMC'nin 1h-4h okumalarını sentetik barlara mahkum ediyordu.
+        # XAU_REAL_H1_ENABLED=0 ile eski davranışa dönülür.
+        _existing_1h = _candles_1h.get(symbol, {}) or {}
+        _existing_1h_candles = _existing_1h.get("candles", [])
+        _existing_1h_source = (_existing_1h.get("source") or "").lower()
+        _real_1h_available = (
+            os.getenv("XAU_REAL_H1_ENABLED", "1") != "0"
+            and bool(_existing_1h_candles)
+            and "derived" not in _existing_1h_source
+            and _existing_1h_source not in {"", "unknown"}
+        )
+
+        if raw_30m and not _real_1h_available:
             derived_1h = _resample(raw_30m, 2)  # 1h = 30m × 2
             if derived_1h:
                 _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_30m"}
-            derived_4h = _resample(raw_30m, 8)  # 4h = 30m × 8
-            if derived_4h:
-                _candles_4h[symbol] = {"candles": derived_4h, "timestamp": now, "source": "derived_from_30m"}
+
+        derived_4h = None
+        _src_4h = "derived_from_30m"
+        if _real_1h_available:
+            derived_4h = _resample(_existing_1h_candles, 4)  # 4h = gerçek 1h × 4
+            _src_4h = "derived_from_1h"
+        if not derived_4h and raw_30m:
+            derived_4h = _resample(raw_30m, 8)  # 4h = 30m × 8 (fallback)
+            _src_4h = "derived_from_30m"
+        if derived_4h:
+            _candles_4h[symbol] = {"candles": derived_4h, "timestamp": now, "source": _src_4h}
     else:
         # NDX: 4h = 1h × 4
         raw_1h = _candles_1h.get(symbol, {}).get("candles", [])

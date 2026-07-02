@@ -50,8 +50,13 @@ _last_logged_prediction_id: Optional[str] = None
 
 
 def is_enabled() -> bool:
-    """Master kill switch. Set CROSS_MODEL_EXPERIMENT_ENABLED=0 to disable."""
-    return os.getenv("CROSS_MODEL_EXPERIMENT_ENABLED", "1") != "0"
+    """Master kill switch. Set CROSS_MODEL_EXPERIMENT_ENABLED=1 to re-enable.
+
+    2026-07-01 (rapor aksiyon #7): Default KAPALI. 60 günlük canlı sonuç:
+    ml_cross_xau_nasdaq SELL 12W/162L (%6.9 WR), toplam %48.3 WR —
+    NASDAQ modelinin XAU mumlarına transferi kanıtlanmış şekilde başarısız.
+    """
+    return os.getenv("CROSS_MODEL_EXPERIMENT_ENABLED", "0") == "1"
 
 
 async def predict_xau_via_nasdaq_model() -> Dict[str, Any]:

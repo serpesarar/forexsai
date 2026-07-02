@@ -406,13 +406,17 @@ def classify_signal(
             return max(target_floor_profit, max(profit_pips, 0.0))
         return max(profit_pips, 0.0)
 
-    if status == "stopped" and resolution_reason == "direction_flip":
-        # Direction flip = model predicted wrong direction → this IS a loss, don't exclude
-        actual_loss = stop_loss_pips or loss_pips
-        return "stopped", False, -actual_loss
+    # 2026-07-01 (rapor aksiyon #1): TP-hit önceliği direction_flip'ten YÜKSEK.
+    # TP1/2/3 görmüş bir sinyal, model sonradan yön değiştirdi diye kayıp sayılmaz
+    # — flip anına kadar hedefine ulaşmıştır. Eski sıralama 14 günde 1026 TP-görmüş
+    # flip kaydını tam SL kaybı olarak puanlıyordu (XAUUSD+GDAXI).
     if status == "completed" or (status == "stopped" and any_target_hit):
         actual_profit = resolved_success_pips()
         return "completed", True, actual_profit
+    if status == "stopped" and resolution_reason == "direction_flip":
+        # Direction flip (hiç TP görmemiş) = model yön değiştirdi → kayıp
+        actual_loss = stop_loss_pips or loss_pips
+        return "stopped", False, -actual_loss
     if status == "stopped":
         actual_loss = stop_loss_pips or loss_pips
         return "stopped", False, -actual_loss

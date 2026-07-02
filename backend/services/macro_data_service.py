@@ -114,6 +114,58 @@ _started: bool = False
 _refresh_task: Optional[asyncio.Task] = None
 _refresh_lock = asyncio.Lock()
 
+# ── Canlı VIX override (Pepperstone → Supabase vix_live → buradaki TÜM VIX okuyucular) ──
+# Bulut backend yerel MT5'e bağlanamaz; vix_recorder.py Pepperstone VIX'i Supabase'e yazar,
+# bu döngü 60s'de okuyup in-memory VIX serisinin SON kapanışına basar → get_macro_dict /
+# get_snapshot / get_history hepsi canlı değeri döndürür (bot VIX-regime scope, meta Layer4b,
+# scheduler vol-sizing). Supabase boş/bayat/erişilemez → DOKUNMAZ, yfinance kalır (kırılmaz).
+LIVE_VIX_MAX_AGE_S = 900     # 15dk'dan eski → canlı sayma, yfinance'e bırak
+LIVE_VIX_POLL_S = 60
+_live_vix: dict = {"value": None, "ts": 0.0}
+
+
+def _read_live_vix() -> Optional[float]:
+    import os
+    url = os.environ.get("SUPABASE_URL")
+    key = (os.environ.get("SUPABASE_SERVICE_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+           or os.environ.get("SUPABASE_KEY"))
+    if not url or not key:
+        return None
+    try:
+        import requests
+        r = requests.get(
+            f"{url.rstrip('/')}/rest/v1/vix_live?symbol=eq.VIX&select=value,ts_utc&limit=1",
+            headers={"apikey": key, "Authorization": f"Bearer {key}"}, timeout=8)
+        if r.status_code == 200 and r.json():
+            row = r.json()[0]
+            ts = datetime.fromisoformat(str(row["ts_utc"]).replace("Z", "+00:00"))
+            if (datetime.now(timezone.utc) - ts).total_seconds() < LIVE_VIX_MAX_AGE_S:
+                return float(row["value"])
+    except Exception as e:
+        logger.warning(f"[macro] live VIX read failed: {e}")
+    return None
+
+
+def _inject_live_vix(value: float) -> None:
+    """Canlı VIX'i in-memory VIX serisinin son kapanışına yaz → tüm okuma yolları canlı döner."""
+    for store in (_history_h1, _history_d1):
+        df = store.get("VIX")
+        if df is not None and not df.empty and "close" in df.columns:
+            df.iloc[-1, df.columns.get_loc("close")] = float(value)
+
+
+async def _live_vix_loop() -> None:
+    loop = asyncio.get_running_loop()
+    while True:
+        try:
+            v = await loop.run_in_executor(None, _read_live_vix)
+            if v is not None:
+                _live_vix.update(value=v, ts=datetime.now(timezone.utc).timestamp())
+                _inject_live_vix(v)
+        except Exception as e:
+            logger.warning(f"[macro] live VIX loop error: {e}")
+        await asyncio.sleep(LIVE_VIX_POLL_S)
+
 
 @dataclass
 class MacroSnapshot:
@@ -188,7 +240,9 @@ async def ensure_started() -> None:
     async with _refresh_lock:
         await _refresh_once()
     _refresh_task = asyncio.create_task(_refresh_loop(), name="macro_data_refresh_loop")
-    logger.info("Macro data service started — refresh interval %ds", REFRESH_INTERVAL_SECONDS)
+    asyncio.create_task(_live_vix_loop(), name="macro_live_vix_loop")   # Pepperstone canlı VIX
+    logger.info("Macro data service started — refresh %ds + canlı VIX (Supabase vix_live) takibi",
+                REFRESH_INTERVAL_SECONDS)
 
 
 def get_history(name: str, timeframe: str = "H1") -> Optional[pd.DataFrame]:

@@ -426,18 +426,40 @@ def _calc_ema(values, period):
     return ema
 
 
+#: Endekslerde sabit mesafeler taban, ATR tavan belirler (rapor aksiyon #3).
+#: GDAXI 60g kanıtı: sabit TP20/SL12 point 5m gürültüsünün içinde kaldı —
+#: stopped sinyallerde ort. MFE 6-7 pip vs SL 65-68 pip, her iki yön de kaybetti.
+_ATR_GEOMETRY_SYMBOLS = {"GDAXI.INDX", "NDX.INDX"}
+_ATR_TP_MULT = 1.5
+_ATR_SL_MULT = 1.0
+
+
 def _scalp_tp_sl(symbol: str, current_price: float, direction: str, atr_val: float):
-    """Calculate scalping-appropriate TP/SL using fixed instrument distances.
-    Falls back to ATR×0.5 if ATR is very low (low volatility)."""
+    """Calculate scalping-appropriate TP/SL.
+
+    Endeksler (GDAXI/NDX): ATR-bazlı dinamik mesafe — TP ≥ max(fixed, ATR×1.5),
+    SL ≥ max(fixed, ATR×1.0). Volatilite arttığında mesafeler genişler, sabit
+    mesafeler taban görevi görür. PULSE_ATR_GEOMETRY=0 ile eski davranışa dönülür.
+
+    Emtialar (XAUUSD/USOIL): eski davranış — sabit mesafe tavan, düşük ATR'de
+    daralma (BUY tarafı %69-80 WR ile bu geometride çalışıyor, rapor 3.1/2.3).
+    """
+    import os as _os
     dist = SCALP_DISTANCES.get(symbol, {"tp": 15, "sl": 10})
     tp_dist = dist["tp"]
     sl_dist = dist["sl"]
-    
-    # Clamp: if ATR is very low, reduce distances
-    atr_tp = atr_val * 1.0
-    atr_sl = atr_val * 0.6
-    tp_dist = min(tp_dist, max(atr_tp, tp_dist * 0.3))  # Don't go below 30% of fixed
-    sl_dist = min(sl_dist, max(atr_sl, sl_dist * 0.3))
+
+    atr_geometry_on = _os.getenv("PULSE_ATR_GEOMETRY", "1") != "0"
+    if atr_geometry_on and symbol in _ATR_GEOMETRY_SYMBOLS and atr_val and atr_val > 0:
+        # ATR taban geometrisi: gürültü bandının dışına çık
+        tp_dist = max(tp_dist, atr_val * _ATR_TP_MULT)
+        sl_dist = max(sl_dist, atr_val * _ATR_SL_MULT)
+    else:
+        # Clamp: if ATR is very low, reduce distances
+        atr_tp = atr_val * 1.0
+        atr_sl = atr_val * 0.6
+        tp_dist = min(tp_dist, max(atr_tp, tp_dist * 0.3))  # Don't go below 30% of fixed
+        sl_dist = min(sl_dist, max(atr_sl, sl_dist * 0.3))
     
     if direction == "BUY":
         target = current_price + tp_dist
@@ -1021,28 +1043,94 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             },
             "comment": port_comment
         })
-        
+
+        # ─── 10. MAKRO UYUM (DXY / US10Y / VIX) — 2026-07-01, rapor aksiyon #10 ──
+        # yfinance makro verisi (macro_data_service, saatlik) EMEL'e 10. kontrol
+        # olarak bağlandı. XAUUSD/USOIL: DXY + US10Y günlük değişimi → emtia
+        # rüzgar yönü. NDX/GDAXI: VIX günlük değişimi → risk iştahı. Fail-open:
+        # makro veri yoksa nötr (warning) kalır, skoru etkilemez.
+        macro_status = "warning"
+        macro_dir = "neutral"
+        macro_comment = "Makro veri henüz hazır değil (nötr katkı)"
+        macro_details: Dict[str, Any] = {}
+        try:
+            from services.macro_data_service import get_snapshot as _macro_get_snapshot
+            _msnap = _macro_get_snapshot()
+            _dxy = _msnap.get("DXY")
+            _us10y = _msnap.get("US10Y")
+            _vix = _msnap.get("VIX")
+            if symbol in ("XAUUSD", "USOIL.FOREX"):
+                _macro_score = 0.0
+                if _dxy is not None and _dxy.change_1d_pct is not None:
+                    _macro_score -= _dxy.change_1d_pct  # DXY zayıflarsa emtia lehine
+                    macro_details["dxy_1d_pct"] = round(_dxy.change_1d_pct, 2)
+                if _us10y is not None and _us10y.change_1d_pct is not None:
+                    _macro_score -= 0.5 * _us10y.change_1d_pct
+                    macro_details["us10y_1d_pct"] = round(_us10y.change_1d_pct, 2)
+                macro_details["composite"] = round(_macro_score, 2)
+                if _macro_score > 0.15:
+                    macro_dir, macro_status = "up", "pass"
+                    macro_comment = "DXY/US10Y zayıflıyor → emtia için BUY rüzgarı"
+                elif _macro_score < -0.15:
+                    macro_dir, macro_status = "down", "pass"
+                    macro_comment = "DXY/US10Y güçleniyor → emtia için SELL rüzgarı"
+                else:
+                    macro_comment = "Makro nötr (DXY/US10Y belirgin hareket yok)"
+            else:
+                if _vix is not None and _vix.change_1d_pct is not None:
+                    macro_details["vix_1d_pct"] = round(_vix.change_1d_pct, 2)
+                    if _vix.change_1d_pct < -2.0:
+                        macro_dir, macro_status = "up", "pass"
+                        macro_comment = "VIX düşüyor → risk iştahı, endeks BUY rüzgarı"
+                    elif _vix.change_1d_pct > 4.0:
+                        macro_dir, macro_status = "down", "pass"
+                        macro_comment = "VIX sıçraması → risk-off, endeks SELL rüzgarı"
+                    else:
+                        macro_comment = "Makro nötr (VIX belirgin hareket yok)"
+        except Exception as _macro_check_err:
+            logger.debug(f"EMEL macro check fail-open: {_macro_check_err}")
+
+        checks.append({
+            "id": 10,
+            "name": "Makro Uyum",
+            "subtitle": "DXY / US10Y / VIX",
+            "status": macro_status,
+            "direction": macro_dir,
+            "color": "green" if macro_status == "pass" else "yellow",
+            "label": ("BUY RÜZGARI" if macro_dir == "up" else "SELL RÜZGARI") if macro_status == "pass" else "NÖTR",
+            "details": macro_details,
+            "comment": macro_comment
+        })
+
         # ─────────────────────────────────────────────────────────────────────
         # KONFLUANS TABANLI AĞIRLIKLI SİNYAL KATMANI (YENİ)
         # ─────────────────────────────────────────────────────────────────────
         
         # 1. ENSTRÜMAN-SPESİFİK AĞIRLIKLAR
+        # 2026-07-01 (rapor 4.4 + aksiyon #10): "macro" faktörü eklendi
+        # (emtialarda ağır, endekslerde hafif). GDAXI: sentetik tick-volume
+        # ağırlığı 15→8 düşürüldü, trend 20→25 yükseltildi, SR 15→12
+        # (pivot DAX'ta zayıf referans — rapor 4.4).
         SYMBOL_WEIGHTS = {
             "NDX.INDX": {
                 "trend": 25, "mtf": 20, "regime": 15, "momentum": 20,
-                "volume": 15, "sr": 10, "pattern": 15, "portfolio": 20
+                "volume": 15, "sr": 10, "pattern": 15, "portfolio": 20,
+                "macro": 5
             },
             "GDAXI.INDX": {
-                "trend": 20, "mtf": 25, "regime": 15, "momentum": 20,
-                "volume": 15, "sr": 15, "pattern": 10, "portfolio": 20
+                "trend": 25, "mtf": 25, "regime": 15, "momentum": 20,
+                "volume": 8, "sr": 12, "pattern": 10, "portfolio": 20,
+                "macro": 5
             },
             "XAUUSD": {
                 "trend": 15, "mtf": 20, "regime": 15, "momentum": 25,
-                "volume": 10, "sr": 20, "pattern": 15, "portfolio": 20
+                "volume": 10, "sr": 20, "pattern": 15, "portfolio": 20,
+                "macro": 15
             },
             "USOIL.FOREX": {
                 "trend": 20, "mtf": 15, "regime": 20, "momentum": 20,
-                "volume": 20, "sr": 15, "pattern": 10, "portfolio": 20
+                "volume": 20, "sr": 15, "pattern": 10, "portfolio": 20,
+                "macro": 10
             }
         }
         
@@ -1057,14 +1145,15 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             "volume": vol_status,
             "sr": sr_status,
             "pattern": pattern_status,
-            "portfolio": port_status
+            "portfolio": port_status,
+            "macro": macro_status       # 2026-07-01: 10. kontrol
         }
         
         # 3. YÖNLÜ ağırlıklı skor: yönlü faktörler (trend, mtf, momentum, sr, pattern)
         #    pass olduğunda faktörün kendi yönüne göre +/- skor ekler.
         #    Salt kalite faktörleri (regime, volume, portfolio, learning) skoru azaltır/artırır
         #    ama yön kararı vermez.
-        directional_factors = {"trend", "mtf", "momentum", "sr", "pattern"}
+        directional_factors = {"trend", "mtf", "momentum", "sr", "pattern", "macro"}
 
         # Momentum yönü (label yerine flag kullan)
         mom_direction = "up" if bullish_momentum else "down" if bearish_momentum else "neutral"
@@ -1079,6 +1168,7 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             "momentum": mom_direction,
             "sr": sr_direction,
             "pattern": pattern_direction,
+            "macro": macro_dir if macro_status == "pass" else "neutral",
         }
 
         score = 0.0
@@ -1394,19 +1484,29 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         
         # ─── REGIME CHECK: Pulse 1 disabled in strong trends ────────────
         regime = await detect_regime(symbol)
-        
-        if regime.model_weights.get("pulse1", 0) == 0:
+
+        # 2026-07-01 (rapor aksiyon #3): GDAXI'de pulse1 askıda — 60g: 446W/1339L
+        # (%25 WR), inverse dahi %38. GDAXI_PULSE1_ENABLED=1 ile tekrar açılır.
+        from services.signal_gates import pulse1_symbol_enabled
+        _pulse1_suspended = not pulse1_symbol_enabled(symbol)
+
+        if regime.model_weights.get("pulse1", 0) == 0 or _pulse1_suspended:
+            _disable_reason = (
+                "Pulse 1 GDAXI'de askıda: 60 günlük WR %25, sinyaller DAX 5m gürültüsünde bilgi taşımıyor (gösterge denetimi 2026-07-01)"
+                if _pulse1_suspended
+                else f"Pulse 1 devre dışı: {regime.regime} rejiminde scalp sinyalleri güvenilir değil"
+            )
             payload = {
                 "symbol": symbol,
                 "timeframe": timeframe,
                 "timestamp": response_timestamp,
                 "signal_timestamp": signal_timestamp,
                 "signal": "HOLD",
-                "signal_type": "REGIME_DISABLED",
+                "signal_type": "SYMBOL_SUSPENDED" if _pulse1_suspended else "REGIME_DISABLED",
                 "pulse_score": 0,
                 "regime": {
                     "type": regime.regime,
-                    "reason": f"Pulse 1 devre dışı: {regime.regime} rejiminde scalp sinyalleri güvenilir değil",
+                    "reason": _disable_reason,
                     "adx": regime.adx,
                     "session": regime.session,
                     "allowed_models": [k for k, v in regime.model_weights.items() if v > 0],
@@ -1417,8 +1517,8 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
                 "momentum": {"rsi": {"value": 50, "trend": "neutral"}, "macd": {"value": 0, "trend": "neutral"}, "stochastic": {"value": 50, "trend": "neutral"}},
                 "volume": {"status": "unknown", "label": "N/A", "ratio": 0, "available": False},
                 "score_breakdown": {},
-                "decision_notes": [f"Pulse 1 kapalı: {regime.regime} rejimi"],
-                "suggestion": {"text": f"⛔ Pulse 1 {regime.regime} rejiminde devre dışı. ML ve Pulse 2/3 kullanın.", "target": regime.current_price or 0, "stop": regime.current_price or 0, "target_distance": 0, "stop_distance": 0, "rr_ratio": 0, "timeframe_estimate": "N/A"}
+                "decision_notes": [_disable_reason if _pulse1_suspended else f"Pulse 1 kapalı: {regime.regime} rejimi"],
+                "suggestion": {"text": ("⛔ Pulse 1 GDAXI'de askıda (gösterge denetimi). ML ve Pulse 2 kullanın." if _pulse1_suspended else f"⛔ Pulse 1 {regime.regime} rejiminde devre dışı. ML ve Pulse 2/3 kullanın."), "target": regime.current_price or 0, "stop": regime.current_price or 0, "target_distance": 0, "stop_distance": 0, "rr_ratio": 0, "timeframe_estimate": "N/A"}
             }
             _set_cached_panel_analysis("pulse1", symbol, timeframe, payload)
             return payload
@@ -1524,14 +1624,21 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         score_details["ema_stack"] = {"ema5": round(ema_5, 2), "ema10": round(ema_10, 2), "ema20": round(ema_20, 2), "stack": ema_stack, "pts": ema_pts}
         
         # 3. RSI Momentum (20 puan)
+        # 2026-07-01 (rapor 3.1): Aşırı bölge cezası trend-aware yapıldı.
+        # Altın ATH trendinde RSI haftalarca 70+ kalabiliyor; yönle uyumlu aşırı
+        # RSI = momentum devamıdır, ceza XAU SELL felaketinin (%19 WR) kaynağıydı.
         rsi_14 = ta.get("rsi_14", 50)
         rsi_pts = 0
+        _rsi_extreme_aligned = (rsi_14 > 75 and candle_bias == "up") or (rsi_14 < 25 and candle_bias == "down")
         if 40 <= rsi_14 <= 60:
             rsi_pts = 10  # Neutral = trend devam ediyor
+        elif _rsi_extreme_aligned and (regime.regime in ("TRANSITION", "STRONG_TREND_UP", "STRONG_TREND_DOWN") or regime.is_ath_zone):
+            rsi_pts = 10  # Trend ortamında yönle uyumlu aşırı RSI = momentum, ceza yok
+            decision_notes.append(f"RSI {rsi_14:.0f} aşırı ama trend yönünde (momentum devam)")
         elif (rsi_14 > 60 and candle_bias == "up") or (rsi_14 < 40 and candle_bias == "down"):
             rsi_pts = 20  # RSI yönle uyumlu
         elif rsi_14 > 75 or rsi_14 < 25:
-            rsi_pts = 0  # Aşırı bölge = risk
+            rsi_pts = 0  # Aşırı bölge + yön uyumsuz = risk
         else:
             rsi_pts = 5
         score += rsi_pts
@@ -1580,15 +1687,32 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         score += vol_pts
         score_details["volume"] = {"ratio": round(volume_ratio, 2), "status": volume_status, "pts": vol_pts}
         
-        # 6. Stochastic onayı (10 puan)
+        # 6. H4 Trend Uyumu (10 puan) — Stochastic'in yerini aldı (2026-07-01)
+        # Stoch 5m'de RSI-14 ile ~%90 korele idi: aynı mean-reversion bilgisini
+        # iki kez sayıp counter-trend sinyali güçlendiriyordu (rapor 3.1).
+        # Stoch artık yalnızca görüntü amaçlı (pts=0), puan H4 uyumuna taşındı.
         stoch_k = ta.get("stoch_k", 50)
-        stoch_pts = 0
-        if (stoch_k > 50 and candle_bias == "up") or (stoch_k < 50 and candle_bias == "down"):
-            stoch_pts = 10
-        elif 30 <= stoch_k <= 70:
-            stoch_pts = 5
-        score += stoch_pts
-        score_details["stochastic"] = {"k": round(stoch_k, 1), "pts": stoch_pts}
+        score_details["stochastic"] = {"k": round(stoch_k, 1), "pts": 0, "display_only": True}
+
+        h4_trend = "neutral"
+        h4_pts = 3  # 4h verisi yoksa nötr katkı (fail-soft)
+        try:
+            _h4_candles = await get_ohlcv_data(symbol, timeframe="4h", limit=60)
+            if _h4_candles and len(_h4_candles) >= 25:
+                _h4_closes = [float(c["close"]) for c in _h4_candles]
+                _h4_ema20 = _calc_ema(_h4_closes, 20)
+                h4_trend = "up" if _h4_closes[-1] > _h4_ema20 else "down"
+                if (h4_trend == "up" and candle_bias == "up") or (h4_trend == "down" and candle_bias == "down"):
+                    h4_pts = 10
+                elif candle_bias == "neutral":
+                    h4_pts = 3
+                else:
+                    h4_pts = 0
+                    decision_notes.append(f"H4 trend ({h4_trend}) 5m bias ile çelişiyor")
+        except Exception as _h4_err:
+            logger.debug(f"PULSE1 H4 alignment skipped: {_h4_err}")
+        score += h4_pts
+        score_details["h4_alignment"] = {"trend": h4_trend, "pts": h4_pts}
 
         preferred_pattern_direction = "BUY" if candle_bias == "up" else "SELL" if candle_bias == "down" else None
         pattern_result = await get_pattern_adjustment(symbol, timeframe="4h")
@@ -1619,8 +1743,9 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         else: bearish_score += 15
         if macd_hist > 0: bullish_score += 15
         else: bearish_score += 15
-        if stoch_k > 50: bullish_score += 15
-        else: bearish_score += 15
+        # 2026-07-01: Stoch oyu H4 trend oyuyla değiştirildi (mükerrer bilgiydi)
+        if h4_trend == "up": bullish_score += 15
+        elif h4_trend == "down": bearish_score += 15
         
         if bullish_score > bearish_score:
             trend_direction = "up"
@@ -1703,6 +1828,22 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         if was_filtered:
             signal_type = "HOLD"
             decision_notes.append(filter_reason)
+
+        # ─── MERKEZİ KAPILAR (signal_gates — rapor aksiyon #2/#5/#9) ─────────
+        # XAU trend-yönü SELL kapısı + seans kapısı + takvim kapısı.
+        if pulse_signal in ("BUY", "SELL"):
+            try:
+                from services.signal_gates import apply_signal_gates
+                _gated_signal, _gate_notes = await apply_signal_gates(
+                    symbol, pulse_signal, "pulse1", regime=regime
+                )
+                if _gate_notes:
+                    decision_notes.extend(_gate_notes)
+                if _gated_signal != pulse_signal:
+                    pulse_signal = _gated_signal
+                    signal_type = "HOLD"
+            except Exception as _gate_err:
+                logger.warning(f"PULSE1 signal_gates skipped (fail-open): {_gate_err}")
 
         # ─── AI-Ops Guards (XAU/PULSE1) ───────────────────────────────────────
         # Multiple independent failure clusters surfaced by AI-Ops on
@@ -2248,7 +2389,22 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
         if was_filtered:
             signal_type = "HOLD"
             notes.append(filter_reason)
-            
+
+        # ─── MERKEZİ KAPILAR (signal_gates — rapor aksiyon #2/#5/#9) ────
+        if signal in ("BUY", "SELL"):
+            try:
+                from services.signal_gates import apply_signal_gates
+                _gated_signal, _gate_notes = await apply_signal_gates(
+                    symbol, signal, "pulse2", regime=regime
+                )
+                if _gate_notes:
+                    notes.extend(_gate_notes)
+                if _gated_signal != signal:
+                    signal = _gated_signal
+                    signal_type = "HOLD"
+            except Exception as _gate_err:
+                logger.warning(f"PULSE2 signal_gates skipped (fail-open): {_gate_err}")
+
         # ─── Hedef / Stop (SCALPING distances — instrument-specific) ────
         atr_val = ta.get("atr_14", current_price * 0.002)
         target, stop, _, _ = _scalp_tp_sl(symbol, current_price, signal, atr_val)
@@ -2565,10 +2721,17 @@ def _analyze_1h(closes, ta) -> Dict:
     details["macd"] = {"hist": round(macd_hist, 4), "dir": macd_dir, "pts": macd_pts}
     
     # 3. Son 20 mum performans (5 puan)
+    # 2026-07-01 (rapor aksiyon #4): sabit %1 eşiği ATR-normalize edildi —
+    # düşük volatilitede %1 ulaşılmaz, yüksek volatilitede önemsizdir.
     perf_pts = 0
     if len(closes) >= 20:
         change = (closes[-1] - closes[-20]) / closes[-20]
-        if abs(change) > 0.01:  # %1 hareket
+        _atr_pct = ta.get("atr_pct")
+        if _atr_pct:
+            _th_perf = max(1.5 * float(_atr_pct) / 100.0, 0.005)
+        else:
+            _th_perf = 0.01  # fallback: eski sabit eşik
+        if abs(change) > _th_perf:
             perf_pts = 5
     score += perf_pts
     details["performance"] = {"pts": perf_pts}
@@ -2597,30 +2760,43 @@ def _analyze_4h(closes, ta) -> Dict:
     # Son 10 mumun genel yönü
     first = float(closes[-10])
     change = (current - first) / first
-    
+
+    # 2026-07-01 (rapor aksiyon #4): sabit %2/%1/%0.3 eşikleri ATR-normalize
+    # edildi. 10 barlık hareket 4H ATR%'sine oranla ölçeklenir; ATR verisi
+    # yoksa eski sabitlere düşülür. Böylece altın gibi yüksek volatilite
+    # enstrümanlarında eşikler otomatik genişler, sakin dönemde daralır.
+    _atr_pct = ta.get("atr_pct")
+    if _atr_pct:
+        _atr_frac = float(_atr_pct) / 100.0
+        _th_strong = max(3.0 * _atr_frac, 0.008)
+        _th_mid = max(1.5 * _atr_frac, 0.004)
+        _th_weak = max(0.5 * _atr_frac, 0.0015)
+    else:
+        _th_strong, _th_mid, _th_weak = 0.02, 0.01, 0.003
+
     change_pts = 0
-    if change > 0.02:  # %2 yukarı
+    if change > _th_strong:
         change_pts = 15
         trend = "up"
-    elif change > 0.01:
+    elif change > _th_mid:
         change_pts = 10
         trend = "up"
-    elif change > 0.003:
+    elif change > _th_weak:
         change_pts = 5
         trend = "up"
-    elif change < -0.02:
+    elif change < -_th_strong:
         change_pts = 15
         trend = "down"
-    elif change < -0.01:
+    elif change < -_th_mid:
         change_pts = 10
         trend = "down"
-    elif change < -0.003:
+    elif change < -_th_weak:
         change_pts = 5
         trend = "down"
     else:
         trend = "neutral"
     score += change_pts
-    details["change"] = {"pct": round(change * 100, 2), "pts": change_pts}
+    details["change"] = {"pct": round(change * 100, 2), "pts": change_pts, "atr_normalized": bool(_atr_pct)}
     
     # EMA20 ek kontrol (5 puan)
     ema20 = ta.get("ema_20", current)
@@ -2712,10 +2888,27 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
         result_5m = _analyze_5m(c5, h5, l5, v5, ta_5m)
         result_1h = _analyze_1h(c1h, ta_1h)
         result_4h = _analyze_4h(c4h, ta_4h)
-        
-        # Ağırlıklı toplam skor
-        total_score = result_5m["score"] + result_1h["score"] + result_4h["score"]
-        # Max: 50 + 30 + 20 = 100
+
+        # Ağırlıklı toplam skor — REGIME-AWARE (2026-07-01, rapor aksiyon #4)
+        # Eski sabit dağılım (5m %50 / 1H %30 / 4H %20) trend ortamında 5m
+        # gürültüsünün 4H trendini ezmesine yol açıyordu (XAU SELL WR %19.7).
+        # Trend/ATH: 4H %40 / 1H %35 / 5m %25; TRANSITION: 35/35/30;
+        # RANGING: eski dağılım korunur. PULSE3_REGIME_WEIGHTS=0 → eski davranış.
+        import os as _os
+        if _os.getenv("PULSE3_REGIME_WEIGHTS", "1") != "0" and (
+            regime.regime in ("STRONG_TREND_UP", "STRONG_TREND_DOWN") or regime.is_ath_zone
+        ):
+            _w5, _w1h, _w4h = 25.0, 35.0, 40.0
+        elif _os.getenv("PULSE3_REGIME_WEIGHTS", "1") != "0" and regime.regime == "TRANSITION":
+            _w5, _w1h, _w4h = 30.0, 35.0, 35.0
+        else:
+            _w5, _w1h, _w4h = 50.0, 30.0, 20.0
+        total_score = (
+            (result_5m["score"] / 50.0) * _w5
+            + (result_1h["score"] / 30.0) * _w1h
+            + (result_4h["score"] / 20.0) * _w4h
+        )
+        # Max: 100 (normalize edilmiş alt skorların ağırlıklı toplamı)
         
         # ─── YÖN BELİRLEME (regime-biased) ──────────────────────────────
         up_votes = sum(1 for r in [result_5m, result_1h, result_4h] if r["trend"] == "up")
@@ -2766,6 +2959,21 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
         if was_filtered:
             signal_type = "HOLD"
             notes.append(filter_reason)
+
+        # ─── MERKEZİ KAPILAR (signal_gates — rapor aksiyon #2/#5/#9) ────
+        if direction in ("BUY", "SELL"):
+            try:
+                from services.signal_gates import apply_signal_gates
+                _gated_dir, _gate_notes = await apply_signal_gates(
+                    symbol, direction, "pulse3", regime=regime
+                )
+                if _gate_notes:
+                    notes.extend(_gate_notes)
+                if _gated_dir != direction:
+                    direction = "NEUTRAL"
+                    signal_type = "HOLD"
+            except Exception as _gate_err:
+                logger.warning(f"PULSE3 signal_gates skipped (fail-open): {_gate_err}")
 
         if pattern_context.get("count", 0) > 0 and pattern_context.get("preferred_direction") in {"BUY", "SELL"} and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
             if signal_type == "CONFIRM":

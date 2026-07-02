@@ -762,6 +762,17 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     targets_hit = {}
     targets_hit_times = {}
 
+    # 2026-07-01 (rapor aksiyon #1): Önceki check'lerde DB'ye yazılmış TP
+    # vuruşlarını tohumla. 1m/5m fetch penceresi sinyal başlangıcını
+    # kapsamadığında TP bilgisi kaybolup sinyal haksız yere 'stopped'
+    # oluyordu. Tohumlanan vuruşların zamanı bilinmediği için
+    # targets_hit_times'a girilmez (aşağıdaki fallback'ler halleder).
+    _stored_hits = signal.get("targets_hit")
+    if isinstance(_stored_hits, dict):
+        for _tp_name, _tp_val in _stored_hits.items():
+            if _tp_val:
+                targets_hit[str(_tp_name)] = True
+
     new_high = 0.0
     new_low = 0.0
 
@@ -825,9 +836,16 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             if tp1_3_hit:
                 new_status = "completed"
                 # Find the earliest TP exit time
-                earliest_tp = min(targets_hit_times.keys(), key=lambda k: targets_hit_times[k])
-                exit_time = targets_hit_times[earliest_tp]
-                exit_price = target_prices[earliest_tp]
+                if targets_hit_times:
+                    earliest_tp = min(targets_hit_times.keys(), key=lambda k: targets_hit_times[k])
+                    exit_time = targets_hit_times[earliest_tp]
+                else:
+                    # TP vuruşu önceki check'ten tohumlandı — zamanı bilinmiyor
+                    earliest_tp = next(
+                        tp for tp in ("TP1", "TP2", "TP3") if targets_hit.get(tp)
+                    )
+                    exit_time = c_date
+                exit_price = target_prices.get(earliest_tp, entry_price)
                 resolution_reason = "tp1_3_hit_then_sl"
                 break
             else:
@@ -840,8 +858,8 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         # If TP4 is hit, it completes immediately
         if targets_hit.get("TP4"):
             new_status = "completed"
-            exit_time = targets_hit_times["TP4"]
-            exit_price = target_prices["TP4"]
+            exit_time = targets_hit_times.get("TP4", c_date)
+            exit_price = target_prices.get("TP4", entry_price)
             resolution_reason = "tp4_hit"
             break
 
@@ -948,6 +966,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             if (trajectory_alert
                     and trajectory_alert.get("deteriorating")
                     and new_high < 1.0           # not already winning
+                    and not any(targets_hit.values())  # 2026-07-01: TP görmüş sinyal abort edilmez
                     and resolved_sl_pips > 0
                     and abs(new_low) >= resolved_sl_pips * 0.3):
                 new_status = "stopped"
