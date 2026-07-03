@@ -39,6 +39,52 @@ def resolve_path(direction: str, tp: float, sl: float, bars_after: list[dict]):
     return None, None
 
 
+def _path_metrics(direction: str, entry: float, tp: float, sl: float,
+                  bars: list[dict], post_bars: int = 288) -> dict | None:
+    """İşlemin YOLU (kullanıcının 'SL/TP noktalarını yakala' isteği — öğrenmenin kalbi):
+     - mfe_r / mae_r: en iyi lehte / en kötü aleyhte hareket (R = |entry−sl| birimi).
+       Konservatif intrabar: SL vurulan barın lehte hareketi SAYILMAZ (sıra bilinmez).
+     - bars_to_outcome: kaç barda sonuçlandı (anında ret vs tez çürümesi ayrımı).
+     - tp_progress: TP'ye ilerlemenin oranı (LOSS'ta ≥0.85 = 'TP birazcık uzaktı').
+     - LOSS SONRASI (post_bars≈24h): sl_recovered_entry = fiyat entry'ye döndü (SL-avı);
+       sl_then_tp = orijinal TP'ye ulaştı (yön DOĞRUYDU, stop dar — en acı ders).
+    ⚠ Bu metrikler SONUÇTAN türetilir → post_mortem'de AYIRICI-ÖZELLİK olarak kullanılMAZ
+    (etiket sızıntısı olur); yalnız segmentasyon/kalite raporu içindir. batch paketlerine
+    leak_guard zaten sokmaz (beyaz-listede yok)."""
+    buy = direction.upper() == "BUY"
+    risk = abs(entry - sl)
+    tp_dist = abs(tp - entry)
+    if not risk or not tp_dist or not bars:
+        return None
+    mfe = mae = 0.0
+    out, k = None, None
+    for j, b in enumerate(bars):
+        fav = (b["high"] - entry) if buy else (entry - b["low"])
+        adv = (entry - b["low"]) if buy else (b["high"] - entry)
+        if (b["low"] <= sl) if buy else (b["high"] >= sl):    # konservatif: SL önce
+            out, k, mae = "LOSS", j, risk
+            break
+        mae = max(mae, adv)
+        if (b["high"] >= tp) if buy else (b["low"] <= tp):
+            out, k, mfe = "WIN", j, tp_dist
+            break
+        mfe = max(mfe, fav)
+    d = {"mfe_r": round(mfe / risk, 2), "mae_r": round(mae / risk, 2),
+         "bars_to_outcome": (k + 1) if k is not None else None,
+         "tp_progress": round(mfe / tp_dist, 2)}
+    if out == "LOSS" and k is not None:                        # SL SONRASI otopsi
+        rec = sltp = False
+        for b in bars[k + 1:k + 1 + post_bars]:
+            if (b["high"] >= entry) if buy else (b["low"] <= entry):
+                rec = True
+            if (b["high"] >= tp) if buy else (b["low"] <= tp):
+                sltp = True
+                break
+        d["sl_recovered_entry"] = rec or sltp
+        d["sl_then_tp"] = sltp
+    return d
+
+
 def pnl_r(outcome: str, rr: float = 0.667) -> float:
     """WIN → +rr (R cinsinden; R = SL riski), LOSS → −1.0. rr per-trade (sembole göre stop)."""
     return round(float(rr), 3) if outcome == "WIN" else (-1.0 if outcome == "LOSS" else 0.0)
@@ -97,6 +143,9 @@ def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
                         e["pnl_r"] = pnl_r(outcome, tr.get("rr", 0.667)); changed += 1
                     elif now - datetime.fromisoformat(e["ts"]).timestamp() > max_horizon_h * 3600:
                         e["outcome"] = "EXPIRE"; e["pnl_r"] = 0.0; changed += 1
+                    if e.get("outcome") and e.get("path") is None:      # YOL analizi (SL/TP otopsisi)
+                        e["path"] = _path_metrics(e["decision"]["direction"], tr["entry_price"],
+                                                  tr["tp"], tr["sl"], bars)
         # 2) karşı-olgu (her kayıtta: primary_dir açsaydı) + ÇOKLU ÇIKIŞ grade'i
         if need_cf:
             if bars is None:
@@ -108,6 +157,8 @@ def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
                 e["cf_pnl_r"] = pnl_r(cfo, cf.get("rr", 0.667)); changed += 1
             elif mature:
                 e["cf_outcome"] = "EXPIRE"; e["cf_pnl_r"] = 0.0; changed += 1
+            if e.get("cf_outcome") and e.get("cf_path") is None and bars:   # cf YOL analizi
+                e["cf_path"] = _path_metrics(cf["dir"], cf["entry_price"], cf["tp"], cf["sl"], bars)
             # Çıkış politikaları: tam ileri pencere üzerinde 6 çıkışı grade et (sembol başına
             # en iyi çıkışı öğrenmek için — exit_compare.py analiz eder). cf çözülünce/olgunlaşınca.
             if e.get("exit_grades") is None and cf.get("atr") and bars and (cfo or mature):

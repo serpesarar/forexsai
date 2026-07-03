@@ -51,6 +51,90 @@ def _label_dir(e):
     return None, None, None
 
 
+def _path_of(e, src):
+    """Etiket kaynağına uygun yol metriği (real→path, cf→cf_path). ⚠ Yol metrikleri
+    SONUÇTAN türetilir → _flatten'a ASLA girmez (etiket sızıntısı); yalnız segmentasyon."""
+    return e.get("path") if src == "real" else e.get("cf_path")
+
+
+def _subtype(lab, path):
+    """Yol-tabanlı alt-tip — kaybın/kazancın KARAKTERİ (dersler zıt olduğu için ayrışır):
+    LOSS_instant (mfe<0.25R, direkt SL)=GİRİŞ hatası · LOSS_reversal (mfe≥0.6R, önce
+    lehte koştu)=giriş doğru ÇIKIŞ hatası · WIN_lucky (mae≥0.8R, SL'e sürtündü)=kırılgan."""
+    if not path or not lab:
+        return None
+    if lab == "LOSS":
+        m = path.get("mfe_r")
+        if m is None:
+            return None
+        return "LOSS_instant" if m < 0.25 else ("LOSS_reversal" if m >= 0.6 else "LOSS_mid")
+    if lab == "WIN":
+        m = path.get("mae_r")
+        if m is None:
+            return None
+        return "WIN_lucky" if m >= 0.8 else ("WIN_clean" if m < 0.4 else "WIN_mid")
+
+
+def path_quality(rows):
+    """[SL/TP YOL ANALİZİ] — 'maksimum SL/TP analizi': kayıplar NASIL kaybetti, kazançlar
+    NASIL kazandı? Her pay eyleme çevrilir (giriş mi çıkış mı stop mu TP mi sorunlu)."""
+    L, W = [], []
+    for e in rows:
+        lab, d, src = _label_dir(e)
+        p = _path_of(e, src)
+        if p and lab in ("WIN", "LOSS"):
+            (L if lab == "LOSS" else W).append((e, p))
+    print("=" * 70)
+    print(f"SL/TP YOL ANALİZİ — kayıp: {len(L)}, kazanç: {len(W)} (yol-metrikli)")
+    print("=" * 70)
+    if len(L) < 5 and len(W) < 5:
+        print("  ⏳ yol-metrikli kayıt az (YENİ alan — resolve dolduracak).")
+        return
+    if L:
+        n = len(L)
+        inst = [x for x in L if _subtype("LOSS", x[1]) == "LOSS_instant"]
+        rev = [x for x in L if _subtype("LOSS", x[1]) == "LOSS_reversal"]
+        near = [x for x in L if (x[1].get("tp_progress") or 0) >= 0.85]
+        hunt = [x for x in L if x[1].get("sl_recovered_entry")]
+        sltp = [x for x in L if x[1].get("sl_then_tp")]
+        print(f"\n[KAYIPLAR NASIL KAYBETTİ] (n={n})")
+        print(f"  anlık-kayıp (mfe<0.25R):    {len(inst):>3} (%{100*len(inst)/n:.0f}) → GİRİŞ sorunu (aşağıdaki entry-saflığına bak)")
+        print(f"  dönüş-kaybı (mfe≥0.6R):     {len(rev):>3} (%{100*len(rev)/n:.0f}) → giriş DOĞRUYDU, ÇIKIŞ sorunu")
+        if rev:
+            pols = {}
+            for e, _ in rev:                       # bu kayıpları hangi çıkış kurtarırdı?
+                for pol, v in (e.get("exit_grades") or {}).items():
+                    if isinstance(v, (int, float)):
+                        pols.setdefault(pol, []).append(v)
+            if pols:
+                best = max(pols, key=lambda k: sum(pols[k]) / len(pols[k]))
+                bavg = sum(pols[best]) / len(pols[best])
+                print(f"      ↳ kurtarıcı çıkış: '{best}' bu işlemlerde ort {bavg:+.2f} ATR verirdi (exit_compare teyidi ara)")
+        print(f"  TP'ye %85+ yaklaşıp döndü:  {len(near):>3} (%{100*len(near)/n:.0f}) → 'TP birazcık uzaktı' (TP kalibrasyonu)")
+        print(f"  SL-AVI — SL sonrası entry'ye döndü: {len(hunt)} (%{100*len(hunt)/n:.0f}); "
+              f"orijinal TP'ye ULAŞTI: {len(sltp)} (%{100*len(sltp)/n:.0f}) → yön doğru, STOP dar")
+        tsl = [x[1]["bars_to_outcome"] for x in L if x[1].get("bars_to_outcome")]
+        if tsl:
+            print(f"  SL'e ortalama süre: {sum(tsl)/len(tsl):.0f} bar")
+    if W:
+        lucky = [x for x in W if _subtype("WIN", x[1]) == "WIN_lucky"]
+        print(f"\n[KAZANÇLAR NASIL KAZANDI] (n={len(W)})")
+        print(f"  şanslı/kırılgan (mae≥0.8R): {len(lucky)} (%{100*len(lucky)/len(W):.0f}) → bunları giriş-pattern teyidi SAYMA")
+        ttp = [x[1]["bars_to_outcome"] for x in W if x[1].get("bars_to_outcome")]
+        if ttp:
+            print(f"  TP'ye ortalama süre: {sum(ttp)/len(ttp):.0f} bar")
+    # ENTRY SAFLIĞI — en saf kıyas: anlık-kayıp vs temiz-kazanç (orta/karışık tipler dışarıda
+    # → çıkış-kaynaklı gürültü elenir, giriş sinyali konsantre olur)
+    pure = []
+    for e in rows:
+        lab, d, src = _label_dir(e)
+        if _subtype(lab, _path_of(e, src)) in ("LOSS_instant", "WIN_clean"):
+            pure.append(e)
+    if len(pure) >= MIN_SIDE * 2:
+        print()
+        _report(pure, "ENTRY SAFLIĞI — anlık-kayıp vs temiz-kazanç (en saf giriş sinyali)")
+
+
 def _session_of(e):
     return ((e.get("context") or {}).get("session")
             or (e.get("free_context") or {}).get("session"))
@@ -244,6 +328,8 @@ def main():
     for sym, items in sorted(by_sym.items()):
         if len(items) >= MIN_SIDE * 3:
             _report(items, f"SEMBOL: {sym}")
+    print()
+    path_quality(rows)          # SL/TP yol analizi + entry-saflığı
     if cands:
         print("\n[ADAY FİLTRELER] (FDR-geçti; LESSONS'a yazmak için --write)")
         for c in cands:
