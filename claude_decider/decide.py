@@ -29,8 +29,10 @@ MEM = HERE / "memory"
 JOURNAL_JSONL = MEM / "journal.jsonl"
 DECIDE_MODEL = "opus"                       # asıl (canlı) karar modeli
 # GÖLGE model A/B: aynı veriye paralel karar verir, AYRI grade edilir (canlı değil, kıyas için).
-# model_compare.py Opus vs bunu kıyaslar. None → kapalı. Fable5 ~4× ucuz (0.07 vs 0.30/çağrı).
-SHADOW_MODEL = "claude-fable-5"
+# 2026-07-03 KAPATILDI (None): canlı çift-çağrı 3 günde haftalık limitin %55'ini yedi.
+# Fable artık batch_eval.py ile ölçülür: kayıtlar birikir → TEK toplu çağrı → sızıntısız
+# değerlendirme (sonuçlar+fiyat+zaman sıyrılır, shuffle). ~60 çağrı/gün → 1 çağrı/gün.
+SHADOW_MODEL = None
 # Per-sembol ATR stop çarpanları (grading + trade). Varsayılan RR~0.67.
 # XAUUSD "patient WR" ([[xauusd-meta-stop-sizing]]): dar stop → dönüş tamamlanmadan SL.
 # Geniş SL ver → sabırlı bounce stop yemeden realize olsun (canlı gözlem: XAU BUY %43/−0.29R dar stopla).
