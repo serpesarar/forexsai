@@ -243,6 +243,7 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
         "free_context": {k: ctx.get(k) for k in ("price", "session", "support", "resistance",
                                                  "dist_to_support_atr", "dist_to_resistance_atr", "macro")},
         "multi_tf": ctx.get("multi_tf"),
+        "forensics": ctx.get("forensics"),   # SL-otopsi snapshot
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),
         "shadow_model": shadow,          # Fable5 A/B kararı (ayrı grade)
         "outcome": None,
@@ -292,6 +293,7 @@ def append_journal(situation: dict, dec: dict) -> dict:
         "counterfactual": cf,        # primary_dir "açsaydı" — analyze_missed grade eder
         "cf_outcome": None,
         "dirs_live": {d: (b.get("live") or {}) for d, b in (situation.get("directions") or {}).items()},
+        "forensics": situation.get("forensics"),   # SL-otopsi: hacim/VIX/DXY/kanal/multi-TF S/R
         "vix": situation.get("vix"),
         "context": situation.get("context"),
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),

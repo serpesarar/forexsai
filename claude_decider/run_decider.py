@@ -26,6 +26,7 @@ from decide import (decide_situation, decide_free, append_journal, append_free_j
                     JOURNAL_JSONL, DECIDE_MODEL, HARD_BANS)
 import evidence as ev  # noqa: E402
 import free_context as fx  # noqa: E402
+import forensics  # noqa: E402
 import outcomes  # noqa: E402
 
 CADENCE_SEC = 1200       # 20dk (maliyet: 15→20dk ~%25 az çağrı; mean-rev bu hızda yeterli)
@@ -99,13 +100,13 @@ def fetch_bars_mt5(n: int = BARS_N) -> dict[str, list[dict]]:
     return out
 
 
-def fetch_multi_tf(fx_sym: str, n: int = 120) -> dict:
-    """XAU serbest-zekâ için çok-TF bar (1m/5m/30m/1h). Dönüş: {'1m':[...], ...}."""
+def fetch_multi_tf(fx_sym: str, n: int = 150) -> dict:
+    """Çok-TF bar (1m/5m/30m/1h/4h) — free mod + FORENSİK snapshot için (tüm semboller)."""
     mt5_sym = _SYM_MAP.get(fx_sym)
     if not mt5_sym:
         return {}
     tf_map = {"1m": mt5.TIMEFRAME_M1, "5m": mt5.TIMEFRAME_M5,
-              "30m": mt5.TIMEFRAME_M30, "1h": mt5.TIMEFRAME_H1}
+              "30m": mt5.TIMEFRAME_M30, "1h": mt5.TIMEFRAME_H1, "4h": mt5.TIMEFRAME_H4}
     out = {}
     for tf, const in tf_map.items():
         rates = mt5.copy_rates_from_pos(mt5_sym, const, 0, n)
@@ -242,6 +243,13 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
     if sits:
         print(f"[{now:%H:%M}] {len(sits)} ilginç sembol → Opus (kanıt-temelli, {model})...")
         for sit in sits:
+            # FORENSİK snapshot (hacim/VIX/DXY/kanal/multi-TF S/R+güç) — model GÖRÜR + journal'a yazılır
+            if _HAS_MT5:
+                try:
+                    sit["forensics"] = forensics.build_forensics(
+                        fetch_multi_tf(sit["symbol"]), vix=vix, dxy=dxy)
+                except Exception as e:
+                    print("  forensics hatası (devam):", e)
             dec = decide_situation(sit, model=model)
             append_journal(sit, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
@@ -252,8 +260,13 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
 
     # XAU SERBEST-ZEKÂ (kanıt-tablosu yok; çok-TF ham bağlam → Opus çıplak muhakeme)
     if _HAS_MT5 and FREE_SYMBOL in _SYM_MAP:
-        ctx = fx.build_free_context(fetch_multi_tf(FREE_SYMBOL), vix=vix, dxy=dxy)
+        mtf = fetch_multi_tf(FREE_SYMBOL)
+        ctx = fx.build_free_context(mtf, vix=vix, dxy=dxy)
         if ctx:
+            try:
+                ctx["forensics"] = forensics.build_forensics(mtf, vix=vix, dxy=dxy)
+            except Exception as e:
+                print("  forensics hatası (devam):", e)
             print(f"[{now:%H:%M}] {FREE_SYMBOL} → Opus (SERBEST-ZEKÂ, çok-TF)...")
             dec = decide_free(ctx, model=model)
             append_free_journal(ctx, dec)["shadow"] = shadow
