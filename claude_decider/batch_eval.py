@@ -27,7 +27,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
-from decide import JOURNAL_JSONL, call_claude  # noqa: E402
+from decide import JOURNAL_JSONL, call_claude, journal_lock  # noqa: E402
 
 MODEL = "claude-fable-5"
 MAX_PER_CALL = 70           # tek çağrıda değerlendirilen kayıt (çıktı token güvenliği)
@@ -198,17 +198,18 @@ def evaluate(packs, key, model=MODEL, write=False):
         print(f"  💰 Tasarruf: canlı shadow olsaydı ~${canli_maliyet:.0f}; toplu çağrı ${cost:.2f} "
               f"(~{canli_maliyet/max(cost,0.01):.0f}× ucuz)")
     if write:      # değerlendirilenleri işaretle (bu model için tekrar sorulmasın)
-        rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
-        by_ts = {e.get("ts"): a for a in answers for e in [key.get(a.get("i"))] if e}
-        for r in rows:
-            a = by_ts.get(r.get("ts"))
-            if a:
-                r.setdefault("batch_eval", {})[model] = {"action": a.get("action"),
-                                                         "direction": a.get("direction"),
-                                                         "size": a.get("size")}
-        with open(JOURNAL_JSONL, "w", encoding="utf-8") as f:
+        with journal_lock():       # decider'ın resolve yeniden-yazımıyla çakışma önlenir
+            rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
+            by_ts = {e.get("ts"): a for a in answers for e in [key.get(a.get("i"))] if e}
             for r in rows:
-                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+                a = by_ts.get(r.get("ts"))
+                if a:
+                    r.setdefault("batch_eval", {})[model] = {"action": a.get("action"),
+                                                             "direction": a.get("direction"),
+                                                             "size": a.get("size")}
+            with open(JOURNAL_JSONL, "w", encoding="utf-8") as f:
+                for r in rows:
+                    f.write(json.dumps(r, ensure_ascii=False) + "\n")
         print(f"  → journal'a batch_eval[{model}] işlendi (bu model için tekrar sorulmaz).")
 
 

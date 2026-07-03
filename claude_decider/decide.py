@@ -28,6 +28,42 @@ from gates import CHAN_Z as GATE_CHAN_Z, VWAP_Z as GATE_VWAP_Z  # noqa: E402  (f
 
 MEM = HERE / "memory"
 JOURNAL_JSONL = MEM / "journal.jsonl"
+JOURNAL_LOCK = MEM / "journal.lock"
+
+
+from contextlib import contextmanager  # noqa: E402
+
+
+@contextmanager
+def journal_lock(timeout: float = 10.0):
+    """Süreçler-arası journal kilidi: decider'ın resolve'ı (tam-dosya yeniden-yazım) ile
+    batch_eval --write / append'ler çakışıp SESSİZCE veri kaybetmesin. Fail-open: timeout'ta
+    kilitli beklemek yerine uyarıyla devam (canlı döngü asla kilitlenmez). Bayat kilit
+    (>60s, sahibi ölmüş) otomatik kırılır."""
+    import os
+    import time as _t
+    MEM.mkdir(parents=True, exist_ok=True)
+    deadline = _t.time() + timeout
+    fd = None
+    while True:
+        try:
+            if JOURNAL_LOCK.exists() and _t.time() - JOURNAL_LOCK.stat().st_mtime > 60:
+                JOURNAL_LOCK.unlink(missing_ok=True)          # bayat kilidi kır
+            fd = os.open(str(JOURNAL_LOCK), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            break
+        except FileExistsError:
+            if _t.time() > deadline:
+                print("  ⚠ journal.lock timeout — fail-open devam (nadir çakışma riski)")
+                break
+            _t.sleep(0.25)
+        except OSError:
+            break
+    try:
+        yield
+    finally:
+        if fd is not None:
+            os.close(fd)
+            JOURNAL_LOCK.unlink(missing_ok=True)
 DECIDE_MODEL = "opus"                       # asıl (canlı) karar modeli
 # GÖLGE model A/B: aynı veriye paralel karar verir, AYRI grade edilir (canlı değil, kıyas için).
 # 2026-07-03 KAPATILDI (None): canlı çift-çağrı 3 günde haftalık limitin %55'ini yedi.
@@ -204,10 +240,13 @@ FREE_SYSTEM = (
 
 
 def build_free_prompt(ctx: dict) -> str:
+    # forensics varken multi_tf ÇİFTE veri (channel_z/adx/trend iki kez) → prompt'tan düş
+    # (~%40 token tasarrufu her XAU çağrısında; journal'da ikisi de durur)
+    pctx = {k: v for k, v in ctx.items() if not (k == "multi_tf" and ctx.get("forensics"))}
     return f"""{FREE_SYSTEM}
 
 === XAUUSD ÇOK-TF HAM BAĞLAM (kanıt değil, senin yorumlaman için) ===
-{json.dumps(ctx, ensure_ascii=False, indent=2)}
+{json.dumps(pctx, ensure_ascii=False, indent=2)}
 
 GÖREV — bir altın uzmanı gibi bu resmi oku:
 - Çok-TF uyum: 1m/5m/30m/1h trendleri hizalı mı, yoksa çelişiyor mu (çelişki=belirsizlik)?
@@ -277,8 +316,9 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
         "outcome": None,
     }
     MEM.mkdir(parents=True, exist_ok=True)
-    with open(JOURNAL_JSONL, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    with journal_lock(timeout=5.0):
+        with open(JOURNAL_JSONL, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     return entry
 
 
@@ -329,8 +369,9 @@ def append_journal(situation: dict, dec: dict) -> dict:
         "outcome": None,
     }
     MEM.mkdir(parents=True, exist_ok=True)
-    with open(JOURNAL_JSONL, "a", encoding="utf-8") as f:
-        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    with journal_lock(timeout=5.0):
+        with open(JOURNAL_JSONL, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
     return entry
 
 

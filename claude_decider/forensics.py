@@ -62,24 +62,25 @@ def _cluster(levels: list[float], atr: float) -> list[float]:
     return out
 
 
-def _touch_stats(bars, level: float, tol: float, kind: str):
+def _touch_stats(bars, level: float, count_tol: float, react_tol: float, kind: str):
     """Seviyeye dokunuş sayısı + SON TEPKİ. kind='sup' → low'lar dokunur; 'res' → high'lar.
-    Son tepki: son dokunuştan sonraki 4 barın kapanışı seviyenin doğru tarafında kaldıysa
-    'bounce' (döndü), aksi halde 'broke' (kırdı)."""
+    count_tol = KÜME genişliği (CLUSTER_ATR) — seviye zaten ±bu banttaki pivotların ortalaması,
+    dokunuşlar da aynı bantta sayılmalı (dar 0.15 tol kümenin kendi üyelerini SAYMIYORDU →
+    'seviye gücü' sistematik düşüktü). react_tol = tepki için dar tolerans (0.15, hassas)."""
     win = bars[-SR_LOOKBACK:]
     touches, last_i = 0, None
     for i, b in enumerate(win):
         probe = b["low"] if kind == "sup" else b["high"]
-        if abs(probe - level) <= tol:
+        if abs(probe - level) <= count_tol:
             touches += 1; last_i = i
     reaction = None
     if last_i is not None and last_i + 1 < len(win):
         after = [b["close"] for b in win[last_i + 1:last_i + 5]]
         if after:
             if kind == "sup":
-                reaction = "bounce" if min(after) > level - tol else "broke"
+                reaction = "bounce" if min(after) > level - react_tol else "broke"
             else:
-                reaction = "bounce" if max(after) < level + tol else "broke"
+                reaction = "bounce" if max(after) < level + react_tol else "broke"
     return touches, reaction
 
 
@@ -89,18 +90,19 @@ def _sr_pack(bars, price: float, atr: float) -> dict:
         return {}
     sup_raw, res_raw = _pivot_levels(bars)
     sups = _cluster(sup_raw, atr); ress = _cluster(res_raw, atr)
-    tol = TOL_ATR * atr
+    count_tol = CLUSTER_ATR * atr        # dokunuş = küme bandı (üyeler sayılsın)
+    react_tol = TOL_ATR * atr            # tepki = dar bant (hassas bounce/broke)
     out = {}
     below = [s for s in sups if s < price]
     above = [r for r in ress if r > price]
     if below:
         lvl = max(below)
-        t, rx = _touch_stats(bars, lvl, tol, "sup")
+        t, rx = _touch_stats(bars, lvl, count_tol, react_tol, "sup")
         out["sup"] = {"level": round(lvl, 5), "dist_atr": round((price - lvl) / atr, 2),
                       "touches": t, "last_reaction": rx}
     if above:
         lvl = min(above)
-        t, rx = _touch_stats(bars, lvl, tol, "res")
+        t, rx = _touch_stats(bars, lvl, count_tol, react_tol, "res")
         out["res"] = {"level": round(lvl, 5), "dist_atr": round((lvl - price) / atr, 2),
                       "touches": t, "last_reaction": rx}
     return out

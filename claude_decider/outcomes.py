@@ -18,7 +18,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import decider_config as config  # noqa: E402
-from decide import JOURNAL_JSONL  # noqa: E402
+from decide import JOURNAL_JSONL, journal_lock  # noqa: E402
 import exits  # noqa: E402  (çoklu çıkış politikası grade'i)
 
 MAX_HORIZON_H = 48      # bu süre içinde ne TP ne SL → EXPIRE (nötr)
@@ -52,6 +52,11 @@ def pnl_r(outcome: str, rr: float = 0.667) -> float:
 def resolve_journal(fetcher, max_horizon_h: float = MAX_HORIZON_H) -> tuple[int, list]:
     if not JOURNAL_JSONL.exists():
         return 0, []
+    with journal_lock():           # tam-dosya yeniden-yazım ⟂ batch_eval/append çakışması önlenir
+        return _resolve_locked(fetcher, max_horizon_h)
+
+
+def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
     rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
     now = time.time(); changed = 0
 
