@@ -116,7 +116,10 @@ def _tf_forensics(bars) -> dict | None:
     atr = _atr(highs, lows, closes)
     ema20 = _ema(closes[-80:], 20); ema50 = _ema(closes[-120:], 50)
     vols = [float(b.get("volume", 0) or 0) for b in bars]
-    vol_ratio = round(vols[-1] / (sum(vols[-21:-1]) / 20), 2) if len(vols) >= 21 and sum(vols[-21:-1]) else None
+    # SON BAR FORMING (kısmi hacim) olabilir → hacim oranı SON KAPALI bar (-2) ile,
+    # önceki 20 kapalı barın ortalamasına karşı. Aksi halde sistematik-düşük yanlış oran.
+    vol_ratio = (round(vols[-2] / (sum(vols[-22:-2]) / 20), 2)
+                 if len(vols) >= 22 and sum(vols[-22:-2]) else None)
     cz = channel_zscore(closes, 50); vz = vwap_zscore(bars, 50)
     adx = _adx(highs, lows, closes)
     trend = ("yukari" if (ema20 and ema50 and ema20 > ema50 and price > ema20)

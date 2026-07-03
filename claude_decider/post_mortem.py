@@ -135,9 +135,10 @@ def llm_autopsy(rows, model="claude-fable-5", max_cases=12):
     prompt = f"""Sen kıdemli bir trading post-mortem analistisin. Aşağıda KAYBEDEN ve KAZANAN
 işlemlerin giriş-anı forensik özellikleri var (channel_z=trend kanalında konum, opp_sr_dist=
 karşı destek/dirence ATR mesafe, opp_sr_touches=o seviyenin gücü, vol_ratio=hacim oranı,
-vix/dxy=makro). GÖREV: kaybedenleri kazananlardan ayıran EN GÜÇLÜ 3 örüntüyü bul ve her biri
-için tek cümlelik FİLTRE ÖNERİSİ yaz (ör. "4h karşı dirence <1 ATR iken BUY açma").
-Uydurma — yalnız verideki farklara dayan. SADECE 3 maddelik liste döndür.
+vix/dxy=makro). GÖREV: kaybedenleri kazananlardan ayıran EN GÜÇLÜ 3 örüntüyü bul; her biri
+için tek cümlelik FİLTRE ÖNERİSİ (ör. "4h karşı dirence <1 ATR iken BUY açma").
+Uydurma — yalnız verideki farklara dayan. Çıktın SADECE şu tek-satır JSON:
+{{"hypotheses":["örüntü+filtre 1","örüntü+filtre 2","örüntü+filtre 3"]}}
 
 KAYBEDENLER ({len(cases)}):
 {json.dumps(cases, ensure_ascii=False)}
@@ -145,33 +146,53 @@ KAYBEDENLER ({len(cases)}):
 KAZANANLAR ({len(wins)}):
 {json.dumps(wins, ensure_ascii=False)}"""
     dec = call_claude(prompt, model=model)
-    text = dec.get("reason") or dec.get("_raw") or ""
-    if not text and isinstance(dec, dict):      # call_claude JSON bekler; düz metin _raw'da
-        text = json.dumps(dec, ensure_ascii=False)
+    hyps = dec.get("hypotheses")
     print("\n[LLM OTOPSİ — hipotezler (istatistik teyidi şart, otomatik uygulanmaz)]")
-    print(text[:1200])
-    return text
+    if isinstance(hyps, list) and hyps:
+        for h in hyps:
+            print("  •", h)
+    else:
+        print("  (parse edilemedi)", str(dec.get("_raw") or dec.get("reason") or "")[:300])
+    return hyps
 
 
-def main():
-    rows = _load()
+def _report(rows, title):
     results, used = analyze(rows)
     print("=" * 70)
-    print(f"SL OTOPSİSİ — WIN'i LOSS'tan ayıran koşul (forensik'li kayıt: {used})")
+    print(f"{title} (forensik'li grade'li kayıt: {used})")
     print("=" * 70)
     if not results:
-        print("\n⏳ Yeterli forensik'li+grade'li kayıt yok. Bu YENİ özellik — decider güncel")
-        print("   kodla çalıştıkça her karara snapshot yazılacak; birkaç gün sonra tekrar bak.")
-        return
+        print("  ⏳ yeterli kayıt yok (her tarafta ≥%d gerek).\n" % MIN_SIDE)
+        return []
+    n_feat = len(results)
     print(f"\n{'özellik':<22}{'n(W/L)':>9}{'WIN ort':>10}{'LOSS ort':>10}{'p':>8}  yorum")
     print("-" * 72)
     cands = []
     for k, nw, nl, mw, ml, p in results[:14]:
-        tag = "✅ AYIRICI" if p < 0.05 else ("⏳ izle" if p < 0.15 else "")
+        tag = ("✅✅ GÜÇLÜ" if p < 0.01 else "✅ aday" if p < 0.05
+               else "⏳ izle" if p < 0.15 else "")
         print(f"{k:<22}{f'{nw}/{nl}':>9}{mw:>10.2f}{ml:>10.2f}{p:>8.3f}  {tag}")
         if p < 0.05:
             yon = "düşük" if ml < mw else "yüksek"
             cands.append(f"{k}: kayıplarda {yon} (W ort {mw:.2f} vs L {ml:.2f}, p={p:.3f})")
+    # ÇOKLU-KARŞILAŞTIRMA dürüstlüğü: k özellik × p<0.05 → şans-pozitifi beklenir
+    print(f"\n  ⚠ {n_feat} özellik test edildi → p<0.05'te ~{n_feat*0.05:.1f} ŞANS-pozitifi beklenir.")
+    print("    '✅ aday'a tek koşuda güvenme; ✅✅ (p<0.01) + tekrar-koşu/distill teyidi ara.")
+    return cands
+
+
+def main():
+    rows = _load()
+    cands = _report(rows, "SL OTOPSİSİ — TÜM SEMBOLLER (WIN'i LOSS'tan ayıran koşul)")
+    # Per-sembol: havuz karışması (ör. XAU kayıpları domine) sembol-özelliği yakalamasın
+    by_sym = defaultdict(list)
+    for e in rows:
+        lab, _, _ = _label_dir(e)
+        if lab and e.get("forensics"):
+            by_sym[e.get("symbol")].append(e)
+    for sym, items in sorted(by_sym.items()):
+        if len(items) >= MIN_SIDE * 3:
+            _report(items, f"SEMBOL: {sym}")
     if cands:
         print("\n[ADAY FİLTRELER] (placebo-geçti; LESSONS'a yazmak için --write)")
         for c in cands:
