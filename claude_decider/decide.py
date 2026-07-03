@@ -24,6 +24,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import decider_config as config  # noqa: E402
+from gates import CHAN_Z as GATE_CHAN_Z, VWAP_Z as GATE_VWAP_Z  # noqa: E402  (free-cf eşikleri)
 
 MEM = HERE / "memory"
 JOURNAL_JSONL = MEM / "journal.jsonl"
@@ -237,11 +238,34 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
     atr, price, bt = ctx.get("atr_5m"), ctx.get("price"), ctx.get("bar_time_5m")
     trade = build_trade("XAUUSD", d, atr, price, bt) if str(dec.get("action", "")).upper() == "OPEN" else None
     shadow = _shadow_pack("XAUUSD", dec.get("_shadow"), atr, price, bt)
+
+    # KARŞI-OLGU (Paket 2): free mod WAIT dese bile "açsaydı BUY" grade edilir — yoksa
+    # 80 karar = 0 öğrenilebilir veri (recall/otopsi/batch/exit XAU'yu hiç göremiyordu).
+    # Yalnız BUY (XAU SELL sert yasak). live bloğu forensics-5m'den, gates eşikleriyle.
+    cf = None
+    lf = None
+    if atr and price and ("XAUUSD", "BUY") not in HARD_BANS:
+        f5 = ((ctx.get("forensics") or {}).get("tfs") or {}).get("5m") or {}
+        cz, vz = f5.get("channel_z"), f5.get("vwap_z")
+        rev_c = (-float(cz)) if cz is not None else None      # BUY hizalı: −z
+        rev_v = (-float(vz)) if vz is not None else None
+        lf = {"rev_chan": round(rev_c, 2) if rev_c is not None else None,
+              "rev_vwap": round(rev_v, 2) if rev_v is not None else None,
+              "adx": f5.get("adx"), "atr": atr,
+              "gate_fired": bool((rev_c is not None and rev_c > GATE_CHAN_Z)
+                                 or (rev_v is not None and rev_v > GATE_VWAP_Z))}
+        t = build_trade("XAUUSD", "BUY", atr, price, bt)
+        if t:
+            cf = {"dir": "BUY", **t, "live": lf}
+
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "symbol": "XAUUSD", "mode": "free",
         "decision": {k: dec.get(k) for k in ("action", "direction", "size_factor", "reason", "management")},
         "trade": trade,
+        "counterfactual": cf,                      # "açsaydı BUY" — outcomes grade eder
+        "cf_outcome": None,
+        "dirs_live": {"BUY": lf} if lf else None,  # batch_eval free kayıtları da görsün
         "free_context": {k: ctx.get(k) for k in ("price", "session", "support", "resistance",
                                                  "dist_to_support_atr", "dist_to_resistance_atr", "macro")},
         "multi_tf": ctx.get("multi_tf"),
