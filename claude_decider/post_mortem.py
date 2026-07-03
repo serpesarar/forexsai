@@ -51,8 +51,18 @@ def _label_dir(e):
     return None, None, None
 
 
+def _session_of(e):
+    return ((e.get("context") or {}).get("session")
+            or (e.get("free_context") or {}).get("session"))
+
+
 def _flatten(e, direction):
-    """Forensik snapshot → düz özellik sözlüğü (yön-hizalı S/R dahil)."""
+    """Forensik snapshot → düz özellik sözlüğü. TÜMÜ yön-hizalı veya yön-nötr:
+    - rev_chan/rev_vwap: (−z BUY / +z SELL) → pozitif = işlem yönü LEHİNE mean-rev aşırılığı.
+      HAM z havuzlanMAZ (BUY+SELL karışınca sinyali yıkar / yön-kompozisyon artefaktı üretir).
+    - Kategorikler 0/1 gösterge: opp/beh_last_bounce (kullanıcı hipotezi: "seviye geçmişte
+      döndü mü"), {tf}_trend_aligned, session one-hot, n_tf_trend_aligned/anti sayaçları.
+    """
     fx = e.get("forensics") or {}
     tfs = fx.get("tfs") or {}
     out = {}
@@ -61,22 +71,48 @@ def _flatten(e, direction):
         out["vix"] = float(mac["vix"])
     if mac.get("dxy") is not None:
         out["dxy"] = float(mac["dxy"])
+    sess = _session_of(e)
+    if sess:
+        for s in ("NY", "Londra", "Asya"):
+            out[f"session_{s}"] = 1.0 if sess == s else 0.0
     buy = str(direction or "").upper() == "BUY"
+    n_al = n_anti = 0
     for tf in TFS:
         f = tfs.get(tf)
         if not f:
             continue
-        for k in ("channel_z", "vwap_z", "adx", "vol_ratio"):
+        # K1 — YÖN-HİZALI z (evidence.rev ile aynı tanım)
+        if f.get("channel_z") is not None:
+            z = float(f["channel_z"])
+            out[f"{tf}_rev_chan"] = (-z) if buy else z
+        if f.get("vwap_z") is not None:
+            v = float(f["vwap_z"])
+            out[f"{tf}_rev_vwap"] = (-v) if buy else v
+        for k in ("adx", "vol_ratio"):                    # yön-nötr → ham
             if f.get(k) is not None:
                 out[f"{tf}_{k}"] = float(f[k])
+        # K2 — trend uyumu (kullanıcının "TF'ler uyumlu mu" sorusu)
+        tr = f.get("trend")
+        if tr in ("yukari", "asagi"):
+            aligned = (tr == "yukari") == buy
+            out[f"{tf}_trend_aligned"] = 1.0 if aligned else 0.0
+            n_al += 1 if aligned else 0
+            n_anti += 0 if aligned else 1
         sr = f.get("sr") or {}
         opp = sr.get("res") if buy else sr.get("sup")     # KARŞI seviye (TP yönünde duvar)
         beh = sr.get("sup") if buy else sr.get("res")     # ARKA seviye (stop tarafı)
         if opp:
             out[f"{tf}_opp_sr_dist"] = float(opp["dist_atr"])
             out[f"{tf}_opp_sr_touches"] = float(opp["touches"])
+            if opp.get("last_reaction") in ("bounce", "broke"):   # K2 — kullanıcı hipotezi
+                out[f"{tf}_opp_last_bounce"] = 1.0 if opp["last_reaction"] == "bounce" else 0.0
         if beh:
             out[f"{tf}_beh_sr_dist"] = float(beh["dist_atr"])
+            if beh.get("last_reaction") in ("bounce", "broke"):
+                out[f"{tf}_beh_last_bounce"] = 1.0 if beh["last_reaction"] == "bounce" else 0.0
+    if n_al + n_anti:
+        out["n_tf_trend_aligned"] = float(n_al)
+        out["n_tf_trend_anti"] = float(n_anti)
     return out
 
 
@@ -165,19 +201,30 @@ def _report(rows, title):
         print("  ⏳ yeterli kayıt yok (her tarafta ≥%d gerek).\n" % MIN_SIDE)
         return []
     n_feat = len(results)
-    print(f"\n{'özellik':<22}{'n(W/L)':>9}{'WIN ort':>10}{'LOSS ort':>10}{'p':>8}  yorum")
-    print("-" * 72)
+    # Benjamini-Hochberg FDR: p'ler artan sıralı (results zaten sıralı) →
+    # en büyük k öyle ki p_k ≤ 0.05·k/m; ilk k özellik FDR-geçer. Çoklu-karşılaştırmayı
+    # DÜZGÜN çözer (naif p<0.05, ~m/20 şans-pozitifi üretir).
+    bh_k = 0
+    for rank, (_, _, _, _, _, p) in enumerate(results, 1):
+        if p <= 0.05 * rank / n_feat:
+            bh_k = rank
+    bh_pass = {results[i][0] for i in range(bh_k)}
+    show = 16
+    print(f"\n{'özellik':<24}{'n(W/L)':>9}{'WIN ort':>9}{'LOSS ort':>9}{'p':>8}  yorum")
+    print("-" * 76)
     cands = []
-    for k, nw, nl, mw, ml, p in results[:14]:
-        tag = ("✅✅ GÜÇLÜ" if p < 0.01 else "✅ aday" if p < 0.05
+    for k, nw, nl, mw, ml, p in results[:show]:
+        tag = ("✅✅ GÜÇLÜ" if (p < 0.01 and k in bh_pass)
+               else "✅ aday(FDR)" if k in bh_pass
                else "⏳ izle" if p < 0.15 else "")
-        print(f"{k:<22}{f'{nw}/{nl}':>9}{mw:>10.2f}{ml:>10.2f}{p:>8.3f}  {tag}")
-        if p < 0.05:
+        print(f"{k:<24}{f'{nw}/{nl}':>9}{mw:>9.2f}{ml:>9.2f}{p:>8.3f}  {tag}")
+        if k in bh_pass:
             yon = "düşük" if ml < mw else "yüksek"
             cands.append(f"{k}: kayıplarda {yon} (W ort {mw:.2f} vs L {ml:.2f}, p={p:.3f})")
-    # ÇOKLU-KARŞILAŞTIRMA dürüstlüğü: k özellik × p<0.05 → şans-pozitifi beklenir
-    print(f"\n  ⚠ {n_feat} özellik test edildi → p<0.05'te ~{n_feat*0.05:.1f} ŞANS-pozitifi beklenir.")
-    print("    '✅ aday'a tek koşuda güvenme; ✅✅ (p<0.01) + tekrar-koşu/distill teyidi ara.")
+    if n_feat > show:
+        print(f"  … (+{n_feat - show} özellik daha, p yüksek — gizlendi)")
+    print(f"\n  ⚠ {n_feat} özellik test edildi; aday etiketi FDR-düzeltmeli (BH %5) — naif p<0.05 değil.")
+    print("    Yine de tek koşuya güvenme: ✅✅ + distill/tekrar-koşu teyidi kalıcılık şartı.")
     return cands
 
 
