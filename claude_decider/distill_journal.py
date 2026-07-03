@@ -168,6 +168,70 @@ def distill():
     print("\n".join(lines))
     if promoted:
         print(f"\n→ {len(promoted)} ders LESSONS.md auto-bloğuna terfi etti.")
+    candidate_lifecycle(rows)
+
+
+def candidate_lifecycle(rows):
+    """S1 — BİRLEŞİK ADAY YAŞAM DÖNGÜSÜ (kill-protokollü): post_mortem ayırıcılarını her
+    distill'de TAZE veriyle yeniden test et. ≥2 ARDIŞIK koşuda FDR-geçen → ✅ KANIT-TEYİTLİ
+    (LESSONS'ta karara görünür). Geçmeyen → SİLİNİR (terfiliyse DÜŞÜRÜLÜR) — bayat aday
+    birikmez, hurafe LESSONS'ı kirletemez. S2 — terfi tarihli önce/sonra OPEN WR etkisi."""
+    import post_mortem as pm
+    from datetime import datetime
+    hist_p = LESSONS.parent / "candidate_history.json"
+    hist = json.loads(hist_p.read_text(encoding="utf-8")) if hist_p.exists() else {}
+    results, used = pm.analyze(rows)
+    passed = pm.bh_pass(results) if results else set()
+    by_key = {r[0]: r for r in results}
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    print("\n" + "=" * 60)
+    print(f"ADAY YAŞAM DÖNGÜSÜ — forensik'li kayıt: {used}, FDR-geçen: {len(passed)}")
+    print("=" * 60)
+    # 1) geçenler: teyit sayacı (aynı gün mükerrer koşu sayılmaz)
+    for k in passed:
+        _, nw, nl, mw, ml, p = by_key[k]
+        h = hist.get(k) or {"first_seen": today, "confirms": 0}
+        if h.get("last_seen") != today:
+            h["confirms"] = h.get("confirms", 0) + 1
+        h.update(last_seen=today, last_p=p,
+                 yon="düşük" if ml < mw else "yüksek",
+                 stats=f"W {mw:.2f} vs L {ml:.2f}")
+        if h["confirms"] >= 2 and not h.get("promoted"):
+            h["promoted"] = today
+            print(f"  ✅ TERFİ: {k} ({h['confirms']}× ardışık FDR)")
+        hist[k] = h
+    # 2) KILL: bu koşuda geçmeyen her aday silinir (terfili olsa bile düşürülür)
+    for k in [k for k in hist if k not in passed]:
+        note = " (terfiliydi → DÜŞÜRÜLDÜ)" if hist[k].get("promoted") else ""
+        print(f"  ✂ SİLİNDİ: {k}{note} — taze veride FDR geçemedi")
+        del hist[k]
+    hist_p.write_text(json.dumps(hist, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    conf = [f"{k}: kayıplarda {h['yon']} ({h['stats']}, p={h['last_p']:.3f}, "
+            f"{h['confirms']}× teyit, ilk {h['first_seen']})"
+            for k, h in sorted(hist.items()) if h.get("promoted")]
+    pend = [f"{k}: kayıplarda {h['yon']} ({h['stats']}, p={h['last_p']:.3f}, "
+            f"{h['confirms']}/2 teyit)"
+            for k, h in sorted(hist.items()) if not h.get("promoted")]
+    pm.write_candidates_block(pend, confirmed=conf, title_extra=" · distill-yönetimli")
+    print(f"  → LESSONS bloğu: {len(conf)} teyitli, {len(pend)} izlenen (tek kaynak, replace).")
+
+    # S2 — DERS-ETKİ: terfi tarihinden önce/sonra gerçek OPEN WR (düşük güç, dürüst trend)
+    opens = [(r["ts"][:10], r["outcome"]) for r in rows
+             if str((r.get("decision") or {}).get("action", "")).upper() == "OPEN"
+             and r.get("outcome") in ("WIN", "LOSS")]
+    for k, h in hist.items():
+        pd = h.get("promoted")
+        if not pd:
+            continue
+        bef = [o for d, o in opens if d < pd]
+        aft = [o for d, o in opens if d >= pd]
+        if len(bef) >= 5 and len(aft) >= 5:
+            bw = 100 * sum(1 for o in bef if o == "WIN") / len(bef)
+            aw = 100 * sum(1 for o in aft if o == "WIN") / len(aft)
+            print(f"  📈 ETKİ [{k}] terfi {pd}: önce WR {bw:.0f}% (n={len(bef)}) → "
+                  f"sonra {aw:.0f}% (n={len(aft)})  {'▲' if aw > bw else '▼'}")
 
 
 def _write_block(lines: list[str]):

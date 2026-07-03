@@ -116,6 +116,17 @@ def _flatten(e, direction):
     return out
 
 
+def bh_pass(results, alpha=0.05):
+    """Benjamini-Hochberg FDR: p-artan sıralı results'ta en büyük k öyle ki p_k ≤ α·k/m →
+    ilk k özellik geçer. Naif p<α, m özellikte ~m·α şans-pozitifi üretir; BH bunu düzeltir."""
+    m = len(results)
+    bh_k = 0
+    for rank, row in enumerate(results, 1):
+        if row[5] <= alpha * rank / m:
+            bh_k = rank
+    return {results[i][0] for i in range(bh_k)}
+
+
 def _perm_p(wins, losses, M=PERM_M):
     """|mean fark| permütasyon p."""
     obs = abs(sum(wins) / len(wins) - sum(losses) / len(losses))
@@ -201,24 +212,17 @@ def _report(rows, title):
         print("  ⏳ yeterli kayıt yok (her tarafta ≥%d gerek).\n" % MIN_SIDE)
         return []
     n_feat = len(results)
-    # Benjamini-Hochberg FDR: p'ler artan sıralı (results zaten sıralı) →
-    # en büyük k öyle ki p_k ≤ 0.05·k/m; ilk k özellik FDR-geçer. Çoklu-karşılaştırmayı
-    # DÜZGÜN çözer (naif p<0.05, ~m/20 şans-pozitifi üretir).
-    bh_k = 0
-    for rank, (_, _, _, _, _, p) in enumerate(results, 1):
-        if p <= 0.05 * rank / n_feat:
-            bh_k = rank
-    bh_pass = {results[i][0] for i in range(bh_k)}
+    bh = bh_pass(results)
     show = 16
     print(f"\n{'özellik':<24}{'n(W/L)':>9}{'WIN ort':>9}{'LOSS ort':>9}{'p':>8}  yorum")
     print("-" * 76)
     cands = []
     for k, nw, nl, mw, ml, p in results[:show]:
-        tag = ("✅✅ GÜÇLÜ" if (p < 0.01 and k in bh_pass)
-               else "✅ aday(FDR)" if k in bh_pass
+        tag = ("✅✅ GÜÇLÜ" if (p < 0.01 and k in bh)
+               else "✅ aday(FDR)" if k in bh
                else "⏳ izle" if p < 0.15 else "")
         print(f"{k:<24}{f'{nw}/{nl}':>9}{mw:>9.2f}{ml:>9.2f}{p:>8.3f}  {tag}")
-        if k in bh_pass:
+        if k in bh:
             yon = "düşük" if ml < mw else "yüksek"
             cands.append(f"{k}: kayıplarda {yon} (W ort {mw:.2f} vs L {ml:.2f}, p={p:.3f})")
     if n_feat > show:
@@ -258,12 +262,23 @@ PM_START = "<!-- POST-MORTEM AUTO START (post_mortem.py/distill üretir) -->"
 PM_END = "<!-- POST-MORTEM AUTO END -->"
 
 
-def write_candidates_block(lines: list[str], title_extra: str = ""):
+def write_candidates_block(lines: list[str], confirmed: list[str] | None = None,
+                           title_extra: str = ""):
     """LESSONS'taki POST-MORTEM bloğunu REPLACE eder (append DEĞİL → her koşuda şişip her
-    karar promptunu kirletmez). distill_journal da bu fonksiyonla aynı bloğu yönetir."""
+    karar promptunu kirletmez). distill_journal da bu fonksiyonla aynı bloğu yönetir.
+    confirmed: ≥2 ardışık distill'de FDR-geçen KANIT-TEYİTLİ dersler (karar bunlara güvenir)."""
     from datetime import datetime
-    body = (f"{PM_START}\n### 🔬 Post-mortem adayları ({datetime.now():%Y-%m-%d}){title_extra}\n"
-            + "\n".join(f"- ⏳ {c}" for c in lines) + f"\n{PM_END}")
+    parts = [f"{PM_START}", f"### 🔬 Post-mortem ({datetime.now():%Y-%m-%d}){title_extra}"]
+    if confirmed:
+        parts.append("**✅ KANIT-TEYİTLİ** (≥2 ardışık FDR — karar verirken dikkate al):")
+        parts += [f"- ✅ {c}" for c in confirmed]
+    if lines:
+        parts.append("İzlenen adaylar (henüz teyitsiz — kararı ETKİLEMEZ):")
+        parts += [f"- ⏳ {c}" for c in lines]
+    if not confirmed and not lines:
+        parts.append("(şu an aday yok)")
+    parts.append(PM_END)
+    body = "\n".join(parts)
     txt = LESSONS.read_text(encoding="utf-8") if LESSONS.exists() else "# Decider LESSONS\n"
     if PM_START in txt and PM_END in txt:
         pre = txt[:txt.index(PM_START)]
