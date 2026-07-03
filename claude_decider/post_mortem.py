@@ -241,19 +241,37 @@ def main():
         if len(items) >= MIN_SIDE * 3:
             _report(items, f"SEMBOL: {sym}")
     if cands:
-        print("\n[ADAY FİLTRELER] (placebo-geçti; LESSONS'a yazmak için --write)")
+        print("\n[ADAY FİLTRELER] (FDR-geçti; LESSONS'a yazmak için --write)")
         for c in cands:
             print("  •", c)
         if "--write" in sys.argv:
-            from datetime import datetime
-            block = ("\n### 🔬 Post-mortem adayları (" + datetime.now().strftime("%Y-%m-%d") + ")\n"
-                     + "\n".join(f"- ⏳ {c}" for c in cands) + "\n")
-            LESSONS.write_text(LESSONS.read_text(encoding="utf-8") + block, encoding="utf-8")
-            print("  → LESSONS.md'ye '⏳ izlenen' olarak eklendi (kararı otomatik ETKİLEMEZ).")
+            write_candidates_block(cands)
+            print("  → LESSONS.md POST-MORTEM bloğu GÜNCELLENDİ (replace — şişme yok; "
+                  "kararı otomatik ETKİLEMEZ).")
     else:
-        print("\n(placebo-geçen ayırıcı yok — kayıplar bu özelliklerle açıklanmıyor ya da veri az)")
+        print("\n(FDR-geçen ayırıcı yok — kayıplar bu özelliklerle açıklanmıyor ya da veri az)")
     if "--llm" in sys.argv:
         llm_autopsy(rows)
+
+
+PM_START = "<!-- POST-MORTEM AUTO START (post_mortem.py/distill üretir) -->"
+PM_END = "<!-- POST-MORTEM AUTO END -->"
+
+
+def write_candidates_block(lines: list[str], title_extra: str = ""):
+    """LESSONS'taki POST-MORTEM bloğunu REPLACE eder (append DEĞİL → her koşuda şişip her
+    karar promptunu kirletmez). distill_journal da bu fonksiyonla aynı bloğu yönetir."""
+    from datetime import datetime
+    body = (f"{PM_START}\n### 🔬 Post-mortem adayları ({datetime.now():%Y-%m-%d}){title_extra}\n"
+            + "\n".join(f"- ⏳ {c}" for c in lines) + f"\n{PM_END}")
+    txt = LESSONS.read_text(encoding="utf-8") if LESSONS.exists() else "# Decider LESSONS\n"
+    if PM_START in txt and PM_END in txt:
+        pre = txt[:txt.index(PM_START)]
+        post = txt[txt.index(PM_END) + len(PM_END):]
+        txt = pre + body + post
+    else:
+        txt = txt.rstrip() + "\n\n" + body + "\n"
+    LESSONS.write_text(txt, encoding="utf-8")
 
 
 if __name__ == "__main__":

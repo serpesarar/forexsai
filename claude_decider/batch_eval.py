@@ -102,14 +102,15 @@ def _pack(e, idx: int) -> dict | None:
     return pack
 
 
-def build_batch(limit: int = MAX_PER_CALL):
-    """Ölçülebilir kayıtları (cf grade'li) seç, paketle, SHUFFLE et. Dönüş (packs, key)."""
+def build_batch(limit: int = MAX_PER_CALL, model: str = MODEL):
+    """Ölçülebilir kayıtları (cf grade'li) seç, paketle, SHUFFLE et. Dönüş (packs, key).
+    model-parametrik: aynı kayıtlar farklı modellerce ayrı ayrı değerlendirilebilir (adil A/B)."""
     if not JOURNAL_JSONL.exists():
         return [], {}
     rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
     usable = [e for e in rows
               if e.get("cf_outcome") in ("WIN", "LOSS") and e.get("dirs_live")
-              and not (e.get("batch_eval") or {}).get(MODEL)]          # daha önce değerlendirilmemiş
+              and not (e.get("batch_eval") or {}).get(model)]          # bu model daha önce görmedi
     usable = usable[-limit:]
     random.seed(SHUFFLE_SEED)
     random.shuffle(usable)                                             # kronolojik zinciri KIR
@@ -130,9 +131,9 @@ mean-reversion aşırılığı (rev_chan/rev_vwap; >2 güçlü ters-aşırılık
 eşik; tfs = zaman dilimi başına kanal konumu (channel_z), hacim oranı, trend, ve destek/dirence
 ATR-mesafe + dokunuş gücü (sup_/res_dist_atr, touches). Mutlak fiyat/zaman bilerek verilmedi.
 
-GÖREV: HER durum için ayrı karar ver — işleme girer miydin? Kurallar: RR~0.67 (breakeven
-~%60) → yalnız net kurulumlar; XAUUSD'de ekstra temkinli; karşı yöndeki S/R'a <1 ATR varsa
-dikkat. Çıktın SADECE şu JSON (başka hiçbir şey yazma):
+GÖREV: HER durum için ayrı karar ver — işleme girer miydin? Tek kural: RR~0.67 (breakeven
+~%60) → yalnız net kurulumlarda aç, belirsizse WAIT. Kendi yargınla değerlendir.
+Çıktın SADECE şu JSON (başka hiçbir şey yazma):
 {{"answers":[{{"i":0,"action":"OPEN|WAIT","direction":"BUY|SELL|null","size":0.0}}, ...]}}
 Tüm {n} durum için cevap ver, i indexlerini aynen kullan.
 
@@ -150,11 +151,16 @@ def evaluate(packs, key, model=MODEL, write=False):
     if not isinstance(answers, list):
         print("❌ cevap parse edilemedi:", str(dec.get("_raw") or dec.get("reason"))[:200])
         return
-    # eşleştir + grade (cf_outcome = 1m-dürüst zincirimiz; Fable'a hiç gitmedi)
+    # eşleştir + grade (cf_outcome = 1m-dürüst zincirimiz; modele hiç gitmedi)
     win = loss = wait = dir_mismatch = 0
     ev_sum = 0.0
+    seen_i = set()
     for a in answers:
-        e = key.get(a.get("i"))
+        i = a.get("i")
+        if i in seen_i:            # model aynı i'yi iki kez dönerse çifte sayma
+            continue
+        seen_i.add(i)
+        e = key.get(i)
         if e is None:
             continue
         act = str(a.get("action", "")).upper()
@@ -169,11 +175,11 @@ def evaluate(packs, key, model=MODEL, write=False):
             loss += 1; ev_sum += e.get("cf_pnl_r") or -1.0
     graded = win + loss
     print("\n" + "=" * 60)
-    print(f"FABLE TOPLU DEĞERLENDİRME — {n} durum, maliyet ${cost:.2f}" if cost else f"FABLE TOPLU — {n} durum")
+    print(f"TOPLU DEĞERLENDİRME [{model}] — {n} durum" + (f", maliyet ${cost:.2f}" if cost else ""))
     print("=" * 60)
     print(f"  OPEN: {graded + dir_mismatch} (grade'li {graded}, yön-eşleşmedi {dir_mismatch}) | WAIT: {wait}")
     if graded:
-        print(f"  Fable WR: {100*win/graded:.0f}% ({win}/{graded}) | EV: {ev_sum/graded:+.3f}R/işlem")
+        print(f"  {model} WR: {100*win/graded:.0f}% ({win}/{graded}) | EV: {ev_sum/graded:+.3f}R/işlem")
     # Opus kıyası (aynı kayıtların canlı kararları — lokal, Fable görmedi)
     o_win = o_loss = o_open = 0
     for e in key.values():
@@ -191,37 +197,90 @@ def evaluate(packs, key, model=MODEL, write=False):
         canli_maliyet = n * 0.55
         print(f"  💰 Tasarruf: canlı shadow olsaydı ~${canli_maliyet:.0f}; toplu çağrı ${cost:.2f} "
               f"(~{canli_maliyet/max(cost,0.01):.0f}× ucuz)")
-    if write:      # değerlendirilenleri işaretle (tekrar sorulmasın)
+    if write:      # değerlendirilenleri işaretle (bu model için tekrar sorulmasın)
         rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
-        marked = {id(e) for e in key.values()}
         by_ts = {e.get("ts"): a for a in answers for e in [key.get(a.get("i"))] if e}
         for r in rows:
             a = by_ts.get(r.get("ts"))
             if a:
-                r.setdefault("batch_eval", {})[MODEL] = {"action": a.get("action"),
+                r.setdefault("batch_eval", {})[model] = {"action": a.get("action"),
                                                          "direction": a.get("direction"),
                                                          "size": a.get("size")}
         with open(JOURNAL_JSONL, "w", encoding="utf-8") as f:
             for r in rows:
                 f.write(json.dumps(r, ensure_ascii=False) + "\n")
-        print("  → journal'a batch_eval işlendi (aynı kayıtlar tekrar sorulmaz).")
+        print(f"  → journal'a batch_eval[{model}] işlendi (bu model için tekrar sorulmaz).")
+
+
+def report():
+    """KÜMÜLATİF skorbord (LLM çağrısız): tüm batch_eval işaretleri + cf sonuçları →
+    model başına birikmiş WR/EV. Günlük koşuların terminalde kaybolmasını önler."""
+    if not JOURNAL_JSONL.exists():
+        print("journal yok."); return
+    rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    marked = [r for r in rows if r.get("batch_eval") and r.get("cf_outcome") in ("WIN", "LOSS")]
+    print("=" * 62)
+    print(f"BATCH SKORBORD (kümülatif) — işaretli kayıt: {len(marked)}")
+    print("=" * 62)
+    if not marked:
+        print("  ⏳ henüz batch_eval işareti yok (14 nolu bat'ı --write ile koş)."); return
+    models = sorted({m for r in marked for m in r["batch_eval"]})
+    print(f"  {'model':<18}{'değerlendirdi':>14}{'OPEN':>6}  {'WR':>14}{'EV(R)':>9}")
+    print("  " + "-" * 63)
+    for m in models:
+        n_eval = o = w = l = 0
+        ev = 0.0
+        for r in marked:
+            a = r["batch_eval"].get(m)
+            if not a:
+                continue
+            n_eval += 1
+            if str(a.get("action", "")).upper() != "OPEN":
+                continue
+            if str(a.get("direction", "")).upper() != str((r.get("counterfactual") or {}).get("dir", "")).upper():
+                continue
+            o += 1
+            if r["cf_outcome"] == "WIN":
+                w += 1; ev += r.get("cf_pnl_r") or 0.667
+            else:
+                l += 1; ev += r.get("cf_pnl_r") or -1.0
+        wr = f"{100*w/(w+l):.0f}% ({w}/{w+l})" if w + l else "-"
+        evs = f"{ev/(w+l):+.3f}" if w + l else "-"
+        print(f"  {m:<18}{n_eval:>14}{o:>6}  {wr:>14}{evs:>9}")
+    # kıyas tabanları: Opus canlı + naive-gate (aynı işaretli küme üzerinde)
+    ow = ol = 0
+    for r in marked:
+        if str((r.get("decision") or {}).get("action", "")).upper() == "OPEN":
+            if r.get("outcome") == "WIN":
+                ow += 1
+            elif r.get("outcome") == "LOSS":
+                ol += 1
+    if ow + ol:
+        print(f"  {'(canlı karar)':<18}{'-':>14}{ow+ol:>6}  {f'{100*ow/(ow+ol):.0f}% ({ow}/{ow+ol})':>14}")
+    nw = sum(1 for r in marked if r["cf_outcome"] == "WIN")
+    print(f"  {'(naive-gate)':<18}{len(marked):>14}{len(marked):>6}  {f'{100*nw/len(marked):.0f}%':>14}")
+    print("\n  Not: tüm modeller AYNI sızıntısız paketleri gördü (adil A/B, batch protokolü).")
 
 
 def main():
-    limit = MAX_PER_CALL
+    limit, model = MAX_PER_CALL, MODEL
     for a in sys.argv[1:]:
         if a.startswith("--limit="):
             limit = int(a.split("=")[1])
-    packs, key = build_batch(limit)
-    print(f"Ölçülebilir (cf-grade'li, daha önce sorulmamış) kayıt: {len(packs)}")
+        elif a.startswith("--model="):
+            model = a.split("=", 1)[1]          # örn. --model=opus → adil A/B (aynı paketler)
+    if "--report" in sys.argv:
+        report(); return
+    packs, key = build_batch(limit, model)
+    print(f"[{model}] ölçülebilir (cf-grade'li, bu modelce sorulmamış) kayıt: {len(packs)}")
     if not packs:
         print("⏳ değerlendirilecek yeni kayıt yok."); return
     if "--dry-run" in sys.argv:
-        print("\n[DRY-RUN] Fable'a gidecek örnek paket (SIZINTI YOK — fiyat/zaman/sonuç/Opus-kararı sıyrıldı):")
+        print("\n[DRY-RUN] Modele gidecek örnek paket (SIZINTI YOK — fiyat/zaman/sonuç/karar sıyrıldı):")
         print(json.dumps(packs[0], ensure_ascii=False, indent=1))
         print(f"\nleak_guard: {len(packs)} paket beyaz-listeden geçti ✓  (çağrı yapılmadı)")
         return
-    evaluate(packs, key, write="--write" in sys.argv)
+    evaluate(packs, key, model=model, write="--write" in sys.argv)
 
 
 if __name__ == "__main__":

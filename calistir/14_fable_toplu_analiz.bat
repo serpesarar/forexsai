@@ -1,14 +1,18 @@
 @echo off
 chcp 65001 >nul
-title ForexSAI - Fable Toplu Analiz (tek cagri, sizintisiz)
-echo  Biriken kararlari TEK cagriyla Fable'a degerlendirtir (canli shadow yerine).
-echo  SIZINTI YOK: sonuc/fiyat/zaman/Opus-karari siyrilir + kayitlar karistirilir.
-echo  Gunde 1 kez yeter. Once ne gidecegini gormek icin CMD'den:
-echo    python batch_eval.py --dry-run
-echo  Degerlendirilenleri isaretlemek icin (tekrar sorulmaz):
-echo    python batch_eval.py --write
+title ForexSAI - Toplu Model Analizi (Fable + Opus, sizintisiz)
+echo  Biriken kararlari TEK cagriyla degerlendirir — IKI model AYNI paketleri
+echo  gorur (adil A/B). SIZINTI YOK: sonuc/fiyat/zaman/karar siyrilir + shuffle.
+echo  Gunde 1 kez yeter (~2 cagri toplam).
+echo.
+echo  Kumulatif skorbord icin: python batch_eval.py --report
+echo  On-izleme (cagri yok):   python batch_eval.py --dry-run
 echo ============================================================
 cd /d "%~dp0..\claude_decider"
-python batch_eval.py --write
+python batch_eval.py --model=claude-fable-5 --write
+python batch_eval.py --model=opus --write
+echo.
+echo ──────────── KUMULATIF SKORBORD ────────────
+python batch_eval.py --report
 echo.
 pause

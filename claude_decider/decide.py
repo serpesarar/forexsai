@@ -33,6 +33,8 @@ DECIDE_MODEL = "opus"                       # asıl (canlı) karar modeli
 # 2026-07-03 KAPATILDI (None): canlı çift-çağrı 3 günde haftalık limitin %55'ini yedi.
 # Fable artık batch_eval.py ile ölçülür: kayıtlar birikir → TEK toplu çağrı → sızıntısız
 # değerlendirme (sonuçlar+fiyat+zaman sıyrılır, shuffle). ~60 çağrı/gün → 1 çağrı/gün.
+# GÖZLENEN canlı headless maliyet (3 gün, journal): Opus $0.34/çağrı, Fable $0.55/çağrı —
+# "Fable ucuz" varsayımı YANLIŞTI; gerçek tasarruf kolu çağrı SAYISI (CONSULT_REV/cadence/batch).
 SHADOW_MODEL = None
 # Per-sembol ATR stop çarpanları (grading + trade). Varsayılan RR~0.67.
 # XAUUSD "patient WR" ([[xauusd-meta-stop-sizing]]): dar stop → dönüş tamamlanmadan SL.
