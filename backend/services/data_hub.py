@@ -207,12 +207,23 @@ def _canonical_symbol(symbol: str) -> str:
         "NDX": "NDX.INDX",
         "NASDAQ": "NDX.INDX",
         "NDX.INDX": "NDX.INDX",
+        "USTEC": "NDX.INDX",
+        "US100": "NDX.INDX",
+        "NAS100": "NDX.INDX",
+        "NDAQ100": "NDX.INDX",
+        "USNDAQ100": "NDX.INDX",
+        "NASDAQ100": "NDX.INDX",
+        "US100.CASH": "NDX.INDX",
         "XAUUSD": "XAUUSD",
         "XAUUSD.FOREX": "XAUUSD",
         "GOLD": "XAUUSD",
         "GDAXI": "GDAXI.INDX",
         "DAX": "GDAXI.INDX",
         "GDAXI.INDX": "GDAXI.INDX",
+        "DE30": "GDAXI.INDX",
+        "GER30": "GDAXI.INDX",
+        "DE40": "GDAXI.INDX",
+        "GER40": "GDAXI.INDX",
         "USOIL": "USOIL.FOREX",
         "USOIL.FOREX": "USOIL.FOREX",
         "CL": "USOIL.FOREX",
@@ -521,42 +532,54 @@ async def _fetch_yahoo_candles(yahoo_symbol: str, interval: str, limit: int) -> 
 # vendor API is used here.
 # ═══════════════════════════════════════════════════════════════
 async def _fetch_price_from_api(symbol: str) -> Optional[float]:
-    """Fetch real-time price — Yahoo for commodities, else nothing (MT5 feeds indices)."""
+    """Fetch real-time price — Yahoo for commodities/indices fallback, else nothing."""
     eod_symbol = _normalize_symbol(symbol)
 
-    # --- YAHOO FINANCE FALLBACK (commodities) ---
+    # --- YAHOO FINANCE FALLBACK ---
     if eod_symbol == "CL":  # USOil / WTI
         return await _fetch_yahoo_price("CL=F")
     if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"):  # Gold
         return await _fetch_yahoo_price("GC=F")
+    if eod_symbol == "NDX.INDX":  # Nasdaq
+        return await _fetch_yahoo_price("^NDX")
+    if eod_symbol == "GDAXI.INDX":  # DAX
+        return await _fetch_yahoo_price("^GDAXI")
 
     # Indices come from the MT5 -> Redis bridge; no upstream HTTP fetch.
     return None
 
 
 async def _fetch_candles_from_api(symbol: str, interval: str, limit: int = 500) -> List[Dict]:
-    """Fetch intraday candles — Yahoo for commodities, else nothing (MT5 feeds indices)."""
+    """Fetch intraday candles — Yahoo for commodities/indices fallback, else nothing."""
     eod_symbol = _normalize_symbol(symbol)
 
-    # --- YAHOO FINANCE FALLBACK (commodities) ---
+    # --- YAHOO FINANCE FALLBACK ---
     if eod_symbol == "CL":
         return await _fetch_yahoo_candles("CL=F", interval, limit)
     if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"):
         return await _fetch_yahoo_candles("GC=F", interval, limit)
+    if eod_symbol == "NDX.INDX":
+        return await _fetch_yahoo_candles("^NDX", interval, limit)
+    if eod_symbol == "GDAXI.INDX":
+        return await _fetch_yahoo_candles("^GDAXI", interval, limit)
 
     # Indices come from the MT5 -> Redis bridge; no upstream HTTP fetch.
     return []
 
 
 async def _fetch_eod_from_api(symbol: str, limit: int = 300) -> List[Dict]:
-    """Fetch EOD candles — Yahoo for commodities, else nothing (MT5 feeds indices)."""
+    """Fetch EOD candles — Yahoo for commodities/indices fallback, else nothing."""
     eod_symbol = _normalize_symbol(symbol)
 
-    # --- YAHOO FINANCE FALLBACK (commodities) ---
+    # --- YAHOO FINANCE FALLBACK ---
     if eod_symbol == "CL":
         return await _fetch_yahoo_candles("CL=F", "1d", limit)
     if eod_symbol in ("XAUUSD.FOREX", "XAUUSD"):
         return await _fetch_yahoo_candles("GC=F", "1d", limit)
+    if eod_symbol == "NDX.INDX":
+        return await _fetch_yahoo_candles("^NDX", "1d", limit)
+    if eod_symbol == "GDAXI.INDX":
+        return await _fetch_yahoo_candles("^GDAXI", "1d", limit)
 
     # Indices come from the MT5 -> Redis bridge; no upstream HTTP fetch.
     return []

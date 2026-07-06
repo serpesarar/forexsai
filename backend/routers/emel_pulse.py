@@ -4,7 +4,7 @@ EMEL + PULSE Panel API Endpoints
 - PULSE: Hızlı scalp analizi
 """
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, HTTPException
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 import logging
@@ -3174,7 +3174,10 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
     except Exception as e:
         logger.error(f"PULSE V3 analysis error: {e}")
         import traceback
-        return {"error": str(e), "traceback": traceback.format_exc()}
+        raise HTTPException(
+            status_code=500,
+            detail={"error": str(e), "traceback": traceback.format_exc()}
+        )
 
 
 @router.get("/rebound/{symbol}", response_model=Dict[str, Any])
