@@ -233,6 +233,50 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Lifecycle hatası: {e}")
 
+    # 4.5 BIAS AUTO-RUNNER (opt-in: BIAS_AUTO_RUN_ENABLED=1) — NY saatinde
+    #     debate motorunu çalıştırır + gün sonu sonuçları doldurur. Her 60s tick.
+    try:
+        from services.bias_auto_runner import tick as bias_tick
+        async def bias_auto_loop():
+            await asyncio.sleep(20)
+            from services.cortex_confluence_signal import tick as cortex_sig_tick
+            while True:
+                try:
+                    await bias_tick()
+                except Exception as e:
+                    logger.error(f"Bias auto-runner hatası: {e}")
+                try:
+                    await cortex_sig_tick()   # opt-in shadow confluence signals
+                except Exception as e:
+                    logger.error(f"CORTEX signal hatası: {e}")
+                await asyncio.sleep(60)
+
+        asyncio.create_task(bias_auto_loop())
+        print("✅ Bias auto-runner loop başlatıldı (opt-in flag ile)")
+    except Exception as e:
+        print(f"❌ Bias auto-runner hatası: {e}")
+
+    # 4.6 REFLEX ENGINE (opt-in: REFLEX_ENABLED=1) — NDX momentum-continuation +
+    #     15dk time-stop. Leak-free, SHADOW by default (REFLEX_MODE). Her 30s tick:
+    #     due sinyalleri kapat (time-stop/SL) + yeni event ara.
+    try:
+        from services.reflex_engine_service import tick as reflex_tick, ENABLED as REFLEX_ON, MODE as REFLEX_MODE
+        async def reflex_loop():
+            await asyncio.sleep(25)
+            while True:
+                try:
+                    await reflex_tick()
+                except Exception as e:
+                    logger.error(f"Reflex engine hatası: {e}")
+                await asyncio.sleep(30)
+        if REFLEX_ON:
+            asyncio.create_task(reflex_loop())
+            print(f"✅ Reflex Engine başlatıldı (mod={REFLEX_MODE}, her 30s)")
+        else:
+            print("⏸️ Reflex Engine kapalı (REFLEX_ENABLED=1 ile açılır)")
+    except Exception as e:
+        print(f"❌ Reflex Engine hatası: {e}")
+
     # 5. Real-time prices come from the MT5 -> Redis bridge (DataHub ingest).
     #    No external market-data vendor WebSocket is used.
 
@@ -528,6 +572,9 @@ router_module_names = [
     "bot_router",
     "bot_diagnostic_router",
     "usoil_config_backtest",
+    "miroshark_router",
+    "bias_test_router",
+    "reflex_router",
 ]
 
 for module_name in router_module_names:

@@ -1,0 +1,42 @@
+{
+  "split_day": "2025-04-11",
+  "target_wr": 0.85,
+  "families": {
+    "chan_rev": {
+      "tp_atr": 0.4,
+      "sl_atr": 2.5,
+      "ts_min": 30,
+      "tau": 0.8,
+      "train_oos_n": 151,
+      "train_oos_wr": 0.8543,
+      "train_oos_ev": -0.0266
+    },
+    "vwap_rev": {
+      "tp_atr": 0.4,
+      "sl_atr": 2.5,
+      "ts_min": 30,
+      "tau": 0.78,
+      "train_oos_n": 270,
+      "train_oos_wr": 0.8519,
+      "train_oos_ev": -0.0409
+    },
+    "sweep": {
+      "tp_atr": 0.4,
+      "sl_atr": 2.0,
+      "ts_min": 30,
+      "tau": 0.81,
+      "train_oos_n": 110,
+      "train_oos_wr": 0.8545,
+      "train_oos_ev": -0.004
+    },
+    "mom_cont": {
+      "tp_atr": 0.4,
+      "sl_atr": 1.5,
+      "ts_min": 30,
+      "tau": null,
+      "train_oos_n": 164,
+      "train_oos_wr": 0.8537,
+      "train_oos_ev": 0.0339
+    }
+  }
+}

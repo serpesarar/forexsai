@@ -1,0 +1,8 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "bias-lab-static", "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m","http.server","4599","--directory","backend/routers"],
+      "port": 4599 }
+  ]
+}

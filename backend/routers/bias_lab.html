@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Neural Bias Engine</title>
+<style>
+  :root{
+    --bg:#04060e; --bg2:#070b18; --glass:rgba(18,26,48,.55); --glass2:rgba(12,18,36,.6);
+    --border:rgba(90,120,200,.18); --border2:rgba(120,150,240,.32);
+    --txt:#e6ecff; --muted:#8593b8; --dim:#5a6690;
+    --cyan:#34e0e6; --violet:#b57bff; --gold:#ffcf5c;
+    --green:#25e08a; --red:#ff5470; --amber:#ffb020; --slate:#7b89b5;
+    --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:var(--bg); color:var(--txt); overflow-x:hidden;
+    font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background-image:
+      radial-gradient(900px 600px at 78% 18%, rgba(120,90,255,.10), transparent 60%),
+      radial-gradient(800px 600px at 12% 78%, rgba(40,200,220,.08), transparent 60%);
+    background-attachment:fixed;}
+  /* animated starfield */
+  .stars{position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden}
+  .stars i{position:absolute; width:2px; height:2px; border-radius:50%;
+    background:#9fb4ff; opacity:.35; animation:drift linear infinite}
+  @keyframes drift{from{transform:translateY(-10vh)}to{transform:translateY(110vh)}}
+  .wrap{position:relative; z-index:1; max-width:1080px; margin:0 auto; padding:22px 20px 70px}
+
+  /* header */
+  header{display:flex; align-items:center; gap:14px; margin-bottom:18px}
+  .logo{width:38px; height:38px; border-radius:11px; display:grid; place-items:center;
+    background:linear-gradient(135deg,rgba(52,224,230,.25),rgba(181,123,255,.28));
+    border:1px solid var(--border2); box-shadow:0 0 24px rgba(120,120,255,.25)}
+  .logo svg{width:22px;height:22px}
+  h1{font-size:17px; margin:0; letter-spacing:.03em; font-weight:700}
+  h1 span{color:var(--muted); font-weight:500; font-size:12px; display:block; letter-spacing:.18em;
+    text-transform:uppercase; margin-top:1px}
+  .hemis{margin-left:auto; display:flex; gap:8px; font:11px/1 var(--mono)}
+  .hemi{display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:20px;
+    background:var(--glass); border:1px solid var(--border)}
+  .hemi b{font-weight:600}
+  .hemi.k b{color:var(--violet)} .hemi.d b{color:var(--cyan)}
+  .hemi .d0{width:7px;height:7px;border-radius:50%;background:var(--dim)}
+  .hemi.on.k .d0{background:var(--violet);box-shadow:0 0 8px var(--violet)}
+  .hemi.on.d .d0{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+
+  /* chamber */
+  .chamber{position:relative; border-radius:20px; overflow:hidden; margin-bottom:16px;
+    background:linear-gradient(180deg,var(--glass),var(--glass2));
+    border:1px solid var(--border); box-shadow:0 20px 60px rgba(0,0,0,.4), inset 0 0 60px rgba(60,80,160,.06)}
+  .chamber .cap{display:flex; align-items:center; gap:10px; padding:14px 18px; position:relative; z-index:3}
+  .cap .ttl{font:600 12px/1 var(--mono); letter-spacing:.16em; color:var(--muted); text-transform:uppercase}
+  .cap .phase{font:12px/1 var(--mono); color:var(--cyan); margin-left:4px; min-height:14px}
+  .cap .run{margin-left:auto}
+  svg.net{display:block; width:100%; height:auto}
+  .node-label{font:600 10px/1 var(--mono); fill:var(--muted); letter-spacing:.06em; text-transform:uppercase}
+  .node-sub{font:9px/1 var(--mono); fill:var(--dim)}
+  .neuron{cursor:pointer; transition:transform .2s}
+  .neuron:hover{transform:scale(1.06)}
+  .synapse{fill:none; stroke:rgba(120,150,230,.16); stroke-width:1.4}
+  .flow{fill:none; stroke-width:2; stroke-linecap:round; opacity:0;
+    stroke-dasharray:5 14; transition:opacity .3s}
+  .flow.d{stroke:var(--cyan)} .flow.k{stroke:var(--violet)} .flow.g{stroke:var(--gold)}
+  .flow.fire{opacity:.95; animation:flow 1s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-38}}
+  .halo{opacity:.0; transition:opacity .4s}
+  .halo.fire{opacity:.9; animation:breathe 1.4s ease-in-out infinite}
+  @keyframes breathe{0%,100%{opacity:.35}50%{opacity:.9}}
+  .core-ring{fill:none; stroke:rgba(255,207,92,.25); stroke-width:3}
+  .core-prog{fill:none; stroke:var(--gold); stroke-width:5; stroke-linecap:round;
+    transform:rotate(-90deg); transform-origin:760px 236px;
+    transition:stroke-dashoffset 1.1s ease, stroke .6s}
+  .core-spin{animation:spin 1.4s linear infinite; transform-origin:760px 236px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #verdictBias{font:800 30px/1 -apple-system,sans-serif; text-anchor:middle; fill:#fff; letter-spacing:.02em}
+  #verdictConf{font:600 13px/1 var(--mono); text-anchor:middle; fill:var(--muted)}
+  #verdictMode{font:10px/1 var(--mono); text-anchor:middle; fill:var(--dim); letter-spacing:.08em}
+
+  button{cursor:pointer; font:inherit; border:none; border-radius:10px; font-weight:600;
+    color:#fff; padding:10px 18px; background:linear-gradient(135deg,#6d5cff,#a45bff);
+    box-shadow:0 6px 20px rgba(130,90,255,.35); transition:transform .12s, box-shadow .2s}
+  button:hover{transform:translateY(-1px); box-shadow:0 10px 28px rgba(130,90,255,.5)}
+  button:active{transform:translateY(0)}
+  button:disabled{opacity:.5; cursor:progress}
+  button.ghost{background:transparent; border:1px solid var(--border2); color:var(--muted); box-shadow:none}
+  button.sm{padding:6px 12px; font-size:12px; font-weight:500}
+
+  /* drawer */
+  .drawer{position:fixed; top:0; right:0; height:100%; width:min(420px,90vw); z-index:20;
+    background:linear-gradient(180deg,#0a1122,#070b16); border-left:1px solid var(--border2);
+    box-shadow:-30px 0 80px rgba(0,0,0,.6); transform:translateX(100%); transition:transform .3s ease;
+    padding:22px; overflow-y:auto}
+  .drawer.open{transform:translateX(0)}
+  .drawer h3{margin:0 0 4px; font-size:15px}
+  .drawer .role{font:11px/1 var(--mono); letter-spacing:.1em; text-transform:uppercase; margin-bottom:14px}
+  .drawer .body{font-size:13.5px; line-height:1.7; color:#cfd8f5; white-space:pre-wrap}
+  .drawer .x{position:absolute; top:16px; right:16px}
+
+  /* console cards */
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .card{background:linear-gradient(180deg,var(--glass),var(--glass2));
+    border:1px solid var(--border); border-radius:16px; padding:16px 17px; margin-bottom:14px}
+  .card h2{margin:0 0 13px; font:600 11px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+  .card h2 .n{color:var(--violet); margin-right:7px}
+  label{display:block; font:11px/1 var(--mono); color:var(--dim); margin:0 0 5px; text-transform:uppercase; letter-spacing:.05em}
+  input,select,textarea{width:100%; background:rgba(6,10,22,.8); border:1px solid var(--border);
+    color:var(--txt); border-radius:9px; padding:9px 11px; font:inherit}
+  input:focus,select:focus,textarea:focus{outline:none; border-color:var(--border2); box-shadow:0 0 0 3px rgba(120,120,255,.12)}
+  textarea{min-height:110px; font:12px/1.5 var(--mono)}
+  .row{margin-bottom:11px} .g2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .chip{background:rgba(6,10,22,.7);border:1px solid var(--border);color:var(--muted);
+    border-radius:16px;padding:5px 13px;font:12px/1 var(--mono);cursor:pointer}
+  .chip.active{background:linear-gradient(135deg,rgba(109,92,255,.4),rgba(164,91,255,.4));color:#fff;border-color:var(--border2)}
+  .tabs{display:flex;gap:8px;margin-bottom:11px}
+  .out{margin-top:11px;font:12.5px/1.6 var(--mono);padding:10px 12px;border-radius:9px;
+    background:rgba(6,10,22,.7);border:1px solid var(--border);white-space:pre-wrap;display:none}
+  .out.ok{border-color:rgba(37,224,138,.4)} .out.err{border-color:rgba(255,84,112,.5);color:#ffb3c0}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--border)}
+  th{color:var(--dim);font:600 10px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em}
+  .bar{height:7px;border-radius:4px;background:rgba(6,10,22,.9);overflow:hidden;min-width:90px}
+  .bar>i{display:block;height:100%;border-radius:4px;transition:width .6s}
+  .muted{color:var(--muted)} .hint{font:11px/1.5 var(--mono);color:var(--dim);margin-top:7px}
+  code{background:rgba(6,10,22,.8);padding:1px 6px;border-radius:5px;font-size:11px;color:var(--cyan)}
+  .status{display:flex;align-items:center;gap:7px;font:11px/1 var(--mono);color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+  .dot.on{background:var(--green);box-shadow:0 0 9px var(--green)} .dot.off{background:var(--red)}
+  .autobar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 18px;margin-bottom:14px;border-radius:16px;
+    background:linear-gradient(135deg,rgba(37,224,138,.10),rgba(52,224,230,.05));border:1px solid rgba(37,224,138,.28)}
+  .autobar.off{background:linear-gradient(135deg,rgba(255,176,32,.08),rgba(255,84,112,.05));border-color:rgba(255,176,32,.3)}
+  .autobar .pulse{width:11px;height:11px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:breathe 1.6s ease-in-out infinite}
+  .autobar.off .pulse{background:var(--amber);box-shadow:0 0 12px var(--amber);animation:none}
+  .autobar .t{font:700 13.5px/1.35 -apple-system,sans-serif}
+  .autobar .sched{font:11.5px/1.5 var(--mono);color:var(--muted)}
+  .autobar .sched b{color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+<div class="wrap">
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3a4 4 0 0 0-4 4 4 4 0 0 0-2 7 3.5 3.5 0 0 0 3 5 3 3 0 0 0 3 2 3 3 0 0 0 3-2 3.5 3.5 0 0 0 3-5 4 4 0 0 0-2-7 4 4 0 0 0-4-4Z" stroke="url(#lg)" stroke-width="1.4"/><defs><linearGradient id="lg" x1="0" y1="0" x2="24" y2="24"><stop stop-color="#34e0e6"/><stop offset="1" stop-color="#b57bff"/></linearGradient></defs></svg>
+    </div>
+    <h1>Neural Bias Engine<span>NASDAQ · Multi-Agent Debate</span></h1>
+    <div class="hemis">
+      <div class="hemi d" id="hemiD"><span class="d0"></span><b>DeepSeek</b></div>
+      <div class="hemi k" id="hemiK"><span class="d0"></span><b>Kimi</b></div>
+      <div class="hemi" id="hemiAuto"><span class="d0"></span><b>OTO</b></div>
+    </div>
+  </header>
+
+  <!-- NEURAL DEBATE CHAMBER -->
+  <div class="chamber">
+    <div class="cap">
+      <span class="ttl">Debate Chamber</span>
+      <span class="phase" id="phase">◦ hazır — nöronlara tıkla veya debate başlat</span>
+      <span class="run"><button id="debateBtn">⚡ Debate Başlat</button></span>
+    </div>
+    <svg class="net" viewBox="0 0 900 480" id="net">
+      <defs>
+        <radialGradient id="gC" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#7ff6fa"/><stop offset="1" stop-color="#0e8f96"/></radialGradient>
+        <radialGradient id="gV" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#d7b0ff"/><stop offset="1" stop-color="#7a3fd0"/></radialGradient>
+        <radialGradient id="gG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff0c0"/><stop offset="1" stop-color="#e0972a"/></radialGradient>
+        <filter id="blur" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="10"/></filter>
+      </defs>
+
+      <!-- synapses (base) -->
+      <g id="synBase"></g>
+      <!-- synapses (flow overlay) -->
+      <g id="synFlow"></g>
+
+      <!-- neurons injected by JS -->
+      <g id="neurons"></g>
+
+      <!-- CIO core -->
+      <g id="core">
+        <circle class="halo" id="coreHalo" cx="760" cy="236" r="80" fill="url(#gG)" filter="url(#blur)"/>
+        <circle cx="760" cy="236" r="62" fill="rgba(8,12,24,.85)" stroke="rgba(255,207,92,.4)" stroke-width="1.5"/>
+        <circle class="core-ring" cx="760" cy="236" r="52"/>
+        <circle class="core-prog" id="coreProg" cx="760" cy="236" r="52" stroke-dasharray="327" stroke-dashoffset="327"/>
+        <text id="verdictBias" x="760" y="230">CIO</text>
+        <text id="verdictConf" x="760" y="252">bekliyor</text>
+        <text id="verdictMode" x="760" y="286"></text>
+        <text class="node-label" x="760" y="316" text-anchor="middle" fill="#ffcf5c">SENTEZ ÇEKİRDEĞİ</text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- AUTO STATUS -->
+  <div class="autobar off" id="autobar">
+    <span class="pulse"></span>
+    <div><div class="t" id="autoTitle">Otomatik mod kapalı</div>
+      <div class="sched" id="autoSched">tüm çalıştırmaları elle yapıyorsun</div></div>
+  </div>
+
+  <!-- REPORT — izlenecek ANA panel -->
+  <div class="card">
+    <h2><span class="n">★</span> Öğrenilen İsabet — İzlediğin Panel <button class="ghost sm" id="refreshBtn" style="float:right">↻ Yenile</button></h2>
+    <div id="report"><span class="muted">Yükleniyor…</span></div>
+  </div>
+
+  <!-- MANUAL — opsiyonel yedek -->
+  <div class="card">
+    <h2 id="manualToggle" style="cursor:pointer;user-select:none"><span id="manualArrow">▸</span> Manuel Kontroller
+      <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">— otomatik modda basmana gerek yok</span></h2>
+    <div id="manualBody" style="display:none">
+    <div class="grid2">
+    <!-- LOG -->
+    <div class="card">
+      <h2><span class="n">01</span> Manuel / MiroShark Log</h2>
+      <div class="row"><label>Run label</label>
+        <div class="chips" id="labelChips">
+          <span class="chip" data-v="0800_main">0800_main</span>
+          <span class="chip" data-v="0945_confirm">0945_confirm</span>
+          <span class="chip" data-v="manual">manual</span>
+        </div>
+        <input id="runLabel" value="0945_confirm" /></div>
+      <div class="tabs">
+        <button class="ghost sm" id="tabForm">Form</button>
+        <button class="ghost sm" id="tabJson">JSON</button>
+      </div>
+      <div id="formMode">
+        <div class="g2 row">
+          <div><label>Bias</label><select id="bias"><option>bullish</option><option>bearish</option><option>neutral</option><option>choppy</option></select></div>
+          <div><label>Confidence</label><input id="confidence" type="number" value="70" /></div>
+        </div>
+        <div class="g2 row">
+          <div><label>Support</label><input id="support" type="number" placeholder="20150" /></div>
+          <div><label>Resistance</label><input id="resistance" type="number" placeholder="20520" /></div>
+        </div>
+        <div class="row"><label>Invalid if</label><input id="invalidIf" placeholder="NQ breaks premarket low" /></div>
+      </div>
+      <div id="jsonMode" style="display:none">
+        <label>MiroShark CIO JSON</label>
+        <textarea id="rawJson" placeholder='{"nasdaq_daily_bias":"bullish","confidence":72}'></textarea>
+      </div>
+      <div class="row" style="margin-top:4px"><button class="sm" id="logBtn">↳ Logla</button></div>
+      <div id="logOut" class="out"></div>
+    </div>
+
+    <!-- FILL -->
+    <div class="card">
+      <h2><span class="n">02</span> Gün Sonu Sonuç</h2>
+      <div class="g2 row">
+        <div><label>NY tarihi (boş=bugün)</label><input id="nyDate" placeholder="2026-07-06" /></div>
+        <div style="align-self:end"><button class="sm" id="fillBtn">↳ Hesapla</button></div>
+      </div>
+      <div class="hint">ABD kapanışından (16:00 ET) sonra çalıştır.</div>
+      <div id="fillOut" class="out"></div>
+    </div>
+    </div>
+    </div>
+  </div>
+
+  <div class="status" style="margin-top:14px"><span class="dot" id="dot"></span><span id="statusText">bağlanıyor…</span></div>
+</div>
+
+<!-- agent drawer -->
+<div class="drawer" id="drawer">
+  <button class="ghost sm x" id="drawerX">✕</button>
+  <h3 id="dName">Ajan</h3>
+  <div class="role" id="dRole"></div>
+  <div class="body" id="dBody"></div>
+</div>
+
+<script>
+const $=(id)=>document.getElementById(id);
+const NS="http://www.w3.org/2000/svg";
+
+// starfield
+(function(){const s=$("stars");for(let i=0;i<40;i++){const el=document.createElement("i");
+  el.style.left=Math.random()*100+"vw";el.style.animationDuration=(8+Math.random()*22)+"s";
+  el.style.animationDelay=(-Math.random()*20)+"s";el.style.opacity=(.15+Math.random()*.4);s.appendChild(el);}})();
+
+// ── neuron model ──────────────────────────────────────────────
+const NODES=[
+  {id:"technical_structure",x:150,y:108,g:"gC",cls:"d",label:"TEKNİK YAPI",sub:"structure",role:"DeepSeek · normal ajan",desc:"Trend, destek/direnç ve piyasa yapısı. Londra yönü ile ABD premarket teyidi arasındaki divergence'ı arar."},
+  {id:"volatility",x:108,y:240,g:"gC",cls:"d",label:"VOLATİLİTE",sub:"vol / chop",role:"DeepSeek · normal ajan",desc:"Beklenen intraday oynaklık ve chop riski. Overlap penceresi ve yarım-gün/tatil likiditesini değerlendirir."},
+  {id:"macro",x:150,y:372,g:"gC",cls:"d",label:"MAKRO",sub:"rates / USD",role:"DeepSeek · normal ajan",desc:"Faiz, dolar, risk iştahı. Asya gecesi risk-off oldu mu, Avrupa/ABD açılışına taşınır mı?"},
+  {id:"bull_case",x:470,y:150,g:"gV",cls:"k",label:"BOĞA",sub:"bull debater",role:"Kimi · debate",desc:"NASDAQ için en güçlü kanıta dayalı YUKARI savını kurar. Somut seviye ve yapı, hype yok."},
+  {id:"bear_case",x:470,y:322,g:"gV",cls:"k",label:"AYI",sub:"bear debater",role:"Kimi · debate",desc:"NASDAQ için en güçlü kanıta dayalı AŞAĞI savını kurar. Somut seviye ve yapı, hype yok."},
+];
+const SYN=[
+  ["technical_structure","bull_case","d"],["technical_structure","bear_case","d"],
+  ["volatility","bull_case","d"],["volatility","bear_case","d"],
+  ["macro","bull_case","d"],["macro","bear_case","d"],
+  ["bull_case","core","k"],["bear_case","core","k"],
+  ["bull_case","bear_case","k"],
+];
+const CORE={x:760,y:236};
+const P=(id)=> id==="core"?CORE:NODES.find(n=>n.id===id);
+function pathD(a,b){const A=P(a),B=P(b);const mx=(A.x+B.x)/2;
+  return `M${A.x},${A.y} C${mx},${A.y} ${mx},${B.y} ${B.x},${B.y}`;}
+
+// build synapses
+const synBase=$("synBase"),synFlow=$("synFlow"),neurons=$("neurons");
+const flowEls={};
+SYN.forEach(([a,b,c],i)=>{
+  const base=document.createElementNS(NS,"path");base.setAttribute("class","synapse");base.setAttribute("d",pathD(a,b));synBase.appendChild(base);
+  const fl=document.createElementNS(NS,"path");fl.setAttribute("class","flow "+c);fl.setAttribute("d",pathD(a,b));synFlow.appendChild(fl);
+  flowEls[a+">"+b]=fl;
+});
+// build neurons
+NODES.forEach(n=>{
+  const g=document.createElementNS(NS,"g");g.setAttribute("class","neuron");g.dataset.id=n.id;
+  g.innerHTML=`
+    <circle class="halo" data-halo="${n.id}" cx="${n.x}" cy="${n.y}" r="42" fill="url(#${n.g})" filter="url(#blur)"/>
+    <circle cx="${n.x}" cy="${n.y}" r="24" fill="rgba(8,12,24,.85)" stroke="${n.cls==='d'?'rgba(52,224,230,.5)':'rgba(181,123,255,.5)'}" stroke-width="1.4"/>
+    <circle cx="${n.x}" cy="${n.y}" r="9" fill="url(#${n.g})"/>
+    <text class="node-label" x="${n.x}" y="${n.y+40}" text-anchor="middle">${n.label}</text>
+    <text class="node-sub" x="${n.x}" y="${n.y+52}" text-anchor="middle">${n.sub}</text>`;
+  g.addEventListener("click",()=>openDrawer(n.id));
+  neurons.appendChild(g);
+});
+
+// ── drawer (agent thoughts) ──────────────────────────────────
+let lastDebate=null;
+function openDrawer(id){
+  const meta = id==="core"
+    ? {label:"SENTEZ ÇEKİRDEĞİ (CIO)",role:"Kimi · nihai karar",desc:"Tüm ajanları ve boğa/ayı tartışmasını sentezleyip nihai NASDAQ bias verdict'ini üretir."}
+    : NODES.find(n=>n.id===id);
+  $("dName").textContent=meta.label; $("dRole").textContent=meta.role;
+  $("dRole").style.color = (meta.cls==="d")?"var(--cyan)":(meta.cls==="k"||id==="core")?"var(--violet)":"var(--muted)";
+  let txt=meta.desc;
+  if(lastDebate){
+    if(id==="bull_case"&&lastDebate.bull_case) txt=lastDebate.bull_case;
+    else if(id==="bear_case"&&lastDebate.bear_case) txt=lastDebate.bear_case;
+    else if(lastDebate.context_notes&&lastDebate.context_notes[id]) txt=lastDebate.context_notes[id];
+    else if(id==="core"&&window.lastVerdict) txt=(window.lastVerdict.reason_summary||"")+"\n\nDebate winner: "+(window.lastVerdict.debate_winner||"—");
+  }
+  $("dBody").textContent=txt;
+  $("drawer").classList.add("open");
+}
+$("drawerX").onclick=()=>$("drawer").classList.remove("open");
+
+// ── api helper ───────────────────────────────────────────────
+async function api(path,opts){const r=await fetch(path,opts);const b=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(b.detail||("HTTP "+r.status));return b;}
+function showOut(el,ok,t){el.style.display="block";el.className="out "+(ok?"ok":"err");el.textContent=t;}
+
+// ── animation helpers ────────────────────────────────────────
+function fireNode(id,on){const h=document.querySelector(`[data-halo="${id}"]`);if(h)h.classList.toggle("fire",on);}
+function coreHaloFire(on){$("coreHalo").classList.toggle("fire",on);}
+function fireSyn(a,b,on){const f=flowEls[a+">"+b];if(f)f.classList.toggle("fire",on);}
+function resetChamber(){NODES.forEach(n=>fireNode(n.id,false));coreHaloFire(false);
+  Object.values(flowEls).forEach(f=>f.classList.remove("fire"));
+  $("coreProg").classList.remove("core-spin");}
+const BIAS_COL={bullish:"var(--green)",bearish:"var(--red)",neutral:"var(--slate)",choppy:"var(--amber)"};
+
+async function runDebate(){
+  const btn=$("debateBtn");btn.disabled=true;
+  resetChamber();lastDebate=null;window.lastVerdict=null;
+  $("verdictBias").textContent="…";$("verdictBias").setAttribute("fill","#fff");
+  $("verdictConf").textContent="düşünüyor";$("verdictMode").textContent="";
+  $("coreProg").setAttribute("stroke-dashoffset","327");
+  const label=$("runLabel").value.trim()||"manual_debate";
+
+  // staged neural firing (visual) while the request is in flight
+  const seq=[
+    ()=>{$("phase").textContent="◉ veri ajanları ateşleniyor — DeepSeek";
+      ["technical_structure","volatility","macro"].forEach(id=>{fireNode(id,true);
+        fireSyn(id,"bull_case",true);fireSyn(id,"bear_case",true);});},
+    ()=>{$("phase").textContent="◉ Boğa ⚔ Ayı — Kimi tartışıyor";
+      fireNode("bull_case",true);fireNode("bear_case",true);
+      fireSyn("bull_case","bear_case",true);
+      fireSyn("bull_case","core",true);fireSyn("bear_case","core",true);},
+    ()=>{$("phase").textContent="◉ CIO sentezliyor…";coreHaloFire(true);
+      $("coreProg").classList.add("core-spin");},
+  ];
+  let step=0;const timeline=setInterval(()=>{if(step<seq.length)seq[step++]();},1100);
+  seq[step++]();
+
+  try{
+    const r=await api(`/api/bias-test/run-debate?run_label=${encodeURIComponent(label)}`,{method:"POST"});
+    clearInterval(timeline);
+    lastDebate=r.debate||null;window.lastVerdict=r.verdict||{};
+    revealVerdict(r);
+    $("phase").textContent="✓ verdict hazır — çekirdeğe/nöronlara tıkla";
+    loadReport();
+  }catch(e){
+    clearInterval(timeline);resetChamber();
+    $("phase").textContent="✕ "+e.message;
+    $("verdictBias").textContent="—";$("verdictConf").textContent="hata";
+  }finally{btn.disabled=false;}
+}
+
+function revealVerdict(r){
+  const v=r.verdict||{};const bias=(r.predicted_bias||v.nasdaq_daily_bias||"").toLowerCase();
+  const col=BIAS_COL[bias]||"#fff";
+  // settle: keep flows lit briefly then calm; core blooms
+  $("coreProg").classList.remove("core-spin");coreHaloFire(true);
+  $("coreHalo").setAttribute("fill",col==="var(--green)"?"#12603a":"url(#gG)");
+  $("verdictBias").textContent=(bias||"—").toUpperCase();
+  $("verdictBias").setAttribute("fill",col);
+  $("verdictConf").textContent="güven %"+(v.confidence??"?");
+  $("verdictMode").textContent=(v.trade_mode||"")+(v.debate_winner?(" · "+v.debate_winner):"");
+  // confidence ring
+  const C=327,pct=Math.max(0,Math.min(100,Number(v.confidence)||0));
+  $("coreProg").setAttribute("stroke",col);
+  $("coreProg").setAttribute("stroke-dashoffset",String(C*(1-pct/100)));
+  // calm the synapses after a beat
+  setTimeout(()=>{Object.values(flowEls).forEach(f=>f.classList.remove("fire"));
+    NODES.forEach(n=>fireNode(n.id,false));},1600);
+}
+$("debateBtn").onclick=runDebate;
+
+// ── status / hemispheres ─────────────────────────────────────
+async function ping(){try{await api("/api/health");$("dot").className="dot on";$("statusText").textContent="backend bağlı";}
+  catch{$("dot").className="dot off";$("statusText").textContent="backend KAPALI";}}
+async function loadRouting(){try{const r=await api("/api/bias-test/routing-status");
+  $("hemiD").classList.toggle("on",r.deepseek_configured);
+  $("hemiK").classList.toggle("on",r.kimi_configured);
+  $("hemiAuto").querySelector(".d0").style.background=r.auto_run_enabled?"var(--green)":"var(--dim)";
+  $("hemiAuto").querySelector(".d0").style.boxShadow=r.auto_run_enabled?"0 0 8px var(--green)":"none";
+  // automation status bar
+  const ab=$("autobar");
+  if(r.auto_run_enabled){ab.classList.remove("off");
+    $("autoTitle").textContent="⚡ Otomatik mod AÇIK — hiçbir şeye basmıyorsun";
+    const win=(r.run_windows||"").split(",").map(w=>w.split("=")[0].trim()).filter(Boolean).join(" · ");
+    $("autoSched").innerHTML=`debate: <b>${win} ET</b> · gün sonu doldurma: <b>${r.fill_time_et||"?"} ET</b> · sadece ★ raporu izle`;
+  }else{ab.classList.add("off");
+    $("autoTitle").textContent="Otomatik mod KAPALI — şu an elle çalıştırıyorsun";
+    $("autoSched").innerHTML=`açmak için .env: <code>BIAS_AUTO_RUN_ENABLED=1</code> + <code>KIMI_API_KEY</code>/<code>DEEPSEEK_API_KEY</code>`;
+  }
+}catch{}}
+$("manualToggle").onclick=()=>{const b=$("manualBody");const open=b.style.display!=="none";
+  b.style.display=open?"none":"";$("manualArrow").textContent=open?"▸":"▾";};
+
+// ── log form ─────────────────────────────────────────────────
+$("labelChips").onclick=(e)=>{if(!e.target.dataset.v)return;$("runLabel").value=e.target.dataset.v;
+  [...$("labelChips").children].forEach(c=>c.classList.toggle("active",c===e.target));};
+let mode="form";
+$("tabForm").onclick=()=>{mode="form";$("formMode").style.display="";$("jsonMode").style.display="none";
+  $("tabForm").classList.add("active");$("tabJson").classList.remove("active");};
+$("tabJson").onclick=()=>{mode="json";$("formMode").style.display="none";$("jsonMode").style.display="";
+  $("tabJson").classList.add("active");$("tabForm").classList.remove("active");};
+$("tabForm").classList.add("active");
+$("logBtn").onclick=async()=>{const run_label=$("runLabel").value.trim()||"manual";let body;
+  try{ if(mode==="json"){body={run_label,payload:JSON.parse($("rawJson").value)};}
+    else{body={run_label,nasdaq_daily_bias:$("bias").value,confidence:parseFloat($("confidence").value),
+      main_support:$("support").value?parseFloat($("support").value):null,
+      main_resistance:$("resistance").value?parseFloat($("resistance").value):null,
+      invalid_if:$("invalidIf").value||null};}
+  }catch(e){return showOut($("logOut"),false,"JSON hatası: "+e.message);}
+  try{const r=await api("/api/bias-test/log",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    showOut($("logOut"),true,`✓ ${r.predicted_bias?.toUpperCase()} · seans ${r.current_session} · ${r.run_label}`);loadReport();
+  }catch(e){showOut($("logOut"),false,"Hata: "+e.message);}};
+
+// ── fill ─────────────────────────────────────────────────────
+$("fillBtn").onclick=async()=>{const d=$("nyDate").value.trim();
+  try{const r=await api("/api/bias-test/fill-outcomes"+(d?`?ny_date=${d}`:""),{method:"POST"});
+    showOut($("fillOut"),true,`✓ ${r.ny_date}: ${r.actual_close_direction} (${r.actual_change_pct}%) · ${r.rows_updated} satır`);loadReport();
+  }catch(e){showOut($("fillOut"),false,"Hata: "+e.message);}};
+
+// ── report ───────────────────────────────────────────────────
+function rateRow(name,r){const pct=r.accuracy_pct==null?"—":r.accuracy_pct+"%";const w=r.accuracy_pct==null?0:r.accuracy_pct;
+  const col=w>=65?"var(--green)":w>=55?"var(--amber)":"var(--red)";
+  return `<tr><td>${name}</td><td class="muted">${r.correct}/${r.n}</td>
+    <td><div class="bar"><i style="width:${w}%;background:${col}"></i></div></td>
+    <td style="color:${col};font-weight:700">${pct}</td></tr>`;}
+function section(t,o){const k=Object.keys(o||{});if(!k.length)return"";
+  return `<div style="font:600 10px/1 var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:15px 0 5px">${t}</div>
+    <table><tbody>${k.map(x=>rateRow(x,o[x])).join("")}</tbody></table>`;}
+async function loadReport(){try{const r=await api("/api/bias-test/accuracy-report");
+  if(!r.total_graded){$("report").innerHTML=`<span class="muted">Henüz notlanmış sonuç yok. Debate çalıştır + gün sonu doldur.</span>`;return;}
+  let h=`<table><tbody>${rateRow("<b style='color:#fff'>GENEL</b>",r.overall)}</tbody></table>`;
+  h+=section("Çalıştırma saati",r.by_run_label);h+=section("Confidence dilimi",r.by_confidence_bucket);
+  h+=section("Seans",r.by_current_session);h+=`<div class="hint" style="margin-top:12px">${r.go_live_hint}</div>`;
+  $("report").innerHTML=h;
+}catch(e){$("report").innerHTML=`<span class="muted">Rapor alınamadı: ${e.message}</span>`;}}
+$("refreshBtn").onclick=loadReport;
+
+// boot
+ping();setInterval(ping,15000);loadRouting();setInterval(loadRouting,20000);loadReport();
+</script>
+</body>
+</html>

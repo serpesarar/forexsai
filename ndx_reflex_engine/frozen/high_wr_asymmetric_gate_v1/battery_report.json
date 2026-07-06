@@ -1,0 +1,184 @@
+{
+  "mom_cont|BUY (base)": {
+    "hold_n": 72,
+    "hold_wr": 0.5833,
+    "hold_ev": 0.1079,
+    "friction": {
+      "ev_at_1.5x": 0.0306,
+      "ev_at_2.0x": -0.0468,
+      "pass": true
+    },
+    "placebo": {
+      "real_ev": 0.1115,
+      "placebo_p95": -0.0048,
+      "placebo_mean": -0.1626,
+      "n_placebo": 200,
+      "pass": true
+    },
+    "bootstrap": {
+      "p_ev_pos": 0.8165,
+      "pass": false
+    },
+    "pass_all": false
+  },
+  "mom_cont|SELL (base)": {
+    "hold_n": 45,
+    "hold_wr": 0.6222,
+    "hold_ev": 0.495,
+    "friction": {
+      "ev_at_1.5x": 0.4136,
+      "ev_at_2.0x": 0.3322,
+      "pass": true
+    },
+    "placebo": {
+      "real_ev": 0.4138,
+      "placebo_p95": -0.0339,
+      "placebo_mean": -0.1876,
+      "n_placebo": 200,
+      "pass": true
+    },
+    "bootstrap": {
+      "p_ev_pos": 0.9925,
+      "pass": true
+    },
+    "pass_all": true
+  },
+  "vwap_rev(A)": {
+    "gated_n": 166,
+    "gated_wr": 0.6988,
+    "gated_ev": 0.0117,
+    "friction": {
+      "ev_at_1.5x": -0.0572,
+      "ev_at_2.0x": -0.126,
+      "pass": false
+    },
+    "bootstrap": {
+      "p_ev_pos": 0.58,
+      "pass": false
+    },
+    "calibration": {
+      "reliability": [
+        {
+          "p_mean": 0.172,
+          "wr": 0.322,
+          "n": 115
+        },
+        {
+          "p_mean": 0.509,
+          "wr": 0.56,
+          "n": 125
+        },
+        {
+          "p_mean": 0.668,
+          "wr": 0.644,
+          "n": 87
+        },
+        {
+          "p_mean": 0.772,
+          "wr": 0.682,
+          "n": 110
+        },
+        {
+          "p_mean": 0.999,
+          "wr": 0.732,
+          "n": 56
+        }
+      ],
+      "spearman": 1.0,
+      "pass": true
+    },
+    "pass_all": false
+  },
+  "vwap_rev(AB)": {
+    "gated_n": 184,
+    "gated_wr": 0.7174,
+    "gated_ev": 0.045,
+    "friction": {
+      "ev_at_1.5x": -0.0243,
+      "ev_at_2.0x": -0.0935,
+      "pass": false
+    },
+    "bootstrap": {
+      "p_ev_pos": 0.7985,
+      "pass": false
+    },
+    "calibration": {
+      "reliability": [
+        {
+          "p_mean": 0.203,
+          "wr": 0.25,
+          "n": 100
+        },
+        {
+          "p_mean": 0.435,
+          "wr": 0.51,
+          "n": 100
+        },
+        {
+          "p_mean": 0.612,
+          "wr": 0.648,
+          "n": 108
+        },
+        {
+          "p_mean": 0.749,
+          "wr": 0.714,
+          "n": 105
+        },
+        {
+          "p_mean": 0.892,
+          "wr": 0.725,
+          "n": 80
+        }
+      ],
+      "spearman": 1.0,
+      "pass": true
+    },
+    "pass_all": false
+  },
+  "chan_rev(A)": {
+    "gated_n": 134,
+    "gated_wr": 0.6642,
+    "gated_ev": 0.0081,
+    "friction": {
+      "ev_at_1.5x": -0.0627,
+      "ev_at_2.0x": -0.1335,
+      "pass": false
+    },
+    "bootstrap": {
+      "p_ev_pos": 0.5595,
+      "pass": false
+    },
+    "calibration": {
+      "reliability": [
+        {
+          "p_mean": 0.123,
+          "wr": 0.369,
+          "n": 103
+        },
+        {
+          "p_mean": 0.357,
+          "wr": 0.486,
+          "n": 105
+        },
+        {
+          "p_mean": 0.513,
+          "wr": 0.526,
+          "n": 116
+        },
+        {
+          "p_mean": 0.719,
+          "wr": 0.649,
+          "n": 114
+        },
+        {
+          "p_mean": 0.99,
+          "wr": 0.673,
+          "n": 49
+        }
+      ],
+      "spearman": 1.0,
+      "pass": true
+    },
+    "pass_all": false
+  }
+}

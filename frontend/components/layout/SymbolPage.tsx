@@ -12,12 +12,14 @@ import MetaSignalCard from "../meta/MetaSignalCard";
 import SharedChart from "../chart/SharedChart";
 import SignalGrid from "../signals/SignalGrid";
 import ContextCards from "../context/ContextCards";
+import DailyBiasCard from "../context/DailyBiasCard";
 import PerformanceScoreboard from "../performance/PerformanceScoreboard";
 import LifecycleResultsTable from "../performance/LifecycleResultsTable";
 import type { SymbolConfig } from "../../lib/symbolConfig";
 
 const ClearTrendPanelV3 = dynamic(() => import("../panels/ClearTrendPanelV3"), { ssr: false });
 const NewCombinationPanel = dynamic(() => import("../panels/NewCombinationPanel"), { ssr: false });
+const ReflexEnginePanel = dynamic(() => import("../panels/ReflexEnginePanel"), { ssr: false });
 
 interface Props {
   config: SymbolConfig;
@@ -69,6 +71,9 @@ function SymbolPageInner({ config }: Props) {
         {/* Section 0 — New Combination: best proven combos, flashes on full agreement */}
         <NewCombinationPanel symbol={config.symbol} />
 
+        {/* Daily macro bias badge (NASDAQ-only; component self-guards) */}
+        <DailyBiasCard symbol={config.symbol} />
+
         {/* Section 1 — Top bar: price + meta signal */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
           <LivePriceBar config={config} />
@@ -88,6 +93,11 @@ function SymbolPageInner({ config }: Props) {
         {/* Section 3 — Signal grid, full panel heights */}
         <Section title="Signal Models" subtitle="6 models · weighted ensemble" delay={0.1}>
           <SignalGrid symbol={config.symbol} symbolLabel={config.label} />
+        </Section>
+
+        {/* Section 3.5 — Reflex Engine (NDX-only: momentum-continuation + 15m time-stop) */}
+        <Section title="Reflex Engine" subtitle="Canlı momentum sinyalleri · sızıntısız · win rate & EV" delay={0.13}>
+          <ReflexEnginePanel symbol={config.symbol} />
         </Section>
 
         {/* Section 4 — Market context */}

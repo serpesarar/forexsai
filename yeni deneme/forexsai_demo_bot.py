@@ -2,9 +2,10 @@
 ForexSAI — Demo Deney Botu
 ==========================
 PULSE sinyallerini (rolling walk-forward'da en başarılı model ailesi)
-ForexSAI backend'inden çeker; walk-forward ile doğrulanmış 3 robust scope
-(NDX BUY / GDAXI SELL / USOIL SELL) için TÜRETİLMİŞ TP/SL ile IC Markets
-demo hesabında işlem açar.
+ForexSAI backend'inden çeker; walk-forward ile doğrulanmış 4 robust scope
+(NDX BUY / GDAXI BUY / USOIL SELL / USOIL BUY) için TÜRETİLMİŞ TP/SL ile
+IC Markets demo hesabında işlem açar. Güncel scope listesi: config.ROBUST_SCOPES
+(GDAXI SELL 2026-06-24'te çıkarıldı — OOS'ta çöktü).
 
 Çalıştırma:  python forexsai_demo_bot.py
 Ayarlar:     config.py
@@ -29,6 +30,7 @@ except ImportError:
     sys.exit(1)
 
 import config
+import reflex_exec
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion
 
@@ -895,6 +897,15 @@ def main():
                     check_vix_regime()
                 except Exception as e:
                     log.exception("vix-regime hata: %s", e)
+
+            # ── REFLEX ENGINE (NDX momentum-continuation + 15dk time-stop, AYRI magic+3) ──
+            #    Backend /api/reflex/live sinyallerini uygular. SHADOW varsayılan
+            #    (REFLEX_LIVE=1 ile canlı). Kendi time-stop'unu yönetir.
+            if getattr(config, "REFLEX_ENABLED", True):
+                try:
+                    reflex_exec.poll_reflex(log)
+                except Exception as e:
+                    log.exception("reflex hata: %s", e)
             time.sleep(config.POLL_SECONDS)
     except KeyboardInterrupt:
         log.info("Durduruldu (Ctrl+C).")

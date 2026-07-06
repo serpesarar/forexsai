@@ -743,9 +743,31 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     new_low = min(prev_low, worst_pips)
 
     # ------------------------------------------------------------------
-    # 3. Targets
+    # 3. Targets (Spread & Slippage-Aware Simulation)
     # ------------------------------------------------------------------
     target_prices = _resolve_target_prices(signal, entry_price, direction, symbol, timeframe)
+
+    # Dynamic spread and slippage size calculation
+    def _get_pip_size(sym: str) -> float:
+        sym_upper = sym.upper()
+        if "XAUUSD" in sym_upper:
+            return 0.1
+        if "USOIL" in sym_upper or "CL.COMM" in sym_upper:
+            return 0.01
+        return 1.0
+
+    # Average spread in pips per instrument
+    SYMBOL_SPREADS = {
+        "NDX.INDX": 1.5,
+        "XAUUSD": 2.5,
+        "GDAXI.INDX": 2.0,
+        "USOIL.FOREX": 3.0,
+    }
+    
+    pip_size = _get_pip_size(symbol)
+    avg_spread_pips = SYMBOL_SPREADS.get(symbol, 2.0)
+    spread_value = avg_spread_pips * pip_size
+    slippage_value = 1.0 * pip_size  # 1.0 pip default slippage
 
     targets_hit = signal.get("targets_hit") or {}
     if not isinstance(targets_hit, dict):
@@ -765,7 +787,10 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         # Calculate pip distance to this target from entry
         tp_pips_distance = abs(pips_from_price_change(abs(tp_price - entry_price), symbol))
 
-        if direction == "BUY" and session_high is not None and session_high >= tp_price:
+        # Spread-aware target detection:
+        # BUY TP requires Ask to reach level (session_high >= tp_price + spread)
+        # SELL TP requires Bid to reach level (session_low <= tp_price - spread)
+        if direction == "BUY" and session_high is not None and (session_high - spread_value) >= tp_price:
             # Sanity gate: cumulative best profit must be at least 60% of target
             # distance. Prevents false positives from stale/pre-signal candle wicks.
             if tp_pips_distance > 0 and new_high < tp_pips_distance * 0.6:
@@ -778,9 +803,9 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             targets_hit[tp_name] = True
             logger.info(
                 f"✅ Signal {signal_id[:8]} {symbol} {direction}: "
-                f"{tp_name} HIT @ high={session_high:.2f} (target={tp_price:.2f})"
+                f"{tp_name} HIT @ high={session_high:.2f} (target={tp_price:.2f}, spread={spread_value:.4f})"
             )
-        elif direction == "SELL" and session_low is not None and session_low <= tp_price:
+        elif direction == "SELL" and session_low is not None and (session_low + spread_value) <= tp_price:
             if tp_pips_distance > 0 and new_high < tp_pips_distance * 0.6:
                 logger.debug(
                     f"lifecycle.tp_gate_blocked | signal={signal_id[:8]} {symbol} {direction} "
@@ -791,7 +816,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             targets_hit[tp_name] = True
             logger.info(
                 f"✅ Signal {signal_id[:8]} {symbol} {direction}: "
-                f"{tp_name} HIT @ low={session_low:.2f} (target={tp_price:.2f})"
+                f"{tp_name} HIT @ low={session_low:.2f} (target={tp_price:.2f}, spread={spread_value:.4f})"
             )
 
     tp1_3_hit = any(
@@ -805,7 +830,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     any_target_hit = any(bool(v) for v in targets_hit.values()) if targets_hit else False
 
     # ------------------------------------------------------------------
-    # 4. Stop loss
+    # 4. Stop loss (Slippage-Aware Simulation)
     # ------------------------------------------------------------------
     sl_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
     resolved_sl_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
@@ -816,11 +841,12 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     # Pre-entry wick guard: if signal is younger than 60s, do not fire
     # target/SL hits — would mis-attribute pre-entry candle ranges.
+    # Slippage is included to simulate worse-case execution.
     if _suppress_target_hit_this_check:
         hit_stop = False
-    elif direction == "BUY" and session_low is not None and session_low <= sl_price and sl_drawdown_ok:
+    elif direction == "BUY" and session_low is not None and session_low <= (sl_price + slippage_value) and sl_drawdown_ok:
         hit_stop = True
-    elif direction == "SELL" and session_high is not None and session_high >= sl_price and sl_drawdown_ok:
+    elif direction == "SELL" and session_high is not None and session_high >= (sl_price - slippage_value) and sl_drawdown_ok:
         hit_stop = True
 
     target_status = {tp_name: bool(targets_hit.get(tp_name)) for tp_name in target_prices}

@@ -1,0 +1,74 @@
+########## NDX ##########
+N=97252  working idx 58351..97221  barrier=24.9920 (0.10% of median 24992.00)  spread=1.4995
+block drifts: b1+1485 b2+725 b3+689 b4+1350 b5-224  BULL=[1, 2, 3, 4] BEAR=[5]
+
+--- 1. BASELINE WR (resolved, net spread) ---
+  always BUY: WR 47.6% N=27121 meanPnL -1.1357
+  always SELL: WR 44.5% N=27419 meanPnL -2.6657
+  BUY+SELL pooled WR 46.1% N=54540 (≈50% by geometry)
+
+--- window scan: 185x2 dirs. Top 12 by WORST-block WR (>=25/blk) ---
+ minWR  ovWR  std     N   mPnL  per-block        win/dir
+   63%   69% 0.07   300 +9.664  [80% 65% 63% 75% 63%]  dow3+h17 BUY
+   59%   68% 0.07   295 +8.895  [80% 59% 69% 62% 68%]  dow3+h19 SELL
+   57%   74% 0.17   329+12.230  [88% 98% 57% 91% 60%]  dow2+h22 BUY
+   50%   72% 0.19   309+10.919  [50% 53% 93% 89% 55%]  dow1+h20 BUY
+   48%   56% 0.22   813 +2.859  [94% 95% 48% 49% 50%]  hour=05 SELL
+   47%   60% 0.11  1420 +4.963  [47% 55% 78% 66% 53%]  hour=20 BUY
+   46%   58% 0.08   358 +4.049  [70% 46% 56% 63% 57%]  dow2+h17 BUY
+   45%   53% 0.06  2863 +1.318  [55% 48% 62% 55% 45%]  win20-22 BUY
+   44%   48% 0.06 15476 -0.789  [59% 46% 44% 50% 45%]  sess=Other BUY
+   43%   66% 0.16   255 +7.939  [69% 93% 71% 71% 43%]  dow0+h10 SELL
+   43%   48% 0.06  3204 -0.442  [60% 43% 50% 49% 43%]  dow1+Other BUY
+   43%   65% 0.19   280 +7.319  [72% 55% 75% 100% 43%]  dow2+h20 BUY
+  drift control (top 5): this-dir ov vs opposite-dir ov
+    dow3+h17 BUY ov 69% | SELL ov 26% | sum 95%
+    dow3+h19 SELL ov 68% | BUY ov 27% | sum 94%
+    dow2+h22 BUY ov 74% | SELL ov 20% | sum 95%
+    dow1+h20 BUY ov 72% | SELL ov 24% | sum 96%
+    hour=05 SELL ov 56% | BUY ov 36% | sum 92%
+
+--- 2. RULE STRATEGIES (overall WR / mean PnL, BUY & SELL where directional) ---
+  SR bounce (near prior low)         BUY: WR 45.6% meanPnL -2.1485 N=5795
+  SR bounce (near prior high)        SELL: WR 42.9% meanPnL -3.4606 N=7498
+  channel low (RSI<35 + below e50)   BUY: WR 45.7% meanPnL -2.1848 N=4551
+  channel high (RSI>65 + above e50)  SELL: WR 41.7% meanPnL -4.0424 N=5662
+  breakout up (c>prior20 high)       BUY: WR 50.2% meanPnL +0.1318 N=1907
+  breakout dn (c<prior20 low)        SELL: WR 47.8% meanPnL -0.9177 N=1601
+  trend-follow up (e20>e50,ADX>25)   BUY: WR 49.5% meanPnL -0.2581 N=11106
+  trend-follow dn (e20<e50,ADX>25)   SELL: WR 45.6% meanPnL -2.2084 N=8732
+  candle up bar                      BUY: WR 47.9% meanPnL -0.9711 N=13725
+  candle dn bar                      SELL: WR 45.1% meanPnL -2.3719 N=13282
+  RSI<30 reversal                    BUY: WR 45.9% meanPnL -2.1376 N=2909
+  RSI>70 reversal                    SELL: WR 41.2% meanPnL -4.2721 N=3510
+  vol tercile=0                      BUY: WR 48.6% meanPnL -0.3752 N=5086
+  vol tercile=0                      SELL: WR 39.6% meanPnL -4.9121 N=5229
+  vol tercile=1                      BUY: WR 46.2% meanPnL -1.9192 N=9388
+  vol tercile=1                      SELL: WR 46.1% meanPnL -1.8955 N=9507
+  vol tercile=2                      BUY: WR 48.3% meanPnL -0.8600 N=12647
+  vol tercile=2                      SELL: WR 45.4% meanPnL -2.3168 N=12683
+  momentum up (r5>0)                 BUY: WR 48.8% meanPnL -0.5789 N=13835
+  momentum dn (r5<0)                 SELL: WR 45.8% meanPnL -2.0406 N=13284
+
+--- 3. ML GBM walk-forward (P(BUY win)), per-fold WR, bootstrap CI ---
+  fold1: WR 48.8% N=3186
+  fold2: WR 42.7% N=2335
+  fold3: WR 45.8% N=1615
+  fold4: WR 43.9% N=1489
+  POOLED net: N=8625 WR 45.7% meanPnL -2.0517 CI[-2.5874,-1.5037] 
+  POOLED gross(no spread): meanPnL -0.5522 WR 46.0%
+
+--- 4. EV: GBM director (per-block mean PnL) vs naive drift baseline ---
+  GBM director: N=6740 meanPnL -2.3933 CI[-2.9812,-1.8116] worst-block mean -3.7870 
+  drift baseline (trade e20>e50 side): N=27275 meanPnL -1.0885 CI[-1.3781,-0.7973]
+
+--- 5. REGIME configs (net spread), bull vs bear block PnL split ---
+  (2) always SELL                      N=27419 WR 45% mean -2.6657 bull -75285 bear  +2195  (bear-only=drift)
+  (2) always BUY                       N=27121 WR 48% mean -1.1357 bull  -6818 bear -23983
+  (1) time+fixed-dir WF                N= 5457 WR 43% mean -3.2772 bull -11711 bear  -6173
+  (3) time+SELL                        N= 6442 WR 46% mean -2.0188 bull -14230 bear  +1225  (bear-only=drift)
+  (4) time+regime                      N= 4532 WR 50% mean -0.2587 bull  +1877 bear  -3049
+  (5) regime-gated                     N=18183 WR 48% mean -0.9448 bull  -9887 bear  -7293
+  (6) time+regime-gated                N= 4532 WR 50% mean -0.2587 bull  +1877 bear  -3049
+  (7) ML classifier WF                 N= 5423 WR 45% mean -2.2251 bull  -9974 bear  -2093
+

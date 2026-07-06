@@ -1,0 +1,15 @@
+{
+ "NDX_L_spx": {
+  "dec_utc": 14,
+  "target": "y_1h",
+  "bull_min": 11,
+  "x_SPX_min": 0.2451
+ },
+ "NDX_S_es": {
+  "dec_utc": 15,
+  "target": "y_1h",
+  "macd_max": -0.000712,
+  "first_hour_max": -0.1965,
+  "x_ES_max": -0.2093
+ }
+}

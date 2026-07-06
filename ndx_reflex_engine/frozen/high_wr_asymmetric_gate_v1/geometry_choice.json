@@ -1,0 +1,110 @@
+{
+  "chan_rev|BUY": {
+    "tp_atr": 0.75,
+    "sl_atr": 1.5,
+    "ts_min": 30,
+    "train_n": 297,
+    "train_wr": 0.5758,
+    "train_ev_r": -0.1921,
+    "viable": false
+  },
+  "chan_rev|SELL": {
+    "tp_atr": 1.5,
+    "sl_atr": 1.5,
+    "ts_min": 60,
+    "train_n": 279,
+    "train_wr": 0.4516,
+    "train_ev_r": -0.1505,
+    "viable": false
+  },
+  "mom_cont|BUY": {
+    "tp_atr": 1.5,
+    "sl_atr": 1.5,
+    "ts_min": 60,
+    "train_n": 51,
+    "train_wr": 0.6078,
+    "train_ev_r": 0.1589,
+    "viable": true
+  },
+  "mom_cont|SELL": {
+    "tp_atr": 1.5,
+    "sl_atr": 1.0,
+    "ts_min": 30,
+    "train_n": 62,
+    "train_wr": 0.6613,
+    "train_ev_r": 0.5912,
+    "viable": true
+  },
+  "orb|BUY": {
+    "tp_atr": 0.75,
+    "sl_atr": 1.0,
+    "ts_min": 30,
+    "train_n": 53,
+    "train_wr": 0.5849,
+    "train_ev_r": -0.0214,
+    "viable": false
+  },
+  "orb|SELL": {
+    "tp_atr": 1.5,
+    "sl_atr": 1.0,
+    "ts_min": 30,
+    "train_n": 55,
+    "train_wr": 0.4545,
+    "train_ev_r": 0.0934,
+    "viable": true
+  },
+  "sr_react|BUY": {
+    "tp_atr": 1.5,
+    "sl_atr": 1.5,
+    "ts_min": 60,
+    "train_n": 293,
+    "train_wr": 0.4471,
+    "train_ev_r": -0.1673,
+    "viable": false
+  },
+  "sr_react|SELL": {
+    "tp_atr": 1.5,
+    "sl_atr": 1.5,
+    "ts_min": 30,
+    "train_n": 294,
+    "train_wr": 0.4524,
+    "train_ev_r": -0.1556,
+    "viable": false
+  },
+  "sweep|BUY": {
+    "tp_atr": 1.5,
+    "sl_atr": 1.5,
+    "ts_min": 60,
+    "train_n": 244,
+    "train_wr": 0.3975,
+    "train_ev_r": -0.2578,
+    "viable": false
+  },
+  "sweep|SELL": {
+    "tp_atr": 1.5,
+    "sl_atr": 1.5,
+    "ts_min": 30,
+    "train_n": 204,
+    "train_wr": 0.4608,
+    "train_ev_r": -0.1303,
+    "viable": false
+  },
+  "vwap_rev|BUY": {
+    "tp_atr": 1.5,
+    "sl_atr": 1.5,
+    "ts_min": 30,
+    "train_n": 260,
+    "train_wr": 0.4923,
+    "train_ev_r": -0.0695,
+    "viable": false
+  },
+  "vwap_rev|SELL": {
+    "tp_atr": 0.5,
+    "sl_atr": 1.5,
+    "ts_min": 30,
+    "train_n": 264,
+    "train_wr": 0.6098,
+    "train_ev_r": -0.2432,
+    "viable": false
+  }
+}

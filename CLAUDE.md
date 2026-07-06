@@ -3,6 +3,8 @@
 > Bu dosya proje kökünde `CLAUDE.md` olarak yerleştirilmelidir.
 > Claude Code her oturumda bu dosyayı otomatik okur ve tüm talimatları uygular.
 
+@CLAUDE-REASONING.md
+
 ---
 
 ## 🎯 Rol ve Kimlik
@@ -140,9 +142,9 @@ Her değişiklikte bu haritayı kontrol et. Bir modele dokunursan, bağımlılar
                ▼
 ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐
 │  ML      │ │ PULSE 1  │ │ PULSE 2  │ │ PULSE 3  │ │  EMEL    │ │   SMC    │
-│ LightGBM │ │  Algo    │ │  ML+TA   │ │  MTF     │ │ 9-Check  │ │  ICT/OB  │
+│ LightGBM │ │  Algo    │ │  ML+TA   │ │  MTF     │ │ 10-Check │ │  ICT/OB  │
 │ 150feat  │ │ 6-comp   │ │ Hybrid   │ │ 5m+1H+4H│ │ Strategic│ │ OB/FVG   │
-│ .joblib  │ │ scalp    │ │ ML+EMA   │ │ 3-layer  │ │ 9-point  │ │ CHoCH    │
+│ .joblib  │ │ scalp    │ │ ML+EMA   │ │ 3-layer  │ │ 10-point │ │ CHoCH    │
 └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘
      │            │            │            │            │            │
      └────────────┴────────────┴────────────┴────────────┴────────────┘
@@ -183,6 +185,9 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 | `signal_trajectory_snapshots` | Aktif sinyallerin periyodik snapshot'ı (signal_checks'in yerini aldı) | signal_id, current_price, current_profit_pips, current_drawdown_pips, deterioration_score |
 | `outcome_results` | Sonuç analizleri | signal_id, outcome, highest_profit_pips, lowest_drawdown_pips, exit_price |
 | `candle_cache` | Kalıcı OHLCV cache | symbol, timeframe, timestamp, o, h, l, c, v |
+| `signal_vetoes` | Precision Veto Engine denetim logu (+2026-07-03: `macro_bias_adjustment`, `macro_bias_state`) | symbol, veto_stage, veto_reason, liquidity_zone_position, macro_bias_adjustment |
+| `daily_bias` | ⭐ MiroShark günlük NASDAQ makro bias'ı (günde 1, UPSERT `bias_date`+`symbol`). Precision Veto Engine yumuşak katman olarak okur. NASDAQ-only. | bias_date, symbol, nasdaq_daily_bias, confidence, main_support/resistance, invalid_if, is_invalidated |
+| `cortex_episodes` | ⭐ CORTEX Faz 1 epizodik hafıza (hipokampus). Her NASDAQ karar-günü: situation vektörü + karar + (kapanışta) sonuç. Analog retrieval bundan base-rate üretip debate CIO'ya besler. NASDAQ-only, izole. | ny_date, vix_regime (⭐ en ağır), market_regime, qqq_premarket_change, predicted_bias, actual_close_direction, was_correct |
 | `cot_data` | ⚠️ Bu tablo Supabase'de YOK. COT verisi `cot_report_service` tarafından canlı çekilip in-memory tutuluyor, persist EDİLMİYOR. | (tablo mevcut değil) |
 
 **Supabase kuralları:**
@@ -201,7 +206,7 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 | `GET /api/panel/pulse/{symbol}` | PULSE 1 (Algo) |
 | `GET /api/panel/pulse-ml/{symbol}` | PULSE 2 (ML+TA) |
 | `GET /api/panel/pulse-v3/{symbol}` | PULSE 3 (Hybrid) |
-| `GET /api/panel/emel/{symbol}` | EMEL (9-Check) |
+| `GET /api/panel/emel/{symbol}` | EMEL (10-Check) |
 | `GET /api/panel/smc/{symbol}` | SMC (ICT/OB) |
 | `GET /api/panel/regime/{symbol}` | Market Regime |
 
@@ -220,6 +225,34 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 | `GET /api/learning/smc-performance` | SMC performansı |
 | `GET /api/whale/dashboard` | Whale Tracker |
 | `GET /api/cot/history/{symbol}` | COT rapor geçmişi |
+
+### MiroShark Makro Bias (NASDAQ-only)
+| Endpoint | Açıklama |
+|----------|----------|
+| `POST /api/miroshark/webhook` | MiroShark CIO push — HMAC-SHA256 imza (`X-MiroShark-Signature`, `WEBHOOK_SECRET`). 401 imza / 400 JSON / 503 DB. UPSERT. |
+| `POST /api/miroshark/manual-bias` | İmzasız fallback — CIO JSON'u elle yapıştır. Aynı UPSERT. |
+| `GET /api/miroshark/current-bias?symbol=NDX.INDX` | Bugünkü bias veya `no_bias_today`. Frontend + veto engine okur. |
+
+- Servis: `services/daily_bias_service.py` (normalize + UPSERT + read-cache 60s + `compute_alignment` + invalidation). Router: `routers/miroshark_router.py`. Kurulum: `docs/MIROSHARK_SETUP.md`.
+
+### Bias Doğruluk Test Harness'ı (2026-07-03, İZOLE — canlıya dokunmaz)
+| Endpoint | Açıklama |
+|----------|----------|
+| `POST /api/bias-test/log` | Bias run'ını seans bağlamıyla `bias_test_log`'a yazar (`run_label` ile). |
+| `POST /api/bias-test/fill-outcomes?ny_date=` | Gün kapanınca NDX gerçek yönüne göre `was_correct` doldurur. |
+| `GET /api/bias-test/accuracy-report` | run_label / confidence / seans kırılımlı isabet oranı. |
+| `GET /api/bias-test/lab` | Çift-tıkla kontrol paneli UI (self-contained HTML, `routers/bias_lab.html`, same-origin). |
+| `POST /api/bias-test/run-debate` | Native debate motorunu ŞİMDİ çalıştır + logla. |
+| `GET /api/bias-test/routing-status` | LLM sağlayıcı yönlendirmesi + auto-run durumu. |
+
+- Çift-tıkla başlatıcı: `Bias Lab.command` (proje kökü) — backend'i (yoksa) başlatır, paneli tarayıcıda açar.
+- **Debate motoru (native):** `services/bias_debate_engine.py` — 6 ajan; model yönlendirmesi `services/llm_router.py` (önemli/CIO/debate → **Kimi**, normal → **DeepSeek Reasoner**; OpenAI-uyumlu, key yoksa fail-open fallback). Core: `services/bias_test_service.py` (router+auto-runner paylaşır, DRY).
+- **Yan beslemeler (context):** `QQQ.US` premarket proxy (NDX cash premarket işlem görmez) + DXY/VIX/US10Y makro göstergeleri (`macro_data_service.get_macro_dict`). QQQ, `data_hub.REFERENCE_SYMBOLS`'e eklendi — **tradable DEĞİL** (sinyal/scheduler/model yok), sadece fiyat/mum ingest'i (`ingest_live_price`/`ingest_candles` guard'ları REFERENCE'ı kabul eder). MT5 bridge `QQQ.US` tick'ini zaten yolluyor.
+- **CORTEX Faz 1 (epizodik hafıza + analog retrieval):** `services/cortex_memory.py` — `build_situation` (seans+makro+QQQ+regime+takvim, hepsi nullable), `record_episode`/`fill_outcomes` (bias_test flow'a kancalı), `find_analogs` (ağırlıklı kNN, k=8; shrinkage prior 0.55 = ölçülen drift; `p_up_calibrated` gain 0.20 — ham p_up aşırı-özgüvenli olduğu için). Debate CIO'ya kalibre base-rate **0 LLM** ile enjekte edilir ("MILD tilt" diliyle). Flag `CORTEX_ENABLED`, `CORTEX_ANALOG_K`. Plan: `docs/CORTEX_PLAN.md`.
+- **CORTEX backfill + doğrulama (2026-07-03):** `services/cortex_backfill.py` — DOĞRU hedef (kullanıcı düzeltmesi): karar anı intraday (09:30/10:00/11:00 ET), tahmin **ileriye NQ futures net yönü** +6h ve +24h (gece Asya/Avrupa dahil). 3567 sızıntısız epizod (2019-24, 1189 gün × 3 saat), NQ karışık-TZ ay-bazlı hacim-çıpasıyla çözüldü. ⚠️ **SONUÇ: analog-kNN bu hedef için YÖN ÖNGÖRMÜYOR** — Q4−Q1 kalibrasyon farkı çoğu hücrede negatif/sıfır; tek pozitif (11:00×24h) holdout'ta −11pp (aşırı-uyum); momentum baseline ~%50. Verimli-fiyatlama ile tutarlı. **Karar:** analog enjeksiyonu debate'e VARSAYILAN KAPALI (`CORTEX_ANALOG_INJECT=0`); hafıza kaydı açık (Faz 2/3 için). Yön edge'i kNN'de yok — haber/mikroyapı/LLM'de aranmalı. Bulgular: `research/cortex_backfill/FINDINGS.md`.
+- **Auto-runner:** `services/bias_auto_runner.py` — main.py'de 60s loop; trading günü NY 08:00 & 09:45'te debate→log, 16:15'te fill-outcomes. **Opt-in** `BIAS_AUTO_RUN_ENABLED=1` (token harcar). Env: `KIMI_API_KEY`/`KIMI_MODEL`, `BIAS_RUN_WINDOWS_ET`, `BIAS_FILL_TIME_ET`.
+
+- Servis: `services/session_context_service.py` — `get_session_context(ts)` (DST-doğru, `zoneinfo`; seans/premarket/overlap/yarım-gün/tatil; statik NYSE 2026 takvimi + opsiyonel `pandas_market_calendars`). Router: `routers/bias_test_router.py`. Rehber: `docs/BIAS_TEST_GUIDE.md`. **Amaç: hangi çalıştırma saatinin en isabetli bias verdiğini ölçmek → canlıya bağlama kararı (≥%65 iyi, ≥%55 min).** Ayrı tablo, ayrı router; `daily_bias`/veto engine'e DOKUNMAZ.
 
 ---
 
@@ -242,16 +275,19 @@ MT5 Bridge XAUUSD için 5m barları doğrudan gönderir. Üst timeframe'ler Data
 - MT5 → Redis `mt5:bar:5m` stream → DataHub `_candles_5m`
 - 5m → resample → 15m, 30m (derived_from_5m)
 - 30m → resample → 1h, 4h (derived_from_30m)
+- **2026-07-01:** `mt5:bar:1h` stream'inden veya persistent cache'ten GERÇEK 1h barı varsa, 30m türevi artık onu ezmez; 4h de gerçek 1h'ten türetilir (`derived_from_1h`). `XAU_REAL_H1_ENABLED=0` ile eski davranış.
 - Bu türetme mantığı `data_hub.py` içinde, `mt5_redis_client.py`'ın ingest ettiği veriden yapılır
 - `data_fetcher.py` ve `market_data_service.py` sadece DataHub'dan okur, doğrudan MT5/Redis'e bağlanmaz
 
-### Enstrüman-Spesifik EMEL Ağırlıkları
+### Enstrüman-Spesifik EMEL Ağırlıkları (2026-07-01 revizyonu)
 ```
-NDX.INDX:   trend=25, mtf=20, regime=15, momentum=20, volume=15, sr=10, pattern=15
-GDAXI.INDX: trend=20, mtf=25, regime=15, momentum=20, volume=15, sr=15, pattern=10
-XAUUSD:     trend=15, mtf=20, regime=15, momentum=25, volume=10, sr=20, pattern=15
-USOIL:      trend=20, mtf=15, regime=20, momentum=20, volume=20, sr=15, pattern=10
+NDX.INDX:   trend=25, mtf=20, regime=15, momentum=20, volume=15, sr=10, pattern=15, macro=5
+GDAXI.INDX: trend=25, mtf=25, regime=15, momentum=20, volume=8,  sr=12, pattern=10, macro=5
+XAUUSD:     trend=15, mtf=20, regime=15, momentum=25, volume=10, sr=20, pattern=15, macro=15
+USOIL:      trend=20, mtf=15, regime=20, momentum=20, volume=20, sr=15, pattern=10, macro=10
 ```
+- `macro` = 10. EMEL kontrolü (DXY/US10Y emtia, VIX endeks — yfinance, fail-open nötr)
+- GDAXI: volume 15→8 (sentetik tick volume), sr 15→12 (pivot zayıf referans), trend 20→25
 
 ---
 
@@ -259,6 +295,7 @@ USOIL:      trend=20, mtf=15, regime=20, momentum=20, volume=20, sr=15, pattern=
 
 Her sinyal üretiminde bu kontrolleri sırasıyla uygula:
 
+0. **Merkezi Kapılar (2026-07-01):** `services/signal_gates.py::apply_signal_gates()` — panel endpoint'lerinde (pulse1/2/3) regime filtresinden hemen sonra + `prediction_logger.log_prediction`'da güvenlik ağı olarak. Kapsam: XAU trend-yönü SELL kapısı (pulse+smc), GDAXI pulse1 askısı, seans kapıları (XAU 20 & 01-02 UTC, GDAXI 07 UTC), takvim kapısı (±30dk, pulse+smc+emel). Hepsi fail-open, env ile kapatılabilir.
 1. **Regime Filter:** `filter_signal_by_regime()` — izin verilen yön kontrolü
 2. **Confidence Threshold:** Scope preset'e göre minimum confidence
 3. **Cooldown:** 15dk yön değişimi cooldown, sinyal bitişi 30dk bekleme
@@ -266,6 +303,14 @@ Her sinyal üretiminde bu kontrolleri sırasıyla uygula:
 5. **Portfolio Risk:** Günlük %3 limit, anlık %1.5 uyarı
 6. **Dedup:** (symbol, model_type, direction, status=active) unique
 7. **ATH Protocol:** ATH zone'da SELL bloklanır, threshold düşer
+
+### Precision Veto Engine — Makro Bias Katmanı (2026-07-03, NASDAQ-only)
+`services/precision_veto_service.py::check_signal()` Aşama 1 içinde (likidite + MTF'ten SONRA) MiroShark günlük bias'ını uygular:
+- Hizalı sinyal → confidence bonus `+min(15, C×0.2)`; karşıt → penaltı `−min(20, C×0.25)`; karşıt & `C>75` → **soft veto** (`macro_bias_opposition`, HOLD).
+- `choppy` → tüm sinyaller `−10` (`wait_and_see` → `−20`). `neutral`/bias-yok/invalidated → **etkisiz** (sinyal eskisi gibi).
+- Bias yoksa veya `is_invalidated` ise nötr. Gün-içi `invalid_if` izleme lifecycle'da (`_check_daily_bias_invalidation`, support/resistance kırılımı).
+- Flag: `PRECISION_VETO_CONFIG["macro_bias_enabled"]` / env `MACRO_BIAS_ENABLED=0`. Bonus/penaltı `signal_vetoes.macro_bias_*` kolonlarına loglanır. **Diğer semboller (DAX/XAU/USOIL) etkilenmez.**
+- ⚠️ Stage 4 meta modeli türev bias feature'larını (`daily_bias_is_*`, `signal_aligns_with_bias`) ancak **yeniden eğitilirse** tüketir.
 
 ---
 
@@ -407,6 +452,31 @@ DEEPSEEK_API_KEY=
 # Pulse inversion SHADOW deneyi (indeksler) — ana sistemi etkilemez
 PULSE_SHADOW_INVERSION_ENABLED=1
 PULSE_SHADOW_INVERSION_SYMBOLS=NDX.INDX,GDAXI.INDX
+
+# ─── 2026-07-01 Gösterge Denetimi bayrakları (services/signal_gates.py) ───
+SIGNAL_BREAKEVEN_AFTER_TP1=1      # TP1 vurmuş sinyal flip-close'da completed sayılır
+XAU_TREND_SELL_GATE=1             # XAU trend/ATH ortamında pulse+smc SELL → HOLD
+SESSION_GATES_ENABLED=1           # XAU 20,01-02 UTC / GDAXI 07 UTC yeni sinyal blok
+CALENDAR_GATE_ENABLED=1           # High-impact takvim olayı ±30dk sinyal blok (fail-open)
+CALENDAR_GATE_MINUTES=30
+GDAXI_PULSE1_ENABLED=0            # GDAXI pulse1 ASKIDA (60g WR %25) — 1 ile açılır
+PULSE_ATR_GEOMETRY=1              # Endekslerde TP≥ATR×1.5 / SL≥ATR×1.0 taban
+PULSE3_REGIME_WEIGHTS=1           # Trend/ATH'de pulse3: 4H %40 / 1H %35 / 5m %25
+XAU_REAL_H1_ENABLED=1             # Gerçek mt5:bar:1h varsa 30m türevini ezme
+CROSS_MODEL_EXPERIMENT_ENABLED=0  # ml_cross_xau_nasdaq KAPALI (SELL %6.9 WR kanıtı)
+
+# ─── MiroShark makro bias köprüsü (2026-07-03, NASDAQ-only) ───
+WEBHOOK_SECRET=                   # MiroShark ↔ ForexSAI ortak HMAC-SHA256 secret'ı (iki tarafta aynı)
+MACRO_BIAS_ENABLED=1              # Precision Veto makro bias katmanı; 0 ile tamamen kapat
+
+# ─── Bias debate motoru + auto-runner (2026-07-03) ───
+KIMI_API_KEY=                     # Kimi/Moonshot (önemli+CIO+debate ajanları). MOONSHOT_API_KEY de kabul.
+KIMI_MODEL=kimi-k2-0711-preview   # gerçek Kimi 2.6 model id'siyle değiştir
+KIMI_BASE_URL=https://api.moonshot.ai/v1
+DEEPSEEK_MODEL=deepseek-reasoner  # normal/veri ajanları
+BIAS_AUTO_RUN_ENABLED=0           # 1 → NY 08:00 & 09:45'te oto debate+log, 16:15 fill (token harcar)
+BIAS_RUN_WINDOWS_ET=08:00=0800_main,09:45=0945_confirm
+BIAS_FILL_TIME_ET=16:15
 
 # App Config
 ENVIRONMENT=development|production

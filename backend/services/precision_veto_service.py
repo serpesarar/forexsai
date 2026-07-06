@@ -63,6 +63,9 @@ PRECISION_VETO_CONFIG: dict[str, Any] = {
     "mtf_single_opposition_penalty": 15,
     "meta_classifier_threshold": 0.55,
     "meta_confidence_blend_weight": 0.3,
+    # Makro günlük bias katmanı (MiroShark → daily_bias). NASDAQ-only, soft.
+    # False → katman tamamen kapalı (sinyaller eskisi gibi). Env: MACRO_BIAS_ENABLED=0.
+    "macro_bias_enabled": True,
 }
 
 # Sembol bazlı override — XAUUSD'nin volatilitesi farklı.
@@ -112,6 +115,14 @@ def _env_shadow() -> bool:
     return bool(PRECISION_VETO_CONFIG.get("shadow_mode", True))
 
 
+def _macro_bias_on() -> bool:
+    """Makro bias katmanı açık mı: config flag + MACRO_BIAS_ENABLED env override."""
+    env = os.getenv("MACRO_BIAS_ENABLED")
+    if env is not None:
+        return env != "0"
+    return bool(PRECISION_VETO_CONFIG.get("macro_bias_enabled", True))
+
+
 # ─── Sonuç tipi ──────────────────────────────────────────────────────────────
 @dataclass
 class VetoResult:
@@ -132,6 +143,10 @@ class VetoResult:
     # lot çarpanı olarak uygular. 1.0 = baseline, 0.0 = veto, >1 = boost.
     position_size_multiplier: float = 1.0
     sizing_action: str = ""    # "hard_veto"|"size_quarter"|"size_normal"|"size_boost"|"size_max"|"cold_start_passthrough"
+    # Makro günlük bias confidence bonusu (NASDAQ). Penaltı total_penalty'ye
+    # gider; bonus (bias ile hizalı sinyal) burada birikir ve adjusted_confidence
+    # hesaplandıktan SONRA eklenir.
+    macro_bias_bonus: float = 0.0
 
     def to_log_dict(self, signal: dict) -> dict:
         f = self.features
@@ -149,6 +164,8 @@ class VetoResult:
             "bb_position": f.get("bb_position"),
             "z_score": f.get("z_score"),
             "meta_classifier_proba": f.get("meta_classifier_proba"),
+            "macro_bias_adjustment": f.get("macro_bias_adjustment"),
+            "macro_bias_state": f.get("macro_bias_state"),
             "price_at_veto": float(signal.get("price") or signal.get("entry_price") or 0),
             "market_regime": signal.get("market_regime"),
             "outcome": ("shadow" if (self.would_veto and self.shadow_mode)
@@ -761,6 +778,58 @@ async def check_signal(signal: dict) -> VetoResult:
             res.total_penalty += penalty
             res.details["stage1_mtf_penalty"] = det
 
+        # ── Makro günlük bias (NASDAQ) — likidite ve MTF'ten SONRA ───────────
+        # MiroShark'ın günde 1 kez ürettiği bias'a hizalı sinyaller bonus,
+        # karşıt sinyaller penaltı alır; yüksek-kanaat karşıtlık soft veto.
+        # NASDAQ dışı semboller için no-op (servis içinde garantili).
+        if _macro_bias_on():
+            try:
+                from services.daily_bias_service import check_macro_bias_alignment
+                m = check_macro_bias_alignment(direction, symbol)
+            except Exception as e:
+                logger.warning("[precision-veto] makro bias hatası %s: %s", symbol, e)
+                m = None
+            if m and m.get("state") != "not_nasdaq":
+                adj = float(m.get("adjustment") or 0.0)
+                state = m.get("state")
+                # NASDAQ feature snapshot'ı (Stage 4 ML + panel görünürlüğü).
+                # not_nasdaq → hiç yazma; diğer semboller tamamen dokunulmaz.
+                res.features["macro_bias_state"] = state
+                res.features["macro_bias_adjustment"] = round(adj, 2)
+                # ── Stage 3.4 — meta-classifier türev feature'ları ───────────
+                # NOT: Stage 4 modeli feature'ları precision_meta_features.json
+                # listesinden okur; bu key'ler yalnızca model YENİDEN EĞİTİLİNCE
+                # tüketilir (o zamana dek zararsızca göz ardı edilir).
+                aligned = m.get("aligned")
+                res.features["daily_bias_confidence"] = round(
+                    (float(m.get("confidence") or 0.0)) / 100.0, 4)
+                res.features["signal_aligns_with_bias"] = (
+                    1 if aligned is True else 0 if aligned is False else -1)
+                res.features["bias_is_invalidated"] = (
+                    1 if state == "invalidated" else 0)
+                for _s in ("bullish", "bearish", "neutral", "choppy"):
+                    res.features[f"daily_bias_is_{_s}"] = 1 if state == _s else 0
+                if state in ("bullish", "bearish", "choppy"):
+                    res.details["macro_bias"] = {
+                        "state": m.get("state"),
+                        "adjustment": round(adj, 2),
+                        "aligned": m.get("aligned"),
+                        "confidence": m.get("confidence"),
+                        "trade_mode": m.get("trade_mode"),
+                    }
+                    if m.get("soft_veto"):
+                        # Yüksek-kanaat karşıtlık. Penaltıyı DA uygula ki shadow
+                        # modda (bloklama yokken) confidence düşüşü yansısın —
+                        # aksi halde C>75 karşıt, C<75 karşıttan az cezalanırdı.
+                        res.total_penalty += -adj
+                        res.adjusted_confidence = max(0.0, conf - res.total_penalty)
+                        return _hard_veto(1, "macro_bias_opposition",
+                                          res.details["macro_bias"])
+                    if adj < 0:
+                        res.total_penalty += -adj
+                    elif adj > 0:
+                        res.macro_bias_bonus += adj
+
     # ── AŞAMA 2 — Mum yapısı ─────────────────────────────────────────────────
     if PRECISION_VETO_CONFIG["stage_2_enabled"]:
         reason, wick_score, det = _stage2_wick(symbol, direction, price, candles)
@@ -799,6 +868,9 @@ async def check_signal(signal: dict) -> VetoResult:
 
     # ── Soft veto kontrolü — kümülatif penaltı ───────────────────────────────
     res.adjusted_confidence = max(0.0, conf - res.total_penalty)
+    # Makro bias bonusu penaltılardan bağımsız — hizalı NASDAQ sinyaline eklenir.
+    if res.macro_bias_bonus:
+        res.adjusted_confidence = min(100.0, res.adjusted_confidence + res.macro_bias_bonus)
     cap = float(PRECISION_VETO_CONFIG["soft_veto_penalty_cap"])
     if res.total_penalty >= cap:
         res.would_veto = True

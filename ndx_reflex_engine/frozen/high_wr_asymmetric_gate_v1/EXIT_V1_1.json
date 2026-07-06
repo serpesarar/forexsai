@@ -1,0 +1,9 @@
+{
+  "variant": "v1.1_trailing_exit",
+  "entry": "frozen high_wr_asymmetric_gate_v1 gates UNCHANGED (chan_rev/vwap_rev/sweep ML+tau, mom_cont base)",
+  "exit": {"policy": "atr_trail", "activate_atr": 0.4, "trail_atr": 0.4, "time_stop_min": 60,
+           "sl_atr_per_family": {"chan_rev": 2.5, "vwap_rev": 2.5, "sweep": 2.0, "mom_cont": 1.5}},
+  "oos_pooled": {"n": 3428, "wr": 0.723, "ev_r": 0.041, "pf": 1.22, "p_ev_pos": 1.0},
+  "groups_ev_positive": "9/10",
+  "note": "Exit-only optimization flips V1 from -0.06R to +0.04R. See ../../EXIT_STUDY.md. Shadow-test slippage on trailing fills before live."
+}

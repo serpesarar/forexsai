@@ -476,6 +476,19 @@ async def _apply_precision_veto(record: dict) -> bool:
             record["ml_confidence"] = round(vr.adjusted_confidence, 2)
             if isinstance(record.get("factors"), dict):
                 record["factors"]["precision_veto_penalty"] = round(vr.total_penalty, 1)
+        # Macro daily-bias context → persist onto the signal itself (prediction_logs
+        # factors) so it lands next to the realized outcome. This is what makes the
+        # "does aligning with the bias help?" question TRAINABLE — signal_vetoes only
+        # keeps penalised/vetoed rows, but bonus (aligned) signals need capturing too.
+        f = vr.features or {}
+        if f.get("macro_bias_state") and isinstance(record.get("factors"), dict):
+            record["factors"]["macro_bias"] = {
+                "state": f.get("macro_bias_state"),
+                "adjustment": f.get("macro_bias_adjustment"),
+                "daily_bias_confidence": f.get("daily_bias_confidence"),
+                "signal_aligns_with_bias": f.get("signal_aligns_with_bias"),
+                "bias_is_invalidated": f.get("bias_is_invalidated"),
+            }
         return True
     except Exception as e:
         logger.warning("[precision-veto] kontrol hatası — sinyal geçti: %s", e)

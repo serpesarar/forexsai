@@ -1,0 +1,103 @@
+{
+  "model": "NDX_PEF_v4",
+  "exit": {
+    "type": "time_stop_market",
+    "minutes": 15,
+    "fill": "gap_aware_realistic",
+    "no_partial": true,
+    "no_trailing": true
+  },
+  "entry_gate": {
+    "chan_rev": 0.8,
+    "vwap_rev": 0.78,
+    "sweep": 0.81,
+    "mom_cont": "base_rate"
+  },
+  "regime": {
+    "EXPANSION": "atr_pctl>=0.80",
+    "CONTRACTION": "atr_pctl<=0.25 & adx<20",
+    "TREND": "adx>=25",
+    "CHOP": "else"
+  },
+  "regime_family_table": {
+    "chan_rev|CHOP": {
+      "train_ev": 0.163,
+      "n": 159,
+      "allow": true,
+      "cell_size": 0.708
+    },
+    "chan_rev|EXPANSION": {
+      "train_ev": 0.1937,
+      "n": 326,
+      "allow": true,
+      "cell_size": 0.841
+    },
+    "chan_rev|TREND": {
+      "train_ev": -0.0135,
+      "n": 91,
+      "allow": false,
+      "cell_size": 0.0
+    },
+    "mom_cont|CHOP": {
+      "train_ev": 0.7365,
+      "n": 24,
+      "allow": true,
+      "cell_size": 1.6
+    },
+    "mom_cont|EXPANSION": {
+      "train_ev": 0.8232,
+      "n": 121,
+      "allow": true,
+      "cell_size": 1.6
+    },
+    "mom_cont|TREND": {
+      "train_ev": 0.31,
+      "n": 19,
+      "allow": false,
+      "cell_size": 0.0
+    },
+    "sweep|CHOP": {
+      "train_ev": 0.1123,
+      "n": 153,
+      "allow": true,
+      "cell_size": 0.5
+    },
+    "sweep|EXPANSION": {
+      "train_ev": 0.2302,
+      "n": 233,
+      "allow": true,
+      "cell_size": 1.0
+    },
+    "sweep|TREND": {
+      "train_ev": 0.2592,
+      "n": 53,
+      "allow": true,
+      "cell_size": 1.126
+    },
+    "vwap_rev|CHOP": {
+      "train_ev": 0.3983,
+      "n": 152,
+      "allow": true,
+      "cell_size": 1.6
+    },
+    "vwap_rev|EXPANSION": {
+      "train_ev": 0.2013,
+      "n": 336,
+      "allow": true,
+      "cell_size": 0.874
+    },
+    "vwap_rev|TREND": {
+      "train_ev": 0.2283,
+      "n": 88,
+      "allow": true,
+      "cell_size": 0.992
+    }
+  },
+  "sizing": "base * conf_mult(p) * cell_size(train_ev/median, [0.5,1.6])",
+  "pooled_result": {
+    "n": 3092,
+    "wr": 0.4463130659767141,
+    "ev_r": 0.07818496421106168,
+    "p_ev_pos": 0.9996666666666667
+  }
+}

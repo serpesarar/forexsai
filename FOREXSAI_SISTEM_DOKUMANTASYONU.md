@@ -2,7 +2,10 @@
 
 > **Proje:** ForexSAI AI Trading Dashboard  
 > **Oluşturulma Tarihi:** 14 Nisan 2026  
+> **Son Güncelleme:** 2026-07-01 (Gösterge Denetimi — detay: `UYGULAMA_NOTLARI_2026-07-01.md`)  
 > **Doküman Tipi:** Teknik Sistem Dokümantasyonu (Haber Analiz Sistemi Hariç)  
+
+> ⚠️ **2026-07-01 Gösterge Denetimi değişiklikleri:** Merkezi sinyal kapıları (`services/signal_gates.py`: XAU trend-SELL, seans, takvim, GDAXI pulse1 askısı), TP1→breakeven semantiği (`direction_flip_after_tp`), pulse1'de Stochastic→H4 Trend Uyumu, PULSE 3 rejime duyarlı TF ağırlıkları, endekslerde ATR-taban TP/SL, EMEL 10. kontrol (Makro Uyum), XAUUSD gerçek 1h bar tercihi, ml_cross deneyi kapalı. Bu dokümanın ilgili bölümleri güncellenmiştir.
 
 ---
 
@@ -224,18 +227,19 @@ CONFIDENCE_LAYERS = {
 
 #### PULSE 1 (Algo) - `/api/panel/pulse/{symbol}`
 ```python
-# 6-bileşenli puanlama (100 puan)
+# 6-bileşenli puanlama (100 puan) — 2026-07-01 revizyonu
 components = {
-    "trend_ema": 25,      # EMA stack
-    "rsi": 20,           # RSI momentum
-    "macd": 20,          # MACD histogram
-    "volume": 15,        # Hacim onayı
-    "stochastic": 15,    # Stochastic
-    "candle": 5          # Mum formasyonu
+    "candle_10": 20,      # Son 10 mum yönü
+    "ema_stack": 25,      # EMA 5/10/20 stack
+    "rsi": 20,            # RSI momentum (trend-aware: yönle uyumlu aşırı RSI ceza YEMEZ)
+    "macd": 15,           # MACD histogram
+    "volume": 10,         # Hacim onayı
+    "h4_alignment": 10    # H4 trend uyumu (Stochastic'in yerini aldı — RSI ile mükerrerdi)
 }
-# 10 mum analizi
-# SCOUT(40-64)/CONFIRM(65+)
-# R/R min 1.2
+# Stochastic artık yalnızca görüntü amaçlı (skor katkısı 0)
+# SCOUT(35-55)/CONFIRM(56+), R/R min regime.min_rr (dinamik)
+# GDAXI'de pulse1 ASKIDA (60g WR %25) — GDAXI_PULSE1_ENABLED=1 ile açılır
+# Sinyal sonrası merkezi kapılar: signal_gates.apply_signal_gates()
 ```
 
 #### PULSE 2 (ML+TA) - `/api/panel/pulse-ml/{symbol}`
@@ -249,35 +253,40 @@ components = {
 
 #### PULSE 3 (Hybrid) - `/api/panel/pulse-v3/{symbol}`
 ```python
-# Çoklu zaman dilimi:
-#   5m: 50 puan
-#   1H: 30 puan
-#   4H: 20 puan
+# Çoklu zaman dilimi — REGIME-AWARE ağırlıklar (2026-07-01):
+#   RANGING:            5m %50 / 1H %30 / 4H %20 (eski dağılım)
+#   TRANSITION:         5m %30 / 1H %35 / 4H %35
+#   STRONG_TREND / ATH: 5m %25 / 1H %35 / 4H %40  (5m gürültüsü 4H trendini ezemez)
+# 1H/4H mutlak % eşikleri ATR-normalize edildi (PULSE3_REGIME_WEIGHTS=1)
 # Paralel veri fetch
 # Entry zone hesaplama
 # Order Block tespiti
 ```
 
-### 5.3 EMEL (9 Kontrol Noktalı Strateji)
+### 5.3 EMEL (10 Kontrol Noktalı Strateji) — 2026-07-01: Makro Uyum eklendi
 
 **Dosya:** `backend/routers/emel_pulse.py` - `get_emel_analysis()`
 
 ```python
-# 9 kontrol noktası:
+# 10 kontrol noktası:
 checks = [
-    "Trend Yönü",           # EMA20/50/200 stack
+    "Trend Analizi",        # EMA20/50/200 stack + slope
+    "Rejim Tespiti",        # ADX + yapı
+    "Multi-Timeframe",      # 1D/4H/1H/15m konfluans
+    "Formasyon",            # Harmonik pattern (4H)
+    "Destek/Direnç",        # Pivot S/R
     "Momentum",             # RSI/MACD/Stochastic
-    "Hacim Onayı",          # Volume ratio
-    "Support/Resistance",   # S/R mesafe
-    "Pattern",              # Mum formasyonları
-    "Multi-Timeframe",      # MTF konfluans
-    "Volatilite",           # ATR
-    "Risk/Reward",          # R/R oranı
-    "Piyasa Rejimi"         # Market regime
+    "Hacim Onayı",          # Volume z-score
+    "Learning",             # Geçmiş performans (win rate)
+    "Portföy Riski",        # Günlük risk limiti (hard gate)
+    "Makro Uyum"            # YENİ (2026-07-01): DXY/US10Y (emtia), VIX (endeks)
 ]
 
-# Threshold: 5/9 yeşil → Sinyal (önceki 6/9)
-# 4/9 + ML agreement → Sinyal
+# Konfluans ağırlıkları sembol-spesifik (bkz. CLAUDE.md "Enstrüman-Spesifik
+# EMEL Ağırlıkları"): macro ağırlığı XAU=15, USOIL=10, endeksler=5.
+# GDAXI revizyonu: volume 15→8, sr 15→12, trend 20→25.
+# XAUUSD EMEL 60g WR: %84.8 — ATH SELL bloğu diğer modellere de genellendi
+# (signal_gates.xau_trend_sell_gate).
 ```
 
 ### 5.4 Meta-Intelligence Engine
@@ -692,7 +701,7 @@ Sol Sütun:              Sağ Sütun:
 
 | Panel | Dosya | Açıklama |
 |-------|-------|----------|
-| EmelPanel | panels/EmelPanel.tsx | 9 kontrol noktalı analiz |
+| EmelPanel | panels/EmelPanel.tsx | 10 kontrol noktalı analiz (2026-07-01: Makro Uyum eklendi) |
 | PulsePanel | panels/PulsePanel.tsx | PULSE 1 (Algo) |
 | PulseMLPanel | panels/PulseMLPanel.tsx | PULSE 2 (ML+TA) |
 | PulseV3Panel | panels/PulseV3Panel.tsx | PULSE 3 (Hybrid MTF) |

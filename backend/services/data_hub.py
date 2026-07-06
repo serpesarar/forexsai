@@ -58,6 +58,12 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════
 TRACKED_SYMBOLS = ["NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX"]
 
+# REFERENCE-ONLY symbols: ingested for CONTEXT (price/candles) but NOT tradable —
+# no signal generation, no scheduler, no model routing touches them. QQQ.US (a
+# NASDAQ-100 ETF that trades the US premarket, unlike the NDX cash index) gives
+# the bias debate engine a live premarket read when NDX cash is closed.
+REFERENCE_SYMBOLS = {"QQQ.US"}
+
 # ═══════════════════════════════════════════════════════════════
 # FETCH INTERVALS (seconds)
 # ═══════════════════════════════════════════════════════════════
@@ -1497,7 +1503,7 @@ async def ingest_live_price(
     source: str = "mt5_redis",
 ) -> bool:
     canonical_symbol = _canonical_symbol(symbol)
-    if canonical_symbol not in TRACKED_SYMBOLS:
+    if canonical_symbol not in TRACKED_SYMBOLS and canonical_symbol not in REFERENCE_SYMBOLS:
         logger.warning("[DataHub] Ignoring live price for untracked symbol %s", symbol)
         return False
 
@@ -1575,7 +1581,7 @@ async def ingest_candles(
 ) -> int:
     canonical_symbol = _canonical_symbol(symbol)
     tf, store = _get_store_for_timeframe(timeframe)
-    if canonical_symbol not in TRACKED_SYMBOLS:
+    if canonical_symbol not in TRACKED_SYMBOLS and canonical_symbol not in REFERENCE_SYMBOLS:
         logger.warning("[DataHub] Ignoring candles for untracked symbol %s", symbol)
         return 0
     # 15m and 4h are derived-only — never ingested directly

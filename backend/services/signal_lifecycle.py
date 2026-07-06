@@ -1765,6 +1765,26 @@ async def export_failures(days: int = 30) -> List[Dict[str, Any]]:
 #  Scheduler integration
 # ═════════════════════════════════════════════════════════════════════════════
 
+async def _check_daily_bias_invalidation() -> None:
+    """Invalidate today's NASDAQ macro bias if intraday price broke its structure.
+
+    Cheap: one price read + (only on breach) one UPDATE. No-op when the macro
+    bias layer is off, no bias exists today, or it's already invalidated.
+    """
+    from services.daily_bias_service import (
+        DEFAULT_BIAS_SYMBOL, get_current_bias, check_and_maybe_invalidate,
+    )
+    bias = get_current_bias(DEFAULT_BIAS_SYMBOL)
+    if not bias or bias.get("is_invalidated"):
+        return
+    price = await fetch_latest_price(DEFAULT_BIAS_SYMBOL)
+    if not price or price <= 0:
+        return
+    reason = check_and_maybe_invalidate(DEFAULT_BIAS_SYMBOL, float(price), bias=bias)
+    if reason:
+        logger.info(f"[daily-bias] NDX.INDX bias invalidated intraday: {reason}")
+
+
 async def check_lifecycle_if_needed():
     """Called from background_scheduler every 60s; runs lifecycle every minute."""
     global _last_lifecycle_check, _last_cleanup_run
@@ -1793,6 +1813,14 @@ async def check_lifecycle_if_needed():
 
     except Exception as e:
         logger.error(f"Lifecycle check error: {e}")
+
+    # Stage 3.2 — NASDAQ günlük bias'ının invalid_if koşulunu izle. Fiyat
+    # main_support/main_resistance yapısını kırdıysa bias'ı geçersiz kıl; bu
+    # andan sonra veto engine makro etkiyi nötr sayar. Fail-open, NASDAQ-only.
+    try:
+        await _check_daily_bias_invalidation()
+    except Exception as e:
+        logger.debug(f"Daily bias invalidation check skipped: {e}")
 
     if _last_cleanup_run is None or (now - _last_cleanup_run).total_seconds() >= CLEANUP_INTERVAL_SECONDS:
         try:

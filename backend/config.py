@@ -25,6 +25,28 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("DEEP_SEEKR1", "DEEPSEEK_API_KEY"),
     )
     groq_api_key: str | None = Field(default=None, validation_alias="GROQ_API_KEY")
+    # ─── Bias debate engine — model routing (OpenAI-compatible APIs) ───
+    deepseek_base_url: str = Field(default="https://api.deepseek.com", validation_alias="DEEPSEEK_BASE_URL")
+    deepseek_model: str = Field(default="deepseek-reasoner", validation_alias="DEEPSEEK_MODEL")
+    kimi_api_key: str | None = Field(default=None, validation_alias=AliasChoices("KIMI_API_KEY", "MOONSHOT_API_KEY"))
+    kimi_base_url: str = Field(default="https://api.moonshot.ai/v1", validation_alias="KIMI_BASE_URL")
+    kimi_model: str = Field(default="kimi-k2-0711-preview", validation_alias="KIMI_MODEL")
+    # ─── Bias auto-runner (scheduled debate + outcome fill) ───
+    bias_auto_run_enabled: bool = Field(default=False, validation_alias="BIAS_AUTO_RUN_ENABLED")
+    bias_run_windows_et: str = Field(default="08:00=0800_main,09:45=0945_confirm", validation_alias="BIAS_RUN_WINDOWS_ET")
+    bias_fill_time_et: str = Field(default="16:15", validation_alias="BIAS_FILL_TIME_ET")
+    # ─── CORTEX (episodic memory + analog retrieval) ───
+    cortex_enabled: bool = Field(default=True, validation_alias="CORTEX_ENABLED")
+    cortex_analog_k: int = Field(default=8, validation_alias="CORTEX_ANALOG_K")
+    # Analog base-rate injection into the debate is OFF by default: the 2019-24
+    # backtest found NO reliable directional edge for the forward target, so we
+    # keep RECORDING memory (Phase 2/3) but don't feed a misleading P(up) to the
+    # CIO. Flip to 1 only if a future feature set proves predictive.
+    cortex_analog_inject: bool = Field(default=False, validation_alias="CORTEX_ANALOG_INJECT")
+    # Validated confluence playbook (OOS-tested rules) → debate CIO as prior evidence.
+    cortex_rules_inject: bool = Field(default=True, validation_alias="CORTEX_RULES_INJECT")
+    # Live SHADOW confluence signals (14:00/15:00 UTC, log-only, needs yfinance).
+    cortex_signal_enabled: bool = Field(default=False, validation_alias="CORTEX_SIGNAL_ENABLED")
     xai_api_key: str | None = Field(default=None, validation_alias="XAI_API_KEY")
     x_bearer_token: str | None = Field(default=None, validation_alias="X_BEARER_TOKEN")
     aisstream_api_key: str | None = Field(default=None, validation_alias="AISSTREAM_API_KEY")
@@ -40,6 +62,8 @@ class Settings(BaseSettings):
     supabase_key: str | None = Field(default=None, validation_alias=AliasChoices("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_KEY"))
     resend_api_key: str | None = Field(default=None, validation_alias="RESEND_API_KEY")
     turnstile_secret_key: str | None = Field(default=None, validation_alias="TURNSTILE_SECRET_KEY")
+    # MiroShark → ForexSAI daily-bias webhook (shared HMAC-SHA256 secret).
+    miroshark_webhook_secret: str | None = Field(default=None, validation_alias="WEBHOOK_SECRET")
     ob_fractal_period: int = Field(default=2, validation_alias="OB_FRACTAL_PERIOD")
     ob_min_displacement_atr: float = Field(default=1.0, validation_alias="OB_MIN_DISPLACEMENT_ATR")
     ob_min_score: float = Field(default=50.0, validation_alias="OB_MIN_SCORE")

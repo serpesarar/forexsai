@@ -39,8 +39,11 @@ Sonra `calistir\` klasöründeki bat'lara **çift tıkla** (her biri ayrı pence
 | `2_oto_trade_bot.bat` | Kural-bazlı oto-trade | IC Markets |
 | `3_claude_decider.bat` | Opus decider (shadow) | Pepperstone + Claude login |
 | `4_vix_kaydedici.bat` | Canlı VIX → Supabase | Pepperstone |
+| `16_tick_kaydedici.bat` | bid/ask tick → YEREL disk (`yeni deneme\tickdata\`) | IC Markets |
 | `5_decider_ozet.bat` | Decider WR/EV özeti (ara sıra) | — |
 | `6_decider_ogrenme.bat` | Haftalık öğrenme | — |
+| `7-14_*.bat` | Talep-üzerine analizler (kaçırılan, kalibrasyon, SL otopsi, model kıyas...) | — |
+| `15_gosterge_tarama.bat` | 29 göstergede olay taraması — hangi kesişim/eşik scalp'te ayırt edici? (haftada 1) | — |
 
 ## 🔄 Güncelleme (yeni kod gelince — WhatsApp YOK)
 `forexsai-bot` klasöründe CMD aç:

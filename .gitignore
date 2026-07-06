@@ -21,6 +21,7 @@ __pycache__
 # ŞİFRELER (config) + runtime/log ASLA commit edilmez (__pycache__/*.pyc zaten üstte):
 yeni deneme/config.py
 yeni deneme/*.log
+yeni deneme/tickdata/
 claude_decider/decider_config.py
 claude_decider/vix_live.json
 claude_decider/memory/journal.jsonl
@@ -28,3 +29,22 @@ claude_decider/memory/journal.jsonl
 # Local research documents — never commit
 day_structure_research.md
 day_structure_analysis.png
+
+# ── Large research DATA artifacts (2026-07-06) ──────────────────────────────
+# Code/scripts/reports are committed; bulk data is not (GitHub 100MB/file limit,
+# repo-bloat). Regenerate via the research scripts, or store data outside git.
+*.jsonl
+*.parquet
+sr_rejection_research/data/
+signal_performance_research/*.json
+signal_performance_research/*.txt
+research/cortex_confluence/**/*.json
+research/cortex_backfill/**/*.json
+RECOVER/*.json
+RECOVER/*.csv
+bot_live_audit/**/*.json
+bot_live_audit/**/*.csv
+macro_ndx_test/**/*.json
+multi_asset_edge_research/**/*.json
+claude_decider.zip
+claude_decider/*.backup_*.json

@@ -45,7 +45,12 @@
       "Bash(tee /tmp/run_ndx_excl.log)",
       "Bash(chmod +x /tmp/regime_only.sh)",
       "Bash(bash /tmp/regime_only.sh)",
-      "Bash(tee /tmp/regime_only.log)"
+      "Bash(tee /tmp/regime_only.log)",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__execute_sql",
+      "Read(//Users/melihcanodacioglu/Downloads/**)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "WebSearch"
     ]
   }
 }

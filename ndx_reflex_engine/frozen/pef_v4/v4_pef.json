@@ -1,0 +1,214 @@
+{
+  "size_table": {
+    "chan_rev|CHOP": {
+      "train_ev": 0.163,
+      "n": 159,
+      "allow": true,
+      "cell_size": 0.708
+    },
+    "chan_rev|EXPANSION": {
+      "train_ev": 0.1937,
+      "n": 326,
+      "allow": true,
+      "cell_size": 0.841
+    },
+    "chan_rev|TREND": {
+      "train_ev": -0.0135,
+      "n": 91,
+      "allow": false,
+      "cell_size": 0.0
+    },
+    "mom_cont|CHOP": {
+      "train_ev": 0.7365,
+      "n": 24,
+      "allow": true,
+      "cell_size": 1.6
+    },
+    "mom_cont|EXPANSION": {
+      "train_ev": 0.8232,
+      "n": 121,
+      "allow": true,
+      "cell_size": 1.6
+    },
+    "mom_cont|TREND": {
+      "train_ev": 0.31,
+      "n": 19,
+      "allow": false,
+      "cell_size": 0.0
+    },
+    "sweep|CHOP": {
+      "train_ev": 0.1123,
+      "n": 153,
+      "allow": true,
+      "cell_size": 0.5
+    },
+    "sweep|EXPANSION": {
+      "train_ev": 0.2302,
+      "n": 233,
+      "allow": true,
+      "cell_size": 1.0
+    },
+    "sweep|TREND": {
+      "train_ev": 0.2592,
+      "n": 53,
+      "allow": true,
+      "cell_size": 1.126
+    },
+    "vwap_rev|CHOP": {
+      "train_ev": 0.3983,
+      "n": 152,
+      "allow": true,
+      "cell_size": 1.6
+    },
+    "vwap_rev|EXPANSION": {
+      "train_ev": 0.2013,
+      "n": 336,
+      "allow": true,
+      "cell_size": 0.874
+    },
+    "vwap_rev|TREND": {
+      "train_ev": 0.2283,
+      "n": 88,
+      "allow": true,
+      "cell_size": 0.992
+    }
+  },
+  "groups": [
+    [
+      "G1 2025 2025-04-14..2025-04-25",
+      {
+        "n": 211,
+        "wr": 0.4834,
+        "ev_r": 0.1401,
+        "pf": 1.328,
+        "max_dd_r": 10.18,
+        "avg_win": 1.174,
+        "avg_loss": -0.828,
+        "sw_ev_r": 0.1536
+      }
+    ],
+    [
+      "G2 2025 2025-04-28..2025-05-08",
+      {
+        "n": 180,
+        "wr": 0.4222,
+        "ev_r": 0.0426,
+        "pf": 1.094,
+        "max_dd_r": 15.36,
+        "avg_win": 1.179,
+        "avg_loss": -0.787,
+        "sw_ev_r": 0.1317
+      }
+    ],
+    [
+      "G3 2025 2025-05-09..2025-05-21",
+      {
+        "n": 192,
+        "wr": 0.4844,
+        "ev_r": 0.075,
+        "pf": 1.169,
+        "max_dd_r": 14.29,
+        "avg_win": 1.071,
+        "avg_loss": -0.861,
+        "sw_ev_r": 0.1267
+      }
+    ],
+    [
+      "G4 2025 2025-05-22..2025-06-04",
+      {
+        "n": 173,
+        "wr": 0.474,
+        "ev_r": -0.0078,
+        "pf": 0.982,
+        "max_dd_r": 15.28,
+        "avg_win": 0.921,
+        "avg_loss": -0.844,
+        "sw_ev_r": 0.0322
+      }
+    ],
+    [
+      "G5 2025 2025-06-05..2025-06-18",
+      {
+        "n": 165,
+        "wr": 0.3818,
+        "ev_r": -0.1086,
+        "pf": 0.786,
+        "max_dd_r": 27.11,
+        "avg_win": 1.044,
+        "avg_loss": -0.821,
+        "sw_ev_r": -0.055
+      }
+    ],
+    [
+      "G6 2026-02",
+      {
+        "n": 300,
+        "wr": 0.47,
+        "ev_r": 0.1039,
+        "pf": 1.242,
+        "max_dd_r": 18.54,
+        "avg_win": 1.136,
+        "avg_loss": -0.811,
+        "sw_ev_r": 0.1675
+      }
+    ],
+    [
+      "G7 2026-03",
+      {
+        "n": 504,
+        "wr": 0.4464,
+        "ev_r": 0.077,
+        "pf": 1.179,
+        "max_dd_r": 28.61,
+        "avg_win": 1.134,
+        "avg_loss": -0.775,
+        "sw_ev_r": 0.1294
+      }
+    ],
+    [
+      "G8 2026-04",
+      {
+        "n": 459,
+        "wr": 0.451,
+        "ev_r": 0.0549,
+        "pf": 1.123,
+        "max_dd_r": 33.66,
+        "avg_win": 1.113,
+        "avg_loss": -0.814,
+        "sw_ev_r": 0.1293
+      }
+    ],
+    [
+      "G9 2026-05",
+      {
+        "n": 436,
+        "wr": 0.4472,
+        "ev_r": 0.1277,
+        "pf": 1.292,
+        "max_dd_r": 18.11,
+        "avg_win": 1.263,
+        "avg_loss": -0.79,
+        "sw_ev_r": 0.1893
+      }
+    ],
+    [
+      "G10 2026-06",
+      {
+        "n": 423,
+        "wr": 0.4303,
+        "ev_r": 0.1556,
+        "pf": 1.339,
+        "max_dd_r": 17.81,
+        "avg_win": 1.428,
+        "avg_loss": -0.805,
+        "sw_ev_r": 0.1934
+      }
+    ]
+  ],
+  "pooled": {
+    "n": 3092,
+    "wr": 0.4463130659767141,
+    "ev_r": 0.07818496421106168,
+    "p_ev_pos": 0.9996666666666667
+  }
+}

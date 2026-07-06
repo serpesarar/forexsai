@@ -1,6 +1,9 @@
 # ForexSAI - Detaylı Teknik Özellikler
 
 > Bu doküman, meta-engine entegrasyonu için gerekli teknik detayları içerir.
+> **Son Güncelleme:** 2026-07-01 — Gösterge Denetimi değişiklikleri işlendi
+> (merkezi kapılar `signal_gates.py`, pulse1 Stoch→H4, PULSE 3 rejim ağırlıkları,
+> endeks ATR TP/SL, EMEL 10. kontrol). Detay: `UYGULAMA_NOTLARI_2026-07-01.md`
 
 ---
 
@@ -195,8 +198,11 @@ GET /api/panel/pulse/{symbol}
     "rsi": 20,
     "macd": 15,
     "volume": 10,
-    "stochastic": 10
+    "stochastic": 0,
+    "h4_alignment": 10
   }
+  // 2026-07-01: Stochastic skor dışı (display_only:true, RSI ile mükerrerdi);
+  // 10 puan yeni h4_alignment bileşenine taşındı (H4 close vs EMA20 uyumu)
 }
 ```
 
@@ -278,7 +284,7 @@ GET /api/panel/pulse-v3/{symbol}
 }
 ```
 
-#### EMEL API (9-Check)
+#### EMEL API (10-Check — 2026-07-01: Makro Uyum eklendi)
 ```
 GET /api/panel/emel/{symbol}
 ```
@@ -304,11 +310,11 @@ GET /api/panel/emel/{symbol}
       "details": {"ema20": 24980, "ema50": 24950, "ema200": 24800},
       "comment": "Kısa ve orta vadeli trend yukarı."
     },
-    // ... 8 more checks
+    // ... 9 more checks (id:10 = "Makro Uyum" — DXY/US10Y emtia, VIX endeks)
   ],
   
   "confluence": {
-    "green": 6,                   // 6/9 kontrol geçti
+    "green": 6,                   // 6/10 kontrol geçti
     "yellow": 2,
     "red": 1,
     "direction": "bullish"
@@ -363,7 +369,7 @@ final_confidence = base_confidence * layer_multipliers  # 30-95 arası clamp
 | **MACD** | 12, 26, 9 | EMA12 - EMA26 | Trend gücü |
 | **ATR** | 14 | Average True Range | Volatilite, TP/SL |
 | **ADX** | 14 | Wilder DMI | Trend gücü (Regime) |
-| **Stochastic** | 14, 3 | %K = (C-L14)/(H14-L14)*100 | PULSE 1 onay |
+| **Stochastic** | 14, 3 | %K = (C-L14)/(H14-L14)*100 | PULSE 1 görüntü (2026-07-01: skor dışı, yerine H4 uyumu) |
 | **Bollinger** | 20, 2 | SMA ± 2σ | EMEL S/R |
 | **Williams %R** | 14 | -100*(H14-C)/(H14-L14) | Aşırı alım/satım |
 | **MFI** | 14 | Money Flow Index | Hacimli RSI |
@@ -434,7 +440,12 @@ SCALP_DISTANCES = {
     "USOIL.FOREX": {"tp": 0.50, "sl": 0.30} # dollars
 }
 
-# ATR clamping (düşük volatilitede düzeltme)
+# ── 2026-07-01: ENDEKSLER (GDAXI/NDX) için ATR-TABAN geometri ──
+# Sabit mesafeler artık TABAN, ATR tavan belirler (PULSE_ATR_GEOMETRY=1):
+#   tp_dist = max(fixed_tp, ATR × 1.5)
+#   sl_dist = max(fixed_sl, ATR × 1.0)   → RR ≥ 1.5 garanti
+# Gerekçe: GDAXI'de TP20/SL12 5m gürültüsünün içindeydi (stopped MFE 7p vs SL 65p).
+# Emtialar (XAUUSD/USOIL) eski davranışta kalır:
 atr_tp = atr_val * 1.0
 atr_sl = atr_val * 0.6
 tp_dist = min(tp_dist, max(atr_tp, tp_dist * 0.3))  # Min %30 sabit
