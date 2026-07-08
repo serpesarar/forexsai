@@ -117,43 +117,47 @@ class OrderBlockService:
         choch_list = list(self._get_field(structure, "choch_list", []) or [])
         bos_list = list(self._get_field(structure, "bos_list", []) or [])
         fvg_list = list(self._get_field(structure, "fvg_list", []) or [])
-        recent_start = max(0, n - 15) if n > 0 else 0
-
         for ob in list(self._get_field(structure, "ob_list", []) or [])[:10]:
             ob_dict = ob.to_dict()
             ob_index = int(self._get_field(ob, "index", -1) or -1)
             ob_type = self._get_field(ob, "type")
 
-            def _near_ob_or_recent(idx):
-                return (ob_index <= idx <= ob_index + 15) or (n > 0 and idx >= recent_start)
+            # 2026-07-08 fix: confluence must be LOCAL to the OB. The old
+            # `idx >= n-15` clause attributed any structure event in the last
+            # 15 candles to EVERY OB in the list, so a single recent bearish
+            # BOS marked has_bearish_bos=True on all 10 OBs and inflated the
+            # combined-signal confluence score (observed: bullish structure +
+            # SELL 0.77 contradiction on XAUUSD 15m).
+            def _near_ob(idx):
+                return ob_index <= idx <= ob_index + 15
 
             bullish_choch = any(
-                _near_ob_or_recent(self._get_field(c, "index", -1))
+                _near_ob(self._get_field(c, "index", -1))
                 and self._get_field(c, "type") == "bullish"
                 for c in choch_list
             )
             bearish_choch = any(
-                _near_ob_or_recent(self._get_field(c, "index", -1))
+                _near_ob(self._get_field(c, "index", -1))
                 and self._get_field(c, "type") == "bearish"
                 for c in choch_list
             )
             bullish_bos = any(
-                _near_ob_or_recent(self._get_field(b, "index", -1))
+                _near_ob(self._get_field(b, "index", -1))
                 and self._get_field(b, "type") == "bullish"
                 for b in bos_list
             )
             bearish_bos = any(
-                _near_ob_or_recent(self._get_field(b, "index", -1))
+                _near_ob(self._get_field(b, "index", -1))
                 and self._get_field(b, "type") == "bearish"
                 for b in bos_list
             )
             bullish_fvg = any(
-                _near_ob_or_recent(self._get_field(f, "index", -1))
+                _near_ob(self._get_field(f, "index", -1))
                 and self._get_field(f, "direction") == "bullish"
                 for f in fvg_list
             )
             bearish_fvg = any(
-                _near_ob_or_recent(self._get_field(f, "index", -1))
+                _near_ob(self._get_field(f, "index", -1))
                 and self._get_field(f, "direction") == "bearish"
                 for f in fvg_list
             )
@@ -417,15 +421,19 @@ class OrderBlockService:
         use_cache: bool = True,
         log_signals: bool = True,
     ) -> dict:
+        # 2026-07-08: normalize aliases up-front ("XAU"/"NAS100"...) so the
+        # symbol-keyed SL/TP tables in MarketStructureAnalyzer actually match
+        # and cache keys don't fragment per alias.
+        symbol = self._normalize_market_symbol(symbol)
         # bump cache version whenever detection inputs/logic changes
-        cache_key = f"v6:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
+        cache_key = f"v7:{symbol}:{timeframe}:{limit}:{config}"  # noqa: S608 - cache key
         if use_cache:
             with self._lock:
                 cached = self._cache.get(cache_key)
                 if cached and self._utc_now() - cached.timestamp < self.ttl:
                     return cached.payload
 
-        candles, warning = await self._load_candles_with_warning(symbol=symbol, timeframe=timeframe, limit=limit)
+        candles, warning, used_timeframe = await self._load_candles_with_warning(symbol=symbol, timeframe=timeframe, limit=limit)
         if warning:
             payload = {
                 "symbol": symbol,
@@ -469,8 +477,17 @@ class OrderBlockService:
                 self._cache[cache_key] = CacheEntry(timestamp=self._utc_now(), payload=payload)
             return payload
 
-        # Use NEW detector with independent algorithms (symbol-aware TP/SL)
-        structure = MarketStructureAnalyzer.analyze(candles, symbol=symbol)
+        # Use NEW detector with independent algorithms (symbol-aware TP/SL).
+        # 2026-07-08: OrderBlockConfig is now actually threaded into the v2
+        # analyzer (it used to be consumed only by the cache key, so scheduler
+        # tuning like min_displacement_atr=1.2 / min_score=50 silently did nothing).
+        structure = MarketStructureAnalyzer.analyze(
+            candles,
+            swing_period=max(2, int(getattr(config, "fractal_period", 2) or 2) + 1),
+            symbol=symbol,
+            min_displacement_atr=float(getattr(config, "min_displacement_atr", 1.2) or 1.2),
+            min_ob_score=float(getattr(config, "min_score", 0.0) or 0.0),
+        )
 
         # Prepare enriched order blocks with structure info
         enriched_obs = self._enrich_order_blocks(structure, n=len(candles))
@@ -516,8 +533,14 @@ class OrderBlockService:
             "support_resistance": support_resistance,
             "timestamp": self._utc_now().isoformat().replace("+00:00", "Z"),
         }
+        if used_timeframe != timeframe:
+            payload["warning"] = (
+                f"Intraday {timeframe} feed empty — analysis ran on {used_timeframe} candles; signal logging suppressed."
+            )
+            payload["analyzed_timeframe"] = used_timeframe
 
-        if log_signals:
+        # EOD fallback bars must never be logged as intraday signals
+        if log_signals and used_timeframe == timeframe:
             await self._log_smc_signal(symbol=symbol, timeframe=timeframe, candles=candles, combined_signal=combined_signal)
 
         with self._lock:
@@ -869,7 +892,11 @@ class OrderBlockService:
         bull_score = 0
         bull_reasons: List[str] = []
 
-        if bullish_obs and trend != "bearish" and in_discount:
+        # 2026-07-08 fix: also require agreement with the STRUCTURE trend.
+        # Local EMA10/30 said "ranging" during a pullback while swing structure
+        # was bullish, letting counter-structure SELLs fire near uptrend tops
+        # (observed XAUUSD 15m: structure/projection bullish + SELL 0.77).
+        if bullish_obs and trend != "bearish" and struct_trend != "bearish" and in_discount:
             best = max(bullish_obs, key=lambda x: self._get_field(x, "score", 0))
             bull_score += 25
             bull_reasons.append("bullish OB in discount")
@@ -909,7 +936,7 @@ class OrderBlockService:
         bear_score = 0
         bear_reasons: List[str] = []
 
-        if bearish_obs and trend != "bullish" and in_premium:
+        if bearish_obs and trend != "bullish" and struct_trend != "bullish" and in_premium:
             best = max(bearish_obs, key=lambda x: self._get_field(x, "score", 0))
             bear_score += 25
             bear_reasons.append("bearish OB in premium")
@@ -1037,31 +1064,47 @@ class OrderBlockService:
             "reasons": reasons,
         }
 
-    async def _load_candles_with_warning(self, symbol: str, timeframe: str, limit: int) -> Tuple[List[Candle], Optional[str]]:
-        """Load reliable candles and block synthetic fallback for analytical endpoints."""
-        candles = await self._load_candles(symbol=symbol, timeframe=timeframe, limit=limit)
-        if candles:
-            return candles, None
-        return [], f"No reliable candle data available for {symbol} on {timeframe}. Synthetic fallback was blocked."
+    async def _load_candles_with_warning(
+        self, symbol: str, timeframe: str, limit: int
+    ) -> Tuple[List[Candle], Optional[str], str]:
+        """Load reliable candles and block synthetic fallback for analytical endpoints.
 
-    async def _load_candles(self, symbol: str, timeframe: str, limit: int) -> List[Candle]:
+        Returns (candles, warning, used_timeframe). `used_timeframe` differs from
+        the requested one only when the EOD fallback kicked in — callers must NOT
+        log signals in that case (2026-07-08 fix: daily bars were silently
+        analyzed and logged as 15m signals with stale daily entry prices).
+        """
+        candles, used_timeframe = await self._load_candles(symbol=symbol, timeframe=timeframe, limit=limit)
+        if candles:
+            return candles, None, used_timeframe
+        return [], f"No reliable candle data available for {symbol} on {timeframe}. Synthetic fallback was blocked.", timeframe
+
+    async def _load_candles(self, symbol: str, timeframe: str, limit: int) -> Tuple[List[Candle], str]:
         """
         Load candles from DataHub for the requested timeframe.
         Falls back: requested tf → EOD → empty.
         DataHub supports: 5m, 15m, 30m, 1h, 4h, eod
+        Returns (candles, actually_used_timeframe).
         """
         symbol = self._normalize_market_symbol(symbol)
         # Try requested timeframe first
         data = await fetch_ohlc_data(symbol, timeframe=timeframe, limit=limit)
+        used_timeframe = timeframe
 
         # Fallback to EOD if the requested timeframe returned nothing
         if not data:
             data = await fetch_eod_candles(symbol, limit=limit)
+            if data:
+                used_timeframe = "eod"
+                logger.warning(
+                    "[SMC] %s %s: intraday feed empty — analyzing EOD candles instead (signals suppressed)",
+                    symbol, timeframe,
+                )
 
         if data:
-            return self._rows_to_candles(data)
+            return self._rows_to_candles(data), used_timeframe
 
-        return []
+        return [], used_timeframe
 
     def _generate_candles(self, limit: int) -> List[Candle]:
         prices = np.cumsum(np.random.normal(scale=0.8, size=limit)) + 21500

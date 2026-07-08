@@ -48,7 +48,9 @@ class OrderBlockSignal:
 @dataclass
 class OrderBlockConfig:
     fractal_period: int = 2
-    min_displacement_atr: float = 1.0
+    # 1.2 = parity with the v2 analyzer's previous hardcoded displacement gate
+    # (config is threaded into v2 as of 2026-07-08; 1.0 would loosen the panel)
+    min_displacement_atr: float = 1.2
     min_score: float = 50.0
     zone_type: str = "wick"
     max_tests: int = 2

@@ -530,7 +530,12 @@ class OrderBlockDetector:
     """
     
     @staticmethod
-    def detect(candles: List[Candle], swings: List[SwingPoint]) -> List[OrderBlock]:
+    def detect(
+        candles: List[Candle],
+        swings: List[SwingPoint],
+        min_displacement_atr: float = 1.2,
+        min_score: float = 0.0,
+    ) -> List[OrderBlock]:
         if len(candles) < 20:
             return []
 
@@ -569,7 +574,7 @@ class OrderBlockDetector:
             if c_current.close < c_current.open:  # Current candle was bearish (the OB candle)
                 displacement_up = c_next.close - c_current.open
                 
-                if displacement_up > atr * 1.2:  # Strong upward displacement
+                if displacement_up > atr * min_displacement_atr:  # Strong upward displacement
                     score = min(100, int(30 + (displacement_up / atr) * 12))
                     # Volume bonus
                     if vol_ratio > 1.2:
@@ -604,7 +609,7 @@ class OrderBlockDetector:
             elif c_current.close > c_current.open:  # Current candle was bullish (the OB candle)
                 displacement_down = c_current.open - c_next.close
                 
-                if displacement_down > atr * 1.2:  # Strong downward displacement
+                if displacement_down > atr * min_displacement_atr:  # Strong downward displacement
                     score = min(100, int(30 + (displacement_down / atr) * 12))
                     if vol_ratio > 1.2:
                         score = min(100, score + 10)
@@ -635,7 +640,7 @@ class OrderBlockDetector:
                     ))
         
         # Sort by score descending, filter out mitigated OBs for primary display
-        ob_list = [ob for ob in ob_list if not ob.mitigated]
+        ob_list = [ob for ob in ob_list if not ob.mitigated and ob.score >= min_score]
         ob_list.sort(key=lambda x: x.score, reverse=True)
         return ob_list[:10]  # Return top 10
     
@@ -678,7 +683,13 @@ class MarketStructureAnalyzer:
     _DEFAULT_TP_FIBS: Tuple[float, float, float] = (1.0, 1.618, 2.0)
 
     @staticmethod
-    def analyze(candles: List[Candle], swing_period: int = 3, symbol: str = "") -> MarketStructure:
+    def analyze(
+        candles: List[Candle],
+        swing_period: int = 3,
+        symbol: str = "",
+        min_displacement_atr: float = 1.2,
+        min_ob_score: float = 0.0,
+    ) -> MarketStructure:
         # Step 1: Detect swing points (period=3 reduces noise on intraday)
         swings = SwingDetector.detect(candles, period=swing_period)
 
@@ -686,7 +697,11 @@ class MarketStructureAnalyzer:
         choch_list = CHoCHDetector.detect(candles, swings)
         bos_list = BOSDetector.detect(candles, swings)
         fvg_list = FVGDetector.detect(candles)
-        ob_list = OrderBlockDetector.detect(candles, swings)
+        ob_list = OrderBlockDetector.detect(
+            candles, swings,
+            min_displacement_atr=min_displacement_atr,
+            min_score=min_ob_score,
+        )
 
         # Step 3: Determine trend
         trend = MarketStructureAnalyzer._determine_trend(candles, swings)

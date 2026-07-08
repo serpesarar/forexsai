@@ -26,8 +26,14 @@ logger = logging.getLogger(__name__)
 # with MT5_BROKER_UTC_OFFSET_HOURS (e.g. "3" or "0") to skip auto-detection.
 _TF_SECONDS = {"1m": 60, "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "4h": 14400, "1d": 86400, "d1": 86400}
 _DETECT_MAX_TRUE_DRIFT = 1800   # only detect from streams whose latest-bar age < 30 min
-_mt5_offset_seconds = 0         # detected broker→UTC offset (subtracted from epochs)
+_mt5_offset_seconds = 0         # detected broker→UTC offset for BAR streams
+_mt5_tick_offset_seconds = 0    # detected offset for TICKS (kept separate — see below)
 _mt5_offset_fixed: Optional[int] = None  # env override in seconds, or None
+
+# 2026-07-08: tick and bar offsets are tracked SEPARATELY. The bridge stamps
+# ticks in UTC but bars in broker time (UTC+2/+3); a single shared offset
+# flip-flopped between 0 and +3h depending on which observation came last,
+# leaving a mixture of shifted and unshifted bars in the stores.
 
 
 def _load_mt5_offset_override() -> None:
@@ -68,21 +74,29 @@ def _candle_epoch_seconds(c: Dict[str, Any]) -> Optional[float]:
         return None
 
 
-def _observe_for_offset(epoch_s: Optional[float], max_true_drift: float) -> None:
-    """Update the detected broker offset from an epoch whose true age is small."""
-    global _mt5_offset_seconds
+def _observe_for_offset(epoch_s: Optional[float], max_true_drift: float, kind: str = "bar") -> None:
+    """Update the detected broker offset from an epoch whose true age is small.
+
+    kind="bar" updates the bar-stream offset; kind="tick" updates the tick
+    offset. They are independent because the bridge stamps them differently.
+    """
+    global _mt5_offset_seconds, _mt5_tick_offset_seconds
     if _mt5_offset_fixed is not None or epoch_s is None or max_true_drift > _DETECT_MAX_TRUE_DRIFT:
         return
     now = _dt.now(_tz.utc).timestamp()
     off = int(round((epoch_s - now) / 3600.0)) * 3600
     if abs(off) > 14 * 3600:
         return
-    if off != _mt5_offset_seconds:
+    current = _mt5_tick_offset_seconds if kind == "tick" else _mt5_offset_seconds
+    if off != current:
         logger.warning(
-            "[MT5Redis] broker→UTC offset detected: %+.0fh (was %+.0fh) — normalizing timestamps",
-            off / 3600.0, _mt5_offset_seconds / 3600.0,
+            "[MT5Redis] broker→UTC %s offset detected: %+.0fh (was %+.0fh) — normalizing timestamps",
+            kind, off / 3600.0, current / 3600.0,
         )
-        _mt5_offset_seconds = off
+        if kind == "tick":
+            _mt5_tick_offset_seconds = off
+        else:
+            _mt5_offset_seconds = off
 
 
 def _normalize_candle_times(c: Dict[str, Any]) -> Dict[str, Any]:
@@ -105,7 +119,7 @@ def _normalize_candle_times(c: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _normalize_tick_timestamp(ts):
-    off = _effective_offset()
+    off = _mt5_offset_fixed if _mt5_offset_fixed is not None else _mt5_tick_offset_seconds
     if not off or ts is None:
         return ts
     try:
@@ -217,7 +231,7 @@ async def _handle_tick(payload: Dict[str, Any]) -> None:
     if raw_ts is not None:
         try:
             _v = float(raw_ts)
-            _observe_for_offset(_v / 1000.0 if _v > 1e12 else _v, 30)
+            _observe_for_offset(_v / 1000.0 if _v > 1e12 else _v, 30, kind="tick")
         except Exception:
             pass
 

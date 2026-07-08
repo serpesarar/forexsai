@@ -97,7 +97,8 @@ def detect_order_blocks(
     closes: np.ndarray,
     volumes: np.ndarray,
     swing_highs: List[Dict],
-    swing_lows: List[Dict]
+    swing_lows: List[Dict],
+    timeframe: str = "H1",
 ) -> List[OrderBlock]:
     """
     Detect Order Blocks based on price action:
@@ -141,7 +142,7 @@ def detect_order_blocks(
                     price_low=float(lows[i]),
                     strength=strength,
                     status=status,
-                    timeframe="H1",
+                    timeframe=timeframe,
                     created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
                 ))
         
@@ -169,7 +170,7 @@ def detect_order_blocks(
                     price_low=float(lows[i]),
                     strength=strength,
                     status=status,
-                    timeframe="H1",
+                    timeframe=timeframe,
                     created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
                 ))
     
@@ -207,7 +208,9 @@ def detect_fair_value_gaps(
                 fill_pct = 0.0
                 status = "open"
             else:
-                fill_pct = ((highs[i-2] - current_price) / gap_size) * 100
+                # 2026-07-08 fix: bullish gap fills top-down from lows[i]; the old
+                # (highs[i-2] - current_price) produced NEGATIVE percentages
+                fill_pct = ((lows[i] - current_price) / gap_size) * 100
                 status = "partial"
             
             fvgs.append(FairValueGap(
@@ -515,7 +518,7 @@ def calculate_bias(
     }
 
 
-async def calculate_smc(symbol: str, candles: list) -> dict:
+async def calculate_smc(symbol: str, candles: list, timeframe: str = "H1") -> dict:
     """
     Main entry point - Calculate SMC analysis from candle data.
     
@@ -550,7 +553,7 @@ async def calculate_smc(symbol: str, candles: list) -> dict:
     swing_highs, swing_lows = find_swing_points(highs, lows, closes)
     
     # Detect SMC elements
-    order_blocks = detect_order_blocks(opens, highs, lows, closes, volumes, swing_highs, swing_lows)
+    order_blocks = detect_order_blocks(opens, highs, lows, closes, volumes, swing_highs, swing_lows, timeframe=timeframe)
     fvgs = detect_fair_value_gaps(highs, lows, closes)
     liquidity_pools = detect_liquidity_pools(highs, lows, swing_highs, swing_lows, current_price)
     breaker_blocks = detect_breaker_blocks(highs, lows, closes, swing_highs, swing_lows)
@@ -783,11 +786,11 @@ def detect_gap_fvgs(
     return gap_fvgs
 
 
-async def calculate_smc_with_gaps(symbol: str, candles: list) -> dict:
+async def calculate_smc_with_gaps(symbol: str, candles: list, timeframe: str = "D1") -> dict:
     """
     Enhanced SMC analysis with Gap-Aware optimizations for EOD data.
     """
-    result = await calculate_smc(symbol, candles)
+    result = await calculate_smc(symbol, candles, timeframe=timeframe)
     
     if "error" in result:
         return result

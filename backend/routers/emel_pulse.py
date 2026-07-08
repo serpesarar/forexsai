@@ -3354,7 +3354,10 @@ async def get_performance_stats(days: int = 7):
 # DATAHUB DEBUG - Hacim Verisi Kontrolü
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@router.get("/debug/datahub/{symbol}", response_model=DataHubDebugResponse)
+# response_model kaldırıldı (2026-07-08): handler serbest-şekilli debug dict'i
+# dönüyor; DataHubDebugResponse şeması (hub_status/cached) ile uyuşmayıp
+# 500 validation hatası veriyordu.
+@router.get("/debug/datahub/{symbol}", response_model=Dict[str, Any])
 async def debug_datahub_volumes(symbol: str):
     """
     DataHub'daki hacim verilerini kontrol et.

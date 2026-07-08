@@ -20,6 +20,25 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+# Intraday interval (seconds) per timeframe — used to reject bucket-misaligned
+# bars (tick snapshots with arbitrary second offsets) at the persistence
+# boundary so pollution can't round-trip through Supabase (2026-07-08 fix).
+_TF_INTERVAL_S: Dict[str, int] = {
+    "1m": 60, "5m": 300, "15m": 900, "20m": 1200,
+    "30m": 1800, "1h": 3600, "4h": 14400,
+}
+
+
+def _is_aligned_epoch(epoch_s: float, timeframe: str) -> bool:
+    """True if the epoch sits on the timeframe's clock-bucket boundary.
+
+    Non-intraday timeframes (eod) always pass.
+    """
+    interval = _TF_INTERVAL_S.get(timeframe)
+    if not interval:
+        return True
+    return int(epoch_s) % interval == 0
+
 
 def _get_db():
     """Get Supabase client, returns None if unavailable."""
@@ -44,12 +63,17 @@ def persist_candles(symbol: str, timeframe: str, candles: List[Dict]) -> int:
         return 0
 
     rows = []
+    skipped_misaligned = 0
     for c in candles:
         # Determine candle time from either timestamp (ms) or date string
         candle_time = None
         if c.get("timestamp") and c["timestamp"] > 0:
+            epoch_s = c["timestamp"] / 1000
+            if not _is_aligned_epoch(epoch_s, timeframe):
+                skipped_misaligned += 1
+                continue  # tick artifact — never persist
             candle_time = datetime.fromtimestamp(
-                c["timestamp"] / 1000, tz=timezone.utc
+                epoch_s, tz=timezone.utc
             ).isoformat()
         elif c.get("date"):
             date_str = c["date"]
@@ -92,6 +116,11 @@ def persist_candles(symbol: str, timeframe: str, candles: List[Dict]) -> int:
     if persisted > 0:
         _update_meta(db, symbol, timeframe, rows)
 
+    if skipped_misaligned:
+        logger.debug(
+            "[CandleCache] Skipped %d misaligned (tick-artifact) candles for %s/%s",
+            skipped_misaligned, symbol, timeframe,
+        )
     logger.info(f"[CandleCache] Persisted {persisted}/{len(candles)} candles for {symbol}/{timeframe}")
     return persisted
 
@@ -152,6 +181,17 @@ def load_candles(symbol: str, timeframe: str, limit: int = 500) -> List[Dict]:
                     ts = 0
             except Exception:
                 ts = 0
+
+            # Symmetric guard: old tick-polluted rows (misaligned candle_time)
+            # must never re-seed the in-memory stores on startup.
+            if ts and not _is_aligned_epoch(ts / 1000, timeframe):
+                continue
+            # Future-time guard: rows persisted in broker time (UTC+2/+3) by
+            # older builds land hours in the future; loading them next to
+            # UTC rows creates duplicate/conflicting buckets at the seam.
+            interval_s = _TF_INTERVAL_S.get(timeframe, 60)
+            if ts and ts / 1000 > datetime.now(timezone.utc).timestamp() + interval_s:
+                continue
 
             candles.append({
                 "timestamp": ts,

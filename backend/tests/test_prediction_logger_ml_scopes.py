@@ -110,6 +110,10 @@ async def test_log_smc_prediction_inserts_without_ml_scope_filtering():
             assert name == "prediction_logs"
             return _PredictionLogsTable()
 
+    # Isolate the primary SMC insert: shadow inversion (SHADOW_INVERSION_ENABLED,
+    # default on for NDX.INDX + smc) deliberately logs a parallel inverted
+    # `smc_inv` mirror row via log_prediction, which would be a 2nd insert. That
+    # mirror is a separate documented experiment, not part of this contract.
     with patch.object(prediction_logger, "is_db_available", return_value=True), patch.object(
         prediction_logger,
         "get_supabase_client",
@@ -118,7 +122,7 @@ async def test_log_smc_prediction_inserts_without_ml_scope_filtering():
         prediction_logger,
         "_check_session_filter",
         return_value=(False, ""),
-    ):
+    ), patch.dict(os.environ, {"SHADOW_INVERSION_ENABLED": "0"}):
         prediction_id = await log_smc_prediction(
             symbol="NDX.INDX",
             timeframe="5m",

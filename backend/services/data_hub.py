@@ -301,6 +301,27 @@ def _coerce_timestamp_ms(timestamp: Any) -> int:
     return int(_coerce_epoch_seconds(timestamp) * 1000)
 
 
+# ── Bucket alignment (2026-07-08 tick-pollution fix) ──────────────────
+# Tick-built bars with arbitrary second offsets (:48, :53...) were entering the
+# closed-bar stores and cascading through every derived timeframe (XAUUSD worst:
+# ~90% of bars misaligned). All merge/resample/persist paths now snap or reject
+# by clock bucket.
+_TF_INTERVAL_MS: Dict[str, int] = {
+    "1m": 60_000, "5m": 300_000, "15m": 900_000, "20m": 1_200_000,
+    "30m": 1_800_000, "1h": 3_600_000, "4h": 14_400_000,
+}
+
+
+def _tf_interval_ms(timeframe: str) -> Optional[int]:
+    """Millisecond interval for an intraday timeframe (None for eod/unknown)."""
+    return _TF_INTERVAL_MS.get(_normalize_timeframe(timeframe))
+
+
+def _is_bucket_aligned(ts_ms: int, interval_ms: int) -> bool:
+    """True if the timestamp sits exactly on a clock-bucket boundary."""
+    return interval_ms > 0 and int(ts_ms) % interval_ms == 0
+
+
 def _entry_age_seconds(entry: Dict[str, Any]) -> Optional[float]:
     timestamp = entry.get("timestamp")
     if timestamp is None:
@@ -588,56 +609,53 @@ async def _fetch_eod_from_api(symbol: str, limit: int = 300) -> List[Dict]:
 # ═══════════════════════════════════════════════════════════════
 # RESAMPLE LOGIC (0 API calls - pure computation)
 # ═══════════════════════════════════════════════════════════════
-def _resample(candles: List[Dict], period: int) -> List[Dict]:
-    """Resample candles to larger timeframe. E.g., 5m×3=15m, 5m×6=30m, 1h×4=4h.
+def _resample(candles: List[Dict], period: int, base_ms: Optional[int] = None) -> List[Dict]:
+    """Resample candles to a larger timeframe by CLOCK BUCKET. E.g., 5m×3=15m.
 
-    Gap handling (CRITICAL):
-      When a time gap is found at position j inside a group, we advance i to
-      (i + j + 1) — i.e. the candle right AFTER the gap boundary — and start
-      a fresh group from there.  The old `i += 1` pattern caused heavily
-      overlapping windows: e.g. a 1m gap at j=3 would produce groups
-      [0:5], [1:6], [2:7], [3:8] all as separate 5m candles from the same
-      underlying 1m bars, making the chart look like 3× too many candles.
+    2026-07-08 rewrite (tick-pollution fix): the old implementation grouped by
+    POSITION (candles[i:i+period]) with a base interval guessed from the first
+    two candles and the group's first timestamp as output. On a polluted or
+    gappy base series this produced phase-shifted 15m bars at :48/:53, 12-minute
+    "1h" bars, and collapsed 4h series. Now:
+      - base_ms comes from the caller (timeframe constant), falling back to the
+        MEDIAN of observed diffs (robust against a bad first pair);
+      - candles are grouped by `ts // out_interval` (true clock buckets);
+      - output timestamp is the BUCKET START (always aligned, e.g. :00/:15/:30);
+      - misaligned input bars (ts not on a base_ms boundary — tick artifacts)
+        are skipped;
+      - the still-open trailing bucket is excluded so live partial bars never
+        enter closed-bar stores.
     """
-    if not candles or len(candles) < period:
+    if not candles:
         return []
-    result = []
 
-    # Estimate base interval from first two candles
-    base_interval: int = 0
-    if len(candles) > 1:
-        base_interval = int(
-            candles[1].get("timestamp", 0) - candles[0].get("timestamp", 0)
+    if base_ms is None or base_ms <= 0:
+        diffs = sorted(
+            int(candles[i + 1].get("timestamp", 0)) - int(candles[i].get("timestamp", 0))
+            for i in range(len(candles) - 1)
         )
-        if base_interval <= 0:
-            base_interval = 5 * 60 * 1000  # default 5m
+        diffs = [d for d in diffs if d > 0]
+        base_ms = diffs[len(diffs) // 2] if diffs else 5 * 60 * 1000
 
-    # Gap threshold: 6× base interval (tolerates brief illiquidity, e.g. XAUUSD
-    # Asian-session quiet minutes, but still rejects weekend / holiday gaps)
-    gap_threshold = base_interval * 6 if base_interval > 0 else 0
+    out_interval = base_ms * period
+    now_ms = int(time.time() * 1000)
+    current_bucket = (now_ms // out_interval) * out_interval
 
-    i = 0
-    while i <= len(candles) - period:
-        group = candles[i : i + period]
+    buckets: Dict[int, List[Dict]] = {}
+    for c in candles:
+        ts = int(c.get("timestamp", 0) or 0)
+        if ts <= 0 or not _is_bucket_aligned(ts, base_ms):
+            continue  # tick artifact / phase-drifted bar — never aggregate it
+        bucket = (ts // out_interval) * out_interval
+        if bucket >= current_bucket:
+            continue  # bucket still forming — exclude live partial bar
+        buckets.setdefault(bucket, []).append(c)
 
-        # Find first gap inside this group
-        gap_at = -1
-        if gap_threshold > 0:
-            for j in range(len(group) - 1):
-                diff = int(
-                    group[j + 1].get("timestamp", 0) - group[j].get("timestamp", 0)
-                )
-                if diff > gap_threshold:
-                    gap_at = j
-                    break
-
-        if gap_at >= 0:
-            # Skip to the first candle AFTER the gap — no overlapping windows
-            i += gap_at + 1
-            continue
-
+    result = []
+    for bucket in sorted(buckets):
+        group = sorted(buckets[bucket], key=lambda c: c.get("timestamp", 0))
         result.append({
-            "timestamp": group[0].get("timestamp", 0),
+            "timestamp": bucket,
             "date":      group[0].get("date", ""),
             "open":      group[0].get("open", 0),
             "high":      max(c.get("high", 0) for c in group),
@@ -645,8 +663,6 @@ def _resample(candles: List[Dict], period: int) -> List[Dict]:
             "close":     group[-1].get("close", 0),
             "volume":    sum(c.get("volume", 0) for c in group),
         })
-        i += period
-
     return result
 
 
@@ -663,13 +679,13 @@ def _rebuild_derived(symbol: str):
     
     raw_5m = _candles_5m.get(symbol, {}).get("candles", [])
     if raw_5m:
-        _candles_20m[symbol] = {"candles": _resample(raw_5m, 4), "timestamp": now, "source": "derived_from_5m"}
+        _candles_20m[symbol] = {"candles": _resample(raw_5m, 4, base_ms=300_000), "timestamp": now, "source": "derived_from_5m"}
         # 15m = 5m × 3 (always)
-        _candles_15m[symbol] = {"candles": _resample(raw_5m, 3), "timestamp": now, "source": "derived_from_5m"}
-        
+        _candles_15m[symbol] = {"candles": _resample(raw_5m, 3, base_ms=300_000), "timestamp": now, "source": "derived_from_5m"}
+
         # 30m: use directly-fetched 30m if available, otherwise derive from 5m
         if not use_direct_30m:
-            _candles_30m[symbol] = {"candles": _resample(raw_5m, 6), "timestamp": now, "source": "derived_from_5m"}
+            _candles_30m[symbol] = {"candles": _resample(raw_5m, 6, base_ms=300_000), "timestamp": now, "source": "derived_from_5m"}
 
         if market_data_source in {"mt5_redis", "hybrid"} and not use_direct_30m and not derive_from_30m:
             # Respect directly-ingested 1h from MT5 (mt5:bar:1h stream) or Supabase
@@ -685,7 +701,7 @@ def _rebuild_derived(symbol: str):
                 or ("derived" not in existing_1h_source and existing_1h_source not in {"", "unknown"})
             )
             if not richer_1h_available:
-                derived_1h = _resample(raw_5m, 12)
+                derived_1h = _resample(raw_5m, 12, base_ms=300_000)
                 if derived_1h:
                     _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_5m"}
     
@@ -709,17 +725,17 @@ def _rebuild_derived(symbol: str):
         )
 
         if raw_30m and not _real_1h_available:
-            derived_1h = _resample(raw_30m, 2)  # 1h = 30m × 2
+            derived_1h = _resample(raw_30m, 2, base_ms=1_800_000)  # 1h = 30m × 2
             if derived_1h:
                 _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_30m"}
 
         derived_4h = None
         _src_4h = "derived_from_30m"
         if _real_1h_available:
-            derived_4h = _resample(_existing_1h_candles, 4)  # 4h = gerçek 1h × 4
+            derived_4h = _resample(_existing_1h_candles, 4, base_ms=3_600_000)  # 4h = gerçek 1h × 4
             _src_4h = "derived_from_1h"
         if not derived_4h and raw_30m:
-            derived_4h = _resample(raw_30m, 8)  # 4h = 30m × 8 (fallback)
+            derived_4h = _resample(raw_30m, 8, base_ms=1_800_000)  # 4h = 30m × 8 (fallback)
             _src_4h = "derived_from_30m"
         if derived_4h:
             _candles_4h[symbol] = {"candles": derived_4h, "timestamp": now, "source": _src_4h}
@@ -727,7 +743,7 @@ def _rebuild_derived(symbol: str):
         # NDX: 4h = 1h × 4
         raw_1h = _candles_1h.get(symbol, {}).get("candles", [])
         if raw_1h:
-            _candles_4h[symbol] = {"candles": _resample(raw_1h, 4), "timestamp": now, "source": "derived_from_1h"}
+            _candles_4h[symbol] = {"candles": _resample(raw_1h, 4, base_ms=3_600_000), "timestamp": now, "source": "derived_from_1h"}
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -801,24 +817,47 @@ def _persist_async(symbol: str, timeframe: str, candles: List[Dict]):
         logger.debug(f"Persist failed for {symbol}/{timeframe}: {e}")
 
 
-def _merge_candles(existing: List[Dict], new_candles: List[Dict], limit: int) -> List[Dict]:
-    """Merge new candles into existing, deduplicate by timestamp, keep latest `limit`."""
+def _merge_candles(
+    existing: List[Dict],
+    new_candles: List[Dict],
+    limit: int,
+    interval_ms: Optional[int] = None,
+) -> List[Dict]:
+    """Merge new candles into existing, deduplicate by clock bucket, keep latest `limit`.
+
+    2026-07-08: dedup key is now the INTERVAL-ALIGNED bucket (when interval_ms
+    is given) instead of the exact timestamp. Exact-ts keying let a bar at
+    12:45:00 and a tick artifact at 12:48:23 coexist forever, densifying the
+    store beyond its nominal interval. One bucket → one bar; new data wins;
+    an aligned timestamp wins over a misaligned one within the same bucket.
+    """
     if not new_candles:
         return existing
-    if not existing:
-        return new_candles[-limit:]
-    
-    # Build a dict keyed by timestamp for dedup
-    merged = {}
+
+    def _key(c: Dict) -> Any:
+        ts = c.get("timestamp")
+        if ts and interval_ms:
+            return (int(ts) // interval_ms) * interval_ms
+        return ts or c.get("date", "")
+
+    merged: Dict[Any, Dict] = {}
     for c in existing:
-        key = c.get("timestamp") or c.get("date", "")
+        key = _key(c)
         if key:
             merged[key] = c
     for c in new_candles:
-        key = c.get("timestamp") or c.get("date", "")
-        if key:
-            merged[key] = c  # New data overwrites old
-    
+        key = _key(c)
+        if not key:
+            continue
+        prev = merged.get(key)
+        if prev is not None and interval_ms:
+            # Keep the bucket-aligned bar over a misaligned artifact
+            prev_aligned = _is_bucket_aligned(int(prev.get("timestamp", 0) or 0), interval_ms)
+            new_aligned = _is_bucket_aligned(int(c.get("timestamp", 0) or 0), interval_ms)
+            if prev_aligned and not new_aligned:
+                continue
+        merged[key] = c  # New data overwrites old
+
     # Sort by timestamp ascending and trim
     result = sorted(merged.values(), key=lambda x: x.get("timestamp", 0) or 0)
     return result[-limit:]
@@ -908,7 +947,7 @@ async def _pump_cycle():
                 if symbol in _1M_ONLY_SYMBOLS:
                     raw_limit = (FULL_SEED_LIMIT_5M * 5) if is_seed else (DELTA_LIMIT_5M * 5)
                     raw_1m = await _fetch_candles_from_api(symbol, "1m", limit=raw_limit)
-                    candles = _resample(raw_1m, 5) if raw_1m else []
+                    candles = _resample(raw_1m, 5, base_ms=60_000) if raw_1m else []
                     logger.info(f"[DataHub] {symbol}: fetched {len(raw_1m)} 1m → resampled to {len(candles)} 5m candles")
                 else:
                     fetch_limit = FULL_SEED_LIMIT_5M if is_seed else DELTA_LIMIT_5M
@@ -917,7 +956,7 @@ async def _pump_cycle():
                 if candles:
                     with _lock:
                         existing = (_candles_5m.get(symbol) or {}).get("candles", [])
-                        merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_5M)
+                        merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_5M, interval_ms=300_000)
                         _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                         _rebuild_derived(symbol)
                     _mark_fetched(f"5m:{symbol}")
@@ -938,7 +977,7 @@ async def _pump_cycle():
             if candles:
                 with _lock:
                     existing = (_candles_30m.get(symbol) or {}).get("candles", [])
-                    merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_30M)
+                    merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_30M, interval_ms=1_800_000)
                     _candles_30m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                     _rebuild_derived(symbol)
                 _mark_fetched(f"30m:{symbol}")
@@ -969,7 +1008,7 @@ async def _pump_cycle():
                     if candles:
                         with _lock:
                             existing = (_candles_1h.get(symbol) or {}).get("candles", [])
-                            merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H)
+                            merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H, interval_ms=3_600_000)
                             _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                             _rebuild_derived(symbol)
                         _mark_fetched(f"1h:{symbol}")
@@ -1589,7 +1628,25 @@ def _normalize_ingested_candle(candle: Dict[str, Any], timeframe: str) -> Option
         normalized["timestamp"] = int(ts_seconds * 1000)
         normalized["date"] = datetime.fromtimestamp(ts_seconds, tz=timezone.utc).date().isoformat()
     else:
-        normalized["timestamp"] = _coerce_timestamp_ms(timestamp)
+        ts_ms = _coerce_timestamp_ms(timestamp)
+        interval_ms = _tf_interval_ms(timeframe)
+        if interval_ms:
+            # Broker-time guard: MT5 bridge bars can arrive stamped in broker
+            # time (UTC+2/+3) before the offset detector locks on, landing
+            # hours in the future. Whole-hour offsets survive sub-hour bucket
+            # alignment, so correct them deterministically here.
+            now_ms = int(time.time() * 1000)
+            if ts_ms > now_ms + interval_ms:
+                offset_h = round((ts_ms - now_ms) / 3_600_000)
+                if 1 <= offset_h <= 12:
+                    ts_ms -= offset_h * 3_600_000
+            # Tick-pollution guard: reject bars not on a clock-bucket boundary
+            # (tick snapshots carry arbitrary second offsets like :48:23).
+            if not _is_bucket_aligned(ts_ms, interval_ms):
+                return None
+            if ts_ms > now_ms:
+                return None  # still-forming bucket — closed-bar stores only
+        normalized["timestamp"] = ts_ms
 
     if all(normalized[key] == 0 for key in ("open", "high", "low", "close")):
         return None
@@ -1631,16 +1688,16 @@ async def ingest_candles(
 
     with _lock:
         existing = (store.get(canonical_symbol) or {}).get("candles", [])
-        merged = _merge_candles(existing, normalized_candles, candle_limit)
+        merged = _merge_candles(existing, normalized_candles, candle_limit, interval_ms=_tf_interval_ms(tf))
         store[canonical_symbol] = {"candles": merged, "timestamp": now_ts, "source": source}
 
         if tf == "1m":
             # For symbols that use 1m as primary (XAUUSD), cascade: 1m → 5m → derived TFs
             if canonical_symbol in _1M_ONLY_SYMBOLS:
-                resampled_5m = _resample(merged, 5)
+                resampled_5m = _resample(merged, 5, base_ms=60_000)
                 if resampled_5m:
                     existing_5m = (_candles_5m.get(canonical_symbol) or {}).get("candles", [])
-                    merged_5m = _merge_candles(existing_5m, resampled_5m, FULL_SEED_LIMIT_5M)
+                    merged_5m = _merge_candles(existing_5m, resampled_5m, FULL_SEED_LIMIT_5M, interval_ms=300_000)
                     _candles_5m[canonical_symbol] = {
                         "candles": merged_5m, "timestamp": now_ts, "source": f"{source}_1m_resampled"
                     }

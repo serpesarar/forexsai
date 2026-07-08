@@ -69,7 +69,7 @@ async def test_detect_logs_smc_buy_signals_with_prediction_logger():
     module = _load_order_block_service_module("test_order_block_service_buy")
     service = module.OrderBlockService(ttl_seconds=0)
 
-    with patch.object(service, "_load_candles", AsyncMock(return_value=[SimpleNamespace(close=2345.6)])), patch.object(
+    with patch.object(service, "_load_candles", AsyncMock(side_effect=lambda **kw: ([SimpleNamespace(close=2345.6)], kw.get("timeframe", "5m")))), patch.object(
         module.MarketStructureAnalyzer, "analyze", return_value=_FakeStructure("bullish")
     ), patch.object(module.OrderBlockDetector, "detect", return_value=[]), patch.object(
         service,
@@ -94,7 +94,7 @@ async def test_detect_skips_logging_for_neutral_smc_signal():
     module = _load_order_block_service_module("test_order_block_service_neutral")
     service = module.OrderBlockService(ttl_seconds=0)
 
-    with patch.object(service, "_load_candles", AsyncMock(return_value=[SimpleNamespace(close=21500.0)])), patch.object(
+    with patch.object(service, "_load_candles", AsyncMock(side_effect=lambda **kw: ([SimpleNamespace(close=21500.0)], kw.get("timeframe", "5m")))), patch.object(
         module.MarketStructureAnalyzer, "analyze", return_value=_FakeStructure("bullish")
     ), patch.object(module.OrderBlockDetector, "detect", return_value=[]), patch.object(
         service,
@@ -111,7 +111,7 @@ async def test_detect_can_disable_signal_logging_for_read_only_panel_calls():
     module = _load_order_block_service_module("test_order_block_service_read_only")
     service = module.OrderBlockService(ttl_seconds=300)
 
-    with patch.object(service, "_load_candles", AsyncMock(return_value=[SimpleNamespace(close=2345.6)])), patch.object(
+    with patch.object(service, "_load_candles", AsyncMock(side_effect=lambda **kw: ([SimpleNamespace(close=2345.6)], kw.get("timeframe", "5m")))), patch.object(
         module.MarketStructureAnalyzer, "analyze", return_value=_FakeStructure("bullish")
     ), patch.object(module.OrderBlockDetector, "detect", return_value=[]), patch.object(
         service,
@@ -135,7 +135,7 @@ async def test_detect_can_bypass_cache_for_scheduler_logging():
     module = _load_order_block_service_module("test_order_block_service_cache_bypass")
     service = module.OrderBlockService(ttl_seconds=300)
 
-    with patch.object(service, "_load_candles", AsyncMock(return_value=[SimpleNamespace(close=2345.6)])), patch.object(
+    with patch.object(service, "_load_candles", AsyncMock(side_effect=lambda **kw: ([SimpleNamespace(close=2345.6)], kw.get("timeframe", "5m")))), patch.object(
         module.MarketStructureAnalyzer, "analyze", return_value=_FakeStructure("bullish")
     ), patch.object(module.OrderBlockDetector, "detect", return_value=[]), patch.object(
         service,
@@ -169,7 +169,7 @@ async def test_detect_returns_support_resistance_payload_for_panel_rendering():
     candle = SimpleNamespace(close=21500.0, high=21540.0, low=21460.0)
     candles = [candle for _ in range(80)]
 
-    with patch.object(service, "_load_candles", AsyncMock(return_value=candles)), patch.object(
+    with patch.object(service, "_load_candles", AsyncMock(side_effect=lambda **kw: (candles, kw.get("timeframe", "5m")))), patch.object(
         module.MarketStructureAnalyzer, "analyze", return_value=_FakeStructure("bullish")
     ), patch.object(module.OrderBlockDetector, "detect", return_value=[]), patch.object(
         service,
