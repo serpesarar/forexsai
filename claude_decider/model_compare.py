@@ -48,7 +48,7 @@ def _wr_ev(items):
 def main():
     rows = [r for r in _load() if r.get("shadow_model")]   # yalnız gölge-model'li kayıtlar
     print("=" * 68)
-    print(f"MODEL KIYAS — {DECIDE_MODEL} (asıl) vs {SHADOW_MODEL} (gölge)")
+    print(f"MODEL KIYAS — {DECIDE_MODEL} (asıl) vs {SHADOW_MODEL or 'gölge(tarihsel)'} (gölge)")
     print("=" * 68)
     print(f"Gölge-model'li karar: {len(rows)}")
     if len(rows) < MIN_N:
@@ -92,20 +92,23 @@ def main():
     print(f"    Aynı aksiyon (OPEN/WAIT): {100*agree_act/both:.0f}%")
     print(f"    Aynı aksiyon+yön:         {100*agree_dir/both:.0f}%")
 
+    # SHADOW_MODEL=None olabilir (canlı gölge kapalı, tarihsel kayıtlar analiz ediliyor) →
+    # None'ı formatlamak TypeError veriyordu (2026-07-09 paket denetiminde bulunan çökme).
+    shadow_name = SHADOW_MODEL or "gölge(tarihsel)"
     print("\n[2] AÇILAN İŞLEM KALİTESİ (kendi OPEN'larında)")
-    for name, tr in ((DECIDE_MODEL, opus_trades), (SHADOW_MODEL, fable_trades)):
+    for name, tr in ((str(DECIDE_MODEL), opus_trades), (shadow_name, fable_trades)):
         res = _wr_ev(tr)
         print(f"    {name:<16} " + (f"WR {res[2]:.0f}% ({res[0]}/{res[1]})  EV {res[3]:+.3f}R" if res else "grade'li OPEN yok"))
 
     print("\n[3] SEÇİCİLİK (kim daha çok açıyor)")
     print(f"    {DECIDE_MODEL}: {opus_opens}/{both} OPEN ({100*opus_opens/both:.0f}%)  ·  "
-          f"{SHADOW_MODEL}: {fable_opens}/{both} OPEN ({100*fable_opens/both:.0f}%)")
+          f"{SHADOW_MODEL or 'gölge'}: {fable_opens}/{both} OPEN ({100*fable_opens/both:.0f}%)")
 
     print("\n[4] AYRIŞMA KİMİN LEHİNE (yalnız biri OPEN dediğinde kazandı mı)")
     if opus_only_n:
         print(f"    Sadece {DECIDE_MODEL} açtı: {opus_only_win}/{opus_only_n} kazandı ({100*opus_only_win/opus_only_n:.0f}%)")
     if fable_only_n:
-        print(f"    Sadece {SHADOW_MODEL} açtı: {fable_only_win}/{fable_only_n} kazandı ({100*fable_only_win/fable_only_n:.0f}%)")
+        print(f"    Sadece {SHADOW_MODEL or 'gölge'} açtı: {fable_only_win}/{fable_only_n} kazandı ({100*fable_only_win/fable_only_n:.0f}%)")
     if not opus_only_n and not fable_only_n:
         print("    (henüz ayrışan grade'li OPEN yok)")
 

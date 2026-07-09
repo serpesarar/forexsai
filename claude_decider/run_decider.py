@@ -232,12 +232,36 @@ def build_situation(symbol: str, bars: list[dict], vix, positions: dict, now: da
 
 
 # ── Çekirdek pass ────────────────────────────────────────────────────────────
+_last_bar_seen: dict = {}    # sym → [son_bar_time, kaç_döngüdür_aynı]
+
+
+def _feed_is_frozen(sym: str, bars: list | None) -> bool:
+    """DONUK-FEED / KAPALI-PİYASA koruması (2026-07-09 otopsisi: hafta sonu frozen bar'larla
+    263 sahte karar üretildi — 129 kopya GDAXI SELL Pazartesi gap'inde otomatik LOSS, tüm
+    istatistikleri zehirledi). Bar zamanı ≥3 döngüdür (≈1 saat) İLERLEMİYORSA sembol donuk →
+    karar üretme. Saat-dilimi bağımsız (broker-frame vs UTC kıyası yapmaz, ilerleme bakar)."""
+    bt = bars[-1].get("time") if bars else None
+    if bt is None:
+        return False
+    st = _last_bar_seen.get(sym)
+    if st and st[0] == bt:
+        st[1] += 1
+    else:
+        _last_bar_seen[sym] = st = [bt, 0]
+    if st[1] >= 3:
+        if st[1] == 3:
+            print(f"  ❄ {sym}: bar zamanı ~1 saattir ilerlemiyor (kapalı/donuk feed) → karar üretilmiyor")
+        return True
+    return False
+
+
 def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
              model: str = DECIDE_MODEL, vix_source: str = "yfinance", dxy=None):
     now = datetime.now(timezone.utc)
-    # Kanıt-temelli semboller (XAU HARİÇ — o serbest-zekâ moduna gider)
+    # Kanıt-temelli semboller (XAU HARİÇ — o serbest-zekâ moduna gider) + donuk-feed filtresi
     sits = [s for s in (build_situation(sym, bars_by_symbol.get(sym), vix, positions, now, vix_source)
-                        for sym in ALLOW if sym != FREE_SYMBOL) if s]
+                        for sym in ALLOW
+                        if sym != FREE_SYMBOL and not _feed_is_frozen(sym, bars_by_symbol.get(sym))) if s]
     out = []
     tag = "SHADOW" if shadow else "CANLI"
     if sits:
@@ -261,6 +285,8 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
     # XAU SERBEST-ZEKÂ (kanıt-tablosu yok; çok-TF ham bağlam → Opus çıplak muhakeme)
     if _HAS_MT5 and FREE_SYMBOL in _SYM_MAP:
         mtf = fetch_multi_tf(FREE_SYMBOL)
+        if _feed_is_frozen(FREE_SYMBOL, mtf.get("5m")):
+            mtf = {}                      # donuk feed → free karar da üretme
         ctx = fx.build_free_context(mtf, vix=vix, dxy=dxy)
         if ctx:
             try:
