@@ -13,6 +13,7 @@ export interface SymbolConfig {
   symbol: string;
   label: string;
   storageKey: string;
+  priceDecimals: number;
   theme: SymbolTheme;
 }
 
@@ -22,6 +23,7 @@ export const SYMBOL_CONFIGS: Record<SymbolSlug, SymbolConfig> = {
     symbol: "NDX.INDX",
     label: "NASDAQ",
     storageKey: "nasdaq-dashboard-layout-v5",
+    priceDecimals: 1,
     theme: {
       accent: "emerald",
       accentBg: "bg-emerald-500/10",
@@ -35,6 +37,7 @@ export const SYMBOL_CONFIGS: Record<SymbolSlug, SymbolConfig> = {
     symbol: "XAUUSD",
     label: "XAU/USD",
     storageKey: "xauusd-dashboard-layout-v5",
+    priceDecimals: 2,
     theme: {
       accent: "amber",
       accentBg: "bg-amber-500/10",
@@ -48,6 +51,7 @@ export const SYMBOL_CONFIGS: Record<SymbolSlug, SymbolConfig> = {
     symbol: "GDAXI.INDX",
     label: "DAX",
     storageKey: "dax-dashboard-layout-v5",
+    priceDecimals: 1,
     theme: {
       accent: "blue",
       accentBg: "bg-blue-500/10",
@@ -61,6 +65,7 @@ export const SYMBOL_CONFIGS: Record<SymbolSlug, SymbolConfig> = {
     symbol: "USOIL.FOREX",
     label: "US OIL",
     storageKey: "oil-dashboard-layout-v5",
+    priceDecimals: 2,
     theme: {
       accent: "orange",
       accentBg: "bg-orange-500/10",
@@ -70,6 +75,24 @@ export const SYMBOL_CONFIGS: Record<SymbolSlug, SymbolConfig> = {
     },
   },
 };
+
+
+export const DEFAULT_PRICE_DECIMALS = 2;
+
+/** Decimal places per backend symbol id (e.g. "NDX.INDX"). */
+export const PRICE_DECIMALS_BY_SYMBOL: Record<string, number> = Object.fromEntries(
+  Object.values(SYMBOL_CONFIGS).map((cfg) => [cfg.symbol, cfg.priceDecimals]),
+);
+
+export function getPriceDecimals(symbol: string): number {
+  return PRICE_DECIMALS_BY_SYMBOL[symbol] ?? DEFAULT_PRICE_DECIMALS;
+}
+
+/** Format a price with symbol-aware decimals (NDX/DAX: 1, XAU/OIL: 2, default 2). */
+export function formatPrice(symbol: string, value: number): string {
+  if (!Number.isFinite(value)) return "-";
+  return value.toFixed(getPriceDecimals(symbol));
+}
 
 export function getSymbolBySlug(slug: string): SymbolConfig | null {
   return SYMBOL_CONFIGS[slug as SymbolSlug] ?? null;

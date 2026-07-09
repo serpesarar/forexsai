@@ -22,6 +22,32 @@ logger = logging.getLogger(__name__)
 SMC_MODEL_TYPE = "smc"
 SMC_STRATEGY = "SMART_MONEY_ZONES"
 
+# ── Sembole özel SMC profilleri (2026-07-08) ─────────────────────────────
+# Ölçülen kanıtlara dayanır (14g canlı WR + EMEL ağırlık revizyonu gerekçeleri):
+#  - GDAXI: tick volume sentetik → volume bonusu kapalı (EMEL'de volume 15→8
+#    ile aynı gerekçe); son 14g SMC 0/13 → eşikler sıkı.
+#  - XAUUSD: momentum-ağırlıklı, whipsaw'lı → daha güçlü displacement iste,
+#    daha derin premium/discount bölgesi bekle.
+#  - USOIL: 5m SMC en iyi performans (%47) → baz eşikler; gerçek hacim var.
+#  - NDX: trend-yanlı endeks → baz profil (yapı-trend kapısı zaten mevcut).
+# Bilinmeyen semboller `default` profili alır.
+_SMC_SYMBOL_PROFILES: Dict[str, Dict[str, Any]] = {
+    "NDX.INDX":    {"swing_period": 3, "min_displacement_atr": 1.2, "min_ob_score": 50,
+                    "volume_bonus": True,  "signal_threshold": 60, "deep_discount": 0.30, "deep_premium": 0.70},
+    "GDAXI.INDX":  {"swing_period": 3, "min_displacement_atr": 1.3, "min_ob_score": 55,
+                    "volume_bonus": False, "signal_threshold": 65, "deep_discount": 0.30, "deep_premium": 0.70},
+    "XAUUSD":      {"swing_period": 3, "min_displacement_atr": 1.3, "min_ob_score": 55,
+                    "volume_bonus": True,  "signal_threshold": 65, "deep_discount": 0.25, "deep_premium": 0.75},
+    "USOIL.FOREX": {"swing_period": 3, "min_displacement_atr": 1.2, "min_ob_score": 50,
+                    "volume_bonus": True,  "signal_threshold": 60, "deep_discount": 0.30, "deep_premium": 0.70},
+    "default":     {"swing_period": 3, "min_displacement_atr": 1.2, "min_ob_score": 50,
+                    "volume_bonus": True,  "signal_threshold": 60, "deep_discount": 0.30, "deep_premium": 0.70},
+}
+
+
+def _smc_profile(symbol: str) -> Dict[str, Any]:
+    return _SMC_SYMBOL_PROFILES.get(symbol, _SMC_SYMBOL_PROFILES["default"])
+
 
 @dataclass
 class CacheEntry:
@@ -478,15 +504,23 @@ class OrderBlockService:
             return payload
 
         # Use NEW detector with independent algorithms (symbol-aware TP/SL).
-        # 2026-07-08: OrderBlockConfig is now actually threaded into the v2
-        # analyzer (it used to be consumed only by the cache key, so scheduler
-        # tuning like min_displacement_atr=1.2 / min_score=50 silently did nothing).
+        # 2026-07-08: parameters come from the per-symbol SMC profile; an
+        # explicit OrderBlockConfig can only TIGHTEN (max of the two), so
+        # scheduler overrides still bite without loosening a stricter profile.
+        profile = _smc_profile(symbol)
         structure = MarketStructureAnalyzer.analyze(
             candles,
-            swing_period=max(2, int(getattr(config, "fractal_period", 2) or 2) + 1),
+            swing_period=int(profile["swing_period"]),
             symbol=symbol,
-            min_displacement_atr=float(getattr(config, "min_displacement_atr", 1.2) or 1.2),
-            min_ob_score=float(getattr(config, "min_score", 0.0) or 0.0),
+            min_displacement_atr=max(
+                float(profile["min_displacement_atr"]),
+                float(getattr(config, "min_displacement_atr", 0.0) or 0.0),
+            ),
+            min_ob_score=max(
+                float(profile["min_ob_score"]),
+                float(getattr(config, "min_score", 0.0) or 0.0),
+            ),
+            volume_bonus=bool(profile["volume_bonus"]),
         )
 
         # Prepare enriched order blocks with structure info
@@ -499,8 +533,10 @@ class OrderBlockService:
                 order_blocks=enriched_obs,
                 current_price=current_price,
                 candles=candles,
+                profile=profile,
             )
         )
+        combined_signal, mtf_info = await self._apply_mtf_alignment(symbol, timeframe, combined_signal)
         support_resistance = self._build_support_resistance(symbol, candles, current_price) if current_price > 0 else {
             "all_levels": [],
             "nearest_resistance": None,
@@ -531,6 +567,7 @@ class OrderBlockService:
             "combined_signal": combined_signal,
             "trend": structure.trend,
             "support_resistance": support_resistance,
+            "mtf_alignment": mtf_info,
             "timestamp": self._utc_now().isoformat().replace("+00:00", "Z"),
         }
         if used_timeframe != timeframe:
@@ -547,6 +584,61 @@ class OrderBlockService:
             self._cache[cache_key] = CacheEntry(timestamp=self._utc_now(), payload=payload)
 
         return payload
+
+    async def _htf_trend(self, symbol: str, timeframe: str) -> Optional[str]:
+        """Structure trend on a higher timeframe (cheap: reads DataHub memory).
+
+        Returns "bullish"/"bearish"/"ranging" or None when data is too thin.
+        """
+        try:
+            rows = await fetch_ohlc_data(symbol, timeframe=timeframe, limit=120)
+            if not rows or len(rows) < 30:
+                return None
+            candles = self._rows_to_candles(rows)
+            swings = SwingDetector.detect(candles, period=3)
+            return MarketStructureAnalyzer._determine_trend(candles, swings)
+        except Exception as e:
+            logger.debug("[SMC] HTF trend (%s %s) failed: %s", symbol, timeframe, e)
+            return None
+
+    async def _apply_mtf_alignment(
+        self, symbol: str, timeframe: str, combined_signal: dict
+    ) -> Tuple[dict, Dict[str, Any]]:
+        """MTF uyum katmanı (2026-07-08): 5m/15m sinyali 1h/4h yapı trendiyle
+        çelişiyorsa güveni düşür; her iki üst TF de karşıysa NEUTRAL'a çek.
+        Fail-open: üst TF verisi yoksa sinyale dokunmaz.
+        """
+        mtf_info: Dict[str, Any] = {"applied": False, "h1_trend": None, "h4_trend": None}
+        action = (combined_signal or {}).get("action")
+        if timeframe not in {"5m", "15m"} or action not in {"BUY", "SELL"}:
+            return combined_signal, mtf_info
+
+        h1_trend, h4_trend = await asyncio.gather(
+            self._htf_trend(symbol, "1h"), self._htf_trend(symbol, "4h")
+        )
+        mtf_info.update({"applied": True, "h1_trend": h1_trend, "h4_trend": h4_trend})
+
+        opposing = "bearish" if action == "BUY" else "bullish"
+        opposed = [tf for tf, t in (("1h", h1_trend), ("4h", h4_trend)) if t == opposing]
+        if not opposed:
+            return combined_signal, mtf_info
+
+        payload = dict(combined_signal)
+        reasons = list(payload.get("reasons") or [])
+        reasoning = list(payload.get("reasoning") or [])
+        if len(opposed) == 2:
+            payload["action"] = "NEUTRAL"
+            payload["confidence"] = min(float(payload.get("confidence", 0.4) or 0.4), 0.45)
+            note = f"MTF veto: {action} vs {opposing} 1h+4h structure"
+        else:
+            payload["confidence"] = round(float(payload.get("confidence", 0.4) or 0.4) * 0.75, 3)
+            note = f"MTF caution: {action} vs {opposing} {opposed[0]} structure"
+        reasons.append(note)
+        reasoning.append(note)
+        payload["reasons"] = reasons
+        payload["reasoning"] = reasoning
+        mtf_info["adjustment"] = note
+        return payload, mtf_info
 
     async def _log_smc_signal(self, symbol: str, timeframe: str, candles: List[Candle], combined_signal: dict) -> None:
         direction = (combined_signal or {}).get("action")
@@ -807,7 +899,9 @@ class OrderBlockService:
         order_blocks: List[Dict[str, Any]] | None = None,
         current_price: float = 0.0,
         candles: List | None = None,
+        profile: Optional[Dict[str, Any]] = None,
     ) -> dict:
+        profile = profile or _SMC_SYMBOL_PROFILES["default"]
         _neutral = {
             "action": "NEUTRAL",
             "confidence": 0.40,
@@ -862,8 +956,8 @@ class OrderBlockService:
 
         in_discount = price_pct < 0.5
         in_premium = price_pct > 0.5
-        deep_discount = price_pct < 0.3
-        deep_premium = price_pct > 0.7
+        deep_discount = price_pct < float(profile.get("deep_discount", 0.30))
+        deep_premium = price_pct > float(profile.get("deep_premium", 0.70))
 
         # ── 3. OB PROXIMITY FILTER (recency removed — proximity naturally filters stale OBs) ──
         bullish_obs = [
@@ -1026,9 +1120,9 @@ class OrderBlockService:
                     bear_score += 8
                     bear_reasons.append("rejection candle")
 
-        # ── 9. DECISION (symmetric thresholds for balanced signals) ──
-        bull_threshold = 60
-        bear_threshold = 60
+        # ── 9. DECISION (symmetric, per-symbol threshold from the SMC profile) ──
+        bull_threshold = int(profile.get("signal_threshold", 60))
+        bear_threshold = bull_threshold
 
         bull_pass = bull_score >= bull_threshold
         bear_pass = bear_score >= bear_threshold

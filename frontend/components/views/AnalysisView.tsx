@@ -1,6 +1,7 @@
 "use client";
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
+import type { OrderBlockTimeframe } from "../../components/OrderBlockPanelUnified";
 import { TrendingUp, Layers, Globe2, CalendarDays, Waves } from "lucide-react";
 import { LoadingIcon, SignalsIcon, AdvancedAnalysisIcon, EmelIcon } from "../ui/CustomIcons";
 import AuthGuard from "../../components/AuthGuard";
@@ -25,6 +26,8 @@ const PanelLoader = () => (
 
 export default function AnalysisView() {
     const { t } = useI18nStore();
+    // Shared SMC timeframe — keeps the Smart Money Zones panel and the OB chart in sync
+    const [obTimeframe, setObTimeframe] = useState<OrderBlockTimeframe>("5m");
 
     return (
         <div className="w-full text-white animate-in fade-in duration-300">
@@ -71,7 +74,7 @@ export default function AnalysisView() {
                 <LazyPanel fallbackHeight={400}>
                     <Suspense fallback={<PanelLoader />}>
                         <ErrorBoundary>
-                            <OrderBlockPanelUnified />
+                            <OrderBlockPanelUnified timeframe={obTimeframe} onTimeframeChange={setObTimeframe} />
                         </ErrorBoundary>
                     </Suspense>
                 </LazyPanel>
@@ -80,7 +83,7 @@ export default function AnalysisView() {
                 <LazyPanel fallbackHeight={520}>
                     <Suspense fallback={<PanelLoader />}>
                         <ErrorBoundary>
-                            <OrderBlockChartPanel />
+                            <OrderBlockChartPanel timeframe={obTimeframe} onTimeframeChange={setObTimeframe} />
                         </ErrorBoundary>
                     </Suspense>
                 </LazyPanel>

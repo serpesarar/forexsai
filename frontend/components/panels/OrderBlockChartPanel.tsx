@@ -14,6 +14,7 @@ import { HelpCircle, Maximize2, Minimize2, RefreshCw, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetcher } from "../../lib/api";
 import type { OrderBlockDetectResponse } from "../../lib/api/orderBlocks";
+import { formatPrice } from "../../lib/symbolConfig";
 import styles from "./ob-chart.module.css";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────
@@ -117,9 +118,23 @@ function throttle<T extends (...args: any[]) => void>(fn: T, delay: number): T {
 
 // ─── COMPONENT ───────────────────────────────────────────────────────
 
-export default function OrderBlockChartPanel() {
+interface OrderBlockChartPanelProps {
+  /** Controlled timeframe — omit to keep the panel's own internal TF state. */
+  timeframe?: TF;
+  onTimeframeChange?: (tf: TF) => void;
+}
+
+export default function OrderBlockChartPanel({ timeframe: timeframeProp, onTimeframeChange }: OrderBlockChartPanelProps = {}) {
   const [symbol, setSymbol] = useState(SYMBOLS[0].key);
-  const [timeframe, setTimeframe] = useState<TF>("5m");
+  const [internalTimeframe, setInternalTimeframe] = useState<TF>("5m");
+  const timeframe = timeframeProp ?? internalTimeframe;
+  const setTimeframe = useCallback(
+    (tf: TF) => {
+      setInternalTimeframe(tf);
+      onTimeframeChange?.(tf);
+    },
+    [onTimeframeChange]
+  );
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showGuide, setShowGuide] = useState(true);
   const [showSignalLayer, setShowSignalLayer] = useState(false);
@@ -167,6 +182,8 @@ export default function OrderBlockChartPanel() {
   const {
     data: candles,
     isLoading: candlesLoading,
+    error: candlesError,
+    refetch: refetchCandles,
   } = useQuery({
     queryKey: ["ob-chart-ohlcv", symbol, timeframe],
     queryFn: () => fetchOHLCV(symbol, timeframe),
@@ -203,7 +220,12 @@ export default function OrderBlockChartPanel() {
   }, [activeSignalsData, symbol, showSignalLayer]);
 
   // ── Order block detect data
-  const { data: obData, isLoading: obLoading } = useQuery<OrderBlockDetectResponse>({
+  const {
+    data: obData,
+    isLoading: obLoading,
+    error: obError,
+    refetch: refetchOb,
+  } = useQuery<OrderBlockDetectResponse>({
     queryKey: ["ob-chart-detect", detectPayload],
     queryFn: () =>
       fetcher<OrderBlockDetectResponse>("/api/order-blocks/detect", {
@@ -413,6 +435,37 @@ export default function OrderBlockChartPanel() {
     if (xLeft === null || xRight === null) return;
     const chartW = chartSize.width;
 
+    // Right-anchored label pills are collected first, then drawn at the end of the
+    // overlay pass with a simple collision-avoidance sweep (labels <14px apart get
+    // pushed down so they never overlap).
+    interface RightLabel {
+      y: number;
+      text: string;
+      color: string;
+      small?: boolean;
+    }
+    const rightLabels: RightLabel[] = [];
+    const LABEL_MIN_GAP = 14;
+
+    const flushRightLabels = () => {
+      rightLabels.sort((a, b) => a.y - b.y);
+      for (let i = 1; i < rightLabels.length; i++) {
+        if (rightLabels[i].y - rightLabels[i - 1].y < LABEL_MIN_GAP) {
+          rightLabels[i].y = rightLabels[i - 1].y + LABEL_MIN_GAP;
+        }
+      }
+      for (const lbl of rightLabels) {
+        ctx.font = lbl.small ? "bold 8px Inter, sans-serif" : "bold 10px Inter, sans-serif";
+        const tm = ctx.measureText(lbl.text);
+        const px = chartW - tm.width - 14;
+        const py = lbl.y - 7;
+        ctx.fillStyle = "rgba(10,14,23,0.80)";
+        ctx.fillRect(px - 4, py, tm.width + 8, 14);
+        ctx.fillStyle = lbl.color;
+        ctx.fillText(lbl.text, px, py + 10);
+      }
+    };
+
     // ── 1. Draw Swing High/Low horizontal lines (blue)
     const swingPoints = (obData as any)?.swing_points as any[] | undefined;
     if (swingPoints?.length) {
@@ -440,16 +493,8 @@ export default function OrderBlockChartPanel() {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // Label with background
-        ctx.font = "bold 9px Inter, sans-serif";
-        const text = `${label} ${sw.price.toFixed(1)}`;
-        const tm = ctx.measureText(text);
-        const lx = chartW - tm.width - 8;
-        const ly = yPos - 4;
-        ctx.fillStyle = "rgba(59, 130, 246, 0.15)";
-        ctx.fillRect(lx - 3, ly - 9, tm.width + 6, 12);
-        ctx.fillStyle = SWING_LABEL_COLOR;
-        ctx.fillText(text, lx, ly);
+        // Label pill (collected; drawn with collision avoidance at the end)
+        rightLabels.push({ y: yPos, text: `${label} ${formatPrice(symbol, sw.price)}`, color: SWING_LABEL_COLOR, small: true });
       };
 
       // Draw last 2 swing highs and lows
@@ -531,15 +576,8 @@ export default function OrderBlockChartPanel() {
         ctx.lineTo(chartW, slY);
         ctx.stroke();
 
-        // Label pill
-        const slLabel = `⊗ SL  ${projection.stop_loss.toFixed(1)}`;
-        ctx.font = "bold 10px Inter, sans-serif";
-        const slTm = ctx.measureText(slLabel);
-        const slPx = chartW - slTm.width - 14;
-        ctx.fillStyle = "rgba(10,14,23,0.80)";
-        ctx.fillRect(slPx - 4, slY - 8, slTm.width + 8, 14);
-        ctx.fillStyle = SL_COLOR;
-        ctx.fillText(slLabel, slPx, slY + 3);
+        // Label pill (collision-avoided)
+        rightLabels.push({ y: slY, text: `⊗ SL  ${formatPrice(symbol, projection.stop_loss)}`, color: SL_COLOR });
       }
 
       // ── TP1 — bright green solid ────────────────────────────────────────────
@@ -553,14 +591,7 @@ export default function OrderBlockChartPanel() {
         ctx.lineTo(chartW, tp1Y);
         ctx.stroke();
 
-        const tp1Label = `① TP1  ${projection.tp1.toFixed(1)}`;
-        ctx.font = "bold 10px Inter, sans-serif";
-        const t1m = ctx.measureText(tp1Label);
-        const t1x = chartW - t1m.width - 14;
-        ctx.fillStyle = "rgba(10,14,23,0.80)";
-        ctx.fillRect(t1x - 4, tp1Y - 8, t1m.width + 8, 14);
-        ctx.fillStyle = TP1_COLOR;
-        ctx.fillText(tp1Label, t1x, tp1Y + 3);
+        rightLabels.push({ y: tp1Y, text: `① TP1  ${formatPrice(symbol, projection.tp1)}`, color: TP1_COLOR });
       }
 
       // ── TP2 — medium green solid ────────────────────────────────────────────
@@ -574,14 +605,7 @@ export default function OrderBlockChartPanel() {
         ctx.lineTo(chartW, tp2Y);
         ctx.stroke();
 
-        const tp2Label = `② TP2  ${projection.tp2.toFixed(1)}`;
-        ctx.font = "bold 10px Inter, sans-serif";
-        const t2m = ctx.measureText(tp2Label);
-        const t2x = chartW - t2m.width - 14;
-        ctx.fillStyle = "rgba(10,14,23,0.80)";
-        ctx.fillRect(t2x - 4, tp2Y - 8, t2m.width + 8, 14);
-        ctx.fillStyle = TP2_COLOR;
-        ctx.fillText(tp2Label, t2x, tp2Y + 3);
+        rightLabels.push({ y: tp2Y, text: `② TP2  ${formatPrice(symbol, projection.tp2)}`, color: TP2_COLOR });
       }
 
       // ── TP3 — dark green dashed (Fibonacci extension) ──────────────────────
@@ -596,14 +620,7 @@ export default function OrderBlockChartPanel() {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        const tp3Label = `③ TP3  ${projection.tp3.toFixed(1)}`;
-        ctx.font = "bold 10px Inter, sans-serif";
-        const t3m = ctx.measureText(tp3Label);
-        const t3x = chartW - t3m.width - 14;
-        ctx.fillStyle = "rgba(10,14,23,0.80)";
-        ctx.fillRect(t3x - 4, tp3Y - 8, t3m.width + 8, 14);
-        ctx.fillStyle = TP3_COLOR;
-        ctx.fillText(tp3Label, t3x, tp3Y + 3);
+        rightLabels.push({ y: tp3Y, text: `③ TP3  ${formatPrice(symbol, projection.tp3)}`, color: TP3_COLOR });
       }
 
       // ── Swing range arrow (vertical, right edge) ───────────────────────────
@@ -667,7 +684,7 @@ export default function OrderBlockChartPanel() {
 
         // LEFT-side label pill (right side projection labels'la çakışmasın)
         ctx.font = "bold 10px Inter, sans-serif";
-        const text = `${label} ${price.toFixed(1)}${opts.strikethrough ? " ✓" : ""}`;
+        const text = `${label} ${formatPrice(symbol, price)}${opts.strikethrough ? " ✓" : ""}`;
         const tm = ctx.measureText(text);
         const px = xLeft + 8;
         const py = y - 7;
@@ -735,6 +752,10 @@ export default function OrderBlockChartPanel() {
         const fillColor = isBullish ? OB_BULL_COLOR : OB_BEAR_COLOR;
         const borderColor = isBullish ? OB_BULL_BORDER : OB_BEAR_BORDER;
 
+        // Dim consumed zones: mitigated ≈ 25%, tested ≈ 60% of normal opacity
+        const dimFactor = ob.mitigated ? 0.25 : ob.tested ? 0.6 : 1;
+        ctx.globalAlpha = dimFactor;
+
         const grad = ctx.createLinearGradient(obX, y, chartW, y);
         // Both bull and bear use gold/amber shades — different opacity only
         if (isBullish) {
@@ -764,9 +785,10 @@ export default function OrderBlockChartPanel() {
         ctx.lineTo(chartW, y + h);
         ctx.stroke();
 
-        // Numbered label pill (①②③...) at left side
+        // Numbered label pill (①②③...) at left side — kept at full opacity so ✓/✗ stays readable
+        ctx.globalAlpha = 1;
         const num = ["①","②","③","④","⑤"][obSeq] ?? `${obSeq+1}`;
-        const status = ob.tested ? " ✓" : ob.mitigated ? " ✗" : "";
+        const status = ob.mitigated ? " ✗" : ob.tested ? " ✓" : "";
         const score  = ob.score != null ? ` ${ob.score}` : "";
         const label  = `${num} ${isBullish ? "Bull" : "Bear"} OB${score}${status}`;
         ctx.font = "bold 9.5px Inter, sans-serif";
@@ -779,11 +801,9 @@ export default function OrderBlockChartPanel() {
         ctx.fillStyle = borderColor;
         ctx.fillText(label, pillX + 1, pillY + 10);
 
-        // Price labels on right axis
-        ctx.font = "8px Inter, sans-serif";
-        ctx.fillStyle = borderColor;
-        ctx.fillText(zoneHigh.toFixed(1), chartW - 52, y - 2);
-        ctx.fillText(zoneLow.toFixed(1),  chartW - 52, y + h + 9);
+        // Price labels on right axis (collision-avoided with TP/SL pills)
+        rightLabels.push({ y: y - 2, text: formatPrice(symbol, zoneHigh), color: borderColor, small: true });
+        rightLabels.push({ y: y + h + 9, text: formatPrice(symbol, zoneLow), color: borderColor, small: true });
       });
     }
 
@@ -816,6 +836,10 @@ export default function OrderBlockChartPanel() {
         const fvgFill   = isBullish ? FVG_BULL_COLOR : FVG_BEAR_COLOR;
         const fvgBorder = isBullish ? FVG_BULL_BORDER : FVG_BEAR_BORDER;
 
+        // Fade the zone as it gets filled: 0% filled → full opacity, 80% filled → faint
+        const fillPct = Math.min(100, Math.max(0, Number(fvg.fill_percentage) || 0));
+        ctx.globalAlpha = Math.max(0.15, 1 - fillPct / 100);
+
         ctx.fillStyle = fvgFill;
         ctx.fillRect(fvgX, y, chartW - fvgX, h);
 
@@ -846,7 +870,8 @@ export default function OrderBlockChartPanel() {
         // FVG label
         ctx.font = "bold 8px Inter, sans-serif";
         ctx.fillStyle = fvgBorder;
-        ctx.fillText("FVG", fvgX + 4, y + 9);
+        ctx.fillText(fillPct > 0 ? `FVG ${fillPct.toFixed(0)}%` : "FVG", fvgX + 4, y + 9);
+        ctx.globalAlpha = 1;
       }
     }
 
@@ -908,13 +933,21 @@ export default function OrderBlockChartPanel() {
       }
     }
 
-  }, [candles, obData, chartSize, overlayVersion, liveSignal]);
+    // ── 6. Draw all right-anchored price pills with collision avoidance
+    flushRightLabels();
+
+  }, [candles, obData, chartSize, overlayVersion, liveSignal, symbol]);
 
   useEffect(() => {
     drawOverlay();
   }, [drawOverlay, overlayVersion]);
 
   const isLoading = candlesLoading || obLoading;
+  const chartError = (candlesError ?? obError) as Error | null;
+  const retryChart = useCallback(() => {
+    if (candlesError) void refetchCandles();
+    if (obError) void refetchOb();
+  }, [candlesError, obError, refetchCandles, refetchOb]);
   const signal = obData?.combined_signal;
   const trend = obData?.trend || "ranging";
 
@@ -1037,6 +1070,24 @@ export default function OrderBlockChartPanel() {
             </div>
           )}
 
+          {!isLoading && chartError && (
+            <div className={styles.loading} style={{ flexDirection: "column", gap: 10 }}>
+              <X size={18} style={{ color: "#ef4444" }} />
+              <span style={{ color: "#ef4444" }}>
+                {chartError.message || "Failed to load chart data"}
+              </span>
+              <button
+                type="button"
+                onClick={retryChart}
+                className={styles.symbolBtn}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <RefreshCw size={12} />
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* Canvas overlay for zones */}
           <canvas
             ref={canvasRef}
@@ -1088,10 +1139,10 @@ export default function OrderBlockChartPanel() {
           const isBull = p.direction === "bullish";
           return (
             <div className={styles.statItem} style={{ color: isBull ? "#22c55e" : "#ef4444", gap: 6, display: "flex", flexWrap: "wrap" }}>
-              <span style={{ color: "#ef4444", fontWeight: 700 }}>⊗ SL {p.stop_loss.toFixed(1)}</span>
-              <span style={{ color: "#22c55e" }}>① {p.tp1.toFixed(1)}</span>
-              <span style={{ color: "#16a34a" }}>② {p.tp2.toFixed(1)}</span>
-              <span style={{ color: "#15803d" }}>③ {p.tp3.toFixed(1)}</span>
+              <span style={{ color: "#ef4444", fontWeight: 700 }}>⊗ SL {formatPrice(symbol, p.stop_loss)}</span>
+              <span style={{ color: "#22c55e" }}>① {formatPrice(symbol, p.tp1)}</span>
+              <span style={{ color: "#16a34a" }}>② {formatPrice(symbol, p.tp2)}</span>
+              <span style={{ color: "#15803d" }}>③ {formatPrice(symbol, p.tp3)}</span>
               <span style={{ color: "#facc15", marginLeft: 4 }}>Range {p.swing_range.toFixed(0)}pts · {p.confidence}</span>
             </div>
           );

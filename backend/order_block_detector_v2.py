@@ -535,6 +535,7 @@ class OrderBlockDetector:
         swings: List[SwingPoint],
         min_displacement_atr: float = 1.2,
         min_score: float = 0.0,
+        volume_bonus: bool = True,
     ) -> List[OrderBlock]:
         if len(candles) < 20:
             return []
@@ -576,8 +577,8 @@ class OrderBlockDetector:
                 
                 if displacement_up > atr * min_displacement_atr:  # Strong upward displacement
                     score = min(100, int(30 + (displacement_up / atr) * 12))
-                    # Volume bonus
-                    if vol_ratio > 1.2:
+                    # Volume bonus (disabled per-symbol when tick volume is synthetic, e.g. GDAXI)
+                    if volume_bonus and vol_ratio > 1.2:
                         score = min(100, score + 10)
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
@@ -611,7 +612,7 @@ class OrderBlockDetector:
                 
                 if displacement_down > atr * min_displacement_atr:  # Strong downward displacement
                     score = min(100, int(30 + (displacement_down / atr) * 12))
-                    if vol_ratio > 1.2:
+                    if volume_bonus and vol_ratio > 1.2:
                         score = min(100, score + 10)
                     strength = "strong" if score > 70 else "moderate" if score > 50 else "weak"
                     
@@ -689,6 +690,7 @@ class MarketStructureAnalyzer:
         symbol: str = "",
         min_displacement_atr: float = 1.2,
         min_ob_score: float = 0.0,
+        volume_bonus: bool = True,
     ) -> MarketStructure:
         # Step 1: Detect swing points (period=3 reduces noise on intraday)
         swings = SwingDetector.detect(candles, period=swing_period)
@@ -701,6 +703,7 @@ class MarketStructureAnalyzer:
             candles, swings,
             min_displacement_atr=min_displacement_atr,
             min_score=min_ob_score,
+            volume_bonus=volume_bonus,
         )
 
         # Step 3: Determine trend

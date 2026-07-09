@@ -183,3 +183,47 @@ async def test_detect_returns_support_resistance_payload_for_panel_rendering():
     assert support_resistance["nearest_support"] is not None
     assert support_resistance["nearest_resistance"] is not None
     assert support_resistance["all_levels"]
+
+@pytest.mark.asyncio
+async def test_mtf_alignment_vetoes_signal_opposed_by_both_htf_structures():
+    module = _load_order_block_service_module("obs_mtf_veto")
+    service = module.OrderBlockService(ttl_seconds=0)
+    with patch.object(service, "_htf_trend", AsyncMock(side_effect=lambda s, tf: "bearish")):
+        sig, info = await service._apply_mtf_alignment(
+            "XAUUSD", "15m", {"action": "BUY", "confidence": 0.8, "reasons": [], "reasoning": []}
+        )
+
+    assert sig["action"] == "NEUTRAL"
+    assert "MTF veto" in sig["reasons"][-1]
+    assert info["applied"] is True
+
+
+@pytest.mark.asyncio
+async def test_mtf_alignment_reduces_confidence_when_one_htf_opposes():
+    module = _load_order_block_service_module("obs_mtf_caution")
+    service = module.OrderBlockService(ttl_seconds=0)
+    async def one(symbol, tf):
+        return "bearish" if tf == "1h" else "bullish"
+
+    with patch.object(service, "_htf_trend", AsyncMock(side_effect=one)):
+        sig, _ = await service._apply_mtf_alignment(
+            "XAUUSD", "5m", {"action": "BUY", "confidence": 0.8, "reasons": [], "reasoning": []}
+        )
+
+    assert sig["action"] == "BUY"
+    assert sig["confidence"] == pytest.approx(0.6)
+    assert "MTF caution" in sig["reasons"][-1]
+
+
+@pytest.mark.asyncio
+async def test_mtf_alignment_fails_open_without_htf_data_and_skips_htf_requests():
+    module = _load_order_block_service_module("obs_mtf_failopen")
+    service = module.OrderBlockService(ttl_seconds=0)
+    with patch.object(service, "_htf_trend", AsyncMock(return_value=None)):
+        sig, _ = await service._apply_mtf_alignment(
+            "XAUUSD", "15m", {"action": "SELL", "confidence": 0.7, "reasons": [], "reasoning": []}
+        )
+    assert sig["action"] == "SELL" and sig["confidence"] == 0.7
+
+    _, info = await service._apply_mtf_alignment("XAUUSD", "1h", {"action": "SELL", "confidence": 0.8})
+    assert info["applied"] is False

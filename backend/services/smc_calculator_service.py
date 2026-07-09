@@ -1,14 +1,30 @@
 """
 SMC (Smart Money Concepts) Calculator Service
 ==============================================
-Rule-based technical calculation for Order Blocks, FVG, Liquidity Pools.
+Legacy-shaped SMC facade over the canonical v2 engine.
+
+2026-07-08 consolidation: OB / FVG / trend / bias now derive from
+``order_block_detector_v2.MarketStructureAnalyzer`` (the single canonical SMC
+engine). This module only adapts the v2 output to the legacy response shape
+consumed by routers/deepseek_analysis.py and services/meta_analysis_engine.py.
+Liquidity pools, breaker blocks and the daily-gap analysis are independent of
+the old buggy OB/FVG detectors and are kept as-is.
 NO DeepSeek/AI - Pure geometric calculation for instant results.
 """
 
+import logging
 import numpy as np
 from typing import List, Dict, Literal, Optional
 from dataclasses import dataclass
 from datetime import datetime, timezone
+
+from order_block_detector_v2 import (
+    Candle as V2Candle,
+    MarketStructure as V2MarketStructure,
+    MarketStructureAnalyzer,
+)
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -90,163 +106,107 @@ def find_swing_points(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, p
     return swing_highs, swing_lows
 
 
-def detect_order_blocks(
-    opens: np.ndarray,
-    highs: np.ndarray,
-    lows: np.ndarray,
-    closes: np.ndarray,
-    volumes: np.ndarray,
-    swing_highs: List[Dict],
-    swing_lows: List[Dict],
-    timeframe: str = "H1",
-) -> List[OrderBlock]:
+def _to_v2_candles(candles: list) -> List[V2Candle]:
+    """Convert legacy candle dicts to v2 ``Candle`` dataclasses.
+
+    Handles ``timestamp`` in seconds or milliseconds, ``time`` aliases and
+    missing timestamps (falls back to the candle index to preserve order).
     """
-    Detect Order Blocks based on price action:
-    - Bullish OB: Bearish candle followed by strong bullish move
-    - Bearish OB: Bullish candle followed by strong bearish move
-    """
-    order_blocks = []
-    
-    if len(closes) < 10:
-        return order_blocks
-    
-    # Look for OBs in last 50 candles
-    lookback = min(50, len(closes) - 1)
-    
-    for i in range(len(closes) - lookback, len(closes) - 2):
-        if i < 1:
-            continue
-            
-        current_candle_bullish = closes[i] > opens[i]
-        prev_candle_bearish = closes[i-1] < opens[i-1]
-        next_candle_bullish = closes[i+1] > opens[i+1]
-        
-        # Bullish Order Block: Bearish candle before strong bullish move
-        if prev_candle_bearish and current_candle_bullish and next_candle_bullish:
-            body_size = abs(closes[i] - opens[i])
-            avg_body = np.mean(np.abs(closes[max(0,i-10):i] - opens[max(0,i-10):i]))
-            
-            if body_size > avg_body * 0.5:  # Significant body
-                strength = min(10, max(1, int((body_size / avg_body) * 5)))
-                
-                # Check if tested
-                status = "fresh"
-                for j in range(i+1, len(closes)):
-                    if lows[j] < lows[i]:
-                        status = "tested"
-                        break
-                
-                order_blocks.append(OrderBlock(
-                    type="bullish",
-                    price_high=float(highs[i]),
-                    price_low=float(lows[i]),
-                    strength=strength,
-                    status=status,
-                    timeframe=timeframe,
-                    created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-                ))
-        
-        # Bearish Order Block: Bullish candle before strong bearish move
-        prev_candle_bullish = closes[i-1] > opens[i-1]
-        current_candle_bearish = closes[i] < opens[i]
-        next_candle_bearish = closes[i+1] < opens[i+1]
-        
-        if prev_candle_bullish and current_candle_bearish and next_candle_bearish:
-            body_size = abs(opens[i] - closes[i])
-            avg_body = np.mean(np.abs(closes[max(0,i-10):i] - opens[max(0,i-10):i]))
-            
-            if body_size > avg_body * 0.5:
-                strength = min(10, max(1, int((body_size / avg_body) * 5)))
-                
-                status = "fresh"
-                for j in range(i+1, len(closes)):
-                    if highs[j] > highs[i]:
-                        status = "tested"
-                        break
-                
-                order_blocks.append(OrderBlock(
-                    type="bearish",
-                    price_high=float(highs[i]),
-                    price_low=float(lows[i]),
-                    strength=strength,
-                    status=status,
-                    timeframe=timeframe,
-                    created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-                ))
-    
-    # Sort by strength and recency
-    order_blocks.sort(key=lambda x: (x.strength, x.status == "fresh"), reverse=True)
-    return order_blocks[:5]  # Return top 5
+    v2_candles: List[V2Candle] = []
+    for i, c in enumerate(candles):
+        ts = c.get("timestamp", c.get("time", c.get("t")))
+        if isinstance(ts, str):
+            try:
+                ts = datetime.fromisoformat(ts.replace("Z", "+00:00")).timestamp()
+            except ValueError:
+                ts = None
+        if isinstance(ts, (int, float)):
+            ts = float(ts)
+            if ts > 1e12:  # milliseconds → seconds
+                ts = ts / 1000.0
+        else:
+            ts = float(i)
+        v2_candles.append(V2Candle(
+            timestamp=ts,
+            open=float(c["open"]),
+            high=float(c["high"]),
+            low=float(c["low"]),
+            close=float(c["close"]),
+            volume=float(c.get("volume", 0) or 0),
+        ))
+    return v2_candles
 
 
-def detect_fair_value_gaps(
-    highs: np.ndarray,
-    lows: np.ndarray,
-    closes: np.ndarray
-) -> List[FairValueGap]:
-    """
-    Detect Fair Value Gaps (3-candle pattern):
-    - Bullish FVG: Low[i] > High[i-2] (gap up)
-    - Bearish FVG: High[i] < Low[i-2] (gap down)
-    """
-    fvgs = []
-    
-    if len(closes) < 5:
-        return fvgs
-    
-    for i in range(2, len(closes)):
-        # Bullish FVG
-        if lows[i] > highs[i-2]:
-            gap_size = lows[i] - highs[i-2]
-            
-            # Calculate fill percentage
-            current_price = closes[-1]
-            if current_price <= highs[i-2]:
-                fill_pct = 100.0
-                status = "filled"
-            elif current_price >= lows[i]:
-                fill_pct = 0.0
-                status = "open"
-            else:
-                # 2026-07-08 fix: bullish gap fills top-down from lows[i]; the old
-                # (highs[i-2] - current_price) produced NEGATIVE percentages
-                fill_pct = ((lows[i] - current_price) / gap_size) * 100
-                status = "partial"
-            
-            fvgs.append(FairValueGap(
-                direction="bullish",
-                high=float(lows[i]),
-                low=float(highs[i-2]),
-                fill_pct=round(fill_pct, 1),
-                status=status
-            ))
-        
-        # Bearish FVG
-        elif highs[i] < lows[i-2]:
-            gap_size = lows[i-2] - highs[i]
-            
-            current_price = closes[-1]
-            if current_price >= lows[i-2]:
-                fill_pct = 100.0
-                status = "filled"
-            elif current_price <= highs[i]:
-                fill_pct = 0.0
-                status = "open"
-            else:
-                fill_pct = ((current_price - highs[i]) / gap_size) * 100
-                status = "partial"
-            
-            fvgs.append(FairValueGap(
-                direction="bearish",
-                high=float(lows[i-2]),
-                low=float(highs[i]),
-                fill_pct=round(fill_pct, 1),
-                status=status
-            ))
-    
-    # Return only open/partial FVGs, sorted by recency
-    active_fvgs = [f for f in fvgs if f.status in ["open", "partial"]]
-    return active_fvgs[-3:]  # Last 3 active FVGs
+def _map_v2_order_blocks(structure: V2MarketStructure, timeframe: str) -> List[OrderBlock]:
+    """Map v2 OrderBlocks (score 0-100, tested/mitigated) to legacy shape."""
+    mapped: List[OrderBlock] = []
+    for ob in structure.ob_list[:5]:
+        strength = max(1, min(10, round(ob.score / 10)))
+        status = "tested" if (ob.tested or ob.mitigated) else "fresh"
+        mapped.append(OrderBlock(
+            type=ob.type,
+            price_high=float(ob.zone_high),
+            price_low=float(ob.zone_low),
+            strength=int(strength),
+            status=status,
+            timeframe=timeframe,
+            created_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        ))
+    return mapped
+
+
+def _map_v2_fvgs(structure: V2MarketStructure) -> List[FairValueGap]:
+    """Map v2 FVGs (fill_percentage/filled) to legacy shape, active only."""
+    mapped: List[FairValueGap] = []
+    for fvg in structure.fvg_list:
+        if fvg.filled:
+            status = "filled"
+        elif fvg.fill_percentage <= 0:
+            status = "open"
+        else:
+            status = "partial"
+        mapped.append(FairValueGap(
+            direction=fvg.direction,
+            high=float(fvg.high),
+            low=float(fvg.low),
+            fill_pct=round(float(fvg.fill_percentage), 1),
+            status=status,
+        ))
+    # Legacy contract: only open/partial FVGs, last 3 by recency
+    active = [f for f in mapped if f.status in ("open", "partial")]
+    return active[-3:]
+
+
+def _map_v2_market_structure(structure: V2MarketStructure, current_price: float) -> Dict:
+    """Build the legacy market_structure dict from the v2 analysis."""
+    swing_highs = [s for s in structure.swing_list if s.type == "high"]
+    swing_lows = [s for s in structure.swing_list if s.type == "low"]
+
+    bos = None
+    if structure.bos_list:
+        last = structure.bos_list[-1]
+        bos = {
+            "direction": "up" if last.type == "bullish" else "down",
+            "price": round(float(last.price), 2),
+            "confirmed": bool(last.confirmation),
+        }
+
+    choch = None
+    if structure.choch_list:
+        last = structure.choch_list[-1]
+        choch = {
+            "direction": "up" if last.type == "bullish" else "down",
+            "price": round(float(last.price), 2),
+            "confirmed": True,
+        }
+
+    return {
+        "current_trend": structure.trend,
+        "last_bos": bos,
+        "last_choch": choch,
+        "swing_high": round(float(swing_highs[-1].price), 2) if swing_highs else round(current_price * 1.01, 2),
+        "swing_low": round(float(swing_lows[-1].price), 2) if swing_lows else round(current_price * 0.99, 2),
+    }
 
 
 def detect_liquidity_pools(
@@ -434,100 +394,107 @@ def determine_market_structure(
     }
 
 
+_PROJECTION_CONFIDENCE = {"high": 75, "medium": 60, "low": 45}
+
+
 def calculate_bias(
+    structure: V2MarketStructure,
     order_blocks: List[OrderBlock],
-    fvgs: List[FairValueGap],
-    liquidity_pools: List[LiquidityPool],
-    market_structure: Dict,
-    current_price: float
+    current_price: float,
 ) -> Dict:
     """
-    Calculate overall bias based on SMC elements.
+    Calculate overall bias from the v2 engine's trend + TP/SL projection.
+
+    Direction comes from v2 trend / projection agreement; confidence is scaled
+    from the projection confidence (high=75, medium=60, low=45). Output field
+    names/types match the legacy bias contract exactly.
     """
-    score = 0
-    factors = []
-    
-    # Trend contribution
-    if market_structure["current_trend"] == "bullish":
-        score += 20
+    trend = structure.trend
+    projection = structure.projection
+    factors: List[str] = []
+
+    if trend == "bullish":
         factors.append("Bullish structure")
-    elif market_structure["current_trend"] == "bearish":
-        score -= 20
+    elif trend == "bearish":
         factors.append("Bearish structure")
-    
-    # Order Blocks
-    fresh_bullish_obs = [ob for ob in order_blocks if ob.type == "bullish" and ob.status == "fresh"]
-    fresh_bearish_obs = [ob for ob in order_blocks if ob.type == "bearish" and ob.status == "fresh"]
-    
-    if fresh_bullish_obs and current_price > fresh_bullish_obs[0].price_low:
-        score += 25
-        factors.append(f"Bullish OB at {fresh_bullish_obs[0].price_low}")
-    
-    if fresh_bearish_obs and current_price < fresh_bearish_obs[0].price_high:
-        score -= 25
-        factors.append(f"Bearish OB at {fresh_bearish_obs[0].price_high}")
-    
-    # FVGs
-    open_bullish_fvgs = [f for f in fvgs if f.direction == "bullish" and f.status == "open"]
-    open_bearish_fvgs = [f for f in fvgs if f.direction == "bearish" and f.status == "open"]
-    
-    if open_bullish_fvgs:
-        score += 15
-        factors.append("Open bullish FVG")
-    
-    if open_bearish_fvgs:
-        score -= 15
-        factors.append("Open bearish FVG")
-    
-    # Liquidity
-    unswept_buy = [p for p in liquidity_pools if p.type == "buy_side" and not p.swept]
-    unswept_sell = [p for p in liquidity_pools if p.type == "sell_side" and not p.swept]
-    
-    if unswept_buy:
-        score += 10
-        factors.append("Buy-side liquidity below")
-    
-    if unswept_sell:
-        score -= 10
-        factors.append("Sell-side liquidity above")
-    
-    # Determine direction
-    if score > 30:
-        direction = "bullish"
-        confidence = min(90, 50 + score)
-        key_level = min([ob.price_low for ob in fresh_bullish_obs], default=current_price * 0.99)
-        invalidation = min([p.price for p in unswept_buy], default=current_price * 0.97)
-    elif score < -30:
-        direction = "bearish"
-        confidence = min(90, 50 - score)
-        key_level = max([ob.price_high for ob in fresh_bearish_obs], default=current_price * 1.01)
-        invalidation = max([p.price for p in unswept_sell], default=current_price * 1.03)
+
+    if trend in ("bullish", "bearish"):
+        direction = trend
+        if projection and projection.direction == trend:
+            confidence = _PROJECTION_CONFIDENCE.get(projection.confidence, 45)
+            factors.append(f"Projection agrees ({projection.confidence} confidence)")
+        elif projection:
+            confidence = 45
+            factors.append(f"Projection diverges ({projection.direction})")
+        else:
+            confidence = 50
+    elif projection:
+        # Ranging structure but a projection exists — weak directional lean
+        direction = "neutral"
+        confidence = 40
+        factors.append(f"Ranging structure, {projection.direction} projection")
     else:
         direction = "neutral"
         confidence = 40
+
+    # Signed score consistent with legacy semantics (positive=bullish)
+    if direction == "bullish":
+        score = confidence - 40
+    elif direction == "bearish":
+        score = -(confidence - 40)
+    else:
+        score = 0
+
+    # Key level: nearest fresh OB in the bias direction, else projection entry zone
+    fresh_bullish = [ob for ob in order_blocks if ob.type == "bullish" and ob.status == "fresh"]
+    fresh_bearish = [ob for ob in order_blocks if ob.type == "bearish" and ob.status == "fresh"]
+
+    if direction == "bullish":
+        if fresh_bullish:
+            key_level = min(ob.price_low for ob in fresh_bullish)
+            factors.append(f"Bullish OB at {round(key_level, 2)}")
+        elif projection and projection.direction == "bullish":
+            key_level = projection.entry_zone_low
+        else:
+            key_level = current_price * 0.99
+        invalidation = projection.stop_loss if (projection and projection.direction == "bullish") else current_price * 0.97
+    elif direction == "bearish":
+        if fresh_bearish:
+            key_level = max(ob.price_high for ob in fresh_bearish)
+            factors.append(f"Bearish OB at {round(key_level, 2)}")
+        elif projection and projection.direction == "bearish":
+            key_level = projection.entry_zone_high
+        else:
+            key_level = current_price * 1.01
+        invalidation = projection.stop_loss if (projection and projection.direction == "bearish") else current_price * 1.03
+    else:
         key_level = current_price
         invalidation = current_price * 0.95 if score > 0 else current_price * 1.05
-    
+
     return {
         "direction": direction,
-        "confidence": confidence,
-        "key_level_to_watch": round(key_level, 2),
-        "invalidation": round(invalidation, 2),
+        "confidence": int(confidence),
+        "key_level_to_watch": round(float(key_level), 2),
+        "invalidation": round(float(invalidation), 2),
         "narrative": " | ".join(factors) if factors else "No clear SMC setup",
-        "score": score
+        "score": int(score),
     }
 
 
 async def calculate_smc(symbol: str, candles: list, timeframe: str = "H1") -> dict:
     """
     Main entry point - Calculate SMC analysis from candle data.
-    
+
+    OB/FVG/trend/bias derive from the canonical v2 engine
+    (order_block_detector_v2.MarketStructureAnalyzer); liquidity pools and
+    breaker blocks keep their independent legacy detectors.
+
     Args:
         symbol: Trading symbol
         candles: List of candle dicts with open, high, low, close, volume
-    
+
     Returns:
-        SMCAnalysis as dict (JSON serializable)
+        SMCAnalysis as dict (JSON serializable, legacy shape)
     """
     if not candles or len(candles) < 20:
         return {
@@ -539,28 +506,34 @@ async def calculate_smc(symbol: str, candles: list, timeframe: str = "H1") -> di
             "breaker_blocks": [],
             "bias": {"direction": "neutral", "confidence": 0}
         }
-    
-    # Convert to numpy arrays
-    opens = np.array([c["open"] for c in candles])
+
+    # Convert to numpy arrays (liquidity/breaker detectors still need them)
     highs = np.array([c["high"] for c in candles])
     lows = np.array([c["low"] for c in candles])
     closes = np.array([c["close"] for c in candles])
-    volumes = np.array([c.get("volume", 0) for c in candles])
-    
+
     current_price = float(closes[-1])
-    
-    # Find swing points
+
+    # Canonical v2 engine: swings, CHoCH/BOS, OB, FVG, trend, projection
+    v2_candles = _to_v2_candles(candles)
+    structure = MarketStructureAnalyzer.analyze(
+        v2_candles,
+        swing_period=3,
+        symbol=symbol,
+        min_displacement_atr=1.2,
+        min_ob_score=0.0,
+        volume_bonus=True,
+    )
+
+    order_blocks = _map_v2_order_blocks(structure, timeframe)
+    fvgs = _map_v2_fvgs(structure)
+    market_structure = _map_v2_market_structure(structure, current_price)
+    bias = calculate_bias(structure, order_blocks, current_price)
+
+    # Independent legacy detectors (not part of the buggy OB/FVG code)
     swing_highs, swing_lows = find_swing_points(highs, lows, closes)
-    
-    # Detect SMC elements
-    order_blocks = detect_order_blocks(opens, highs, lows, closes, volumes, swing_highs, swing_lows, timeframe=timeframe)
-    fvgs = detect_fair_value_gaps(highs, lows, closes)
     liquidity_pools = detect_liquidity_pools(highs, lows, swing_highs, swing_lows, current_price)
     breaker_blocks = detect_breaker_blocks(highs, lows, closes, swing_highs, swing_lows)
-    
-    # Determine structure and bias
-    market_structure = determine_market_structure(swing_highs, swing_lows, current_price)
-    bias = calculate_bias(order_blocks, fvgs, liquidity_pools, market_structure, current_price)
     
     # Convert to dict format
     return {
