@@ -27,6 +27,7 @@ from decide import (decide_situation, decide_free, append_journal, append_free_j
 import evidence as ev  # noqa: E402
 import free_context as fx  # noqa: E402
 import forensics  # noqa: E402
+from data_contract import validate_bars, validate_multi  # noqa: E402  (sıfır-güven)
 import outcomes  # noqa: E402
 
 CADENCE_SEC = 1200       # 20dk (maliyet: 15→20dk ~%25 az çağrı; mean-rev bu hızda yeterli)
@@ -95,8 +96,13 @@ def fetch_bars_mt5(n: int = BARS_N) -> dict[str, list[dict]]:
         rates = mt5.copy_rates_from_pos(mt5_sym, mt5.TIMEFRAME_M5, 0, n)
         if rates is None or len(rates) == 0:
             continue
-        out[fx_sym] = [{"high": float(r["high"]), "low": float(r["low"]), "close": float(r["close"]),
-                        "volume": float(r["tick_volume"]), "time": int(r["time"])} for r in rates]
+        bars = [{"high": float(r["high"]), "low": float(r["low"]), "close": float(r["close"]),
+                 "volume": float(r["tick_volume"]), "time": int(r["time"])} for r in rates]
+        ok, why = validate_bars(bars, "5m")            # SIFIR-GÜVEN: sözleşmesiz bar kullanılmaz
+        if ok:
+            out[fx_sym] = bars
+        else:
+            print(f"  🛡 DataContract: {fx_sym} 5m REDDEDİLDİ — {why}")
     return out
 
 
@@ -113,7 +119,7 @@ def fetch_multi_tf(fx_sym: str, n: int = 150) -> dict:
         if rates is not None and len(rates):
             out[tf] = [{"high": float(r["high"]), "low": float(r["low"]), "close": float(r["close"]),
                         "volume": float(r["tick_volume"]), "time": int(r["time"])} for r in rates]
-    return out
+    return validate_multi(out)                        # SIFIR-GÜVEN: geçersiz TF'ler düşer
 
 
 def fetch_dxy() -> float | None:
@@ -136,8 +142,13 @@ def fetch_bars_after_mt5(symbol: str, since_ts: float) -> list[dict]:
     rates = mt5.copy_rates_from_pos(mt5_sym, mt5.TIMEFRAME_M5, 0, 800)
     if rates is None:
         return []
-    return [{"high": float(r["high"]), "low": float(r["low"]),
+    bars = [{"high": float(r["high"]), "low": float(r["low"]),
              "close": float(r["close"]), "time": int(r["time"])} for r in rates]
+    ok, why = validate_bars(bars, "5m", min_bars=10)   # grading de sözleşmeli (yanlış grade > grade yok)
+    if not ok:
+        print(f"  🛡 DataContract(grade): {symbol} REDDEDİLDİ — {why}")
+        return []
+    return bars
 
 
 def open_positions_summary() -> dict:
