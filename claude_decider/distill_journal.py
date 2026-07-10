@@ -35,7 +35,8 @@ AUTO_END = "<!-- AUTO-LESSONS END -->"
 def _load_graded():
     if not JOURNAL_JSONL.exists():
         return [], []
-    rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    from decide import load_journal
+    rows = load_journal(clean=True)   # donuk-kopya karantinası (öğrenme zehirlenmesin)
     graded = [r for r in rows if r.get("outcome") in ("WIN", "LOSS")]
     graded.sort(key=lambda r: r["ts"])
     last, out = {}, []          # dedup 60dk/sembol/yön (autocorrelation engeli)

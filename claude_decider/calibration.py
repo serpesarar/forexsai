@@ -32,7 +32,8 @@ _TABLES = ev.load_tables()
 def _load():
     if not JOURNAL_JSONL.exists():
         return []
-    return [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    from decide import load_journal
+    return load_journal(clean=True)   # donuk-kopya karantinası (analiz katmanı)
 
 
 def _predicted_wr(symbol, direction, lf) -> float | None:

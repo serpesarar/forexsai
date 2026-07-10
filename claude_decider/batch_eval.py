@@ -107,7 +107,8 @@ def build_batch(limit: int = MAX_PER_CALL, model: str = MODEL):
     model-parametrik: aynı kayıtlar farklı modellerce ayrı ayrı değerlendirilebilir (adil A/B)."""
     if not JOURNAL_JSONL.exists():
         return [], {}
-    rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    from decide import load_journal
+    rows = load_journal(clean=True)   # donuk-kopyalar modele SORULMAZ (para+istatistik)
     usable = [e for e in rows
               if e.get("cf_outcome") in ("WIN", "LOSS") and e.get("dirs_live")
               and not (e.get("batch_eval") or {}).get(model)]          # bu model daha önce görmedi
@@ -218,7 +219,8 @@ def report():
     model başına birikmiş WR/EV. Günlük koşuların terminalde kaybolmasını önler."""
     if not JOURNAL_JSONL.exists():
         print("journal yok."); return
-    rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    from decide import load_journal
+    rows = load_journal(clean=True)   # skorbord donuk-kopyasız
     marked = [r for r in rows if r.get("batch_eval") and r.get("cf_outcome") in ("WIN", "LOSS")]
     print("=" * 62)
     print(f"BATCH SKORBORD (kümülatif) — işaretli kayıt: {len(marked)}")

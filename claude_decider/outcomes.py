@@ -203,7 +203,8 @@ def main():
     her cycle yapılır). MT5 gerekmez — sadece okur."""
     if not JOURNAL_JSONL.exists():
         print("journal yok (decider henüz çalışmadı)."); return
-    rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    from decide import load_journal
+    rows = load_journal(clean=True)
     print("Decider performans özeti:")
     print("  " + summary(rows))
 

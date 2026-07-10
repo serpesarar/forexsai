@@ -126,6 +126,34 @@ SYSTEM = (
 )
 
 
+def load_journal(clean: bool = True) -> list[dict]:
+    """Analiz/öğrenme araçları için MERKEZİ journal yükleyici. clean=True → DONUK-FEED
+    KOPYALARINI düşürür: bir sembolün ardışık kayıtlarında (cf.dir, cf.entry_price) birebir
+    aynıysa yalnız İLKİ kalır. 2026-07-04/05 hafta sonu 263 frozen kayıt (124× aynı entry!)
+    tüm istatistikleri zehirlemişti; bu filtre GEÇMİŞİ de GELECEĞİ de jenerik temizler
+    (tarih hardcode'u yok — parmak izi: donuk feed = değişmeyen karar). NOT: outcomes.resolve
+    HAM okur (grading her kaydı işlemeli); bu filtre YALNIZ analiz/öğrenme katmanı içindir."""
+    if not JOURNAL_JSONL.exists():
+        return []
+    rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    if not clean:
+        return rows
+    out, last, dropped = [], {}, 0
+    for e in rows:
+        cf = e.get("counterfactual") or {}
+        fp = (cf.get("dir"), cf.get("entry_price"))
+        sym = e.get("symbol")
+        if fp != (None, None) and last.get(sym) == fp:
+            dropped += 1
+            continue
+        last[sym] = fp
+        out.append(e)
+    if dropped:
+        print(f"  🧹 journal temizliği: {dropped} donuk-kopya kayıt analiz dışı bırakıldı "
+              f"(ham {len(rows)} → temiz {len(out)}; grading etkilenmez)")
+    return out
+
+
 def _read(name: str) -> str:
     p = MEM / name
     return p.read_text(encoding="utf-8") if p.exists() else ""
