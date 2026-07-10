@@ -182,15 +182,26 @@ def fetch_vix() -> tuple[float | None, str]:
 
 # ── Bağlam + durum ───────────────────────────────────────────────────────────
 def recent_journal_summary(n: int = 8) -> str:
-    if not JOURNAL_JSONL.exists():
+    """Opus'un her kararda gördüğü yakın-geçmiş. C — FIRSAT MUHASEBESİ dahil: model
+    yalnız gerçekleşen kaybı görürse çekingenliği öğrenir (kanıt: 360 kaçırılan kazanana
+    karşı 79 yakalanan). Vazgeçilen-R'yi göstermek çekingenliği 'bedava' olmaktan çıkarır."""
+    from decide import load_journal
+    from datetime import timedelta
+    rows = load_journal(clean=True)
+    if not rows:
         return "henüz geçmiş yok"
-    lines = JOURNAL_JSONL.read_text(encoding="utf-8").strip().splitlines()[-n:]
-    if not lines:
-        return "henüz geçmiş yok"
-    rows = [json.loads(x) for x in lines]
-    res = [r.get("outcome") for r in rows if r.get("outcome")]
-    wins = sum(1 for o in res if str(o).upper().startswith("WIN"))
-    return f"son {len(rows)} karar; sonuçlanan {len(res)}, kazanan {wins}"
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    day = [r for r in rows if r.get("ts", "") >= cutoff]
+    if not day:
+        day = rows[-n:]
+    opens = [r for r in day if str((r.get("decision") or {}).get("action", "")).upper() == "OPEN"]
+    realized = sum(r.get("pnl_r") or 0 for r in day if r.get("outcome") in ("WIN", "LOSS"))
+    foregone = sum(r.get("cf_pnl_r") or 0 for r in day
+                   if str((r.get("decision") or {}).get("action", "")).upper() == "WAIT"
+                   and r.get("cf_outcome") in ("WIN", "LOSS"))
+    return (f"son 24s: {len(day)} karar, {len(opens)} OPEN; gerçekleşen {realized:+.2f}R; "
+            f"VAZGEÇİLEN {foregone:+.2f}R (beklediklerinin cf toplamı — aşırı temkin de maliyettir, "
+            f"pozitifse kazananları kaçırıyorsun demektir)")
 
 
 NEAR_EVENT = False   # TODO(news): kullanıcının haber panelini bağla → yüksek-etkili olay penceresi
@@ -244,6 +255,28 @@ def build_situation(symbol: str, bars: list[dict], vix, positions: dict, now: da
 
 # ── Çekirdek pass ────────────────────────────────────────────────────────────
 _last_bar_seen: dict = {}    # sym → [son_bar_time, kaç_döngüdür_aynı]
+_last_consult: dict = {}     # sym → son Opus danışmasının durum-imzası
+
+
+def _state_changed(sym: str, sig: tuple) -> bool:
+    """A — OLAY-TETİKLİ filtre: saat-tetikli sistem 'yeni bilgi yok'u ifade edemiyordu
+    (124 kopya karar bunun kanıtı). Aynı bar + aynı durum imzasıyla (yön, gate, rev-bandı)
+    Opus'a İKİNCİ kez sorulmaz — karar yalnız durum DEĞİŞTİĞİNDE üretilir. Yan etkiler:
+    frozen-sınıfı hatalar imkânsızlaşır, LLM maliyeti düşer, journal kayıtları gerçekten
+    bağımsız bilgi taşır (otokorelasyon şişmesi biter)."""
+    if _last_consult.get(sym) == sig:
+        print(f"  ⏭ {sym}: durum değişmedi (aynı bar+imza) → Opus'a tekrar sorulmadı")
+        return False
+    _last_consult[sym] = sig
+    return True
+
+
+def _sit_signature(sit: dict) -> tuple:
+    p = sit.get("primary_dir")
+    lv = ((sit.get("directions") or {}).get(p) or {}).get("live") or {}
+    rev = lv.get("rev_chan")
+    return (sit.get("bar_time"), p, bool(lv.get("gate_fired")),
+            round(rev * 2) / 2 if isinstance(rev, (int, float)) else None)
 
 
 def _feed_is_frozen(sym: str, bars: list | None) -> bool:
@@ -273,6 +306,7 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
     sits = [s for s in (build_situation(sym, bars_by_symbol.get(sym), vix, positions, now, vix_source)
                         for sym in ALLOW
                         if sym != FREE_SYMBOL and not _feed_is_frozen(sym, bars_by_symbol.get(sym))) if s]
+    sits = [s for s in sits if _state_changed(s["symbol"], _sit_signature(s))]   # olay-tetikli
     out = []
     tag = "SHADOW" if shadow else "CANLI"
     if sits:
@@ -299,6 +333,12 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
         if _feed_is_frozen(FREE_SYMBOL, mtf.get("5m")):
             mtf = {}                      # donuk feed → free karar da üretme
         ctx = fx.build_free_context(mtf, vix=vix, dxy=dxy)
+        if ctx:
+            cz = ((ctx.get("multi_tf") or {}).get("5m") or {}).get("channel_z")
+            free_sig = (ctx.get("bar_time_5m"),
+                        round(cz * 2) / 2 if isinstance(cz, (int, float)) else None)
+            if not _state_changed(FREE_SYMBOL, free_sig):     # olay-tetikli (free)
+                ctx = None
         if ctx:
             try:
                 ctx["forensics"] = forensics.build_forensics(mtf, vix=vix, dxy=dxy)

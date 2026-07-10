@@ -194,8 +194,16 @@ def summary(rows: list) -> str:
         return f"henüz grade edilmiş işlem yok | açık={len(opens)} bekle={len(waits)} expire={len(exp)}"
     w = sum(1 for r in graded if r["outcome"] == "WIN")
     ev = sum(r.get("pnl_r", 0) for r in graded) / len(graded)
+    # C — FIRSAT MUHASEBESİ (Goodhart düzeltmesi): yalnız gerçekleşen kaybı ölçen sistem
+    # çekingenliği öğrenir (360 kaçırılan vs 79 yakalanan raporlarda görünmüyordu).
+    # vazgeçilen-R = WAIT kararlarının cf toplamı ("bekledim" seçiminin fırsat maliyeti).
+    realized = sum(r.get("pnl_r") or 0 for r in graded)
+    foregone = sum(r.get("cf_pnl_r") or 0 for r in waits
+                   if r.get("cf_outcome") in ("WIN", "LOSS"))
     return (f"OPEN kararlar: {len(graded)} grade | WR {100*w/len(graded):.0f}% ({w}/{len(graded)}) | "
-            f"EV {ev:+.3f}R/işlem | açık={len(opens)} bekle={len(waits)} expire={len(exp)}")
+            f"EV {ev:+.3f}R/işlem | açık={len(opens)} bekle={len(waits)} expire={len(exp)}\n"
+            f"  💰 FIRSAT MUHASEBESİ: gerçekleşen {realized:+.1f}R | VAZGEÇİLEN {foregone:+.1f}R "
+            f"(WAIT'lerin cf toplamı — çekingenlik bedava değil)")
 
 
 def main():

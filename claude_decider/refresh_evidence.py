@@ -35,7 +35,8 @@ MIN_DIVERGE = 6       # rapor: araştırma↔canlı bu kadar pp ayrışan hücre
 def _load_journal():
     if not JOURNAL_JSONL.exists():
         return []
-    return [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
+    from decide import load_journal
+    return load_journal(clean=True)   # donuk-kopya karantinası (frozen kayıtlar base-rate'i zehirlemesin)
 
 
 def collect_live(rows) -> dict:
@@ -113,7 +114,36 @@ def refresh(apply: bool = False):
                         changes.append((key, sub, b, rwr, lwr, len(ws), bl))
                     t.setdefault(sub, {})[b] = {**rcell, "wr": bl, "live_n": len(ws)}
 
-    if not changes:
+    # 2 — CERRAHİ YÜKSEK-İDDİA KAPAĞI (temiz kalibrasyon 2026-07-10): şişiklik DAR bölgede —
+    # yalnız ≥%80 iddialı hücreler canlıda ~%60-61 verdi (−25/−32pp); 50-80 bandı kalibre.
+    # Yeterli canlı teyidi (live_n≥20 ve hâlâ ≥80) olmayan her ≥80 iddia 72'ye kapaklanır.
+    # oos_wr DAHİL — tüketiciler (evidence_pack/calibration) oos_wr'ı tercih eder, bypass olmasın.
+    CAP_AT, CAP_MIN_LIVE, CAP_FROM = 72, 20, 80
+    capped = 0
+
+    def _cap_cell(c):
+        nonlocal capped
+        if not isinstance(c, dict):
+            return
+        strong_live = (c.get("live_n") or 0) >= CAP_MIN_LIVE and (c.get("wr") or 0) >= CAP_FROM
+        for fld in ("wr", "oos_wr"):
+            v = c.get(fld)
+            if isinstance(v, (int, float)) and v >= CAP_FROM and not strong_live:
+                c[fld] = CAP_AT
+                c["capped"] = True
+                capped += 1
+
+    for _k, _t in new_tables.items():
+        for _sub, _val in _t.items():
+            if _sub in ("gate", "base"):
+                _cap_cell(_val)
+            elif isinstance(_val, dict):
+                for _b, _c in _val.items():
+                    _cap_cell(_c)
+    if capped:
+        print(f"🔒 Cerrahi kapak: canlı-teyitsiz ≥{CAP_FROM}% iddialı {capped} alan {CAP_AT}%'e indirildi.")
+
+    if not changes and not capped:
         upd = sum(1 for k, c in live.items() if len(c["gate"]) >= MIN_LIVE)
         print(f"Güncellenecek belirgin hücre YOK (live_n≥{MIN_LIVE} & ≥{MIN_DIVERGE}pp sapan).")
         print(f"  ({graded} grade'li örnek henüz hücre başına az; veri biriktikçe dolacak.)")
