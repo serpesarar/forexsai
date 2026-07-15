@@ -12,14 +12,18 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Load .env file - try multiple locations
+# Load BOTH env files. Previously this `break`ed after backend/.env, so keys
+# that only existed in the root .env (KIMI_API_KEY, BIAS_AUTO_RUN_ENABLED,
+# CORTEX_SIGNAL_ENABLED, ...) were silently never loaded — the auto-runner sat
+# disabled for days. load_dotenv doesn't override already-set vars, so
+# backend/.env still wins for overlapping keys; root .env fills the rest.
 env_paths = [
-    Path(__file__).parent / ".env",  # backend/.env
-    Path(__file__).parent.parent / ".env",  # project root/.env
+    Path(__file__).parent / ".env",  # backend/.env (takes precedence)
+    Path(__file__).parent.parent / ".env",  # project root/.env (fills gaps)
 ]
 for env_path in env_paths:
     if env_path.exists():
         load_dotenv(env_path)
-        break
 
 from config import settings
 
@@ -239,17 +243,25 @@ async def lifespan(app: FastAPI):
         from services.bias_auto_runner import tick as bias_tick
         async def bias_auto_loop():
             await asyncio.sleep(20)
-            from services.cortex_confluence_signal import tick as cortex_sig_tick
             while True:
                 try:
                     await bias_tick()
                 except Exception as e:
                     logger.error(f"Bias auto-runner hatası: {e}")
+                await asyncio.sleep(60)
+
+        # Ayrı task: 6 dakikalık bir debate, cortex sinyal penceresini yutmasın.
+        async def cortex_signal_loop():
+            await asyncio.sleep(30)
+            from services.cortex_confluence_signal import tick as cortex_sig_tick
+            while True:
                 try:
                     await cortex_sig_tick()   # opt-in shadow confluence signals
                 except Exception as e:
                     logger.error(f"CORTEX signal hatası: {e}")
                 await asyncio.sleep(60)
+
+        asyncio.create_task(cortex_signal_loop())
 
         asyncio.create_task(bias_auto_loop())
         print("✅ Bias auto-runner loop başlatıldı (opt-in flag ile)")
@@ -556,6 +568,7 @@ router_module_names = [
     "signal_lifecycle_router",
     "strategy_optimizer",
     "news_correlation",
+    "market_events",
     "rss_router",
     "prices",
     "economic_calendar_router",
@@ -575,6 +588,8 @@ router_module_names = [
     "miroshark_router",
     "bias_test_router",
     "reflex_router",
+    "evolution_router",
+    "patterns_router",
 ]
 
 for module_name in router_module_names:

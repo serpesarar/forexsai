@@ -223,6 +223,87 @@ async def _qqq_premarket() -> dict:
     return out
 
 
+async def _smc_snapshot(symbol: str) -> Optional[dict]:
+    """Real SMC structure: order blocks / FVG / CHoCH / BOS / computed S-R.
+
+    Calls the SAME engine the live SMC panel uses (order_block_service),
+    so the debate agents reason over the system's own structure detection
+    instead of guessing from raw candles. log_signals=False — a debate run
+    must never write to prediction_logs (that's the live SMC signal path)."""
+    try:
+        from services.order_block_service import service as smc_service
+        from order_block_detector import OrderBlockConfig
+        r = await smc_service.detect(symbol=symbol, timeframe="1h", limit=150,
+                                     config=OrderBlockConfig(), use_cache=True,
+                                     log_signals=False)
+        sr = r.get("support_resistance") or {}
+        combined = r.get("combined_signal") or {}
+        return {
+            "bullish_obs": r.get("bullish_obs"), "bearish_obs": r.get("bearish_obs"),
+            "choch_count": len(r.get("choch_list") or []),
+            "bos_count": len(r.get("bos_list") or []),
+            "fvg_count": len(r.get("fvg_list") or []),
+            "trend": r.get("trend"),
+            "nearest_support": sr.get("nearest_support"),
+            "nearest_resistance": sr.get("nearest_resistance"),
+            "signal": combined.get("action"), "signal_confidence": combined.get("confidence"),
+            "reasoning": (combined.get("reasoning") or [])[:2],
+        }
+    except Exception as e:
+        logger.debug("[debate] SMC snapshot unavailable for %s: %s", symbol, e)
+        return None
+
+
+async def _pattern_snapshot(symbol: str) -> Optional[dict]:
+    """Detected harmonic/classic chart patterns (fail-open, real detector)."""
+    try:
+        from services.harmonic_pattern_service import detect_chart_patterns
+        r = await detect_chart_patterns(symbol, timeframe="4h")
+        if not r.get("has_patterns"):
+            return {"has_patterns": False}
+        return {
+            "has_patterns": True, "strongest_signal": r.get("strongest_signal"),
+            "bullish_count": r.get("bullish_count"), "bearish_count": r.get("bearish_count"),
+            "top": (r.get("patterns_summary") or [])[:3],
+        }
+    except Exception as e:
+        logger.debug("[debate] pattern snapshot unavailable for %s: %s", symbol, e)
+        return None
+
+
+async def _channel_snapshot(symbol: str) -> Optional[dict]:
+    """Real trend-channel regression + pivot-clustered S/R (not LLM-guessed).
+
+    Same engine as the trend/regime panels (weighted linear regression channel
+    + fractal-pivot S/R clustering) — grounds the debate's structural read and
+    gives the CIO real numbers instead of having it invent support/resistance."""
+    try:
+        from services.trend_analyzer import run_trend_analysis
+        r = await run_trend_analysis(symbol, timeframe="1h")
+        return {
+            "trend": r.trend, "trend_strength": r.trend_strength,
+            "channel_upper": round(r.channel.upper, 2), "channel_lower": round(r.channel.lower, 2),
+            "channel_slope_norm": round(r.channel.slope_normalized, 3),
+            "nearest_support": round(r.nearest_support.price, 2),
+            "support_touches": r.nearest_support.touches,
+            "nearest_resistance": round(r.nearest_resistance.price, 2),
+            "resistance_touches": r.nearest_resistance.touches,
+        }
+    except Exception as e:
+        logger.debug("[debate] channel snapshot unavailable for %s: %s", symbol, e)
+        return None
+
+
+async def _projection_snapshot_safe(symbol: str, price: Optional[float]) -> Optional[dict]:
+    """Fibonacci/ADR/vol/mean-rev/ORB/market-profile hedef seviyeleri (fail-open)."""
+    try:
+        from services.price_projection_service import projection_snapshot
+        return await projection_snapshot(symbol, current_price=price)
+    except Exception as e:
+        logger.debug("[debate] projection snapshot unavailable for %s: %s", symbol, e)
+        return None
+
+
 def _macro_gauges() -> dict:
     """DXY / VIX / US10Y snapshot from the existing macro service (fail-open)."""
     try:
@@ -277,11 +358,21 @@ async def _gather_context(symbol: str, now_utc: datetime) -> dict:
     except Exception as e:
         logger.warning("[debate] context fetch degraded: %s", e)
 
-    # Side feeds (best-effort, nullable). QQQ proxy is NDX-specific.
+    # Side feeds (best-effort, nullable, run concurrently). QQQ proxy is NDX-only.
+    side_names = ["smc", "patterns", "channel",
+                  "projections"]   # fib/ADR/vol/mean-rev/ORB/market-profile
+    side_calls = [_smc_snapshot(symbol), _pattern_snapshot(symbol), _channel_snapshot(symbol),
+                  _projection_snapshot_safe(symbol, market.get("price"))]
     if symbol == _NDX:
-        market["qqq"] = await _qqq_premarket()
-        if market["qqq"] and market["qqq"].get("premarket_change_pct") is not None:
-            ctx["us_premarket_change"] = market["qqq"]["premarket_change_pct"]
+        side_names.append("qqq")
+        side_calls.append(_qqq_premarket())
+    side_results = await asyncio.gather(*side_calls, return_exceptions=True)
+    for name, res in zip(side_names, side_results):
+        market[name] = None if isinstance(res, Exception) else res
+    if symbol != _NDX:
+        market["qqq"] = None
+    if market.get("qqq") and market["qqq"].get("premarket_change_pct") is not None:
+        ctx["us_premarket_change"] = market["qqq"]["premarket_change_pct"]
     market["macro"] = _macro_gauges()
     return market
 
@@ -318,6 +409,44 @@ def _context_block(market: dict, symbol: str) -> str:
             v = mac.get(k) or {}
             return f"{v.get('price')} ({v.get('chg_1h')}%/1h)"
         lines.append(f"Macro: DXY {_g('dxy')} | VIX {_g('vix')} | US10Y {_g('us10y')}")
+
+    # ── Real computed structure (NOT LLM-guessed) — grounds S/R + patterns ────
+    ch = market.get("channel") or {}
+    if ch:
+        lines.append(
+            f"REAL trend channel (1h regression): {ch.get('channel_lower')} – "
+            f"{ch.get('channel_upper')} | slope(norm): {ch.get('channel_slope_norm')} | "
+            f"trend: {ch.get('trend')} (strength {ch.get('trend_strength')})")
+        lines.append(
+            f"REAL pivot S/R (fractal-clustered): support {ch.get('nearest_support')} "
+            f"({ch.get('support_touches')} touches) | resistance {ch.get('nearest_resistance')} "
+            f"({ch.get('resistance_touches')} touches)")
+    smc = market.get("smc") or {}
+    if smc:
+        lines.append(
+            f"REAL SMC structure (order blocks/FVG/CHoCH/BOS, 1h): "
+            f"bullish_OB={smc.get('bullish_obs')} bearish_OB={smc.get('bearish_obs')} "
+            f"CHoCH={smc.get('choch_count')} BOS={smc.get('bos_count')} FVG={smc.get('fvg_count')} "
+            f"| structure trend: {smc.get('trend')} | SMC signal: {smc.get('signal')} "
+            f"(conf {smc.get('signal_confidence')})")
+        if smc.get("nearest_support") or smc.get("nearest_resistance"):
+            lines.append(f"REAL SMC S/R: support {smc.get('nearest_support')} | "
+                         f"resistance {smc.get('nearest_resistance')}")
+    pat = market.get("patterns") or {}
+    if pat.get("has_patterns"):
+        lines.append(
+            f"REAL chart patterns (4h, harmonic+classic detector): "
+            f"{pat.get('strongest_signal')} ({pat.get('bullish_count')} bullish / "
+            f"{pat.get('bearish_count')} bearish) — {', '.join(pat.get('top') or [])}")
+    proj = market.get("projections")
+    if proj:
+        try:
+            from services.price_projection_service import projection_prompt_block
+            pb = projection_prompt_block(proj)
+            if pb:
+                lines.append(pb)
+        except Exception:
+            pass
     return "\n".join(lines)
 
 
@@ -340,6 +469,44 @@ def _build_agents(symbol: str) -> dict[str, tuple[str, str]]:
             f"You are the Macro agent for {name}. Read the live gauges provided. "
             f"{p['macro_extra']} Weigh them together, don't cite one in "
             f"isolation. <150 words."),
+        "smc_structure": (
+            "normal",
+            f"You are the Smart Money Concepts (SMC/ICT) agent for {name}. Read "
+            f"the REAL SMC structure line in the context (order blocks, FVG, "
+            f"CHoCH/BOS counts, structure trend, SMC signal) — this is computed "
+            f"by the system's own order-block detector, NOT a guess. "
+            f"{p.get('smc_extra', 'Weigh bullish vs bearish order-block imbalance and whether CHoCH/BOS confirm the prevailing trend or signal a reversal.')} "
+            f"State whether SMC structure agrees or disagrees with plain price "
+            f"action. <150 words."),
+        "trend_channel": (
+            "normal",
+            f"You are the Trend Channel / Support-Resistance agent for {name}. "
+            f"Read the REAL trend channel (regression upper/lower/slope) and REAL "
+            f"pivot S/R (fractal-clustered, with touch counts) in the context — "
+            f"these are computed, not guessed. {p.get('channel_extra', 'A level with more touches is stronger; price near the channel edge with the trend against it favors a reversion.')} "
+            f"State where price sits in the channel and how many touches the "
+            f"nearest support/resistance has. <150 words."),
+        "chart_patterns": (
+            "normal",
+            f"You are the Chart Pattern agent for {name}. Read the REAL chart "
+            f"pattern detector output (harmonic + classic patterns, 4h) in the "
+            f"context. {p.get('pattern_extra', 'If no patterns were detected, say so plainly — do not invent a pattern.')} "
+            f"Never invent a pattern that isn't in the data. <150 words."),
+        "price_targets": (
+            "normal",
+            f"You are the Price Targets agent for {name} — the 'how far can it "
+            f"go' specialist. Read the REAL computed lines in the context: "
+            f"Fibonacci retracement/extension of the last impulse, the "
+            f"measured-move target, ADR ({name}'s average daily range and how "
+            f"much of it is already used today), volatility state "
+            f"(squeeze/expanding), mean-reversion stretch vs daily EMA20, and "
+            f"Market Profile POC/VAH/VAL. Rules of craft: ADR near-exhausted → "
+            f"continuation is harder, fade extensions; a squeeze → expect a big "
+            f"move but direction UNKNOWN; stretch >2 ATR → reversion risk BUT "
+            f"dangerous to fade in a strong trend; price above VAH that keeps "
+            f"getting rejected = market not accepting higher prices. Give the "
+            f"most probable UP target and DOWN target with the level source "
+            f"(fib/ADR/POC). <170 words."),
         "bull_case": (
             "important",
             f"You are the Bull-case debater for {name} today. Argue the strongest "
@@ -381,8 +548,14 @@ def _build_cio_system(symbol: str) -> str:
         "}\n\n"
         "CRITICAL: main_support and main_resistance MUST be real levels derived "
         "from the CURRENT PRICE given in the market context (within a few "
-        "percent of it). NEVER invent price levels from memory/training data — "
-        "if the context lacks enough structure to place levels, set them to null."
+        "percent of it). NEVER invent price levels from memory/training data. "
+        "The context gives you REAL computed support/resistance (pivot-cluster, "
+        "SMC, Fibonacci retracements, ADR-projected extremes, Market Profile "
+        "VAH/VAL) — PREFER those numbers (or something close to them) over "
+        "guessing your own; if they disagree, pick the one nearer price or "
+        "state why. If no real structure is available, set them to null. "
+        "When ADR is near-exhausted, temper continuation confidence; in a "
+        "volatility squeeze, prefer choppy/neutral unless structure breaks."
     )
 
 
@@ -425,8 +598,13 @@ async def run_debate(symbol: str = _NDX, now_utc: Optional[datetime] = None) -> 
         except Exception as e:
             logger.warning("[debate] CORTEX situation/analog skipped: %s", e)
 
-    # 1) Context agents in parallel.
-    ctx_names = ["technical_structure", "volatility", "macro"]
+    # 1) Context agents in parallel. smc_structure/trend_channel/chart_patterns
+    #    read REAL computed structure (order blocks, regression channel, fractal
+    #    S/R, harmonic/classic patterns) — grounds the debate instead of letting
+    #    agents guess structure from raw price alone.
+    ctx_names = ["technical_structure", "volatility", "macro",
+                 "smc_structure", "trend_channel", "chart_patterns",
+                 "price_targets"]
     ctx_results = await asyncio.gather(*[
         _run_agent(n, agents[n][0], agents[n][1],
                    f"MARKET CONTEXT:\n{ctx_block}\n\nGive your assessment.")
@@ -484,12 +662,31 @@ async def run_debate(symbol: str = _NDX, now_utc: Optional[datetime] = None) -> 
     except Exception as e:
         logger.debug("[debate] track record skipped: %s", e)
 
+    # EVRİM PANELİ DERSLERİ: hata analizlerinden damıtılıp "Öğret" ile
+    # hedeflenen dersler (fail-open; ders yoksa blok boş kalır).
+    lessons_block = ""
+    try:
+        from services.evolution_service import get_active_lessons
+        _lessons = get_active_lessons("bias_debate", symbol=symbol, limit=6)
+        if _lessons:
+            # title + summary tek satıra düzleştirilir: satır sonu içeren bir ders
+            # kendi maddesinden kaçıp CIO prompt'una sahte talimat enjekte edemesin.
+            lines = "\n".join(
+                f"- {' '.join((l.get('title') or '').split())}: "
+                f"{' '.join((l.get('summary') or '').split())}"
+                for l in _lessons)
+            lessons_block = ("PANEL LESSONS (distilled from this system's own "
+                            "error analyses — weigh as prior evidence):\n" + lines)
+    except Exception as e:
+        logger.debug("[debate] panel lessons skipped: %s", e)
+
     # 3) CIO synthesis → JSON verdict (important tier, JSON mode). Sees the FULL
     #    multi-round debate (both sides' rebuttals) + analog base rate + playbook.
     cio_user = (f"MARKET CONTEXT:\n{ctx_block}\n\n"
                 + (f"{analog_block}\n\n" if analog_block else "")
                 + (f"{rules_block}\n\n" if rules_block else "")
                 + (f"{track_block}\n\n" if track_block else "")
+                + (f"{lessons_block}\n\n" if lessons_block else "")
                 + f"AGENT NOTES:\n{notes_block}\n\n"
                 f"FULL {rounds}-ROUND DEBATE (later rounds are rebuttals — weigh which "
                 f"side's argument survived the rebuttals):\n{debate_block}\n\n"
@@ -505,10 +702,20 @@ async def run_debate(symbol: str = _NDX, now_utc: Optional[datetime] = None) -> 
     # Sanity-clamp hallucinated levels: the first live run produced S/R ~34%
     # away from the real price (model recalled training-era index levels).
     # A support/resistance more than 10% from the live price is unusable and
-    # would poison invalid_if monitoring — null it and flag.
+    # would poison invalid_if monitoring. Since we now compute REAL pivot/SMC
+    # S/R, snap to the closer of those two instead of just nulling — only
+    # fall back to null if no real structure is available either.
     price = market.get("price")
     verdict["symbol"] = symbol
     verdict["price_at_decision"] = price
+    ch = market.get("channel") or {}
+    smc = market.get("smc") or {}
+    real_levels = {
+        "main_support": [v for v in (ch.get("nearest_support"), smc.get("nearest_support"))
+                         if v is not None],
+        "main_resistance": [v for v in (ch.get("nearest_resistance"), smc.get("nearest_resistance"))
+                            if v is not None],
+    }
     if price:
         for key in ("main_support", "main_resistance"):
             try:
@@ -516,9 +723,11 @@ async def run_debate(symbol: str = _NDX, now_utc: Optional[datetime] = None) -> 
             except (TypeError, ValueError):
                 v = None
             if v is not None and abs(v - price) / price > 0.10:
-                logger.warning("[debate] %s=%s is >10%% from price %s — clamped to null",
-                               key, v, price)
-                verdict[key] = None
+                fallback = min(real_levels[key], key=lambda x: abs(x - price)) \
+                    if real_levels[key] else None
+                logger.warning("[debate] %s=%s is >10%% from price %s — snapped to %s",
+                               key, v, price, fallback)
+                verdict[key] = fallback
                 verdict["sr_clamped"] = True
 
     verdict["_debate"] = {

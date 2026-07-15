@@ -48,3 +48,8 @@ macro_ndx_test/**/*.json
 multi_asset_edge_research/**/*.json
 claude_decider.zip
 claude_decider/*.backup_*.json
+
+# Evrim Paneli runtime durumu (tohum veri commit'lenir, biriken durum edilmez)
+backend/data/evolution/runs/
+backend/data/evolution/lessons.json
+backend/data/evolution/session_log.json

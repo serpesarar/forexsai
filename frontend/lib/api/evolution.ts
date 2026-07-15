@@ -1,0 +1,285 @@
+/**
+ * Evrim Paneli API istemcisi — /api/evolution/*
+ * Tüm veri erişimi bu katmandan; component'te fetch YOK.
+ */
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiBase } from "./base";
+
+const API = getApiBase();
+
+// ── Tipler ───────────────────────────────────────────────────────────────
+
+export interface ModelAccuracy {
+  strategy: string;
+  total_predictions: number;
+  with_outcome: number;
+  ml_accuracy: number | null;
+  target_hit_rate: number | null;
+  stop_hit_rate: number | null;
+  expired: number;
+  partial_target_hit: number;
+}
+
+export interface BiasRate {
+  n: number;
+  correct: number;
+  accuracy_pct: number | null;
+}
+
+export interface BiasReport {
+  total_graded: number;
+  overall: BiasRate;
+  by_symbol: Record<string, BiasRate>;
+  by_run_label: Record<string, BiasRate>;
+  by_confidence_bucket: Record<string, BiasRate>;
+  go_live_hint: string;
+}
+
+export interface Overview {
+  generated_at: string;
+  days: number;
+  models: { models: ModelAccuracy[]; total: number } | null;
+  bias: BiasReport | null;
+  counts: {
+    registry: number;
+    analyses: number;
+    backlog_pending: number;
+    backlog_total: number;
+    lessons_active: number;
+  };
+  active_runs: RunMeta[];
+}
+
+export interface RegistryComponent {
+  id: string;
+  name: string;
+  file: string;
+  category: string;
+  purpose: string;
+  key_functions: string[];
+  status_hint: string;
+  agents?: { id: string; role: string }[];
+}
+
+export interface Analysis {
+  id: string;
+  name: string;
+  kind?: "script" | "endpoint";
+  command?: string;
+  method?: string;
+  path?: string;
+  category: string;
+  what_it_does: string;
+  output: string;
+  needs_backend: boolean;
+  est_runtime: string;
+  runnable_here?: boolean;
+  run_note?: string;
+  learn_targets?: string[];
+}
+
+export interface RunMeta {
+  run_id: string;
+  analysis_id: string;
+  analysis_name: string;
+  command: string;
+  status: "running" | "done" | "failed" | "timeout" | "interrupted";
+  started_at: string;
+  finished_at: string | null;
+  return_code: number | null;
+  output?: string;
+  output_truncated?: boolean;
+}
+
+export interface BacklogItem {
+  id: string;
+  title: string;
+  detail: string;
+  category: string;
+  priority: "high" | "medium" | "low";
+  status: "pending" | "in_progress" | "done" | "dropped";
+  source: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChangelogEntry {
+  kind: "commit" | "session" | "worktree";
+  id: string;
+  ts: string;
+  author: string;
+  summary: string;
+  files?: string[];
+  backlog_added?: string[];
+}
+
+export interface Lesson {
+  id: string;
+  created_at: string;
+  title: string;
+  summary: string;
+  symbol: string | null;
+  targets: string[];
+  source: Record<string, unknown>;
+  status: "active" | "archived";
+}
+
+// ── fetch yardımcıları ───────────────────────────────────────────────────
+
+async function getJson<T>(path: string): Promise<T> {
+  const res = await fetch(`${API}${path}`);
+  if (!res.ok) throw new Error(`${path} → HTTP ${res.status}`);
+  return res.json();
+}
+
+async function sendJson<T>(path: string, method: string, body?: unknown): Promise<T> {
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data?.detail) detail = String(data.detail);
+    } catch {
+      /* gövde JSON değilse durum kodu yeter */
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
+// ── Query hook'ları ──────────────────────────────────────────────────────
+
+export function useOverview(days = 30) {
+  return useQuery<Overview>({
+    queryKey: ["evolution", "overview", days],
+    queryFn: () => getJson(`/api/evolution/overview?days=${days}`),
+    refetchInterval: 60_000,
+  });
+}
+
+export function useRegistry() {
+  return useQuery<{ components: RegistryComponent[] }>({
+    queryKey: ["evolution", "registry"],
+    queryFn: () => getJson("/api/evolution/registry"),
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useAnalyses() {
+  return useQuery<{ analyses: Analysis[] }>({
+    queryKey: ["evolution", "analyses"],
+    queryFn: () => getJson("/api/evolution/analyses"),
+    staleTime: 10 * 60_000,
+  });
+}
+
+export function useChangelog(limit = 60) {
+  return useQuery<{ entries: ChangelogEntry[] }>({
+    queryKey: ["evolution", "changelog", limit],
+    queryFn: () => getJson(`/api/evolution/changelog?limit=${limit}`),
+    refetchInterval: 120_000,
+  });
+}
+
+export function useBacklog() {
+  return useQuery<{ items: BacklogItem[] }>({
+    queryKey: ["evolution", "backlog"],
+    queryFn: () => getJson("/api/evolution/backlog"),
+  });
+}
+
+export function useRuns(limit = 40) {
+  return useQuery<{ runs: RunMeta[] }>({
+    queryKey: ["evolution", "runs", limit],
+    queryFn: () => getJson(`/api/evolution/runs?limit=${limit}`),
+    refetchInterval: 15_000,
+  });
+}
+
+/** Aktif run çıktısını 3sn'de bir izle (running değilse durur). */
+export function useRunDetail(runId: string | null) {
+  return useQuery<RunMeta>({
+    queryKey: ["evolution", "run", runId],
+    queryFn: () => getJson(`/api/evolution/runs/${runId}`),
+    enabled: !!runId,
+    refetchInterval: (query) =>
+      query.state.data?.status === "running" ? 3_000 : false,
+  });
+}
+
+export function useLessons() {
+  return useQuery<{ lessons: Lesson[] }>({
+    queryKey: ["evolution", "lessons"],
+    queryFn: () => getJson("/api/evolution/lessons"),
+  });
+}
+
+// ── Mutation hook'ları ───────────────────────────────────────────────────
+
+export function useStartRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ analysisId, extraArgs }: { analysisId: string; extraArgs?: string }) =>
+      sendJson<RunMeta>(`/api/evolution/analyses/${analysisId}/run`, "POST", {
+        extra_args: extraArgs ?? "",
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["evolution", "runs"] });
+      qc.invalidateQueries({ queryKey: ["evolution", "overview"] });
+    },
+  });
+}
+
+export function useLearnFromRun() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      runId,
+      targets,
+      symbol,
+      instruction,
+    }: {
+      runId: string;
+      targets: string[];
+      symbol?: string | null;
+      instruction?: string;
+    }) =>
+      sendJson<Lesson>(`/api/evolution/runs/${runId}/learn`, "POST", {
+        targets,
+        symbol: symbol ?? null,
+        instruction: instruction ?? "",
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["evolution", "lessons"] }),
+  });
+}
+
+export function useUpdateBacklog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...fields }: { id: string } & Partial<BacklogItem>) =>
+      sendJson<BacklogItem>(`/api/evolution/backlog/${id}`, "PATCH", fields),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["evolution", "backlog"] }),
+  });
+}
+
+export function useAddBacklog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { title: string; detail?: string; category?: string; priority?: string }) =>
+      sendJson<BacklogItem>("/api/evolution/backlog", "POST", body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["evolution", "backlog"] }),
+  });
+}
+
+export function useArchiveLesson() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "active" | "archived" }) =>
+      sendJson<Lesson>(`/api/evolution/lessons/${id}`, "PATCH", { status }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["evolution", "lessons"] }),
+  });
+}
