@@ -663,7 +663,7 @@ async def get_accuracy_by_model(
         predictions = await _fetch_prediction_logs_window(
             client,
             cutoff=start,
-            select_fields="id, strategy, model_type, ml_direction, claude_direction, factors, status, targets_hit, created_at, resolution_reason",
+            select_fields="id, strategy, model_type, ml_direction, claude_direction, factors, status, targets_hit, created_at, resolution_reason, ml_entry_price, exit_price, stop_loss_pips, symbol",
             symbol=symbol,
         )
         # Exclude active predictions
@@ -713,14 +713,27 @@ async def get_accuracy_by_model(
                     targets_hit = {}
             
             any_target_hit = any(targets_hit.values()) if targets_hit else False
-            
+
             if status == "completed":
                 # Signal completed successfully (target hit)
                 stats["ml_correct"] += 1
                 stats["target_hit"] += 1
             elif status == "stopped":
-                # Signal stopped out
-                stats["stop_hit"] += 1
+                # 2026-07-15: TP görmemiş direction_flip kapanışı gerçek SL
+                # kaybı değildir (canlı: XAU flip ort. −0.92$ vs SL 15$) — WR'a
+                # sokmak yerine nötr flip_closed kovasına ayır. Realized kayıp
+                # SL mesafesinin ≥%50'siyse yine gerçek kayıp sayılır
+                # (classify_signal ile aynı kural).
+                is_soft_flip = False
+                if (pred.get("resolution_reason") or "").lower().strip() == "direction_flip" and not any_target_hit:
+                    realized = realized_pips(pred, default_symbol=symbol)
+                    sl_pips = analytics_coerce_float(pred.get("stop_loss_pips"), 0.0) or 0.0
+                    if realized is not None and sl_pips > 0:
+                        is_soft_flip = realized > -(sl_pips * 0.5)
+                if is_soft_flip:
+                    stats["flip_closed"] = stats.get("flip_closed", 0) + 1
+                else:
+                    stats["stop_hit"] += 1
             elif status == "expired":
                 stats["expired"] += 1
                 if any_target_hit:
@@ -747,6 +760,7 @@ async def get_accuracy_by_model(
                 "stop_hit_rate": round(stats["stop_hit"] / with_outcome, 3) if with_outcome > 0 else None,
                 "stop_hits": stats["stop_hit"],
                 "expired": stats["expired"],
+                "flip_closed": stats.get("flip_closed", 0),
                 "partial_target_hit": stats.get("partial_target_hit", 0),
             })
         
@@ -2474,11 +2488,11 @@ async def update_notification_settings(
         
         if user_id:
             data["user_id"] = user_id
-            result = supabase.table('user_notification_settings').upsert(data).execute()
+            result = supabase.table('user_notification_settings').upsert(data)
         else:
-            result = supabase.table('user_notification_settings').insert(data).execute()
-        
-        return {"success": True, "data": result.data}
+            result = supabase.table('user_notification_settings').insert(data)
+
+        return {"success": True, "data": result.get("data") if isinstance(result, dict) else None}
     except Exception as e:
         return {"success": False, "error": str(e)}
 

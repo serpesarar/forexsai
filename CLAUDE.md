@@ -7,6 +7,33 @@
 
 ---
 
+## 🥇 1. KURAL — Evrim Paneli Senkronu (HER OTURUMDA ZORUNLU)
+
+Bu projede anlamlı bir değişiklik yapan HER Claude Code oturumu, işi bitirmeden önce
+değişikliği Evrim Paneli'ne kaydeder. İki mekanizma:
+
+1. **Oturum notu** — çalışmanın sonunda tek komut:
+   ```bash
+   python3 backend/scripts/evolution_session_log.py "kısa Türkçe özet" \
+       --files degisen/dosya1.py,degisen/dosya2.tsx
+   ```
+   (Backend çalışıyorsa alternatif: `POST /api/evolution/session-note`.)
+2. **Backlog** — oturumda yarım kalan, test edilmemiş veya "sonra bakılacak" denen
+   HER iş backlog'a eklenir (unutulan deneyler bir daha kaybolmasın):
+   ```bash
+   python3 backend/scripts/evolution_session_log.py "özet" \
+       --backlog "başlık|detay|experiment|high"
+   ```
+   Kategoriler: `experiment | wiring | retrain | decision | idea`. Ayrıca yeni bir
+   motor/servis/analiz scripti eklendiyse `backend/data/evolution/system_registry.json`
+   veya `analyses.json` kataloğuna girdisi eklenir.
+
+Panel: `frontend /evolution` — sistem haritası, model başarıları, hata-analizi
+çalıştırıcı (Çalıştır → Öğret), bekleyen işler ve değişiklik akışı buradan izlenir.
+Git commit'leri changelog'a otomatik düşer; oturum notu commit'lenmeyen bağlamı taşır.
+
+---
+
 ## 🎯 Rol ve Kimlik
 
 Sen ForexSAI projesinin **Lead Architect & Senior Full-Stack Developer**'ısın. Bu projenin her katmanını — frontend, backend, ML pipeline, Supabase schema, WebSocket broadcast, signal lifecycle — derinlemesine biliyorsun. Kullanıcı kısa bir komut verse bile, sen o komutun arkasındaki **tüm bağımlılıkları, yan etkileri ve optimizasyon fırsatlarını** düşünerek hareket edersin.
@@ -246,7 +273,10 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 | `GET /api/bias-test/routing-status` | LLM sağlayıcı yönlendirmesi + auto-run durumu. |
 
 - Çift-tıkla başlatıcı: `Bias Lab.command` (proje kökü) — backend'i (yoksa) başlatır, paneli tarayıcıda açar.
-- **Debate motoru (native):** `services/bias_debate_engine.py` — 6 ajan; model yönlendirmesi `services/llm_router.py` (önemli/CIO/debate → **Kimi**, normal → **DeepSeek Reasoner**; OpenAI-uyumlu, key yoksa fail-open fallback). Core: `services/bias_test_service.py` (router+auto-runner paylaşır, DRY).
+- **ÇOK-SEMBOL (2026-07-08):** Debate motoru sembol-parametrik (`SYMBOL_PROFILES`: NDX/XAUUSD/GDAXI/USOIL — her biri kendi ajan uzmanlıkları + sızıntısız kanıtlanmış edge'ler enjekte). Günde-1 otomatik pencereler: NDX 08:00+09:45 ET, **XAU & DAX 08:00 UTC**, **USOIL 13:05 UTC** (`BIAS_SYMBOL_RUNS_UTC`); notlama 16:15 ET + **22:20 UTC** (`BIAS_SYMBOL_FILL_UTC`). Satırlar `run_label` önekiyle sembole bağlanır (`xau_daily`/`dax_daily`/`usoil_daily`; `raw_payload.symbol` kesin kaynak → `bts.symbol_for_row`). Notlama sembol-bazlı seans penceresi: NDX RTH open→close (legacy), diğerleri **karar-fiyatı→seans kapanışı** (DAX Berlin 17:30, XAU NY 17:00, OIL NY 14:30 settle; 1h'ten sentetik). CORTEX epizodik hafıza NDX-izole kalır. `GET /recent-runs` panel sembol kartlarını besler; `POST /run-debate?symbol=`. Çok-turlu adversaryal debate: `DEBATE_ROUNDS=3` (boğa/ayı karşılıklı çürütme, CIO tam transkripti görür).
+- **Debate motoru (native):** `services/bias_debate_engine.py` — 8 ajan; model yönlendirmesi `services/llm_router.py` (önemli/CIO/debate → **Kimi**, normal → **DeepSeek Reasoner**; OpenAI-uyumlu, key yoksa fail-open fallback). Core: `services/bias_test_service.py` (router+auto-runner paylaşır, DRY).
+- **Hedef-seviye motoru (2026-07-10):** `services/price_projection_service.py` — 8 klasik hedef tekniği GERÇEK veriden: Fibonacci retr/ext (son impuls swing'inden; 20000→19000'de %61.8=19618 birebir testli), measured-move hedefi, ADR-20 (+bugün tükenme %'si), volatilite squeeze/expansion (ATR+BB yüzdelik), mean-rev stretch (günlük EMA20'den ATR-birimlik), ORB (⚠ context-only, backtest edge'i yok), Market Profile POC/VAH/VAL (5g×5m hacim histogramı, %70 VA). Koşullu-olasılık AYRICA yazılmadı — sistemin sızıntısız confluence playbook'u zaten o. Veri: data_fetcher → candle_cache fallback (standalone da çalışır), 5dk TTL. **Tüketiciler:** (1) debate 9. ajan `price_targets` + CIO S/R tercihi, (2) `claude_decider/run_decider.build_situation` → `situation.projections` (saf compute_fib/compute_vol_state, kendi MT5 barlarından; prompt kuralı: fib=çapa, giriş sebebi DEĞİL), (3) panel HEDEF/FİBO nöronu. Model karar katmanına (signal_gates) BAĞLANMADI — fib seviyeleri için doğrulanmış edge yok, dürüstlük ilkesi.
+- **Gerçek yapı ajanları (2026-07-10):** 3 ek DeepSeek ajanı sistemin KENDİ analiz motorlarını okur (LLM tahmini değil): `smc_structure` → `order_block_service.service.detect()` (OB/FVG/CHoCH/BOS + SMC S/R; **`log_signals=False`** — debate asla `prediction_logs`'a SMC sinyali yazmaz), `trend_channel` → `trend_analyzer.run_trend_analysis()` (regresyon kanalı + fraktal-pivot S/R, dokunuş sayılarıyla), `chart_patterns` → `harmonic_pattern_service.detect_chart_patterns()` (harmonic+klasik formasyon, 4h). CIO'nun `main_support`/`main_resistance`'ı artık bu gerçek seviyelere dayanıyor; halüsinasyon clamp'i (>%10 fiyat sapması) artık null'a değil **en yakın gerçek seviyeye snap** ediyor. Panelin nöron ağında 3 yeni düğüm (`bias_lab.html`).
 - **Yan beslemeler (context):** `QQQ.US` premarket proxy (NDX cash premarket işlem görmez) + DXY/VIX/US10Y makro göstergeleri (`macro_data_service.get_macro_dict`). QQQ, `data_hub.REFERENCE_SYMBOLS`'e eklendi — **tradable DEĞİL** (sinyal/scheduler/model yok), sadece fiyat/mum ingest'i (`ingest_live_price`/`ingest_candles` guard'ları REFERENCE'ı kabul eder). MT5 bridge `QQQ.US` tick'ini zaten yolluyor.
 - **CORTEX Faz 1 (epizodik hafıza + analog retrieval):** `services/cortex_memory.py` — `build_situation` (seans+makro+QQQ+regime+takvim, hepsi nullable), `record_episode`/`fill_outcomes` (bias_test flow'a kancalı), `find_analogs` (ağırlıklı kNN, k=8; shrinkage prior 0.55 = ölçülen drift; `p_up_calibrated` gain 0.20 — ham p_up aşırı-özgüvenli olduğu için). Debate CIO'ya kalibre base-rate **0 LLM** ile enjekte edilir ("MILD tilt" diliyle). Flag `CORTEX_ENABLED`, `CORTEX_ANALOG_K`. Plan: `docs/CORTEX_PLAN.md`.
 - **CORTEX backfill + doğrulama (2026-07-03):** `services/cortex_backfill.py` — DOĞRU hedef (kullanıcı düzeltmesi): karar anı intraday (09:30/10:00/11:00 ET), tahmin **ileriye NQ futures net yönü** +6h ve +24h (gece Asya/Avrupa dahil). 3567 sızıntısız epizod (2019-24, 1189 gün × 3 saat), NQ karışık-TZ ay-bazlı hacim-çıpasıyla çözüldü. ⚠️ **SONUÇ: analog-kNN bu hedef için YÖN ÖNGÖRMÜYOR** — Q4−Q1 kalibrasyon farkı çoğu hücrede negatif/sıfır; tek pozitif (11:00×24h) holdout'ta −11pp (aşırı-uyum); momentum baseline ~%50. Verimli-fiyatlama ile tutarlı. **Karar:** analog enjeksiyonu debate'e VARSAYILAN KAPALI (`CORTEX_ANALOG_INJECT=0`); hafıza kaydı açık (Faz 2/3 için). Yön edge'i kNN'de yok — haber/mikroyapı/LLM'de aranmalı. Bulgular: `research/cortex_backfill/FINDINGS.md`.
@@ -456,7 +486,7 @@ PULSE_SHADOW_INVERSION_SYMBOLS=NDX.INDX,GDAXI.INDX
 # ─── 2026-07-01 Gösterge Denetimi bayrakları (services/signal_gates.py) ───
 SIGNAL_BREAKEVEN_AFTER_TP1=1      # TP1 vurmuş sinyal flip-close'da completed sayılır
 XAU_TREND_SELL_GATE=1             # XAU trend/ATH ortamında pulse+smc SELL → HOLD
-SESSION_GATES_ENABLED=1           # XAU 20,01-02 UTC / GDAXI 07 UTC yeni sinyal blok
+SESSION_GATES_ENABLED=1           # XAU 20,01-02 / GDAXI 07 / NDX 03-04,18,22 / USOIL 00-11 UTC blok
 CALENDAR_GATE_ENABLED=1           # High-impact takvim olayı ±30dk sinyal blok (fail-open)
 CALENDAR_GATE_MINUTES=30
 GDAXI_PULSE1_ENABLED=0            # GDAXI pulse1 ASKIDA (60g WR %25) — 1 ile açılır
@@ -464,6 +494,17 @@ PULSE_ATR_GEOMETRY=1              # Endekslerde TP≥ATR×1.5 / SL≥ATR×1.0 ta
 PULSE3_REGIME_WEIGHTS=1           # Trend/ATH'de pulse3: 4H %40 / 1H %35 / 5m %25
 XAU_REAL_H1_ENABLED=1             # Gerçek mt5:bar:1h varsa 30m türevini ezme
 CROSS_MODEL_EXPERIMENT_ENABLED=0  # ml_cross_xau_nasdaq KAPALI (SELL %6.9 WR kanıtı)
+
+# ─── 2026-07-10 MT5 otopsi kapıları (analiz_paketi_2026-07-09/RAPOR_MT5_ISLEM_OTOPSISI.md) ───
+ENTRY_SCORE_GATE_ENABLED=1        # 8 koşullu giriş skoru kapısı (NDX+USOIL, pulse+smc; fail-open)
+ENTRY_SCORE_MIN=7                 # min skor (0-8); kanıt: NDX ≥7 WR 60→65, USOIL ≥7 WR 49→72
+
+# ─── 2026-07-15 model denetimi kapıları/düzeltmeleri ───
+NDX_SMC_SELL_GATE=1               # NDX'te SMC counter-trend SELL blok (H4 close>EMA50; kanıt 14g: 1W/28L)
+SHADOW_INVERSION_MODELS=          # default artık 'emel' İÇERMEZ (emel_inverse zaten adanmış ters model; üçlü loglama fix)
+# Ayrıca: flip-close muhasebesi (direction_flip + realized < SL×0.5 → nötr 'flip_closed',
+# WR'a girmez); pulse1/2/3 confidence [0,100] clamp; pulse2 confidence = hibrit skor
+# (ham ml_confidence değil); pattern_rules.json win_rate birim normalizasyonu (kesir→yüzde).
 
 # ─── MiroShark makro bias köprüsü (2026-07-03, NASDAQ-only) ───
 WEBHOOK_SECRET=                   # MiroShark ↔ ForexSAI ortak HMAC-SHA256 secret'ı (iki tarafta aynı)

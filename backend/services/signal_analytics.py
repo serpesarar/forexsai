@@ -414,7 +414,18 @@ def classify_signal(
         actual_profit = resolved_success_pips()
         return "completed", True, actual_profit
     if status == "stopped" and resolution_reason == "direction_flip":
-        # Direction flip (hiç TP görmemiş) = model yön değiştirdi → kayıp
+        # 2026-07-15: Flip kapanışı ≠ SL kaybı. 14 günde XAU pulse "stopped"
+        # satırlarının %68'i (1006/1485) ort. −0.92$ realized ile kapanan
+        # direction_flip'ti ama tam stop_loss_pips (−15$) kayıp sayılıyordu —
+        # WR %15'e çakılıp panelleri yanıltıyordu. Gerçek SL vuruşları zaten
+        # resolution_reason="sl_hit" ile ayrı geliyor.
+        #   - Realized kayıp SL mesafesinin ≥%50'siyse → gerçek kayıp (realized ile).
+        #   - Daha küçükse → nötr "flip_closed" (WR'a girmez, expired gibi).
+        if realized is not None:
+            meaningful_loss = (stop_loss_pips or 0.0) * 0.5
+            if realized <= -meaningful_loss and meaningful_loss > 0:
+                return "stopped", False, realized
+            return "flip_closed", None, realized
         actual_loss = stop_loss_pips or loss_pips
         return "stopped", False, -actual_loss
     if status == "stopped":
@@ -519,8 +530,10 @@ def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] 
     stopped = 0
     expired = 0
     active = 0
+    flip_closed = 0
     total_profit = 0.0
     total_loss = 0.0
+    flip_net = 0.0
     scored_signals = 0
 
     for signal in scope_signals:
@@ -533,6 +546,11 @@ def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] 
         if scoped_status == "expired":
             expired += 1
             continue
+        if scoped_status == "flip_closed":
+            # Nötr flip kapanışı: WR'a girmez ama gerçek PnL'i net_pips'e işler.
+            flip_closed += 1
+            flip_net += scoped_pips or 0.0
+            continue
 
         scored_signals += 1
         if scoped_status == "completed":
@@ -543,7 +561,7 @@ def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] 
             total_loss += abs(scoped_pips or 0.0)
 
     resolved = completed + stopped
-    net_pips = total_profit - total_loss
+    net_pips = total_profit - total_loss + flip_net
     return {
         "total_signals": len(scope_signals),
         "scored_signals": scored_signals,
@@ -551,6 +569,7 @@ def summarize_scope(scope_signals: List[dict], *, default_symbol: Optional[str] 
         "stopped": stopped,
         "expired": expired,
         "active": active,
+        "flip_closed": flip_closed,
         "win_rate": round((completed / resolved * 100) if resolved > 0 else 0, 1),
         "net_pips": round(net_pips, 1),
         "avg_pips": round(net_pips / resolved, 1) if resolved > 0 else 0,

@@ -243,7 +243,8 @@ async def _fetch_signals_with_outcomes(
         if timeframe:
             q = q.eq("timeframe", timeframe)
         res = q.execute() if hasattr(q, "execute") else q
-        rows = res.get("data") if isinstance(res, dict) else getattr(res, "data", []) or []
+        # DB hatasında data=None gelebilir; `or []` her iki dalı da kapsamalı.
+        rows = (res.get("data") if isinstance(res, dict) else getattr(res, "data", None)) or []
         signals = [r for r in rows if r.get("status") in ("completed", "stopped")]
     except Exception as e:
         logger.exception("[tp_sl] fetch signals failed: %s", e)

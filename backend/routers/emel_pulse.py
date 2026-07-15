@@ -8,7 +8,7 @@ from fastapi import APIRouter, Query, HTTPException
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -219,7 +219,9 @@ class PulseV3Response(BaseModel):
     symbol: str
     timestamp: str
     signal_timestamp: Optional[str] = None
-    pulse_score: int
+    # float: payload round(total_score, 1) küsuratlı olabilir; int tanımı
+    # Pydantic ResponseValidationError ile endpoint'i 500'e düşürüyordu.
+    pulse_score: float
     max_score: int
     signal_type: str
     direction: str
@@ -477,6 +479,44 @@ def _scalp_tp_sl(symbol: str, current_price: float, direction: str, atr_val: flo
 # ═══════════════════════════════════════════════════════════════════════════════
 # EMEL PANEL - 9 KONTROL NOKTASI
 # ═══════════════════════════════════════════════════════════════════════════════
+
+# EMEL check-8 (Learning) gerçek veri kaynağı: sembolün son 30 günlük EMEL
+# WR'ı. Eskiden prediction.get("learning_insights") okunuyordu ama o alan
+# PredictionResult'ta hiç yoktu → kontrol her zaman "VERİ YOK" idi (ölü).
+# 10 dakikalık modül-içi cache ile sorgu maliyeti panel trafiğinden ayrışır.
+_emel_wr_cache: Dict[str, tuple] = {}  # symbol -> (expires_epoch, win_rate, samples)
+_EMEL_WR_TTL = 600.0
+
+
+async def _emel_recent_winrate(symbol: str) -> tuple:
+    """(win_rate_pct, sample_count) — son 30g EMEL completed/stopped sayımı."""
+    import time as _time
+    cached = _emel_wr_cache.get(symbol)
+    if cached and cached[0] > _time.time():
+        return cached[1], cached[2]
+    win_rate, samples = 50.0, 0
+    try:
+        from database.supabase_client import get_supabase_client, is_db_available
+        if is_db_available():
+            client = get_supabase_client()
+            cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+            res = (client.table("prediction_logs")
+                   .select("status")
+                   .eq("symbol", symbol).eq("model_type", "emel")
+                   .gte("created_at", cutoff)
+                   .in_("status", ["completed", "stopped"])
+                   .limit(2000).execute())
+            # SupabaseRestClient dict döner; resmi client obje — ikisini de kapsa.
+            rows = (res.get("data") if isinstance(res, dict) else getattr(res, "data", None)) or []
+            comp = sum(1 for r in rows if r.get("status") == "completed")
+            samples = len(rows)
+            if samples > 0:
+                win_rate = comp / samples * 100.0
+    except Exception as _wr_err:
+        logger.debug(f"[EMEL Learning] {symbol}: WR sorgusu atlandı ({_wr_err})")
+    _emel_wr_cache[symbol] = (_time.time() + _EMEL_WR_TTL, win_rate, samples)
+    return win_rate, samples
+
 
 @router.get("/emel/{symbol}", response_model=EMELResponse)
 async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
@@ -964,9 +1004,9 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         # ─────────────────────────────────────────────────────────────────────
         # 8️⃣ LEARNING / GEÇMİŞ PERFORMANS
         # ─────────────────────────────────────────────────────────────────────
-        learning_data = prediction.get("learning_insights", {})
-        win_rate = float(learning_data.get("win_rate", 50) or 50)
-        sample_count = int(learning_data.get("sample_count", 0) or 0)
+        # 2026-07-15 fix: "learning_insights" alanı PredictionResult'ta yoktu →
+        # kontrol her zaman "VERİ YOK" veriyordu (ölü). Artık gerçek 30g EMEL WR.
+        win_rate, sample_count = await _emel_recent_winrate(symbol)
 
         # İstatistiksel güven için min 10 örnek şart
         if sample_count < 10:
@@ -1006,28 +1046,34 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
         # ─────────────────────────────────────────────────────────────────────
         # 9️⃣ PORTFÖY RİSK YÖNETİMİ
         # ─────────────────────────────────────────────────────────────────────
-        portfolio_risk = prediction.get("portfolio_risk", {})
-        current_risk = portfolio_risk.get("current_risk_pct", 0)
-        daily_limit = portfolio_risk.get("daily_limit_pct", 3)
-        
-        if current_risk < daily_limit * 0.5:
-            port_status = "pass"
-            port_color = "green"
-            port_label = "UYGUN"
-            port_comment = f"Portföy risk limitleri uygun. Yeni pozisyona izin veriliyor."
-            green_count += 1
-        elif current_risk < daily_limit:
-            port_status = "warning"
-            port_color = "yellow"
-            port_label = "DİKKAT"
-            port_comment = f"Risk limiti %{current_risk:.1f}/{daily_limit}. Küçük pozisyon al."
+        # 2026-07-15 fix: prediction dict'inde "portfolio_risk" alanı hiç yoktu
+        # (PredictionResult'ta tanımsız) → kontrol her zaman current_risk=0 ile
+        # PASS veriyordu (ölü kontrol, sabit +yeşil). Gerçek portföy riski artık
+        # trading_engine.check_portfolio_risk'ten okunuyor (fail-open).
+        current_risk = 0.0
+        daily_limit = 3.0
+        try:
+            from services.trading_engine import check_portfolio_risk as _check_port_risk
+            _pr = _check_port_risk(symbol, prediction.get("direction") or "BUY")
+            _risk_level = str(_pr.get("risk_level") or "").lower()
+            if not _pr.get("can_trade", True):
+                port_status = "fail"; port_color = "red"; port_label = "LİMİT AŞILDI"
+                port_comment = f"Portföy riski: {_pr.get('reason') or 'yeni pozisyon engellendi.'}"
+                red_count += 1
+            elif _risk_level in ("high", "elevated", "critical") or _pr.get("warnings"):
+                port_status = "warning"; port_color = "yellow"; port_label = "DİKKAT"
+                _warn = (_pr.get("warnings") or [f"risk seviyesi {_risk_level}"])[0]
+                port_comment = f"Portföy riski yükseldi: {_warn}"
+                yellow_count += 1
+            else:
+                port_status = "pass"; port_color = "green"; port_label = "UYGUN"
+                port_comment = "Portföy risk limitleri uygun. Yeni pozisyona izin veriliyor."
+                green_count += 1
+        except Exception as _port_err:
+            logger.debug(f"[EMEL Portfolio] {symbol}: risk servisi yok ({_port_err}) — nötr")
+            port_status = "warning"; port_color = "yellow"; port_label = "VERİ YOK"
+            port_comment = "Portföy risk servisi erişilemedi — nötr sayıldı."
             yellow_count += 1
-        else:
-            port_status = "fail"
-            port_color = "red"
-            port_label = "LİMİT AŞILDI"
-            port_comment = f"Günlük risk limiti aşıldı. Yeni pozisyon açma."
-            red_count += 1
         
         checks.append({
             "id": 9,
@@ -1171,31 +1217,47 @@ async def get_emel_analysis(symbol: str, timeframe: str = "1H"):
             "macro": macro_dir if macro_status == "pass" else "neutral",
         }
 
+        # 2026-07-15 fix: kalite faktörleri (regime/volume/portfolio) eskiden
+        # yönlü skora HER ZAMAN +işaretli katkı ekliyordu → her kalite onayı
+        # skoru BUY yönüne itiyor, SELL kurulumlarını zayıflatıyordu (sistematik
+        # long yanlılığı; ör. NDX'te sabit +10 portfolio + +7.5 regime). Artık
+        # iki fazlı: önce yönlü faktörler işareti belirler, sonra kalite
+        # faktörleri işaret-farkındalıklı olarak yalnızca BÜYÜKLÜĞÜ ayarlar.
         score = 0.0
         factor_contributions: Dict[str, Dict[str, Any]] = {}
         for factor, status in factor_status.items():
+            if factor not in directional_factors:
+                continue
             weight = weights.get(factor, 15)
             contribution = 0.0
-            if factor in directional_factors:
-                fdir = factor_dirs.get(factor, "neutral")
-                if status == "pass" and fdir == "up":
-                    contribution = +weight
-                elif status == "pass" and fdir == "down":
+            fdir = factor_dirs.get(factor, "neutral")
+            if status == "pass" and fdir == "up":
+                contribution = +weight
+            elif status == "pass" and fdir == "down":
+                contribution = -weight
+            elif status == "fail":
+                # fail = yön bilgisi var (trend down stack gibi) → karşı yön skoruna eksi
+                if fdir == "up":
                     contribution = -weight
-                elif status == "fail":
-                    # fail = yön bilgisi var (trend down stack gibi) → karşı yön skoruna eksi
-                    if fdir == "up":
-                        contribution = -weight
-                    elif fdir == "down":
-                        contribution = +weight
-                    else:
-                        contribution = 0
-            else:
-                # Kalite faktörleri: symmetric quality gate (yönsüz)
-                if status == "pass":
-                    contribution = +weight * 0.5  # pozitif katkı tatmin eder, yön vermez
-                elif status == "fail":
-                    contribution = -weight  # fail cezası tam
+                elif fdir == "down":
+                    contribution = +weight
+
+            score += contribution
+            factor_contributions[factor] = {
+                "weight": weight, "status": status, "contribution": round(contribution, 1),
+                "direction": factor_dirs.get(factor)
+            }
+
+        _dir_sign = 1.0 if score > 0 else (-1.0 if score < 0 else 0.0)
+        for factor, status in factor_status.items():
+            if factor in directional_factors:
+                continue
+            weight = weights.get(factor, 15)
+            contribution = 0.0
+            if status == "pass":
+                contribution = _dir_sign * weight * 0.5   # magnitude'u güçlendirir
+            elif status == "fail":
+                contribution = -_dir_sign * weight        # magnitude'u HOLD'a çeker
 
             score += contribution
             factor_contributions[factor] = {
@@ -1822,7 +1884,10 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
         elif rsi_interpretation["action"] == "boost":
             decision_notes.append(rsi_interpretation["note"])
             score += rsi_interpretation["score_adjustment"]
-        
+        # RSI boost min(score,100) clamp'inden SONRA eklendiği için skor 101-105'e
+        # taşabiliyordu (canlı: pulse1 XAU conf=101/105) — burada tekrar sabitle.
+        score = max(0.0, min(score, 100.0))
+
         # Direction filter - enforce regime allowed directions
         pulse_signal, was_filtered, filter_reason = filter_signal_by_regime(pulse_signal, regime)
         if was_filtered:
@@ -2449,6 +2514,10 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
         if signal in ["BUY", "SELL"]:
             try:
                 from services.prediction_logger import log_prediction
+                # Pulse2'nin kanaati hibrit `score`tur; eskiden ham ml_confidence
+                # loglanıyordu → ML HOLD + TA-fallback sinyallerinde conf=0 satırlar
+                # (14g XAU'da 336 adet) WR istatistiklerini kirletiyordu.
+                pulse2_conf = round(max(0.0, min(float(score), 100.0)), 1)
                 await log_prediction(
                     symbol=symbol,
                     context={
@@ -2456,15 +2525,16 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
                         "ta": ta,
                         "score": score,
                         "signal_type": signal_type,
+                        "ml_raw_confidence": round(float(ml_confidence), 1),
                         "ml_prediction": {
                             "direction": signal,
-                            "confidence": ml_confidence,
+                            "confidence": pulse2_conf,
                             "entry_price": current_price,
                             "target_price": target,
                             "stop_price": stop,
                         }
                     },
-                    analysis={"final_decision": signal, "confidence": ml_confidence, "model_used": "PULSE-ML-V2"},
+                    analysis={"final_decision": signal, "confidence": pulse2_conf, "model_used": "PULSE-ML-V2"},
                     timeframe=timeframe,
                     strategy="PULSE_ML",
                     model_type="pulse2",
@@ -2490,7 +2560,9 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
             "signal": signal,
             "signal_type": signal_type,
             "pulse_score": round(score, 1),
-            "confidence": ml_confidence,
+            # Panelin (ve meta motorunun) okuduğu kanaat = hibrit skor.
+            # Ham ML güveni score_breakdown.ml.confidence içinde duruyor.
+            "confidence": round(max(0.0, min(float(score), 100.0)), 1),
             "model_type": "PULSE_ML_V2",
             "price": current_price,
             "target": round(target, 2) if target else 0,
@@ -3059,6 +3131,9 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
         elif rsi_check["action"] == "caution" and signal_type == "CONFIRM":
             signal_type = "SCOUT"
             notes.append(rsi_check["note"])
+        # RSI boost sonrası skor 100'ü aşabiliyordu (canlı: pulse3 NDX conf=105,
+        # loglanan confidence clamp'siz round(total_score) idi) — sabitle.
+        total_score = max(0.0, min(total_score, 100.0))
         
         # ─── SUGGESTION ──────────────────────────────────────────────────
         regime_tag = f" [{regime.regime}]" if regime.regime != "TRANSITION" else ""

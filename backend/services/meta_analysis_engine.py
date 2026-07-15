@@ -1105,7 +1105,12 @@ def _parse_model_response(model_id: str, data: Any) -> ModelSignal:
         # Pulse 1/2/3 response
         elif model_id.startswith("pulse"):
             direction = _coerce_direction_value(data.get("signal", data.get("direction", "HOLD")))
-            conf_raw = data.get("confidence", data.get("meta_confidence", 0))
+            # pulse1 exposes its conviction as "pulse_score" (no "confidence"
+            # key) — without this fallback pulse1 always parsed to 0 and was
+            # skipped as an abstain vote in fuse_confidence.
+            conf_raw = data.get("confidence")
+            if conf_raw is None:
+                conf_raw = data.get("pulse_score", data.get("meta_confidence", 0))
             confidence = float(conf_raw) * 100 if float(conf_raw) <= 1 else float(conf_raw)
             entry = float(data.get("entry_price", data.get("current_price", 0)) or 0)
             tp = float(data.get("take_profit", data.get("tp1", 0)) or 0)
@@ -1124,7 +1129,14 @@ def _parse_model_response(model_id: str, data: Any) -> ModelSignal:
         # SMC response
         elif model_id == "smc":
             direction = _coerce_direction_value(data.get("signal", data.get("bias", "HOLD")))
-            conf_raw = data.get("confidence", data.get("score", 0))
+            # calculate_smc nests conviction inside the "bias" dict
+            # ({"direction", "confidence", "score"}); the top level has neither
+            # "confidence" nor "score", so SMC always parsed to 0 and was
+            # skipped as an abstain vote in fuse_confidence.
+            conf_raw = data.get("confidence", data.get("score"))
+            if conf_raw is None and isinstance(data.get("bias"), dict):
+                conf_raw = data["bias"].get("confidence", data["bias"].get("score", 0))
+            conf_raw = conf_raw or 0
             confidence = float(conf_raw) * 100 if float(conf_raw) <= 1 else float(conf_raw)
             entry = float(data.get("entry_price", data.get("current_price", 0)) or 0)
 

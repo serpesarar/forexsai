@@ -265,6 +265,19 @@ def _load_rules(force: bool = False) -> list[dict]:
         try:
             payload = json.loads(path.read_text())
             for r in (payload.get("rules") or []):
+                # Birim savunması: bazı eski miner çıktıları win_rate'i kesir
+                # (0-1) yazdı; matcher yüzde bekler. 0.4 (=%40) yüzde sanılınca
+                # "≤25 aşırı toksik" sayılıp koca bir model-sembol kanalını
+                # bloke ediyordu (canlı: USOIL·meta 07-09'dan beri kilitliydi).
+                # 0 < wr ≤ 1 aralığı n≥MIN_SAMPLE_SIZE örneklemde gerçek bir
+                # %≤1 WR'den ayırt edilemeyecek kadar imkânsız → kesir kabul et.
+                wr = r.get("win_rate")
+                if isinstance(wr, (int, float)) and 0 < wr <= 1.0:
+                    r = {**r, "win_rate": round(float(wr) * 100.0, 1)}
+                    logger.warning(
+                        "[pattern_matcher] fraction-unit win_rate normalized: "
+                        f"{r.get('segment')} {wr} -> {r['win_rate']}%"
+                    )
                 # Tag rules with their source so frontend/UI can distinguish layers
                 rules.append({**r, "source": source})
         except Exception as e:

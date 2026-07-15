@@ -239,7 +239,7 @@ def _close_existing_signal(
             "exit_price": exit_price,
             "factors": existing_factors,
         }
-        result = client.table("prediction_logs").eq("id", signal_id).update(update_data).execute()
+        result = client.table("prediction_logs").eq("id", signal_id).update(update_data)
         if result and safe_get_data(result):
             logger.info(
                 f"✅ Closed signal {signal_id[:8]}: {final_reason} -> {new_direction} "
@@ -772,9 +772,12 @@ def _shadow_inversion_enabled(symbol: str, model_type: str) -> bool:
         "SHADOW_INVERSION_SYMBOLS", "NDX.INDX,GDAXI.INDX,XAUUSD").split(",") if s.strip()}
     if symbol.upper() not in syms:
         return False
+    # "emel" listede DEĞİL: EMEL'in kendi adanmış ters modeli var (emel_inverse,
+    # emel_pulse.py) — genel gölge de açıkken her EMEL sinyali 3 kez loglanıyordu
+    # (emel + emel_inv + emel_inverse).
     models = {m.strip().lower() for m in _os.getenv(
         "SHADOW_INVERSION_MODELS",
-        "pulse1,pulse2,pulse3,emel,smc,meta,ml:main,ml_cross_xau_nasdaq").split(",") if m.strip()}
+        "pulse1,pulse2,pulse3,smc,meta,ml:main,ml_cross_xau_nasdaq").split(",") if m.strip()}
     return (model_type or "").lower() in models
 
 
@@ -863,7 +866,9 @@ async def log_prediction(
         # can measure real inverted WR without altering the main system.
 
         effective_model_type, resolved_strategy = _resolve_logging_identity(model_type, strategy)
-        raw_confidence = float(ml.get("confidence", 0.0))
+        # Güvenlik ağı: üretici clamp'lemeyi kaçırsa bile DB'ye asla [0,100]
+        # dışı confidence yazma (canlı: pulse1/pulse3 101-105 kayıtları).
+        raw_confidence = max(0.0, min(float(ml.get("confidence", 0.0)), 100.0))
 
         # ═══════════════════════════════════════════════════════════════════════
         # 0. MERKEZİ SİNYAL KAPILARI (signal_gates) — güvenlik ağı
