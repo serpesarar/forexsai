@@ -1,6 +1,7 @@
-import { SYMBOL_CONFIGS } from "@/lib/symbolConfig";
-import SymbolPage from "@/components/layout/SymbolPage";
+// Eski NASDAQ paneli Neural tasarıma taşındı.
+// Yedek: .backup/legacy_panels_20260715/app/nasdaq/
+import { redirect } from "next/navigation";
 
-export default function NasdaqPage() {
-  return <SymbolPage config={SYMBOL_CONFIGS.nasdaq} />;
+export default function NasdaqRedirect() {
+  redirect("/neural/ndx");
 }

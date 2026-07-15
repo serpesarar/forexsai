@@ -1,13 +1,17 @@
-import { notFound } from "next/navigation";
-import { SYMBOL_CONFIGS, getSymbolBySlug, type SymbolSlug } from "../../../lib/symbolConfig";
-import SymbolPage from "../../../components/layout/SymbolPage";
+// Eski sembol dashboard'u Neural tasarıma taşındı.
+// Yedek: .backup/legacy_panels_20260715/app/dashboard/
+import { redirect } from "next/navigation";
 
-export function generateStaticParams() {
-  return (Object.keys(SYMBOL_CONFIGS) as SymbolSlug[]).map((symbol) => ({ symbol }));
-}
+const SLUG_MAP: Record<string, string> = {
+  nasdaq: "ndx",
+  ndx: "ndx",
+  dax: "dax",
+  xauusd: "xauusd",
+  gold: "xauusd",
+  oil: "usoil",
+  usoil: "usoil",
+};
 
-export default function DashboardSymbolRoute({ params }: { params: { symbol: string } }) {
-  const config = getSymbolBySlug(params.symbol);
-  if (!config) notFound();
-  return <SymbolPage config={config} />;
+export default function DashboardSymbolRedirect({ params }: { params: { symbol: string } }) {
+  redirect(`/neural/${SLUG_MAP[params.symbol.toLowerCase()] ?? "ndx"}`);
 }

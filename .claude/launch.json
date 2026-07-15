@@ -1,8 +1,38 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "bias-lab-static", "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m","http.server","4599","--directory","backend/routers"],
-      "port": 4599 }
+    {
+      "name": "bias-lab-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4599",
+        "--directory",
+        "backend/routers"
+      ],
+      "port": 4599
+    },
+    {
+      "name": "frontend-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "cwd": "frontend",
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "frontend-evolution-test",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "NEXT_PUBLIC_API_URL=http://localhost:8010 exec npm run dev -- -p 3010"
+      ],
+      "cwd": "frontend",
+      "port": 3010
+    }
   ]
 }

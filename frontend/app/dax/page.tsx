@@ -1,6 +1,7 @@
-import { SYMBOL_CONFIGS } from "@/lib/symbolConfig";
-import SymbolPage from "@/components/layout/SymbolPage";
+// Eski DAX paneli Neural tasarıma taşındı.
+// Yedek: .backup/legacy_panels_20260715/app/dax/
+import { redirect } from "next/navigation";
 
-export default function DaxPage() {
-  return <SymbolPage config={SYMBOL_CONFIGS.dax} />;
+export default function DaxRedirect() {
+  redirect("/neural/dax");
 }
