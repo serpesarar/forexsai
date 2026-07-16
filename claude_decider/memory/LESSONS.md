@@ -27,3 +27,8 @@
 
 ## ⏳ İzlenenler (henüz kanıt-kapısını geçmedi → kararı ETKİLEMEZ)
 *(boş — JOURNAL biriktikçe `distill_journal.py` aday ekleyecek)*
+
+<!-- PANEL-LESSONS START -->
+## 📟 Panel dersleri (Evrim Paneli'nden — analiz çıktısı, İHTİYATLA uygula)
+*(aktif panel dersi yok)*
+<!-- PANEL-LESSONS END -->

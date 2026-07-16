@@ -13,11 +13,13 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { BrainCircuit } from "lucide-react";
 import { LangToggle, useNeuralLocale } from "./i18n";
+import { useIsOwner } from "./OwnerGuard";
 import UserMenu from "@/components/UserMenu";
 
 export default function NeuralNav() {
   const { L } = useNeuralLocale();
   const pathname = usePathname() ?? "/";
+  const isOwner = useIsOwner();
 
   const tabs = [
     { href: "/", label: L("PANEL", "PANEL"), match: (p: string) => p === "/" },
@@ -26,7 +28,10 @@ export default function NeuralNav() {
     { href: "/neural/xauusd", label: L("ALTIN", "GOLD"), match: (p: string) => p.startsWith("/neural/xauusd") },
     { href: "/neural/usoil", label: L("PETROL", "OIL"), match: (p: string) => p.startsWith("/neural/usoil") },
     { href: "/oil", label: L("GEMİ HARİTASI", "SHIP MAP"), match: (p: string) => p.startsWith("/oil") },
-    { href: "/evolution", label: L("EVRİM", "EVOLUTION"), match: (p: string) => p.startsWith("/evolution") },
+    // EVRİM sekmesi yalnızca panel sahibine görünür (OwnerGuard e-postası)
+    ...(isOwner
+      ? [{ href: "/evolution", label: L("EVRİM", "EVOLUTION"), match: (p: string) => p.startsWith("/evolution") }]
+      : []),
   ];
 
   return (

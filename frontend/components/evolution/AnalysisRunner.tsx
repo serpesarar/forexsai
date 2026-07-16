@@ -8,7 +8,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Ban,
   BrainCog,
   CheckCircle2,
   ChevronDown,
@@ -30,7 +29,9 @@ import {
   useRuns,
   useStartRun,
 } from "@/lib/api/evolution";
-import { Badge, EmptyState, GlassCard, PulseDot, Section, catLabel, cx, stagger, timeAgo } from "./ui";
+import { onOpenRun } from "./events";
+import { toast } from "./toast";
+import { Badge, EmptyState, GlassCard, PulseDot, Section, Skeleton, catLabel, cx, stagger, timeAgo } from "./ui";
 
 const LEARN_TARGET_LABELS: Record<string, string> = {
   bias_debate: "Ajan Tartışması",
@@ -104,7 +105,7 @@ function AnalysisCard({
   index: number;
 }) {
   const startRun = useStartRun();
-  const disabled = analysis.runnable_here === false;
+  const isRemote = analysis.runnable_here === false; // MT5 kutusunda, Evrim Ajanı üzerinden koşar
   const running = activeRun?.status === "running";
 
   return (
@@ -113,8 +114,7 @@ function AnalysisCard({
       whileHover={{ y: -3 }}
       className={cx(
         "group relative flex flex-col overflow-hidden rounded-2xl border p-4 transition-colors",
-        running ? "border-emerald-400/30 bg-emerald-400/[0.04]" : "border-white/[0.07] bg-white/[0.025] hover:border-white/15",
-        disabled && "opacity-55"
+        running ? "border-emerald-400/30 bg-emerald-400/[0.04]" : "border-white/[0.07] bg-white/[0.025] hover:border-white/15"
       )}
     >
       {/* üst renk şeridi */}
@@ -126,18 +126,29 @@ function AnalysisCard({
           <button onClick={() => activeRun && onOpen(activeRun.run_id)} className="shrink-0 rounded-xl bg-emerald-400/15 p-2 text-emerald-300" title="Çıktıyı izle">
             <Loader2 size={15} className="animate-spin" />
           </button>
-        ) : disabled ? (
-          <span className="shrink-0 rounded-xl bg-white/5 p-2 text-slate-500" title={analysis.run_note}>
-            <Ban size={15} />
-          </span>
         ) : (
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => startRun.mutate({ analysisId: analysis.id }, { onSuccess: (run) => onOpen(run.run_id) })}
+            onClick={() =>
+              startRun.mutate(
+                { analysisId: analysis.id },
+                {
+                  onSuccess: (run) => {
+                    toast.success(isRemote ? `"${analysis.name}" MT5 kutusuna gönderildi` : `"${analysis.name}" başlatıldı`);
+                    onOpen(run.run_id);
+                  },
+                  onError: (e) => toast.error(`Başlatılamadı: ${(e as Error).message}`),
+                }
+              )
+            }
             disabled={startRun.isPending}
             className="shrink-0 rounded-xl p-2 text-white shadow-lg transition disabled:opacity-50"
-            style={{ background: `linear-gradient(135deg, ${accent}, ${accent}bb)`, boxShadow: `0 6px 18px -6px ${accent}` }}
-            title="Çalıştır"
+            style={
+              isRemote
+                ? { background: "linear-gradient(135deg, #F59E0B, #FB923Cbb)", boxShadow: "0 6px 18px -6px #F59E0B" }
+                : { background: `linear-gradient(135deg, ${accent}, ${accent}bb)`, boxShadow: `0 6px 18px -6px ${accent}` }
+            }
+            title={isRemote ? "MT5 kutusunda çalıştır (Evrim Ajanı)" : "Çalıştır"}
           >
             <Play size={15} />
           </motion.button>
@@ -154,7 +165,7 @@ function AnalysisCard({
             <Sparkles size={10} /> öğretilebilir
           </Badge>
         )}
-        {disabled && <Badge tone="amber">MT5 kutusu</Badge>}
+        {isRemote && <Badge tone="amber">MT5 kutusunda koşar</Badge>}
       </div>
       {startRun.isError && <p className="mt-1.5 text-[10px] text-rose-300">{(startRun.error as Error).message}</p>}
     </motion.div>
@@ -207,6 +218,7 @@ function RunDrawer({ runId, analyses, onClose }: { runId: string; analyses: Anal
             </span>
             <span className="text-sm font-semibold text-slate-100">{run?.analysis_name ?? "…"}</span>
             {run && <StatusBadge status={run.status} />}
+            {run?.remote && <Badge tone="amber">MT5 kutusu</Badge>}
           </div>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white">
             <X size={18} />
@@ -236,7 +248,16 @@ function RunDrawer({ runId, analyses, onClose }: { runId: string; analyses: Anal
             ))}
             <motion.button
               whileTap={{ scale: 0.96 }}
-              onClick={() => run && learn.mutate({ runId: run.run_id, targets })}
+              onClick={() =>
+                run &&
+                learn.mutate(
+                  { runId: run.run_id, targets },
+                  {
+                    onSuccess: (l) => toast.success(`Ders kaydedildi: "${l.title}"`),
+                    onError: (e) => toast.error(`Öğretilemedi: ${(e as Error).message}`),
+                  }
+                )
+              }
               disabled={!run || run.status === "running" || learn.isPending || targets.length === 0}
               className="ml-auto flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 px-3.5 py-2 text-xs font-semibold text-white shadow-lg shadow-violet-500/25 transition disabled:opacity-40"
             >
@@ -258,11 +279,14 @@ function RunDrawer({ runId, analyses, onClose }: { runId: string; analyses: Anal
 }
 
 export default function AnalysisRunner() {
-  const { data: analysesData } = useAnalyses();
+  const { data: analysesData, isLoading } = useAnalyses();
   const { data: runsData } = useRuns(30);
   const [openRunId, setOpenRunId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ error_analysis: true, performance: true });
+
+  // Komut paletinden başlatılan run'ın çekmecesini aç
+  useEffect(() => onOpenRun(setOpenRunId), []);
 
   const analyses = useMemo(() => analysesData?.analyses ?? [], [analysesData]);
   const runs = runsData?.runs ?? [];
@@ -306,6 +330,13 @@ export default function AnalysisRunner() {
       </div>
 
       {searching && filtered.length === 0 && <EmptyState text={`"${search}" ile eşleşen araç yok.`} />}
+      {isLoading && (
+        <div className="space-y-3">
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-2/3" />
+        </div>
+      )}
 
       <div className="space-y-4">
         {orderedCats.map((cat) => {

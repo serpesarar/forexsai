@@ -6,6 +6,7 @@ bu endpoint'leri tüketir. Tüm iş mantığı services/evolution_service.py'de.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import List, Optional
 
@@ -13,6 +14,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from services import evolution_service as evo
+from services import evolution_remote as remote
 
 logger = logging.getLogger(__name__)
 
@@ -120,9 +122,16 @@ async def patch_backlog_item(item_id: str, body: BacklogUpdate):
 
 @router.post("/analyses/{analysis_id}/run")
 async def run_analysis(analysis_id: str, body: RunRequest | None = None):
-    """Katalogdaki analizi arka planda başlat."""
+    """Katalogdaki analizi başlat — yerelde, ya da 'MT5 kutusu' etiketliyse uzakta."""
+    extra_args = body.extra_args if body else ""
+    analysis = evo._find_analysis(analysis_id)
+    if analysis is not None and analysis.get("runnable_here") is False:
+        try:
+            return await asyncio.to_thread(remote.start_remote_analysis, analysis, extra_args)
+        except (RuntimeError, ValueError) as e:
+            raise HTTPException(status_code=409, detail=str(e))
     try:
-        return await evo.start_run(analysis_id, extra_args=(body.extra_args if body else ""))
+        return await evo.start_run(analysis_id, extra_args=extra_args)
     except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except (RuntimeError, ValueError) as e:
@@ -137,11 +146,75 @@ async def get_runs(limit: int = Query(40, ge=1, le=200)):
 
 @router.get("/runs/{run_id}")
 async def get_run(run_id: str):
-    """Tek çalıştırmanın durumu + çıktı kuyruğu (polling için)."""
+    """Tek çalıştırmanın durumu + çıktı kuyruğu (polling için).
+
+    'cmd_' önekli id'ler MT5 kutusundaki uzak komutlardır — Supabase'ten okunur;
+    frontend'in çıktı çekmecesi ikisini de aynı şekilde gösterir.
+    """
+    cmd_id = remote.parse_cmd_run_id(run_id)
+    if cmd_id is not None:
+        cmd = await asyncio.to_thread(remote.get_command, cmd_id)
+        if cmd is None:
+            raise HTTPException(status_code=404, detail=f"uzak komut yok: {run_id}")
+        return remote.command_to_run_meta(cmd)
     run = evo.get_run(run_id)
     if run is None:
         raise HTTPException(status_code=404, detail=f"run yok: {run_id}")
     return run
+
+
+# ── Evrim Ajanı köprüsü (MT5 kutusu) ─────────────────────────────────────
+
+class RemoteCommandRequest(BaseModel):
+    kind: str = Field(..., pattern="^(sync_lessons|git_pull|restart_bot)$")
+    payload: dict = Field(default_factory=dict)
+
+
+@router.get("/remote/status")
+async def remote_status():
+    """MT5 kutusu kalp atışı + komut kuyruğu durumu."""
+    try:
+        return await asyncio.to_thread(remote.get_remote_status)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
+@router.get("/remote/bot-performance")
+async def remote_bot_performance(days: int = Query(30, ge=1, le=365)):
+    """Gerçek MT5 işlem sonuçları (bot_trades) — sembol kırılımlı."""
+    try:
+        return await asyncio.to_thread(remote.get_bot_performance, days)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
+@router.get("/remote/decider-stats")
+async def remote_decider_stats(days: int = Query(30, ge=1, le=365)):
+    """Claude Decider karar karnesi (decider_journal)."""
+    try:
+        return await asyncio.to_thread(remote.get_decider_stats, days)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
+@router.post("/remote/command")
+async def remote_command(body: RemoteCommandRequest):
+    """Kutuya komut gönder: ders senkronu / git pull / güvenli bot restart.
+
+    sync_lessons payload'ı sunucuda üretilir (aktif panel dersleri bloğu) —
+    istemciden içerik kabul edilmez.
+    """
+    payload = dict(body.payload)
+    if body.kind == "sync_lessons":
+        payload = {"content": evo.build_decider_lessons_block()}
+    try:
+        cmd = await asyncio.to_thread(
+            remote.enqueue_command, body.kind, payload,
+            remote.DEFAULT_HOST, "panel",
+        )
+        return remote.command_to_run_meta(cmd)
+    except (RuntimeError, ValueError) as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 
 # ── Öğrenme köprüsü ─────────────────────────────────────────────────────

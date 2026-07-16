@@ -38,8 +38,13 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
       // Demo mode bypass for localhost agent testing
       if (isDemoMode()) {
-        const { isAuthenticated, setUser, setToken } = useAuthStore.getState();
-        if (!isAuthenticated) {
+        const { isAuthenticated, user, token, setUser, setToken } = useAuthStore.getState();
+        if (!isAuthenticated && user && token) {
+          // Persist'ten gelen GERÇEK oturumu demo kullanıcıyla EZME —
+          // isAuthenticated partialize dışı olduğundan her yüklemede false
+          // başlar; localde token'lı kullanıcıyı oturumlu say.
+          useAuthStore.setState({ isAuthenticated: true });
+        } else if (!isAuthenticated) {
           console.log("%c🟢 DEMO MODE ACTIVE", "color: var(--accent-positive); font-size: 16px; font-weight: bold;");
           // Inject demo user into zustand store
           const demoUser = {

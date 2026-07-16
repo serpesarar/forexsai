@@ -10,7 +10,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle2, Circle, ListTodo, Play, Plus, Trash2 } from "lucide-react";
 
 import { type BacklogItem, useAddBacklog, useBacklog, useUpdateBacklog } from "@/lib/api/evolution";
-import { Badge, EmptyState, GlassCard, Section, catLabel, cx, stagger, timeAgo } from "./ui";
+import { toast } from "./toast";
+import { Badge, EmptyState, GlassCard, Section, Skeleton, catLabel, cx, stagger, timeAgo } from "./ui";
 
 const PRIORITY_TONE = { high: "red", medium: "amber", low: "slate" } as const;
 const PRIORITY_LABEL = { high: "yüksek", medium: "orta", low: "düşük" } as const;
@@ -28,7 +29,10 @@ function ItemRow({ item, index }: { item: BacklogItem; index: number }) {
       return;
     }
     setConfirmDrop(false);
-    update.mutate({ id: item.id, status: "dropped" });
+    update.mutate(
+      { id: item.id, status: "dropped" },
+      { onSuccess: () => toast.info(`Bırakıldı: "${item.title.slice(0, 40)}…"`) }
+    );
   };
 
   return (
@@ -42,7 +46,12 @@ function ItemRow({ item, index }: { item: BacklogItem; index: number }) {
     >
       <div className="flex items-start gap-3">
         <button
-          onClick={() => update.mutate({ id: item.id, status: done ? "pending" : "done" })}
+          onClick={() =>
+            update.mutate(
+              { id: item.id, status: done ? "pending" : "done" },
+              { onSuccess: (u) => toast.success(u.status === "done" ? "Tamamlandı olarak işaretlendi ✓" : "Yeniden açıldı") }
+            )
+          }
           className="mt-0.5 shrink-0 transition hover:scale-110"
           title={done ? "Yeniden aç" : "Tamamlandı"}
         >
@@ -85,51 +94,120 @@ function ItemRow({ item, index }: { item: BacklogItem; index: number }) {
   );
 }
 
+type PriorityKey = "high" | "medium" | "low";
+type FilterKey = "all" | PriorityKey;
+
 export default function BacklogPanel() {
-  const { data } = useBacklog();
+  const { data, isLoading } = useBacklog();
   const add = useAddBacklog();
   const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState<PriorityKey>("medium");
+  const [filter, setFilter] = useState<FilterKey>("all");
   const [showDone, setShowDone] = useState(false);
 
   const items = data?.items ?? [];
-  const active = items.filter((i) => i.status === "pending" || i.status === "in_progress");
+  const allActive = items.filter((i) => i.status === "pending" || i.status === "in_progress");
+  const active = filter === "all" ? allActive : allActive.filter((i) => i.priority === filter);
   const finished = items.filter((i) => i.status === "done" || i.status === "dropped");
+
+  const countOf = (p: FilterKey) =>
+    p === "all" ? allActive.length : allActive.filter((i) => i.priority === p).length;
 
   const submit = () => {
     const t = title.trim();
     if (t.length < 3) return;
-    add.mutate({ title: t }, { onSuccess: () => setTitle("") });
+    add.mutate(
+      { title: t, priority },
+      {
+        onSuccess: () => {
+          setTitle("");
+          toast.success("Backlog'a eklendi");
+        },
+        onError: (e) => toast.error(`Eklenemedi: ${(e as Error).message}`),
+      }
+    );
   };
 
   return (
     <Section
       id="bekleyen"
       title="Bekleyen & Unutulan İşler"
-      subtitle={`${active.length} açık iş — her oturum otomatik güncellenir`}
+      subtitle={`${allActive.length} açık iş — her oturum otomatik güncellenir`}
       accent="#818CF8"
       icon={<ListTodo size={22} />}
     >
       <GlassCard>
-        <div className="mb-4 flex gap-2">
+        <div className="mb-3 flex flex-wrap gap-2">
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submit()}
             placeholder="Yeni iş / fikir ekle… (Enter)"
-            className="flex-1 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-2.5 text-xs text-slate-200 placeholder:text-slate-500 transition focus:border-violet-400/50 focus:outline-none"
+            className="min-w-0 flex-1 rounded-2xl border border-white/[0.07] bg-white/[0.03] px-4 py-2.5 text-xs text-slate-200 placeholder:text-slate-500 transition focus:border-violet-400/50 focus:outline-none"
           />
+          {/* öncelik seçimi */}
+          <div className="flex shrink-0 items-center gap-1 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-1">
+            {(Object.keys(PRIORITY_LABEL) as PriorityKey[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPriority(p)}
+                className={cx(
+                  "rounded-xl px-2.5 py-1.5 text-[11px] font-medium transition",
+                  priority === p
+                    ? p === "high"
+                      ? "bg-rose-400/20 text-rose-200"
+                      : p === "medium"
+                        ? "bg-amber-400/20 text-amber-200"
+                        : "bg-white/10 text-slate-200"
+                    : "text-slate-500 hover:text-slate-300"
+                )}
+                title={`Öncelik: ${PRIORITY_LABEL[p]}`}
+              >
+                {PRIORITY_LABEL[p]}
+              </button>
+            ))}
+          </div>
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={submit}
             disabled={add.isPending || title.trim().length < 3}
-            className="flex items-center gap-1 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 px-4 text-xs font-semibold text-white shadow-lg shadow-indigo-500/25 transition disabled:opacity-40"
+            className="flex shrink-0 items-center gap-1 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-500 px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-indigo-500/25 transition disabled:opacity-40"
           >
             <Plus size={14} /> Ekle
           </motion.button>
         </div>
 
+        {/* öncelik filtresi */}
+        {allActive.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-1.5">
+            {(["all", "high", "medium", "low"] as FilterKey[]).map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={cx(
+                  "rounded-full px-3 py-1 text-[11px] font-medium transition",
+                  filter === f
+                    ? "bg-violet-500/25 text-violet-200 ring-1 ring-violet-400/50"
+                    : "bg-white/[0.04] text-slate-500 hover:text-slate-300"
+                )}
+              >
+                {f === "all" ? "tümü" : PRIORITY_LABEL[f]} · {countOf(f)}
+              </button>
+            ))}
+          </div>
+        )}
+
         {add.isError && <p className="mb-2 text-[11px] text-rose-300">Eklenemedi: {(add.error as Error).message}</p>}
-        {active.length === 0 && <EmptyState text="Açık iş yok — her şey yapıldı 🎉" />}
+        {isLoading && (
+          <div className="space-y-2">
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-16 w-3/4" />
+          </div>
+        )}
+        {!isLoading && active.length === 0 && (
+          <EmptyState text={filter === "all" ? "Açık iş yok — her şey yapıldı 🎉" : `Bu öncelikte açık iş yok.`} />
+        )}
 
         <div className="space-y-2">
           {active.map((i, idx) => (

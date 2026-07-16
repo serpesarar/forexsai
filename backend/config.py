@@ -64,6 +64,9 @@ class Settings(BaseSettings):
     turnstile_secret_key: str | None = Field(default=None, validation_alias="TURNSTILE_SECRET_KEY")
     # MiroShark → ForexSAI daily-bias webhook (shared HMAC-SHA256 secret).
     miroshark_webhook_secret: str | None = Field(default=None, validation_alias="WEBHOOK_SECRET")
+    # GÖLGE MODU (default AÇIK): MiroShark bias'ı yalnız bias_test_log'a yazılır,
+    # daily_bias'a (canlı veto katmanı) DOKUNMAZ. İsabet ≥%55 kanıtlanınca 0 yap.
+    miroshark_shadow_only: bool = Field(default=True, validation_alias="MIROSHARK_SHADOW_ONLY")
     ob_fractal_period: int = Field(default=2, validation_alias="OB_FRACTAL_PERIOD")
     ob_min_displacement_atr: float = Field(default=1.0, validation_alias="OB_MIN_DISPLACEMENT_ATR")
     ob_min_score: float = Field(default=50.0, validation_alias="OB_MIN_SCORE")

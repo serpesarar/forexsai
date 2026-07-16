@@ -116,17 +116,47 @@ export function GlassCard({
   hover?: boolean;
   glow?: string;
 }) {
+  // Spotlight: fare kartın üzerinde gezerken yumuşak bir ışık takip eder
+  // (yalnız CSS değişkeni günceller — reflow/re-render yok, ucuz).
+  const onMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    e.currentTarget.style.setProperty("--spot-x", `${e.clientX - r.left}px`);
+    e.currentTarget.style.setProperty("--spot-y", `${e.clientY - r.top}px`);
+  };
   return (
     <div
+      onMouseMove={onMove}
       className={cx(
-        "relative rounded-3xl border border-white/[0.07] bg-white/[0.025] p-5",
+        "group/card relative overflow-hidden rounded-3xl border border-white/[0.07] bg-white/[0.025] p-5",
         "shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset]",
         hover && "transition-all duration-300 hover:border-white/15 hover:bg-white/[0.045] hover:-translate-y-0.5",
         className
       )}
       style={glow ? { boxShadow: `0 0 0 1px ${glow}20, 0 12px 40px -16px ${glow}40` } : undefined}
     >
-      {children}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
+        style={{
+          background: "radial-gradient(340px circle at var(--spot-x, 50%) var(--spot-y, 50%), rgba(139,124,246,0.08), transparent 70%)",
+        }}
+      />
+      <div className="relative">{children}</div>
+    </div>
+  );
+}
+
+/** Yükleme iskeleti — parıltılı placeholder (boş 'Yükleniyor…' yazısı yerine). */
+export function Skeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={cx("relative overflow-hidden rounded-xl bg-white/[0.04]", className)}>
+      <motion.span
+        aria-hidden
+        className="absolute inset-0"
+        style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)" }}
+        animate={{ x: ["-100%", "100%"] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }}
+      />
     </div>
   );
 }

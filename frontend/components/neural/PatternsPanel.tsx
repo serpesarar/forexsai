@@ -8,7 +8,7 @@
  * D completion zone (PRZ) which pulses with target rings + price tag.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shapes, X } from "lucide-react";
 import { useNeuralLocale, type LFn } from "./i18n";
@@ -407,6 +407,16 @@ export default function PatternsPanel({ live }: { live?: DetectedPattern[] }) {
   const patterns = live && live.length > 0 ? live : demo;
   const isLive = Boolean(live && live.length > 0);
   const [sel, setSel] = useState<DetectedPattern | null>(null);
+
+  // ESC ile kapat — ModelDetailModal ile aynı davranış
+  useEffect(() => {
+    if (!sel) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSel(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [sel]);
 
   return (
     <>

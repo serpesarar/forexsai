@@ -40,6 +40,9 @@ export interface Overview {
   days: number;
   models: { models: ModelAccuracy[]; total: number } | null;
   bias: BiasReport | null;
+  /** Soğuk başlangıç: kaynak arka planda ısınıyor, sonraki yenilemede gelir. */
+  models_warming?: boolean;
+  bias_warming?: boolean;
   counts: {
     registry: number;
     analyses: number;
@@ -89,6 +92,51 @@ export interface RunMeta {
   return_code: number | null;
   output?: string;
   output_truncated?: boolean;
+  /** true → MT5 kutusundaki Evrim Ajanı'nda koşuyor (run_id 'cmd_' öneklidir) */
+  remote?: boolean;
+}
+
+// ── Evrim Ajanı köprüsü (MT5 kutusu) ─────────────────────────────────────
+
+export interface RemoteCommandSummary {
+  id: string;
+  created_at: string;
+  kind: string;
+  status: "pending" | "running" | "done" | "failed" | "timeout";
+  requested_by: string;
+  analysis_id: string | null;
+  analysis_name: string | null;
+  finished_at: string | null;
+  return_code: number | null;
+}
+
+export interface RemoteStatus {
+  host: string;
+  online: boolean;
+  last_seen: string | null;
+  last_seen_ago_s: number | null;
+  meta: { open_positions?: number; mt5?: boolean; [k: string]: unknown };
+  pending_commands: number;
+  running_commands: number;
+  recent_commands: RemoteCommandSummary[];
+}
+
+export interface BotPerformance {
+  days: number;
+  total_trades: number;
+  win_rate: number | null;
+  net_profit: number;
+  by_symbol: Record<string, { n: number; wins: number; net: number; win_rate: number | null }>;
+  last_trade_at: string | null;
+}
+
+export interface DeciderStats {
+  days: number;
+  total_decisions: number;
+  decisions: Record<string, number>;
+  resolved: number;
+  win_rate: number | null;
+  last_decision_at: string | null;
 }
 
 export interface BacklogItem {
@@ -158,6 +206,8 @@ export function useOverview(days = 30) {
     queryKey: ["evolution", "overview", days],
     queryFn: () => getJson(`/api/evolution/overview?days=${days}`),
     refetchInterval: 60_000,
+    // Gün aralığı değişince sayaçlar 0'a düşmesin — eski veri, yenisi gelene dek kalır
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -281,5 +331,46 @@ export function useArchiveLesson() {
     mutationFn: ({ id, status }: { id: string; status: "active" | "archived" }) =>
       sendJson<Lesson>(`/api/evolution/lessons/${id}`, "PATCH", { status }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["evolution", "lessons"] }),
+  });
+}
+
+// ── Evrim Ajanı köprüsü hook'ları (MT5 kutusu) ───────────────────────────
+
+export function useRemoteStatus() {
+  return useQuery<RemoteStatus>({
+    queryKey: ["evolution", "remote", "status"],
+    queryFn: () => getJson("/api/evolution/remote/status"),
+    refetchInterval: 30_000,
+    retry: 1,
+  });
+}
+
+export function useBotPerformance(days = 30) {
+  return useQuery<BotPerformance>({
+    queryKey: ["evolution", "remote", "bot-performance", days],
+    queryFn: () => getJson(`/api/evolution/remote/bot-performance?days=${days}`),
+    refetchInterval: 120_000,
+    placeholderData: (prev) => prev,
+    retry: 1,
+  });
+}
+
+export function useDeciderStats(days = 30) {
+  return useQuery<DeciderStats>({
+    queryKey: ["evolution", "remote", "decider-stats", days],
+    queryFn: () => getJson(`/api/evolution/remote/decider-stats?days=${days}`),
+    refetchInterval: 120_000,
+    placeholderData: (prev) => prev,
+    retry: 1,
+  });
+}
+
+/** Kutuya komut gönder: sync_lessons | git_pull | restart_bot */
+export function useRemoteCommand() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ kind, payload }: { kind: "sync_lessons" | "git_pull" | "restart_bot"; payload?: Record<string, unknown> }) =>
+      sendJson<RunMeta>("/api/evolution/remote/command", "POST", { kind, payload: payload ?? {} }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["evolution", "remote"] }),
   });
 }

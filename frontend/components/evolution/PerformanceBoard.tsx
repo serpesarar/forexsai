@@ -10,7 +10,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, Users } from "lucide-react";
 
 import type { Overview } from "@/lib/api/evolution";
-import { Badge, EmptyState, GlassCard, ProgressBar, Ring, Section, modelColor, stagger } from "./ui";
+import { Badge, EmptyState, GlassCard, ProgressBar, Ring, Section, Skeleton, modelColor, stagger } from "./ui";
 
 const MIN_RESOLVED = 10;
 
@@ -45,7 +45,22 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
         {/* Model çubukları */}
         <GlassCard className="lg:col-span-3">
           <h3 className="mb-4 text-sm font-semibold text-slate-300">Model Kazanma Oranları</h3>
-          {models.length === 0 && <EmptyState text="Yeterli çözülmüş sinyal yok — veritabanı erişimini kontrol et." />}
+          {(!overview || (models.length === 0 && overview.models_warming)) && (
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-11/12" />
+              <Skeleton className="h-8 w-4/5" />
+              <Skeleton className="h-8 w-3/4" />
+              {overview?.models_warming && (
+                <p className="text-center text-[11px] text-slate-500">
+                  Veriler ısınıyor — birazdan otomatik gelecek…
+                </p>
+              )}
+            </div>
+          )}
+          {overview && !overview.models_warming && models.length === 0 && (
+            <EmptyState text="Yeterli çözülmüş sinyal yok — veritabanı erişimini kontrol et." />
+          )}
           <div className="space-y-3.5">
             {models.map((m, i) => {
               const pct = Math.round((m.ml_accuracy ?? 0) * 100);
@@ -73,7 +88,20 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-300">
             <Users size={15} /> Ajan Tartışması Karnesi
           </h3>
-          {!bias ? (
+          {!overview || (bias === null && overview.bias_warming) ? (
+            <div className="space-y-4">
+              <div className="flex justify-center">
+                <Skeleton className="h-[150px] w-[150px] rounded-full" />
+              </div>
+              <Skeleton className="h-5 w-full" />
+              <Skeleton className="h-5 w-4/5" />
+              {overview?.bias_warming && (
+                <p className="text-center text-[11px] text-slate-500">
+                  Veriler ısınıyor — birazdan otomatik gelecek…
+                </p>
+              )}
+            </div>
+          ) : !bias ? (
             <EmptyState text="Henüz notlanmış tahmin yok." />
           ) : (
             <div className="flex flex-col items-center">

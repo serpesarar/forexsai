@@ -179,7 +179,10 @@ async def _fetch_prediction_logs_window(
             if page_before:
                 query = query.lte("created_at", page_before)
 
-            batch = safe_get_data(query.order("created_at", desc=True).limit(1000).execute()) or []
+            # Blocking HTTP call thread'e alınır — yüzlerce sayfalık soğuk
+            # fetch'te event loop'u kilitlemesin (panel/diğer endpoint'ler donuyordu).
+            page_query = query.order("created_at", desc=True).limit(1000)
+            batch = safe_get_data(await asyncio.to_thread(page_query.execute)) or []
             if not batch:
                 break
 
@@ -2866,7 +2869,8 @@ async def get_recent_signals_endpoint(
             if page_before:
                 query = query.lt("created_at", page_before)
 
-            batch = safe_get_data(query.order("created_at", desc=True).limit(1000).execute()) or []
+            page_query = query.order("created_at", desc=True).limit(1000)
+            batch = safe_get_data(await asyncio.to_thread(page_query.execute)) or []
             if not batch:
                 break
 

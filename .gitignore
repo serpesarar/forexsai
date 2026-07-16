@@ -53,3 +53,9 @@ claude_decider/*.backup_*.json
 backend/data/evolution/runs/
 backend/data/evolution/lessons.json
 backend/data/evolution/session_log.json
+
+# Evrim Ajanı — kutuya özel gizli ayar + biriken durum (örnek dosya commit'lenir)
+remote_agent/agent_config.py
+remote_agent/agent_state.json
+remote_agent/evolution_agent.log
+remote_agent/restart_bot.bat

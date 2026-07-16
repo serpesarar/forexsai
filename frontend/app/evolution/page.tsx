@@ -6,9 +6,12 @@
  */
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useSpring } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
+  ArrowUp,
+  Bot,
   Dna,
   GraduationCap,
   History,
@@ -17,19 +20,29 @@ import {
   Sparkles,
   Terminal,
   TrendingUp,
+  WifiOff,
 } from "lucide-react";
 
 import { useOverview } from "@/lib/api/evolution";
+import OwnerGuard from "@/components/neural/OwnerGuard";
 import AnalysisRunner from "@/components/evolution/AnalysisRunner";
 import BacklogPanel from "@/components/evolution/BacklogPanel";
 import ChangelogFeed from "@/components/evolution/ChangelogFeed";
+import CommandPalette from "@/components/evolution/CommandPalette";
+import EvolutionLoop from "@/components/evolution/EvolutionLoop";
 import LessonsPanel from "@/components/evolution/LessonsPanel";
 import PerformanceBoard from "@/components/evolution/PerformanceBoard";
+import RemoteBotBoard from "@/components/evolution/RemoteBotBoard";
 import SystemMap from "@/components/evolution/SystemMap";
-import { AnimatedNumber, PulseDot } from "@/components/evolution/ui";
+import { emitOpenRun } from "@/components/evolution/events";
+import { Toaster } from "@/components/evolution/toast";
+import { AnimatedNumber, PulseDot, cx } from "@/components/evolution/ui";
+
+const DAY_OPTIONS = [7, 30, 90];
 
 const NAV = [
   { id: "performans", label: "Performans", icon: <TrendingUp size={14} /> },
+  { id: "canli-bot", label: "Canlı Bot", icon: <Bot size={14} /> },
   { id: "analiz", label: "Analiz & Öğret", icon: <Terminal size={14} /> },
   { id: "bekleyen", label: "Bekleyen İşler", icon: <ListTodo size={14} /> },
   { id: "harita", label: "Sistem Haritası", icon: <Network size={14} /> },
@@ -63,10 +76,40 @@ function StatTile({
   );
 }
 
-export default function EvolutionPage() {
-  const { data: overview } = useOverview(30);
+function EvolutionPageInner() {
+  const [days, setDays] = useState(30);
+  const { data: overview, isError, refetch } = useOverview(days);
   const counts = overview?.counts;
   const activeRuns = overview?.active_runs ?? [];
+
+  // Üstte incecik okuma-ilerleme çubuğu
+  const { scrollYProgress } = useScroll();
+  const progress = useSpring(scrollYProgress, { stiffness: 140, damping: 28 });
+
+  // Yukarı-dön düğmesi: sayfa biraz inince görünür
+  const [showTop, setShowTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 700);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Görünürdeki bölümü nav'da vurgula
+  const [activeSection, setActiveSection] = useState("performans");
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length > 0) setActiveSection(visible[0].target.id);
+      },
+      { rootMargin: "-15% 0px -70% 0px" }
+    );
+    NAV.forEach((n) => {
+      const el = document.getElementById(n.id);
+      if (el) obs.observe(el);
+    });
+    return () => obs.disconnect();
+  }, []);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#070A11] text-slate-200">
@@ -91,6 +134,12 @@ export default function EvolutionPage() {
 
       {/* ── Sticky nav ── */}
       <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#070A11]/85 backdrop-blur-xl">
+        {/* okuma ilerlemesi */}
+        <motion.span
+          aria-hidden
+          className="absolute inset-x-0 top-0 h-[2px] origin-left bg-gradient-to-r from-sky-400 via-violet-400 to-emerald-400"
+          style={{ scaleX: progress }}
+        />
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-3">
           <Link href="/" className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white" title="Ana sayfa">
             <ArrowLeft size={18} />
@@ -102,19 +151,53 @@ export default function EvolutionPage() {
               <PulseDot /> {activeRuns.length} çalışıyor
             </span>
           )}
-          <nav className="ml-auto hidden items-center gap-1 md:flex">
-            {NAV.map((n) => (
-              <a
-                key={n.id}
-                href={`#${n.id}`}
-                className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium text-slate-400 transition hover:bg-white/[0.06] hover:text-white"
-              >
-                {n.icon} {n.label}
-              </a>
-            ))}
-          </nav>
+          <div className="ml-auto flex items-center gap-2">
+            <nav className="hidden items-center gap-1 md:flex">
+              {NAV.map((n) => (
+                <a
+                  key={n.id}
+                  href={`#${n.id}`}
+                  className={cx(
+                    "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-medium transition",
+                    activeSection === n.id
+                      ? "bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/40"
+                      : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
+                  )}
+                >
+                  {n.icon} {n.label}
+                </a>
+              ))}
+            </nav>
+            <CommandPalette onOpenRun={emitOpenRun} />
+          </div>
         </div>
       </header>
+
+      <Toaster />
+
+      {/* ── Backend çevrimdışı uyarısı ── */}
+      <AnimatePresence>
+        {isError && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="relative z-30 mx-auto mt-3 flex max-w-7xl items-center gap-3 rounded-2xl border border-rose-400/25 bg-rose-500/10 px-5 py-3 text-[13px] text-rose-200 backdrop-blur-sm sm:mx-5 lg:mx-auto"
+          >
+            <WifiOff size={16} className="shrink-0" />
+            <span className="flex-1">
+              Backend'e ulaşılamıyor — veriler güncellenemiyor. Backend'in çalıştığından emin ol
+              (<code className="rounded bg-white/10 px-1">localhost:8000</code>).
+            </span>
+            <button
+              onClick={() => refetch()}
+              className="shrink-0 rounded-full border border-rose-300/30 px-3 py-1 text-[12px] font-medium transition hover:bg-rose-400/15"
+            >
+              Tekrar dene
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── İçerik ── */}
       <main className="relative z-10 mx-auto max-w-7xl px-5 pb-24 pt-10">
@@ -125,30 +208,60 @@ export default function EvolutionPage() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="mb-12"
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-[12px] font-medium text-violet-300">
-            <Sparkles size={13} /> Kendi kendini besleyen sistem
-          </div>
-          <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl">
-            Sinyal <span className="bg-gradient-to-r from-sky-300 via-violet-300 to-emerald-300 bg-clip-text text-transparent">→</span> sonuç{" "}
-            <span className="bg-gradient-to-r from-sky-300 via-violet-300 to-emerald-300 bg-clip-text text-transparent">→</span> analiz{" "}
-            <span className="bg-gradient-to-r from-sky-300 via-violet-300 to-emerald-300 bg-clip-text text-transparent">→</span> öğren
-          </h1>
-          <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-400">
-            Tüm motorların ve ajanların tek yerden. Neyin yanlış gittiğini gör, tek tıkla
-            çalıştır, "Öğret" ile modellere işlet. Unuttuğun hiçbir deney kaybolmaz.
-          </p>
+          <div className="flex flex-col items-start gap-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-1.5 text-[12px] font-medium text-violet-300">
+                <Sparkles size={13} /> Kendi kendini besleyen sistem
+              </div>
+              <h1 className="max-w-2xl text-4xl font-bold leading-[1.1] tracking-tight text-white sm:text-5xl">
+                Sistem kendini{" "}
+                <span className="bg-gradient-to-r from-sky-300 via-violet-300 to-emerald-300 bg-clip-text text-transparent">
+                  izler, analiz eder, öğrenir
+                </span>
+              </h1>
+              <p className="mt-4 max-w-xl text-[15px] leading-relaxed text-slate-400">
+                Tüm motorların ve ajanların tek yerden. Neyin yanlış gittiğini gör, tek tıkla
+                çalıştır, "Öğret" ile modellere işlet. Unuttuğun hiçbir deney kaybolmaz.
+              </p>
 
-          {/* İstatistik tile'ları */}
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatTile value={counts?.registry ?? 0} label="motor & ajan" accent="#818CF8" />
-            <StatTile value={counts?.analyses ?? 0} label="analiz aracı" accent="#5EEAD4" />
-            <StatTile value={counts?.backlog_pending ?? 0} label="bekleyen iş" accent="#818CF8" warn={(counts?.backlog_pending ?? 0) > 0} />
-            <StatTile value={counts?.lessons_active ?? 0} label="aktif ders" accent="#F9A8D4" />
+              {/* İstatistik tile'ları */}
+              <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <StatTile value={counts?.registry ?? 0} label="motor & ajan" accent="#818CF8" />
+                <StatTile value={counts?.analyses ?? 0} label="analiz aracı" accent="#5EEAD4" />
+                <StatTile value={counts?.backlog_pending ?? 0} label="bekleyen iş" accent="#818CF8" warn={(counts?.backlog_pending ?? 0) > 0} />
+                <StatTile value={counts?.lessons_active ?? 0} label="aktif ders" accent="#F9A8D4" />
+              </div>
+            </div>
+
+            {/* Canlı evrim döngüsü */}
+            <div className="hidden md:block">
+              <EvolutionLoop activeRuns={activeRuns.length} />
+            </div>
           </div>
         </motion.div>
 
+        {/* Gün aralığı seçici — tüm performans verilerini etkiler */}
+        <div className="mb-6 flex items-center gap-2">
+          <span className="text-[12px] font-medium text-slate-500">Zaman aralığı:</span>
+          {DAY_OPTIONS.map((d) => (
+            <button
+              key={d}
+              onClick={() => setDays(d)}
+              className={cx(
+                "rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition",
+                days === d
+                  ? "bg-violet-500/25 text-violet-200 ring-1 ring-violet-400/50"
+                  : "bg-white/[0.04] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200"
+              )}
+            >
+              {d} gün
+            </button>
+          ))}
+        </div>
+
         <div className="space-y-16">
           <PerformanceBoard overview={overview} />
+          <RemoteBotBoard days={days} />
           <AnalysisRunner />
           <BacklogPanel />
           <SystemMap />
@@ -162,6 +275,31 @@ export default function EvolutionPage() {
           <Dna size={13} /> 1. Kural: her oturum değişikliklerini bu panele yazar — hiçbir fikir kaybolmaz.
         </footer>
       </main>
+
+      {/* ── Yukarı dön ── */}
+      <AnimatePresence>
+        {showTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="fixed bottom-5 left-5 z-40 flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-[#0D1119]/90 text-slate-400 shadow-xl backdrop-blur-sm transition hover:text-white"
+            title="Yukarı dön"
+          >
+            <ArrowUp size={17} />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+// Evrim Paneli yalnızca panel sahibine açık — diğer hesaplar ana panele döner.
+export default function EvolutionPage() {
+  return (
+    <OwnerGuard>
+      <EvolutionPageInner />
+    </OwnerGuard>
   );
 }

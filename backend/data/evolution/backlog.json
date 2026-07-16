@@ -262,5 +262,82 @@
     "source": "session",
     "created_at": "2026-07-15T19:16:34.611534+00:00",
     "updated_at": "2026-07-15T19:16:34.611796+00:00"
+  },
+  {
+    "id": "bl_ce2fe8087a",
+    "title": "UI test notu — silinebilir",
+    "detail": "",
+    "category": "idea",
+    "priority": "medium",
+    "status": "dropped",
+    "source": "manual",
+    "created_at": "2026-07-16T00:10:30.174061+00:00",
+    "updated_at": "2026-07-16T00:11:02.667496+00:00"
+  },
+  {
+    "id": "bl_1541ac412e",
+    "title": "[UI-TEST] palet üzerinden backlog denemesi",
+    "detail": "",
+    "category": "idea",
+    "priority": "medium",
+    "status": "done",
+    "source": "manual",
+    "created_at": "2026-07-16T01:14:49.764035+00:00",
+    "updated_at": "2026-07-16T01:16:44.975809+00:00"
+  },
+  {
+    "id": "bl_0af93c8769",
+    "title": "Evrim Ajanı: MT5 kutusu köprüsü",
+    "detail": "Windows kutusuna evolution_agent.py: (1) MT5 deal+decider journal → Supabase push 5dk, (2) evolution_commands kuyruğu dinle: git pull + güvenli bot restart + sonuç geri yaz, (3) runnable_here=false araçları uzaktan koştur + çıktıyı RunDrawer'a akıt, (4) haftalık 8-9 komut zamanlaması, (5) heartbeat/çevrimdışı alarmı + onay kapısı + ders öncesi/sonrası WR etki ölçümü. Kod değil sadece veri güncellenir; kurallar sürümlü+geri alınabilir.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-07-16T02:36:58.355706+00:00",
+    "updated_at": "2026-07-16T04:21:27.476403+00:00"
+  },
+  {
+    "id": "bl_077753dbea",
+    "title": "MT5 kutusunda Evrim Ajanı kurulumu",
+    "detail": "remote_agent/README.md izle: git pull, pip install supabase, agent_config.py doldur (key yeni deneme/config.py'den), restart_bot.bat yaz, start_agent.bat başlat + shell:startup kısayolu. Panel 3dk içinde çevrimiçi göstermeli.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T04:21:16.109085+00:00",
+    "updated_at": "2026-07-16T04:21:16.109441+00:00"
+  },
+  {
+    "id": "bl_4a13a3ddbc",
+    "title": "Sinyal drop telemetrisi: cooldown/dedup/session-filter kayıpları DB'ye yazılmıyor",
+    "detail": "prediction_logger loglama ÖNCESİ düşen sinyaller (HOLD, cooldown, dedup, session filter) sadece logger.debug — hiçbir tabloda yok. Öğrenme için kör nokta: hangi sinyaller neden hiç doğmadı bilinmiyor. Küçük bir signal_drops tablosu + sayaç yeter.",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "manual",
+    "created_at": "2026-07-16T14:57:34.530028+00:00",
+    "updated_at": "2026-07-16T14:57:34.530037+00:00"
+  },
+  {
+    "id": "bl_1d7e5bdb01",
+    "title": "Ders etki ölçümü: uygulanan dersin öncesi/sonrası WR karşılaştırması",
+    "detail": "lessons kayıtlarında created_at var ama hedef motorun ders öncesi/sonrası performans farkı ölçülmüyor. Evrim döngüsünün kapanması için şart: ders → uygulama → etki → tut/geri al.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "manual",
+    "created_at": "2026-07-16T14:57:34.541393+00:00",
+    "updated_at": "2026-07-16T14:57:34.541399+00:00"
+  },
+  {
+    "id": "bl_16b76bed17",
+    "title": "Boş öğrenme tabloları: learning_insights / factor_importance / learning_feedback 0 satır",
+    "detail": "Bu 3 tablo şemada var ama hiç beslenmemiş — ya besleyen kod hiç yazılmadı ya da sessizce kopmuş. İncele: kullanılacaksa bağla, kullanılmayacaksa şemadan düş (ölü şema kafa karıştırıyor). Not: mt5_trades (0 satır) da bot_trades ile süperseded.",
+    "category": "decision",
+    "priority": "low",
+    "status": "pending",
+    "source": "manual",
+    "created_at": "2026-07-16T14:57:34.551564+00:00",
+    "updated_at": "2026-07-16T14:57:34.551570+00:00"
   }
 ]

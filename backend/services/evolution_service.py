@@ -580,6 +580,32 @@ _PANEL_START = "<!-- PANEL-LESSONS START -->"
 _PANEL_END = "<!-- PANEL-LESSONS END -->"
 
 
+def build_decider_lessons_block() -> str:
+    """Aktif 'claude_decider' derslerinin panel bloğu — İÇERİK (marker'sız).
+
+    İki tüketici: (1) _sync_decider_lessons bu makinedeki LESSONS.md'ye yazar,
+    (2) evolution_remote sync_lessons komutuyla MT5 kutusundaki ajana yollar —
+    iki makinede birebir aynı blok oluşur.
+    """
+    lessons = [
+        l for l in _read_json(LESSONS_FILE, [])
+        if l.get("status", "active") == "active"
+        and "claude_decider" in (l.get("targets") or [])
+    ]
+    lessons.sort(key=lambda l: l.get("created_at", ""), reverse=True)
+    lines = ["## 📟 Panel dersleri (Evrim Paneli'nden — analiz çıktısı, İHTİYATLA uygula)"]
+    for l in lessons[:12]:
+        # Tümü tek-satıra düzleştirilir: satır sonu içeren başlık/sembol
+        # kendi maddesinden kaçıp prompt'a sahte satır enjekte edemesin.
+        sym = f" [{_one_line(l['symbol'], 24)}]" if l.get("symbol") else ""
+        title = _one_line(l.get("title"), 160) or "Ders"
+        summary = _one_line(l.get("summary"), 400)
+        lines.append(f"- **{title}**{sym} ({l.get('created_at', '')[:10]}): {summary}")
+    if not lessons:
+        lines.append("*(aktif panel dersi yok)*")
+    return "\n".join(lines)
+
+
 def _sync_decider_lessons() -> None:
     """Aktif 'claude_decider' hedefli dersleri LESSONS.md panel bloğuna yaz.
 
@@ -588,27 +614,7 @@ def _sync_decider_lessons() -> None:
     kanıt-kapısını geçmiş ✅ derslerle karışmaz.
     """
     try:
-        lessons = [
-            l for l in _read_json(LESSONS_FILE, [])
-            if l.get("status", "active") == "active"
-            and "claude_decider" in (l.get("targets") or [])
-        ]
-        lessons.sort(key=lambda l: l.get("created_at", ""), reverse=True)
-        lines = [
-            _PANEL_START,
-            "## 📟 Panel dersleri (Evrim Paneli'nden — analiz çıktısı, İHTİYATLA uygula)",
-        ]
-        for l in lessons[:12]:
-            # Tümü tek-satıra düzleştirilir: satır sonu içeren başlık/sembol
-            # kendi maddesinden kaçıp prompt'a sahte satır enjekte edemesin.
-            sym = f" [{_one_line(l['symbol'], 24)}]" if l.get("symbol") else ""
-            title = _one_line(l.get("title"), 160) or "Ders"
-            summary = _one_line(l.get("summary"), 400)
-            lines.append(f"- **{title}**{sym} ({l.get('created_at', '')[:10]}): {summary}")
-        if not lessons:
-            lines.append("*(aktif panel dersi yok)*")
-        lines.append(_PANEL_END)
-        block = "\n".join(lines)
+        block = f"{_PANEL_START}\n{build_decider_lessons_block()}\n{_PANEL_END}"
 
         if DECIDER_LESSONS_FILE.exists():
             text = DECIDER_LESSONS_FILE.read_text(encoding="utf-8")
@@ -619,7 +625,7 @@ def _sync_decider_lessons() -> None:
             else:
                 new_text = text.rstrip() + "\n\n" + block + "\n"
             DECIDER_LESSONS_FILE.write_text(new_text, encoding="utf-8")
-            logger.info(f"[evolution] decider LESSONS.md panel bloğu güncellendi ({len(lessons)} ders)")
+            logger.info("[evolution] decider LESSONS.md panel bloğu güncellendi")
     except Exception as e:
         logger.error(f"[evolution] decider lesson senkronu başarısız: {e}")
 
@@ -681,7 +687,14 @@ async def distill_run_to_lesson(
     llm_router üzerinden DeepSeek/Kimi kullanır; anahtar yoksa çıktının ham
     kuyruğunu ders olarak kaydeder (fail-open — düğme asla ölü kalmaz).
     """
-    run = get_run(run_id)
+    if run_id.startswith("cmd_"):
+        # Uzak (MT5 kutusu) çalıştırma — Supabase'ten oku; Öğret akışı aynı.
+        from services import evolution_remote as _remote
+        cmd_id = _remote.parse_cmd_run_id(run_id)
+        cmd = await asyncio.to_thread(_remote.get_command, cmd_id) if cmd_id else None
+        run = _remote.command_to_run_meta(cmd) if cmd else None
+    else:
+        run = get_run(run_id)
     if run is None:
         raise KeyError(f"run bulunamadı: {run_id}")
     output = (run.get("output") or "").strip()
@@ -722,10 +735,43 @@ async def distill_run_to_lesson(
 
 # ── Genel bakış (panelin tek fetch'i) ────────────────────────────────────
 
+# Soğuk başlangıçta prediction_logs sorgusu ~100s sürebilir; panel BEKLEMEZ.
+# Zaman aşımında kaynak arka planda çalışmaya devam eder (shield) — kendi
+# cache'ini ısıtır, panelin 60s'lik otomatik yenilemesi sıcak veriyi alır.
+# 20→8: iki kaynak artık paralel beklendiği için endpoint tavanı ~8s.
+OVERVIEW_SOURCE_TIMEOUT = 8
+
+
+async def _bounded(task: "asyncio.Task", timeout: float) -> Any:
+    """Task'i süre sınırıyla bekle; aşarsa İPTAL ETME (cache ısınsın), None dön."""
+    try:
+        return await asyncio.wait_for(asyncio.shield(task), timeout=timeout)
+    except asyncio.TimeoutError:
+        return None
+
+
+# Soğuk kaynak başına TEK uçuşta ısınma görevi — her overview isteği yeni bir
+# 75k-satırlık Supabase taraması başlatmasın (panel 60s'de bir yeniliyor).
+_WARM_TASKS: Dict[str, "asyncio.Task"] = {}
+
+
+def _shared_task(key: str, factory) -> "asyncio.Task":
+    """Aynı key için çalışan task varsa onu döndür; yoksa factory ile başlat."""
+    task = _WARM_TASKS.get(key)
+    if task is not None and not task.done():
+        return task
+    task = asyncio.create_task(factory())
+    _track_task(task)
+    _WARM_TASKS[key] = task
+    task.add_done_callback(lambda t, k=key: _WARM_TASKS.pop(k, None) if _WARM_TASKS.get(k) is t else None)
+    return task
+
+
 async def get_overview(days: int = 30) -> dict:
     """Panelin üst kartları: model başarıları + bias + sistem sayaçları.
 
-    Her alt kaynak fail-open — biri çökerse diğerleri gelmeye devam eder.
+    Her alt kaynak fail-open + süre sınırlı — biri yavaşsa/çökerse panel
+    beklemez, diğer veriler gelmeye devam eder.
     """
     overview: Dict[str, Any] = {
         "generated_at": _now_iso(),
@@ -736,19 +782,38 @@ async def get_overview(days: int = 30) -> dict:
         "active_runs": [],
     }
 
+    # İki yavaş kaynak PARALEL beklenir — endpoint tavanı tek timeout olur
+    # (eskiden sıralıydı: 20s models + 20s bias = 40s'ye kadar sürüyordu).
+    task = None
+    btask = None
     try:
         from routers.learning import get_accuracy_by_model
-        acc = await get_accuracy_by_model(symbol=None, days=days, check_interval="24h")
-        if isinstance(acc, dict) and "models" in acc:
-            overview["models"] = acc
+        task = _shared_task(
+            f"models:{days}",
+            lambda: get_accuracy_by_model(symbol=None, days=days, check_interval="24h"))
     except Exception as e:
-        logger.warning(f"[evolution] model accuracy alınamadı: {e}")
-
+        logger.warning(f"[evolution] model accuracy task kurulamadı: {e}")
     try:
         from services.bias_test_service import accuracy_report  # type: ignore
-        overview["bias"] = await asyncio.to_thread(accuracy_report)
+        btask = _shared_task("bias", lambda: asyncio.to_thread(accuracy_report))
     except Exception as e:
-        logger.warning(f"[evolution] bias raporu alınamadı: {e}")
+        logger.warning(f"[evolution] bias task kurulamadı: {e}")
+
+    acc, bias = await asyncio.gather(
+        _bounded(task, OVERVIEW_SOURCE_TIMEOUT) if task else asyncio.sleep(0, result=None),
+        _bounded(btask, OVERVIEW_SOURCE_TIMEOUT) if btask else asyncio.sleep(0, result=None),
+    )
+
+    if isinstance(acc, dict) and "models" in acc:
+        overview["models"] = acc
+    elif task is not None and acc is None and not task.done():
+        overview["models_warming"] = True
+        logger.info("[evolution] model accuracy yavaş — arka planda ısınıyor")
+
+    if bias is not None:
+        overview["bias"] = bias
+    elif btask is not None and not btask.done():
+        overview["bias_warming"] = True
 
     backlog = get_backlog()
     overview["counts"] = {

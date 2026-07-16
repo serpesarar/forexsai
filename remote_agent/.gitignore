@@ -1,0 +1,4 @@
+agent_config.py
+agent_state.json
+evolution_agent.log
+__pycache__/

@@ -10,7 +10,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Bot, BrainCircuit, ChevronDown, Cpu, Database, GraduationCap, Network, Shield, Wrench } from "lucide-react";
 
 import { type RegistryComponent, useRegistry } from "@/lib/api/evolution";
-import { Badge, EmptyState, GlassCard, Section, catLabel, cx, stagger } from "./ui";
+import DataFlowRibbon from "./DataFlowRibbon";
+import { EmptyState, GlassCard, Section, catLabel, cx, stagger } from "./ui";
 
 const CAT_ICONS: Record<string, ReactNode> = {
   signal_engine: <Cpu size={15} />,
@@ -95,6 +96,7 @@ export default function SystemMap() {
       accent="#38BDF8"
       icon={<Network size={22} />}
     >
+      <DataFlowRibbon />
       <GlassCard>
         <div className="mb-4 flex flex-wrap gap-2">
           {cats.map((cat) => {

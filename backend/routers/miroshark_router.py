@@ -37,8 +37,57 @@ def verify_signature(raw_body: bytes, signature: str | None, secret: str) -> boo
     return hmac.compare_digest(expected, signature)
 
 
-def _persist(payload: dict, source: str) -> dict:
-    """Shared UPSERT + response shaping for webhook and manual paths."""
+SHADOW_RUN_LABEL = "miroshark_daily"
+
+
+async def _log_shadow(payload: dict) -> bool:
+    """Her MiroShark bias'ını bias_test_log'a yaz (run_label=miroshark_daily).
+
+    Gölge karnesi: native debate ile yan yana notlanır (fill-outcomes aynı
+    makine). Gün içinde aynı etiket zaten loglandıysa atlanır (mükerrer yok).
+    Loglama hatası push'u DÜŞÜRMEZ — gölge, canlı akışın önüne geçemez.
+    """
+    from services import bias_test_service as bts
+    try:
+        ny_date = None
+        try:
+            from services import session_context_service as scs
+            from datetime import datetime, timezone
+            ctx = scs.get_session_context(datetime.now(timezone.utc))
+            ny_date = ctx["ny_time"][:10]
+        except Exception:
+            pass
+        if ny_date and bts.already_logged(ny_date, SHADOW_RUN_LABEL):
+            logger.info("[miroshark] gölge kaydı atlandı — bugün zaten loglanmış")
+            return False
+        await bts.record_run(payload, run_label=SHADOW_RUN_LABEL)
+        logger.info("[miroshark] gölge kaydı yazıldı (bias_test_log/%s)", SHADOW_RUN_LABEL)
+        return True
+    except Exception as e:
+        logger.warning("[miroshark] gölge kaydı başarısız (push sürüyor): %s", e)
+        return False
+
+
+async def _persist(payload: dict, source: str) -> dict:
+    """Webhook + manual ortak yolu.
+
+    GÖLGE MODU (MIROSHARK_SHADOW_ONLY=1, default): bias yalnız bias_test_log'a
+    yazılır — daily_bias'a (Precision Veto'nun okuduğu canlı tablo) DOKUNULMAZ.
+    Kanıtsız sistem canlı sinyalleri etkileyemez; isabet ≥%55 kanıtlanınca
+    env 0 yapılır ve eski davranış (daily_bias UPSERT) geri gelir.
+    """
+    shadow_logged = await _log_shadow(payload)
+
+    if settings.miroshark_shadow_only:
+        return {
+            "ok": True,
+            "source": source,
+            "mode": "shadow_only",
+            "shadow_logged": shadow_logged,
+            "note": "GÖLGE MODU: bias_test_log'a kaydedildi, canlı veto katmanına dokunulmadı. "
+                    "Karne: GET /api/bias-test/accuracy-report (run_label=miroshark_daily)",
+        }
+
     try:
         result = bias_svc.upsert_bias(payload)
     except ValueError as e:
@@ -55,6 +104,8 @@ def _persist(payload: dict, source: str) -> dict:
     return {
         "ok": True,
         "source": source,
+        "mode": "live",
+        "shadow_logged": shadow_logged,
         "bias_date": row.get("bias_date"),
         "symbol": row.get("symbol"),
         "nasdaq_daily_bias": row.get("nasdaq_daily_bias"),
@@ -81,7 +132,7 @@ async def miroshark_webhook(request: Request):
     except (json.JSONDecodeError, UnicodeDecodeError) as e:
         raise HTTPException(status_code=400, detail=f"invalid JSON: {e}")
 
-    return _persist(payload, source="webhook")
+    return await _persist(payload, source="webhook")
 
 
 @router.post("/manual-bias")
@@ -90,7 +141,7 @@ async def miroshark_manual_bias(payload: dict):
 
     No signature (operator-triggered). Same UPSERT + validation as the webhook.
     """
-    return _persist(payload, source="manual")
+    return await _persist(payload, source="manual")
 
 
 @router.get("/current-bias")
