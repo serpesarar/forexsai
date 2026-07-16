@@ -2,14 +2,16 @@
 
 /**
  * Performans Panosu — model başarı oranları (dürüst lifecycle) + ajan bias karnesi.
- * Sol: en iyi modeller gradyan çubuklarla. Sağ: ajan karnesi büyük gauge halkasıyla.
+ * Sol: en iyi modeller gradyan çubuklarla — TIKLA → sembol/yön detay çekmecesi.
+ * Sağ: ajan karnesi büyük gauge halkasıyla — sembole tıkla → etiket/güven kırılımı.
  */
 
-import { useMemo } from "react";
-import { motion } from "framer-motion";
-import { TrendingUp, Users } from "lucide-react";
+import { useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronRight, TrendingUp, Users, X } from "lucide-react";
 
-import type { Overview } from "@/lib/api/evolution";
+import type { BiasReport, Overview } from "@/lib/api/evolution";
+import ModelDetailDrawer from "./ModelDetailDrawer";
 import { Badge, EmptyState, GlassCard, ProgressBar, Ring, Section, Skeleton, modelColor, stagger } from "./ui";
 
 const MIN_RESOLVED = 10;
@@ -21,7 +23,86 @@ function biasColor(pct: number | null): string {
   return "#FB7185";
 }
 
+/** Bias karnesi sembol detayı — etiket (çalıştırma saati) + güven kovası kırılımı. */
+function BiasDetailSheet({ bias, symbol, onClose }: { bias: BiasReport; symbol: string; onClose: () => void }) {
+  const symRate = bias.by_symbol?.[symbol];
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 40, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 40, opacity: 0, scale: 0.98 }}
+        transition={{ type: "spring", damping: 28, stiffness: 320 }}
+        className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#0B0F17] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-3.5">
+          <span className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+            <Users size={15} className="text-violet-300" /> {symbol} — ajan karnesi
+          </span>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
+          {symRate && (
+            <p className="mb-4 text-center text-sm text-slate-300">
+              <span className="text-2xl font-bold" style={{ color: biasColor(symRate.accuracy_pct) }}>
+                {symRate.accuracy_pct !== null ? `%${symRate.accuracy_pct}` : "—"}
+              </span>{" "}
+              isabet · {symRate.correct}/{symRate.n} tahmin
+            </p>
+          )}
+          <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Çalıştırma etiketine göre (tüm semboller)
+          </h4>
+          <div className="mb-4 space-y-2">
+            {Object.entries(bias.by_run_label ?? {}).map(([label, r]) => (
+              <div key={label} className="flex items-center gap-2.5 text-xs">
+                <span className="w-32 shrink-0 truncate font-medium text-slate-300">{label}</span>
+                <div className="flex-1">
+                  <ProgressBar pct={r.accuracy_pct ?? 0} color={biasColor(r.accuracy_pct)} />
+                </div>
+                <span className="w-20 shrink-0 text-right tabular-nums text-slate-500">
+                  {r.accuracy_pct !== null ? `%${r.accuracy_pct}` : "—"} · {r.n}
+                </span>
+              </div>
+            ))}
+          </div>
+          <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Güven kovasına göre (tüm semboller)
+          </h4>
+          <div className="space-y-2">
+            {Object.entries(bias.by_confidence_bucket ?? {}).map(([bucket, r]) => (
+              <div key={bucket} className="flex items-center gap-2.5 text-xs">
+                <span className="w-32 shrink-0 truncate font-medium text-slate-300">{bucket}</span>
+                <div className="flex-1">
+                  <ProgressBar pct={r.accuracy_pct ?? 0} color={biasColor(r.accuracy_pct)} />
+                </div>
+                <span className="w-20 shrink-0 text-right tabular-nums text-slate-500">
+                  {r.accuracy_pct !== null ? `%${r.accuracy_pct}` : "—"} · {r.n}
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-center text-[10px] text-slate-600">
+            Etiket ve güven kırılımları tüm sembollerin toplamıdır — hangi saat/etiket en isabetli görülür.
+          </p>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function PerformanceBoard({ overview }: { overview: Overview | undefined }) {
+  const [openModel, setOpenModel] = useState<string | null>(null);
+  const [openBiasSymbol, setOpenBiasSymbol] = useState<string | null>(null);
   const models = useMemo(() => {
     const rows = overview?.models?.models ?? [];
     return rows
@@ -61,14 +142,23 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
           {overview && !overview.models_warming && models.length === 0 && (
             <EmptyState text="Yeterli çözülmüş sinyal yok — veritabanı erişimini kontrol et." />
           )}
-          <div className="space-y-3.5">
+          <div className="space-y-1.5">
             {models.map((m, i) => {
               const pct = Math.round((m.ml_accuracy ?? 0) * 100);
               const color = modelColor(m.strategy);
               return (
-                <motion.div key={m.strategy} {...stagger(i)}>
+                <motion.button
+                  key={m.strategy}
+                  {...stagger(i)}
+                  onClick={() => setOpenModel(m.strategy)}
+                  className="group/row block w-full rounded-xl px-2 py-2 text-left transition hover:bg-white/[0.04]"
+                  title="Sembol bazlı detayı aç"
+                >
                   <div className="mb-1.5 flex items-baseline justify-between">
-                    <span className="text-[13px] font-medium text-slate-200">{m.strategy}</span>
+                    <span className="flex items-center gap-1 text-[13px] font-medium text-slate-200">
+                      {m.strategy}
+                      <ChevronRight size={12} className="text-slate-600 opacity-0 transition group-hover/row:translate-x-0.5 group-hover/row:opacity-100" />
+                    </span>
                     <span className="text-xs tabular-nums text-slate-500">
                       <span className="text-base font-bold" style={{ color }}>
                         %{pct}
@@ -77,10 +167,13 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                     </span>
                   </div>
                   <ProgressBar pct={pct} color={color} delay={i * 0.04} />
-                </motion.div>
+                </motion.button>
               );
             })}
           </div>
+          {models.length > 0 && (
+            <p className="mt-3 text-center text-[10px] text-slate-600">Bir modele tıkla → sembol & yön kırılımı</p>
+          )}
         </GlassCard>
 
         {/* Ajan bias karnesi */}
@@ -118,17 +211,23 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                 {overallPct !== null && overallPct < 55 && <Badge tone="red">alt sınırın altında</Badge>}
               </div>
 
-              <div className="mt-5 w-full space-y-2.5">
+              <div className="mt-5 w-full space-y-1">
                 {Object.entries(bias.by_symbol ?? {}).map(([sym, r], i) => (
-                  <motion.div key={sym} {...stagger(i)} className="flex items-center gap-2.5 text-xs">
-                    <span className="w-24 shrink-0 truncate font-medium text-slate-300">{sym}</span>
+                  <motion.button
+                    key={sym}
+                    {...stagger(i)}
+                    onClick={() => setOpenBiasSymbol(sym)}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-xs transition hover:bg-white/[0.04]"
+                    title="Etiket & güven kırılımını aç"
+                  >
+                    <span className="w-24 shrink-0 truncate text-left font-medium text-slate-300">{sym}</span>
                     <div className="flex-1">
                       <ProgressBar pct={r.accuracy_pct ?? 0} color={biasColor(r.accuracy_pct)} delay={i * 0.05} />
                     </div>
                     <span className="w-16 shrink-0 text-right tabular-nums text-slate-500">
                       {r.accuracy_pct !== null ? `%${r.accuracy_pct}` : "—"}
                     </span>
-                  </motion.div>
+                  </motion.button>
                 ))}
               </div>
               <p className="mt-4 text-center text-[11px] text-slate-500">Hedef: ≥%65 iyi · ≥%55 canlıya alma alt sınırı</p>
@@ -136,6 +235,19 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
           )}
         </GlassCard>
       </div>
+
+      <AnimatePresence>
+        {openModel && (
+          <ModelDetailDrawer
+            strategy={openModel}
+            days={overview?.days ?? 30}
+            onClose={() => setOpenModel(null)}
+          />
+        )}
+        {openBiasSymbol && bias && (
+          <BiasDetailSheet bias={bias} symbol={openBiasSymbol} onClose={() => setOpenBiasSymbol(null)} />
+        )}
+      </AnimatePresence>
     </Section>
   );
 }

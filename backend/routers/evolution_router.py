@@ -188,6 +188,16 @@ async def remote_bot_performance(days: int = Query(30, ge=1, le=365)):
         raise HTTPException(status_code=503, detail=str(e))
 
 
+@router.get("/remote/bot-trades")
+async def remote_bot_trades(symbol: str = Query(..., min_length=2, max_length=20),
+                            days: int = Query(30, ge=1, le=365)):
+    """Tek sembolün son MT5 işlemleri (Canlı Bot panelinde sembole tıkla)."""
+    try:
+        return await asyncio.to_thread(remote.get_bot_trades, symbol, days)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
 @router.get("/remote/decider-stats")
 async def remote_decider_stats(days: int = Query(30, ge=1, le=365)):
     """Claude Decider karar karnesi (decider_journal)."""

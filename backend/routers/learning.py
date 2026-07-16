@@ -42,13 +42,14 @@ class SimpleCache:
                 del self.store[key]
         return None
 
-    async def set(self, key: Any, val: Any):
+    async def set(self, key: Any, val: Any, ttl: Optional[float] = None):
+        expiry = time.time() + (ttl if ttl is not None else self.ttl)
         lock = self._get_lock()
         if lock:
             async with lock:
-                self.store[key] = (time.time() + self.ttl, val)
+                self.store[key] = (expiry, val)
         else:
-            self.store[key] = (time.time() + self.ttl, val)
+            self.store[key] = (expiry, val)
 
     async def invalidate_all(self):
         lock = self._get_lock()
@@ -778,12 +779,117 @@ async def get_accuracy_by_model(
             "symbol": symbol,
             "source": "lifecycle_primary",
         }
-        await _learning_stats_cache.set(cache_key, res)
+        await _learning_stats_cache.set(cache_key, res, ttl=600.0)  # ağır agregat: recompute ~90-120s, 60s TTL soğuk döngü yaratıyordu
         return res
     
     except Exception as e:
         import traceback
         return {"error": str(e), "traceback": traceback.format_exc()[:300]}
+
+
+@router.get("/model-symbol-breakdown")
+async def get_model_symbol_breakdown(
+    strategy: str = Query(..., min_length=2, max_length=60),
+    days: int = Query(30, ge=1, le=1095),
+):
+    """Tek modelin sembol + yön kırılımı (Evrim Paneli 'modele tıkla' detayı).
+
+    accuracy-by-model ile AYNI sınıflandırma (signal_analytics.classify_signal):
+    completed→win, soft direction_flip→nötr flip_closed, MCI satırları gizli.
+    Panel anahtarları model_type kolonuyla birebir ('ml:main', 'emel', ...).
+    """
+    if not is_db_available():
+        return {"error": "Database not available"}
+    from database.supabase_client import get_supabase_client
+    client = get_supabase_client()
+    if not client:
+        return {"error": "Database client not available"}
+
+    cache_key = ("model_symbol_breakdown", strategy, days)
+    cached = await _learning_stats_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    cutoff = _utc_iso(_utc_now() - timedelta(days=days))
+
+    def _fetch() -> List[dict]:
+        rows: List[dict] = []
+        page_before: Optional[str] = None
+        while True:
+            q = (client.table("prediction_logs").select("*")
+                 .eq("model_type", strategy)
+                 .gte("created_at", cutoff)
+                 .neq("status", "active"))
+            if page_before:
+                q = q.lt("created_at", page_before)
+            batch = safe_get_data(q.order("created_at", desc=True).limit(1000).execute()) or []
+            rows.extend(batch)
+            if len(batch) < 1000:
+                return rows
+            page_before = batch[-1].get("created_at")
+
+    try:
+        predictions = await asyncio.to_thread(_fetch)
+        predictions = filter_market_closed_invalid_signals(predictions)
+        attach_corrections(predictions, client)
+
+        by_symbol: Dict[str, dict] = {}
+        recent: List[dict] = []
+        totals = {"total": 0, "wins": 0, "losses": 0, "flips": 0, "expired": 0}
+
+        for pred in predictions:
+            sym = pred.get("symbol") or "?"
+            direction = (pred.get("ml_direction") or "?").upper()
+            status_class, is_win, pips = classify_signal(pred, default_symbol=sym)
+
+            s = by_symbol.setdefault(sym, {
+                "total": 0, "wins": 0, "losses": 0, "flips": 0, "expired": 0,
+                "by_direction": {},
+            })
+            d = s["by_direction"].setdefault(direction, {"total": 0, "wins": 0, "losses": 0})
+            s["total"] += 1
+            d["total"] += 1
+            totals["total"] += 1
+
+            if status_class == "completed":
+                s["wins"] += 1; d["wins"] += 1; totals["wins"] += 1
+            elif status_class == "stopped":
+                s["losses"] += 1; d["losses"] += 1; totals["losses"] += 1
+            elif status_class == "flip_closed":
+                s["flips"] += 1; totals["flips"] += 1
+            else:
+                s["expired"] += 1; totals["expired"] += 1
+
+            if len(recent) < 15:
+                recent.append({
+                    "symbol": sym,
+                    "direction": direction,
+                    "outcome": status_class,
+                    "profit_pips": round(pips, 1) if pips is not None else None,
+                    "created_at": pred.get("created_at"),
+                })
+
+        def _wr(w: int, l: int) -> Optional[float]:
+            return round(100 * w / (w + l), 1) if (w + l) > 0 else None
+
+        for s in by_symbol.values():
+            s["win_rate"] = _wr(s["wins"], s["losses"])
+            for d in s["by_direction"].values():
+                d["win_rate"] = _wr(d["wins"], d["losses"])
+
+        res = {
+            "strategy": strategy,
+            "days": days,
+            **totals,
+            "win_rate": _wr(totals["wins"], totals["losses"]),
+            "by_symbol": by_symbol,
+            "recent": recent,
+        }
+        await _learning_stats_cache.set(cache_key, res, ttl=600.0)  # ağır agregat: recompute ~90-120s, 60s TTL soğuk döngü yaratıyordu
+        return res
+    except Exception as e:
+        logger.error(f"model-symbol-breakdown error: {e}")
+        return {"error": str(e)}
 
 
 @router.get("/lifecycle-results")
@@ -2340,7 +2446,7 @@ async def get_ai_panel_performance(
                 },
             },
         }
-        await _learning_stats_cache.set(cache_key, res)
+        await _learning_stats_cache.set(cache_key, res, ttl=600.0)  # ağır agregat: recompute ~90-120s, 60s TTL soğuk döngü yaratıyordu
         return res
     except Exception as e:
         import traceback
@@ -3266,7 +3372,7 @@ async def get_all_models_summary(
             "symbol": symbol,
             "models": summary
         }
-        await _learning_stats_cache.set(cache_key, res)
+        await _learning_stats_cache.set(cache_key, res, ttl=600.0)  # ağır agregat: recompute ~90-120s, 60s TTL soğuk döngü yaratıyordu
         return res
         
     except Exception as e:

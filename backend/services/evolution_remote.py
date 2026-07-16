@@ -148,6 +148,21 @@ def get_decider_stats(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, Any
     }
 
 
+def get_bot_trades(symbol: str, days: int = 30, host: str = DEFAULT_HOST,
+                   limit: int = 40) -> Dict[str, Any]:
+    """Tek sembolün son MT5 işlemleri (panelde sembole tıkla → detay)."""
+    client = _client()
+    since = (_now() - timedelta(days=days)).isoformat()
+    res = (client.table("bot_trades")
+           .select("ticket,symbol,direction,volume,close_time,close_price,profit,commission,swap,comment")
+           .eq("host", host).eq("symbol", symbol).gte("close_time", since)
+           .order("close_time", desc=True).limit(limit).execute())
+    trades = res.get("data") or []
+    for t in trades:
+        t["net"] = round((t.get("profit") or 0) + (t.get("commission") or 0) + (t.get("swap") or 0), 2)
+    return {"symbol": symbol, "days": days, "trades": trades}
+
+
 # ── Komut kuyruğu ─────────────────────────────────────────────────────────
 
 ALLOWED_KINDS = {"run_analysis", "sync_lessons", "git_pull", "restart_bot"}

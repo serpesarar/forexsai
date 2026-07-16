@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Bot,
   GitPullRequest,
@@ -17,11 +17,13 @@ import {
   Sparkles,
   Wifi,
   WifiOff,
+  X,
 } from "lucide-react";
 
 import {
   type RemoteCommandSummary,
   useBotPerformance,
+  useBotTrades,
   useDeciderStats,
   useRemoteCommand,
   useRemoteStatus,
@@ -65,12 +67,74 @@ function CommandRow({ cmd }: { cmd: RemoteCommandSummary }) {
   );
 }
 
+/** Sembole tıkla → o sembolün son MT5 işlemleri. */
+function TradesSheet({ symbol, days, onClose }: { symbol: string; days: number; onClose: () => void }) {
+  const { data, isLoading } = useBotTrades(symbol, days);
+  const trades = data?.trades ?? [];
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 40, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 40, opacity: 0, scale: 0.98 }}
+        transition={{ type: "spring", damping: 28, stiffness: 320 }}
+        className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#0B0F17] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-3.5">
+          <span className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+            <Bot size={15} className="text-orange-300" /> {symbol} — son işlemler
+            <Badge tone="slate">son {days} gün</Badge>
+          </span>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
+          {isLoading && <Skeleton className="h-24 w-full" />}
+          {!isLoading && trades.length === 0 && (
+            <p className="rounded-xl border border-dashed border-white/10 p-4 text-center text-[12px] text-slate-500">
+              Bu pencerede işlem yok.
+            </p>
+          )}
+          <div className="space-y-0.5">
+            {trades.map((t) => (
+              <div key={t.ticket} className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[11px] odd:bg-white/[0.02]">
+                <span className="flex items-center gap-2 text-slate-300">
+                  <span className={cx("font-semibold", t.direction === "BUY" ? "text-emerald-300" : "text-rose-300")}>
+                    {t.direction}
+                  </span>
+                  {t.volume != null && <span className="text-slate-500">{t.volume} lot</span>}
+                  {t.comment && <span className="truncate text-slate-600">{t.comment}</span>}
+                </span>
+                <span className="flex shrink-0 items-center gap-2.5 text-slate-500">
+                  <span className={cx("font-semibold tabular-nums", t.net >= 0 ? "text-emerald-300" : "text-rose-300")}>
+                    {t.net >= 0 ? "+" : ""}{t.net} $
+                  </span>
+                  {timeAgo(t.close_time)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function RemoteBotBoard({ days }: { days: number }) {
   const { data: status, isLoading: statusLoading, isError } = useRemoteStatus();
   const { data: bot } = useBotPerformance(days);
   const { data: decider } = useDeciderStats(days);
   const command = useRemoteCommand();
   const [confirmRestart, setConfirmRestart] = useState(false);
+  const [openSymbol, setOpenSymbol] = useState<string | null>(null);
 
   const online = status?.online ?? false;
   const openPositions = status?.meta?.open_positions;
@@ -214,17 +278,23 @@ export default function RemoteBotBoard({ days }: { days: number }) {
                 {bot.net_profit >= 0 ? "+" : ""}
                 {bot.net_profit.toLocaleString("tr-TR")} $
               </p>
-              <div className="mt-4 w-full space-y-2">
+              <div className="mt-4 w-full space-y-1">
                 {Object.entries(bot.by_symbol).map(([sym, s], i) => (
-                  <motion.div key={sym} {...stagger(i)} className="flex items-center gap-2 text-xs">
-                    <span className="w-20 shrink-0 truncate font-medium text-slate-300">{sym}</span>
+                  <motion.button
+                    key={sym}
+                    {...stagger(i)}
+                    onClick={() => setOpenSymbol(sym)}
+                    className="flex w-full items-center gap-2 rounded-lg px-1.5 py-1.5 text-xs transition hover:bg-white/[0.04]"
+                    title="Son işlemleri aç"
+                  >
+                    <span className="w-20 shrink-0 truncate text-left font-medium text-slate-300">{sym}</span>
                     <div className="flex-1">
                       <ProgressBar pct={s.win_rate ?? 0} color={wrColor(s.win_rate)} delay={i * 0.05} />
                     </div>
                     <span className="w-24 shrink-0 text-right tabular-nums text-slate-500">
                       %{s.win_rate ?? "—"} · {s.n} işlem
                     </span>
-                  </motion.div>
+                  </motion.button>
                 ))}
               </div>
             </div>
@@ -272,6 +342,9 @@ export default function RemoteBotBoard({ days }: { days: number }) {
           )}
         </GlassCard>
       </div>
+      <AnimatePresence>
+        {openSymbol && <TradesSheet symbol={openSymbol} days={days} onClose={() => setOpenSymbol(null)} />}
+      </AnimatePresence>
     </Section>
   );
 }

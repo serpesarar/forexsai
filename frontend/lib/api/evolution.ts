@@ -374,3 +374,70 @@ export function useRemoteCommand() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["evolution", "remote"] }),
   });
 }
+
+// ── Model detayı (tıkla → sembol/yön kırılımı) ───────────────────────────
+
+export interface DirectionStat {
+  total: number;
+  wins: number;
+  losses: number;
+  win_rate: number | null;
+}
+
+export interface SymbolBreakdown {
+  total: number;
+  wins: number;
+  losses: number;
+  flips: number;
+  expired: number;
+  win_rate: number | null;
+  by_direction: Record<string, DirectionStat>;
+}
+
+export interface ModelDetail {
+  strategy: string;
+  days: number;
+  total: number;
+  wins: number;
+  losses: number;
+  flips: number;
+  expired: number;
+  win_rate: number | null;
+  by_symbol: Record<string, SymbolBreakdown>;
+  recent: {
+    symbol: string;
+    direction: string;
+    outcome: string;
+    profit_pips: number | null;
+    created_at: string;
+  }[];
+}
+
+export function useModelDetail(strategy: string | null, days = 30) {
+  return useQuery<ModelDetail>({
+    queryKey: ["evolution", "model-detail", strategy, days],
+    queryFn: () => getJson(`/api/learning/model-symbol-breakdown?strategy=${encodeURIComponent(strategy!)}&days=${days}`),
+    enabled: !!strategy,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export interface BotTrade {
+  ticket: number;
+  symbol: string;
+  direction: string;
+  volume: number | null;
+  close_time: string;
+  close_price: number | null;
+  net: number;
+  comment: string | null;
+}
+
+export function useBotTrades(symbol: string | null, days = 30) {
+  return useQuery<{ symbol: string; days: number; trades: BotTrade[] }>({
+    queryKey: ["evolution", "remote", "bot-trades", symbol, days],
+    queryFn: () => getJson(`/api/evolution/remote/bot-trades?symbol=${encodeURIComponent(symbol!)}&days=${days}`),
+    enabled: !!symbol,
+    staleTime: 60_000,
+  });
+}

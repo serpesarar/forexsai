@@ -1305,13 +1305,14 @@ async def _run_lifecycle_check_inner() -> Dict[str, Any]:
         logger.error(f"lifecycle.check_fatal | error_type={type(e).__name__} error={e}\n{traceback.format_exc()}")
         summary["error"] = str(e)
 
-    # Invalidate dashboard stats cache and learning router cache
+    # Invalidate dashboard stats cache
     await _dashboard_stats_cache.invalidate_all()
-    try:
-        from routers.learning import _learning_stats_cache
-        await _learning_stats_cache.invalidate_all()
-    except Exception as e:
-        logger.warning(f"Failed to invalidate learning stats cache: {e}")
+    # 2026-07-16: _learning_stats_cache artık BURADA silinmiyor. Lifecycle 2dk'da
+    # bir koşup cache'i koşulsuz siliyordu; accuracy-by-model'in yeniden hesabı
+    # ~90-120s sürdüğünden panel kalıcı "ısınıyor" döngüsüne giriyor ve 23k
+    # satırlık Supabase taraması sürekli tekrarlanıyordu. Tazelik artık TTL'de
+    # (ağır agregatlar 600s, canlı feed'ler 60s) — 30 günlük toplamda tek
+    # çözümün görünür etkisi yok.
 
     # Record job state for scheduler resilience
     _record_job_state(client, "lifecycle_check", summary)

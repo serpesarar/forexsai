@@ -38,7 +38,7 @@ import { emitOpenRun } from "@/components/evolution/events";
 import { Toaster } from "@/components/evolution/toast";
 import { AnimatedNumber, PulseDot, cx } from "@/components/evolution/ui";
 
-const DAY_OPTIONS = [7, 30, 90];
+const DAY_OPTIONS = [7, 30, 90, 365];
 
 const NAV = [
   { id: "performans", label: "Performans", icon: <TrendingUp size={14} /> },

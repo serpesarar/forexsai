@@ -339,5 +339,60 @@
     "source": "manual",
     "created_at": "2026-07-16T14:57:34.551564+00:00",
     "updated_at": "2026-07-16T14:57:34.551570+00:00"
+  },
+  {
+    "id": "bl_13a6973f2c",
+    "title": "Fakeout kapısını blok moduna alma kararı",
+    "detail": "1-2 hafta gölge loglarını izle (fakeout_gate GÖLGE satırları): bloklanacak sinyallerin gerçek outcome'ları toplanınca sinyal-bazlı doğrulama yap; edge tutuyorsa FAKEOUT_GATE_BLOCK=1",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T18:12:36.903568+00:00",
+    "updated_at": "2026-07-16T18:12:36.903918+00:00"
+  },
+  {
+    "id": "bl_7f9a6c1849",
+    "title": "Fakeout mining diğer semboller",
+    "detail": "XAUUSD/GDAXI/USOIL için fakeout_miner çalıştır (sembol-parametrik hazır: --symbol); kural dosyası şu an tek sembol tutuyor — çok-sembol JSON şemasına genişletmek gerekir",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T18:12:36.905277+00:00",
+    "updated_at": "2026-07-16T18:12:36.905283+00:00"
+  },
+  {
+    "id": "bl_da8d6c75f7",
+    "title": "MT5 canlı botuna fakeout freni",
+    "detail": "yeni deneme/ botu işlem açmadan önce GET /api/fakeout/assess/NDX.INDX çağırıp fake_probability≥80 + yön hizalıysa girişi atlasın (kullanıcının asıl isteği MT5 botuydu; panel/decider bağlandı, bot bağlanmadı)",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T18:12:36.905803+00:00",
+    "updated_at": "2026-07-16T18:12:36.905807+00:00"
+  },
+  {
+    "id": "bl_3510ab4a59",
+    "title": "Fade stratejisi bağımsız doğrulama",
+    "detail": "skor≤−2 klimaks kırılımını TERS yönde işlem olarak friction'lı backtest et (spread+slippage, NDX 5m ATR bazlı; OOS %87.5 sahte = brüt +0.74R @1:1) — tutarsa yeni sinyal kaynağı/reflex ailesi olarak değerlendir, mevcut rev_chan mean-rev kanıtıyla korelasyonunu ölç (aynı edge'i mi yakalıyor?)",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T18:49:34.727806+00:00",
+    "updated_at": "2026-07-16T18:49:34.727968+00:00"
+  },
+  {
+    "id": "bl_cd4ab545e5",
+    "title": "Backend restart — fakeout v2 modülü",
+    "detail": "Lokal backend eski fakeout_service (v1) modülüyle çalışıyor; restart sonrası /api/fakeout/assess breakout_score+recommendation+confirmation alanlarını dönmeli, Neural panel kartı da bunları gösterecek",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T18:49:34.728584+00:00",
+    "updated_at": "2026-07-16T18:49:34.728587+00:00"
   }
 ]
