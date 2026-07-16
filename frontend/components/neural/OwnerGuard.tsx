@@ -1,9 +1,9 @@
 "use client";
 
 /**
- * OwnerGuard — yalnızca panel sahibinin (m.canodacioglu@gmail.com) girişinde
- * içerik gösterir. AuthGuard'ın üstüne kurulur: önce normal oturum kontrolü,
- * sonra e-posta eşleşmesi. Sahip değilse ana panele yönlendirir.
+ * OwnerGuard — yalnızca panel sahiplerinin (OWNER_EMAILS) girişinde içerik
+ * gösterir. AuthGuard'ın üstüne kurulur: önce normal oturum kontrolü, sonra
+ * e-posta eşleşmesi. Sahip değilse ana panele yönlendirir.
  * NeuralNav, EVOLUTION sekmesini yalnızca useIsOwner() true iken gösterir.
  */
 
@@ -12,17 +12,22 @@ import { useRouter } from "next/navigation";
 import AuthGuard from "@/components/AuthGuard";
 import { useAuthStore } from "@/lib/auth/store";
 
-export const OWNER_EMAIL = "m.canodacioglu@gmail.com";
+export const OWNER_EMAILS = ["m.canodacioglu@gmail.com", "m.canodaciogluabd@gmail.com"];
+
+function isOwnerEmail(email: string | null | undefined): boolean {
+  const normalized = (email ?? "").trim().toLowerCase();
+  return OWNER_EMAILS.includes(normalized);
+}
 
 export function useIsOwner(): boolean {
   const email = useAuthStore((s) => s.user?.email);
-  return (email ?? "").trim().toLowerCase() === OWNER_EMAIL;
+  return isOwnerEmail(email);
 }
 
 function OwnerOnly({ children }: { children: ReactNode }) {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
-  const isOwner = (user?.email ?? "").trim().toLowerCase() === OWNER_EMAIL;
+  const isOwner = isOwnerEmail(user?.email);
 
   useEffect(() => {
     // AuthGuard bu noktada oturumu garantiledi; sahip değilse ana panele dön.
