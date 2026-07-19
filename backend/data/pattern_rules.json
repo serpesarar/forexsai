@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-07-15T10:21:37.594425Z",
+  "generated_at": "2026-07-16T03:28:40.817818Z",
   "days": 60,
-  "total_signals": 42564,
+  "total_signals": 43237,
   "rules": [
     {
       "kind": "winning_pattern",
@@ -60,14 +60,14 @@
         "rsi_H4 = [30,50)",
         "M30_adx_label = trending",
         "consec_red_M30 = [0,2)",
-        "bb_extreme_upper \u2260 False"
+        "bb_extreme_upper = True"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "GLOBAL \u2014 t\u00fcm sembol & model",
       "win_rate": 31.3,
-      "samples": 4952,
+      "samples": 4965,
       "conditions": [
         "rsi_H4 \u2260 [30,50)",
         "adx_H4 \u2260 [25,35)",
@@ -90,8 +90,8 @@
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ai_panel",
-      "win_rate": 96.4,
-      "samples": 28,
+      "win_rate": 93.1,
+      "samples": 29,
       "conditions": [
         "vix_chg1d \u2260 [3,+\u221e)",
         "rsi_H1 \u2260 [50,65)",
@@ -110,13 +110,13 @@
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 meta",
-      "win_rate": 82.9,
-      "samples": 41,
+      "win_rate": 96.0,
+      "samples": 25,
       "conditions": [
         "sar_bearish \u2260 False",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "us10y_chg1d \u2260 [0.5,+\u221e)",
-        "adx_H4 = [25,35)"
+        "adx_H4 = [25,35)",
+        "hour_bucket \u2260 12-16"
       ]
     },
     {
@@ -168,8 +168,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 meta",
-      "win_rate": 32.3,
-      "samples": 31,
+      "win_rate": 31.2,
+      "samples": 32,
       "conditions": [
         "sar_bearish = False",
         "H4_ema_stack = mixed",
@@ -179,34 +179,25 @@
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:balanced",
-      "win_rate": 100.0,
-      "samples": 26,
+      "win_rate": 97.7,
+      "samples": 43,
       "conditions": [
         "rsi_H1 \u2260 [50,65)",
-        "vix_chg1d = [0,3)",
-        "H1_ema_stack \u2260 mixed"
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "H1_ema_stack \u2260 down",
+        "vix_chg1d = [0,3)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:balanced",
-      "win_rate": 95.0,
-      "samples": 20,
+      "win_rate": 84.8,
+      "samples": 33,
       "conditions": [
         "rsi_H1 \u2260 [50,65)",
-        "vix_chg1d = [0,3)",
-        "H1_ema_stack = mixed"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "GDAXI.INDX \u00b7 ml:balanced",
-      "win_rate": 85.7,
-      "samples": 28,
-      "conditions": [
-        "rsi_H1 \u2260 [50,65)",
-        "vix_chg1d \u2260 [0,3)",
-        "vix_chg1d = [-3,0)"
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "H1_ema_stack \u2260 down",
+        "vix_chg1d \u2260 [0,3)"
       ]
     },
     {
@@ -235,24 +226,23 @@
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:full_power",
       "win_rate": 100.0,
-      "samples": 31,
+      "samples": 21,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "rsi_H1 \u2260 [50,65)",
-        "vix_chg1d = [0,3)"
+        "dow = Tue"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:full_power",
-      "win_rate": 85.2,
-      "samples": 27,
+      "win_rate": 83.1,
+      "samples": 59,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "rsi_H1 \u2260 [50,65)",
-        "vix_chg1d \u2260 [0,3)"
+        "dow \u2260 Tue",
+        "H4_ema_stack = up"
       ]
     },
     {
@@ -261,21 +251,9 @@
       "win_rate": 81.5,
       "samples": 27,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "rsi_H1 \u2260 [50,65)",
         "rsi_H4 = [50,65)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "GDAXI.INDX \u00b7 ml:full_power",
-      "win_rate": 80.0,
-      "samples": 20,
-      "conditions": [
-        "sar_bearish \u2260 False",
-        "vix_chg1d \u2260 [3,+\u221e)",
-        "rsi_H1 = [50,65)",
-        "dxy_chg1d = [-0.5,0)"
       ]
     },
     {
@@ -284,34 +262,33 @@
       "win_rate": 7.7,
       "samples": 26,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "rsi_H1 = [50,65)",
         "H1_adx_label \u2260 weak_trend",
-        "adx_H4 = [18,25)"
+        "H4_adx_label = weak_trend"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:main",
       "win_rate": 100.0,
-      "samples": 31,
+      "samples": 21,
       "conditions": [
         "sar_bearish = True",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "rsi_H1 \u2260 [50,65)",
-        "vix_chg1d = [0,3)"
+        "dow = Tue"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:main",
-      "win_rate": 85.2,
-      "samples": 27,
+      "win_rate": 83.1,
+      "samples": 59,
       "conditions": [
         "sar_bearish = True",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "rsi_H1 \u2260 [50,65)",
-        "vix_chg1d \u2260 [0,3)"
+        "dow \u2260 Tue",
+        "H4_ema_stack = up"
       ]
     },
     {
@@ -323,18 +300,6 @@
         "sar_bearish \u2260 True",
         "rsi_H1 \u2260 [50,65)",
         "rsi_H4 = [50,65)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "GDAXI.INDX \u00b7 ml:main",
-      "win_rate": 80.0,
-      "samples": 20,
-      "conditions": [
-        "sar_bearish = True",
-        "vix_chg1d \u2260 [3,+\u221e)",
-        "rsi_H1 = [50,65)",
-        "dxy_chg1d = [-0.5,0)"
       ]
     },
     {
@@ -489,13 +454,37 @@
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse2",
-      "win_rate": 92.1,
-      "samples": 63,
+      "win_rate": 97.7,
+      "samples": 43,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "H4_ema_stack \u2260 NA",
-        "us10y_chg1d = [\u2212\u221e,-0.5)"
+        "regime_label \u2260 transition",
+        "hour_bucket \u2260 12-16"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "GDAXI.INDX \u00b7 pulse2",
+      "win_rate": 87.9,
+      "samples": 33,
+      "conditions": [
+        "sar_bearish = True",
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "regime_label = transition",
+        "dow = Tue"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "GDAXI.INDX \u00b7 pulse2",
+      "win_rate": 75.9,
+      "samples": 29,
+      "conditions": [
+        "sar_bearish = True",
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "regime_label \u2260 transition",
+        "hour_bucket = 12-16"
       ]
     },
     {
@@ -504,9 +493,9 @@
       "win_rate": 0.0,
       "samples": 30,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "mtf_trend \u2260 mixed",
-        "bb_extreme_upper \u2260 False",
+        "bb_extreme_upper = True",
         "rsi_H4 = [50,65)"
       ]
     },
@@ -516,9 +505,9 @@
       "win_rate": 6.2,
       "samples": 32,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "mtf_trend \u2260 mixed",
-        "bb_extreme_upper = False",
+        "bb_extreme_upper \u2260 True",
         "dxy_chg1d = [0,0.5)"
       ]
     },
@@ -528,9 +517,9 @@
       "win_rate": 7.7,
       "samples": 26,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "mtf_trend \u2260 mixed",
-        "bb_extreme_upper \u2260 False",
+        "bb_extreme_upper = True",
         "rsi_H4 \u2260 [50,65)"
       ]
     },
@@ -540,7 +529,7 @@
       "win_rate": 16.1,
       "samples": 31,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "mtf_trend = mixed",
         "us10y_chg1d = [0.5,+\u221e)"
       ]
@@ -551,7 +540,7 @@
       "win_rate": 23.3,
       "samples": 30,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
         "vix_chg1d = [3,+\u221e)",
         "macro_alignment \u2260 strong_pro"
       ]
@@ -562,7 +551,7 @@
       "win_rate": 32.9,
       "samples": 79,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "mtf_trend = mixed",
         "us10y_chg1d \u2260 [0.5,+\u221e)",
         "regime_label = transition"
@@ -571,8 +560,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse2_inv",
-      "win_rate": 23.3,
-      "samples": 30,
+      "win_rate": 26.5,
+      "samples": 34,
       "conditions": [
         "macro_alignment \u2260 strong_pro",
         "macro_alignment \u2260 neutral",
@@ -606,12 +595,12 @@
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse3",
-      "win_rate": 4.8,
-      "samples": 21,
+      "win_rate": 3.7,
+      "samples": 27,
       "conditions": [
         "sar_bearish = True",
-        "adx_H1 = [\u2212\u221e,18)",
-        "H4_ema_stack \u2260 NA",
+        "H1_adx_label = ranging",
+        "vix_chg1d \u2260 [3,+\u221e)",
         "hour_bucket \u2260 12-16"
       ]
     },
@@ -634,7 +623,7 @@
       "samples": 27,
       "conditions": [
         "sar_bearish = True",
-        "adx_H1 \u2260 [\u2212\u221e,18)",
+        "H1_adx_label \u2260 ranging",
         "dxy_chg1d = [0.5,+\u221e)"
       ]
     },
@@ -653,18 +642,6 @@
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse3",
-      "win_rate": 20.0,
-      "samples": 20,
-      "conditions": [
-        "sar_bearish = True",
-        "adx_H1 = [\u2212\u221e,18)",
-        "H4_ema_stack \u2260 NA",
-        "hour_bucket = 12-16"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "GDAXI.INDX \u00b7 pulse3",
       "win_rate": 20.5,
       "samples": 151,
       "conditions": [
@@ -677,12 +654,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse3",
-      "win_rate": 30.6,
-      "samples": 36,
+      "win_rate": 25.9,
+      "samples": 27,
       "conditions": [
         "sar_bearish = True",
-        "adx_H1 = [\u2212\u221e,18)",
-        "H4_ema_stack = NA"
+        "H1_adx_label = ranging",
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "hour_bucket = 12-16"
       ]
     },
     {
@@ -692,7 +670,7 @@
       "samples": 75,
       "conditions": [
         "sar_bearish = True",
-        "adx_H1 \u2260 [\u2212\u221e,18)",
+        "H1_adx_label \u2260 ranging",
         "dxy_chg1d \u2260 [0.5,+\u221e)",
         "macro_alignment = strong_pro"
       ]
@@ -707,6 +685,17 @@
         "rsi_H4 \u2260 [50,65)",
         "us10y_chg1d = [0.5,+\u221e)",
         "rsi_H4 = NA"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "GDAXI.INDX \u00b7 pulse3",
+      "win_rate": 33.3,
+      "samples": 27,
+      "conditions": [
+        "sar_bearish = True",
+        "H1_adx_label = ranging",
+        "vix_chg1d = [3,+\u221e)"
       ]
     },
     {
@@ -773,12 +762,12 @@
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 ai_panel",
-      "win_rate": 93.3,
-      "samples": 30,
+      "win_rate": 91.3,
+      "samples": 23,
       "conditions": [
         "dow \u2260 Mon",
-        "sar_bearish = True",
-        "rsi_H4 \u2260 [30,50)"
+        "H4_ema_stack = up",
+        "sar_bearish \u2260 False"
       ]
     },
     {
@@ -788,20 +777,20 @@
       "samples": 20,
       "conditions": [
         "dow \u2260 Mon",
-        "sar_bearish \u2260 True",
-        "H4_ema_stack = up"
+        "H4_ema_stack = up",
+        "sar_bearish = False"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 meta",
-      "win_rate": 84.4,
-      "samples": 32,
+      "win_rate": 77.5,
+      "samples": 71,
       "conditions": [
         "ml_confidence_bucket \u2260 [70,80)",
         "rsi_H1 \u2260 [65,75)",
         "H1_ema_stack \u2260 up",
-        "adx_H1 = [35,+\u221e)"
+        "macro_alignment \u2260 neutral"
       ]
     },
     {
@@ -812,7 +801,7 @@
       "conditions": [
         "ml_confidence_bucket = [70,80)",
         "adx_H4 \u2260 [25,35)",
-        "sar_bearish = False"
+        "sar_bearish \u2260 True"
       ]
     },
     {
@@ -828,12 +817,12 @@
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 meta",
-      "win_rate": 24.0,
-      "samples": 25,
+      "win_rate": 25.0,
+      "samples": 28,
       "conditions": [
         "ml_confidence_bucket = [70,80)",
         "adx_H4 \u2260 [25,35)",
-        "sar_bearish \u2260 False"
+        "sar_bearish = True"
       ]
     },
     {
@@ -851,13 +840,12 @@
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 ml:balanced",
-      "win_rate": 87.5,
-      "samples": 32,
+      "win_rate": 86.7,
+      "samples": 30,
       "conditions": [
         "us10y_chg1d \u2260 [0,0.5)",
-        "dow \u2260 Mon",
-        "H1_ema_stack = up",
-        "vix_chg1d = [-3,0)"
+        "H4_ema_stack \u2260 mixed",
+        "session_phase = open_drive"
       ]
     },
     {
@@ -867,43 +855,42 @@
       "samples": 23,
       "conditions": [
         "us10y_chg1d = [0,0.5)",
-        "hour_bucket = 16-20"
+        "hour_bucket \u2260 12-16"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 ml:balanced",
-      "win_rate": 33.3,
-      "samples": 21,
+      "win_rate": 28.6,
+      "samples": 28,
       "conditions": [
         "us10y_chg1d \u2260 [0,0.5)",
-        "dow \u2260 Mon",
-        "H1_ema_stack \u2260 up",
-        "H4_adx_label \u2260 trending"
+        "H4_ema_stack = mixed",
+        "adx_H4 \u2260 [35,+\u221e)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 ml:balanced",
+      "win_rate": 32.0,
+      "samples": 25,
+      "conditions": [
+        "us10y_chg1d \u2260 [0,0.5)",
+        "H4_ema_stack \u2260 mixed",
+        "session_phase \u2260 open_drive",
+        "dow = Mon"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 ml:full_power",
-      "win_rate": 90.6,
-      "samples": 32,
+      "win_rate": 87.1,
+      "samples": 31,
       "conditions": [
+        "macro_alignment \u2260 weak_pro",
         "dow \u2260 Mon",
-        "us10y_chg1d \u2260 [0,0.5)",
-        "H1_ema_stack = up",
-        "rsi_H1 \u2260 [50,65)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "NDX.INDX \u00b7 ml:full_power",
-      "win_rate": 83.3,
-      "samples": 24,
-      "conditions": [
-        "dow \u2260 Mon",
-        "us10y_chg1d \u2260 [0,0.5)",
-        "H1_ema_stack \u2260 up",
-        "dow = Thu"
+        "dxy_chg1d \u2260 [0,0.5)",
+        "adx_H4 = [35,+\u221e)"
       ]
     },
     {
@@ -912,32 +899,30 @@
       "win_rate": 23.3,
       "samples": 30,
       "conditions": [
+        "macro_alignment = weak_pro"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 ml:full_power",
+      "win_rate": 29.4,
+      "samples": 34,
+      "conditions": [
+        "macro_alignment \u2260 weak_pro",
+        "dow \u2260 Mon",
+        "dxy_chg1d = [0,0.5)",
+        "sar_bearish \u2260 True"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 ml:full_power",
+      "win_rate": 35.0,
+      "samples": 20,
+      "conditions": [
+        "macro_alignment \u2260 weak_pro",
         "dow = Mon",
-        "dxy_chg1d \u2260 [0,0.5)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "NDX.INDX \u00b7 ml:main",
-      "win_rate": 90.6,
-      "samples": 32,
-      "conditions": [
-        "dow \u2260 Mon",
-        "us10y_chg1d \u2260 [0,0.5)",
-        "H1_ema_stack = up",
-        "rsi_H1 \u2260 [50,65)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "NDX.INDX \u00b7 ml:main",
-      "win_rate": 82.6,
-      "samples": 23,
-      "conditions": [
-        "dow \u2260 Mon",
-        "us10y_chg1d \u2260 [0,0.5)",
-        "H1_ema_stack \u2260 up",
-        "dow = Thu"
+        "volatility_regime \u2260 high"
       ]
     },
     {
@@ -946,8 +931,18 @@
       "win_rate": 23.3,
       "samples": 30,
       "conditions": [
+        "macro_alignment = weak_pro"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 ml:main",
+      "win_rate": 35.0,
+      "samples": 20,
+      "conditions": [
+        "macro_alignment \u2260 weak_pro",
         "dow = Mon",
-        "dxy_chg1d \u2260 [0,0.5)"
+        "volatility_regime = normal"
       ]
     },
     {
@@ -962,11 +957,11 @@
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 ml:main_inv",
-      "win_rate": 26.9,
-      "samples": 26,
+      "win_rate": 30.0,
+      "samples": 20,
       "conditions": [
         "dow \u2260 Mon",
-        "H4_adx_label \u2260 trending"
+        "H4_ema_stack = up"
       ]
     },
     {
@@ -976,20 +971,9 @@
       "samples": 21,
       "conditions": [
         "dow \u2260 Mon",
-        "H4_adx_label = trending",
+        "H4_ema_stack \u2260 up",
+        "regime_label = transition",
         "volatility_regime \u2260 normal"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "NDX.INDX \u00b7 pulse1",
-      "win_rate": 0.0,
-      "samples": 23,
-      "conditions": [
-        "bb_extreme_upper \u2260 True",
-        "rsi_H1 \u2260 [65,75)",
-        "rsi_H4 = [65,75)",
-        "H1_adx_label \u2260 weak_trend"
       ]
     },
     {
@@ -998,9 +982,21 @@
       "win_rate": 0.0,
       "samples": 73,
       "conditions": [
-        "bb_extreme_upper = True",
+        "bb_extreme_upper \u2260 False",
         "H1_ema_stack \u2260 mixed",
         "ml_confidence_bucket = [80,+\u221e)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 pulse1",
+      "win_rate": 0.0,
+      "samples": 23,
+      "conditions": [
+        "bb_extreme_upper = False",
+        "rsi_H1 \u2260 [65,75)",
+        "rsi_H4 = [65,75)",
+        "adx_H1 \u2260 [18,25)"
       ]
     },
     {
@@ -1009,7 +1005,7 @@
       "win_rate": 2.1,
       "samples": 48,
       "conditions": [
-        "bb_extreme_upper \u2260 True",
+        "bb_extreme_upper = False",
         "rsi_H1 = [65,75)",
         "H4_ema_stack \u2260 down",
         "ml_confidence_bucket = [80,+\u221e)"
@@ -1021,7 +1017,7 @@
       "win_rate": 9.7,
       "samples": 31,
       "conditions": [
-        "bb_extreme_upper = True",
+        "bb_extreme_upper \u2260 False",
         "H1_ema_stack \u2260 mixed",
         "ml_confidence_bucket \u2260 [80,+\u221e)"
       ]
@@ -1032,7 +1028,7 @@
       "win_rate": 15.2,
       "samples": 33,
       "conditions": [
-        "bb_extreme_upper \u2260 True",
+        "bb_extreme_upper = False",
         "rsi_H1 = [65,75)",
         "H4_ema_stack \u2260 down",
         "ml_confidence_bucket \u2260 [80,+\u221e)"
@@ -1044,10 +1040,10 @@
       "win_rate": 18.5,
       "samples": 27,
       "conditions": [
-        "bb_extreme_upper \u2260 True",
+        "bb_extreme_upper = False",
         "rsi_H1 \u2260 [65,75)",
         "rsi_H4 = [65,75)",
-        "H1_adx_label = weak_trend"
+        "adx_H1 = [18,25)"
       ]
     },
     {
@@ -1056,7 +1052,7 @@
       "win_rate": 26.5,
       "samples": 34,
       "conditions": [
-        "bb_extreme_upper = True",
+        "bb_extreme_upper \u2260 False",
         "H1_ema_stack = mixed"
       ]
     },
@@ -1066,7 +1062,7 @@
       "win_rate": 29.2,
       "samples": 24,
       "conditions": [
-        "bb_extreme_upper \u2260 True",
+        "bb_extreme_upper = False",
         "rsi_H1 = [65,75)",
         "H4_ema_stack = down"
       ]
@@ -1074,115 +1070,100 @@
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse1_inv",
-      "win_rate": 84.6,
-      "samples": 26,
+      "win_rate": 76.2,
+      "samples": 21,
       "conditions": [
-        "rsi_H1 \u2260 [50,65)",
-        "vix_chg1d = [\u2212\u221e,-3)",
-        "session_phase = mid_session"
+        "overbought \u2260 True",
+        "dow \u2260 Fri",
+        "session_phase = after_hours",
+        "H4_adx_label = ranging"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse1_inv",
-      "win_rate": 21.2,
-      "samples": 33,
+      "win_rate": 24.1,
+      "samples": 29,
       "conditions": [
-        "rsi_H1 = [50,65)",
+        "overbought \u2260 True",
+        "dow = Fri"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 pulse1_inv",
+      "win_rate": 32.1,
+      "samples": 56,
+      "conditions": [
+        "overbought \u2260 True",
+        "dow \u2260 Fri",
+        "session_phase \u2260 after_hours",
         "H1_ema_stack = up"
       ]
     },
     {
       "kind": "avoid_pattern",
-      "segment": "NDX.INDX \u00b7 pulse1_inv",
-      "win_rate": 30.8,
-      "samples": 26,
-      "conditions": [
-        "rsi_H1 = [50,65)",
-        "H1_ema_stack \u2260 up",
-        "session_phase = mid_session"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "NDX.INDX \u00b7 pulse1_inv",
-      "win_rate": 32.4,
-      "samples": 34,
-      "conditions": [
-        "rsi_H1 \u2260 [50,65)",
-        "vix_chg1d \u2260 [\u2212\u221e,-3)",
-        "adx_H1 = [18,25)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse2",
-      "win_rate": 87.3,
-      "samples": 63,
+      "win_rate": 0.0,
+      "samples": 28,
       "conditions": [
-        "sar_bearish \u2260 False",
-        "adx_H1 \u2260 [18,25)",
-        "volatility_regime = high",
-        "H4_ema_stack = up"
+        "bb_extreme_upper = True",
+        "session_phase \u2260 after_hours"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse2",
-      "win_rate": 5.0,
-      "samples": 20,
+      "win_rate": 3.3,
+      "samples": 30,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "bb_extreme_upper \u2260 True",
         "adx_H1 = [18,25)",
-        "ml_confidence_bucket = [50,60)",
-        "H4_ema_stack = up"
+        "us10y_chg1d = [-0.5,0)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse2",
-      "win_rate": 9.3,
-      "samples": 107,
+      "win_rate": 8.3,
+      "samples": 24,
       "conditions": [
-        "sar_bearish = False",
-        "vix_chg1d \u2260 [\u2212\u221e,-3)",
-        "rsi_H1 \u2260 [30,50)",
-        "H4_ema_stack \u2260 down"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "NDX.INDX \u00b7 pulse2",
-      "win_rate": 20.0,
-      "samples": 20,
-      "conditions": [
-        "sar_bearish \u2260 False",
+        "bb_extreme_upper \u2260 True",
         "adx_H1 \u2260 [18,25)",
-        "volatility_regime \u2260 high",
-        "mtf_trend = all_up"
+        "rsi_H4 = [65,75)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse2",
-      "win_rate": 33.3,
-      "samples": 27,
+      "win_rate": 17.4,
+      "samples": 23,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "bb_extreme_upper = True",
+        "session_phase = after_hours"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 pulse2",
+      "win_rate": 30.0,
+      "samples": 70,
+      "conditions": [
+        "bb_extreme_upper \u2260 True",
         "adx_H1 = [18,25)",
-        "ml_confidence_bucket = [50,60)",
-        "H4_ema_stack \u2260 up"
+        "us10y_chg1d \u2260 [-0.5,0)",
+        "dxy_chg1d = [-0.5,0)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse2_inv",
-      "win_rate": 80.0,
-      "samples": 20,
+      "win_rate": 85.7,
+      "samples": 21,
       "conditions": [
         "bb_extreme_lower = False",
         "mtf_trend \u2260 mixed",
-        "hour_bucket \u2260 12-16"
+        "hour_bucket = 16-20"
       ]
     },
     {
@@ -1200,25 +1181,13 @@
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse3",
-      "win_rate": 87.2,
-      "samples": 39,
+      "win_rate": 87.8,
+      "samples": 41,
       "conditions": [
         "H1_adx_label \u2260 trending",
         "ml_confidence_bucket = [\u2212\u221e,50)",
-        "us10y_chg1d = [0.5,+\u221e)",
-        "H1_adx_label \u2260 ranging"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "NDX.INDX \u00b7 pulse3",
-      "win_rate": 82.1,
-      "samples": 201,
-      "conditions": [
-        "H1_adx_label = trending",
-        "macro_alignment \u2260 weak_pro",
-        "adx_H4 = [25,35)",
-        "dxy_chg1d \u2260 [0,0.5)"
+        "us10y_chg1d \u2260 [\u2212\u221e,-0.5)",
+        "adx_H1 \u2260 [\u2212\u221e,18)"
       ]
     },
     {
@@ -1253,7 +1222,19 @@
         "H1_adx_label \u2260 trending",
         "ml_confidence_bucket \u2260 [\u2212\u221e,50)",
         "sar_bearish \u2260 True",
-        "adx_H4 \u2260 [18,25)"
+        "H4_adx_label \u2260 weak_trend"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 pulse3",
+      "win_rate": 15.6,
+      "samples": 45,
+      "conditions": [
+        "H1_adx_label = trending",
+        "macro_alignment \u2260 weak_pro",
+        "mtf_trend \u2260 mixed",
+        "sar_bearish \u2260 True"
       ]
     },
     {
@@ -1270,8 +1251,19 @@
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse3",
-      "win_rate": 26.4,
-      "samples": 208,
+      "win_rate": 25.9,
+      "samples": 27,
+      "conditions": [
+        "H1_adx_label \u2260 trending",
+        "ml_confidence_bucket = [\u2212\u221e,50)",
+        "us10y_chg1d = [\u2212\u221e,-0.5)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 pulse3",
+      "win_rate": 27.1,
+      "samples": 214,
       "conditions": [
         "H1_adx_label \u2260 trending",
         "ml_confidence_bucket \u2260 [\u2212\u221e,50)",
@@ -1322,38 +1314,39 @@
       "samples": 26,
       "conditions": [
         "dow = Fri",
-        "mtf_trend \u2260 mixed"
+        "us10y_chg1d = [-0.5,0)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse3_inv",
-      "win_rate": 22.7,
-      "samples": 22,
+      "win_rate": 19.0,
+      "samples": 21,
       "conditions": [
         "dow \u2260 Fri",
         "H4_ema_stack = down",
         "session \u2260 overlap",
-        "rsi_H1 = [50,65)"
+        "dxy_chg1d \u2260 [0,0.5)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 smc",
-      "win_rate": 5.4,
-      "samples": 37,
+      "win_rate": 0.0,
+      "samples": 24,
       "conditions": [
-        "dow = Wed"
+        "macro_alignment = weak_pro"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 smc",
-      "win_rate": 28.6,
-      "samples": 21,
+      "win_rate": 20.7,
+      "samples": 29,
       "conditions": [
-        "dow \u2260 Wed",
-        "dow = Mon"
+        "macro_alignment \u2260 weak_pro",
+        "dow \u2260 Thu",
+        "dxy_chg1d \u2260 [-0.5,0)"
       ]
     },
     {
@@ -1379,8 +1372,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ai_panel",
-      "win_rate": 8.8,
-      "samples": 34,
+      "win_rate": 11.4,
+      "samples": 35,
       "conditions": [
         "M30_ema_stack \u2260 down",
         "macro_alignment \u2260 neutral"
@@ -1389,11 +1382,11 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 emel",
-      "win_rate": 82.6,
-      "samples": 23,
+      "win_rate": 82.8,
+      "samples": 29,
       "conditions": [
         "H4_ema_stack = mixed",
-        "rsi_H4 \u2260 [50,65)",
+        "session \u2260 overlap",
         "macro_alignment \u2260 neutral"
       ]
     },
@@ -1435,21 +1428,21 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 emel",
-      "win_rate": 33.3,
-      "samples": 30,
+      "win_rate": 25.0,
+      "samples": 20,
       "conditions": [
-        "H4_ema_stack \u2260 mixed",
-        "H4_adx_label = trending"
+        "H4_ema_stack = mixed",
+        "session = overlap"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 emel",
       "win_rate": 33.3,
-      "samples": 21,
+      "samples": 30,
       "conditions": [
-        "H4_ema_stack = mixed",
-        "rsi_H4 = [50,65)"
+        "H4_ema_stack \u2260 mixed",
+        "H4_adx_label = trending"
       ]
     },
     {
@@ -1643,8 +1636,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:aggressive",
-      "win_rate": 25.7,
-      "samples": 70,
+      "win_rate": 27.3,
+      "samples": 77,
       "conditions": [
         "mtf_trend = mixed",
         "H4_ema_stack \u2260 down",
@@ -1750,13 +1743,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:balanced",
-      "win_rate": 32.8,
-      "samples": 119,
+      "win_rate": 17.1,
+      "samples": 41,
       "conditions": [
         "mtf_trend = mixed",
         "H4_ema_stack \u2260 down",
         "rsi_H4 \u2260 [30,50)",
-        "adx_M30 \u2260 [35,+\u221e)"
+        "macro_alignment = strong_against"
       ]
     },
     {
@@ -1766,7 +1759,7 @@
       "samples": 101,
       "conditions": [
         "mtf_trend \u2260 mixed",
-        "H4_adx_label = weak_trend",
+        "adx_H4 = [18,25)",
         "dist_low_M30 \u2260 [0.7,1.5)",
         "session \u2260 europe"
       ]
@@ -1778,7 +1771,7 @@
       "samples": 21,
       "conditions": [
         "mtf_trend \u2260 mixed",
-        "H4_adx_label = weak_trend",
+        "adx_H4 = [18,25)",
         "dist_low_M30 \u2260 [0.7,1.5)",
         "session = europe"
       ]
@@ -1790,7 +1783,7 @@
       "samples": 77,
       "conditions": [
         "mtf_trend \u2260 mixed",
-        "H4_adx_label \u2260 weak_trend",
+        "adx_H4 \u2260 [18,25)",
         "dow \u2260 Mon",
         "us10y_chg1d \u2260 [0.5,+\u221e)"
       ]
@@ -1814,7 +1807,7 @@
       "samples": 25,
       "conditions": [
         "mtf_trend \u2260 mixed",
-        "H4_adx_label = weak_trend",
+        "adx_H4 = [18,25)",
         "dist_low_M30 = [0.7,1.5)"
       ]
     },
@@ -1857,8 +1850,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:full_power",
-      "win_rate": 25.7,
-      "samples": 70,
+      "win_rate": 27.3,
+      "samples": 77,
       "conditions": [
         "mtf_trend = mixed",
         "H4_ema_stack \u2260 down",
@@ -1964,8 +1957,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:main",
-      "win_rate": 32.8,
-      "samples": 119,
+      "win_rate": 34.3,
+      "samples": 134,
       "conditions": [
         "mtf_trend = mixed",
         "H4_ema_stack \u2260 down",
@@ -2071,8 +2064,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:ultra_safe",
-      "win_rate": 32.8,
-      "samples": 119,
+      "win_rate": 34.3,
+      "samples": 134,
       "conditions": [
         "mtf_trend = mixed",
         "H4_ema_stack \u2260 down",
@@ -2107,32 +2100,32 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1",
-      "win_rate": 77.9,
-      "samples": 217,
+      "win_rate": 77.2,
+      "samples": 219,
       "conditions": [
         "consec_red_M30 \u2260 [0,2)",
         "vix_chg1d \u2260 [3,+\u221e)",
         "ml_confidence_bucket \u2260 [80,+\u221e)",
-        "adx_H1 = [\u2212\u221e,18)"
+        "H1_adx_label = ranging"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1",
-      "win_rate": 7.3,
-      "samples": 423,
+      "win_rate": 5.0,
+      "samples": 358,
       "conditions": [
         "consec_red_M30 = [0,2)",
         "consec_green_M30 \u2260 [0,2)",
-        "ml_confidence_bucket = [80,+\u221e)",
-        "rsi_H4 \u2260 [65,75)"
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "ml_confidence_bucket = [80,+\u221e)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1",
-      "win_rate": 8.1,
-      "samples": 62,
+      "win_rate": 9.4,
+      "samples": 64,
       "conditions": [
         "consec_red_M30 \u2260 [0,2)",
         "vix_chg1d = [3,+\u221e)",
@@ -2143,20 +2136,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1",
-      "win_rate": 12.5,
-      "samples": 136,
-      "conditions": [
-        "consec_red_M30 = [0,2)",
-        "consec_green_M30 \u2260 [0,2)",
-        "ml_confidence_bucket \u2260 [80,+\u221e)",
-        "us10y_chg1d = [-0.5,0)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse1",
-      "win_rate": 17.0,
-      "samples": 312,
+      "win_rate": 16.7,
+      "samples": 317,
       "conditions": [
         "consec_red_M30 = [0,2)",
         "consec_green_M30 = [0,2)",
@@ -2167,13 +2148,25 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1",
-      "win_rate": 32.5,
-      "samples": 403,
+      "win_rate": 17.7,
+      "samples": 130,
       "conditions": [
         "consec_red_M30 = [0,2)",
         "consec_green_M30 \u2260 [0,2)",
-        "ml_confidence_bucket \u2260 [80,+\u221e)",
-        "us10y_chg1d \u2260 [-0.5,0)"
+        "vix_chg1d = [3,+\u221e)",
+        "H4_ema_stack \u2260 mixed"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse1",
+      "win_rate": 24.4,
+      "samples": 401,
+      "conditions": [
+        "consec_red_M30 = [0,2)",
+        "consec_green_M30 \u2260 [0,2)",
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "ml_confidence_bucket \u2260 [80,+\u221e)"
       ]
     },
     {
@@ -2191,128 +2184,140 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 97.6,
-      "samples": 41,
+      "win_rate": 100.0,
+      "samples": 28,
       "conditions": [
-        "rsi_M30 \u2260 [30,50)",
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "M30_adx_label = trending",
+        "dow = Mon",
         "vix_chg1d = [\u2212\u221e,-3)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 91.9,
-      "samples": 37,
+      "win_rate": 92.8,
+      "samples": 390,
       "conditions": [
-        "rsi_M30 = [30,50)",
-        "M30_ema_stack = up",
-        "ml_confidence_bucket = [50,60)",
-        "H1_adx_label \u2260 trending"
+        "M30_ema_stack = down",
+        "M30_adx_label = trending",
+        "dow \u2260 Mon",
+        "adx_H4 \u2260 [35,+\u221e)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 88.9,
-      "samples": 542,
+      "win_rate": 84.6,
+      "samples": 52,
       "conditions": [
-        "rsi_M30 = [30,50)",
-        "M30_ema_stack \u2260 up",
-        "M30_adx_label = trending",
-        "us10y_chg1d \u2260 [0.5,+\u221e)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 78.7,
-      "samples": 47,
-      "conditions": [
-        "rsi_M30 \u2260 [30,50)",
-        "mtf_trend = all_down",
-        "M30_adx_label = trending",
-        "vix_chg1d \u2260 [\u2212\u221e,-3)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 2.0,
-      "samples": 590,
-      "conditions": [
-        "rsi_M30 \u2260 [30,50)",
-        "mtf_trend \u2260 all_down",
-        "H4_ema_stack \u2260 mixed",
-        "adx_H4 \u2260 [25,35)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 4.2,
-      "samples": 118,
-      "conditions": [
-        "rsi_M30 = [30,50)",
-        "M30_ema_stack = up",
-        "ml_confidence_bucket \u2260 [50,60)",
-        "H4_adx_label \u2260 trending"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 13.7,
-      "samples": 73,
-      "conditions": [
-        "rsi_M30 \u2260 [30,50)",
-        "mtf_trend \u2260 all_down",
-        "H4_ema_stack = mixed",
-        "dow = Thu"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 16.1,
-      "samples": 62,
-      "conditions": [
-        "rsi_M30 \u2260 [30,50)",
-        "mtf_trend \u2260 all_down",
-        "H4_ema_stack \u2260 mixed",
-        "adx_H4 = [25,35)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 19.0,
-      "samples": 21,
-      "conditions": [
-        "rsi_M30 \u2260 [30,50)",
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "M30_adx_label \u2260 trending",
-        "rsi_H1 = [50,65)"
+        "rsi_H1 \u2260 [50,65)",
+        "dow = Tue"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse2",
+      "win_rate": 81.6,
+      "samples": 179,
+      "conditions": [
+        "M30_ema_stack \u2260 down",
+        "rsi_M30 = [30,50)",
+        "ml_confidence_bucket \u2260 [70,80)",
+        "adx_M30 = [35,+\u221e)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse2",
-      "win_rate": 33.3,
+      "win_rate": 0.0,
+      "samples": 54,
+      "conditions": [
+        "M30_ema_stack \u2260 down",
+        "rsi_M30 = [30,50)",
+        "ml_confidence_bucket = [70,80)",
+        "H4_adx_label = weak_trend"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse2",
+      "win_rate": 2.5,
+      "samples": 595,
+      "conditions": [
+        "M30_ema_stack \u2260 down",
+        "rsi_M30 \u2260 [30,50)",
+        "H4_ema_stack \u2260 mixed",
+        "rsi_H1 \u2260 [30,50)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse2",
+      "win_rate": 3.0,
       "samples": 33,
       "conditions": [
+        "M30_ema_stack = down",
+        "M30_adx_label \u2260 trending",
+        "rsi_H1 = [50,65)",
+        "us10y_chg1d \u2260 [\u2212\u221e,-0.5)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse2",
+      "win_rate": 17.9,
+      "samples": 39,
+      "conditions": [
+        "M30_ema_stack \u2260 down",
+        "rsi_M30 \u2260 [30,50)",
+        "H4_ema_stack \u2260 mixed",
+        "rsi_H1 = [30,50)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse2",
+      "win_rate": 21.7,
+      "samples": 23,
+      "conditions": [
+        "M30_ema_stack \u2260 down",
         "rsi_M30 = [30,50)",
-        "M30_ema_stack = up",
-        "ml_confidence_bucket = [50,60)",
-        "H1_adx_label = trending"
+        "ml_confidence_bucket = [70,80)",
+        "H4_adx_label \u2260 weak_trend"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse2",
+      "win_rate": 26.9,
+      "samples": 26,
+      "conditions": [
+        "M30_ema_stack = down",
+        "M30_adx_label \u2260 trending",
+        "rsi_H1 = [50,65)",
+        "us10y_chg1d = [\u2212\u221e,-0.5)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse2",
+      "win_rate": 32.5,
+      "samples": 246,
+      "conditions": [
+        "M30_ema_stack \u2260 down",
+        "rsi_M30 \u2260 [30,50)",
+        "H4_ema_stack = mixed",
+        "adx_M30 \u2260 [35,+\u221e)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse3",
       "win_rate": 88.2,
-      "samples": 1029,
+      "samples": 1032,
       "conditions": [
         "M30_ema_stack \u2260 up",
         "rsi_H1 \u2260 [50,65)",
@@ -2359,8 +2364,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse3",
-      "win_rate": 7.2,
-      "samples": 97,
+      "win_rate": 8.8,
+      "samples": 102,
       "conditions": [
         "M30_ema_stack \u2260 up",
         "rsi_H1 = [50,65)",
@@ -2371,8 +2376,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse3",
-      "win_rate": 10.4,
-      "samples": 77,
+      "win_rate": 12.3,
+      "samples": 81,
       "conditions": [
         "M30_ema_stack = up",
         "H4_adx_label = trending",
@@ -2444,11 +2449,24 @@
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 smc",
       "win_rate": 100.0,
-      "samples": 100,
+      "samples": 58,
       "conditions": [
         "adx_M30 = [35,+\u221e)",
         "mtf_trend \u2260 all_down",
-        "vix_chg1d = [0,3)"
+        "vix_chg1d = [0,3)",
+        "H4_adx_label \u2260 ranging"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "USOIL.FOREX \u00b7 smc",
+      "win_rate": 100.0,
+      "samples": 42,
+      "conditions": [
+        "adx_M30 = [35,+\u221e)",
+        "mtf_trend \u2260 all_down",
+        "vix_chg1d = [0,3)",
+        "H4_adx_label = ranging"
       ]
     },
     {
@@ -2466,8 +2484,8 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 smc",
-      "win_rate": 89.2,
-      "samples": 37,
+      "win_rate": 89.7,
+      "samples": 39,
       "conditions": [
         "adx_M30 \u2260 [35,+\u221e)",
         "rsi_H1 = [50,65)",
@@ -2512,8 +2530,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 smc",
-      "win_rate": 26.7,
-      "samples": 120,
+      "win_rate": 26.2,
+      "samples": 122,
       "conditions": [
         "adx_M30 \u2260 [35,+\u221e)",
         "rsi_H1 \u2260 [50,65)",
@@ -2533,22 +2551,22 @@
     {
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 ai_panel",
-      "win_rate": 85.0,
-      "samples": 20,
+      "win_rate": 87.0,
+      "samples": 23,
       "conditions": [
         "dist_low_M30 \u2260 [0.3,0.7)",
-        "dow \u2260 Tue",
-        "M30_ema_stack = mixed",
-        "dow = Thu"
+        "mtf_trend = mixed",
+        "rsi_M30 = [30,50)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 ai_panel",
-      "win_rate": 81.8,
-      "samples": 33,
+      "win_rate": 77.8,
+      "samples": 27,
       "conditions": [
         "dist_low_M30 \u2260 [0.3,0.7)",
+        "mtf_trend \u2260 mixed",
         "dow = Tue"
       ]
     },
@@ -2559,8 +2577,8 @@
       "samples": 23,
       "conditions": [
         "dist_low_M30 \u2260 [0.3,0.7)",
+        "mtf_trend \u2260 mixed",
         "dow \u2260 Tue",
-        "M30_ema_stack \u2260 mixed",
         "consec_green_M30 \u2260 [0,2)"
       ]
     },
@@ -2701,8 +2719,8 @@
       "win_rate": 82.8,
       "samples": 29,
       "conditions": [
-        "bb_pctb_M30 = [\u2212\u221e,0.2)",
         "macro_alignment \u2260 weak_pro",
+        "bb_pctb_M30 = [\u2212\u221e,0.2)",
         "us10y_chg1d = [\u2212\u221e,-0.5)"
       ]
     },
@@ -2710,57 +2728,45 @@
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 ml:aggressive",
       "win_rate": 75.0,
-      "samples": 28,
+      "samples": 20,
       "conditions": [
+        "macro_alignment \u2260 weak_pro",
         "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
-        "vix_chg1d \u2260 [3,+\u221e)",
-        "consec_green_M30 = [0,2)",
-        "us10y_chg1d = [-0.5,0)"
+        "dist_high_M30 = [0.3,0.7)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:aggressive",
-      "win_rate": 14.8,
+      "win_rate": 7.7,
+      "samples": 26,
+      "conditions": [
+        "macro_alignment = weak_pro",
+        "vix_chg1d = [3,+\u221e)",
+        "ml_confidence_bucket \u2260 [80,+\u221e)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml:aggressive",
+      "win_rate": 25.9,
       "samples": 27,
       "conditions": [
-        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
-        "vix_chg1d = [3,+\u221e)",
-        "us10y_chg1d = [0,0.5)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:aggressive",
-      "win_rate": 22.5,
-      "samples": 40,
-      "conditions": [
-        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
-        "vix_chg1d = [3,+\u221e)",
-        "us10y_chg1d \u2260 [0,0.5)",
-        "dist_high_M30 = [1.5,+\u221e)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:aggressive",
-      "win_rate": 30.3,
-      "samples": 33,
-      "conditions": [
-        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
+        "macro_alignment = weak_pro",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "consec_green_M30 \u2260 [0,2)",
-        "bb_pctb_M30 \u2260 [0.8,+\u221e)"
+        "mtf_trend \u2260 mixed",
+        "H1_adx_label = trending"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:aggressive",
-      "win_rate": 34.3,
-      "samples": 35,
+      "win_rate": 30.0,
+      "samples": 20,
       "conditions": [
-        "bb_pctb_M30 = [\u2212\u221e,0.2)",
-        "macro_alignment = weak_pro"
+        "macro_alignment = weak_pro",
+        "vix_chg1d = [3,+\u221e)",
+        "ml_confidence_bucket = [80,+\u221e)"
       ]
     },
     {
@@ -2769,67 +2775,54 @@
       "win_rate": 84.0,
       "samples": 25,
       "conditions": [
-        "bb_pctb_M30 = [\u2212\u221e,0.2)",
         "macro_alignment \u2260 weak_pro",
+        "bb_pctb_M30 = [\u2212\u221e,0.2)",
         "rsi_H1 = [\u2212\u221e,30)"
       ]
     },
     {
-      "kind": "avoid_pattern",
+      "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 ml:balanced",
-      "win_rate": 8.3,
-      "samples": 24,
+      "win_rate": 80.0,
+      "samples": 20,
       "conditions": [
+        "macro_alignment \u2260 weak_pro",
         "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
-        "vix_chg1d = [3,+\u221e)",
-        "dist_high_M30 = [1.5,+\u221e)",
-        "atr_ratio_M30 \u2260 [0.7,1)"
+        "dist_high_M30 = [0.3,0.7)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:balanced",
-      "win_rate": 25.0,
-      "samples": 28,
-      "conditions": [
-        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
-        "vix_chg1d = [3,+\u221e)",
-        "dist_high_M30 \u2260 [1.5,+\u221e)",
-        "us10y_chg1d \u2260 [0.5,+\u221e)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:balanced",
-      "win_rate": 27.6,
-      "samples": 29,
-      "conditions": [
-        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
-        "vix_chg1d \u2260 [3,+\u221e)",
-        "consec_green_M30 \u2260 [0,2)",
-        "rsi_M30 = [50,65)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:balanced",
-      "win_rate": 30.8,
+      "win_rate": 7.7,
       "samples": 26,
       "conditions": [
-        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
+        "macro_alignment = weak_pro",
         "vix_chg1d = [3,+\u221e)",
-        "dist_high_M30 = [1.5,+\u221e)",
-        "atr_ratio_M30 = [0.7,1)"
+        "adx_M30 = [35,+\u221e)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:balanced",
-      "win_rate": 33.3,
-      "samples": 36,
+      "win_rate": 22.2,
+      "samples": 27,
       "conditions": [
-        "bb_pctb_M30 = [\u2212\u221e,0.2)",
-        "macro_alignment = weak_pro"
+        "macro_alignment = weak_pro",
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "M30_ema_stack \u2260 mixed",
+        "H1_adx_label = trending"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml:balanced",
+      "win_rate": 30.0,
+      "samples": 20,
+      "conditions": [
+        "macro_alignment = weak_pro",
+        "vix_chg1d = [3,+\u221e)",
+        "adx_M30 \u2260 [35,+\u221e)"
       ]
     },
     {
@@ -2838,54 +2831,65 @@
       "win_rate": 83.3,
       "samples": 24,
       "conditions": [
-        "bb_pctb_M30 = [\u2212\u221e,0.2)",
         "macro_alignment \u2260 weak_pro",
+        "bb_pctb_M30 = [\u2212\u221e,0.2)",
         "rsi_H1 = [\u2212\u221e,30)"
       ]
     },
     {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD \u00b7 ml:full_power",
+      "win_rate": 75.0,
+      "samples": 20,
+      "conditions": [
+        "macro_alignment \u2260 weak_pro",
+        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
+        "dist_high_M30 = [0.3,0.7)"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "XAUUSD \u00b7 ml:full_power",
+      "win_rate": 75.0,
+      "samples": 24,
+      "conditions": [
+        "macro_alignment = weak_pro",
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "M30_ema_stack = mixed"
+      ]
+    },
+    {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:full_power",
-      "win_rate": 14.8,
+      "win_rate": 7.7,
+      "samples": 26,
+      "conditions": [
+        "macro_alignment = weak_pro",
+        "vix_chg1d = [3,+\u221e)",
+        "ml_confidence_bucket \u2260 [80,+\u221e)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml:full_power",
+      "win_rate": 25.9,
       "samples": 27,
       "conditions": [
-        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
-        "vix_chg1d = [3,+\u221e)",
-        "us10y_chg1d = [0,0.5)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:full_power",
-      "win_rate": 21.1,
-      "samples": 38,
-      "conditions": [
-        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
-        "vix_chg1d = [3,+\u221e)",
-        "us10y_chg1d \u2260 [0,0.5)",
-        "dist_high_M30 = [1.5,+\u221e)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:full_power",
-      "win_rate": 27.6,
-      "samples": 29,
-      "conditions": [
-        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
+        "macro_alignment = weak_pro",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "consec_green_M30 \u2260 [0,2)",
-        "rsi_M30 = [50,65)"
+        "M30_ema_stack \u2260 mixed",
+        "H1_adx_label = trending"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:full_power",
-      "win_rate": 34.3,
-      "samples": 35,
+      "win_rate": 30.0,
+      "samples": 20,
       "conditions": [
-        "bb_pctb_M30 = [\u2212\u221e,0.2)",
-        "macro_alignment = weak_pro"
+        "macro_alignment = weak_pro",
+        "vix_chg1d = [3,+\u221e)",
+        "ml_confidence_bucket = [80,+\u221e)"
       ]
     },
     {
@@ -2902,8 +2906,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:main",
-      "win_rate": 8.0,
-      "samples": 25,
+      "win_rate": 11.1,
+      "samples": 27,
       "conditions": [
         "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
         "vix_chg1d = [3,+\u221e)",
@@ -2914,8 +2918,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:main",
-      "win_rate": 25.0,
-      "samples": 28,
+      "win_rate": 27.6,
+      "samples": 29,
       "conditions": [
         "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
         "vix_chg1d = [3,+\u221e)",
@@ -2926,13 +2930,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:main",
-      "win_rate": 29.4,
-      "samples": 34,
+      "win_rate": 30.0,
+      "samples": 30,
       "conditions": [
         "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
         "vix_chg1d \u2260 [3,+\u221e)",
         "consec_green_M30 \u2260 [0,2)",
-        "rsi_H1 \u2260 [30,50)"
+        "rsi_M30 = [50,65)"
       ]
     },
     {
@@ -2981,6 +2985,16 @@
       ]
     },
     {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml:main_inv",
+      "win_rate": 34.6,
+      "samples": 26,
+      "conditions": [
+        "consec_red_M30 = [2,4)",
+        "adx_H1 \u2260 [35,+\u221e)"
+      ]
+    },
+    {
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 ml:ultra_safe",
       "win_rate": 90.0,
@@ -2995,13 +3009,24 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:ultra_safe",
-      "win_rate": 14.6,
-      "samples": 48,
+      "win_rate": 14.8,
+      "samples": 27,
       "conditions": [
         "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
         "vix_chg1d = [3,+\u221e)",
-        "macro_alignment \u2260 weak_against",
-        "dxy_chg1d \u2260 [-0.5,0)"
+        "us10y_chg1d = [0,0.5)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml:ultra_safe",
+      "win_rate": 22.5,
+      "samples": 40,
+      "conditions": [
+        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
+        "vix_chg1d = [3,+\u221e)",
+        "us10y_chg1d \u2260 [0,0.5)",
+        "dist_high_M30 = [1.5,+\u221e)"
       ]
     },
     {
@@ -3022,7 +3047,7 @@
       "win_rate": 98.6,
       "samples": 71,
       "conditions": [
-        "mtf_trend \u2260 all_down",
+        "M30_ema_stack \u2260 down",
         "adx_M30 = [35,+\u221e)",
         "macro_alignment \u2260 weak_pro",
         "vix_chg1d = [3,+\u221e)"
@@ -3034,7 +3059,7 @@
       "win_rate": 0.0,
       "samples": 67,
       "conditions": [
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "dist_low_M30 \u2260 [1.5,+\u221e)",
         "dxy_chg1d = [0.5,+\u221e)"
       ]
@@ -3045,7 +3070,7 @@
       "win_rate": 9.5,
       "samples": 21,
       "conditions": [
-        "mtf_trend \u2260 all_down",
+        "M30_ema_stack \u2260 down",
         "adx_M30 \u2260 [35,+\u221e)",
         "atr_ratio_M30 = [0.7,1)",
         "consec_red_M30 = [2,4)"
@@ -3054,10 +3079,22 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq",
-      "win_rate": 16.7,
-      "samples": 84,
+      "win_rate": 12.5,
+      "samples": 24,
       "conditions": [
-        "mtf_trend = all_down",
+        "M30_ema_stack \u2260 down",
+        "adx_M30 \u2260 [35,+\u221e)",
+        "atr_ratio_M30 \u2260 [0.7,1)",
+        "hour_bucket = 16-20"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq",
+      "win_rate": 16.5,
+      "samples": 85,
+      "conditions": [
+        "M30_ema_stack = down",
         "dist_low_M30 \u2260 [1.5,+\u221e)",
         "dxy_chg1d \u2260 [0.5,+\u221e)",
         "dow \u2260 Mon"
@@ -3066,45 +3103,33 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq",
-      "win_rate": 17.4,
-      "samples": 23,
+      "win_rate": 23.7,
+      "samples": 38,
       "conditions": [
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "dist_low_M30 = [1.5,+\u221e)",
-        "H1_adx_label = trending",
-        "ml_confidence_bucket = [\u2212\u221e,50)"
+        "macro_alignment = weak_pro"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq",
-      "win_rate": 19.4,
-      "samples": 31,
+      "win_rate": 28.6,
+      "samples": 28,
       "conditions": [
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "dist_low_M30 = [1.5,+\u221e)",
+        "macro_alignment \u2260 weak_pro",
         "H1_adx_label \u2260 trending"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq",
-      "win_rate": 29.6,
-      "samples": 27,
+      "win_rate": 32.2,
+      "samples": 90,
       "conditions": [
-        "mtf_trend \u2260 all_down",
-        "adx_M30 \u2260 [35,+\u221e)",
-        "atr_ratio_M30 \u2260 [0.7,1)",
-        "volatility_regime = low"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq",
-      "win_rate": 33.7,
-      "samples": 86,
-      "conditions": [
-        "mtf_trend \u2260 all_down",
+        "M30_ema_stack \u2260 down",
         "adx_M30 \u2260 [35,+\u221e)",
         "atr_ratio_M30 = [0.7,1)",
         "consec_red_M30 \u2260 [2,4)"
@@ -3114,65 +3139,90 @@
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv",
       "win_rate": 0.0,
-      "samples": 63,
+      "samples": 53,
       "conditions": [
-        "mtf_trend \u2260 all_down",
         "macro_alignment = weak_pro",
-        "mtf_trend \u2260 all_up"
+        "dxy_chg1d = [0,0.5)",
+        "hour_bucket \u2260 12-16",
+        "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv",
-      "win_rate": 11.8,
-      "samples": 68,
+      "win_rate": 5.0,
+      "samples": 20,
       "conditions": [
-        "mtf_trend \u2260 all_down",
+        "macro_alignment = weak_pro",
+        "dxy_chg1d = [0,0.5)",
+        "hour_bucket \u2260 12-16",
+        "bb_pctb_M30 = [\u2212\u221e,0.2)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv",
+      "win_rate": 17.7,
+      "samples": 141,
+      "conditions": [
         "macro_alignment \u2260 weak_pro",
+        "M30_ema_stack \u2260 down",
         "volatility_regime = normal",
-        "dow = Thu"
+        "M30_adx_label = trending"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv",
-      "win_rate": 21.2,
-      "samples": 33,
+      "win_rate": 24.1,
+      "samples": 29,
       "conditions": [
-        "mtf_trend = all_down",
+        "macro_alignment \u2260 weak_pro",
+        "M30_ema_stack = down",
         "ml_confidence_bucket = [60,70)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv",
-      "win_rate": 26.6,
-      "samples": 139,
+      "win_rate": 25.0,
+      "samples": 20,
       "conditions": [
-        "mtf_trend \u2260 all_down",
-        "macro_alignment \u2260 weak_pro",
-        "volatility_regime = normal",
-        "dow \u2260 Thu"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv",
-      "win_rate": 28.6,
-      "samples": 28,
-      "conditions": [
-        "mtf_trend \u2260 all_down",
         "macro_alignment = weak_pro",
-        "mtf_trend = all_up"
+        "dxy_chg1d = [0,0.5)",
+        "hour_bucket = 12-16"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv",
-      "win_rate": 29.4,
-      "samples": 34,
+      "win_rate": 31.2,
+      "samples": 80,
       "conditions": [
-        "mtf_trend = all_down",
+        "macro_alignment \u2260 weak_pro",
+        "M30_ema_stack \u2260 down",
+        "volatility_regime = normal",
+        "M30_adx_label \u2260 trending"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv",
+      "win_rate": 32.0,
+      "samples": 25,
+      "conditions": [
+        "macro_alignment = weak_pro",
+        "dxy_chg1d \u2260 [0,0.5)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv",
+      "win_rate": 34.6,
+      "samples": 26,
+      "conditions": [
+        "macro_alignment \u2260 weak_pro",
+        "M30_ema_stack = down",
         "ml_confidence_bucket \u2260 [60,70)",
         "dist_high_M30 \u2260 [1.5,+\u221e)"
       ]
@@ -3275,8 +3325,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse1",
-      "win_rate": 13.2,
-      "samples": 425,
+      "win_rate": 13.1,
+      "samples": 426,
       "conditions": [
         "bb_pctb_M30 = [\u2212\u221e,0.2)",
         "H1_adx_label \u2260 weak_trend",
@@ -3287,13 +3337,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse1",
-      "win_rate": 15.9,
-      "samples": 88,
+      "win_rate": 15.0,
+      "samples": 474,
       "conditions": [
         "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
-        "M30_ema_stack = NA",
-        "macro_alignment \u2260 weak_pro",
-        "dist_low_M30 \u2260 [1.5,+\u221e)"
+        "M30_ema_stack \u2260 NA",
+        "vix_chg1d = [3,+\u221e)",
+        "consec_green_M30 \u2260 [2,4)"
       ]
     },
     {
@@ -3322,8 +3372,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse1_inv",
-      "win_rate": 16.0,
-      "samples": 25,
+      "win_rate": 15.4,
+      "samples": 26,
       "conditions": [
         "adx_M30 \u2260 [35,+\u221e)",
         "macro_alignment \u2260 weak_pro",
@@ -3357,12 +3407,36 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse1_inv",
+      "win_rate": 22.2,
+      "samples": 27,
+      "conditions": [
+        "adx_M30 \u2260 [35,+\u221e)",
+        "macro_alignment \u2260 weak_pro",
+        "atr_ratio_M30 \u2260 [0.7,1)",
+        "ml_confidence_bucket = [\u2212\u221e,50)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse1_inv",
       "win_rate": 31.8,
       "samples": 22,
       "conditions": [
         "adx_M30 = [35,+\u221e)",
         "dxy_chg1d = [0,0.5)",
         "macro_alignment = weak_pro"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse1_inv",
+      "win_rate": 34.8,
+      "samples": 141,
+      "conditions": [
+        "adx_M30 \u2260 [35,+\u221e)",
+        "macro_alignment \u2260 weak_pro",
+        "atr_ratio_M30 = [0.7,1)",
+        "ml_confidence_bucket \u2260 [70,80)"
       ]
     },
     {
@@ -3427,8 +3501,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2",
-      "win_rate": 12.4,
-      "samples": 411,
+      "win_rate": 12.3,
+      "samples": 415,
       "conditions": [
         "vix_chg1d = [3,+\u221e)",
         "adx_H1 \u2260 [18,25)",
@@ -3451,20 +3525,20 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2",
-      "win_rate": 16.2,
-      "samples": 99,
+      "win_rate": 16.9,
+      "samples": 124,
       "conditions": [
         "vix_chg1d = [3,+\u221e)",
         "adx_H1 = [18,25)",
         "hour_bucket \u2260 20-24",
-        "hour_bucket \u2260 16-20"
+        "macro_alignment \u2260 strong_pro"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2",
-      "win_rate": 17.2,
-      "samples": 348,
+      "win_rate": 17.4,
+      "samples": 367,
       "conditions": [
         "vix_chg1d \u2260 [3,+\u221e)",
         "M30_ema_stack \u2260 NA",
@@ -3511,25 +3585,37 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2_inv",
-      "win_rate": 9.4,
-      "samples": 64,
+      "win_rate": 8.6,
+      "samples": 58,
       "conditions": [
         "macro_alignment \u2260 weak_against",
-        "ml_confidence_bucket = [80,+\u221e)",
-        "macro_alignment \u2260 neutral",
-        "macro_alignment \u2260 strong_pro"
+        "macro_alignment = weak_pro",
+        "ml_confidence_bucket \u2260 [\u2212\u221e,50)",
+        "dxy_chg1d = [0,0.5)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2_inv",
-      "win_rate": 25.2,
-      "samples": 131,
+      "win_rate": 20.0,
+      "samples": 25,
       "conditions": [
         "macro_alignment \u2260 weak_against",
-        "ml_confidence_bucket \u2260 [80,+\u221e)",
-        "adx_M30 \u2260 [35,+\u221e)",
-        "atr_ratio_M30 = [0.7,1)"
+        "macro_alignment = weak_pro",
+        "ml_confidence_bucket = [\u2212\u221e,50)",
+        "adx_H1 \u2260 [35,+\u221e)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse2_inv",
+      "win_rate": 27.9,
+      "samples": 43,
+      "conditions": [
+        "macro_alignment \u2260 weak_against",
+        "macro_alignment \u2260 weak_pro",
+        "adx_M30 = [35,+\u221e)",
+        "macro_alignment = strong_against"
       ]
     },
     {
@@ -3543,13 +3629,37 @@
       ]
     },
     {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse2_inv",
+      "win_rate": 31.8,
+      "samples": 22,
+      "conditions": [
+        "macro_alignment \u2260 weak_against",
+        "macro_alignment = weak_pro",
+        "ml_confidence_bucket \u2260 [\u2212\u221e,50)",
+        "dxy_chg1d \u2260 [0,0.5)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse2_inv",
+      "win_rate": 32.2,
+      "samples": 180,
+      "conditions": [
+        "macro_alignment \u2260 weak_against",
+        "macro_alignment \u2260 weak_pro",
+        "adx_M30 \u2260 [35,+\u221e)",
+        "dxy_chg1d = [-0.5,0)"
+      ]
+    },
+    {
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 pulse3",
       "win_rate": 78.3,
       "samples": 189,
       "conditions": [
         "vix_chg1d \u2260 [3,+\u221e)",
-        "mtf_trend \u2260 all_down",
+        "M30_ema_stack \u2260 down",
         "M30_ema_stack \u2260 NA",
         "dow = Fri"
       ]
@@ -3561,7 +3671,7 @@
       "samples": 267,
       "conditions": [
         "vix_chg1d \u2260 [3,+\u221e)",
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "bb_pctb_M30 = [\u2212\u221e,0.2)",
         "vix_chg1d \u2260 [0,3)"
       ]
@@ -3569,8 +3679,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse3",
-      "win_rate": 6.0,
-      "samples": 420,
+      "win_rate": 5.8,
+      "samples": 428,
       "conditions": [
         "vix_chg1d = [3,+\u221e)",
         "dow \u2260 Mon",
@@ -3585,7 +3695,7 @@
       "samples": 124,
       "conditions": [
         "vix_chg1d \u2260 [3,+\u221e)",
-        "mtf_trend \u2260 all_down",
+        "M30_ema_stack \u2260 down",
         "M30_ema_stack = NA",
         "sar_bearish \u2260 False"
       ]
@@ -3609,7 +3719,7 @@
       "samples": 227,
       "conditions": [
         "vix_chg1d \u2260 [3,+\u221e)",
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "bb_pctb_M30 \u2260 [\u2212\u221e,0.2)",
         "us10y_chg1d = [-0.5,0)"
       ]
@@ -3617,8 +3727,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse3",
-      "win_rate": 17.8,
-      "samples": 208,
+      "win_rate": 17.5,
+      "samples": 212,
       "conditions": [
         "vix_chg1d = [3,+\u221e)",
         "dow \u2260 Mon",
@@ -3633,7 +3743,7 @@
       "samples": 125,
       "conditions": [
         "vix_chg1d \u2260 [3,+\u221e)",
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "bb_pctb_M30 = [\u2212\u221e,0.2)",
         "vix_chg1d = [0,3)"
       ]
@@ -3657,7 +3767,7 @@
       "samples": 31,
       "conditions": [
         "vix_chg1d \u2260 [3,+\u221e)",
-        "mtf_trend \u2260 all_down",
+        "M30_ema_stack \u2260 down",
         "M30_ema_stack = NA",
         "sar_bearish = False"
       ]
@@ -3677,8 +3787,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse3_inv",
-      "win_rate": 7.7,
-      "samples": 104,
+      "win_rate": 8.3,
+      "samples": 108,
       "conditions": [
         "sar_bearish = False",
         "volatility_regime = normal",
@@ -3712,24 +3822,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse3_inv",
-      "win_rate": 26.7,
-      "samples": 30,
+      "win_rate": 24.2,
+      "samples": 33,
       "conditions": [
         "sar_bearish = False",
         "volatility_regime = normal",
         "bb_extreme_upper \u2260 True",
         "H1_adx_label = weak_trend"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 pulse3_inv",
-      "win_rate": 31.0,
-      "samples": 29,
-      "conditions": [
-        "sar_bearish = False",
-        "volatility_regime = normal",
-        "bb_extreme_upper = True"
       ]
     },
     {
@@ -3741,6 +3840,17 @@
         "sar_bearish \u2260 False",
         "adx_M30 = [35,+\u221e)",
         "macro_alignment = weak_pro"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse3_inv",
+      "win_rate": 33.3,
+      "samples": 33,
+      "conditions": [
+        "sar_bearish = False",
+        "volatility_regime = normal",
+        "bb_extreme_upper = True"
       ]
     },
     {
@@ -3782,18 +3892,6 @@
     {
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 smc",
-      "win_rate": 84.8,
-      "samples": 33,
-      "conditions": [
-        "us10y_chg1d \u2260 [-0.5,0)",
-        "dist_low_M30 = [0.7,1.5)",
-        "dxy_chg1d = [0,0.5)",
-        "ml_confidence_bucket = [80,+\u221e)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "XAUUSD \u00b7 smc",
       "win_rate": 82.5,
       "samples": 57,
       "conditions": [
@@ -3823,18 +3921,6 @@
       "conditions": [
         "us10y_chg1d = [-0.5,0)",
         "dist_high_M30 \u2260 [1.5,+\u221e)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 smc",
-      "win_rate": 34.5,
-      "samples": 29,
-      "conditions": [
-        "us10y_chg1d \u2260 [-0.5,0)",
-        "dist_low_M30 = [0.7,1.5)",
-        "dxy_chg1d \u2260 [0,0.5)",
-        "H1_adx_label = weak_trend"
       ]
     },
     {
@@ -3886,8 +3972,8 @@
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ai_panel \u00b7 BUY",
-      "win_rate": 81.6,
-      "samples": 38,
+      "win_rate": 79.5,
+      "samples": 39,
       "conditions": [
         "rsi_H1 = [30,50)"
       ]
@@ -3905,8 +3991,8 @@
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 meta \u00b7 BUY",
-      "win_rate": 95.5,
-      "samples": 22,
+      "win_rate": 91.3,
+      "samples": 23,
       "conditions": [
         "sar_bearish \u2260 False",
         "rsi_H1 = [30,50)",
@@ -3921,20 +4007,20 @@
       "conditions": [
         "sar_bearish = False",
         "dow \u2260 Fri",
-        "rsi_H4 \u2260 NA",
-        "bb_extreme_upper = True"
+        "adx_H4 \u2260 NA",
+        "bb_extreme_upper \u2260 False"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 meta \u00b7 BUY",
-      "win_rate": 21.9,
-      "samples": 96,
+      "win_rate": 21.6,
+      "samples": 97,
       "conditions": [
         "sar_bearish = False",
         "dow \u2260 Fri",
-        "rsi_H4 \u2260 NA",
-        "bb_extreme_upper \u2260 True"
+        "adx_H4 \u2260 NA",
+        "bb_extreme_upper = False"
       ]
     },
     {
@@ -3945,7 +4031,7 @@
       "conditions": [
         "sar_bearish = False",
         "dow = Fri",
-        "vix_chg1d \u2260 [0,3)"
+        "rsi_H4 = [50,65)"
       ]
     },
     {
@@ -3961,66 +4047,80 @@
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 meta \u00b7 SELL",
-      "win_rate": 21.4,
-      "samples": 28,
+      "win_rate": 20.7,
+      "samples": 29,
       "conditions": [
         "H1_adx_label \u2260 trending",
-        "rsi_H4 \u2260 NA"
+        "H4_adx_label \u2260 NA"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:balanced \u00b7 BUY",
       "win_rate": 100.0,
-      "samples": 24,
+      "samples": 21,
       "conditions": [
-        "rsi_H1 = [30,50)",
+        "sar_bearish \u2260 False",
         "H4_ema_stack = up",
-        "hour_bucket = 08-12"
+        "rsi_H1 = [30,50)",
+        "volatility_regime = normal"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:balanced \u00b7 BUY",
-      "win_rate": 89.3,
-      "samples": 28,
+      "win_rate": 95.0,
+      "samples": 20,
       "conditions": [
-        "rsi_H1 = [30,50)",
+        "sar_bearish \u2260 False",
         "H4_ema_stack = up",
-        "hour_bucket \u2260 08-12"
+        "rsi_H1 = [30,50)",
+        "volatility_regime \u2260 normal"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:balanced \u00b7 BUY",
-      "win_rate": 15.2,
-      "samples": 33,
+      "win_rate": 11.1,
+      "samples": 27,
       "conditions": [
-        "rsi_H1 \u2260 [30,50)",
         "sar_bearish = False",
-        "session = europe"
+        "us10y_chg1d = [0.5,+\u221e)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "GDAXI.INDX \u00b7 ml:balanced \u00b7 BUY",
+      "win_rate": 33.3,
+      "samples": 21,
+      "conditions": [
+        "sar_bearish = False",
+        "us10y_chg1d \u2260 [0.5,+\u221e)",
+        "H4_adx_label = weak_trend"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:full_power \u00b7 BUY",
       "win_rate": 100.0,
-      "samples": 26,
+      "samples": 21,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
+        "H4_ema_stack = up",
         "rsi_H1 = [30,50)",
-        "vix_chg1d = [0,3)"
+        "volatility_regime = normal"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:full_power \u00b7 BUY",
-      "win_rate": 80.0,
-      "samples": 30,
+      "win_rate": 95.0,
+      "samples": 20,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
+        "H4_ema_stack = up",
         "rsi_H1 = [30,50)",
-        "vix_chg1d \u2260 [0,3)"
+        "volatility_regime \u2260 normal"
       ]
     },
     {
@@ -4029,7 +4129,7 @@
       "win_rate": 10.0,
       "samples": 30,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "us10y_chg1d = [0.5,+\u221e)"
       ]
     },
@@ -4039,9 +4139,9 @@
       "win_rate": 20.7,
       "samples": 29,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "us10y_chg1d \u2260 [0.5,+\u221e)",
-        "adx_H4 = [18,25)"
+        "H4_adx_label = weak_trend"
       ]
     },
     {
@@ -4068,22 +4168,24 @@
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:main \u00b7 BUY",
       "win_rate": 100.0,
-      "samples": 26,
+      "samples": 21,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
+        "H4_ema_stack = up",
         "rsi_H1 = [30,50)",
-        "vix_chg1d = [0,3)"
+        "volatility_regime = normal"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 ml:main \u00b7 BUY",
-      "win_rate": 80.0,
-      "samples": 30,
+      "win_rate": 95.0,
+      "samples": 20,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
+        "H4_ema_stack = up",
         "rsi_H1 = [30,50)",
-        "vix_chg1d \u2260 [0,3)"
+        "volatility_regime \u2260 normal"
       ]
     },
     {
@@ -4092,7 +4194,7 @@
       "win_rate": 10.0,
       "samples": 30,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "us10y_chg1d = [0.5,+\u221e)"
       ]
     },
@@ -4102,9 +4204,9 @@
       "win_rate": 20.7,
       "samples": 29,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "us10y_chg1d \u2260 [0.5,+\u221e)",
-        "H4_adx_label = weak_trend"
+        "adx_H4 = [18,25)"
       ]
     },
     {
@@ -4306,18 +4408,6 @@
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse2 \u00b7 BUY",
-      "win_rate": 100.0,
-      "samples": 21,
-      "conditions": [
-        "sar_bearish \u2260 False",
-        "vix_chg1d \u2260 [3,+\u221e)",
-        "regime_label = transition",
-        "bb_extreme_lower \u2260 False"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "GDAXI.INDX \u00b7 pulse2 \u00b7 BUY",
       "win_rate": 97.8,
       "samples": 45,
       "conditions": [
@@ -4340,6 +4430,18 @@
       ]
     },
     {
+      "kind": "winning_pattern",
+      "segment": "GDAXI.INDX \u00b7 pulse2 \u00b7 BUY",
+      "win_rate": 83.7,
+      "samples": 43,
+      "conditions": [
+        "sar_bearish \u2260 False",
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "regime_label = transition",
+        "H1_adx_label = trending"
+      ]
+    },
+    {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse2 \u00b7 BUY",
       "win_rate": 0.0,
@@ -4347,7 +4449,7 @@
       "conditions": [
         "sar_bearish = False",
         "mtf_trend \u2260 mixed",
-        "bb_extreme_upper \u2260 False",
+        "bb_extreme_upper = True",
         "rsi_H4 = [50,65)"
       ]
     },
@@ -4359,7 +4461,7 @@
       "conditions": [
         "sar_bearish = False",
         "mtf_trend \u2260 mixed",
-        "bb_extreme_upper = False",
+        "bb_extreme_upper \u2260 True",
         "dxy_chg1d = [0,0.5)"
       ]
     },
@@ -4371,7 +4473,7 @@
       "conditions": [
         "sar_bearish = False",
         "mtf_trend \u2260 mixed",
-        "bb_extreme_upper \u2260 False",
+        "bb_extreme_upper = True",
         "rsi_H4 \u2260 [50,65)"
       ]
     },
@@ -4405,7 +4507,7 @@
       "conditions": [
         "sar_bearish = False",
         "mtf_trend \u2260 mixed",
-        "bb_extreme_upper = False",
+        "bb_extreme_upper \u2260 True",
         "dxy_chg1d \u2260 [0,0.5)"
       ]
     },
@@ -4422,23 +4524,23 @@
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse2_inv \u00b7 SELL",
-      "win_rate": 15.0,
-      "samples": 20,
+      "win_rate": 25.0,
+      "samples": 24,
       "conditions": [
-        "H4_adx_label = NA",
-        "session \u2260 overlap",
-        "dxy_chg1d \u2260 [0,0.5)"
+        "macro_alignment \u2260 strong_pro",
+        "hour_bucket \u2260 12-16"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse3 \u00b7 BUY",
       "win_rate": 100.0,
-      "samples": 60,
+      "samples": 57,
       "conditions": [
-        "sar_bearish = True",
+        "sar_bearish \u2260 False",
         "rsi_H1 = [30,50)",
-        "vix_chg1d = [0,3)"
+        "adx_H4 = [25,35)",
+        "H1_adx_label = trending"
       ]
     },
     {
@@ -4447,21 +4549,22 @@
       "win_rate": 96.3,
       "samples": 27,
       "conditions": [
-        "sar_bearish = True",
+        "sar_bearish \u2260 False",
         "rsi_H1 \u2260 [30,50)",
         "hour_bucket \u2260 08-12",
-        "bb_extreme_lower = True"
+        "bb_extreme_lower \u2260 False"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse3 \u00b7 BUY",
-      "win_rate": 78.4,
-      "samples": 37,
+      "win_rate": 86.4,
+      "samples": 22,
       "conditions": [
-        "sar_bearish = True",
+        "sar_bearish \u2260 False",
         "rsi_H1 = [30,50)",
-        "vix_chg1d \u2260 [0,3)"
+        "adx_H4 = [25,35)",
+        "H1_adx_label \u2260 trending"
       ]
     },
     {
@@ -4470,7 +4573,7 @@
       "win_rate": 75.6,
       "samples": 41,
       "conditions": [
-        "sar_bearish \u2260 True",
+        "sar_bearish = False",
         "ml_confidence_bucket \u2260 [60,70)",
         "dow = Fri",
         "dxy_chg1d \u2260 [0,0.5)"
@@ -4482,10 +4585,10 @@
       "win_rate": 0.0,
       "samples": 64,
       "conditions": [
-        "sar_bearish \u2260 True",
+        "sar_bearish = False",
         "ml_confidence_bucket \u2260 [60,70)",
         "dow \u2260 Fri",
-        "overbought \u2260 False"
+        "overbought = True"
       ]
     },
     {
@@ -4494,7 +4597,7 @@
       "win_rate": 1.7,
       "samples": 116,
       "conditions": [
-        "sar_bearish \u2260 True",
+        "sar_bearish = False",
         "ml_confidence_bucket = [60,70)",
         "us10y_chg1d \u2260 [\u2212\u221e,-0.5)",
         "rsi_H4 = [50,65)"
@@ -4506,7 +4609,7 @@
       "win_rate": 4.8,
       "samples": 21,
       "conditions": [
-        "sar_bearish \u2260 True",
+        "sar_bearish = False",
         "ml_confidence_bucket = [60,70)",
         "us10y_chg1d = [\u2212\u221e,-0.5)",
         "vix_chg1d = [-3,0)"
@@ -4518,7 +4621,7 @@
       "win_rate": 6.7,
       "samples": 30,
       "conditions": [
-        "sar_bearish = True",
+        "sar_bearish \u2260 False",
         "rsi_H1 \u2260 [30,50)",
         "hour_bucket = 08-12",
         "adx_H4 = [18,25)"
@@ -4530,7 +4633,7 @@
       "win_rate": 7.7,
       "samples": 39,
       "conditions": [
-        "sar_bearish \u2260 True",
+        "sar_bearish = False",
         "ml_confidence_bucket = [60,70)",
         "us10y_chg1d \u2260 [\u2212\u221e,-0.5)",
         "rsi_H4 \u2260 [50,65)"
@@ -4542,7 +4645,7 @@
       "win_rate": 15.0,
       "samples": 20,
       "conditions": [
-        "sar_bearish \u2260 True",
+        "sar_bearish = False",
         "ml_confidence_bucket \u2260 [60,70)",
         "dow = Fri",
         "dxy_chg1d = [0,0.5)"
@@ -4554,10 +4657,10 @@
       "win_rate": 28.3,
       "samples": 230,
       "conditions": [
-        "sar_bearish \u2260 True",
+        "sar_bearish = False",
         "ml_confidence_bucket \u2260 [60,70)",
         "dow \u2260 Fri",
-        "overbought = False"
+        "overbought \u2260 True"
       ]
     },
     {
@@ -4566,7 +4669,7 @@
       "win_rate": 33.3,
       "samples": 21,
       "conditions": [
-        "sar_bearish \u2260 True",
+        "sar_bearish = False",
         "ml_confidence_bucket = [60,70)",
         "us10y_chg1d = [\u2212\u221e,-0.5)",
         "vix_chg1d \u2260 [-3,0)"
@@ -4589,20 +4692,20 @@
       "samples": 32,
       "conditions": [
         "adx_H1 \u2260 [35,+\u221e)",
-        "sar_bearish = False",
-        "adx_H4 \u2260 NA",
+        "sar_bearish \u2260 True",
+        "H4_adx_label \u2260 NA",
         "rsi_H1 \u2260 [30,50)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse3 \u00b7 SELL",
-      "win_rate": 1.5,
-      "samples": 68,
+      "win_rate": 1.4,
+      "samples": 69,
       "conditions": [
         "adx_H1 \u2260 [35,+\u221e)",
-        "sar_bearish \u2260 False",
-        "rsi_H4 \u2260 NA",
+        "sar_bearish = True",
+        "adx_H4 \u2260 NA",
         "dxy_chg1d \u2260 [-0.5,0)"
       ]
     },
@@ -4613,19 +4716,19 @@
       "samples": 30,
       "conditions": [
         "adx_H1 \u2260 [35,+\u221e)",
-        "sar_bearish = False",
-        "adx_H4 = NA"
+        "sar_bearish \u2260 True",
+        "H4_adx_label = NA"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "GDAXI.INDX \u00b7 pulse3 \u00b7 SELL",
-      "win_rate": 24.2,
-      "samples": 33,
+      "win_rate": 25.7,
+      "samples": 35,
       "conditions": [
         "adx_H1 \u2260 [35,+\u221e)",
-        "sar_bearish \u2260 False",
-        "rsi_H4 \u2260 NA",
+        "sar_bearish = True",
+        "adx_H4 \u2260 NA",
         "dxy_chg1d = [-0.5,0)"
       ]
     },
@@ -4636,8 +4739,8 @@
       "samples": 24,
       "conditions": [
         "adx_H1 \u2260 [35,+\u221e)",
-        "sar_bearish \u2260 False",
-        "rsi_H4 = NA",
+        "sar_bearish = True",
+        "adx_H4 = NA",
         "hour_bucket = 08-12"
       ]
     },
@@ -4647,7 +4750,7 @@
       "win_rate": 10.0,
       "samples": 20,
       "conditions": [
-        "H4_ema_stack = NA",
+        "adx_H4 = NA",
         "macro_alignment \u2260 neutral",
         "session = europe"
       ]
@@ -4658,7 +4761,7 @@
       "win_rate": 33.3,
       "samples": 21,
       "conditions": [
-        "H4_ema_stack = NA",
+        "adx_H4 = NA",
         "macro_alignment \u2260 neutral",
         "session \u2260 europe"
       ]
@@ -4741,95 +4844,73 @@
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 meta \u00b7 SELL",
-      "win_rate": 18.5,
-      "samples": 27,
+      "win_rate": 15.0,
+      "samples": 20,
       "conditions": [
         "dow \u2260 Thu",
         "rsi_H1 = [30,50)",
-        "H1_adx_label \u2260 trending"
+        "volatility_regime \u2260 normal"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 ml:balanced \u00b7 BUY",
-      "win_rate": 95.2,
-      "samples": 21,
+      "win_rate": 85.3,
+      "samples": 34,
       "conditions": [
-        "sar_bearish \u2260 False",
-        "dow \u2260 Mon",
-        "H1_ema_stack = up",
-        "vix_chg1d = [-3,0)"
+        "sar_bearish = True",
+        "H4_adx_label \u2260 ranging",
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "volatility_regime \u2260 normal"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 ml:balanced \u00b7 BUY",
-      "win_rate": 15.8,
-      "samples": 38,
+      "win_rate": 15.4,
+      "samples": 39,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "rsi_H1 = [50,65)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 ml:balanced \u00b7 SELL",
-      "win_rate": 78.9,
-      "samples": 38,
+      "win_rate": 78.6,
+      "samples": 28,
       "conditions": [
-        "sar_bearish \u2260 True",
-        "dow \u2260 Tue"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "NDX.INDX \u00b7 ml:balanced \u00b7 SELL",
-      "win_rate": 30.4,
-      "samples": 23,
-      "conditions": [
-        "sar_bearish = True",
-        "dow \u2260 Tue"
+        "H1_ema_stack \u2260 mixed",
+        "session_phase \u2260 mid_session"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 ml:full_power \u00b7 BUY",
-      "win_rate": 90.5,
+      "win_rate": 85.7,
       "samples": 21,
       "conditions": [
-        "sar_bearish = True",
-        "dow \u2260 Mon",
-        "H1_adx_label \u2260 weak_trend",
-        "hour_bucket \u2260 16-20"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "NDX.INDX \u00b7 ml:full_power \u00b7 BUY",
-      "win_rate": 75.0,
-      "samples": 20,
-      "conditions": [
-        "sar_bearish = True",
-        "dow \u2260 Mon",
-        "H1_adx_label \u2260 weak_trend",
-        "hour_bucket = 16-20"
+        "sar_bearish \u2260 False",
+        "adx_H4 \u2260 [\u2212\u221e,18)",
+        "rsi_H1 = [30,50)",
+        "us10y_chg1d \u2260 [0.5,+\u221e)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 ml:full_power \u00b7 BUY",
-      "win_rate": 18.2,
-      "samples": 22,
+      "win_rate": 20.8,
+      "samples": 24,
       "conditions": [
-        "sar_bearish \u2260 True",
+        "sar_bearish = False",
         "session_phase = mid_session"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 ml:full_power \u00b7 SELL",
-      "win_rate": 90.5,
-      "samples": 21,
+      "win_rate": 90.9,
+      "samples": 22,
       "conditions": [
         "us10y_chg1d = [\u2212\u221e,-0.5)",
         "session = overlap"
@@ -4842,38 +4923,25 @@
       "samples": 25,
       "conditions": [
         "us10y_chg1d \u2260 [\u2212\u221e,-0.5)",
-        "H1_adx_label = weak_trend"
+        "adx_H1 = [18,25)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 ml:main \u00b7 BUY",
-      "win_rate": 95.2,
-      "samples": 21,
+      "win_rate": 88.5,
+      "samples": 26,
       "conditions": [
         "sar_bearish \u2260 False",
-        "dow \u2260 Mon",
-        "adx_H1 \u2260 [18,25)",
-        "hour_bucket = 12-16"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "NDX.INDX \u00b7 ml:main \u00b7 BUY",
-      "win_rate": 75.0,
-      "samples": 20,
-      "conditions": [
-        "sar_bearish \u2260 False",
-        "dow \u2260 Mon",
-        "adx_H1 \u2260 [18,25)",
-        "hour_bucket \u2260 12-16"
+        "adx_H4 \u2260 [\u2212\u221e,18)",
+        "ml_confidence_bucket \u2260 [\u2212\u221e,50)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 ml:main \u00b7 BUY",
-      "win_rate": 18.2,
-      "samples": 22,
+      "win_rate": 20.8,
+      "samples": 24,
       "conditions": [
         "sar_bearish = False",
         "session_phase = mid_session"
@@ -4882,11 +4950,11 @@
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 ml:main \u00b7 SELL",
-      "win_rate": 89.3,
-      "samples": 28,
+      "win_rate": 91.3,
+      "samples": 23,
       "conditions": [
         "us10y_chg1d = [\u2212\u221e,-0.5)",
-        "H1_ema_stack = up"
+        "mtf_trend \u2260 mixed"
       ]
     },
     {
@@ -4927,12 +4995,12 @@
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse1 \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 24,
+      "samples": 31,
       "conditions": [
         "ml_confidence_bucket \u2260 [80,+\u221e)",
         "rsi_H1 \u2260 [30,50)",
         "macro_alignment = weak_pro",
-        "us10y_chg1d \u2260 [\u2212\u221e,-0.5)"
+        "session = us"
       ]
     },
     {
@@ -4956,7 +5024,7 @@
         "ml_confidence_bucket = [80,+\u221e)",
         "H1_adx_label \u2260 trending",
         "H1_ema_stack = mixed",
-        "rsi_H4 = [30,50)"
+        "H4_ema_stack = up"
       ]
     },
     {
@@ -4980,18 +5048,6 @@
         "ml_confidence_bucket = [80,+\u221e)",
         "H1_adx_label = trending",
         "dow = Mon"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "NDX.INDX \u00b7 pulse1 \u00b7 BUY",
-      "win_rate": 9.5,
-      "samples": 21,
-      "conditions": [
-        "ml_confidence_bucket \u2260 [80,+\u221e)",
-        "rsi_H1 \u2260 [30,50)",
-        "macro_alignment = weak_pro",
-        "us10y_chg1d = [\u2212\u221e,-0.5)"
       ]
     },
     {
@@ -5021,37 +5077,48 @@
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse1 \u00b7 BUY",
+      "win_rate": 19.0,
+      "samples": 21,
+      "conditions": [
+        "ml_confidence_bucket \u2260 [80,+\u221e)",
+        "rsi_H1 \u2260 [30,50)",
+        "macro_alignment = weak_pro",
+        "session \u2260 us"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 pulse1 \u00b7 BUY",
       "win_rate": 19.2,
       "samples": 26,
       "conditions": [
         "ml_confidence_bucket = [80,+\u221e)",
         "H1_adx_label \u2260 trending",
         "H1_ema_stack = mixed",
-        "rsi_H4 \u2260 [30,50)"
+        "H4_ema_stack \u2260 up"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse1 \u00b7 SELL",
-      "win_rate": 84.7,
-      "samples": 85,
+      "win_rate": 92.3,
+      "samples": 39,
       "conditions": [
         "H1_adx_label = trending",
-        "rsi_H4 = [30,50)",
         "dow \u2260 Tue",
-        "adx_H1 = [35,+\u221e)"
+        "adx_H1 = [35,+\u221e)",
+        "ml_confidence_bucket \u2260 [80,+\u221e)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse1 \u00b7 SELL",
-      "win_rate": 76.1,
-      "samples": 46,
+      "win_rate": 75.8,
+      "samples": 33,
       "conditions": [
         "H1_adx_label \u2260 trending",
         "volatility_regime \u2260 high",
-        "ml_confidence_bucket \u2260 [\u2212\u221e,50)",
-        "sar_bearish = False"
+        "ml_confidence_bucket = [60,70)"
       ]
     },
     {
@@ -5069,30 +5136,6 @@
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse1 \u00b7 SELL",
-      "win_rate": 25.0,
-      "samples": 20,
-      "conditions": [
-        "H1_adx_label \u2260 trending",
-        "volatility_regime \u2260 high",
-        "ml_confidence_bucket = [\u2212\u221e,50)",
-        "rsi_H4 \u2260 [50,65)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "NDX.INDX \u00b7 pulse1 \u00b7 SELL",
-      "win_rate": 30.0,
-      "samples": 20,
-      "conditions": [
-        "H1_adx_label \u2260 trending",
-        "volatility_regime \u2260 high",
-        "ml_confidence_bucket = [\u2212\u221e,50)",
-        "rsi_H4 = [50,65)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "NDX.INDX \u00b7 pulse1 \u00b7 SELL",
       "win_rate": 30.2,
       "samples": 43,
       "conditions": [
@@ -5105,53 +5148,64 @@
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse1 \u00b7 SELL",
-      "win_rate": 32.0,
-      "samples": 25,
+      "win_rate": 33.3,
+      "samples": 21,
       "conditions": [
         "H1_adx_label = trending",
-        "rsi_H4 \u2260 [30,50)",
-        "ml_confidence_bucket \u2260 [\u2212\u221e,50)"
+        "dow = Tue",
+        "H1_ema_stack \u2260 down"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse1_inv \u00b7 BUY",
-      "win_rate": 29.6,
-      "samples": 27,
+      "win_rate": 21.7,
+      "samples": 23,
       "conditions": [
-        "oversold \u2260 True",
-        "adx_H1 = [18,25)"
+        "session_phase = mid_session",
+        "H1_ema_stack = up"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "NDX.INDX \u00b7 pulse1_inv \u00b7 BUY",
+      "win_rate": 34.8,
+      "samples": 23,
+      "conditions": [
+        "session_phase \u2260 mid_session",
+        "dow = Wed"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse1_inv \u00b7 SELL",
-      "win_rate": 86.5,
-      "samples": 37,
+      "win_rate": 90.0,
+      "samples": 20,
       "conditions": [
-        "rsi_H1 \u2260 [50,65)",
-        "H4_ema_stack \u2260 down",
+        "dow \u2260 Fri",
+        "vix_chg1d = [\u2212\u221e,-3)",
         "ml_confidence_bucket = [80,+\u221e)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse1_inv \u00b7 SELL",
-      "win_rate": 20.5,
-      "samples": 39,
+      "win_rate": 14.3,
+      "samples": 21,
       "conditions": [
-        "rsi_H1 = [50,65)",
-        "hour_bucket \u2260 12-16"
+        "dow = Fri"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse1_inv \u00b7 SELL",
-      "win_rate": 25.0,
-      "samples": 20,
+      "win_rate": 27.7,
+      "samples": 47,
       "conditions": [
-        "rsi_H1 \u2260 [50,65)",
-        "H4_ema_stack = down"
+        "dow \u2260 Fri",
+        "vix_chg1d \u2260 [\u2212\u221e,-3)",
+        "session_phase \u2260 after_hours",
+        "rsi_H1 \u2260 [30,50)"
       ]
     },
     {
@@ -5185,8 +5239,8 @@
       "samples": 27,
       "conditions": [
         "sar_bearish = False",
-        "bb_extreme_upper = True",
-        "rsi_H1 \u2260 [65,75)"
+        "bb_extreme_upper \u2260 False",
+        "session_phase \u2260 after_hours"
       ]
     },
     {
@@ -5196,7 +5250,7 @@
       "samples": 25,
       "conditions": [
         "sar_bearish = False",
-        "bb_extreme_upper \u2260 True",
+        "bb_extreme_upper = False",
         "mtf_trend = all_up",
         "dxy_chg1d = [-0.5,0)"
       ]
@@ -5208,8 +5262,8 @@
       "samples": 20,
       "conditions": [
         "sar_bearish = False",
-        "bb_extreme_upper = True",
-        "rsi_H1 = [65,75)"
+        "bb_extreme_upper \u2260 False",
+        "session_phase = after_hours"
       ]
     },
     {
@@ -5219,7 +5273,7 @@
       "samples": 32,
       "conditions": [
         "sar_bearish = False",
-        "bb_extreme_upper \u2260 True",
+        "bb_extreme_upper = False",
         "mtf_trend = all_up",
         "dxy_chg1d \u2260 [-0.5,0)"
       ]
@@ -5231,7 +5285,7 @@
       "samples": 27,
       "conditions": [
         "sar_bearish = False",
-        "bb_extreme_upper \u2260 True",
+        "bb_extreme_upper = False",
         "mtf_trend \u2260 all_up",
         "rsi_H4 = [50,65)"
       ]
@@ -5239,37 +5293,13 @@
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse2 \u00b7 SELL",
-      "win_rate": 92.0,
-      "samples": 25,
+      "win_rate": 87.3,
+      "samples": 55,
       "conditions": [
         "us10y_chg1d \u2260 [0,0.5)",
         "dow \u2260 Tue",
-        "H1_ema_stack = mixed",
-        "session = us"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "NDX.INDX \u00b7 pulse2 \u00b7 SELL",
-      "win_rate": 77.8,
-      "samples": 36,
-      "conditions": [
-        "us10y_chg1d \u2260 [0,0.5)",
-        "dow \u2260 Tue",
-        "H1_ema_stack \u2260 mixed",
-        "volatility_regime = high"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "NDX.INDX \u00b7 pulse2 \u00b7 SELL",
-      "win_rate": 75.0,
-      "samples": 28,
-      "conditions": [
-        "us10y_chg1d \u2260 [0,0.5)",
-        "dow \u2260 Tue",
-        "H1_ema_stack = mixed",
-        "session \u2260 us"
+        "dow \u2260 Wed",
+        "macro_alignment \u2260 neutral"
       ]
     },
     {
@@ -5295,10 +5325,11 @@
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse2_inv \u00b7 BUY",
-      "win_rate": 75.9,
-      "samples": 29,
+      "win_rate": 85.0,
+      "samples": 20,
       "conditions": [
-        "sar_bearish = False"
+        "ml_confidence_bucket = [50,60)",
+        "H4_ema_stack = down"
       ]
     },
     {
@@ -5307,7 +5338,7 @@
       "win_rate": 100.0,
       "samples": 34,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
         "us10y_chg1d = [-0.5,0)",
         "H4_ema_stack = up"
       ]
@@ -5318,7 +5349,7 @@
       "win_rate": 0.0,
       "samples": 117,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "H1_ema_stack = up",
         "rsi_H4 \u2260 [50,65)",
         "mtf_trend \u2260 mixed"
@@ -5330,10 +5361,10 @@
       "win_rate": 3.6,
       "samples": 28,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "H1_ema_stack = up",
         "rsi_H4 = [50,65)",
-        "near_resistance \u2260 False"
+        "near_resistance = True"
       ]
     },
     {
@@ -5342,7 +5373,7 @@
       "win_rate": 4.8,
       "samples": 21,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "H1_ema_stack = up",
         "rsi_H4 \u2260 [50,65)",
         "mtf_trend = mixed"
@@ -5354,7 +5385,7 @@
       "win_rate": 8.3,
       "samples": 24,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "H1_ema_stack \u2260 up",
         "vix_chg1d = [\u2212\u221e,-3)",
         "session_phase = mid_session"
@@ -5366,7 +5397,7 @@
       "win_rate": 9.1,
       "samples": 22,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "H1_ema_stack \u2260 up",
         "vix_chg1d = [\u2212\u221e,-3)",
         "session_phase \u2260 mid_session"
@@ -5378,10 +5409,10 @@
       "win_rate": 18.1,
       "samples": 94,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "H1_ema_stack = up",
         "rsi_H4 = [50,65)",
-        "near_resistance = False"
+        "near_resistance \u2260 True"
       ]
     },
     {
@@ -5390,7 +5421,7 @@
       "win_rate": 19.2,
       "samples": 26,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
         "us10y_chg1d \u2260 [-0.5,0)",
         "vix_chg1d = [-3,0)"
       ]
@@ -5401,7 +5432,7 @@
       "win_rate": 22.7,
       "samples": 22,
       "conditions": [
-        "sar_bearish = False",
+        "sar_bearish \u2260 True",
         "H1_ema_stack \u2260 up",
         "vix_chg1d \u2260 [\u2212\u221e,-3)",
         "dow = Tue"
@@ -5413,7 +5444,7 @@
       "win_rate": 32.0,
       "samples": 25,
       "conditions": [
-        "sar_bearish \u2260 False",
+        "sar_bearish = True",
         "us10y_chg1d \u2260 [-0.5,0)",
         "vix_chg1d \u2260 [-3,0)",
         "H4_adx_label = weak_trend"
@@ -5427,19 +5458,19 @@
       "conditions": [
         "H1_adx_label = trending",
         "macro_alignment = strong_against",
-        "rsi_H1 = [50,65)"
+        "rsi_H1 \u2260 [30,50)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse3 \u00b7 SELL",
-      "win_rate": 95.5,
-      "samples": 22,
+      "win_rate": 95.7,
+      "samples": 23,
       "conditions": [
         "H1_adx_label \u2260 trending",
         "ml_confidence_bucket = [\u2212\u221e,50)",
-        "session \u2260 overlap",
-        "dow = Wed"
+        "session = us",
+        "volatility_regime = high"
       ]
     },
     {
@@ -5462,7 +5493,7 @@
       "conditions": [
         "H1_adx_label = trending",
         "macro_alignment = strong_against",
-        "rsi_H1 \u2260 [50,65)"
+        "rsi_H1 = [30,50)"
       ]
     },
     {
@@ -5478,58 +5509,49 @@
       ]
     },
     {
-      "kind": "avoid_pattern",
+      "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse3 \u00b7 SELL",
-      "win_rate": 9.4,
-      "samples": 106,
+      "win_rate": 75.8,
+      "samples": 33,
       "conditions": [
-        "H1_adx_label \u2260 trending",
-        "ml_confidence_bucket \u2260 [\u2212\u221e,50)",
-        "sar_bearish \u2260 False",
-        "session_phase \u2260 after_hours"
+        "H1_adx_label = trending",
+        "macro_alignment \u2260 strong_against",
+        "dow \u2260 Fri",
+        "us10y_chg1d = [0,0.5)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse3 \u00b7 SELL",
-      "win_rate": 30.8,
-      "samples": 26,
-      "conditions": [
-        "H1_adx_label \u2260 trending",
-        "ml_confidence_bucket = [\u2212\u221e,50)",
-        "session = overlap"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "NDX.INDX \u00b7 pulse3 \u00b7 SELL",
-      "win_rate": 34.4,
-      "samples": 32,
+      "win_rate": 10.7,
+      "samples": 121,
       "conditions": [
         "H1_adx_label \u2260 trending",
         "ml_confidence_bucket \u2260 [\u2212\u221e,50)",
-        "sar_bearish \u2260 False",
-        "session_phase = after_hours"
+        "sar_bearish = True",
+        "H4_ema_stack \u2260 down"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "NDX.INDX \u00b7 pulse3_inv \u00b7 BUY",
-      "win_rate": 83.3,
-      "samples": 30,
+      "win_rate": 100.0,
+      "samples": 21,
       "conditions": [
-        "session_phase = close_drive"
+        "H4_ema_stack = up",
+        "H1_adx_label = weak_trend"
       ]
     },
     {
-      "kind": "winning_pattern",
+      "kind": "avoid_pattern",
       "segment": "NDX.INDX \u00b7 pulse3_inv \u00b7 BUY",
-      "win_rate": 76.9,
-      "samples": 26,
+      "win_rate": 20.0,
+      "samples": 20,
       "conditions": [
-        "session_phase \u2260 close_drive",
-        "H4_ema_stack \u2260 down",
-        "H1_adx_label \u2260 trending"
+        "H4_ema_stack \u2260 up",
+        "adx_H4 \u2260 [35,+\u221e)",
+        "oversold \u2260 True",
+        "session \u2260 overlap"
       ]
     },
     {
@@ -5579,11 +5601,11 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 emel \u00b7 BUY",
-      "win_rate": 82.6,
-      "samples": 23,
+      "win_rate": 82.8,
+      "samples": 29,
       "conditions": [
         "H4_ema_stack = mixed",
-        "rsi_H4 \u2260 [50,65)",
+        "session \u2260 overlap",
         "macro_alignment \u2260 neutral"
       ]
     },
@@ -5625,21 +5647,21 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 emel \u00b7 BUY",
-      "win_rate": 33.3,
-      "samples": 30,
+      "win_rate": 25.0,
+      "samples": 20,
       "conditions": [
-        "H4_ema_stack \u2260 mixed",
-        "H4_adx_label = trending"
+        "H4_ema_stack = mixed",
+        "session = overlap"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 emel \u00b7 BUY",
       "win_rate": 33.3,
-      "samples": 21,
+      "samples": 30,
       "conditions": [
-        "H4_ema_stack = mixed",
-        "rsi_H4 = [50,65)"
+        "H4_ema_stack \u2260 mixed",
+        "H4_adx_label = trending"
       ]
     },
     {
@@ -5817,13 +5839,12 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:aggressive \u00b7 BUY",
-      "win_rate": 75.0,
-      "samples": 24,
+      "win_rate": 77.3,
+      "samples": 22,
       "conditions": [
         "H4_ema_stack \u2260 down",
         "vix_chg1d = [3,+\u221e)",
-        "bb_pctb_M30 \u2260 [0.5,0.8)",
-        "H4_adx_label = trending"
+        "adx_H4 = [35,+\u221e)"
       ]
     },
     {
@@ -5873,13 +5894,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:aggressive \u00b7 BUY",
-      "win_rate": 33.3,
-      "samples": 21,
+      "win_rate": 30.0,
+      "samples": 20,
       "conditions": [
         "H4_ema_stack \u2260 down",
         "vix_chg1d \u2260 [3,+\u221e)",
         "dxy_chg1d \u2260 [0,0.5)",
-        "rsi_M30 \u2260 [50,65)"
+        "adx_H4 \u2260 [25,35)"
       ]
     },
     {
@@ -5938,17 +5959,6 @@
       ]
     },
     {
-      "kind": "winning_pattern",
-      "segment": "USOIL.FOREX \u00b7 ml:balanced \u00b7 BUY",
-      "win_rate": 75.0,
-      "samples": 20,
-      "conditions": [
-        "H4_ema_stack \u2260 down",
-        "vix_chg1d = [3,+\u221e)",
-        "adx_H4 = [35,+\u221e)"
-      ]
-    },
-    {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:balanced \u00b7 BUY",
       "win_rate": 0.0,
@@ -5993,18 +6003,6 @@
       ]
     },
     {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 ml:balanced \u00b7 BUY",
-      "win_rate": 33.3,
-      "samples": 21,
-      "conditions": [
-        "H4_ema_stack \u2260 down",
-        "vix_chg1d \u2260 [3,+\u221e)",
-        "dxy_chg1d \u2260 [0,0.5)",
-        "rsi_M30 \u2260 [50,65)"
-      ]
-    },
-    {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:balanced \u00b7 SELL",
       "win_rate": 100.0,
@@ -6027,6 +6025,18 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:balanced \u00b7 SELL",
+      "win_rate": 95.2,
+      "samples": 21,
+      "conditions": [
+        "H4_ema_stack \u2260 up",
+        "adx_M30 \u2260 [35,+\u221e)",
+        "H1_ema_stack = down",
+        "dow = Fri"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "USOIL.FOREX \u00b7 ml:balanced \u00b7 SELL",
       "win_rate": 85.0,
       "samples": 40,
       "conditions": [
@@ -6036,39 +6046,26 @@
       ]
     },
     {
-      "kind": "winning_pattern",
-      "segment": "USOIL.FOREX \u00b7 ml:balanced \u00b7 SELL",
-      "win_rate": 83.3,
-      "samples": 96,
-      "conditions": [
-        "H4_ema_stack \u2260 up",
-        "adx_M30 \u2260 [35,+\u221e)",
-        "mtf_trend \u2260 mixed",
-        "dow \u2260 Mon"
-      ]
-    },
-    {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:balanced \u00b7 SELL",
-      "win_rate": 27.7,
-      "samples": 47,
+      "win_rate": 20.0,
+      "samples": 30,
       "conditions": [
         "H4_ema_stack \u2260 up",
         "adx_M30 \u2260 [35,+\u221e)",
-        "mtf_trend = mixed",
-        "H4_ema_stack \u2260 mixed"
+        "H1_ema_stack \u2260 down",
+        "H4_ema_stack = down"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:full_power \u00b7 BUY",
-      "win_rate": 75.0,
-      "samples": 24,
+      "win_rate": 77.3,
+      "samples": 22,
       "conditions": [
         "H4_ema_stack \u2260 down",
         "vix_chg1d = [3,+\u221e)",
-        "bb_pctb_M30 \u2260 [0.5,0.8)",
-        "H4_adx_label = trending"
+        "adx_H4 = [35,+\u221e)"
       ]
     },
     {
@@ -6118,13 +6115,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:full_power \u00b7 BUY",
-      "win_rate": 33.3,
-      "samples": 21,
+      "win_rate": 30.0,
+      "samples": 20,
       "conditions": [
         "H4_ema_stack \u2260 down",
         "vix_chg1d \u2260 [3,+\u221e)",
         "dxy_chg1d \u2260 [0,0.5)",
-        "rsi_M30 \u2260 [50,65)"
+        "adx_H4 \u2260 [25,35)"
       ]
     },
     {
@@ -6183,17 +6180,6 @@
       ]
     },
     {
-      "kind": "winning_pattern",
-      "segment": "USOIL.FOREX \u00b7 ml:main \u00b7 BUY",
-      "win_rate": 75.0,
-      "samples": 20,
-      "conditions": [
-        "H4_ema_stack \u2260 down",
-        "vix_chg1d = [3,+\u221e)",
-        "adx_H4 = [35,+\u221e)"
-      ]
-    },
-    {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:main \u00b7 BUY",
       "win_rate": 0.0,
@@ -6240,25 +6226,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:main \u00b7 BUY",
-      "win_rate": 33.3,
-      "samples": 21,
+      "win_rate": 30.0,
+      "samples": 20,
       "conditions": [
         "H4_ema_stack \u2260 down",
         "vix_chg1d \u2260 [3,+\u221e)",
         "dxy_chg1d \u2260 [0,0.5)",
-        "rsi_M30 \u2260 [50,65)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "USOIL.FOREX \u00b7 ml:main \u00b7 SELL",
-      "win_rate": 100.0,
-      "samples": 24,
-      "conditions": [
-        "H4_ema_stack \u2260 up",
-        "adx_M30 \u2260 [35,+\u221e)",
-        "M30_ema_stack \u2260 mixed",
-        "dow = Fri"
+        "adx_H4 \u2260 [25,35)"
       ]
     },
     {
@@ -6284,6 +6258,18 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:main \u00b7 SELL",
+      "win_rate": 95.2,
+      "samples": 21,
+      "conditions": [
+        "H4_ema_stack \u2260 up",
+        "adx_M30 \u2260 [35,+\u221e)",
+        "H1_ema_stack = down",
+        "dow = Fri"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "USOIL.FOREX \u00b7 ml:main \u00b7 SELL",
       "win_rate": 85.4,
       "samples": 41,
       "conditions": [
@@ -6295,24 +6281,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:main \u00b7 SELL",
-      "win_rate": 27.8,
-      "samples": 36,
+      "win_rate": 20.0,
+      "samples": 30,
       "conditions": [
         "H4_ema_stack \u2260 up",
         "adx_M30 \u2260 [35,+\u221e)",
-        "M30_ema_stack = mixed",
-        "us10y_chg1d \u2260 [-0.5,0)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "USOIL.FOREX \u00b7 ml:ultra_safe \u00b7 BUY",
-      "win_rate": 75.0,
-      "samples": 20,
-      "conditions": [
-        "H4_ema_stack \u2260 down",
-        "vix_chg1d = [3,+\u221e)",
-        "adx_H4 = [35,+\u221e)"
+        "H1_ema_stack \u2260 down",
+        "H4_ema_stack = down"
       ]
     },
     {
@@ -6330,11 +6305,24 @@
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:ultra_safe \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 44,
+      "samples": 21,
       "conditions": [
         "H4_ema_stack = down",
         "M30_ema_stack \u2260 mixed",
-        "H1_ema_stack \u2260 down"
+        "rsi_H4 \u2260 [30,50)",
+        "H1_adx_label \u2260 trending"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 ml:ultra_safe \u00b7 BUY",
+      "win_rate": 0.0,
+      "samples": 23,
+      "conditions": [
+        "H4_ema_stack = down",
+        "M30_ema_stack \u2260 mixed",
+        "rsi_H4 \u2260 [30,50)",
+        "H1_adx_label = trending"
       ]
     },
     {
@@ -6345,7 +6333,7 @@
       "conditions": [
         "H4_ema_stack = down",
         "M30_ema_stack \u2260 mixed",
-        "H1_ema_stack = down"
+        "rsi_H4 = [30,50)"
       ]
     },
     {
@@ -6362,25 +6350,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:ultra_safe \u00b7 BUY",
-      "win_rate": 33.3,
-      "samples": 21,
+      "win_rate": 30.0,
+      "samples": 20,
       "conditions": [
         "H4_ema_stack \u2260 down",
         "vix_chg1d \u2260 [3,+\u221e)",
         "dxy_chg1d \u2260 [0,0.5)",
-        "rsi_M30 \u2260 [50,65)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "USOIL.FOREX \u00b7 ml:ultra_safe \u00b7 SELL",
-      "win_rate": 100.0,
-      "samples": 24,
-      "conditions": [
-        "H4_ema_stack \u2260 up",
-        "adx_M30 \u2260 [35,+\u221e)",
-        "M30_ema_stack \u2260 mixed",
-        "dow = Fri"
+        "adx_H4 \u2260 [25,35)"
       ]
     },
     {
@@ -6406,6 +6382,18 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:ultra_safe \u00b7 SELL",
+      "win_rate": 95.2,
+      "samples": 21,
+      "conditions": [
+        "H4_ema_stack \u2260 up",
+        "adx_M30 \u2260 [35,+\u221e)",
+        "H1_ema_stack = down",
+        "dow = Fri"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "USOIL.FOREX \u00b7 ml:ultra_safe \u00b7 SELL",
       "win_rate": 85.4,
       "samples": 41,
       "conditions": [
@@ -6417,13 +6405,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 ml:ultra_safe \u00b7 SELL",
-      "win_rate": 28.6,
-      "samples": 35,
+      "win_rate": 20.0,
+      "samples": 30,
       "conditions": [
         "H4_ema_stack \u2260 up",
         "adx_M30 \u2260 [35,+\u221e)",
-        "M30_ema_stack = mixed",
-        "us10y_chg1d \u2260 [-0.5,0)"
+        "H1_ema_stack \u2260 down",
+        "H4_ema_stack = down"
       ]
     },
     {
@@ -6442,11 +6430,24 @@
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1 \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 89,
+      "samples": 53,
       "conditions": [
         "H4_ema_stack = mixed",
         "dow \u2260 Thu",
-        "us10y_chg1d = [-0.5,0)"
+        "us10y_chg1d = [-0.5,0)",
+        "atr_ratio_M30 \u2260 [1,1.3)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse1 \u00b7 BUY",
+      "win_rate": 0.0,
+      "samples": 36,
+      "conditions": [
+        "H4_ema_stack = mixed",
+        "dow \u2260 Thu",
+        "us10y_chg1d = [-0.5,0)",
+        "atr_ratio_M30 = [1,1.3)"
       ]
     },
     {
@@ -6534,18 +6535,6 @@
       ]
     },
     {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse1 \u00b7 BUY",
-      "win_rate": 8.8,
-      "samples": 80,
-      "conditions": [
-        "H4_ema_stack \u2260 mixed",
-        "M30_adx_label \u2260 trending",
-        "H1_adx_label = ranging",
-        "dist_high_M30 = [1.5,+\u221e)"
-      ]
-    },
-    {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1 \u00b7 SELL",
       "win_rate": 100.0,
@@ -6560,10 +6549,22 @@
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1 \u00b7 SELL",
       "win_rate": 100.0,
-      "samples": 360,
+      "samples": 335,
       "conditions": [
         "H4_ema_stack = up",
-        "atr_ratio_M30 \u2260 [1.7,+\u221e)"
+        "atr_ratio_M30 \u2260 [1.7,+\u221e)",
+        "dist_low_M30 \u2260 [0.3,0.7)"
+      ]
+    },
+    {
+      "kind": "winning_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse1 \u00b7 SELL",
+      "win_rate": 100.0,
+      "samples": 25,
+      "conditions": [
+        "H4_ema_stack = up",
+        "atr_ratio_M30 \u2260 [1.7,+\u221e)",
+        "dist_low_M30 = [0.3,0.7)"
       ]
     },
     {
@@ -6575,7 +6576,7 @@
         "H4_ema_stack \u2260 up",
         "vix_chg1d \u2260 [3,+\u221e)",
         "M30_adx_label = trending",
-        "H4_adx_label = ranging"
+        "regime_label = ranging"
       ]
     },
     {
@@ -6591,8 +6592,8 @@
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1 \u00b7 SELL",
-      "win_rate": 82.6,
-      "samples": 253,
+      "win_rate": 81.0,
+      "samples": 258,
       "conditions": [
         "H4_ema_stack \u2260 up",
         "vix_chg1d \u2260 [3,+\u221e)",
@@ -6609,43 +6610,30 @@
         "H4_ema_stack \u2260 up",
         "vix_chg1d \u2260 [3,+\u221e)",
         "M30_adx_label = trending",
-        "H4_adx_label \u2260 ranging"
+        "regime_label \u2260 ranging"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse1 \u00b7 SELL",
-      "win_rate": 18.7,
-      "samples": 91,
+      "win_rate": 17.9,
+      "samples": 95,
       "conditions": [
         "H4_ema_stack \u2260 up",
         "vix_chg1d = [3,+\u221e)",
         "rsi_H1 \u2260 [\u2212\u221e,30)",
-        "H4_ema_stack \u2260 down"
+        "H4_ema_stack = mixed"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse2 \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 351,
+      "samples": 501,
       "conditions": [
         "H4_ema_stack \u2260 mixed",
         "dow \u2260 Wed",
-        "us10y_chg1d \u2260 [0,0.5)",
-        "adx_M30 \u2260 [35,+\u221e)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse2 \u00b7 BUY",
-      "win_rate": 0.0,
-      "samples": 150,
-      "conditions": [
-        "H4_ema_stack \u2260 mixed",
-        "dow \u2260 Wed",
-        "us10y_chg1d \u2260 [0,0.5)",
-        "adx_M30 = [35,+\u221e)"
+        "us10y_chg1d \u2260 [0,0.5)"
       ]
     },
     {
@@ -6664,35 +6652,35 @@
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse2 \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 56,
+      "samples": 101,
       "conditions": [
         "H4_ema_stack \u2260 mixed",
         "dow = Wed",
-        "adx_M30 = [35,+\u221e)",
-        "vix_chg1d \u2260 [-3,0)"
+        "adx_M30 = [35,+\u221e)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse2 \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 45,
-      "conditions": [
-        "H4_ema_stack \u2260 mixed",
-        "dow = Wed",
-        "adx_M30 = [35,+\u221e)",
-        "vix_chg1d = [-3,0)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse2 \u00b7 BUY",
-      "win_rate": 0.0,
-      "samples": 106,
+      "samples": 84,
       "conditions": [
         "H4_ema_stack = mixed",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "dxy_chg1d = [0,0.5)"
+        "dxy_chg1d = [0,0.5)",
+        "adx_M30 \u2260 [\u2212\u221e,18)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse2 \u00b7 BUY",
+      "win_rate": 0.0,
+      "samples": 22,
+      "conditions": [
+        "H4_ema_stack = mixed",
+        "vix_chg1d \u2260 [3,+\u221e)",
+        "dxy_chg1d = [0,0.5)",
+        "adx_M30 = [\u2212\u221e,18)"
       ]
     },
     {
@@ -6799,14 +6787,15 @@
       ]
     },
     {
-      "kind": "winning_pattern",
+      "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse2 \u00b7 SELL",
-      "win_rate": 78.6,
-      "samples": 28,
+      "win_rate": 7.3,
+      "samples": 55,
       "conditions": [
         "M30_adx_label \u2260 trending",
         "regime_label \u2260 strong_trend_down",
-        "H1_ema_stack = up"
+        "rsi_H1 \u2260 [30,50)",
+        "dxy_chg1d \u2260 [-0.5,0)"
       ]
     },
     {
@@ -6819,18 +6808,6 @@
         "dow = Mon",
         "vix_chg1d \u2260 [\u2212\u221e,-3)",
         "ml_confidence_bucket \u2260 [70,80)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse2 \u00b7 SELL",
-      "win_rate": 32.6,
-      "samples": 233,
-      "conditions": [
-        "M30_adx_label \u2260 trending",
-        "regime_label \u2260 strong_trend_down",
-        "H1_ema_stack \u2260 up",
-        "dow \u2260 Tue"
       ]
     },
     {
@@ -6861,35 +6838,35 @@
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse3 \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 52,
+      "samples": 21,
       "conditions": [
         "H4_ema_stack = mixed",
         "dow \u2260 Thu",
-        "dow = Fri"
+        "dow = Fri",
+        "ml_confidence_bucket \u2260 [60,70)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse3 \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 67,
+      "samples": 31,
       "conditions": [
         "H4_ema_stack = mixed",
-        "dow = Thu",
-        "adx_H4 \u2260 [25,35)",
-        "dist_low_M30 \u2260 [1.5,+\u221e)"
+        "dow \u2260 Thu",
+        "dow = Fri",
+        "ml_confidence_bucket = [60,70)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse3 \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 68,
+      "samples": 135,
       "conditions": [
         "H4_ema_stack = mixed",
         "dow = Thu",
-        "adx_H4 \u2260 [25,35)",
-        "dist_low_M30 = [1.5,+\u221e)"
+        "adx_H4 \u2260 [25,35)"
       ]
     },
     {
@@ -6985,31 +6962,18 @@
         "M30_adx_label = trending",
         "vix_chg1d \u2260 [\u2212\u221e,-3)",
         "dow = Mon",
-        "rsi_H1 \u2260 [30,50)"
+        "rsi_H1 = [50,65)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse3 \u00b7 SELL",
       "win_rate": 100.0,
-      "samples": 376,
+      "samples": 453,
       "conditions": [
         "M30_adx_label = trending",
         "vix_chg1d = [\u2212\u221e,-3)",
-        "dow \u2260 Mon",
-        "dist_low_M30 \u2260 [0.7,1.5)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "USOIL.FOREX \u00b7 pulse3 \u00b7 SELL",
-      "win_rate": 100.0,
-      "samples": 77,
-      "conditions": [
-        "M30_adx_label = trending",
-        "vix_chg1d = [\u2212\u221e,-3)",
-        "dow \u2260 Mon",
-        "dist_low_M30 = [0.7,1.5)"
+        "dow \u2260 Mon"
       ]
     },
     {
@@ -7073,6 +7037,18 @@
       ]
     },
     {
+      "kind": "winning_pattern",
+      "segment": "USOIL.FOREX \u00b7 pulse3 \u00b7 SELL",
+      "win_rate": 78.8,
+      "samples": 33,
+      "conditions": [
+        "M30_adx_label \u2260 trending",
+        "dow \u2260 Tue",
+        "us10y_chg1d \u2260 [-0.5,0)",
+        "regime_label = strong_trend_down"
+      ]
+    },
+    {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 pulse3 \u00b7 SELL",
       "win_rate": 23.8,
@@ -7086,44 +7062,56 @@
     },
     {
       "kind": "avoid_pattern",
-      "segment": "USOIL.FOREX \u00b7 smc \u00b7 BUY",
-      "win_rate": 0.0,
-      "samples": 33,
+      "segment": "USOIL.FOREX \u00b7 pulse3 \u00b7 SELL",
+      "win_rate": 34.4,
+      "samples": 215,
       "conditions": [
-        "ml_confidence_bucket \u2260 [70,80)",
-        "ml_confidence_bucket = [80,+\u221e)",
-        "H4_ema_stack \u2260 mixed",
-        "bb_pctb_M30 \u2260 [0.2,0.5)"
+        "M30_adx_label \u2260 trending",
+        "dow \u2260 Tue",
+        "us10y_chg1d \u2260 [-0.5,0)",
+        "regime_label \u2260 strong_trend_down"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 smc \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 30,
+      "samples": 63,
       "conditions": [
         "ml_confidence_bucket \u2260 [70,80)",
         "ml_confidence_bucket = [80,+\u221e)",
-        "H4_ema_stack \u2260 mixed",
-        "bb_pctb_M30 = [0.2,0.5)"
+        "H4_ema_stack \u2260 mixed"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 smc \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 88,
+      "samples": 66,
       "conditions": [
         "ml_confidence_bucket = [70,80)",
         "us10y_chg1d \u2260 [0,0.5)",
-        "hour_bucket \u2260 16-20"
+        "hour_bucket \u2260 16-20",
+        "H1_adx_label \u2260 trending"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 smc \u00b7 BUY",
-      "win_rate": 5.0,
-      "samples": 20,
+      "win_rate": 0.0,
+      "samples": 22,
+      "conditions": [
+        "ml_confidence_bucket = [70,80)",
+        "us10y_chg1d \u2260 [0,0.5)",
+        "hour_bucket \u2260 16-20",
+        "H1_adx_label = trending"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "USOIL.FOREX \u00b7 smc \u00b7 BUY",
+      "win_rate": 4.8,
+      "samples": 21,
       "conditions": [
         "ml_confidence_bucket = [70,80)",
         "us10y_chg1d \u2260 [0,0.5)",
@@ -7133,8 +7121,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 smc \u00b7 BUY",
-      "win_rate": 9.5,
-      "samples": 21,
+      "win_rate": 13.0,
+      "samples": 23,
       "conditions": [
         "ml_confidence_bucket \u2260 [70,80)",
         "ml_confidence_bucket = [80,+\u221e)",
@@ -7144,8 +7132,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 smc \u00b7 BUY",
-      "win_rate": 14.7,
-      "samples": 34,
+      "win_rate": 14.3,
+      "samples": 35,
       "conditions": [
         "ml_confidence_bucket = [70,80)",
         "us10y_chg1d = [0,0.5)"
@@ -7154,8 +7142,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "USOIL.FOREX \u00b7 smc \u00b7 BUY",
-      "win_rate": 24.2,
-      "samples": 33,
+      "win_rate": 26.5,
+      "samples": 34,
       "conditions": [
         "ml_confidence_bucket \u2260 [70,80)",
         "ml_confidence_bucket \u2260 [80,+\u221e)",
@@ -7227,7 +7215,7 @@
         "adx_H1 \u2260 [25,35)",
         "rsi_H1 \u2260 [50,65)",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "consec_red_M30 = [0,2)"
+        "dxy_chg1d \u2260 [0,0.5)"
       ]
     },
     {
@@ -7239,7 +7227,7 @@
         "adx_H1 \u2260 [25,35)",
         "rsi_H1 \u2260 [50,65)",
         "vix_chg1d \u2260 [3,+\u221e)",
-        "consec_red_M30 \u2260 [0,2)"
+        "dxy_chg1d = [0,0.5)"
       ]
     },
     {
@@ -7431,18 +7419,6 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:aggressive \u00b7 SELL",
-      "win_rate": 27.3,
-      "samples": 22,
-      "conditions": [
-        "adx_M30 \u2260 [35,+\u221e)",
-        "dow \u2260 Thu",
-        "macro_alignment \u2260 neutral",
-        "consec_green_M30 \u2260 [0,2)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:aggressive \u00b7 SELL",
       "win_rate": 30.4,
       "samples": 23,
       "conditions": [
@@ -7460,6 +7436,18 @@
         "adx_M30 \u2260 [35,+\u221e)",
         "dow \u2260 Thu",
         "macro_alignment = neutral"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml:aggressive \u00b7 SELL",
+      "win_rate": 33.3,
+      "samples": 24,
+      "conditions": [
+        "adx_M30 \u2260 [35,+\u221e)",
+        "dow \u2260 Thu",
+        "macro_alignment \u2260 neutral",
+        "consec_green_M30 \u2260 [0,2)"
       ]
     },
     {
@@ -7514,7 +7502,7 @@
       "conditions": [
         "adx_M30 = [35,+\u221e)",
         "rsi_H1 = [30,50)",
-        "sar_bearish = True"
+        "sar_bearish \u2260 False"
       ]
     },
     {
@@ -7533,21 +7521,9 @@
       "win_rate": 27.3,
       "samples": 22,
       "conditions": [
-        "adx_M30 \u2260 [35,+\u221e)",
-        "dow \u2260 Thu",
-        "macro_alignment \u2260 neutral",
-        "consec_green_M30 \u2260 [0,2)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:balanced \u00b7 SELL",
-      "win_rate": 27.3,
-      "samples": 22,
-      "conditions": [
         "adx_M30 = [35,+\u221e)",
         "rsi_H1 = [30,50)",
-        "sar_bearish \u2260 True"
+        "sar_bearish = False"
       ]
     },
     {
@@ -7559,6 +7535,18 @@
         "adx_M30 \u2260 [35,+\u221e)",
         "dow \u2260 Thu",
         "macro_alignment = neutral"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml:balanced \u00b7 SELL",
+      "win_rate": 33.3,
+      "samples": 24,
+      "conditions": [
+        "adx_M30 \u2260 [35,+\u221e)",
+        "dow \u2260 Thu",
+        "macro_alignment \u2260 neutral",
+        "consec_green_M30 \u2260 [0,2)"
       ]
     },
     {
@@ -7602,7 +7590,7 @@
       "samples": 31,
       "conditions": [
         "adx_M30 = [35,+\u221e)",
-        "M30_ema_stack \u2260 down"
+        "mtf_trend \u2260 all_down"
       ]
     },
     {
@@ -7612,7 +7600,7 @@
       "samples": 22,
       "conditions": [
         "adx_M30 = [35,+\u221e)",
-        "M30_ema_stack = down",
+        "mtf_trend = all_down",
         "ml_confidence_bucket = [80,+\u221e)"
       ]
     },
@@ -7633,7 +7621,7 @@
       "samples": 23,
       "conditions": [
         "adx_M30 = [35,+\u221e)",
-        "M30_ema_stack = down",
+        "mtf_trend = all_down",
         "ml_confidence_bucket \u2260 [80,+\u221e)"
       ]
     },
@@ -7651,8 +7639,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:full_power \u00b7 SELL",
-      "win_rate": 28.6,
-      "samples": 21,
+      "win_rate": 34.8,
+      "samples": 23,
       "conditions": [
         "adx_M30 \u2260 [35,+\u221e)",
         "dow \u2260 Thu",
@@ -7728,18 +7716,6 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:main \u00b7 SELL",
-      "win_rate": 27.3,
-      "samples": 22,
-      "conditions": [
-        "adx_M30 \u2260 [35,+\u221e)",
-        "dow \u2260 Thu",
-        "macro_alignment \u2260 neutral",
-        "consec_green_M30 \u2260 [0,2)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:main \u00b7 SELL",
       "win_rate": 27.6,
       "samples": 29,
       "conditions": [
@@ -7760,14 +7736,26 @@
       ]
     },
     {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml:main \u00b7 SELL",
+      "win_rate": 33.3,
+      "samples": 24,
+      "conditions": [
+        "adx_M30 \u2260 [35,+\u221e)",
+        "dow \u2260 Thu",
+        "macro_alignment \u2260 neutral",
+        "consec_green_M30 \u2260 [0,2)"
+      ]
+    },
+    {
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 ml:main_inv \u00b7 SELL",
-      "win_rate": 75.0,
-      "samples": 24,
+      "win_rate": 76.0,
+      "samples": 25,
       "conditions": [
         "adx_H1 \u2260 [35,+\u221e)",
         "consec_red_M30 = [0,2)",
-        "session = asia"
+        "ml_confidence_bucket = [80,+\u221e)"
       ]
     },
     {
@@ -7881,24 +7869,24 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml:ultra_safe \u00b7 SELL",
-      "win_rate": 28.6,
-      "samples": 21,
-      "conditions": [
-        "adx_M30 \u2260 [35,+\u221e)",
-        "dow \u2260 Thu",
-        "macro_alignment \u2260 neutral",
-        "consec_green_M30 \u2260 [0,2)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml:ultra_safe \u00b7 SELL",
       "win_rate": 29.2,
       "samples": 24,
       "conditions": [
         "adx_M30 = [35,+\u221e)",
         "rsi_H1 = [30,50)",
         "macd_atr_M30 \u2260 [-0.3,0)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml:ultra_safe \u00b7 SELL",
+      "win_rate": 34.8,
+      "samples": 23,
+      "conditions": [
+        "adx_M30 \u2260 [35,+\u221e)",
+        "dow \u2260 Thu",
+        "macro_alignment \u2260 neutral",
+        "consec_green_M30 \u2260 [0,2)"
       ]
     },
     {
@@ -7938,103 +7926,69 @@
       ]
     },
     {
-      "kind": "avoid_pattern",
+      "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 BUY",
-      "win_rate": 5.0,
-      "samples": 20,
+      "win_rate": 75.9,
+      "samples": 29,
       "conditions": [
         "adx_M30 \u2260 [35,+\u221e)",
-        "atr_ratio_M30 = [0.7,1)",
-        "dow \u2260 Thu",
-        "consec_red_M30 \u2260 [0,2)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 BUY",
-      "win_rate": 14.3,
-      "samples": 21,
-      "conditions": [
-        "adx_M30 \u2260 [35,+\u221e)",
-        "atr_ratio_M30 \u2260 [0.7,1)",
-        "hour_bucket = 16-20"
+        "macro_alignment = neutral",
+        "atr_ratio_M30 \u2260 [0.7,1)"
       ]
     },
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 BUY",
-      "win_rate": 29.7,
-      "samples": 74,
+      "win_rate": 22.0,
+      "samples": 123,
       "conditions": [
         "adx_M30 \u2260 [35,+\u221e)",
-        "atr_ratio_M30 = [0.7,1)",
-        "dow \u2260 Thu",
-        "consec_red_M30 = [0,2)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
-      "win_rate": 0.0,
-      "samples": 22,
-      "conditions": [
-        "dxy_chg1d \u2260 [0.5,+\u221e)",
-        "us10y_chg1d = [\u2212\u221e,-0.5)",
-        "bb_extreme_lower = True"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
-      "win_rate": 0.0,
-      "samples": 22,
-      "conditions": [
-        "dxy_chg1d = [0.5,+\u221e)",
-        "near_support \u2260 False"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
-      "win_rate": 0.0,
-      "samples": 47,
-      "conditions": [
-        "dxy_chg1d = [0.5,+\u221e)",
-        "near_support = False"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
-      "win_rate": 4.5,
-      "samples": 22,
-      "conditions": [
-        "dxy_chg1d \u2260 [0.5,+\u221e)",
-        "us10y_chg1d \u2260 [\u2212\u221e,-0.5)",
-        "volatility_regime \u2260 normal"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
-      "win_rate": 10.0,
-      "samples": 20,
-      "conditions": [
-        "dxy_chg1d \u2260 [0.5,+\u221e)",
-        "us10y_chg1d = [\u2212\u221e,-0.5)",
-        "bb_extreme_lower \u2260 True"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
-      "win_rate": 18.7,
-      "samples": 75,
-      "conditions": [
-        "dxy_chg1d \u2260 [0.5,+\u221e)",
-        "us10y_chg1d \u2260 [\u2212\u221e,-0.5)",
-        "volatility_regime = normal",
+        "macro_alignment \u2260 neutral",
+        "hour_bucket \u2260 12-16",
         "hour_bucket \u2260 00-04"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
+      "win_rate": 0.0,
+      "samples": 26,
+      "conditions": [
+        "dxy_chg1d \u2260 [0.5,+\u221e)",
+        "dow \u2260 Mon",
+        "rsi_M30 = [\u2212\u221e,30)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
+      "win_rate": 0.0,
+      "samples": 69,
+      "conditions": [
+        "dxy_chg1d = [0.5,+\u221e)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
+      "win_rate": 7.8,
+      "samples": 77,
+      "conditions": [
+        "dxy_chg1d \u2260 [0.5,+\u221e)",
+        "dow \u2260 Mon",
+        "rsi_M30 \u2260 [\u2212\u221e,30)",
+        "hour_bucket \u2260 00-04"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq \u00b7 SELL",
+      "win_rate": 30.4,
+      "samples": 23,
+      "conditions": [
+        "dxy_chg1d \u2260 [0.5,+\u221e)",
+        "dow = Mon",
+        "dist_low_M30 = [0.7,1.5)"
       ]
     },
     {
@@ -8050,11 +8004,11 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv \u00b7 BUY",
-      "win_rate": 26.7,
-      "samples": 30,
+      "win_rate": 22.9,
+      "samples": 35,
       "conditions": [
         "adx_H1 \u2260 [35,+\u221e)",
-        "ml_confidence_bucket \u2260 [80,+\u221e)"
+        "macro_alignment \u2260 neutral"
       ]
     },
     {
@@ -8152,8 +8106,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 ml_cross_xau_nasdaq_inv \u00b7 SELL",
-      "win_rate": 24.3,
-      "samples": 37,
+      "win_rate": 25.0,
+      "samples": 40,
       "conditions": [
         "adx_H1 \u2260 [35,+\u221e)",
         "rsi_H1 \u2260 NA",
@@ -8176,25 +8130,13 @@
     {
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 pulse1 \u00b7 BUY",
-      "win_rate": 80.8,
-      "samples": 229,
+      "win_rate": 79.0,
+      "samples": 238,
       "conditions": [
         "mtf_trend = all_down",
         "us10y_chg1d \u2260 [\u2212\u221e,-0.5)",
         "vix_chg1d \u2260 [3,+\u221e)",
         "adx_M30 \u2260 [35,+\u221e)"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 pulse1 \u00b7 BUY",
-      "win_rate": 2.1,
-      "samples": 95,
-      "conditions": [
-        "mtf_trend \u2260 all_down",
-        "rsi_M30 \u2260 [65,75)",
-        "macro_alignment = strong_pro",
-        "dist_low_M30 = [1.5,+\u221e)"
       ]
     },
     {
@@ -8207,6 +8149,18 @@
         "us10y_chg1d = [\u2212\u221e,-0.5)",
         "macd_atr_M30 = [0,0.3)",
         "H1_adx_label \u2260 trending"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse1 \u00b7 BUY",
+      "win_rate": 3.8,
+      "samples": 106,
+      "conditions": [
+        "mtf_trend \u2260 all_down",
+        "rsi_M30 \u2260 [65,75)",
+        "macro_alignment = strong_pro",
+        "dist_low_M30 = [1.5,+\u221e)"
       ]
     },
     {
@@ -8472,8 +8426,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse1_inv \u00b7 SELL",
-      "win_rate": 28.7,
-      "samples": 80,
+      "win_rate": 28.2,
+      "samples": 85,
       "conditions": [
         "session \u2260 overlap",
         "macro_alignment \u2260 weak_pro",
@@ -8551,13 +8505,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2 \u00b7 BUY",
-      "win_rate": 8.3,
-      "samples": 24,
+      "win_rate": 14.3,
+      "samples": 35,
       "conditions": [
         "vix_chg1d = [3,+\u221e)",
         "H1_adx_label = weak_trend",
         "dow \u2260 Mon",
-        "dxy_chg1d \u2260 [-0.5,0)"
+        "macro_alignment \u2260 strong_pro"
       ]
     },
     {
@@ -8575,8 +8529,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2 \u00b7 BUY",
-      "win_rate": 21.9,
-      "samples": 114,
+      "win_rate": 21.2,
+      "samples": 118,
       "conditions": [
         "vix_chg1d = [3,+\u221e)",
         "H1_adx_label \u2260 weak_trend",
@@ -8587,8 +8541,8 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2 \u00b7 BUY",
-      "win_rate": 23.0,
-      "samples": 74,
+      "win_rate": 25.0,
+      "samples": 84,
       "conditions": [
         "vix_chg1d \u2260 [3,+\u221e)",
         "dow = Wed",
@@ -8657,13 +8611,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2 \u00b7 SELL",
-      "win_rate": 2.1,
-      "samples": 48,
+      "win_rate": 10.4,
+      "samples": 154,
       "conditions": [
         "us10y_chg1d \u2260 [-0.5,0)",
         "adx_M30 \u2260 [35,+\u221e)",
         "dxy_chg1d \u2260 [0.5,+\u221e)",
-        "adx_H1 = [35,+\u221e)"
+        "dow = Wed"
       ]
     },
     {
@@ -8761,13 +8715,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2_inv \u00b7 BUY",
-      "win_rate": 23.5,
-      "samples": 68,
+      "win_rate": 26.7,
+      "samples": 90,
       "conditions": [
         "adx_M30 \u2260 [35,+\u221e)",
         "vix_chg1d \u2260 [\u2212\u221e,-3)",
         "consec_red_M30 = [0,2)",
-        "dxy_chg1d = [-0.5,0)"
+        "session \u2260 overlap"
       ]
     },
     {
@@ -8779,6 +8733,17 @@
         "adx_M30 = [35,+\u221e)",
         "rsi_H1 = [30,50)",
         "atr_ratio_M30 \u2260 [0.7,1)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse2_inv \u00b7 SELL",
+      "win_rate": 8.3,
+      "samples": 24,
+      "conditions": [
+        "adx_M30 \u2260 [35,+\u221e)",
+        "vix_chg1d = [0,3)",
+        "H1_adx_label = weak_trend"
       ]
     },
     {
@@ -8808,27 +8773,6 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2_inv \u00b7 SELL",
-      "win_rate": 16.0,
-      "samples": 25,
-      "conditions": [
-        "adx_M30 \u2260 [35,+\u221e)",
-        "session = us"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 pulse2_inv \u00b7 SELL",
-      "win_rate": 19.4,
-      "samples": 31,
-      "conditions": [
-        "adx_M30 \u2260 [35,+\u221e)",
-        "session \u2260 us",
-        "macro_alignment = weak_pro"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 pulse2_inv \u00b7 SELL",
       "win_rate": 20.0,
       "samples": 20,
       "conditions": [
@@ -8841,13 +8785,13 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse2_inv \u00b7 SELL",
-      "win_rate": 25.8,
-      "samples": 31,
+      "win_rate": 27.6,
+      "samples": 76,
       "conditions": [
         "adx_M30 \u2260 [35,+\u221e)",
-        "session \u2260 us",
-        "macro_alignment \u2260 weak_pro",
-        "hour_bucket = 00-04"
+        "vix_chg1d \u2260 [0,3)",
+        "atr_ratio_M30 \u2260 [1,1.3)",
+        "adx_H1 \u2260 [35,+\u221e)"
       ]
     },
     {
@@ -8860,6 +8804,17 @@
         "rsi_H1 \u2260 [30,50)",
         "hour_bucket \u2260 12-16",
         "vix_chg1d \u2260 [3,+\u221e)"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse2_inv \u00b7 SELL",
+      "win_rate": 33.3,
+      "samples": 39,
+      "conditions": [
+        "adx_M30 \u2260 [35,+\u221e)",
+        "vix_chg1d = [0,3)",
+        "H1_adx_label \u2260 weak_trend"
       ]
     },
     {
@@ -8878,18 +8833,7 @@
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse3 \u00b7 BUY",
       "win_rate": 0.0,
-      "samples": 20,
-      "conditions": [
-        "vix_chg1d = [3,+\u221e)",
-        "dist_high_M30 \u2260 [1.5,+\u221e)",
-        "M30_ema_stack = down"
-      ]
-    },
-    {
-      "kind": "avoid_pattern",
-      "segment": "XAUUSD \u00b7 pulse3 \u00b7 BUY",
-      "win_rate": 0.0,
-      "samples": 64,
+      "samples": 70,
       "conditions": [
         "vix_chg1d = [3,+\u221e)",
         "dist_high_M30 = [1.5,+\u221e)",
@@ -8924,13 +8868,25 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse3 \u00b7 BUY",
-      "win_rate": 20.7,
-      "samples": 58,
+      "win_rate": 14.6,
+      "samples": 82,
       "conditions": [
         "vix_chg1d = [3,+\u221e)",
         "dist_high_M30 \u2260 [1.5,+\u221e)",
-        "M30_ema_stack \u2260 down",
-        "mtf_trend = mixed"
+        "M30_ema_stack \u2260 up",
+        "mtf_trend \u2260 NA"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse3 \u00b7 BUY",
+      "win_rate": 24.0,
+      "samples": 25,
+      "conditions": [
+        "vix_chg1d = [3,+\u221e)",
+        "dist_high_M30 \u2260 [1.5,+\u221e)",
+        "M30_ema_stack = up",
+        "dxy_chg1d = [-0.5,0)"
       ]
     },
     {
@@ -9019,7 +8975,7 @@
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse3 \u00b7 SELL",
       "win_rate": 1.9,
-      "samples": 154,
+      "samples": 155,
       "conditions": [
         "us10y_chg1d \u2260 [-0.5,0)",
         "rsi_extreme = False",
@@ -9182,37 +9138,35 @@
     {
       "kind": "avoid_pattern",
       "segment": "XAUUSD \u00b7 pulse3_inv \u00b7 SELL",
-      "win_rate": 23.1,
-      "samples": 91,
+      "win_rate": 16.0,
+      "samples": 25,
       "conditions": [
         "adx_M30 \u2260 [35,+\u221e)",
         "macro_alignment \u2260 weak_pro",
-        "rsi_H1 \u2260 [30,50)",
-        "volatility_regime = normal"
+        "hour_bucket = 20-24"
+      ]
+    },
+    {
+      "kind": "avoid_pattern",
+      "segment": "XAUUSD \u00b7 pulse3_inv \u00b7 SELL",
+      "win_rate": 31.3,
+      "samples": 115,
+      "conditions": [
+        "adx_M30 \u2260 [35,+\u221e)",
+        "macro_alignment \u2260 weak_pro",
+        "hour_bucket \u2260 20-24",
+        "us10y_chg1d \u2260 [0.5,+\u221e)"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 smc \u00b7 BUY",
       "win_rate": 100.0,
-      "samples": 30,
+      "samples": 56,
       "conditions": [
         "us10y_chg1d = [-0.5,0)",
-        "M30_ema_stack = down",
-        "dow \u2260 Tue",
-        "ml_confidence_bucket \u2260 [60,70)"
-      ]
-    },
-    {
-      "kind": "winning_pattern",
-      "segment": "XAUUSD \u00b7 smc \u00b7 BUY",
-      "win_rate": 100.0,
-      "samples": 26,
-      "conditions": [
-        "us10y_chg1d = [-0.5,0)",
-        "M30_ema_stack = down",
-        "dow \u2260 Tue",
-        "ml_confidence_bucket = [60,70)"
+        "mtf_trend = all_down",
+        "dow \u2260 Tue"
       ]
     },
     {
@@ -9222,7 +9176,7 @@
       "samples": 21,
       "conditions": [
         "us10y_chg1d = [-0.5,0)",
-        "M30_ema_stack = down",
+        "mtf_trend = all_down",
         "dow = Tue"
       ]
     },
@@ -9233,7 +9187,7 @@
       "samples": 39,
       "conditions": [
         "us10y_chg1d \u2260 [-0.5,0)",
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "volatility_regime = low"
       ]
     },
@@ -9244,17 +9198,17 @@
       "samples": 37,
       "conditions": [
         "us10y_chg1d = [-0.5,0)",
-        "M30_ema_stack \u2260 down"
+        "mtf_trend \u2260 all_down"
       ]
     },
     {
       "kind": "winning_pattern",
       "segment": "XAUUSD \u00b7 smc \u00b7 BUY",
-      "win_rate": 75.5,
-      "samples": 53,
+      "win_rate": 75.9,
+      "samples": 54,
       "conditions": [
         "us10y_chg1d \u2260 [-0.5,0)",
-        "mtf_trend = all_down",
+        "M30_ema_stack = down",
         "volatility_regime \u2260 low",
         "rsi_M30 \u2260 [50,65)"
       ]
@@ -9266,7 +9220,7 @@
       "samples": 25,
       "conditions": [
         "us10y_chg1d \u2260 [-0.5,0)",
-        "mtf_trend \u2260 all_down",
+        "M30_ema_stack \u2260 down",
         "H1_adx_label \u2260 weak_trend",
         "M30_adx_label \u2260 trending"
       ]

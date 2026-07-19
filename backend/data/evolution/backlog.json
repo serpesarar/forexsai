@@ -394,5 +394,192 @@
     "source": "session",
     "created_at": "2026-07-16T18:49:34.728584+00:00",
     "updated_at": "2026-07-16T18:49:34.728587+00:00"
+  },
+  {
+    "id": "bl_cfea53049f",
+    "title": "Dedektör canlı gölge takibi",
+    "detail": "fakeout_gate GÖLGE loglarından dedektör çağrılarının CANLI isabetini 2 hafta ölç (OOS %70/%83 canlıda tutuyor mu); tutuyorsa FAKEOUT_GATE_BLOCK=1 + belki genuine çağrısını sinyal-boost olarak değerlendir",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T21:22:57.731758+00:00",
+    "updated_at": "2026-07-16T21:22:57.731918+00:00"
+  },
+  {
+    "id": "bl_7496fc86e4",
+    "title": "Dedektör walk-forward + aylık yeniden eğitim",
+    "detail": "tek 70/30 yerine 3-dilim walk-forward doğrulaması ekle; model yaşlanması için aylık lab→finalize cron'u düşün (drift ölçümüyle)",
+    "category": "retrain",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T21:22:57.732565+00:00",
+    "updated_at": "2026-07-16T21:22:57.732569+00:00"
+  },
+  {
+    "id": "bl_05cf8e0720",
+    "title": "Dalga-verdikt örneklem büyütme",
+    "detail": "K=2 dalga modeli OOS n=42/49 ile geçti — veri biriktikçe (1-2 ay) lab'ı yeniden koş, örneklem 2x olunca eşikleri yeniden doğrula; gölge loglarda wave_k2 çağrılarının canlı isabetini ayrıca ölç",
+    "category": "retrain",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T22:47:29.852215+00:00",
+    "updated_at": "2026-07-16T22:47:29.852347+00:00"
+  },
+  {
+    "id": "bl_4d11a74b26",
+    "title": "MT5 derin geçmiş backfill + lab yeniden koşumu",
+    "detail": "Windows MT5 terminalinden 2024-2025 NAS100 5m/1m export et (research/mt5_export_1m_bars.py deseni) → candle_cache'e yükle → fakeout_lab+wave_lab yeniden koş (farklı rejimlerde eşik sağlamlığı + dalga örneklemi 3-4x büyür). Mevcut veri Şub-Tem 2026 tek pencere",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T22:57:15.212400+00:00",
+    "updated_at": "2026-07-16T22:57:15.212532+00:00"
+  },
+  {
+    "id": "bl_25b2ea3336",
+    "title": "XAU tp1.0 dedektör yeniden kalibrasyonu",
+    "detail": "XAU tp1.0/sl1.0'da GERÇEK sıralaması güçlüydü (sweep %78-96) ama val eşiği çıkmadı → tp0.75 deploy edildi. Veri 2x olunca tp1.0'ı yeniden dene (kullanıcı hedef-küçültme hassasiyeti)",
+    "category": "retrain",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T23:22:31.556476+00:00",
+    "updated_at": "2026-07-16T23:22:31.556629+00:00"
+  },
+  {
+    "id": "bl_0764730305",
+    "title": "4 sembol dedektör gölge takibi",
+    "detail": "fakeout_gate GÖLGE loglarından 4 sembolün dedektör çağrılarının canlı isabetini ölç (2 hafta); OOS'u tutan sembollerde FAKEOUT_GATE_BLOCK sembol-bazlı açmayı değerlendir",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T23:22:31.557512+00:00",
+    "updated_at": "2026-07-16T23:22:31.557515+00:00"
+  },
+  {
+    "id": "bl_b620999023",
+    "title": "Bot FAKEOUT_VETO gölge→canlı izleme",
+    "detail": "Bot loglarında FAKEOUT_VETO satırlarını 2 hafta izle: veto edilen işlemlerin gerçekleşmemiş sonuçları +EV mi? (Windows bot tarafı bu repo kopyasını çekince aktifleşir)",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-16T23:36:00.906873+00:00",
+    "updated_at": "2026-07-16T23:36:00.907033+00:00"
+  },
+  {
+    "id": "bl_5f52fdfcd8",
+    "title": "bias_test_log çok-ufuklu notlama kolonları",
+    "detail": "ret_10m/30m/60m/240m + mfe/mae_60m migration + fill_outcomes 5m mumlardan doldursun; panel ve öz-kalibrasyon 60dk+240dk göstersin",
+    "category": "wiring",
+    "priority": "high",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-07-18T18:37:46.745010+00:00",
+    "updated_at": "2026-07-19T07:27:13.225492+00:00"
+  },
+  {
+    "id": "bl_d18a135856",
+    "title": "Debate çift-yazar düzeltmesi",
+    "detail": "Railway eski-kod auto-runner aynı pencerede 2. kez logluyor (07-15/16 tüm koşular çift); already_logged kontrolü record_run içine taşınsın + 9 çift kayıt temizlensin",
+    "category": "wiring",
+    "priority": "high",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-07-18T18:37:46.746171+00:00",
+    "updated_at": "2026-07-19T07:27:13.226279+00:00"
+  },
+  {
+    "id": "bl_839bf3cc81",
+    "title": "Uzman ajanlara yapılandırılmış stance alanı",
+    "detail": "Her ajan {stance,conviction} JSON döndürsün, agent_stances olarak saklansın; agent_agreement bundan hesaplansın (18/18 'mixed' ölü alan)",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-07-18T18:37:46.746675+00:00",
+    "updated_at": "2026-07-19T07:27:13.226762+00:00"
+  },
+  {
+    "id": "bl_09348b2180",
+    "title": "XAU debate bearish kilitlenmesi",
+    "detail": "6/6 çağrı bearish ve ≥30dk getiriler negatif; prompt'a XAU stress-rejim şartı eklenene kadar XAU yönlü çağrıları gölgede",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-18T18:37:46.747111+00:00",
+    "updated_at": "2026-07-18T18:37:46.747113+00:00"
+  },
+  {
+    "id": "bl_41f154eb8b",
+    "title": "DAX debate yönlü karar üretmiyor",
+    "detail": "5/5 nötr/choppy — askıya al veya prompt'u yönlü karara zorla (token maliyeti)",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-18T18:37:46.747522+00:00",
+    "updated_at": "2026-07-18T18:37:46.747524+00:00"
+  },
+  {
+    "id": "bl_638cb687e4",
+    "title": "fill_pending startup catch-up",
+    "detail": "07-15/16 notlanmamış 14 satır + 07-17 hiç koşu yok; notlama sürekliliği startup'ta fill_pending ile garantiye alınsın",
+    "category": "wiring",
+    "priority": "high",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-07-18T18:37:46.747938+00:00",
+    "updated_at": "2026-07-19T07:27:13.227190+00:00"
+  },
+  {
+    "id": "bl_edc66057e9",
+    "title": "Railway'i güncel kodla yeniden deploy et",
+    "detail": "Çift-yazar idempotensi + çok-ufuklu notlama + stance beyanları sadece lokal kodda; Railway'deki eski yazar korumasız yazmaya devam ediyor",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-19T07:27:30.336440+00:00",
+    "updated_at": "2026-07-19T07:27:30.336600+00:00"
+  },
+  {
+    "id": "bl_d137d8f076",
+    "title": "Debate karar gecikmesi enstrümantasyonu",
+    "detail": "_debate.generated_at_utc ile insert anı + price_at_decision tazeliği arası fark loglanmıyor; slippage kolonu ekle",
+    "category": "wiring",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-19T07:27:30.337285+00:00",
+    "updated_at": "2026-07-19T07:27:30.337287+00:00"
+  },
+  {
+    "id": "bl_1f17b28e8a",
+    "title": "Ufuk karnesini baseline-farkıyla raporla",
+    "detail": "Placebo bulgusu: ham isabet dönem trendini beceri sanıyor (USOIL); accuracy_report'a sembol-ufuk baseline drift'i ve fark kolonu ekle",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-19T07:27:30.337801+00:00",
+    "updated_at": "2026-07-19T07:27:30.337803+00:00"
+  },
+  {
+    "id": "bl_913ef4f06b",
+    "title": "Bias Lab paneline ufuk kolonları",
+    "detail": "bias_lab.html sembol kartlarına 60dk/240dk isabet + GÖLGE kapı log sayacı eklensin",
+    "category": "idea",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-19T07:27:30.338263+00:00",
+    "updated_at": "2026-07-19T07:27:30.338265+00:00"
   }
 ]
