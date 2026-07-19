@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from datetime import datetime, timezone
 from typing import Any, Optional
 
@@ -451,6 +452,51 @@ def _context_block(market: dict, symbol: str) -> str:
 
 
 # ── Agents (built per symbol from the profile) ─────────────────────────────────
+# Yapılandırılmış duruş satırı (2026-07-18): ajan karnesi regex-tahminiyle değil
+# ajanın KENDİ beyanıyla ölçülsün + agent_agreement bu beyanlardan hesaplansın
+# (önceki hali CIO'ya soruluyordu ve 18/18 koşuda "mixed" üretmişti — ölü alan).
+_STANCE_SUFFIX = (
+    " End your note with EXACTLY one final line in this format: "
+    "'STANCE: bullish|bearish|neutral | CONVICTION: 1-5' "
+    "(your own directional lean for the next few hours; 5 = highest conviction)."
+)
+_CTX_AGENT_NAMES = ("technical_structure", "volatility", "macro", "smc_structure",
+                    "trend_channel", "chart_patterns", "price_targets")
+
+_STANCE_RE = re.compile(r"STANCE:\s*(bullish|bearish|neutral)", re.IGNORECASE)
+_CONVICTION_RE = re.compile(r"CONVICTION:\s*([1-5])", re.IGNORECASE)
+
+
+def _parse_stance(text: str) -> Optional[dict]:
+    """Ajan notundaki 'STANCE: ... | CONVICTION: n' satırını ayrıştır."""
+    if not isinstance(text, str):
+        return None
+    m = _STANCE_RE.search(text)
+    if not m:
+        return None
+    c = _CONVICTION_RE.search(text)
+    return {"stance": m.group(1).lower(),
+            "conviction": int(c.group(1)) if c else None}
+
+
+def _stance_agreement(stances: dict[str, Optional[dict]]) -> str:
+    """agent_agreement'ı ajan beyanlarından hesapla (LLM'e sorulmaz).
+
+    high  = ≥3 yönlü duruş ve ≥%75'i aynı yönde
+    low   = iki yön de ≥%40 temsil ediliyor (gerçek bölünme)
+    mixed = geri kalan her durum (nötr ağırlıklı dahil)
+    """
+    dirs = [s["stance"] for s in stances.values()
+            if s and s.get("stance") in ("bullish", "bearish")]
+    if len(dirs) >= 3:
+        bull = dirs.count("bullish") / len(dirs)
+        if max(bull, 1 - bull) >= 0.75:
+            return "high"
+        if min(bull, 1 - bull) >= 0.40:
+            return "low"
+    return "mixed"
+
+
 def _build_agents(symbol: str) -> dict[str, tuple[str, str]]:
     p = SYMBOL_PROFILES[symbol]
     name = p["display"]
@@ -602,16 +648,15 @@ async def run_debate(symbol: str = _NDX, now_utc: Optional[datetime] = None) -> 
     #    read REAL computed structure (order blocks, regression channel, fractal
     #    S/R, harmonic/classic patterns) — grounds the debate instead of letting
     #    agents guess structure from raw price alone.
-    ctx_names = ["technical_structure", "volatility", "macro",
-                 "smc_structure", "trend_channel", "chart_patterns",
-                 "price_targets"]
+    ctx_names = list(_CTX_AGENT_NAMES)
     ctx_results = await asyncio.gather(*[
-        _run_agent(n, agents[n][0], agents[n][1],
+        _run_agent(n, agents[n][0], agents[n][1] + _STANCE_SUFFIX,
                    f"MARKET CONTEXT:\n{ctx_block}\n\nGive your assessment.")
         for n in ctx_names
     ])
     notes = dict(zip(ctx_names, ctx_results))
     notes_block = "\n\n".join(f"[{n}]\n{t}" for n, t in notes.items())
+    agent_stances = {n: _parse_stance(t) for n, t in notes.items()}
 
     # 2) Multi-round ADVERSARIAL debate — bull & bear rebut each other over N
     #    rounds so weak arguments get refuted and the real signal survives.
@@ -658,7 +703,9 @@ async def run_debate(symbol: str = _NDX, now_utc: Optional[datetime] = None) -> 
     track_block = ""
     try:
         from services.bias_test_service import recent_track_record
-        track_block = recent_track_record()
+        # Sembolün KENDİ karnesi (2026-07-18): karma karne XAU'nun bearish
+        # kilitlenmesini NDX koşusuna taşıyordu; artık ufuk kaydı da içerir.
+        track_block = recent_track_record(symbol=symbol)
     except Exception as e:
         logger.debug("[debate] track record skipped: %s", e)
 
@@ -730,10 +777,18 @@ async def run_debate(symbol: str = _NDX, now_utc: Optional[datetime] = None) -> 
                 verdict[key] = fallback
                 verdict["sr_clamped"] = True
 
+    # agent_agreement ajan beyanlarından hesaplanır; CIO'nun kendi tahmini
+    # şeffaflık için _debate altında saklanır (18/18 "mixed" ölü-alan düzeltmesi).
+    verdict.setdefault("agent_agreement", None)
+    cio_agreement = verdict.get("agent_agreement")
+    verdict["agent_agreement"] = _stance_agreement(agent_stances)
+
     verdict["_debate"] = {
         "cio_provider": provider,
         "symbol": symbol,
         "context_notes": notes,
+        "agent_stances": agent_stances,
+        "agent_agreement_cio": cio_agreement,
         "rounds": rounds,
         "transcript": [{"round": rn, "bull": b, "bear": be} for rn, b, be in transcript],
         "bull_case": bull,   # final round

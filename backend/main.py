@@ -241,6 +241,26 @@ async def lifespan(app: FastAPI):
     #     debate motorunu çalıştırır + gün sonu sonuçları doldurur. Her 60s tick.
     try:
         from services.bias_auto_runner import tick as bias_tick
+
+        # Startup catch-up (2026-07-18): backend 16:15 ET'de kapalıysa notlama
+        # birikip kalıyordu (07-15/16'da 14 satır notsuz kaldı, öz-kalibrasyon
+        # bloğu 3 gün kör çalıştı). LLM token HARCAMAZ (sadece notlama), o
+        # yüzden auto-run bayrağından bağımsız; BIAS_FILL_CATCHUP_ENABLED=0
+        # ile kapatılabilir. Çok-ufuklu kolonları da (ret_*/mfe/mae) doldurur.
+        async def bias_fill_catchup():
+            await asyncio.sleep(45)   # DataHub/candle_cache ısınsın
+            if os.getenv("BIAS_FILL_CATCHUP_ENABLED", "1") != "1":
+                return
+            try:
+                from services import bias_test_service as bts
+                res = await bts.fill_pending(max_days=10)
+                if res:
+                    logger.info(f"Bias notlama catch-up: {res}")
+            except Exception as e:
+                logger.warning(f"Bias notlama catch-up hatası: {e}")
+
+        asyncio.create_task(bias_fill_catchup())
+
         async def bias_auto_loop():
             await asyncio.sleep(20)
             while True:
@@ -590,6 +610,7 @@ router_module_names = [
     "reflex_router",
     "evolution_router",
     "patterns_router",
+    "fakeout_router",
 ]
 
 for module_name in router_module_names:

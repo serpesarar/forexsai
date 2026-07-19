@@ -26,6 +26,12 @@ Env bayrakları:
   CALENDAR_GATE_MINUTES=30   → takvim penceresi (dakika)
   ENTRY_SCORE_GATE_ENABLED=1 → 8 koşullu giriş skoru kapısı (default açık)
   ENTRY_SCORE_MIN=7          → minimum skor eşiği (0-8)
+  FAKEOUT_GATE_ENABLED=1     → sahte kırılım radarı (default açık — değerlendir+logla)
+  FAKEOUT_GATE_BLOCK=0       → 1 ise GERÇEKTEN bloklar (default GÖLGE: sadece log)
+  FAKEOUT_BLOCK_PROB=80      → blok için minimum sahte-kırılım olasılığı (%)
+  DEBATE_BIAS_GATE_ENABLED=1 → tartışma-bias karşıt-sinyal freni (default açık — logla)
+  DEBATE_BIAS_GATE_BLOCK=0   → 1 ise GERÇEKTEN bloklar (default GÖLGE: sadece log)
+  DEBATE_BIAS_VALID_MIN=240  → tartışma kararının geçerlilik penceresi (dakika)
 """
 
 from __future__ import annotations
@@ -419,6 +425,170 @@ async def entry_score_gate(
     return True, None
 
 
+# ─── Kapı 6: Sahte kırılım (fakeout) kapısı ─────────────────────────────────
+
+#: Fakeout dedektörleri 4 sembolde OOS %70/%70+ doğrulandı (2026-07-17):
+#: NDX %70/%83 · GDAXI %75/%89 · XAU %72/%93 (tp0.75) · USOIL %86/%81 (kantil eşik).
+#: Kural dosyası olmayan sembolde kapı no-op'tur (fail-open).
+FAKEOUT_GATED_MODELS = {"pulse1", "pulse2", "pulse3", "smc"}
+
+
+async def fakeout_gate(
+    symbol: str,
+    direction: str,
+) -> Tuple[bool, Optional[str]]:
+    """Taze bir seviye kırılımı sinyal yönündeyse ve OOS-doğrulanmış kurallara
+    göre yüksek olasılıkla SAHTE ise sinyali blokla.
+
+    Kanıt: backend/data/fakeout_report.md (fakeout_miner.py, NDX 5m, kronolojik
+    %70/30 OOS). Örn. pen_atr≥0.865 & body_ratio≥0.78 → sahte %89 (train n=91) /
+    %87.8 (test n=41); vol_ratio≥1.274 & body_ratio≥0.78 → %85.7 OOS.
+
+    GÖLGE MODU (default): FAKEOUT_GATE_BLOCK=0 iken yalnızca INFO loglar,
+    bloklamaz — canlı sinyal-bazlı doğrulama toplandıktan sonra açılmalı.
+    Kurallar sembole özgü JSON'dan gelir; başka sembolde kural yoksa no-op.
+    Fail-open: servis/veri hatası asla sinyal bloklamaz.
+    """
+    if not _flag("FAKEOUT_GATE_ENABLED"):
+        return True, None
+
+    try:
+        from services.fakeout_service import assess_symbol
+        result = await assess_symbol(symbol)
+        if result.get("status") != "assessed":
+            return True, None
+        bo = result.get("breakout") or {}
+        aligned = (direction == "BUY" and bo.get("direction") == "up") or \
+                  (direction == "SELL" and bo.get("direction") == "down")
+        if not aligned:
+            return True, None
+
+        try:
+            block_prob = float(os.getenv("FAKEOUT_BLOCK_PROB", "80"))
+        except ValueError:
+            block_prob = 80.0
+        prob = float(result.get("fake_probability") or 0)
+        matched = result.get("matched_rules") or []
+        score = result.get("breakout_score")
+        det_call = (result.get("detector") or {}).get("call")
+        # Kanıt şartı: +1-bar dedektör SAHTE çağrısı (OOS %70) VEYA eşleşen kural
+        # VEYA skor-kalibrasyonlu klimaks hücresi (OOS %87 sahte)
+        evidence = det_call == "fake" or bool(matched) or \
+            (isinstance(score, (int, float)) and score <= -2)
+
+        if (det_call == "fake" and prob >= 60.0) or (prob >= block_prob and evidence):
+            why = ("dedektör SAHTE çağrısı (OOS %70)" if det_call == "fake"
+                   else f"kural: {matched[0].get('rule')}" if matched
+                   else f"birleşik skor {score} (klimaks hücresi)")
+            reason = (
+                f"Fakeout kapısı: {bo.get('level_kind')} {bo.get('level_price')} "
+                f"kırılımı sinyal yönünde ama sahte olasılığı %{prob:.0f} ({why})"
+            )
+            if _flag("FAKEOUT_GATE_BLOCK", "0"):
+                logger.info(f"fakeout_gate BLOCK {symbol} {direction}: {reason}")
+                return False, reason
+            logger.info(f"fakeout_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
+        else:
+            logger.debug(
+                f"fakeout_gate PASS {symbol} {direction}: prob=%{prob:.0f} "
+                f"verdict={result.get('verdict')}"
+            )
+    except Exception as exc:  # fail-open
+        logger.debug(f"fakeout_gate fail-open ({symbol}): {exc}")
+
+    return True, None
+
+
+# ─── Kapı: Tartışma-bias kapısı (agent debate → intraday karşıt-sinyal freni) ─
+#
+# Kanıt (backend/data/agent_debate_analysis_report.md, 2026-07-18, n=18 yönlü —
+# ERKEN KANIT, bu yüzden default GÖLGE):
+#   - Tartışma kararı GÜN-KAPANIŞI değil İNTRADAY (≤240dk) bias'tır: NDX bearish
+#     gün 0/4 ama +60dk 4/6, +240dk 4/5 (ort +0.24..0.29%); boğa-drift kapanışa
+#     doğru çağrıyı ters çeviriyor → NDX'te 14:00 ET sonrası etki YOK.
+#   - debate_winner=bear → +60dk %77; winner=balanced → 30-60dk 0/3 → etkisiz.
+#   - Placebo: USOIL "başarısı" büyük ölçüde dönem trendi; NDX bearish baseline'ı
+#     +0.14pp geçiyor. XAU 6/6 bearish kilitlenmesi negatif, DAX 5/5 nötr →
+#     XAU/DAX tüketilmez.
+#   - LLM confidence TERS kalibre (med 60-75 en kötü) → kararda KULLANILMAZ.
+#   - invalid_if seviyeleri XAU/USOIL'de sık deliniyor ama kimse tüketmiyordu →
+#     seviye delinmişse bias geçersiz sayılır (etkisiz).
+
+DEBATE_GATED_MODELS = {"pulse1", "pulse2", "pulse3", "smc"}
+DEBATE_BIAS_SYMBOLS = {"NDX.INDX", "USOIL.FOREX"}
+_NDX_LATE_CUTOFF_ET = 14 * 60          # 14:00 ET sonrası NDX bias etkisiz
+
+
+async def debate_bias_gate(
+    symbol: str,
+    direction: str,
+) -> Tuple[bool, Optional[str]]:
+    """Taze tartışma bias'ına KARŞIT sinyali frenle (default GÖLGE: sadece log).
+
+    Yalnız karşıt yönü frenler; hizalı sinyale bonus vermez (o iş Precision
+    Veto'nun MiroShark katmanında). Fail-open: veri/DB hatası asla bloklamaz.
+    """
+    if not _flag("DEBATE_BIAS_GATE_ENABLED"):
+        return True, None
+    sym = _norm_symbol(symbol)
+    if sym not in DEBATE_BIAS_SYMBOLS:
+        return True, None
+
+    try:
+        from services.bias_test_service import latest_bias_for_symbol
+        row = latest_bias_for_symbol(sym)
+        if not row or row.get("bias") not in ("bullish", "bearish"):
+            return True, None
+
+        try:
+            valid_min = float(os.getenv("DEBATE_BIAS_VALID_MIN", "240"))
+        except ValueError:
+            valid_min = 240.0
+        if row["age_min"] > valid_min:
+            return True, None
+        if (row.get("debate_winner") or "") == "balanced":
+            return True, None          # balanced-kazanan koşular 30-60dk 0/3
+
+        if sym == "NDX.INDX":
+            from zoneinfo import ZoneInfo
+            ny = datetime.now(timezone.utc).astimezone(ZoneInfo("America/New_York"))
+            if ny.hour * 60 + ny.minute >= _NDX_LATE_CUTOFF_ET:
+                return True, None      # kapanış drift'i intraday çağrıyı bozar
+
+        opposed = (direction == "BUY" and row["bias"] == "bearish") or \
+                  (direction == "SELL" and row["bias"] == "bullish")
+        if not opposed:
+            logger.debug(f"debate_bias_gate hizalı {sym} {direction} "
+                         f"({row['bias']}, {row['age_min']:.0f}dk)")
+            return True, None
+
+        # Bias'ın kendi geçersizlik seviyesi delindiyse artık frenleme.
+        try:
+            from services.data_fetcher import fetch_latest_price
+            price = await fetch_latest_price(sym)
+            sup, res = row.get("main_support"), row.get("main_resistance")
+            if price and row["bias"] == "bullish" and sup and price < float(sup):
+                return True, None
+            if price and row["bias"] == "bearish" and res and price > float(res):
+                return True, None
+        except Exception:
+            pass   # fiyat okunamazsa seviye kontrolünü atla, frene devam
+
+        reason = (
+            f"Tartışma-bias kapısı: {row['run_label']} kararı {row['bias']} "
+            f"({row['age_min']:.0f}dk önce, winner={row.get('debate_winner')}) — "
+            f"{direction} karşıt yönde"
+        )
+        if _flag("DEBATE_BIAS_GATE_BLOCK", "0"):
+            logger.info(f"debate_bias_gate BLOCK {sym} {direction}: {reason}")
+            return False, reason
+        logger.info(f"debate_bias_gate GÖLGE {sym} {direction}: {reason} — bloklanMADI")
+    except Exception as exc:  # fail-open
+        logger.debug(f"debate_bias_gate fail-open ({symbol}): {exc}")
+
+    return True, None
+
+
 # ─── Kapı 4: Ekonomik takvim kapısı ─────────────────────────────────────────
 
 async def calendar_gate(symbol: str) -> Tuple[bool, Optional[str]]:
@@ -523,6 +693,20 @@ async def apply_signal_gates(
         allowed, reason = await entry_score_gate(symbol, direction)
         if not allowed:
             notes.append(reason or "Giriş skoru kapısı")
+            return "HOLD", notes
+
+    # 6) Sahte kırılım kapısı (60s cache'li; default GÖLGE modda — sadece loglar)
+    if base in FAKEOUT_GATED_MODELS:
+        allowed, reason = await fakeout_gate(symbol, direction)
+        if not allowed:
+            notes.append(reason or "Fakeout kapısı")
+            return "HOLD", notes
+
+    # 7) Tartışma-bias kapısı (60s cache'li DB okuma; default GÖLGE — sadece log)
+    if base in DEBATE_GATED_MODELS:
+        allowed, reason = await debate_bias_gate(symbol, direction)
+        if not allowed:
+            notes.append(reason or "Tartışma-bias kapısı")
             return "HOLD", notes
 
     return direction, notes

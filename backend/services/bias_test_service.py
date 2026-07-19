@@ -9,7 +9,8 @@ Writes to bias_test_log only — isolated from the live daily_bias / veto engine
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+import time
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from services import daily_bias_service as bias_svc
@@ -96,6 +97,18 @@ async def record_run(payload: dict, run_label: str = "manual",
         run_ts = run_ts.replace(tzinfo=timezone.utc)
 
     ctx = await sc.enrich_price_context(run_ts)
+
+    # İdempotensi ARTIK insert yolunda (2026-07-18): auto-runner'ın kendi
+    # already_logged kontrolü iki AYRI süreç (ör. Railway + lokal) aynı pencerede
+    # koşunca yarışıyordu — 07-15/16'daki tüm koşular çift loglandı. Zamanlanmış
+    # pencere etiketleri gün başına 1 kayıt; "manual" etiketi bilinçli tekrar
+    # koşulara açık bırakılır.
+    if run_label != "manual" and already_logged(ctx["ny_time"][:10], run_label):
+        logger.info("[bias-test] duplicate run skipped: %s %s",
+                    ctx["ny_time"][:10], run_label)
+        return {"ok": False, "duplicate": True, "run_label": run_label,
+                "ny_date": ctx["ny_time"][:10],
+                "predicted_bias": parsed["nasdaq_daily_bias"]}
     row = {
         "run_timestamp_utc": run_ts.isoformat(),
         "ny_time": ctx["ny_time"],
@@ -148,7 +161,7 @@ async def record_run(payload: dict, run_label: str = "manual",
             "predicted_bias": parsed["nasdaq_daily_bias"]}
 
 
-def recent_track_record(limit: int = 25) -> str:
+def recent_track_record(limit: int = 25, symbol: Optional[str] = None) -> str:
     """ÖZ-KALİBRASYON bloğu: sistemin SON tahminlerinin gerçekleşme karnesi (bias_test_log).
     Debate/CIO promptuna enjekte edilir — model kendi sistematik önyargısını GÖRÜR
     (2026-07-09 otopsisi: %30.8 doğruluk; boğa piyasasında art arda bearish çağrılar —
@@ -157,10 +170,20 @@ def recent_track_record(limit: int = 25) -> str:
         client = _client()
         if client is None:
             return ""
-        rows = (client.table("bias_test_log")
-                .select("predicted_bias,was_correct,ny_date,run_label")
-                .not_.is_("was_correct", "null")
-                .order("ny_date", desc=True).limit(limit).execute()).get("data") or []
+        # NOT: özel REST wrapper'da `.not_` zinciri YOK — eski `.not_.is_(...)`
+        # çağrısı sessizce exception'a düşüyor ve blok hep "" dönüyordu (ölü
+        # öz-kalibrasyon, 2026-07-18'de fark edildi). Null filtresi Python'da.
+        # `sym:raw_payload->>symbol` — transkript içeren koca raw_payload yerine
+        # yalnız sembol alanı iner (PostgREST JSON path select).
+        raw_rows = (client.table("bias_test_log")
+                    .select("predicted_bias,was_correct,ny_date,run_label,"
+                            "ret_60m,ret_240m,sym:raw_payload->>symbol")
+                    .order("ny_date", desc=True).limit(limit * 6).execute()
+                    ).get("data") or []
+        rows = [r for r in raw_rows if r.get("was_correct") is not None
+                and (symbol is None or symbol_for_row(
+                        {"raw_payload": {"symbol": r.get("sym")},
+                         "run_label": r.get("run_label")}) == symbol)][:limit]
         if len(rows) < 5:
             return ""
         by: dict = {}
@@ -177,8 +200,26 @@ def recent_track_record(limit: int = 25) -> str:
             warn = (f" ⚠ '{worst[0]}' calls hit only {worst[1][0]}/{worst[1][1]} — you have a "
                     f"systematic bias in that direction; before calling '{worst[0]}' again, "
                     f"show that your evidence DIFFERS from those failed calls.")
+        # UFUK KARNESİ (2026-07-18 analizi): gün-kapanışı boğa-drift'te yönlü
+        # çağrıyı cezalandırıyor; asıl ölçü +60/+240dk yönlü gerçekleşme.
+        hz = ""
+        for col, tag in (("ret_60m", "+60min"), ("ret_240m", "+240min")):
+            sgn = []
+            for r in rows:
+                b, v = (r.get("predicted_bias") or "").lower(), r.get(col)
+                if v is None or b not in ("bullish", "bearish"):
+                    continue
+                sgn.append(v if b == "bullish" else -v)
+            if len(sgn) >= 5:
+                w = sum(1 for x in sgn if x > 0)
+                hz += f" {tag}: {w}/{len(sgn)}"
+        if hz:
+            hz = (" INTRADAY HORIZON RECORD (directional calls, move in your "
+                  "predicted direction):" + hz + " — your calls are graded on "
+                  "the FIRST HOURS too, not only the close.")
         return (f"SELF-CALIBRATION (outcome record of your LAST {tot_n} predictions): "
-                f"{tot_w}/{tot_n} correct overall; breakdown → " + " | ".join(parts) + "." + warn)
+                f"{tot_w}/{tot_n} correct overall; breakdown → " + " | ".join(parts)
+                + "." + warn + hz)
     except Exception as e:
         logger.debug("[bias-test] track record skipped: %s", e)
         return ""
@@ -193,6 +234,82 @@ def already_logged(ny_date: str, run_label: str) -> bool:
             .eq("ny_date", ny_date).eq("run_label", run_label)
             .limit(1).execute()).get("data") or []
     return bool(rows)
+
+
+# ── Çok-ufuklu notlama (2026-07-18) ──────────────────────────────────────────
+# Gerekçe: gün-kapanışı metriği ajan isabetini gizliyor (NDX bearish gün 0/4
+# ama +60dk 4/6, +240dk 4/5 — backend/data/agent_debate_analysis_report.md).
+# ret_* ham (yönsüz) % değişimdir; isabet okuma tarafında tahmin yönüyle
+# işaretlenerek hesaplanır. mfe/mae_60m tahmin yönüne görelidir.
+HORIZONS_MIN = (10, 30, 60, 240)
+_HORIZON_LOOKBACK_BARS = 6   # hedef anda mum yoksa geriye en çok 30dk bak
+
+
+def _decision_price(row: dict) -> Optional[float]:
+    raw = row.get("raw_payload") or {}
+    if isinstance(raw, dict) and raw.get("price_at_decision"):
+        try:
+            return float(raw["price_at_decision"])
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def _horizon_stats(client, symbol: str, run_ts: datetime,
+                   p0: Optional[float], predicted: str) -> Optional[dict]:
+    """5m mumlardan +10/30/60/240dk getirileri + ilk-60dk MFE/MAE hesapla.
+
+    ``p0`` yoksa karar anındaki 5m kapanışı çapa alınır. 240dk penceresi henüz
+    kapanmadıysa None döner (kısmi yazım yok — catch-up sonra tamamlar).
+    """
+    if datetime.now(timezone.utc) < run_ts + timedelta(minutes=HORIZONS_MIN[-1] + 6):
+        return None
+    start = (run_ts - timedelta(minutes=5 * _HORIZON_LOOKBACK_BARS)).isoformat()
+    end = (run_ts + timedelta(minutes=HORIZONS_MIN[-1] + 5)).isoformat()
+    try:
+        rows = (client.table("candle_cache").select("candle_time,high,low,close")
+                .eq("symbol", symbol).eq("timeframe", "5m")
+                .gte("candle_time", start).lte("candle_time", end)
+                .order("candle_time").limit(120).execute()).get("data") or []
+    except Exception as e:
+        logger.warning("[bias-test] horizon 5m read error (%s): %s", symbol, e)
+        return None
+    bars = []
+    for r in rows:
+        try:
+            t = datetime.fromisoformat(str(r["candle_time"]).replace("Z", "+00:00"))
+            bars.append((t, float(r["high"]), float(r["low"]), float(r["close"])))
+        except (TypeError, ValueError, KeyError):
+            continue
+    if not bars:
+        return None
+
+    def close_at(target: datetime) -> Optional[float]:
+        best = None
+        for t, _h, _l, c in bars:
+            if t <= target and (target - t) <= timedelta(minutes=5 * _HORIZON_LOOKBACK_BARS):
+                best = c
+        return best
+
+    anchor = p0 or close_at(run_ts)
+    if not anchor:
+        return None
+    out: dict[str, Optional[float]] = {}
+    for m in HORIZONS_MIN:
+        px = close_at(run_ts + timedelta(minutes=m))
+        out[f"ret_{m}m"] = round((px - anchor) / anchor * 100.0, 4) if px else None
+    win = [b for b in bars if run_ts < b[0] <= run_ts + timedelta(minutes=60)]
+    if win:
+        up = (max(h for _t, h, _l, _c in win) - anchor) / anchor * 100.0
+        dn = (anchor - min(l for _t, _h, l, _c in win)) / anchor * 100.0
+        if (predicted or "").lower() == "bearish":
+            out["mfe_60m"], out["mae_60m"] = round(dn, 4), round(up, 4)
+        else:   # bullish + nötr/choppy: lehte = yukarı (belgeli kabul)
+            out["mfe_60m"], out["mae_60m"] = round(up, 4), round(dn, 4)
+    if all(out.get(f"ret_{m}m") is None for m in HORIZONS_MIN):
+        return None
+    out["horizon_filled_at"] = datetime.now(timezone.utc).isoformat()
+    return out
 
 
 def _synth_session_stats(symbol: str, ny_date: str) -> Optional[dict]:
@@ -270,13 +387,15 @@ def pending_dates(max_days: int = 10) -> list[str]:
         return []
     today = datetime.now(sc.NY).date().isoformat()
     try:
-        rows = (client.table("bias_test_log").select("ny_date,was_correct")
+        rows = (client.table("bias_test_log")
+                .select("ny_date,was_correct,horizon_filled_at")
                 .limit(500).execute()).get("data") or []
     except Exception:
         return []
     dates = sorted({str(r["ny_date"]) for r in rows
-                    if r.get("ny_date") and r.get("was_correct") is None
-                    and str(r["ny_date"]) < today})
+                    if r.get("ny_date") and str(r["ny_date"]) < today
+                    and (r.get("was_correct") is None
+                         or r.get("horizon_filled_at") is None)})
     return dates[-max_days:]
 
 
@@ -311,9 +430,24 @@ async def fill_outcomes(ny_date: Optional[str] = None) -> dict:
             .eq("ny_date", ny_date).execute()).get("data") or []
 
     stats_cache: dict[str, Optional[dict]] = {}
-    updated, skipped, ndx_change, ndx_dir = 0, 0, None, None
+    updated, skipped, horizons_filled, ndx_change, ndx_dir = 0, 0, 0, None, None
     for r in rows:
         sym = symbol_for_row(r)
+
+        # Çok-ufuklu notlama — gün verisi olmasa da bağımsız doldurulur.
+        if r.get("horizon_filled_at") is None:
+            try:
+                run_ts = datetime.fromisoformat(
+                    str(r["run_timestamp_utc"]).replace("Z", "+00:00"))
+                h = _horizon_stats(client, sym, run_ts,
+                                   _decision_price(r), r.get("predicted_bias") or "")
+            except Exception as e:
+                logger.warning("[bias-test] horizon fill error id=%s: %s", r.get("id"), e)
+                h = None
+            if h:
+                (client.table("bias_test_log").eq("id", r["id"]).update(h))
+                horizons_filled += 1
+
         if sym not in stats_cache:
             stats_cache[sym] = await _day_stats(sym, ny_date)
         stats = stats_cache[sym]
@@ -352,8 +486,8 @@ async def fill_outcomes(ny_date: Optional[str] = None) -> dict:
         }))
         updated += 1
 
-    if updated == 0 and rows:
-        raise BiasTestError(f"no NDX daily candle for {ny_date}")
+    if updated == 0 and horizons_filled == 0 and rows:
+        raise BiasTestError(f"no session/horizon data for {ny_date}")
 
     # CORTEX — grade the same day's NDX episodes (fail-open, NASDAQ-only).
     cortex_filled = 0
@@ -367,8 +501,57 @@ async def fill_outcomes(ny_date: Optional[str] = None) -> dict:
 
     return {"ok": True, "ny_date": ny_date, "actual_change_pct": ndx_change,
             "actual_close_direction": ndx_dir, "rows_updated": updated,
-            "rows_skipped_no_data": skipped,
+            "rows_skipped_no_data": skipped, "horizons_filled": horizons_filled,
             "cortex_episodes_filled": cortex_filled}
+
+
+# ── Canlı tüketici okuyucusu (debate_bias_gate, 2026-07-18) ──────────────────
+_LATEST_CACHE_TTL = 60.0
+_latest_cache: dict[str, tuple[float, Optional[dict]]] = {}
+
+
+def latest_bias_for_symbol(symbol: str) -> Optional[dict]:
+    """Sembolün EN SON tartışma kararı (60s cache'li; fail-open → None).
+
+    Dönen dict: bias, run_ts (datetime, UTC), age_min, run_label, confidence,
+    debate_winner, main_support, main_resistance. Nötr/choppy kararlar da
+    döner — ufuk/yön politikası çağıranın (signal_gates) sorumluluğudur.
+    """
+    now = time.monotonic()
+    hit = _latest_cache.get(symbol)
+    if hit and now - hit[0] < _LATEST_CACHE_TTL:
+        return hit[1]
+    result: Optional[dict] = None
+    try:
+        client = _client()
+        if client is not None:
+            rows = (client.table("bias_test_log").select(
+                        "run_timestamp_utc,ny_date,run_label,predicted_bias,"
+                        "confidence,main_support,main_resistance,raw_payload")
+                    .order("run_timestamp_utc", desc=True).limit(24)
+                    .execute()).get("data") or []
+            for r in rows:
+                if symbol_for_row(r) != symbol:
+                    continue
+                run_ts = datetime.fromisoformat(
+                    str(r["run_timestamp_utc"]).replace("Z", "+00:00"))
+                raw = r.get("raw_payload") or {}
+                result = {
+                    "bias": (r.get("predicted_bias") or "").lower(),
+                    "run_ts": run_ts,
+                    "age_min": (datetime.now(timezone.utc) - run_ts).total_seconds() / 60.0,
+                    "run_label": r.get("run_label"),
+                    "confidence": r.get("confidence"),
+                    "debate_winner": (raw.get("debate_winner") if isinstance(raw, dict) else None),
+                    "main_support": r.get("main_support"),
+                    "main_resistance": r.get("main_resistance"),
+                }
+                break
+    except Exception as e:
+        logger.debug("[bias-test] latest_bias_for_symbol fail-open (%s): %s", symbol, e)
+        result = None
+    _latest_cache[symbol] = (now, result)
+    return result
 
 
 def _conf_bucket(c: float) -> str:
@@ -401,9 +584,33 @@ def accuracy_report() -> dict:
             out.setdefault(str(key_fn(r)), []).append(r)
         return {k: _rate(v) for k, v in sorted(out.items())}
 
+    def horizon_rates(rws: list[dict]) -> dict:
+        """Yönlü çağrıların ufuk-bazlı isabeti (işaretli getiri > 0)."""
+        out = {}
+        for m in HORIZONS_MIN:
+            sgn = []
+            for r in rws:
+                b, v = (r.get("predicted_bias") or "").lower(), r.get(f"ret_{m}m")
+                if v is None or b not in ("bullish", "bearish"):
+                    continue
+                sgn.append(v if b == "bullish" else -v)
+            n, w = len(sgn), sum(1 for x in sgn if x > 0)
+            out[f"{m}m"] = {
+                "n": n, "correct": w,
+                "accuracy_pct": round(w / n * 100.0, 1) if n else None,
+                "avg_signed_ret_pct": round(sum(sgn) / n, 3) if n else None,
+            }
+        return out
+
+    by_sym_rows: dict[str, list] = {}
+    for r in rows:
+        by_sym_rows.setdefault(symbol_for_row(r), []).append(r)
+
     return {
         "total_graded": len(graded),
         "overall": _rate(graded),
+        "by_horizon": horizon_rates(rows),
+        "by_symbol_horizon": {s: horizon_rates(v) for s, v in sorted(by_sym_rows.items())},
         "by_symbol": group(symbol_for_row),
         "by_run_label": group(lambda r: r.get("run_label")),
         "by_confidence_bucket": group(lambda r: _conf_bucket(float(r.get("confidence") or 0))),
