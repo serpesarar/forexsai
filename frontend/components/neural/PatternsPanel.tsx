@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shapes, X } from "lucide-react";
 import { useNeuralLocale, type LFn } from "./i18n";
@@ -32,6 +33,12 @@ export interface DetectedPattern {
   przHigh: number;
   ratios: { legFrom: number; legTo: number; label: string }[]; // pivot idx refs
   candles: { o: number; h: number; l: number; c: number }[];
+  /** kesin bozulma fiyatı — fiyat bu seviyeyi yön aleyhine geçerse formasyon geçersiz */
+  invalidation?: number;
+  /** fiyat bozulma sınırını zaten geçti mi */
+  broken?: boolean;
+  /** serinin son kapanışı (şimdiki fiyat çizgisi için) */
+  lastPrice?: number;
 }
 
 function genCandles(seedPath: number[], jitter = 8): { o: number; h: number; l: number; c: number }[] {
@@ -90,6 +97,8 @@ function buildPatterns(): DetectedPattern[] {
       { legFrom: 3, legTo: 4, label: "CD ≈ 1.272·BC" },
     ],
     candles: gartleyCandles,
+    invalidation: 21470,
+    lastPrice: gartleyCandles[gartleyCandles.length - 1]?.c,
   };
 
   // Ascending Triangle — flat top ~22040, rising lows; breakout target above
@@ -117,6 +126,8 @@ function buildPatterns(): DetectedPattern[] {
     przHigh: 22520,
     ratios: [{ legFrom: 0, legTo: 4, label: "" }],
     candles: triCandles,
+    invalidation: 21720,
+    lastPrice: triCandles[triCandles.length - 1]?.c,
   };
 
   // Completed bearish ABCD on 15m
@@ -146,6 +157,8 @@ function buildPatterns(): DetectedPattern[] {
       { legFrom: 2, legTo: 3, label: "CD = 1.0·AB" },
     ],
     candles: abcdCandles,
+    invalidation: 22015,
+    lastPrice: abcdCandles[abcdCandles.length - 1]?.c,
   };
 
   return [gartley, triangle, abcd];
@@ -175,14 +188,27 @@ export function mapLivePatterns(raws: LivePatternRaw[], candles: LiveCandle[]): 
     pick.push(p);
   }
 
+  // Pivotları mumlara ZAMAN ile eşle (backend'in candle dizisi ile buradaki
+  // /api/data/ohlcv dizisi ayrı isteklerdir; ham index 1-2 bar kayabilir).
+  const tsToIdx = new Map<number, number>();
+  candles.forEach((c, i) => tsToIdx.set(Math.round(c.ts / 1000), i));
+  const alignIdx = (v: { index: number; time?: number }): number => {
+    const t = Number(v.time ?? 0);
+    if (t > 0 && tsToIdx.has(t)) return tsToIdx.get(t)!;
+    return v.index;
+  };
+  const lastPrice = candles[candles.length - 1].c;
+
   return pick.map((p, pi): DetectedPattern => {
-    const entries = Object.entries(p.points).filter(([, v]) => Number.isFinite(v.index) && v.price > 0);
+    const entries = Object.entries(p.points)
+      .filter(([, v]) => Number.isFinite(v.index) && v.price > 0)
+      .map(([k, v]) => [k, { ...v, index: alignIdx(v) }] as [string, { index: number; price: number; time?: number }]);
     const isForming = p.status === "FORMING";
     const pivotEntries = isForming ? entries.filter(([k]) => k !== "D") : entries;
     const idxs = entries.map(([, v]) => v.index);
 
     // projected index: for forming use D point's index (synthetic), else last pivot
-    const dPoint = p.points["D"];
+    const dPoint = entries.find(([k]) => k === "D")?.[1];
     const projIdxRaw = dPoint ? dPoint.index : Math.max(...idxs);
     const projPrice = p.projected?.price ?? dPoint?.price ?? p.targetPrice ?? 0;
 
@@ -208,13 +234,24 @@ export function mapLivePatterns(raws: LivePatternRaw[], candles: LiveCandle[]): 
     const target = fmtP(projPrice);
     const barsAway = Math.max(0, projIdxRaw - endData);
 
+    const invalidation = Number.isFinite(Number(p.invalidation)) ? Number(p.invalidation) : undefined;
+    const broken =
+      p.invalidated === true ||
+      (invalidation !== undefined &&
+        (p.signal === "bullish" ? lastPrice < invalidation : lastPrice > invalidation));
+
     return {
       id: `${p.name}-${pi}`,
       name: (L) => L(p.nameTr, p.name),
       tf: p.timeframe,
       dirUp: p.signal === "bullish",
       completion: isForming ? Math.min(95, Math.max(50, p.confidence)) : 100,
-      status: (L) => (isForming ? L("D AYAĞI BEKLENİYOR", "AWAITING D LEG") : L("TAMAMLANDI ✓", "COMPLETED ✓")),
+      status: (L) =>
+        broken
+          ? L("BOZULDU ✗", "PATTERN BROKE ✗")
+          : isForming
+          ? L("D AYAĞI BEKLENİYOR", "AWAITING D LEG")
+          : L("TAMAMLANDI ✓", "COMPLETED ✓"),
       targetPrice: target,
       targetNote: (L) =>
         isForming
@@ -232,6 +269,9 @@ export function mapLivePatterns(raws: LivePatternRaw[], candles: LiveCandle[]): 
       przHigh: projPrice * 1.0035,
       ratios,
       candles: slice,
+      invalidation,
+      broken,
+      lastPrice,
     };
   });
 }
@@ -240,11 +280,18 @@ export function mapLivePatterns(raws: LivePatternRaw[], candles: LiveCandle[]): 
 
 function PatternChart({ pat }: { pat: DetectedPattern }) {
   const { L } = useNeuralLocale();
-  const W = 620, H = 280, PAD = 14, PAD_R = 84;
+  const W = 860, H = 380, PAD = 16, PAD_R = 104;
   const total = Math.max(pat.projected.i + 4, pat.candles.length + 2);
 
   let lo = Math.min(...pat.candles.map((c) => c.l), pat.przLow);
   let hi = Math.max(...pat.candles.map((c) => c.h), pat.przHigh);
+  // bozulma çizgisi görünür kalsın; ama aralığı en fazla %35 genişletsin
+  if (Number.isFinite(pat.invalidation)) {
+    const range = hi - lo || 1;
+    const inv = pat.invalidation!;
+    if (inv < lo) lo = Math.max(inv, lo - range * 0.35);
+    if (inv > hi) hi = Math.min(inv, hi + range * 0.35);
+  }
   const vpad = (hi - lo) * 0.08;
   lo -= vpad; hi += vpad;
 
@@ -253,6 +300,11 @@ function PatternChart({ pat }: { pat: DetectedPattern }) {
 
   const lastPivot = pat.pivots[pat.pivots.length - 1];
   const isProjection = pat.completion < 100;
+  const invY = Number.isFinite(pat.invalidation) ? toY(pat.invalidation!) : null;
+  const nowY =
+    Number.isFinite(pat.lastPrice) && pat.lastPrice! > lo && pat.lastPrice! < hi
+      ? toY(pat.lastPrice!)
+      : null;
 
   // pivot polyline
   const pivotPath = pat.pivots.map((pv, i) => `${i === 0 ? "M" : "L"} ${toX(pv.i)} ${toY(pv.p)}`).join(" ");
@@ -382,6 +434,50 @@ function PatternChart({ pat }: { pat: DetectedPattern }) {
         </motion.g>
       ))}
 
+      {/* current price line (subtle) */}
+      {nowY !== null && (
+        <g>
+          <line x1={PAD} x2={W - PAD_R + 62} y1={nowY} y2={nowY} stroke="#67e8f9" strokeOpacity="0.35" strokeWidth="1" strokeDasharray="2 4" />
+          <text x={W - PAD_R + 66} y={nowY + 3} fill="#67e8f9" fillOpacity="0.75" fontSize="8" fontFamily="monospace" letterSpacing="0.1em">
+            {L("ŞİMDİ", "NOW")} {fmtP(pat.lastPrice!)}
+          </text>
+        </g>
+      )}
+
+      {/* PATTERN BROKE — kırmızı lazer bozulma çizgisi */}
+      {invY !== null && (
+        <g>
+          {/* laser glow underlay */}
+          <motion.line
+            x1={PAD} x2={W - PAD_R + 62} y1={invY} y2={invY}
+            stroke="#ef4444" strokeWidth="6" strokeLinecap="round"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: pat.broken ? [0.22, 0.4, 0.22] : [0.1, 0.26, 0.1] }}
+            transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+            style={{ filter: "blur(3px)" }}
+          />
+          {/* laser core */}
+          <motion.line
+            x1={PAD} x2={W - PAD_R + 62} y1={invY} y2={invY}
+            stroke={pat.broken ? "#ff2d2d" : "#ef4444"} strokeWidth="1.6"
+            strokeDasharray={pat.broken ? undefined : "12 7"}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: pat.broken ? 1 : [0.6, 1, 0.6], strokeDashoffset: pat.broken ? 0 : [0, -38] }}
+            transition={{ repeat: Infinity, duration: 1.6, ease: "linear" }}
+            style={{ filter: "drop-shadow(0 0 6px rgba(239,68,68,0.95)) drop-shadow(0 0 14px rgba(239,68,68,0.45))" }}
+          />
+          {/* label */}
+          <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
+            <rect x={PAD + 2} y={invY - 22} width={pat.broken ? 168 : 208} height={16} rx="3" fill="rgba(127,29,29,0.55)" stroke="#ef4444" strokeOpacity="0.6" strokeWidth="0.6" />
+            <text x={PAD + 8} y={invY - 10.5} fill="#fecaca" fontSize="9" fontFamily="monospace" fontWeight="700" letterSpacing="0.08em">
+              {pat.broken
+                ? `✗ PATTERN BROKE · ${fmtP(pat.invalidation!)}`
+                : `⚠ ${fmtP(pat.invalidation!)} ${pat.dirUp ? L("ALTI", "BELOW") : L("ÜSTÜ", "ABOVE")} = PATTERN BROKE`}
+            </text>
+          </motion.g>
+        </g>
+      )}
+
       {/* fib ratio labels on legs */}
       {pat.ratios.filter((r) => r.label).map((r, i) => {
         const a = pat.pivots[r.legFrom] ?? pat.pivots[pat.pivots.length - 1];
@@ -454,7 +550,7 @@ export default function PatternsPanel({ live }: { live?: DetectedPattern[] }) {
                   />
                 </span>
                 <span className="font-mono text-[9px] text-gray-600">%{p.completion}</span>
-                <span className={`font-mono text-[8px] tracking-[0.2em] ${p.completion === 100 ? "text-gray-500" : p.dirUp ? "text-emerald-500/80" : "text-red-500/80"}`}>
+                <span className={`font-mono text-[8px] tracking-[0.2em] ${p.broken ? "text-red-400" : p.completion === 100 ? "text-gray-500" : p.dirUp ? "text-emerald-500/80" : "text-red-500/80"}`}>
                   {p.status(L)}
                 </span>
               </span>
@@ -473,7 +569,10 @@ export default function PatternsPanel({ live }: { live?: DetectedPattern[] }) {
         {isLive ? "" : ` ${L("(demo)", "(demo)")}`}
       </p>
 
-      {/* detail modal */}
+      {/* detail modal — portal: transform'lu ata elemanlar position:fixed'i
+          kırdığı için body'ye render edilir; modal her zaman viewport ortasında */}
+      {typeof document !== "undefined" &&
+        createPortal(
       <AnimatePresence>
         {sel && (
           <motion.div
@@ -492,7 +591,7 @@ export default function PatternsPanel({ live }: { live?: DetectedPattern[] }) {
               exit={{ opacity: 0, scale: 0.95, y: 12 }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-3xl max-h-[86vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#080c16]"
+              className="w-[min(96vw,1100px)] max-h-[92vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#080c16]"
               style={{ boxShadow: `0 0 60px -18px ${sel.dirUp ? "rgba(52,211,153,0.35)" : "rgba(248,113,113,0.35)"}, 0 50px 120px -30px rgba(0,0,0,1)` }}
             >
               <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/[0.07] bg-[#080c16]/95 backdrop-blur px-5 py-4">
@@ -501,7 +600,9 @@ export default function PatternsPanel({ live }: { live?: DetectedPattern[] }) {
                   {sel.name(L)} <span className="ml-1.5 font-mono text-[10px] text-gray-500">{sel.tf}</span>
                 </h2>
                 <span className={`rounded-md border px-2.5 py-1 font-mono text-[10px] font-bold ${
-                  sel.dirUp ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-red-500/40 bg-red-500/10 text-red-300"
+                  sel.broken
+                    ? "border-red-500/60 bg-red-500/15 text-red-300"
+                    : sel.dirUp ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-red-500/40 bg-red-500/10 text-red-300"
                 }`}>
                   {sel.status(L)}
                 </span>
@@ -513,9 +614,55 @@ export default function PatternsPanel({ live }: { live?: DetectedPattern[] }) {
                 <div className="rounded-xl border border-white/[0.06] bg-black/40 p-3">
                   <PatternChart pat={sel} />
                 </div>
+
+                {/* key levels */}
+                <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                    <div className="font-mono text-[8px] tracking-[0.2em] text-gray-600">{L("HEDEF", "TARGET")}</div>
+                    <div className={`mt-0.5 font-mono text-sm ${sel.dirUp ? "text-emerald-300" : "text-red-300"}`}>{sel.targetPrice}</div>
+                  </div>
+                  <div className={`rounded-lg border px-3 py-2 ${sel.broken ? "border-red-500/50 bg-red-500/10" : "border-red-500/25 bg-red-500/[0.04]"}`}>
+                    <div className="font-mono text-[8px] tracking-[0.2em] text-red-400/80">{L("BOZULMA SINIRI", "BREAK LEVEL")}</div>
+                    <div className="mt-0.5 font-mono text-sm text-red-300">
+                      {sel.invalidation !== undefined ? fmtP(sel.invalidation) : "—"}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                    <div className="font-mono text-[8px] tracking-[0.2em] text-gray-600">{L("GÜVEN", "CONFIDENCE")}</div>
+                    <div className="mt-0.5 font-mono text-sm text-cyan-300">%{sel.completion}</div>
+                  </div>
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                    <div className="font-mono text-[8px] tracking-[0.2em] text-gray-600">{L("ŞİMDİKİ FİYAT", "CURRENT PRICE")}</div>
+                    <div className="mt-0.5 font-mono text-sm text-gray-200">
+                      {sel.lastPrice !== undefined ? fmtP(sel.lastPrice) : "—"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* broken warning */}
+                {sel.broken && (
+                  <div className="mt-3 flex items-center gap-2.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3.5 py-2.5">
+                    <span className="font-mono text-sm text-red-400">✗</span>
+                    <p className="text-[12.5px] font-light text-red-200/90">
+                      {L(
+                        "Bu formasyon BOZULDU — fiyat bozulma sınırını geçti, senaryo artık geçersiz.",
+                        "This pattern is BROKEN — price crossed the invalidation level, the scenario is no longer valid."
+                      )}
+                    </p>
+                  </div>
+                )}
+
                 <p className="mt-4 text-[13px] font-light leading-relaxed text-gray-400">
                   <span className="mr-1.5 text-cyan-500/70">◆</span>
                   {sel.targetNote(L)}
+                  {sel.invalidation !== undefined && !sel.broken && (
+                    <span className="text-red-300/80">
+                      {" "}{L(
+                        `Fiyat ${fmtP(sel.invalidation)} seviyesinin ${sel.dirUp ? "altına inerse" : "üstüne çıkarsa"} formasyon kesin bozulur (kırmızı çizgi).`,
+                        `If price moves ${sel.dirUp ? "below" : "above"} ${fmtP(sel.invalidation)}, the pattern is definitively broken (red line).`
+                      )}
+                    </span>
+                  )}
                 </p>
                 <p className="mt-4 text-center font-mono text-[9px] tracking-[0.25em] text-gray-700">
                   {isLive
@@ -526,7 +673,9 @@ export default function PatternsPanel({ live }: { live?: DetectedPattern[] }) {
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+          document.body
+        )}
     </>
   );
 }

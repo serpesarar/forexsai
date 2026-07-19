@@ -155,7 +155,7 @@ def _serialize_point(point: Dict[str, Any]) -> Dict[str, Any]:
     return {"time": point["time"], "price": round(point["price"], 4), "type": point["type"], "index": point["index"]}
 
 
-def _build_pattern(pattern_type: str, definition: Dict[str, Any], timeframe: str, direction: str, confidence: int, status: str, candle_indices: List[int], points: Dict[str, Dict[str, Any]], target_price: float | None = None, stop_loss: float | None = None, fib_ratios: Dict[str, float] | None = None, projected: Dict[str, Any] | None = None) -> Dict[str, Any]:
+def _build_pattern(pattern_type: str, definition: Dict[str, Any], timeframe: str, direction: str, confidence: int, status: str, candle_indices: List[int], points: Dict[str, Dict[str, Any]], target_price: float | None = None, stop_loss: float | None = None, fib_ratios: Dict[str, float] | None = None, projected: Dict[str, Any] | None = None, invalidation_price: float | None = None) -> Dict[str, Any]:
     signal = direction.lower()
     pattern: Dict[str, Any] = {
         "type": pattern_type,
@@ -179,6 +179,12 @@ def _build_pattern(pattern_type: str, definition: Dict[str, Any], timeframe: str
         pattern["fib_ratios"] = fib_ratios
     if projected is not None:
         pattern["projected_d"] = projected
+    # Kesin bozulma seviyesi: fiyat bu seviyeyi (yön aleyhine) geçerse formasyon
+    # geçersizdir. Verilmemişse stop_loss aynı rolü üstlenir (klasik formasyonlar
+    # ve tamamlanmış harmonikler için stop = yapının ihlal seviyesi).
+    effective_invalidation = invalidation_price if invalidation_price is not None else stop_loss
+    if effective_invalidation is not None:
+        pattern["invalidation_price"] = round(effective_invalidation, 2)
     return pattern
 
 
@@ -281,7 +287,11 @@ def _detect_harmonic_patterns(candles: List[Dict[str, Any]], timeframe: str, dev
                             projected_index = min(len(candles) - 1, c_point["index"] + max(duration, 1))
                             synthetic_d = {"time": candles[projected_index]["time"], "price": projected_price, "high": projected_price, "low": projected_price, "type": "low" if c_point["type"] == "high" else "high", "index": projected_index}
                             direction = "BULLISH" if x_point["type"] == "low" else "BEARISH"
-                            patterns.append(_build_pattern(pattern_type, definition, timeframe, direction, confidence, "FORMING", _indices_between(x_point["index"], c_point["index"]), {"X": x_point, "A": a_point, "B": b_point, "C": c_point, "D": synthetic_d}, None, None, {"ab": round(ab_ratio, 3), "bc": round(bc_ratio, 3), "cd": 0.0, "xd": round(d_xa_ideal, 3)}, {"price": round(projected_price, 2), "time": candles[projected_index]["time"]}))
+                            # Bozulma: fiyat D için izin verilen en uç XA uzantısını (max + tolerans)
+                            # aşarsa PRZ geçersiz olur → formasyon kesin bozulmuştur.
+                            d_xa_limit = definition["D_XA"]["max"] + fib_tolerance
+                            invalidation_price_val = a_point["price"] - xa * d_xa_limit if a_point["price"] > x_point["price"] else a_point["price"] + xa * d_xa_limit
+                            patterns.append(_build_pattern(pattern_type, definition, timeframe, direction, confidence, "FORMING", _indices_between(x_point["index"], c_point["index"]), {"X": x_point, "A": a_point, "B": b_point, "C": c_point, "D": synthetic_d}, None, None, {"ab": round(ab_ratio, 3), "bc": round(bc_ratio, 3), "cd": 0.0, "xd": round(d_xa_ideal, 3)}, {"price": round(projected_price, 2), "time": candles[projected_index]["time"]}, invalidation_price=invalidation_price_val))
     patterns.sort(key=lambda item: item["confidence"], reverse=True)
     return _dedupe_harmonics(patterns)
 
@@ -446,6 +456,12 @@ def detect_chart_patterns_from_candles(candles: List[Dict[str, Any]], timeframe:
     harmonic = _detect_harmonic_patterns(normalized, normalized_timeframe, float(opts["deviation"]), float(opts["fib_tolerance"]), float(opts["min_confidence"]))
     classic = _detect_classic_patterns(normalized, normalized_timeframe, float(opts["min_confidence"]))
     patterns = sorted(harmonic + classic, key=lambda item: (item.get("category") != "harmonic", -item.get("confidence", 0)))
+    last_close = normalized[-1]["close"]
+    for pattern in patterns:
+        invalidation = pattern.get("invalidation_price")
+        if invalidation is None or last_close <= 0:
+            continue
+        pattern["invalidated"] = last_close < invalidation if pattern.get("direction") == "BULLISH" else last_close > invalidation
     summary = _summarize(patterns, normalized_timeframe)
     summary["timestamp"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     return summary

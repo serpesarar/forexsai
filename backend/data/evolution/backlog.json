@@ -581,5 +581,16 @@
     "source": "session",
     "created_at": "2026-07-19T07:27:30.338263+00:00",
     "updated_at": "2026-07-19T07:27:30.338265+00:00"
+  },
+  {
+    "id": "bl_6768794a09",
+    "title": "HarmonicVisualizerPanel'e de bozulma seviyesi",
+    "detail": "Neural PatternsPanel'e eklenen invalidation_price/PATTERN BROKE lazer çizgisi, lightweight-charts tabanlı HarmonicVisualizerPanel.tsx'te henüz yok; aynı backend alanı orada da çizilebilir",
+    "category": "idea",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-19T08:04:09.953850+00:00",
+    "updated_at": "2026-07-19T08:04:09.954001+00:00"
   }
 ]

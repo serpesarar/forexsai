@@ -108,6 +108,8 @@ export interface LivePatternRaw {
   projected?: { price: number; time?: number };
   targetPrice?: number;
   stopLoss?: number;
+  invalidation?: number;
+  invalidated?: boolean;
   ratios?: Record<string, number>;
 }
 
@@ -401,6 +403,8 @@ async function fetchAll(code: string): Promise<Omit<NeuralLive, "loading">> {
           : undefined,
         targetPrice: Number.isFinite(Number(p.target_price)) ? Number(p.target_price) : undefined,
         stopLoss: Number.isFinite(Number(p.stop_loss)) ? Number(p.stop_loss) : undefined,
+        invalidation: Number.isFinite(Number(p.invalidation_price)) ? Number(p.invalidation_price) : undefined,
+        invalidated: p.invalidated === true,
         ratios: p.ratios ?? undefined,
       }));
     out.sourcesOk++;
