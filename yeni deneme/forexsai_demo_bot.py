@@ -308,6 +308,17 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     digits = info.digits
     price = tick.ask if direction == "BUY" else tick.bid
 
+    # Sahte-kırılım vetosu (4 sembol, OOS %70/%70+; fail-open — FAKEOUT_VETO=0 kapatır)
+    try:
+        from fakeout_veto import fakeout_check
+        allow, veto_reason = fakeout_check(mt5, mt5_symbol, forexsai_sym, direction)
+        if not allow:
+            _log_trade("FAKEOUT_VETO", scope_key, mt5_symbol, direction, price, 0, 0,
+                       voters, veto_reason)
+            return
+    except Exception as _fx_exc:
+        log.debug("fakeout veto fail-open: %s", _fx_exc)
+
     fixed_tp, fixed_sl = _fixed_distances(price, cfg, bot_signal)
 
     if candles is None:
@@ -417,6 +428,18 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     if tick is None or info is None:
         log.error("%s tick/info alınamadı", mt5_symbol); return
 
+    # Sahte-kırılım vetosu (fail-open; FAKEOUT_VETO=0 kapatır)
+    try:
+        from fakeout_veto import fakeout_check
+        allow, veto_reason = fakeout_check(mt5, mt5_symbol, forexsai_sym, direction)
+        if not allow:
+            _log_trade("FAKEOUT_VETO", scope_key, mt5_symbol, direction,
+                       tick.ask if direction == "BUY" else tick.bid, 0, 0,
+                       voters, veto_reason)
+            return
+    except Exception as _fx_exc:
+        log.debug("fakeout veto fail-open: %s", _fx_exc)
+
     price = tick.ask if direction == "BUY" else tick.bid
     # Türetilmiş TP/SL mesafesi — index: puan, USOIL: yüzde.
     if cfg["is_pct"]:
@@ -489,6 +512,17 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     if info is None:
         log.error("%s info alınamadı", mt5_symbol); return
     digits = info.digits
+
+    # Sahte-kırılım vetosu (fail-open; FAKEOUT_VETO=0 kapatır)
+    try:
+        from fakeout_veto import fakeout_check
+        allow, veto_reason = fakeout_check(mt5, mt5_symbol, forexsai_sym, direction)
+        if not allow:
+            _log_trade("FAKEOUT_VETO", scope_key, mt5_symbol, direction, 0, 0, 0,
+                       voters, veto_reason)
+            return
+    except Exception as _fx_exc:
+        log.debug("fakeout veto fail-open: %s", _fx_exc)
 
     tick = mt5.symbol_info_tick(mt5_symbol)
     if tick is None:

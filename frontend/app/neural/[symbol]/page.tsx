@@ -34,6 +34,7 @@ import DebateLayer from "@/components/neural/DebateLayer";
 import ModelDetailModal, { type DetailKey } from "@/components/neural/ModelDetailModal";
 import SignalHistoryChart from "@/components/neural/SignalHistoryChart";
 import PatternsPanel, { mapLivePatterns } from "@/components/neural/PatternsPanel";
+import BreakoutRadarPanel from "@/components/neural/BreakoutRadarPanel";
 import { useHydrateLocale, useNeuralLocale, type LFn } from "@/components/neural/i18n";
 import { useNeuralLive } from "@/lib/api/neural";
 import {
@@ -41,7 +42,6 @@ import {
   CoreLog,
   DecisionTimeline,
   IndicatorList,
-  LevelLadder,
   MacroTiles,
   NeuralCard,
   NewsList,
@@ -465,14 +465,19 @@ export default function NeuralSymbolPage() {
           </NeuralCard>
         </div>
 
-        {/* ── Row 2: Göstergeler · Seviyeler ─────────────────────────── */}
+        {/* ── Row 2: Göstergeler · Seviyeler · Fakeout Radarı ────────── */}
         <div className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
           <NeuralCard title={L("Göstergeler — Tek Bakışta", "Indicators — At a Glance")} icon={<TrendingUp size={14} />} live>
             <IndicatorList items={indicators} />
           </NeuralCard>
 
-          <NeuralCard title={L("Kritik Seviyeler", "Key Levels")} icon={<Layers size={14} />} live delay={0.1}>
-            <LevelLadder levels={demo.levels} price={price} priceNote={demo.levelNote} />
+          <NeuralCard
+            title={L("Kırılım Radarı — Destek/Direnç", "Breakout Radar — Support/Resistance")}
+            icon={<Layers size={14} />}
+            live
+            delay={0.1}
+          >
+            <BreakoutRadarPanel symbol={demo.code} />
           </NeuralCard>
         </div>
 

@@ -80,6 +80,18 @@ def _open(sig: dict, log) -> None:
     info = mt5.symbol_info(REFLEX_MT5_SYMBOL)
     if tick is None or info is None:
         log.error("Reflex tick/info alınamadı"); return
+
+    # Sahte-kırılım vetosu (fail-open; FAKEOUT_VETO=0 kapatır)
+    try:
+        from fakeout_veto import fakeout_check
+        allow, veto_reason = fakeout_check(mt5, REFLEX_MT5_SYMBOL, REFLEX_SYMBOL, direction)
+        if not allow:
+            log.warning("Reflex %s — %s", line, veto_reason)
+            _seen.add(sid)
+            return
+    except Exception as _fx_exc:
+        log.debug("reflex fakeout veto fail-open: %s", _fx_exc)
+
     price = tick.ask if direction == "BUY" else tick.bid
     order_type = mt5.ORDER_TYPE_BUY if direction == "BUY" else mt5.ORDER_TYPE_SELL
     sl = round(sl, info.digits)

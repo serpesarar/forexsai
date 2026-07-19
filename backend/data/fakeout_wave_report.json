@@ -1,0 +1,646 @@
+[
+ {
+  "K": 2,
+  "alive": 552,
+  "base_fake": 52.4,
+  "wave": {
+   "fake": {
+    "ok": true,
+    "thr": 0.679,
+    "test_n": 42,
+    "coverage": 25.3,
+    "precision": 71.4
+   },
+   "genuine": {
+    "ok": true,
+    "thr": 0.341,
+    "test_n": 49,
+    "coverage": 29.5,
+    "precision": 73.5
+   },
+   "pass": true,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 8,
+      "prec": 75.0
+     },
+     {
+      "cov": 0.1,
+      "n": 16,
+      "prec": 75.0
+     },
+     {
+      "cov": 0.15,
+      "n": 24,
+      "prec": 75.0
+     },
+     {
+      "cov": 0.2,
+      "n": 33,
+      "prec": 72.7
+     },
+     {
+      "cov": 0.3,
+      "n": 49,
+      "prec": 69.4
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 8,
+      "prec": 62.5
+     },
+     {
+      "cov": 0.1,
+      "n": 16,
+      "prec": 62.5
+     },
+     {
+      "cov": 0.15,
+      "n": 24,
+      "prec": 66.7
+     },
+     {
+      "cov": 0.2,
+      "n": 33,
+      "prec": 69.7
+     },
+     {
+      "cov": 0.3,
+      "n": 49,
+      "prec": 73.5
+     }
+    ]
+   },
+   "mode": "wave_K2",
+   "train_n": 303,
+   "val_n": 82,
+   "test_n": 166,
+   "base_fake_test": 47.0
+  },
+  "baseline_1bar": {
+   "fake": {
+    "ok": false,
+    "thr": 0.725,
+    "test_n": 26,
+    "coverage": 15.7,
+    "precision": 53.8
+   },
+   "genuine": {
+    "ok": false,
+    "precision": null,
+    "coverage": null,
+    "test_n": 0,
+    "reason": "val eşiği yok"
+   },
+   "pass": false,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 8,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.1,
+      "n": 16,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.15,
+      "n": 24,
+      "prec": 54.2
+     },
+     {
+      "cov": 0.2,
+      "n": 33,
+      "prec": 57.6
+     },
+     {
+      "cov": 0.3,
+      "n": 49,
+      "prec": 59.2
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 8,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.1,
+      "n": 16,
+      "prec": 56.2
+     },
+     {
+      "cov": 0.15,
+      "n": 24,
+      "prec": 54.2
+     },
+     {
+      "cov": 0.2,
+      "n": 33,
+      "prec": 48.5
+     },
+     {
+      "cov": 0.3,
+      "n": 49,
+      "prec": 46.9
+     }
+    ]
+   },
+   "mode": "1bar_on_aliveK2",
+   "train_n": 303,
+   "val_n": 82,
+   "test_n": 166,
+   "base_fake_test": 47.0
+  }
+ },
+ {
+  "K": 3,
+  "alive": 384,
+  "base_fake": 52.6,
+  "wave": {
+   "fake": {
+    "ok": false,
+    "thr": 0.575,
+    "test_n": 49,
+    "coverage": 42.6,
+    "precision": 69.4
+   },
+   "genuine": {
+    "ok": false,
+    "thr": 0.719,
+    "test_n": 91,
+    "coverage": 79.1,
+    "precision": 54.9
+   },
+   "pass": false,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 80.0
+     },
+     {
+      "cov": 0.1,
+      "n": 11,
+      "prec": 72.7
+     },
+     {
+      "cov": 0.15,
+      "n": 17,
+      "prec": 76.5
+     },
+     {
+      "cov": 0.2,
+      "n": 23,
+      "prec": 73.9
+     },
+     {
+      "cov": 0.3,
+      "n": 34,
+      "prec": 70.6
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 80.0
+     },
+     {
+      "cov": 0.1,
+      "n": 11,
+      "prec": 81.8
+     },
+     {
+      "cov": 0.15,
+      "n": 17,
+      "prec": 76.5
+     },
+     {
+      "cov": 0.2,
+      "n": 23,
+      "prec": 73.9
+     },
+     {
+      "cov": 0.3,
+      "n": 34,
+      "prec": 79.4
+     }
+    ]
+   },
+   "mode": "wave_K3",
+   "train_n": 211,
+   "val_n": 56,
+   "test_n": 115,
+   "base_fake_test": 51.3
+  },
+  "baseline_1bar": {
+   "fake": {
+    "ok": false,
+    "precision": null,
+    "coverage": null,
+    "test_n": 0,
+    "reason": "val eşiği yok"
+   },
+   "genuine": {
+    "ok": false,
+    "thr": 0.475,
+    "test_n": 41,
+    "coverage": 35.7,
+    "precision": 56.1
+   },
+   "pass": false,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 40.0
+     },
+     {
+      "cov": 0.1,
+      "n": 11,
+      "prec": 36.4
+     },
+     {
+      "cov": 0.15,
+      "n": 17,
+      "prec": 52.9
+     },
+     {
+      "cov": 0.2,
+      "n": 23,
+      "prec": 52.2
+     },
+     {
+      "cov": 0.3,
+      "n": 34,
+      "prec": 52.9
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 40.0
+     },
+     {
+      "cov": 0.1,
+      "n": 11,
+      "prec": 45.5
+     },
+     {
+      "cov": 0.15,
+      "n": 17,
+      "prec": 52.9
+     },
+     {
+      "cov": 0.2,
+      "n": 23,
+      "prec": 47.8
+     },
+     {
+      "cov": 0.3,
+      "n": 34,
+      "prec": 50.0
+     }
+    ]
+   },
+   "mode": "1bar_on_aliveK3",
+   "train_n": 211,
+   "val_n": 56,
+   "test_n": 115,
+   "base_fake_test": 51.3
+  }
+ },
+ {
+  "K": 4,
+  "alive": 276,
+  "base_fake": 52.5,
+  "wave": {
+   "fake": {
+    "ok": false,
+    "thr": 0.451,
+    "test_n": 45,
+    "coverage": 54.2,
+    "precision": 55.6
+   },
+   "genuine": {
+    "ok": false,
+    "thr": 0.49,
+    "test_n": 43,
+    "coverage": 51.8,
+    "precision": 60.5
+   },
+   "pass": false,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 40.0
+     },
+     {
+      "cov": 0.1,
+      "n": 8,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.15,
+      "n": 12,
+      "prec": 58.3
+     },
+     {
+      "cov": 0.2,
+      "n": 16,
+      "prec": 62.5
+     },
+     {
+      "cov": 0.3,
+      "n": 24,
+      "prec": 62.5
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 60.0
+     },
+     {
+      "cov": 0.1,
+      "n": 8,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.15,
+      "n": 12,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.2,
+      "n": 16,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.3,
+      "n": 24,
+      "prec": 50.0
+     }
+    ]
+   },
+   "mode": "wave_K4",
+   "train_n": 151,
+   "val_n": 42,
+   "test_n": 83,
+   "base_fake_test": 48.2
+  },
+  "baseline_1bar": {
+   "fake": {
+    "ok": false,
+    "precision": null,
+    "coverage": null,
+    "test_n": 0,
+    "reason": "val eşiği yok"
+   },
+   "genuine": {
+    "ok": false,
+    "precision": null,
+    "coverage": null,
+    "test_n": 0,
+    "reason": "val eşiği yok"
+   },
+   "pass": false,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 60.0
+     },
+     {
+      "cov": 0.1,
+      "n": 8,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.15,
+      "n": 12,
+      "prec": 58.3
+     },
+     {
+      "cov": 0.2,
+      "n": 16,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.3,
+      "n": 24,
+      "prec": 54.2
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 60.0
+     },
+     {
+      "cov": 0.1,
+      "n": 8,
+      "prec": 37.5
+     },
+     {
+      "cov": 0.15,
+      "n": 12,
+      "prec": 50.0
+     },
+     {
+      "cov": 0.2,
+      "n": 16,
+      "prec": 56.2
+     },
+     {
+      "cov": 0.3,
+      "n": 24,
+      "prec": 54.2
+     }
+    ]
+   },
+   "mode": "1bar_on_aliveK4",
+   "train_n": 151,
+   "val_n": 42,
+   "test_n": 83,
+   "base_fake_test": 48.2
+  }
+ },
+ {
+  "K": 6,
+  "alive": 176,
+  "base_fake": 51.7,
+  "wave": {
+   "fake": {
+    "ok": false,
+    "thr": 0.347,
+    "test_n": 34,
+    "coverage": 64.2,
+    "precision": 61.8
+   },
+   "genuine": {
+    "ok": false,
+    "precision": null,
+    "coverage": null,
+    "test_n": 0,
+    "reason": "val eşiği yok"
+   },
+   "pass": false,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 60.0
+     },
+     {
+      "cov": 0.1,
+      "n": 5,
+      "prec": 60.0
+     },
+     {
+      "cov": 0.15,
+      "n": 7,
+      "prec": 71.4
+     },
+     {
+      "cov": 0.2,
+      "n": 10,
+      "prec": 70.0
+     },
+     {
+      "cov": 0.3,
+      "n": 15,
+      "prec": 60.0
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 60.0
+     },
+     {
+      "cov": 0.1,
+      "n": 5,
+      "prec": 60.0
+     },
+     {
+      "cov": 0.15,
+      "n": 7,
+      "prec": 57.1
+     },
+     {
+      "cov": 0.2,
+      "n": 10,
+      "prec": 70.0
+     },
+     {
+      "cov": 0.3,
+      "n": 15,
+      "prec": 73.3
+     }
+    ]
+   },
+   "mode": "wave_K6",
+   "train_n": 96,
+   "val_n": 26,
+   "test_n": 53,
+   "base_fake_test": 49.1
+  },
+  "baseline_1bar": {
+   "fake": {
+    "ok": false,
+    "precision": null,
+    "coverage": null,
+    "test_n": 0,
+    "reason": "val eşiği yok"
+   },
+   "genuine": {
+    "ok": false,
+    "precision": null,
+    "coverage": null,
+    "test_n": 0,
+    "reason": "val eşiği yok"
+   },
+   "pass": false,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 20.0
+     },
+     {
+      "cov": 0.1,
+      "n": 5,
+      "prec": 20.0
+     },
+     {
+      "cov": 0.15,
+      "n": 7,
+      "prec": 42.9
+     },
+     {
+      "cov": 0.2,
+      "n": 10,
+      "prec": 30.0
+     },
+     {
+      "cov": 0.3,
+      "n": 15,
+      "prec": 46.7
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 5,
+      "prec": 60.0
+     },
+     {
+      "cov": 0.1,
+      "n": 5,
+      "prec": 60.0
+     },
+     {
+      "cov": 0.15,
+      "n": 7,
+      "prec": 57.1
+     },
+     {
+      "cov": 0.2,
+      "n": 10,
+      "prec": 70.0
+     },
+     {
+      "cov": 0.3,
+      "n": 15,
+      "prec": 60.0
+     }
+    ]
+   },
+   "mode": "1bar_on_aliveK6",
+   "train_n": 96,
+   "val_n": 26,
+   "test_n": 53,
+   "base_fake_test": 49.1
+  }
+ }
+]

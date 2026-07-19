@@ -1,0 +1,319 @@
+{
+ "stage1": {
+  "base": {
+   "fake": {
+    "ok": true,
+    "thr": 0.524,
+    "test_n": 217,
+    "coverage": 50.7,
+    "precision": 70.0
+   },
+   "genuine": {
+    "ok": true,
+    "thr": 0.385,
+    "test_n": 148,
+    "coverage": 34.6,
+    "precision": 83.1
+   },
+   "pass": true,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 21,
+      "prec": 95.2
+     },
+     {
+      "cov": 0.1,
+      "n": 42,
+      "prec": 88.1
+     },
+     {
+      "cov": 0.15,
+      "n": 64,
+      "prec": 92.2
+     },
+     {
+      "cov": 0.2,
+      "n": 85,
+      "prec": 90.6
+     },
+     {
+      "cov": 0.3,
+      "n": 128,
+      "prec": 85.9
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 21,
+      "prec": 100.0
+     },
+     {
+      "cov": 0.1,
+      "n": 42,
+      "prec": 97.6
+     },
+     {
+      "cov": 0.15,
+      "n": 64,
+      "prec": 90.6
+     },
+     {
+      "cov": 0.2,
+      "n": 85,
+      "prec": 88.2
+     },
+     {
+      "cov": 0.3,
+      "n": 128,
+      "prec": 85.2
+     }
+    ]
+   },
+   "mode": "base",
+   "train_n": 784,
+   "val_n": 203,
+   "test_n": 428,
+   "base_fake_test": 48.6
+  },
+  "mtf": {
+   "fake": {
+    "ok": false,
+    "thr": 0.458,
+    "test_n": 242,
+    "coverage": 56.5,
+    "precision": 69.4
+   },
+   "genuine": {
+    "ok": true,
+    "thr": 0.488,
+    "test_n": 198,
+    "coverage": 46.3,
+    "precision": 76.3
+   },
+   "pass": false,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 21,
+      "prec": 95.2
+     },
+     {
+      "cov": 0.1,
+      "n": 42,
+      "prec": 95.2
+     },
+     {
+      "cov": 0.15,
+      "n": 64,
+      "prec": 93.8
+     },
+     {
+      "cov": 0.2,
+      "n": 85,
+      "prec": 90.6
+     },
+     {
+      "cov": 0.3,
+      "n": 128,
+      "prec": 84.4
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 21,
+      "prec": 100.0
+     },
+     {
+      "cov": 0.1,
+      "n": 42,
+      "prec": 95.2
+     },
+     {
+      "cov": 0.15,
+      "n": 64,
+      "prec": 92.2
+     },
+     {
+      "cov": 0.2,
+      "n": 85,
+      "prec": 87.1
+     },
+     {
+      "cov": 0.3,
+      "n": 128,
+      "prec": 85.9
+     }
+    ]
+   },
+   "mode": "mtf",
+   "train_n": 784,
+   "val_n": 203,
+   "test_n": 428,
+   "base_fake_test": 48.6
+  }
+ },
+ "stage2": {
+  "base": {
+   "fake": {
+    "ok": true,
+    "thr": 0.679,
+    "test_n": 42,
+    "coverage": 25.3,
+    "precision": 71.4
+   },
+   "genuine": {
+    "ok": true,
+    "thr": 0.341,
+    "test_n": 49,
+    "coverage": 29.5,
+    "precision": 73.5
+   },
+   "pass": true,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 8,
+      "prec": 75.0
+     },
+     {
+      "cov": 0.1,
+      "n": 16,
+      "prec": 75.0
+     },
+     {
+      "cov": 0.15,
+      "n": 24,
+      "prec": 75.0
+     },
+     {
+      "cov": 0.2,
+      "n": 33,
+      "prec": 72.7
+     },
+     {
+      "cov": 0.3,
+      "n": 49,
+      "prec": 69.4
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 8,
+      "prec": 62.5
+     },
+     {
+      "cov": 0.1,
+      "n": 16,
+      "prec": 62.5
+     },
+     {
+      "cov": 0.15,
+      "n": 24,
+      "prec": 66.7
+     },
+     {
+      "cov": 0.2,
+      "n": 33,
+      "prec": 69.7
+     },
+     {
+      "cov": 0.3,
+      "n": 49,
+      "prec": 73.5
+     }
+    ]
+   },
+   "mode": "wave_base",
+   "train_n": 303,
+   "val_n": 82,
+   "test_n": 166,
+   "base_fake_test": 47.0
+  },
+  "mtf": {
+   "fake": {
+    "ok": true,
+    "thr": 0.689,
+    "test_n": 36,
+    "coverage": 21.7,
+    "precision": 72.2
+   },
+   "genuine": {
+    "ok": true,
+    "thr": 0.329,
+    "test_n": 42,
+    "coverage": 25.3,
+    "precision": 71.4
+   },
+   "pass": true,
+   "sweep": {
+    "fake": [
+     {
+      "cov": 0.05,
+      "n": 8,
+      "prec": 62.5
+     },
+     {
+      "cov": 0.1,
+      "n": 16,
+      "prec": 75.0
+     },
+     {
+      "cov": 0.15,
+      "n": 24,
+      "prec": 70.8
+     },
+     {
+      "cov": 0.2,
+      "n": 33,
+      "prec": 72.7
+     },
+     {
+      "cov": 0.3,
+      "n": 49,
+      "prec": 71.4
+     }
+    ],
+    "genuine": [
+     {
+      "cov": 0.05,
+      "n": 8,
+      "prec": 75.0
+     },
+     {
+      "cov": 0.1,
+      "n": 16,
+      "prec": 68.8
+     },
+     {
+      "cov": 0.15,
+      "n": 24,
+      "prec": 66.7
+     },
+     {
+      "cov": 0.2,
+      "n": 33,
+      "prec": 69.7
+     },
+     {
+      "cov": 0.3,
+      "n": 49,
+      "prec": 73.5
+     }
+    ]
+   },
+   "mode": "wave_mtf",
+   "train_n": 303,
+   "val_n": 82,
+   "test_n": 166,
+   "base_fake_test": 47.0
+  }
+ },
+ "mtf_coverage_events": 1427
+}

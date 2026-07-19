@@ -1,0 +1,427 @@
+{
+  "version": 2,
+  "generated_at": "2026-07-16T23:12:31.867752+00:00",
+  "symbol": "GDAXI.INDX",
+  "timeframe": "5m",
+  "params": {
+    "pivot_w": 12,
+    "min_touches": 2,
+    "pen_min_atr": 0.1,
+    "target_atr": 1.0,
+    "horizon_bars": 72,
+    "train_frac": 0.7
+  },
+  "events_total": 1006,
+  "base_fake_rate_train": 53.6,
+  "base_fake_rate_test": 52.6,
+  "date_range": [
+    "2026-03-18T11:20:00+00:00",
+    "2026-07-16T18:05:00+00:00"
+  ],
+  "segments": {
+    "seviye_türü": {
+      "channel_lower": {
+        "n": 93,
+        "fake_rate": 60.2
+      },
+      "channel_upper": {
+        "n": 93,
+        "fake_rate": 50.5
+      },
+      "resistance": {
+        "n": 367,
+        "fake_rate": 55.0
+      },
+      "support": {
+        "n": 453,
+        "fake_rate": 51.0
+      }
+    },
+    "yön": {
+      "down": {
+        "n": 546,
+        "fake_rate": 52.6
+      },
+      "up": {
+        "n": 460,
+        "fake_rate": 54.1
+      }
+    }
+  },
+  "rules": {
+    "singles": [
+      {
+        "conditions": [
+          {
+            "feature": "prebreak_range_atr",
+            "op": ">=",
+            "threshold": 6.302
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 44.7,
+        "train_lift_pp": -8.9,
+        "test_n": 56,
+        "test_fake_rate": 39.3,
+        "test_lift_pp": -13.4
+      },
+      {
+        "conditions": [
+          {
+            "feature": "prebreak_range_atr",
+            "op": "<=",
+            "threshold": 3.616
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 63.8,
+        "train_lift_pp": 10.3,
+        "test_n": 58,
+        "test_fake_rate": 58.6,
+        "test_lift_pp": 6.0
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vol_ratio",
+            "op": ">=",
+            "threshold": 1.345
+          }
+        ],
+        "train_n": 262,
+        "train_fake_rate": 44.7,
+        "train_lift_pp": -8.9,
+        "test_n": 86,
+        "test_fake_rate": 48.8,
+        "test_lift_pp": -3.8
+      }
+    ],
+    "combos": [
+      {
+        "conditions": [
+          {
+            "feature": "prebreak_range_atr",
+            "op": ">=",
+            "threshold": 6.302
+          },
+          {
+            "feature": "vol_ratio",
+            "op": ">=",
+            "threshold": 1.345
+          }
+        ],
+        "train_n": 44,
+        "train_fake_rate": 38.6,
+        "train_lift_pp": -14.9,
+        "test_n": 16,
+        "test_fake_rate": 37.5,
+        "test_lift_pp": -15.1
+      }
+    ],
+    "tree": [
+      {
+        "conditions": [
+          {
+            "feature": "vol_ratio",
+            "op": "<=",
+            "threshold": 1.305
+          },
+          {
+            "feature": "prebreak_range_atr",
+            "op": ">=",
+            "threshold": 3.63
+          },
+          {
+            "feature": "bb_width_rank",
+            "op": "<=",
+            "threshold": 25.174
+          }
+        ],
+        "train_n": 38,
+        "train_fake_rate": 28.9,
+        "train_lift_pp": -24.6,
+        "test_n": 22,
+        "test_fake_rate": 40.9,
+        "test_lift_pp": -11.7,
+        "source": "tree"
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vol_ratio",
+            "op": "<=",
+            "threshold": 1.305
+          },
+          {
+            "feature": "prebreak_range_atr",
+            "op": "<=",
+            "threshold": 3.63
+          },
+          {
+            "feature": "rsi14",
+            "op": ">=",
+            "threshold": 38.331
+          }
+        ],
+        "train_n": 46,
+        "train_fake_rate": 69.6,
+        "train_lift_pp": 16.0,
+        "test_n": 20,
+        "test_fake_rate": 55.0,
+        "test_lift_pp": 2.4,
+        "source": "tree"
+      }
+    ]
+  },
+  "score": {
+    "components": [
+      {
+        "feature": "prebreak_range_atr",
+        "op": ">=",
+        "threshold": 6.302,
+        "weight": 1
+      },
+      {
+        "feature": "prebreak_range_atr",
+        "op": "<=",
+        "threshold": 3.616,
+        "weight": -1
+      },
+      {
+        "feature": "vol_ratio",
+        "op": ">=",
+        "threshold": 1.345,
+        "weight": 1
+      }
+    ],
+    "buckets": [
+      {
+        "min_score": -99,
+        "max_score": -2,
+        "train_n": 0,
+        "train_genuine": null,
+        "test_n": 0,
+        "test_genuine": null
+      },
+      {
+        "min_score": -1,
+        "max_score": -1,
+        "train_n": 75,
+        "train_genuine": 22.7,
+        "test_n": 37,
+        "test_genuine": 35.1
+      },
+      {
+        "min_score": 0,
+        "max_score": 0,
+        "train_n": 338,
+        "train_genuine": 44.4,
+        "test_n": 160,
+        "test_genuine": 45.6
+      },
+      {
+        "min_score": 1,
+        "max_score": 1,
+        "train_n": 247,
+        "train_genuine": 53.8,
+        "test_n": 89,
+        "test_genuine": 52.8
+      },
+      {
+        "min_score": 2,
+        "max_score": 99,
+        "train_n": 44,
+        "train_genuine": 61.4,
+        "test_n": 16,
+        "test_genuine": 62.5
+      }
+    ],
+    "note": "Skor GERÇEK-kırılım yönünde pozitif: sakin imza +1, klimaks imzası −1."
+  },
+  "confirmation": {
+    "params": {
+      "retest_within_bars": 12,
+      "retest_tol_atr": 0.2,
+      "horizon_bars": 72
+    },
+    "strategies": {
+      "breakout_bar_1to1": {
+        "train": {
+          "n": 704,
+          "wr": 46.4,
+          "ev_r": -0.072
+        },
+        "test": {
+          "n": 302,
+          "wr": 47.4,
+          "ev_r": -0.052
+        }
+      },
+      "next_bar_confirm_1to1": {
+        "train": {
+          "n": 528,
+          "wr": 47.3,
+          "ev_r": -0.053
+        },
+        "test": {
+          "n": 223,
+          "wr": 48.0,
+          "ev_r": -0.04
+        }
+      },
+      "next_bar_confirm_1.5to1": {
+        "train": {
+          "n": 527,
+          "wr": 36.6,
+          "ev_r": -0.084
+        },
+        "test": {
+          "n": 223,
+          "wr": 37.2,
+          "ev_r": -0.07
+        }
+      },
+      "retest_hold_1to1": {
+        "train": {
+          "n": 376,
+          "wr": 46.8,
+          "ev_r": -0.064
+        },
+        "test": {
+          "n": 158,
+          "wr": 46.8,
+          "ev_r": -0.063
+        }
+      },
+      "retest_hold_1.5to1": {
+        "train": {
+          "n": 376,
+          "wr": 36.7,
+          "ev_r": -0.082
+        },
+        "test": {
+          "n": 158,
+          "wr": 37.3,
+          "ev_r": -0.066
+        }
+      }
+    },
+    "conditional": {
+      "confirm_yes": {
+        "n": 754,
+        "orig_genuine": 57.4
+      },
+      "confirm_no": {
+        "n": 252,
+        "orig_genuine": 14.7
+      },
+      "retest_hold": {
+        "n": 534,
+        "orig_genuine": 53.9
+      },
+      "retest_fail": {
+        "n": 340,
+        "orig_genuine": 22.9
+      },
+      "retest_none": {
+        "n": 132,
+        "orig_genuine": 78.8
+      }
+    }
+  },
+  "detector": {
+    "model_file": "model_fakeout_gdaxi_5m.joblib",
+    "mode": "delayed_1bar",
+    "features": [
+      "vol_ratio",
+      "rsi14",
+      "adx14",
+      "atr_pct",
+      "pen_atr",
+      "body_ratio",
+      "wick_against_atr",
+      "dist_ema200_atr",
+      "ema50_side",
+      "with_ema200_trend",
+      "approach_speed_atr",
+      "bb_width_rank",
+      "touches",
+      "level_age_bars",
+      "hour_utc",
+      "ny_session",
+      "is_channel",
+      "prebreak_range_atr",
+      "vol_buildup",
+      "ema50_slope_atr",
+      "vwap_dist_atr",
+      "attempts",
+      "c1_beyond_atr",
+      "c1_body_ratio",
+      "c1_vol_ratio",
+      "c1_move_atr"
+    ],
+    "thresholds": {
+      "fake": 0.3649,
+      "genuine": 0.1847
+    },
+    "oos": {
+      "fake_call": {
+        "test_n": 272,
+        "coverage": 61.1,
+        "precision": 74.6
+      },
+      "genuine_call": {
+        "test_n": 90,
+        "coverage": 20.2,
+        "precision": 88.9
+      },
+      "test_n": 445,
+      "base_fake_test": 54.6
+    },
+    "top_features": [
+      [
+        "c1_move_atr",
+        137
+      ],
+      [
+        "approach_speed_atr",
+        54
+      ],
+      [
+        "c1_body_ratio",
+        53
+      ],
+      [
+        "body_ratio",
+        45
+      ],
+      [
+        "c1_vol_ratio",
+        39
+      ],
+      [
+        "c1_beyond_atr",
+        38
+      ],
+      [
+        "wick_against_atr",
+        37
+      ],
+      [
+        "prebreak_range_atr",
+        36
+      ],
+      [
+        "pen_atr",
+        31
+      ],
+      [
+        "dist_ema200_atr",
+        30
+      ]
+    ],
+    "trained_events": 825,
+    "generated_at": "2026-07-16T23:13:13.235570+00:00",
+    "note": "Karar kırılımdan 1 bar SONRA (teyit barı kapanınca) verilir. p>=fake eşiği → SAHTE çağrısı (OOS %70); p<=genuine eşiği → GERÇEK çağrısı (OOS %83); arası → kararsız."
+  }
+}

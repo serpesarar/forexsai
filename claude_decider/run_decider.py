@@ -319,6 +319,17 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                         fetch_multi_tf(sit["symbol"]), vix=vix, dxy=dxy)
                 except Exception as e:
                     print("  forensics hatası (devam):", e)
+                # FAKEOUT radarı: taze seviye-kırılımı sahte mi? (NDX 5m tabanı: %66 sahte;
+                # klimaks-imzalılar OOS %78-88 — "kırdı, kesin gidecek" varsayımını kırar)
+                try:
+                    from fakeout_bridge import fakeout_context
+                    fk = fakeout_context(_SYM_MAP, sit["symbol"])
+                    if fk:
+                        sit["fakeout"] = fk
+                        print(f"  ⚡ {sit['symbol']}: taze kırılım — sahte olasılığı "
+                              f"%{fk.get('fake_probability')} ({fk.get('verdict')})")
+                except Exception as e:
+                    print("  fakeout hatası (devam):", e)
             dec = decide_situation(sit, model=model)
             append_journal(sit, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")

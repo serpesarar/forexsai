@@ -25,6 +25,16 @@
       "autoPort": true
     },
     {
+      "name": "frontend-fakeout-test",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "NEXT_PUBLIC_API_URL=http://localhost:8077 exec npm run dev -- -p 3011"
+      ],
+      "cwd": "frontend",
+      "port": 3011
+    },
+    {
       "name": "frontend-evolution-test",
       "runtimeExecutable": "bash",
       "runtimeArgs": [

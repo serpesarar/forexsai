@@ -1,0 +1,1097 @@
+{
+  "version": 2,
+  "generated_at": "2026-07-16T18:48:20.459165+00:00",
+  "symbol": "NDX.INDX",
+  "timeframe": "5m",
+  "params": {
+    "pivot_w": 12,
+    "min_touches": 2,
+    "pen_min_atr": 0.1,
+    "target_atr": 1.0,
+    "horizon_bars": 72,
+    "train_frac": 0.7
+  },
+  "events_total": 1005,
+  "base_fake_rate_train": 68.6,
+  "base_fake_rate_test": 64.6,
+  "date_range": [
+    "2026-03-18T10:45:00+00:00",
+    "2026-07-16T18:45:00+00:00"
+  ],
+  "segments": {
+    "seviye_türü": {
+      "channel_lower": {
+        "n": 130,
+        "fake_rate": 68.5
+      },
+      "channel_upper": {
+        "n": 105,
+        "fake_rate": 78.1
+      },
+      "resistance": {
+        "n": 415,
+        "fake_rate": 65.3
+      },
+      "support": {
+        "n": 355,
+        "fake_rate": 66.2
+      }
+    },
+    "yön": {
+      "down": {
+        "n": 485,
+        "fake_rate": 66.8
+      },
+      "up": {
+        "n": 520,
+        "fake_rate": 67.9
+      }
+    }
+  },
+  "rules": {
+    "singles": [
+      {
+        "conditions": [
+          {
+            "feature": "pen_atr",
+            "op": ">=",
+            "threshold": 0.865
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 80.1,
+        "train_lift_pp": 11.6,
+        "test_n": 59,
+        "test_fake_rate": 81.4,
+        "test_lift_pp": 16.8
+      },
+      {
+        "conditions": [
+          {
+            "feature": "approach_speed_atr",
+            "op": ">=",
+            "threshold": 3.198
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 82.3,
+        "train_lift_pp": 13.7,
+        "test_n": 57,
+        "test_fake_rate": 80.7,
+        "test_lift_pp": 16.1
+      },
+      {
+        "conditions": [
+          {
+            "feature": "approach_speed_atr",
+            "op": "<=",
+            "threshold": 0.505
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 55.3,
+        "train_lift_pp": -13.2,
+        "test_n": 69,
+        "test_fake_rate": 49.3,
+        "test_lift_pp": -15.3
+      },
+      {
+        "conditions": [
+          {
+            "feature": "rsi14",
+            "op": "<=",
+            "threshold": 34.594
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 81.6,
+        "train_lift_pp": 13.0,
+        "test_n": 66,
+        "test_fake_rate": 78.8,
+        "test_lift_pp": 14.2
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vol_ratio",
+            "op": ">=",
+            "threshold": 1.274
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 77.3,
+        "train_lift_pp": 8.7,
+        "test_n": 85,
+        "test_fake_rate": 76.5,
+        "test_lift_pp": 11.9
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vwap_dist_atr",
+            "op": "<=",
+            "threshold": -0.92
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 56.0,
+        "train_lift_pp": -12.5,
+        "test_n": 57,
+        "test_fake_rate": 54.4,
+        "test_lift_pp": -10.2
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vol_ratio",
+            "op": "<=",
+            "threshold": 0.997
+          }
+        ],
+        "train_n": 211,
+        "train_fake_rate": 58.8,
+        "train_lift_pp": -9.8,
+        "test_n": 98,
+        "test_fake_rate": 55.1,
+        "test_lift_pp": -9.5
+      },
+      {
+        "conditions": [
+          {
+            "feature": "ema50_slope_atr",
+            "op": ">=",
+            "threshold": 0.53
+          }
+        ],
+        "train_n": 211,
+        "train_fake_rate": 77.3,
+        "train_lift_pp": 8.7,
+        "test_n": 83,
+        "test_fake_rate": 73.5,
+        "test_lift_pp": 8.9
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vwap_dist_atr",
+            "op": ">=",
+            "threshold": 2.388
+          }
+        ],
+        "train_n": 281,
+        "train_fake_rate": 78.3,
+        "train_lift_pp": 9.7,
+        "test_n": 106,
+        "test_fake_rate": 72.6,
+        "test_lift_pp": 8.1
+      },
+      {
+        "conditions": [
+          {
+            "feature": "wick_against_atr",
+            "op": "<=",
+            "threshold": 0.041
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 78.7,
+        "train_lift_pp": 10.2,
+        "test_n": 68,
+        "test_fake_rate": 72.1,
+        "test_lift_pp": 7.5
+      },
+      {
+        "conditions": [
+          {
+            "feature": "with_ema200_trend",
+            "op": "<=",
+            "threshold": 0.5
+          }
+        ],
+        "train_n": 211,
+        "train_fake_rate": 59.7,
+        "train_lift_pp": -8.8,
+        "test_n": 117,
+        "test_fake_rate": 57.3,
+        "test_lift_pp": -7.3
+      },
+      {
+        "conditions": [
+          {
+            "feature": "ema50_slope_atr",
+            "op": "<=",
+            "threshold": -0.569
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 58.2,
+        "train_lift_pp": -10.4,
+        "test_n": 70,
+        "test_fake_rate": 58.6,
+        "test_lift_pp": -6.0
+      },
+      {
+        "conditions": [
+          {
+            "feature": "attempts",
+            "op": ">=",
+            "threshold": 3.6
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 56.7,
+        "train_lift_pp": -11.8,
+        "test_n": 86,
+        "test_fake_rate": 59.3,
+        "test_lift_pp": -5.3
+      },
+      {
+        "conditions": [
+          {
+            "feature": "dist_ema200_atr",
+            "op": ">=",
+            "threshold": 4.656
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 77.3,
+        "train_lift_pp": 8.7,
+        "test_n": 43,
+        "test_fake_rate": 69.8,
+        "test_lift_pp": 5.2
+      },
+      {
+        "conditions": [
+          {
+            "feature": "body_ratio",
+            "op": ">=",
+            "threshold": 0.781
+          }
+        ],
+        "train_n": 281,
+        "train_fake_rate": 77.2,
+        "train_lift_pp": 8.7,
+        "test_n": 115,
+        "test_fake_rate": 67.8,
+        "test_lift_pp": 3.3
+      },
+      {
+        "conditions": [
+          {
+            "feature": "adx14",
+            "op": "<=",
+            "threshold": 17.757
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 59.6,
+        "train_lift_pp": -9.0,
+        "test_n": 71,
+        "test_fake_rate": 62.0,
+        "test_lift_pp": -2.6
+      },
+      {
+        "conditions": [
+          {
+            "feature": "pen_atr",
+            "op": "<=",
+            "threshold": 0.207
+          }
+        ],
+        "train_n": 141,
+        "train_fake_rate": 58.9,
+        "train_lift_pp": -9.7,
+        "test_n": 70,
+        "test_fake_rate": 62.9,
+        "test_lift_pp": -1.7
+      }
+    ],
+    "combos": [
+      {
+        "conditions": [
+          {
+            "feature": "pen_atr",
+            "op": ">=",
+            "threshold": 0.865
+          },
+          {
+            "feature": "rsi14",
+            "op": "<=",
+            "threshold": 34.594
+          }
+        ],
+        "train_n": 41,
+        "train_fake_rate": 90.2,
+        "train_lift_pp": 21.7,
+        "test_n": 15,
+        "test_fake_rate": 100.0,
+        "test_lift_pp": 35.4
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vol_ratio",
+            "op": ">=",
+            "threshold": 1.274
+          },
+          {
+            "feature": "ema50_slope_atr",
+            "op": ">=",
+            "threshold": 0.53
+          }
+        ],
+        "train_n": 44,
+        "train_fake_rate": 81.8,
+        "train_lift_pp": 13.3,
+        "test_n": 16,
+        "test_fake_rate": 100.0,
+        "test_lift_pp": 35.4
+      },
+      {
+        "conditions": [
+          {
+            "feature": "approach_speed_atr",
+            "op": ">=",
+            "threshold": 3.198
+          },
+          {
+            "feature": "vol_ratio",
+            "op": ">=",
+            "threshold": 1.274
+          }
+        ],
+        "train_n": 45,
+        "train_fake_rate": 88.9,
+        "train_lift_pp": 20.3,
+        "test_n": 25,
+        "test_fake_rate": 96.0,
+        "test_lift_pp": 31.4
+      },
+      {
+        "conditions": [
+          {
+            "feature": "pen_atr",
+            "op": ">=",
+            "threshold": 0.865
+          },
+          {
+            "feature": "ema50_slope_atr",
+            "op": ">=",
+            "threshold": 0.53
+          }
+        ],
+        "train_n": 40,
+        "train_fake_rate": 92.5,
+        "train_lift_pp": 23.9,
+        "test_n": 13,
+        "test_fake_rate": 92.3,
+        "test_lift_pp": 27.7
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vol_ratio",
+            "op": ">=",
+            "threshold": 1.274
+          },
+          {
+            "feature": "vwap_dist_atr",
+            "op": ">=",
+            "threshold": 2.388
+          }
+        ],
+        "train_n": 55,
+        "train_fake_rate": 87.3,
+        "train_lift_pp": 18.7,
+        "test_n": 24,
+        "test_fake_rate": 91.7,
+        "test_lift_pp": 27.1
+      },
+      {
+        "conditions": [
+          {
+            "feature": "pen_atr",
+            "op": ">=",
+            "threshold": 0.865
+          },
+          {
+            "feature": "wick_against_atr",
+            "op": "<=",
+            "threshold": 0.041
+          }
+        ],
+        "train_n": 37,
+        "train_fake_rate": 89.2,
+        "train_lift_pp": 20.6,
+        "test_n": 20,
+        "test_fake_rate": 90.0,
+        "test_lift_pp": 25.4
+      },
+      {
+        "conditions": [
+          {
+            "feature": "pen_atr",
+            "op": ">=",
+            "threshold": 0.865
+          },
+          {
+            "feature": "vwap_dist_atr",
+            "op": ">=",
+            "threshold": 2.388
+          }
+        ],
+        "train_n": 71,
+        "train_fake_rate": 88.7,
+        "train_lift_pp": 20.2,
+        "test_n": 26,
+        "test_fake_rate": 88.5,
+        "test_lift_pp": 23.9
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vol_ratio",
+            "op": "<=",
+            "threshold": 0.997
+          },
+          {
+            "feature": "ema50_slope_atr",
+            "op": "<=",
+            "threshold": -0.569
+          }
+        ],
+        "train_n": 50,
+        "train_fake_rate": 48.0,
+        "train_lift_pp": -20.6,
+        "test_n": 24,
+        "test_fake_rate": 41.7,
+        "test_lift_pp": -22.9
+      },
+      {
+        "conditions": [
+          {
+            "feature": "approach_speed_atr",
+            "op": ">=",
+            "threshold": 3.198
+          },
+          {
+            "feature": "rsi14",
+            "op": "<=",
+            "threshold": 34.594
+          }
+        ],
+        "train_n": 61,
+        "train_fake_rate": 90.2,
+        "train_lift_pp": 21.6,
+        "test_n": 20,
+        "test_fake_rate": 85.0,
+        "test_lift_pp": 20.4
+      },
+      {
+        "conditions": [
+          {
+            "feature": "approach_speed_atr",
+            "op": ">=",
+            "threshold": 3.198
+          },
+          {
+            "feature": "ema50_slope_atr",
+            "op": ">=",
+            "threshold": 0.53
+          }
+        ],
+        "train_n": 39,
+        "train_fake_rate": 87.2,
+        "train_lift_pp": 18.6,
+        "test_n": 13,
+        "test_fake_rate": 84.6,
+        "test_lift_pp": 20.0
+      },
+      {
+        "conditions": [
+          {
+            "feature": "approach_speed_atr",
+            "op": "<=",
+            "threshold": 0.505
+          },
+          {
+            "feature": "ema50_slope_atr",
+            "op": "<=",
+            "threshold": -0.569
+          }
+        ],
+        "train_n": 34,
+        "train_fake_rate": 47.1,
+        "train_lift_pp": -21.5,
+        "test_n": 22,
+        "test_fake_rate": 45.5,
+        "test_lift_pp": -19.1
+      },
+      {
+        "conditions": [
+          {
+            "feature": "ema50_slope_atr",
+            "op": ">=",
+            "threshold": 0.53
+          },
+          {
+            "feature": "wick_against_atr",
+            "op": "<=",
+            "threshold": 0.041
+          }
+        ],
+        "train_n": 49,
+        "train_fake_rate": 91.8,
+        "train_lift_pp": 23.3,
+        "test_n": 24,
+        "test_fake_rate": 83.3,
+        "test_lift_pp": 18.8
+      },
+      {
+        "conditions": [
+          {
+            "feature": "approach_speed_atr",
+            "op": "<=",
+            "threshold": 0.505
+          },
+          {
+            "feature": "vol_ratio",
+            "op": "<=",
+            "threshold": 0.997
+          }
+        ],
+        "train_n": 56,
+        "train_fake_rate": 44.6,
+        "train_lift_pp": -23.9,
+        "test_n": 32,
+        "test_fake_rate": 46.9,
+        "test_lift_pp": -17.7
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vol_ratio",
+            "op": "<=",
+            "threshold": 0.997
+          },
+          {
+            "feature": "with_ema200_trend",
+            "op": "<=",
+            "threshold": 0.5
+          }
+        ],
+        "train_n": 73,
+        "train_fake_rate": 54.8,
+        "train_lift_pp": -13.8,
+        "test_n": 40,
+        "test_fake_rate": 47.5,
+        "test_lift_pp": -17.1
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vwap_dist_atr",
+            "op": "<=",
+            "threshold": -0.92
+          },
+          {
+            "feature": "vol_ratio",
+            "op": "<=",
+            "threshold": 0.997
+          }
+        ],
+        "train_n": 49,
+        "train_fake_rate": 46.9,
+        "train_lift_pp": -21.6,
+        "test_n": 23,
+        "test_fake_rate": 47.8,
+        "test_lift_pp": -16.7
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vwap_dist_atr",
+            "op": ">=",
+            "threshold": 2.388
+          },
+          {
+            "feature": "wick_against_atr",
+            "op": "<=",
+            "threshold": 0.041
+          }
+        ],
+        "train_n": 65,
+        "train_fake_rate": 87.7,
+        "train_lift_pp": 19.1,
+        "test_n": 27,
+        "test_fake_rate": 77.8,
+        "test_lift_pp": 13.2
+      },
+      {
+        "conditions": [
+          {
+            "feature": "approach_speed_atr",
+            "op": "<=",
+            "threshold": 0.505
+          },
+          {
+            "feature": "vwap_dist_atr",
+            "op": "<=",
+            "threshold": -0.92
+          }
+        ],
+        "train_n": 53,
+        "train_fake_rate": 49.1,
+        "train_lift_pp": -19.5,
+        "test_n": 32,
+        "test_fake_rate": 53.1,
+        "test_lift_pp": -11.4
+      },
+      {
+        "conditions": [
+          {
+            "feature": "approach_speed_atr",
+            "op": "<=",
+            "threshold": 0.505
+          },
+          {
+            "feature": "with_ema200_trend",
+            "op": "<=",
+            "threshold": 0.5
+          }
+        ],
+        "train_n": 66,
+        "train_fake_rate": 50.0,
+        "train_lift_pp": -18.6,
+        "test_n": 47,
+        "test_fake_rate": 53.2,
+        "test_lift_pp": -11.4
+      }
+    ],
+    "tree": [
+      {
+        "conditions": [
+          {
+            "feature": "vwap_dist_atr",
+            "op": ">=",
+            "threshold": 1.526
+          },
+          {
+            "feature": "body_ratio",
+            "op": "<=",
+            "threshold": 0.846
+          },
+          {
+            "feature": "vol_buildup",
+            "op": ">=",
+            "threshold": 1.193
+          }
+        ],
+        "train_n": 38,
+        "train_fake_rate": 94.7,
+        "train_lift_pp": 26.2,
+        "test_n": 26,
+        "test_fake_rate": 92.3,
+        "test_lift_pp": 27.7,
+        "source": "tree"
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vwap_dist_atr",
+            "op": ">=",
+            "threshold": 1.526
+          },
+          {
+            "feature": "body_ratio",
+            "op": ">=",
+            "threshold": 0.846
+          },
+          {
+            "feature": "vol_ratio",
+            "op": ">=",
+            "threshold": 1.035
+          }
+        ],
+        "train_n": 77,
+        "train_fake_rate": 98.7,
+        "train_lift_pp": 30.1,
+        "test_n": 18,
+        "test_fake_rate": 88.9,
+        "test_lift_pp": 24.3,
+        "source": "tree"
+      },
+      {
+        "conditions": [
+          {
+            "feature": "vwap_dist_atr",
+            "op": "<=",
+            "threshold": 1.526
+          },
+          {
+            "feature": "adx14",
+            "op": ">=",
+            "threshold": 13.17
+          },
+          {
+            "feature": "prebreak_range_atr",
+            "op": ">=",
+            "threshold": 5.46
+          }
+        ],
+        "train_n": 84,
+        "train_fake_rate": 45.2,
+        "train_lift_pp": -23.3,
+        "test_n": 51,
+        "test_fake_rate": 54.9,
+        "test_lift_pp": -9.7,
+        "source": "tree"
+      }
+    ]
+  },
+  "score": {
+    "components": [
+      {
+        "feature": "pen_atr",
+        "op": ">=",
+        "threshold": 0.865,
+        "weight": -1
+      },
+      {
+        "feature": "approach_speed_atr",
+        "op": ">=",
+        "threshold": 3.198,
+        "weight": -1
+      },
+      {
+        "feature": "approach_speed_atr",
+        "op": "<=",
+        "threshold": 0.505,
+        "weight": 1
+      },
+      {
+        "feature": "rsi14",
+        "op": "<=",
+        "threshold": 34.594,
+        "weight": -1
+      },
+      {
+        "feature": "vol_ratio",
+        "op": ">=",
+        "threshold": 1.274,
+        "weight": -1
+      },
+      {
+        "feature": "vwap_dist_atr",
+        "op": "<=",
+        "threshold": -0.92,
+        "weight": 1
+      },
+      {
+        "feature": "vol_ratio",
+        "op": "<=",
+        "threshold": 0.997,
+        "weight": 1
+      },
+      {
+        "feature": "ema50_slope_atr",
+        "op": ">=",
+        "threshold": 0.53,
+        "weight": -1
+      }
+    ],
+    "buckets": [
+      {
+        "min_score": -99,
+        "max_score": -2,
+        "train_n": 183,
+        "train_genuine": 16.4,
+        "test_n": 88,
+        "test_genuine": 12.5
+      },
+      {
+        "min_score": -1,
+        "max_score": -1,
+        "train_n": 145,
+        "train_genuine": 26.9,
+        "test_n": 57,
+        "test_genuine": 38.6
+      },
+      {
+        "min_score": 0,
+        "max_score": 0,
+        "train_n": 150,
+        "train_genuine": 31.3,
+        "test_n": 59,
+        "test_genuine": 49.2
+      },
+      {
+        "min_score": 1,
+        "max_score": 1,
+        "train_n": 133,
+        "train_genuine": 43.6,
+        "test_n": 53,
+        "test_genuine": 37.7
+      },
+      {
+        "min_score": 2,
+        "max_score": 99,
+        "train_n": 92,
+        "train_genuine": 51.1,
+        "test_n": 45,
+        "test_genuine": 55.6
+      }
+    ],
+    "note": "Skor GERÇEK-kırılım yönünde pozitif: sakin imza +1, klimaks imzası −1."
+  },
+  "confirmation": {
+    "params": {
+      "retest_within_bars": 12,
+      "retest_tol_atr": 0.2,
+      "horizon_bars": 72
+    },
+    "strategies": {
+      "breakout_bar_1to1": {
+        "train": {
+          "n": 703,
+          "wr": 31.4,
+          "ev_r": -0.372
+        },
+        "test": {
+          "n": 302,
+          "wr": 35.4,
+          "ev_r": -0.292
+        }
+      },
+      "next_bar_confirm_1to1": {
+        "train": {
+          "n": 545,
+          "wr": 40.9,
+          "ev_r": -0.182
+        },
+        "test": {
+          "n": 232,
+          "wr": 46.6,
+          "ev_r": -0.069
+        }
+      },
+      "next_bar_confirm_1.5to1": {
+        "train": {
+          "n": 544,
+          "wr": 30.5,
+          "ev_r": -0.237
+        },
+        "test": {
+          "n": 232,
+          "wr": 35.3,
+          "ev_r": -0.116
+        }
+      },
+      "retest_hold_1to1": {
+        "train": {
+          "n": 392,
+          "wr": 43.6,
+          "ev_r": -0.128
+        },
+        "test": {
+          "n": 166,
+          "wr": 45.2,
+          "ev_r": -0.096
+        }
+      },
+      "retest_hold_1.5to1": {
+        "train": {
+          "n": 391,
+          "wr": 31.2,
+          "ev_r": -0.22
+        },
+        "test": {
+          "n": 166,
+          "wr": 35.5,
+          "ev_r": -0.111
+        }
+      }
+    },
+    "conditional": {
+      "confirm_yes": {
+        "n": 777,
+        "orig_genuine": 38.4
+      },
+      "confirm_no": {
+        "n": 228,
+        "orig_genuine": 13.2
+      },
+      "retest_hold": {
+        "n": 558,
+        "orig_genuine": 39.1
+      },
+      "retest_fail": {
+        "n": 321,
+        "orig_genuine": 17.8
+      },
+      "retest_none": {
+        "n": 126,
+        "orig_genuine": 42.1
+      }
+    }
+  },
+  "detector": {
+    "model_file": "models/model_fakeout_ndx_5m.joblib",
+    "mode": "delayed_1bar",
+    "features": [
+      "vol_ratio",
+      "rsi14",
+      "adx14",
+      "atr_pct",
+      "pen_atr",
+      "body_ratio",
+      "wick_against_atr",
+      "dist_ema200_atr",
+      "ema50_side",
+      "with_ema200_trend",
+      "approach_speed_atr",
+      "bb_width_rank",
+      "touches",
+      "level_age_bars",
+      "hour_utc",
+      "ny_session",
+      "is_channel",
+      "prebreak_range_atr",
+      "vol_buildup",
+      "ema50_slope_atr",
+      "vwap_dist_atr",
+      "attempts",
+      "c1_beyond_atr",
+      "c1_body_ratio",
+      "c1_vol_ratio",
+      "c1_move_atr"
+    ],
+    "thresholds": {
+      "fake": 0.5239,
+      "genuine": 0.3852
+    },
+    "oos": {
+      "fake_call": {
+        "test_n": 217,
+        "coverage": 50.7,
+        "precision": 70.0
+      },
+      "genuine_call": {
+        "test_n": 148,
+        "coverage": 34.6,
+        "precision": 83.1
+      },
+      "test_n": 428,
+      "base_fake_test": 48.6
+    },
+    "top_features": [
+      [
+        "c1_move_atr",
+        136
+      ],
+      [
+        "c1_body_ratio",
+        61
+      ],
+      [
+        "c1_beyond_atr",
+        56
+      ],
+      [
+        "ema50_slope_atr",
+        43
+      ],
+      [
+        "adx14",
+        42
+      ],
+      [
+        "c1_vol_ratio",
+        39
+      ],
+      [
+        "body_ratio",
+        32
+      ],
+      [
+        "approach_speed_atr",
+        31
+      ],
+      [
+        "bb_width_rank",
+        31
+      ],
+      [
+        "prebreak_range_atr",
+        29
+      ]
+    ],
+    "trained_events": 784,
+    "generated_at": "2026-07-16T21:12:05.743559+00:00",
+    "note": "Karar kırılımdan 1 bar SONRA (teyit barı kapanınca) verilir. p>=fake eşiği → SAHTE çağrısı (OOS %70); p<=genuine eşiği → GERÇEK çağrısı (OOS %83); arası → kararsız."
+  },
+  "detector_wave": {
+    "model_file": "model_fakeout_ndx_5m_wave.joblib",
+    "K": 2,
+    "features": [
+      "vol_ratio",
+      "rsi14",
+      "adx14",
+      "atr_pct",
+      "pen_atr",
+      "body_ratio",
+      "wick_against_atr",
+      "dist_ema200_atr",
+      "ema50_side",
+      "with_ema200_trend",
+      "approach_speed_atr",
+      "bb_width_rank",
+      "touches",
+      "level_age_bars",
+      "hour_utc",
+      "ny_session",
+      "is_channel",
+      "prebreak_range_atr",
+      "vol_buildup",
+      "ema50_slope_atr",
+      "vwap_dist_atr",
+      "attempts",
+      "c1_beyond_atr",
+      "c1_body_ratio",
+      "c1_vol_ratio",
+      "c1_move_atr",
+      "w_mfe_atr",
+      "w_mae_atr",
+      "w_close_beyond_atr",
+      "w_move_atr",
+      "w_pullback_ratio",
+      "w_frac_beyond",
+      "w_frac_adverse",
+      "w_vol_ratio_with_against",
+      "w_vol_last_over_ma",
+      "w_rsi_delta",
+      "w_ema20_slope_atr",
+      "w_retest_hold"
+    ],
+    "thresholds": {
+      "fake": 0.6786,
+      "genuine": 0.3413
+    },
+    "oos": {
+      "fake_call": {
+        "test_n": 42,
+        "coverage": 25.3,
+        "precision": 71.4
+      },
+      "genuine_call": {
+        "test_n": 49,
+        "coverage": 29.5,
+        "precision": 73.5
+      },
+      "test_n": 166,
+      "base_fake_test": 47.0
+    },
+    "generated_at": "2026-07-16T22:41:28.545851+00:00",
+    "note": "Aşama-2: kırılımdan K=2 bar sonra, ±1ATR yarışı HÂLÂ AÇIKSA dalga-yapısı özellikleriyle karar (kullanıcı dalga hipotezi)."
+  }
+}

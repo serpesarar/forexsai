@@ -184,6 +184,13 @@ GÖREV — {sym} için KENDİ görüşünü oluştur (kanıttan muhakeme et):
 - rev_chan/rev_vwap yüksek (ters yönde aşırı) = mean-reversion fırsatı; düşük/negatif = kovalama (kanıtta düşük WR).
 - NDX'te VIX rejimi yönü etkiler AMA yalnız vix.fresh=true ise; vix.fresh=false (off-hours/neutral_band → ^VIX donuk/bıçak-sırtı) → VIX'e GÜVENME, yalnız fiyat-kanıtına dayan.
 - Açık pozisyon/korelasyon yığılması, near_event=true → küçült/bekle.
+- `fakeout` alanı varsa: TAZE bir seviye kırılımı var demektir. `detector.call` en güçlü kanıttır
+  (+1-bar LGBM, OOS: SAHTE çağrısı %70, GERÇEK çağrısı %83 isabet; "pending_next_bar" = teyit barı
+  kapanmadı, kesin karar ~5dk sonra — o zamana dek temkinli ol). `recommendation` alanını oku:
+  · avoid_breakout_direction / fake_probability ≥%75 → kırılım YÖNÜNDE AÇMA ("kırdı, kesin gidecek" tuzağı).
+  · fade_candidate (skor≤−2, OOS %87 sahte) → TERS yön lehine EK kanıt — rev_chan/rev_vwap mean-rev
+    kanıtınla AYNI yönü gösteriyorsa konviksiyonu artırabilir; tek başına giriş sebebi DEĞİL.
+  · breakout_leaning_genuine → sadece "engel yok" demektir (OOS %55 — edge değil), yön kanıtı sayma.
 - XAU BUY ise: "patient WR", GENİŞ stop şart (management'a yaz, boyut düşür).
 SADECE şu tek-satır JSON'u döndür:
 {{"action":"OPEN","direction":"BUY","size_factor":0.7,"entry":"market","reason":"kanıta dayalı kısa gerekçe","management":"stop/hedef/çıkış notu"}}
