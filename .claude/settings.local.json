@@ -50,7 +50,12 @@
       "mcp__supabase__execute_sql",
       "Read(//Users/melihcanodacioglu/Downloads/**)",
       "mcp__claude_ai_Supabase__list_projects",
-      "WebSearch"
+      "WebSearch",
+      "mcp__64cc647f-fb57-4ccd-98a5-ef20d5d1060f__list_projects",
+      "mcp__64cc647f-fb57-4ccd-98a5-ef20d5d1060f__apply_migration",
+      "mcp__supabase__list_tables",
+      "mcp__64cc647f-fb57-4ccd-98a5-ef20d5d1060f__execute_sql",
+      "mcp__supabase__apply_migration"
     ]
   }
 }

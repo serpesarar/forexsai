@@ -253,6 +253,28 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 | `GET /api/whale/dashboard` | Whale Tracker |
 | `GET /api/cot/history/{symbol}` | COT rapor geçmişi |
 
+### Fakeout Radar — Sahte Kırılım (2026-07-16/17, 4 sembol)
+**ÇOK-SEMBOL (2026-07-17):** aynı lab protokolü DAX/XAU/USOIL'e koşuldu; 4 sembolün 4'ü OOS %70/%70+ geçti (hepsi 5m + LGBM + karar kırılımdan +1 bar sonra):
+| Sembol | Geometri | SAHTE çağrısı | GERÇEK çağrısı | Dosyalar |
+|---|---|---|---|---|
+| NDX | tp1.0/sl1.0 | %70.0 (kaps %50.7) | %83.1 (kaps %34.6) + dalga K=2 %71/%74 | `fakeout_rules.json`, `model_fakeout_ndx_5m(.wave)` |
+| GDAXI | tp1.0/sl1.0 | %74.6 (kaps %61.1) | %88.9 (kaps %20.2) | `fakeout_rules_GDAXI.json`, `model_fakeout_gdaxi_5m` |
+| XAUUSD | tp0.75/sl1.0 | %71.7 (kaps %54.2) | %93.1 (kaps %18.3) | `fakeout_rules_XAUUSD.json`, `model_fakeout_xauusd_5m` |
+| USOIL | tp1.0/sl1.0 | %86.0 (kaps %27.3) | %81.0 (kaps %15.1) | `fakeout_rules_USOIL.json`, `model_fakeout_usoil_5m` |
+Notlar: dalga aşaması yalnız NDX'te %70/%70 geçti (diğerlerine EKLENMEDİ — yarış çözülünce `resolved_observed` gözlemi devrede). USOIL eşikleri `val_quantile_fallback` (%20 kapsam/side; val'de kesinlik-hedefli eşik yoktu, test yine %86/%81). XAU dedektör geometrisi tp0.75 (tp1.0'da GERÇEK sıralaması güçlü ama val eşiği çıkmadı — veri büyüyünce yeniden dene). Kural dosyası çözümü: `fakeout_service._rules_path_for` (NDX legacy ad, diğerleri `fakeout_rules_<BASE>.json`); model dosyası `detector.model_file`'dan. Yarış-durumu kontrolü sembolün kendi tp/sl'siyle (`detector.tp_atr/sl_atr`).
+| Endpoint | Açıklama |
+|----------|----------|
+| `GET /api/fakeout/assess/{symbol}` | Canlı: taze S/R/kanal kırılımı + sahte olasılığı + eşleşen OOS kurallar (60s cache). |
+| `GET /api/fakeout/rules` | Yüklü kural seti (`backend/data/fakeout_rules.json`) + meta. |
+| `GET /api/fakeout/report` | Madencilik raporu (markdown). |
+| `POST /api/fakeout/mine?symbol=` | Madenciyi yeniden çalıştır (research dir gerekir; prod'da unavailable). |
+
+- Madenci: `backend/research/fakeout_miner.py` — causal S/R (fraktal pivot kümeleme, ≥2 dokunuş) + linreg kanal kırılımları; ±1×ATR iki-hedef yarışıyla GERÇEK/SAHTE etiketi (1m çözünürlük); ~22 özellik, kronolojik %70/30 OOS doğrulamalı koşul madenciliği + **birleşik kırılım skoru** (GERÇEK-pozitif, 8 bileşen, kova kalibrasyonu) + **teyit protokolü backtest'i** (sonraki-bar teyidi, retest-tut; 1:1 ve 1.5:1).
+- **Bulgular (v2, NDX 5m, 1005 olay):** taban ~%66 SAHTE. Skor ≤ −2 (klimaks: derin penetrasyon, hacim patlaması, hızlı yaklaşım, VWAP'tan ≥2.4 ATR uzaklık, dik EMA50) → **OOS %87.5 sahte** (n=88) = FADE kanıtı. Skor ≥ +2 (sakin imza) → OOS yalnız %55.6 gerçek (n=45) — **gerçek-kırılım tarafında bağımsız edge YOK**; kırılım-yönlü TÜM giriş varyantları −EV (breakout bar −0.29R, sonraki-bar teyidi −0.07R, retest-tut −0.10R). Teyit ELEME filtresi olarak güçlü: teyit gelmezse gerçeklik %13'e düşer. **Sonuç: NDX 5m'de edge kırılımı almakta değil, klimaks kırılımı söndürmekte (fade) + kırılım-yönlü sinyali frenlemekte.**
+- **v3 DEDEKTÖR (2026-07-16, %70/%70 hedefi VURULDU):** `research/fakeout_lab.py` 32 konfig taradı (4 TF × 4 geometri × instant/+1bar × LGBM; kronolojik train/val/test, eşik VAL'de, purge'lü). Kazanan: **5m, tp1.0/sl1.0 (hedef küçültülmedi), LightGBM, karar = kırılımdan +1 bar sonra** → OOS test n=428: **SAHTE çağrısı %70.0 isabet (kapsam %50.7), GERÇEK çağrısı %83.1 isabet (kapsam %34.6)**. En önemli özellikler teyit barı davranışı (`c1_move_atr`, `c1_body_ratio`, `c1_beyond_atr`). Instant mod hiçbir konfigde %70/%70 veremedi — kesin karar teyit barı İSTER. Model: `backend/models/model_fakeout_ndx_5m.joblib` + eşikler `fakeout_rules.json.detector` (üretici: `research/fakeout_finalize.py`; deploy edilen artefakt test edilenin TA KENDİSİ). Yeniden üretim: lab → finalize.
+- **AŞAMA-2 DALGA-VERDİKTİ (kullanıcı dalga hipotezi, doğrulandı):** `research/fakeout_wave_lab.py` — kırılımdan K bar sonra, ±1ATR yarışı HÂLÂ AÇIK olaylarda (taban ~%52, en belirsiz küme) dalga-yapısı özellikleri (pullback/impuls oranı, yönlü-vs-ters bar hacim ORANI, seviye-ötesi kapanış oranı, retest, RSI delta). K=2 kazandı: **OOS SAHTE %71.4 / GERÇEK %73.5**; aynı kümede +1-bar özellikleri kör (%54/—). K=3,4,6 geçemedi. Model: `model_fakeout_ndx_5m_wave.joblib` + `fakeout_rules.json.detector_wave` (`research/fakeout_finalize_wave.py`). Runtime akışı: `pending` → `confirm_bar` (+1 bar, %70/%83) → `wave_k2` (+2 bar, yarış açıksa, %71/%74) → `resolved_observed` (yarış bittiyse gözlemlenen gerçek). `detector.stage` alanı hangi aşamada olduğunu söyler; FRESH_BARS 3→5.
+- Runtime: `services/fakeout_service.py` (saf çekirdek `assess_bars`; **detector.call**: `fake|genuine|abstain|pending_next_bar` — olasılıkların birincil kaynağı; + skor + 4-sınıf öneri + canlı teyit durumu + **levels** (en yakın S/R+kanal, mesafe puan/ATR/%) + **pre_forecast** ("şimdi kırılsa" iki yön ≈tahmini); veri `data_fetcher.fetch_ohlc_data`'dan — market_data_service timestamp düşürür, kullanma). claude_decider `fakeout_bridge.py` → `situation.fakeout` (prompt: detector.call en güçlü kanıt; avoid→açma; fade→mean-rev hizalıysa konviksiyon). Kapı: `signal_gates.fakeout_gate` (NDX pulse+smc, **default GÖLGE**; dedektör SAHTE çağrısı da kanıt sayılır). Panel: Neural "Kırılım Radarı — Destek/Direnç" (`BreakoutRadarPanel.tsx`): SVG seviye merdiveni + ikiz 1-100 göstergeler (GERÇEK/SAHTE) + mesafe satırları + AI dedektör rozeti + teyit çipleri.
+
 ### MiroShark Makro Bias (NASDAQ-only)
 | Endpoint | Açıklama |
 |----------|----------|
@@ -283,6 +305,7 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 - **Auto-runner:** `services/bias_auto_runner.py` — main.py'de 60s loop; trading günü NY 08:00 & 09:45'te debate→log, 16:15'te fill-outcomes. **Opt-in** `BIAS_AUTO_RUN_ENABLED=1` (token harcar). Env: `KIMI_API_KEY`/`KIMI_MODEL`, `BIAS_RUN_WINDOWS_ET`, `BIAS_FILL_TIME_ET`.
 
 - Servis: `services/session_context_service.py` — `get_session_context(ts)` (DST-doğru, `zoneinfo`; seans/premarket/overlap/yarım-gün/tatil; statik NYSE 2026 takvimi + opsiyonel `pandas_market_calendars`). Router: `routers/bias_test_router.py`. Rehber: `docs/BIAS_TEST_GUIDE.md`. **Amaç: hangi çalıştırma saatinin en isabetli bias verdiğini ölçmek → canlıya bağlama kararı (≥%65 iyi, ≥%55 min).** Ayrı tablo, ayrı router; `daily_bias`/veto engine'e DOKUNMAZ.
+- **ÇOK-UFUKLU NOTLAMA (2026-07-18, `agent_debate_analysis_report.md`):** `bias_test_log`'a `ret_10m/30m/60m/240m + mfe_60m/mae_60m + horizon_filled_at` kolonları; `fill_outcomes` bunları 5m mumlardan doldurur (gün verisi olmasa da). Ana bulgu: gün-kapanışı metriği yanıltıcı — NDX bearish gün 0/4 ama +60dk 4/6, +240dk 4/5; tartışma kararı **≤240dk intraday bias** olarak tüketilmeli. `accuracy_report` → `by_horizon` + `by_symbol_horizon`; öz-kalibrasyon `recent_track_record(symbol=)` artık sembol-bazlı + ufuk karnesi içerir (eski `.not_` çağrısı wrapper'da yoktu → blok baştan beri ölüydü, düzeltildi). Uzman ajanlar nota `STANCE: ... | CONVICTION: n` satırı ekler → `_debate.agent_stances`; `agent_agreement` bu beyanlardan HESAPLANIR (CIO'ya sorulmaz — 18/18 "mixed" ölü alandı). `record_run` idempotent (aynı gün+label ikinci insert atlanır; "manual" hariç) — 07-15/16 çift-yazar kayıtları `run_label='*_dup'` ile işaretli, istatistik dışı. Startup'ta `fill_pending` catch-up. Tüketici: `signal_gates.debate_bias_gate` (NDX+USOIL, pulse+smc; karşıt sinyal freni, default GÖLGE; winner=balanced/geçersiz-seviye/NDX 14:00 ET sonrası etkisiz; LLM confidence ters-kalibre olduğu için KULLANILMAZ).
 
 ---
 
@@ -498,6 +521,17 @@ CROSS_MODEL_EXPERIMENT_ENABLED=0  # ml_cross_xau_nasdaq KAPALI (SELL %6.9 WR kan
 # ─── 2026-07-10 MT5 otopsi kapıları (analiz_paketi_2026-07-09/RAPOR_MT5_ISLEM_OTOPSISI.md) ───
 ENTRY_SCORE_GATE_ENABLED=1        # 8 koşullu giriş skoru kapısı (NDX+USOIL, pulse+smc; fail-open)
 ENTRY_SCORE_MIN=7                 # min skor (0-8); kanıt: NDX ≥7 WR 60→65, USOIL ≥7 WR 49→72
+
+# ─── 2026-07-16 sahte kırılım (fakeout) kapısı — services/fakeout_service.py ───
+FAKEOUT_GATE_ENABLED=1            # sahte kırılım radarı (değerlendir + logla; fail-open)
+FAKEOUT_GATE_BLOCK=0              # 1 → gerçekten bloklar (default GÖLGE: sadece log; canlı sinyal-bazlı doğrulama sonrası aç)
+FAKEOUT_BLOCK_PROB=80             # blok için min sahte-kırılım olasılığı (%)
+
+# ─── 2026-07-18 tartışma-bias kapısı + bias notlama (agent_debate_analysis_report.md) ───
+DEBATE_BIAS_GATE_ENABLED=1        # debate kararına KARŞIT pulse/smc sinyalini frenle (NDX+USOIL; fail-open)
+DEBATE_BIAS_GATE_BLOCK=0          # 1 → gerçekten bloklar (default GÖLGE; n=18 erken kanıt — n≥30 + ≥%55 60dk isabet olmadan açma)
+DEBATE_BIAS_VALID_MIN=240         # tartışma kararının geçerlilik penceresi (dk); NDX'te 14:00 ET sonrası her durumda etkisiz
+BIAS_FILL_CATCHUP_ENABLED=1       # startup'ta fill_pending catch-up (token harcamaz; sadece notlama)
 
 # ─── 2026-07-15 model denetimi kapıları/düzeltmeleri ───
 NDX_SMC_SELL_GATE=1               # NDX'te SMC counter-trend SELL blok (H4 close>EMA50; kanıt 14g: 1W/28L)
