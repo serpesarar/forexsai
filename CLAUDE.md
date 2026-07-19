@@ -275,6 +275,18 @@ Notlar: dalga aşaması yalnız NDX'te %70/%70 geçti (diğerlerine EKLENMEDİ �
 - **AŞAMA-2 DALGA-VERDİKTİ (kullanıcı dalga hipotezi, doğrulandı):** `research/fakeout_wave_lab.py` — kırılımdan K bar sonra, ±1ATR yarışı HÂLÂ AÇIK olaylarda (taban ~%52, en belirsiz küme) dalga-yapısı özellikleri (pullback/impuls oranı, yönlü-vs-ters bar hacim ORANI, seviye-ötesi kapanış oranı, retest, RSI delta). K=2 kazandı: **OOS SAHTE %71.4 / GERÇEK %73.5**; aynı kümede +1-bar özellikleri kör (%54/—). K=3,4,6 geçemedi. Model: `model_fakeout_ndx_5m_wave.joblib` + `fakeout_rules.json.detector_wave` (`research/fakeout_finalize_wave.py`). Runtime akışı: `pending` → `confirm_bar` (+1 bar, %70/%83) → `wave_k2` (+2 bar, yarış açıksa, %71/%74) → `resolved_observed` (yarış bittiyse gözlemlenen gerçek). `detector.stage` alanı hangi aşamada olduğunu söyler; FRESH_BARS 3→5.
 - Runtime: `services/fakeout_service.py` (saf çekirdek `assess_bars`; **detector.call**: `fake|genuine|abstain|pending_next_bar` — olasılıkların birincil kaynağı; + skor + 4-sınıf öneri + canlı teyit durumu + **levels** (en yakın S/R+kanal, mesafe puan/ATR/%) + **pre_forecast** ("şimdi kırılsa" iki yön ≈tahmini); veri `data_fetcher.fetch_ohlc_data`'dan — market_data_service timestamp düşürür, kullanma). claude_decider `fakeout_bridge.py` → `situation.fakeout` (prompt: detector.call en güçlü kanıt; avoid→açma; fade→mean-rev hizalıysa konviksiyon). Kapı: `signal_gates.fakeout_gate` (NDX pulse+smc, **default GÖLGE**; dedektör SAHTE çağrısı da kanıt sayılır). Panel: Neural "Kırılım Radarı — Destek/Direnç" (`BreakoutRadarPanel.tsx`): SVG seviye merdiveni + ikiz 1-100 göstergeler (GERÇEK/SAHTE) + mesafe satırları + AI dedektör rozeti + teyit çipleri.
 
+### Shadow Trade Tracker — Formasyon + Fakeout Doğrulama (2026-07-19)
+| Endpoint | Açıklama |
+|----------|----------|
+| `GET /api/shadow-tracker/report?days=&symbol=` | Kaynak/sembol/formasyon/güven-kovası kırılımlı isabet raporu. |
+| `GET /api/shadow-tracker/status` | Döngü durumu + konfigürasyon. |
+| `POST /api/shadow-tracker/run-once` | Bir tarama+çözümleme turunu şimdi çalıştır. |
+
+- Servis: `services/shadow_trade_tracker.py` — 120s döngü (main.py, `SHADOW_TRACKER_ENABLED=1` default açık). İki kaynak: (1) **pattern** — harmonic_pattern_service tespitleri, confidence ≥ %60, status=COMPLETED, TAZE (son pivot ≤4 bar; fraktal teyit +2 bar ister), 4h+1h; (2) **fakeout** — dedektör `call=fake|genuine`, `stage=confirm_bar|wave_k2` (**`resolved_observed` HARİÇ** — gözlem, tahmin değil → hindsight olur), fake→fade yönü, genuine→kırılım yönü, TP/SL=dedektör geometrisi×ATR14(5m).
+- **Sızıntı garantileri:** giriş = karar anındaki son KAPANMIŞ 5m bar kapanışı (koşan bar elenir); çözüm yalnız girişten SONRA açılan barların high/low'u ile (giriş barı dahil değil); aynı barda TP+SL → konservatif LOSS+`ambiguous`; geç tespit → geometri sanity reddeder; piyasa bayatsa (son 5m bar >30dk) işlem açılmaz.
+- Tablo: `shadow_pattern_trades` (RLS kilitli, anon politikası yok; service-role yazar; unique anchor dedup). prediction_logs/signal_lifecycle'dan TAMAMEN İZOLE. DB yoksa in-memory fail-open.
+- Panel: `ShadowAccuracyCard` — Kırılım Radarı (fakeout kaynağı) + Tespit Edilen Formasyonlar (pattern kaynağı) altında canlı karne; n<10 iken "veri birikiyor" uyarısı.
+
 ### MiroShark Makro Bias (NASDAQ-only)
 | Endpoint | Açıklama |
 |----------|----------|
@@ -526,6 +538,11 @@ ENTRY_SCORE_MIN=7                 # min skor (0-8); kanıt: NDX ≥7 WR 60→65,
 FAKEOUT_GATE_ENABLED=1            # sahte kırılım radarı (değerlendir + logla; fail-open)
 FAKEOUT_GATE_BLOCK=0              # 1 → gerçekten bloklar (default GÖLGE: sadece log; canlı sinyal-bazlı doğrulama sonrası aç)
 FAKEOUT_BLOCK_PROB=80             # blok için min sahte-kırılım olasılığı (%)
+
+# ─── 2026-07-19 shadow trade tracker (services/shadow_trade_tracker.py) ───
+SHADOW_TRACKER_ENABLED=1          # %60+ formasyon + fakeout dedektör çağrıları için sızıntısız paper-trade doğrulaması
+SHADOW_TRACKER_MIN_CONF=60        # sanal işlem açma güven eşiği (%)
+SHADOW_TRACKER_INTERVAL_SECONDS=120
 
 # ─── 2026-07-18 tartışma-bias kapısı + bias notlama (agent_debate_analysis_report.md) ───
 DEBATE_BIAS_GATE_ENABLED=1        # debate kararına KARŞIT pulse/smc sinyalini frenle (NDX+USOIL; fail-open)

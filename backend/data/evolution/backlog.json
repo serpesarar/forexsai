@@ -614,5 +614,16 @@
     "source": "session",
     "created_at": "2026-07-19T08:29:23.478404+00:00",
     "updated_at": "2026-07-19T08:29:23.478407+00:00"
+  },
+  {
+    "id": "bl_d6c4a036ff",
+    "title": "Shadow tracker ilk hafta gözlemi",
+    "detail": "Pazartesi piyasa açılınca shadow_pattern_trades'e işlem düşmeye başlayacak; 1 hafta sonra /api/shadow-tracker/report ile pattern vs fakeout isabetine bak, n>=30 olunca güven kovalarını değerlendir",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-19T09:01:36.492200+00:00",
+    "updated_at": "2026-07-19T09:01:36.492337+00:00"
   }
 ]

@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Shapes, X } from "lucide-react";
 import { useNeuralLocale, type LFn } from "./i18n";
 import type { LivePatternRaw, LiveCandle } from "@/lib/api/neural";
+import ShadowAccuracyCard from "@/components/neural/ShadowAccuracyCard";
 
 // ── Types & demo data ──────────────────────────────────────────────────────
 
@@ -497,7 +498,7 @@ function PatternChart({ pat }: { pat: DetectedPattern }) {
 
 // ── List + modal ───────────────────────────────────────────────────────────
 
-export default function PatternsPanel({ live }: { live?: DetectedPattern[] }) {
+export default function PatternsPanel({ live, symbol }: { live?: DetectedPattern[]; symbol?: string }) {
   const { L } = useNeuralLocale();
   const demo = useMemo(buildPatterns, []);
   const patterns = live && live.length > 0 ? live : demo;
@@ -568,6 +569,11 @@ export default function PatternsPanel({ live }: { live?: DetectedPattern[] }) {
         {L("Formasyona tıkla — grafikte tespit noktaları ve tahmini tamamlanma ayağı animasyonla açılır.", "Click a pattern — the chart opens with detection points and the projected completion leg animated.")}
         {isLive ? "" : ` ${L("(demo)", "(demo)")}`}
       </p>
+
+      {/* %60+ formasyonların sızıntısız sanal-işlem doğrulama karnesi */}
+      <div className="mt-4 border-t border-white/[0.05] pt-3">
+        <ShadowAccuracyCard symbol={symbol} sources={["pattern"]} />
+      </div>
 
       {/* detail modal — portal: transform'lu ata elemanlar position:fixed'i
           kırdığı için body'ye render edilir; modal her zaman viewport ortasında */}

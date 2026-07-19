@@ -309,6 +309,21 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Reflex Engine hatası: {e}")
 
+    # 4.7 SHADOW TRADE TRACKER (default açık: SHADOW_TRACKER_ENABLED=0 ile kapat)
+    #     %60+ güvenli formasyon tespitleri + fakeout dedektör çağrıları için
+    #     sızıntısız ileriye-dönük paper-trade doğrulaması. prediction_logs'a
+    #     ve canlı sinyal akışına DOKUNMAZ; kendi tablosuna (shadow_pattern_trades)
+    #     yazar, kendi döngüsüyle çözer.
+    try:
+        if os.getenv("SHADOW_TRACKER_ENABLED", "1") == "1":
+            from services.shadow_trade_tracker import tracker_loop as shadow_tracker_loop
+            asyncio.create_task(shadow_tracker_loop())
+            print("✅ Shadow Trade Tracker başlatıldı (pattern %60+ / fakeout, 120s)")
+        else:
+            print("⏸️ Shadow Trade Tracker kapalı (SHADOW_TRACKER_ENABLED=1 ile açılır)")
+    except Exception as e:
+        print(f"❌ Shadow Trade Tracker hatası: {e}")
+
     # 5. Real-time prices come from the MT5 -> Redis bridge (DataHub ingest).
     #    No external market-data vendor WebSocket is used.
 
@@ -611,6 +626,7 @@ router_module_names = [
     "evolution_router",
     "patterns_router",
     "fakeout_router",
+    "shadow_tracker_router",
 ]
 
 for module_name in router_module_names:

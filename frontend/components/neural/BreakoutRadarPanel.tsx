@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { buildApiUrl } from "@/lib/api/base";
 import { useNeuralLocale } from "@/components/neural/i18n";
+import ShadowAccuracyCard from "@/components/neural/ShadowAccuracyCard";
 
 // ── Tipler (backend sözleşmesi) ────────────────────────────────────────────
 
@@ -538,6 +539,11 @@ export default function BreakoutRadarPanel({ symbol }: { symbol: string }) {
           ))}
         </div>
       )}
+
+      {/* sanal işlem doğrulama karnesi — dedektör çağrıları gerçekten tutuyor mu? */}
+      <div className="border-t border-white/[0.05] pt-3">
+        <ShadowAccuracyCard symbol={symbol} sources={["fakeout"]} />
+      </div>
     </div>
   );
 }

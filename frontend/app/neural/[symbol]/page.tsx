@@ -521,7 +521,7 @@ export default function NeuralSymbolPage() {
           </NeuralCard>
 
           <NeuralCard title={L("Tespit Edilen Formasyonlar", "Detected Patterns")} icon={<Shapes size={14} />} live delay={0.1}>
-            <PatternsPanel live={livePatterns} />
+            <PatternsPanel live={livePatterns} symbol={demo.code} />
           </NeuralCard>
         </div>
 
