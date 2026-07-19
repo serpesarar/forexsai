@@ -135,6 +135,26 @@ CIO sentezinin (%59-61) tek tek ajanların çoğundan iyi olması debate mimaris
 5. **Öz-kalibrasyon bloğu BAŞTAN BERİ ÖLÜYDÜ:** `recent_track_record` özel REST wrapper'da olmayan `.not_` zincirini çağırıyor, exception fail-open'a düşüp hep `""` dönüyordu — yani "model kendi karnesini görsün" mekanizması hiç çalışmamış. Düzeltildi + sembol-bazlı + ufuk karnesi eklendi. (2026-07-09 "%30.8 doğruluk" otopsisinden sonra eklenen mekanizmanın kendisi de sessizce kırıktı — fail-open'ların da izlenebilirliği gerekiyor.)
 6. **Aynı-gün çapraz-sembol korelasyonu:** 07-13/15'te XAU+USOIL birlikte bearish (ortak makro ajan girdisi) — ortak-hata riski; sembol başına bağımsız kanıt şartı prompt'lara eklenebilir (P2).
 
+## EK C — DAX Nötr-Kilitlenmesi: Kök Neden + Dürüst Backtest + Düzeltme (2026-07-19)
+
+**Kök neden (koşu kayıtlarından):** Uzman ajanlar yönlü görüş veriyordu ("Bearish intraday bias", "Moderately bullish") ama CIO 5/5 koşuda nötre ezdi. Gerekçeler hep aynı: "US futures teyidi yok". Sebep yapısal: DAX profili bearish için US-futures teyidi ŞART koşuyordu ama bağlamda ABD yönü diye bir satır YOKTU (QQQ premarket proxy'si NDX-only) — şart hiçbir zaman sağlanamazdı. `cio_extra`'daki "US futures ile açılış sürüşü çelişirse nötrü tercih et" cümlesi de veri yokken her gün tetikleniyordu. İkinci katman: öz-kalibrasyon nötrleri ±0.15% flat bandıyla notluyordu (günlerin ~%80'i banda sığmaz) → haklı çekimserlik "başarısızlık" görünüyordu.
+
+**Dürüst backtest (`research/dax_bias_backtest*.py`, 201 gün 2025-09→2026-07, kronolojik %70/30, bakış-ileri yok, harness-uyumlu notlama):**
+| Karar saati (Berlin) | En iyi kural (OOS) | OOS isabet | Taban |
+|---|---|---|---|
+| 10:00 | açılış-sürüşünü takip | %45.9 | %46 up |
+| 12:00 | gün-yönü \|>0.23\| | %45.2 | %38/%41 |
+| 14:00 | gün-yönünü takip | %42.6 | %36/%41 |
+| 16:00 | gün-yönüne ters | %39.3 | %36/%39 |
+
+Hiçbir basit kural hiçbir saatte sağlamlık çıtasını (train VE test ≥%55) geçmedi; train→test işaret çevirmeleri tipik edge-yok imzası. **Sonuç: DAX'ta gün-içi yön, basit yapıyla öngörülemiyor — CIO'nun çekimserliği çoğu gün DOĞRU karar.** Yönlü edge yalnız nadir çoklu-TF confluence olaylarında (LONG ~%74-77, eski leak-free araştırma).
+
+**Uygulanan düzeltmeler:**
+1. `_us_risk_proxy()` — NDX 24s CFD'nin önceki kapanışa göre değişimi tüm NDX-dışı debate bağlamlarına eklendi ("US RISK PROXY" satırı) → imkânsız-şart artık değerlendirilebilir.
+2. DAX profili yeniden yazıldı: imkânsız teyit cümlesi kaldırıldı; ölçülmüş backtest taban oranları enjekte edildi; "sıradan günde çekimserlik DOĞRUDUR ve cezalandırılmaz; confluence+katalizör hizalandığında NET taahhüt et" kuralı.
+3. **Ana başarı metriği değişti** (`primary_intraday`): yönlü çağrılar sembolün birincil ufkunda (NDX 240dk; DAX/XAU/USOIL 60dk) notlanır; nötr/choppy AYRI "çekimser" istatistiği (çekimser günlerin % kaçı sakindi). Öz-kalibrasyon karnesi de aynı ayrımla yeniden yazıldı — CIO artık "nötre sistematik önyargın var" diye haksız yere yönlü karara itilmiyor. Yeni genel karne: **intraday yönlü 12/17 (%70.6)** (eski gün-kapanışı görünümü: 7/25 %28).
+4. Çok-sembol auto-runner lokal koda geri inşa edildi (`BIAS_SYMBOL_RUNS_UTC`: XAU 08:00 / DAX 08:10 / USOIL 13:05 UTC; notlama 22:20 UTC) — önceki deploy yalnız-NDX runner içeriyordu ve XAU/DAX/USOIL koşularını susturmuştu.
+
 ## EK B — Uygulama Durumu (2026-07-18)
 
 | P0 maddesi | Durum |

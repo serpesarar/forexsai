@@ -35,6 +35,16 @@ class Settings(BaseSettings):
     bias_auto_run_enabled: bool = Field(default=False, validation_alias="BIAS_AUTO_RUN_ENABLED")
     bias_run_windows_et: str = Field(default="08:00=0800_main,09:45=0945_confirm", validation_alias="BIAS_RUN_WINDOWS_ET")
     bias_fill_time_et: str = Field(default="16:15", validation_alias="BIAS_FILL_TIME_ET")
+    # Çok-sembol UTC pencereleri (2026-07-19'da lokal koda geri inşa edildi —
+    # önceki deploy yalnız-NDX runner içeriyordu ve XAU/DAX/USOIL koşularını
+    # susturmuştu). Biçim: "HH:MM=label:SYMBOL,..."; XAU 08:00, DAX 08:10
+    # (aynı tick'te iki ~6dk'lık debate çakışmasın diye bilinçli kaydırma),
+    # USOIL 13:05 UTC. Notlama 22:20 UTC (tüm semboller, fill_outcomes).
+    bias_symbol_runs_utc: str = Field(
+        default="08:00=xau_daily:XAUUSD,08:10=dax_daily:GDAXI.INDX,"
+                "13:05=usoil_daily:USOIL.FOREX",
+        validation_alias="BIAS_SYMBOL_RUNS_UTC")
+    bias_symbol_fill_utc: str = Field(default="22:20", validation_alias="BIAS_SYMBOL_FILL_UTC")
     # ─── CORTEX (episodic memory + analog retrieval) ───
     cortex_enabled: bool = Field(default=True, validation_alias="CORTEX_ENABLED")
     cortex_analog_k: int = Field(default=8, validation_alias="CORTEX_ANALOG_K")

@@ -186,40 +186,59 @@ def recent_track_record(limit: int = 25, symbol: Optional[str] = None) -> str:
                          "run_label": r.get("run_label")}) == symbol)][:limit]
         if len(rows) < 5:
             return ""
+        # 2026-07-18 revizyonu: karne YÖNLÜ ve ÇEKİMSER çağrıları ayırır.
+        # Eski hali nötrleri ±0.15 flat bandıyla notluyordu (günlerin ~%80'i
+        # banda sığmaz → nötr otomatik yanlış) ve "neutral'e sistematik önyargın
+        # var" uyarısıyla CIO'yu haksız yönlü karara itiyordu (DAX kilitlenmesi).
+        directional = [r for r in rows
+                       if (r.get("predicted_bias") or "").lower() in ("bullish", "bearish")]
+        abstain = [r for r in rows if r not in directional]
+
         by: dict = {}
-        for r in rows:
+        for r in directional:
             b = (r.get("predicted_bias") or "?").lower()
             w, n = by.get(b, (0, 0))
             by[b] = (w + (1 if r.get("was_correct") else 0), n + 1)
         tot_w = sum(w for w, _ in by.values())
         tot_n = sum(n for _, n in by.values())
         parts = [f"{b}: {w}/{n}" for b, (w, n) in sorted(by.items(), key=lambda x: -x[1][1])]
-        worst = min(by.items(), key=lambda x: (x[1][0] / max(x[1][1], 1), -x[1][1]))
         warn = ""
-        if worst[1][1] >= 3 and worst[1][0] / worst[1][1] < 0.4:
-            warn = (f" ⚠ '{worst[0]}' calls hit only {worst[1][0]}/{worst[1][1]} — you have a "
-                    f"systematic bias in that direction; before calling '{worst[0]}' again, "
-                    f"show that your evidence DIFFERS from those failed calls.")
-        # UFUK KARNESİ (2026-07-18 analizi): gün-kapanışı boğa-drift'te yönlü
-        # çağrıyı cezalandırıyor; asıl ölçü +60/+240dk yönlü gerçekleşme.
+        if by:
+            worst = min(by.items(), key=lambda x: (x[1][0] / max(x[1][1], 1), -x[1][1]))
+            if worst[1][1] >= 3 and worst[1][0] / worst[1][1] < 0.4:
+                warn = (f" ⚠ '{worst[0]}' calls hit only {worst[1][0]}/{worst[1][1]} — before "
+                        f"calling '{worst[0]}' again, show that your evidence DIFFERS "
+                        f"from those failed calls.")
+
+        # UFUK KARNESİ: asıl ölçü sembolün birincil ufkundaki yönlü gerçekleşme.
+        prim = PRIMARY_HORIZON_MIN.get(symbol or "", 60)
         hz = ""
-        for col, tag in (("ret_60m", "+60min"), ("ret_240m", "+240min")):
-            sgn = []
-            for r in rows:
-                b, v = (r.get("predicted_bias") or "").lower(), r.get(col)
-                if v is None or b not in ("bullish", "bearish"):
-                    continue
-                sgn.append(v if b == "bullish" else -v)
+        for m, tag in ((prim, f"PRIMARY +{prim}min"), (60, "+60min"), (240, "+240min")):
+            if tag != f"PRIMARY +{prim}min" and m == prim:
+                continue
+            sgn = [signed_ret(r, m) for r in rows]
+            sgn = [x for x in sgn if x is not None]
             if len(sgn) >= 5:
                 w = sum(1 for x in sgn if x > 0)
                 hz += f" {tag}: {w}/{len(sgn)}"
         if hz:
             hz = (" INTRADAY HORIZON RECORD (directional calls, move in your "
-                  "predicted direction):" + hz + " — your calls are graded on "
-                  "the FIRST HOURS too, not only the close.")
-        return (f"SELF-CALIBRATION (outcome record of your LAST {tot_n} predictions): "
-                f"{tot_w}/{tot_n} correct overall; breakdown → " + " | ".join(parts)
-                + "." + warn + hz)
+                  "predicted direction):" + hz + " — this horizon record is the "
+                  "PRIMARY success metric, not the daily close.")
+
+        ab = ""
+        if abstain:
+            realized = [abs(r.get("ret_240m")) for r in abstain if r.get("ret_240m") is not None]
+            avg_mv = f"{sum(realized)/len(realized):.2f}" if realized else "?"
+            ab = (f" ABSTAIN RECORD: you abstained (neutral/choppy) {len(abstain)}× "
+                  f"(avg realized |4h move| {avg_mv}%). Abstaining on weak evidence is "
+                  f"CORRECT and is NOT counted against you — but when the evidence is "
+                  f"strong and confluent, COMMIT to a direction cleanly.")
+
+        head = (f"SELF-CALIBRATION (your LAST {tot_n} DIRECTIONAL predictions, day-close "
+                f"legacy metric): {tot_w}/{tot_n}; breakdown → " + " | ".join(parts) + "."
+                ) if tot_n else "SELF-CALIBRATION: no directional calls graded yet."
+        return head + warn + hz + ab
     except Exception as e:
         logger.debug("[bias-test] track record skipped: %s", e)
         return ""
@@ -243,6 +262,31 @@ def already_logged(ny_date: str, run_label: str) -> bool:
 # işaretlenerek hesaplanır. mfe/mae_60m tahmin yönüne görelidir.
 HORIZONS_MIN = (10, 30, 60, 240)
 _HORIZON_LOOKBACK_BARS = 6   # hedef anda mum yoksa geriye en çok 30dk bak
+
+# Sembol başına BİRİNCİL ufuk (dk) — başarı karnesinin ana metriği bu ufukta
+# hesaplanır. Seçim 2026-07-18 çok-ufuklu analizinden (NDX 240dk %75 vs gün
+# %33; USOIL/XAU/DAX 60dk). ⚠ n küçük — sembol başına n≥30 yönlü çağrıda
+# yeniden türet (backlog kaydı var).
+PRIMARY_HORIZON_MIN = {
+    NDX: 240,
+    "GDAXI.INDX": 60,
+    "XAUUSD": 60,
+    "USOIL.FOREX": 60,
+}
+
+#: Çekimser (nötr/choppy) çağrının "haklı" sayıldığı gün-hareket eşiği (%).
+#: ±0.15 flat bandı günlerin ~%80'inde tutmuyor ve çekimserliği otomatik
+#: cezalandırıyordu; 0.5 altı gün "sakin gün" kabul edilir.
+ABSTAIN_QUIET_PCT = 0.5
+
+
+def signed_ret(row: dict, minutes: int) -> Optional[float]:
+    """Tahmin yönünde işaretli ufuk getirisi (%); yönsüz çağrıda None."""
+    b = (row.get("predicted_bias") or "").lower()
+    v = row.get(f"ret_{minutes}m")
+    if v is None or b not in ("bullish", "bearish"):
+        return None
+    return v if b == "bullish" else -v
 
 
 def _decision_price(row: dict) -> Optional[float]:
@@ -606,8 +650,38 @@ def accuracy_report() -> dict:
     for r in rows:
         by_sym_rows.setdefault(symbol_for_row(r), []).append(r)
 
+    def primary_block() -> dict:
+        """ANA BAŞARI METRİĞİ (2026-07-18): yönlü çağrılar sembolün birincil
+        ufkunda notlanır; çekimserler (nötr/choppy) AYRI izlenir ve doğruluk
+        oranına karıştırılmaz (haklı çekimserlik cezalandırılmaz)."""
+        out: dict[str, Any] = {"per_symbol": {}}
+        tot_n = tot_w = 0
+        for sym, rws in sorted(by_sym_rows.items()):
+            m = PRIMARY_HORIZON_MIN.get(sym, 60)
+            sgn = [x for x in (signed_ret(r, m) for r in rws) if x is not None]
+            n, w = len(sgn), sum(1 for x in sgn if x > 0)
+            ab_rows = [r for r in rws
+                       if (r.get("predicted_bias") or "").lower() not in ("bullish", "bearish")]
+            ab_meas = [r for r in ab_rows if r.get("actual_change_pct") is not None]
+            quiet = [r for r in ab_meas if abs(r["actual_change_pct"]) < ABSTAIN_QUIET_PCT]
+            out["per_symbol"][sym] = {
+                "horizon_min": m, "n": n, "correct": w,
+                "accuracy_pct": round(w / n * 100.0, 1) if n else None,
+                "avg_signed_ret_pct": round(sum(sgn) / n, 3) if n else None,
+                "abstain_n": len(ab_rows),
+                "abstain_rate_pct": round(len(ab_rows) / len(rws) * 100.0, 1) if rws else None,
+                "abstain_quiet_day_pct": (round(len(quiet) / len(ab_meas) * 100.0, 1)
+                                          if ab_meas else None),
+            }
+            tot_n += n
+            tot_w += w
+        out["overall"] = {"n": tot_n, "correct": tot_w,
+                          "accuracy_pct": round(tot_w / tot_n * 100.0, 1) if tot_n else None}
+        return out
+
     return {
         "total_graded": len(graded),
+        "primary_intraday": primary_block(),
         "overall": _rate(graded),
         "by_horizon": horizon_rates(rows),
         "by_symbol_horizon": {s: horizon_rates(v) for s, v in sorted(by_sym_rows.items())},
@@ -619,6 +693,8 @@ def accuracy_report() -> dict:
         "by_holiday": group(lambda r: r.get("is_holiday")),
         "by_current_session": group(lambda r: r.get("current_session")),
         "go_live_hint": (
-            "≥65% good, ≥55% minimum to consider wiring live; below → refine prompts"
+            "ANA METRİK: primary_intraday (sembolün birincil ufkunda yönlü isabet; "
+            "çekimserler ayrı). ≥65% iyi, ≥55% + n≥30 canlıya bağlama eşiği; "
+            "overall/by_* gün-kapanışı LEGACY metriktir."
         ),
     }

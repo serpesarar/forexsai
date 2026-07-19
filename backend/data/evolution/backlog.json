@@ -522,10 +522,10 @@
     "detail": "5/5 nötr/choppy — askıya al veya prompt'u yönlü karara zorla (token maliyeti)",
     "category": "decision",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-07-18T18:37:46.747522+00:00",
-    "updated_at": "2026-07-18T18:37:46.747524+00:00"
+    "updated_at": "2026-07-19T08:29:23.412969+00:00"
   },
   {
     "id": "bl_638cb687e4",
@@ -592,5 +592,27 @@
     "source": "session",
     "created_at": "2026-07-19T08:04:09.953850+00:00",
     "updated_at": "2026-07-19T08:04:09.954001+00:00"
+  },
+  {
+    "id": "bl_1f5b7aa8b2",
+    "title": "Birincil ufukları n≥30'da yeniden türet",
+    "detail": "PRIMARY_HORIZON_MIN (NDX 240dk, diğerleri 60dk) küçük örneklemden seçildi; sembol başına ≥30 yönlü çağrı birikince debate_horizon_report ile yeniden hesapla",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-19T08:29:23.477519+00:00",
+    "updated_at": "2026-07-19T08:29:23.477678+00:00"
+  },
+  {
+    "id": "bl_e655fc07d9",
+    "title": "DAX confluence-tetikli yönlü mod",
+    "detail": "Backtest: DAX yön edge'i yalnız nadir çoklu-TF confluence'ta (LONG ~74-77). Debate'e 'confluence dedektörü' beslemesi ekle: sistem confluence tespit ettiğinde DAX CIO'ya açık sinyal gitsin",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-19T08:29:23.478404+00:00",
+    "updated_at": "2026-07-19T08:29:23.478407+00:00"
   }
 ]

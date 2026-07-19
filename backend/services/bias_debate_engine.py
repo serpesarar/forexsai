@@ -133,23 +133,34 @@ SYMBOL_PROFILES: dict[str, dict] = {
             "on volume. Chop risk rises before US open (13:30 UTC) when DAX "
             "waits for US direction; afternoons often re-price to US futures."),
         "macro_extra": (
-            "DAX follows global risk tone: US futures/NDX direction, EUR "
-            "moves, and Europe-specific news. Rising US yields hit DAX too "
-            "but less than NDX. A strong US-futures premarket bid usually "
-            "lifts DAX afternoons."),
+            "DAX follows global risk tone: the US RISK PROXY line in the "
+            "context (NDX 24h CFD vs prior close) IS the US-futures direction "
+            "signal — read it, it is always provided. EUR moves and "
+            "Europe-specific news matter too. Rising US yields hit DAX but "
+            "less than NDX."),
         "evidence": (
-            "VALIDATED DAX BASE RATES (leak-free research + live post-mortems): "
-            "LONG momentum/alignment works (~74-77% when short-term momentum "
-            "agrees across TFs and price is stretched high in its band — "
-            "preliminary, ~2.9y data). SHORT is structurally weak (best "
-            "honest short combo ~67%; live pulse1-DAX ran 25% WR and is "
-            "SUSPENDED). Synthetic volume and pivot S/R are weak references "
-            "on DAX. Do not issue high-confidence bearish unless Europe is "
-            "in clear stress with US futures confirming down."),
+            "VALIDATED DAX BASE RATES (leak-free research + live post-mortems "
+            "+ HONEST BACKTEST 2025-09→2026-07, 201 days, chronological OOS): "
+            "at the 10:00 Berlin decision hour NO simple structural rule "
+            "predicts the decision→close direction — opening-drive follow "
+            "40-46%, drive-fade 38-40%, gap-follow 39-46%, overnight-NDX "
+            "38-45%, prior-day-continuation 38-43%, all at/below the 46% "
+            "base rate. Directional edge on DAX exists ONLY in rare multi-TF "
+            "confluence: LONG momentum/alignment ~74-77% when short-term "
+            "momentum agrees across TFs and price is stretched high. SHORT "
+            "is structurally weak (live pulse1-DAX 25% WR, SUSPENDED). "
+            "Synthetic volume and pivot S/R are weak references on DAX. "
+            "CONSEQUENCE: abstaining (neutral/choppy) on an ordinary day is "
+            "the CORRECT professional call and your track record does NOT "
+            "penalize it — but when multi-TF confluence + a catalyst align, "
+            "COMMIT cleanly with a directional verdict instead of hedging."),
         "cio_extra": (
-            "If US futures and the XETRA opening drive disagree, prefer "
-            "neutral/choppy over forcing a direction. DAX afternoons are "
-            "often decided by the US open, not by Europe."),
+            "The US RISK PROXY line gives you the US direction — never claim "
+            "it is unknown. If it AGREES with the XETRA drive and structure "
+            "confirms, commit to that direction. If they genuinely conflict "
+            "on an evidence-poor day, neutral is acceptable (and not "
+            "penalized). DAX afternoons often re-price to the US open — "
+            "reflect that in invalid_if, not in permanent indecision."),
     },
     _OIL: {
         "display": "WTI CRUDE (USOIL)",
@@ -222,6 +233,30 @@ async def _qqq_premarket() -> dict:
     except Exception as e:
         logger.debug("[debate] QQQ premarket unavailable: %s", e)
     return out
+
+
+async def _us_risk_proxy() -> Optional[dict]:
+    """NDX (24s CFD) canlı fiyat vs önceki kapanış — NDX-dışı debate'lere ABD
+    yön göstergesi.
+
+    KÖK-NEDEN DÜZELTMESİ (2026-07-19): DAX profili bearish için "US futures
+    teyidi" şart koşuyordu ama bağlamda ABD yönü diye bir satır YOKTU (QQQ
+    proxy NDX-only) — şart hiç sağlanamadığı için CIO 5/5 koşuda nötre
+    kilitlendi. MT5 köprüsü NDX.INDX'i neredeyse 24 saat tick'liyor; önceki
+    kapanışa göre değişimi ABD risk yönü olarak veriyoruz."""
+    try:
+        from services.data_fetcher import fetch_latest_price, fetch_ohlc_data
+        px = await fetch_latest_price(_NDX)
+        daily = await fetch_ohlc_data(_NDX, "1d", limit=5)
+        if not daily:
+            daily = _daily_from_1h(await fetch_ohlc_data(_NDX, "1h", limit=120))
+        prior = _c(daily[-2], "close", "c") if daily and len(daily) >= 2 else None
+        if px and prior:
+            return {"price": px, "prior_close": prior,
+                    "change_pct": round((px - prior) / prior * 100.0, 3)}
+    except Exception as e:
+        logger.debug("[debate] US risk proxy unavailable: %s", e)
+    return None
 
 
 async def _smc_snapshot(symbol: str) -> Optional[dict]:
@@ -367,6 +402,9 @@ async def _gather_context(symbol: str, now_utc: datetime) -> dict:
     if symbol == _NDX:
         side_names.append("qqq")
         side_calls.append(_qqq_premarket())
+    else:
+        side_names.append("us_proxy")   # NDX-dışı semboller ABD yönünü görsün
+        side_calls.append(_us_risk_proxy())
     side_results = await asyncio.gather(*side_calls, return_exceptions=True)
     for name, res in zip(side_names, side_results):
         market[name] = None if isinstance(res, Exception) else res
@@ -404,6 +442,12 @@ def _context_block(market: dict, symbol: str) -> str:
     if q.get("price") is not None:
         lines.append(f"QQQ (premarket-live proxy): {q.get('price')} | "
                      f"premarket vs prior close: {q.get('premarket_change_pct')}%")
+    us = market.get("us_proxy") or {}
+    if us.get("change_pct") is not None:
+        lines.append(
+            f"US RISK PROXY — NDX (24h CFD) vs prior close: {us['change_pct']:+.2f}% "
+            f"(live {us.get('price')}). USE THIS as the 'US futures direction' "
+            f"signal; do NOT claim US direction is unknown.")
     mac = market.get("macro") or {}
     if mac:
         def _g(k):
