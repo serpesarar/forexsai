@@ -9,6 +9,7 @@ için router'lar bu modülün fonksiyonlarını asyncio.to_thread ile çağırı
 """
 from __future__ import annotations
 
+import json
 import logging
 import re
 from datetime import datetime, timedelta, timezone
@@ -117,34 +118,88 @@ def get_bot_performance(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, A
     }
 
 
+def _parse_decider_action(decision: Any) -> tuple[str, Optional[str]]:
+    """decider_journal.decision alanından (action, direction) çıkar.
+
+    Gerçek format: decision bir JSON STRING —
+    '{"action":"WAIT|OPEN","direction":"BUY|SELL|null",...}'. Eski kod bunu ham
+    string olarak okuyup .upper() yapıyordu → her satır benzersiz anahtar,
+    WAIT/OPEN sayımı 0, decider "aktif değil" görünüyordu. Artık parse ediyoruz.
+    """
+    if isinstance(decision, dict):
+        obj = decision
+    elif isinstance(decision, str) and decision.strip().startswith("{"):
+        try:
+            obj = json.loads(decision)
+        except (ValueError, TypeError):
+            return "?", None
+    else:
+        return (str(decision).upper() if decision else "?"), None
+    action = str(obj.get("action") or "?").upper()
+    direction = obj.get("direction")
+    return action, (str(direction).upper() if direction else None)
+
+
 def get_decider_stats(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, Any]:
-    """decider_journal'dan karar dağılımı + sonuçlanmışlarda isabet."""
+    """decider_journal'dan karar dağılımı + sonuçlanmışlarda isabet.
+
+    Karar formatı: her satır bir NASDAQ karar-anı. action=WAIT (bekle, işlem yok)
+    veya action=OPEN (BUY/SELL işlem). OPEN kararlarının outcome'u WIN/LOSS/null.
+    win_rate yalnız sonuçlanan OPEN'lardan hesaplanır (WAIT'in sonucu olmaz).
+    """
     client = _client()
     since = (_now() - timedelta(days=days)).isoformat()
     res = (client.table("decider_journal").select("decision,outcome,ts,symbol")
            .eq("host", host).gte("inserted_at", since)
-           .order("inserted_at", desc=True).limit(3000).execute())
+           .order("inserted_at", desc=True).limit(5000).execute())
     rows = res.get("data") or []
 
-    decisions: Dict[str, int] = {}
+    decisions: Dict[str, int] = {}   # WAIT / BUY / SELL (kullanıcıya anlamlı)
+    wait_count = 0
+    open_count = 0
     resolved = 0
     correct = 0
+    last_open_at: Optional[str] = None
+
+    def _outcome_str(o: Any) -> Optional[str]:
+        if isinstance(o, str):
+            return o.strip().upper() or None
+        if isinstance(o, dict):
+            v = o.get("result") or o.get("outcome") or o.get("status")
+            return str(v).strip().upper() if v else None
+        return None
+
     for r in rows:
-        d = (r.get("decision") or "?").upper()
-        decisions[d] = decisions.get(d, 0) + 1
-        outcome = r.get("outcome") or {}
-        if isinstance(outcome, dict) and outcome.get("result") in ("win", "loss"):
-            resolved += 1
-            if outcome["result"] == "win":
-                correct += 1
+        action, direction = _parse_decider_action(r.get("decision"))
+        if action == "WAIT":
+            wait_count += 1
+            decisions["WAIT"] = decisions.get("WAIT", 0) + 1
+        elif action in ("OPEN", "BUY", "SELL"):
+            open_count += 1
+            key = direction or ("BUY" if action == "BUY" else "SELL" if action == "SELL" else "OPEN")
+            decisions[key] = decisions.get(key, 0) + 1
+            last_open_at = last_open_at or r.get("ts")
+            oc = _outcome_str(r.get("outcome"))
+            if oc in ("WIN", "LOSS", "TP", "SL"):
+                resolved += 1
+                if oc in ("WIN", "TP"):
+                    correct += 1
+        else:
+            decisions[action] = decisions.get(action, 0) + 1
 
     return {
         "days": days,
         "total_decisions": len(rows),
+        "wait_count": wait_count,
+        "open_count": open_count,
         "decisions": decisions,
         "resolved": resolved,
         "win_rate": round(100 * correct / resolved, 1) if resolved else None,
         "last_decision_at": rows[0].get("ts") if rows else None,
+        "last_trade_decision_at": last_open_at,
+        # 48 saat içinde karar geldiyse decider canlı sayılır (panel rozeti)
+        "active": bool(rows and _parse_ts(rows[0].get("ts"))
+                       and (_now() - _parse_ts(rows[0].get("ts"))).total_seconds() < 48 * 3600),
     }
 
 

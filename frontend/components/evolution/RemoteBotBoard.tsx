@@ -304,29 +304,47 @@ export default function RemoteBotBoard({ days }: { days: number }) {
         {/* ── Decider karnesi + komut geçmişi ── */}
         <GlassCard>
           <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-300">
-            <Wifi size={15} /> Decider & Komutlar
+            <Wifi size={15} /> Claude Decider
+            {decider && decider.total_decisions > 0 && (
+              decider.active ? (
+                <span className="flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-medium text-emerald-300">
+                  <PulseDot /> aktif
+                </span>
+              ) : (
+                <span className="rounded-full border border-slate-500/30 bg-slate-500/10 px-2 py-0.5 text-[10px] font-medium text-slate-400">
+                  {decider.last_decision_at ? `son karar ${timeAgo(decider.last_decision_at)}` : "beklemede"}
+                </span>
+              )
+            )}
           </h3>
           {decider && decider.total_decisions > 0 ? (
             <div className="mb-4">
-              <div className="mb-2 flex items-baseline justify-between text-xs">
-                <span className="text-slate-400">{decider.total_decisions} karar · {decider.resolved} sonuçlandı</span>
+              {/* İşlem kararlarının kazanma oranı (WAIT'ler sonuçsuz — WR'a girmez) */}
+              <div className="mb-2.5 flex items-center gap-3">
                 {decider.win_rate !== null && (
-                  <span className="text-base font-bold" style={{ color: wrColor(decider.win_rate) }}>
-                    %{decider.win_rate}
-                  </span>
+                  <Ring pct={decider.win_rate} color={wrColor(decider.win_rate)} size={64} stroke={6}>
+                    <span className="text-lg font-bold tabular-nums text-white">%{Math.round(decider.win_rate)}</span>
+                  </Ring>
                 )}
+                <div className="text-xs leading-relaxed text-slate-400">
+                  <div><span className="font-semibold text-slate-200">{decider.open_count}</span> işlem kararı · <span className="font-semibold text-slate-200">{decider.resolved}</span> sonuçlandı</div>
+                  <div><span className="font-semibold text-slate-300">{decider.wait_count}</span> bekle (WAIT) kararı</div>
+                  <div className="text-slate-500">toplam {decider.total_decisions} karar / son {decider.days} gün</div>
+                </div>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {Object.entries(decider.decisions).map(([d, n]) => (
-                  <Badge key={d} tone={d.includes("BUY") ? "green" : d.includes("SELL") ? "red" : "slate"}>
-                    {d} × {n}
-                  </Badge>
-                ))}
+                {Object.entries(decider.decisions)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([d, n]) => (
+                    <Badge key={d} tone={d.includes("BUY") ? "green" : d.includes("SELL") ? "red" : "slate"}>
+                      {d === "WAIT" ? "bekle" : d} × {n}
+                    </Badge>
+                  ))}
               </div>
             </div>
           ) : (
             <p className="mb-4 rounded-xl border border-dashed border-white/10 p-3 text-center text-[11px] text-slate-500">
-              Decider kararı henüz gelmedi.
+              Decider kararı henüz gelmedi — MT5 kutusundaki ajan push edince görünür.
             </p>
           )}
 

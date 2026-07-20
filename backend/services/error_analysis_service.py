@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
@@ -25,7 +26,10 @@ from services.target_config import (
 logger = logging.getLogger(__name__)
 
 # Claude Haiku 4.5 for error analysis
-ERROR_ANALYSIS_MODEL = "claude-haiku-4-5"
+# Hata otopsisi BİRİNCİL modeli: Claude Sonnet (kullanıcı tercihi — Haiku
+# değerlendirme için yetersizdi). Sonnet güçlü akıl yürütür. Kredi/erişim
+# hatasında llm_router (DeepSeek/Kimi) yedeğe düşer. Env ile değiştirilebilir.
+ERROR_ANALYSIS_MODEL = os.getenv("ERROR_ANALYSIS_MODEL", "claude-sonnet-5")
 ERROR_ANALYSIS_MAX_TOKENS = 1000
 
 # Analysis check intervals
@@ -183,17 +187,17 @@ async def analyze_error_with_claude(
     fake_move_info: Dict[str, Any]
 ) -> Dict[str, Any]:
     """
-    Use Claude to analyze why a prediction failed.
-    
+    Sinyalin neden yanlış gittiğini güçlü bir reasoning modeliyle analiz eder.
+
+    Model seçimi (2026-07-20): birincil = Anthropic Claude Sonnet (kullanıcı
+    tercihi — hata otopsisi zeka ister, Haiku yetersizdi). Kredi/erişim hatasında
+    llm_router "important" (Kimi K2 / DeepSeek Reasoner) yedeğe düşer; böylece
+    araç ne tek sağlayıcıya ne de tek faturaya rehin kalır.
+
     Returns:
         AI analysis result with root cause, lessons, and suggestions
     """
-    if not settings.anthropic_api_key:
-        return {"error": "Anthropic API key not configured"}
-    
     try:
-        client = Anthropic(api_key=settings.anthropic_api_key)
-        
         # Prepare context
         entry_price = prediction.get("ml_entry_price", 0)
         direction = prediction.get("ml_direction", "HOLD")
@@ -271,24 +275,38 @@ JSON formatında yanıt ver:
 
 Bu tahminin neden yanlış gittiğini analiz et ve öğrenme noktalarını belirle."""
 
-        # Birincil: Anthropic (Haiku). Kredi/erişim hatasında llm_router'a
-        # (DeepSeek/Kimi) düş — analiz aracı tek sağlayıcıya rehin kalmasın.
-        try:
-            response = client.messages.create(
-                model=ERROR_ANALYSIS_MODEL,
-                max_tokens=ERROR_ANALYSIS_MAX_TOKENS,
-                system=system_prompt,
-                messages=[{"role": "user", "content": user_prompt}]
-            )
-            response_text = response.content[0].text
-        except Exception as anthropic_err:
-            logger.warning(f"Anthropic hata analizi başarısız ({anthropic_err}) — llm_router fallback deneniyor")
-            from services.llm_router import chat as router_chat
-            response_text, _provider = await router_chat(
-                system=system_prompt, user=user_prompt, importance="normal"
-            )
-            if not response_text or not response_text.strip():
-                return {"error": f"anthropic: {anthropic_err}; fallback boş yanıt"}
+        # Birincil: Claude Sonnet (kullanıcı tercihi). Başarısızsa → llm_router
+        # "important" (Kimi/DeepSeek Reasoner) yedeği. Haiku bağımlılığı kaldırıldı.
+        response_text = ""
+        used_provider = ""
+        anth_err: Optional[Exception] = None
+        if settings.anthropic_api_key:
+            try:
+                client = Anthropic(api_key=settings.anthropic_api_key)
+                response = client.messages.create(
+                    model=ERROR_ANALYSIS_MODEL,
+                    max_tokens=ERROR_ANALYSIS_MAX_TOKENS,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": user_prompt}],
+                )
+                response_text = response.content[0].text
+                used_provider = f"anthropic:{ERROR_ANALYSIS_MODEL}"
+            except Exception as e:
+                anth_err = e
+                logger.warning(f"Anthropic ({ERROR_ANALYSIS_MODEL}) başarısız ({e}) — llm_router yedeği deneniyor")
+
+        if not response_text.strip():
+            try:
+                from services.llm_router import chat as router_chat
+                response_text, used_provider = await router_chat(
+                    system=system_prompt, user=user_prompt, importance="important"
+                )
+            except Exception as router_err:
+                return {"error": f"anthropic: {anth_err}; llm_router: {router_err}"}
+
+        if not response_text or not response_text.strip():
+            return {"error": f"AI sağlayıcısı boş yanıt döndürdü (anthropic: {anth_err})"}
+        logger.info(f"[error-analysis] sağlayıcı: {used_provider}")
         
         # Parse JSON response
         try:

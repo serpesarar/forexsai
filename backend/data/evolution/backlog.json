@@ -632,9 +632,20 @@
     "detail": "regime_logger'daki hasattr-ternary bug'ı her kaydı 2 kez yazıyordu (2026-07-16'da düzeltildi). Tabloda 62.655 satırın ~37.5k'sı 1sn-içi ikiz — Entry Optimizer A/B istatistiklerini şişiriyor. Temizlik SQL'i: aynı symbol+created_at<1s ikizlerden geç olanı sil (önce yedek al). Geri alınamaz olduğu için kullanıcı onayı bekliyor.",
     "category": "decision",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "source": "manual",
     "created_at": "2026-07-20T03:28:02.254690+00:00",
-    "updated_at": "2026-07-20T03:28:02.254700+00:00"
+    "updated_at": "2026-07-20T03:37:35.821946+00:00"
+  },
+  {
+    "id": "bl_fd37b3a20a",
+    "title": "DeepSeek reasoner bos yanit + Kimi cagri hatasi (llm_router yedegi olu)",
+    "detail": "llm_router important: Kimi call failed (bos hata mesaji, key/endpoint suphesi), DeepSeek reasoner empty response (6000 max_token reasoninge gidip content bos kaliyor). Hata analizi Anthropic Sonnet birincil yapildi ama kredi biterse yedek de olu. Cozum: DeepSeek icin reasoner yerine deepseek-chat dene VEYA max_tokens artir; Kimi key/base_url dogrula. Tum bias-debate + decider dersleri buna bagli.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "manual",
+    "created_at": "2026-07-20T04:23:18.514880+00:00",
+    "updated_at": "2026-07-20T04:23:18.514889+00:00"
   }
 ]

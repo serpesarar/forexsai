@@ -133,10 +133,14 @@ export interface BotPerformance {
 export interface DeciderStats {
   days: number;
   total_decisions: number;
+  wait_count: number;
+  open_count: number;
   decisions: Record<string, number>;
   resolved: number;
   win_rate: number | null;
   last_decision_at: string | null;
+  last_trade_decision_at: string | null;
+  active: boolean;
 }
 
 export interface BacklogItem {
