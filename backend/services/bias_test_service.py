@@ -664,6 +664,26 @@ def accuracy_report() -> dict:
                        if (r.get("predicted_bias") or "").lower() not in ("bullish", "bearish")]
             ab_meas = [r for r in ab_rows if r.get("actual_change_pct") is not None]
             quiet = [r for r in ab_meas if abs(r["actual_change_pct"]) < ABSTAIN_QUIET_PCT]
+            # Zaman şeridi (panel ısı-şeridi): kronolojik son 20 karar —
+            # yeşil/kırmızı (yönlü isabet/ıska, birincil ufukta) + gri (çekimser).
+            # '_dup' etiketli çift-yazar satırlar istatistik dışı (2026-07-18).
+            timeline: list[dict] = []
+            for r in sorted(rws, key=lambda x: str(x.get("ny_time") or "")):
+                if str(r.get("run_label") or "").endswith("_dup"):
+                    continue
+                bias_val = (r.get("predicted_bias") or "").lower()
+                if bias_val in ("bullish", "bearish"):
+                    sv = signed_ret(r, m)
+                    if sv is None:
+                        continue  # yönlü ama henüz notlanmamış — şeride girmez
+                    timeline.append({"d": str(r.get("ny_date") or "")[:10],
+                                     "ok": sv > 0,
+                                     "bias": bias_val,
+                                     "label": r.get("run_label")})
+                else:
+                    timeline.append({"d": str(r.get("ny_date") or "")[:10],
+                                     "ok": None, "bias": bias_val or "neutral",
+                                     "label": r.get("run_label")})
             out["per_symbol"][sym] = {
                 "horizon_min": m, "n": n, "correct": w,
                 "accuracy_pct": round(w / n * 100.0, 1) if n else None,
@@ -672,6 +692,7 @@ def accuracy_report() -> dict:
                 "abstain_rate_pct": round(len(ab_rows) / len(rws) * 100.0, 1) if rws else None,
                 "abstain_quiet_day_pct": (round(len(quiet) / len(ab_meas) * 100.0, 1)
                                           if ab_meas else None),
+                "timeline": timeline[-20:],
             }
             tot_n += n
             tot_w += w

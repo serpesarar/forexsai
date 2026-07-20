@@ -26,6 +26,13 @@ export interface BiasRate {
   accuracy_pct: number | null;
 }
 
+export interface BiasTimelineCell {
+  d: string; // ny_date
+  ok: boolean | null; // true=isabet, false=ıska, null=çekimser (nötr/choppy)
+  bias: string;
+  label: string | null;
+}
+
 export interface PrimarySymbolStat {
   horizon_min: number;
   n: number;
@@ -35,6 +42,8 @@ export interface PrimarySymbolStat {
   abstain_n: number;
   abstain_rate_pct: number | null;
   abstain_quiet_day_pct: number | null;
+  /** Kronolojik son 20 karar — panel ısı şeridi (eski→yeni). */
+  timeline?: BiasTimelineCell[];
 }
 
 export interface BiasReport {

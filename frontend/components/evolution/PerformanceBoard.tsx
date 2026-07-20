@@ -8,11 +8,11 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, TrendingUp, Users, X } from "lucide-react";
+import { ChevronRight, MoveRight, TrendingDown, TrendingUp, Users, X } from "lucide-react";
 
-import type { BiasReport, Overview } from "@/lib/api/evolution";
+import type { BiasReport, BiasTimelineCell, Overview } from "@/lib/api/evolution";
 import ModelDetailDrawer from "./ModelDetailDrawer";
-import { Badge, EmptyState, GlassCard, ProgressBar, Ring, Section, Skeleton, modelColor, stagger } from "./ui";
+import { Badge, EmptyState, GlassCard, ProgressBar, Ring, Section, Skeleton, cx, modelColor, stagger } from "./ui";
 
 const MIN_RESOLVED = 10;
 
@@ -20,12 +20,83 @@ function biasColor(pct: number | null): string {
   if (pct === null) return "#64748B";
   if (pct >= 65) return "#34D399";
   if (pct >= 55) return "#FBBF24";
+  if (pct >= 45) return "#FB923C";
   return "#FB7185";
+}
+
+// ── Zaman-duyarlı trend: son dönem vs önceki dönem ────────────────────────
+
+interface TrendInfo {
+  recentPct: number | null; // son yarının isabeti (renk bundan gelir)
+  olderPct: number | null;
+  delta: number | null; // + iyileşiyor, − kötüleşiyor
+  dirCount: number;
+}
+
+/** Yönlü hücreleri ikiye böl: eski yarı vs yeni yarı — başarı zamanla nereye gidiyor? */
+function timelineTrend(timeline: BiasTimelineCell[] | undefined): TrendInfo {
+  const dir = (timeline ?? []).filter((c) => c.ok !== null);
+  if (dir.length < 2) return { recentPct: null, olderPct: null, delta: null, dirCount: dir.length };
+  const half = Math.floor(dir.length / 2);
+  const older = dir.slice(0, half);
+  const recent = dir.slice(half);
+  const pct = (arr: BiasTimelineCell[]) =>
+    arr.length ? Math.round((arr.filter((c) => c.ok).length / arr.length) * 100) : null;
+  const olderPct = pct(older);
+  const recentPct = pct(recent);
+  return {
+    recentPct,
+    olderPct,
+    delta: recentPct !== null && olderPct !== null ? recentPct - olderPct : null,
+    dirCount: dir.length,
+  };
+}
+
+function TrendArrow({ delta }: { delta: number | null }) {
+  if (delta === null) return null;
+  if (delta > 5) return <TrendingUp size={13} className="text-emerald-400" />;
+  if (delta < -5) return <TrendingDown size={13} className="text-rose-400" />;
+  return <MoveRight size={13} className="text-slate-500" />;
+}
+
+/** Isı şeridi — kronolojik kararlar (eski→yeni): yeşil isabet, kırmızı ıska, gri çekimser. */
+function HeatStrip({ timeline, tall = false }: { timeline: BiasTimelineCell[] | undefined; tall?: boolean }) {
+  const cells = timeline ?? [];
+  if (cells.length === 0)
+    return <span className="text-[10px] text-slate-600">veri yok</span>;
+  return (
+    <div className="flex items-end gap-[3px]" aria-label="Kronolojik karar şeridi (eski→yeni)">
+      {cells.map((c, i) => {
+        const isLast = i === cells.length - 1;
+        const color = c.ok === null ? "#475569" : c.ok ? "#34D399" : "#FB7185";
+        const title = `${c.d} · ${c.label ?? ""} · ${c.bias}${c.ok === null ? " (çekimser)" : c.ok ? " ✓ isabet" : " ✗ ıska"}`;
+        return (
+          <motion.span
+            key={`${c.d}-${i}`}
+            initial={{ scaleY: 0, opacity: 0 }}
+            whileInView={{ scaleY: 1, opacity: c.ok === null ? 0.45 : 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: Math.min(i * 0.02, 0.4), duration: 0.25 }}
+            title={title}
+            className={cx("origin-bottom rounded-[2px]", tall ? "w-3" : "w-[7px]")}
+            style={{
+              height: tall ? (c.ok === null ? 12 : 22) : c.ok === null ? 8 : 14,
+              background: color,
+              boxShadow: c.ok !== null ? `0 0 6px ${color}66` : undefined,
+              outline: isLast ? "1px solid rgba(255,255,255,0.35)" : undefined,
+              outlineOffset: 1,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
 }
 
 /** Bias karnesi sembol detayı — etiket (çalıştırma saati) + güven kovası kırılımı. */
 function BiasDetailSheet({ bias, symbol, onClose }: { bias: BiasReport; symbol: string; onClose: () => void }) {
   const symRate = bias.by_symbol?.[symbol];
+  const primaryStat = bias.primary_intraday?.per_symbol?.[symbol];
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -51,13 +122,38 @@ function BiasDetailSheet({ bias, symbol, onClose }: { bias: BiasReport; symbol: 
           </button>
         </div>
         <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
-          {symRate && (
+          {primaryStat ? (
+            <p className="mb-4 text-center text-sm text-slate-300">
+              <span className="text-2xl font-bold" style={{ color: biasColor(primaryStat.accuracy_pct) }}>
+                {primaryStat.accuracy_pct !== null ? `%${primaryStat.accuracy_pct}` : "—"}
+              </span>{" "}
+              isabet · {primaryStat.correct}/{primaryStat.n} yönlü çağrı ({primaryStat.horizon_min}dk ufuk)
+              {symRate && (
+                <span className="mt-0.5 block text-[10px] text-slate-600">
+                  gün-kapanışı (eski metrik): %{symRate.accuracy_pct ?? "—"} · {symRate.n} tahmin
+                </span>
+              )}
+            </p>
+          ) : symRate ? (
             <p className="mb-4 text-center text-sm text-slate-300">
               <span className="text-2xl font-bold" style={{ color: biasColor(symRate.accuracy_pct) }}>
                 {symRate.accuracy_pct !== null ? `%${symRate.accuracy_pct}` : "—"}
               </span>{" "}
               isabet · {symRate.correct}/{symRate.n} tahmin
             </p>
+          ) : null}
+          {bias.primary_intraday?.per_symbol?.[symbol]?.timeline && (
+            <>
+              <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Zaman çizgisi — eski → yeni ({symbol})
+              </h4>
+              <div className="mb-1.5 overflow-x-auto pb-1">
+                <HeatStrip timeline={bias.primary_intraday.per_symbol[symbol].timeline} tall />
+              </div>
+              <p className="mb-4 text-[9px] text-slate-600">
+                Her sütun bir karar günü — üzerine gel: tarih, saat etiketi ve sonuç.
+              </p>
+            </>
           )}
           {bias.by_symbol_horizon?.[symbol] && (
             <>
@@ -137,6 +233,15 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
   const primary = bias?.primary_intraday ?? null;
   const overallPct = primary?.overall?.accuracy_pct ?? bias?.overall.accuracy_pct ?? null;
   const overallN = primary?.overall?.n ?? bias?.total_graded ?? 0;
+
+  // Genel trend: tüm sembollerin şeritleri tarih sırasında birleştirilir —
+  // gösterge rengi ve "son dönem vs önceki" çipi buradan.
+  const overallTrend = useMemo(() => {
+    const merged = Object.values(primary?.per_symbol ?? {})
+      .flatMap((s) => s.timeline ?? [])
+      .sort((a, b) => a.d.localeCompare(b.d));
+    return timelineTrend(merged);
+  }, [primary]);
 
   return (
     <Section
@@ -222,7 +327,13 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
             <EmptyState text="Henüz notlanmış tahmin yok." />
           ) : (
             <div className="flex flex-col items-center">
-              <Ring pct={overallPct ?? 0} color={biasColor(overallPct)} size={150}>
+              {/* Gösterge rengi SON DÖNEM isabetinden gelir — başarı zamanla
+                  düşüyorsa halka yeşilden turuncu/kırmızıya kayar. */}
+              <Ring
+                pct={overallPct ?? 0}
+                color={biasColor(overallTrend.recentPct ?? overallPct)}
+                size={150}
+              >
                 <span className="text-4xl font-bold tabular-nums text-white">
                   {overallPct !== null ? `%${overallPct}` : "—"}
                 </span>
@@ -230,6 +341,18 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                   {overallN} yönlü çağrı
                 </span>
               </Ring>
+
+              {/* Trend çipi: son dönem vs önceki dönem */}
+              {overallTrend.delta !== null && (
+                <div className="mt-2 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px]">
+                  <TrendArrow delta={overallTrend.delta} />
+                  <span className="text-slate-300">
+                    son dönem <span className="font-bold" style={{ color: biasColor(overallTrend.recentPct) }}>%{overallTrend.recentPct}</span>
+                  </span>
+                  <span className="text-slate-600">·</span>
+                  <span className="text-slate-500">önceki %{overallTrend.olderPct}</span>
+                </div>
+              )}
               {primary && (
                 <p className="mt-1.5 text-center text-[10px] text-slate-500">
                   birincil ufukta yönlü isabet — çekimserler (nötr) hariç
@@ -242,40 +365,55 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                 {overallPct !== null && overallPct < 55 && <Badge tone="red">alt sınırın altında</Badge>}
               </div>
 
+              {/* Sembol satırları: ısı şeridi (eski→yeni) + trend oku + isabet */}
               <div className="mt-5 w-full space-y-1">
                 {(primary
                   ? Object.entries(primary.per_symbol).map(([sym, s]) => ({
                       sym,
                       pct: s.accuracy_pct,
                       sub: `${s.horizon_min}dk · ${s.n} çağrı${s.abstain_n ? ` · ${s.abstain_n} çekimser` : ""}`,
+                      timeline: s.timeline,
+                      trend: timelineTrend(s.timeline),
                     }))
                   : Object.entries(bias.by_symbol ?? {}).map(([sym, r]) => ({
                       sym,
                       pct: r.accuracy_pct,
                       sub: `${r.n} tahmin`,
+                      timeline: undefined as BiasTimelineCell[] | undefined,
+                      trend: timelineTrend(undefined),
                     }))
                 ).map((row, i) => (
                   <motion.button
                     key={row.sym}
                     {...stagger(i)}
                     onClick={() => setOpenBiasSymbol(row.sym)}
-                    className="flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-xs transition hover:bg-white/[0.04]"
-                    title="Saat/etiket & ufuk kırılımını aç"
+                    className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-xs transition hover:bg-white/[0.05]"
+                    title="Detay panelini aç — saat, ufuk ve güven kırılımı"
                   >
-                    <span className="w-24 shrink-0 truncate text-left">
-                      <span className="block font-medium text-slate-300">{row.sym}</span>
+                    <span className="w-[88px] shrink-0 truncate text-left">
+                      <span className="block font-medium text-slate-300">{row.sym.replace(".INDX", "").replace(".FOREX", "")}</span>
                       <span className="block text-[9px] text-slate-600">{row.sub}</span>
                     </span>
-                    <div className="flex-1">
-                      <ProgressBar pct={row.pct ?? 0} color={biasColor(row.pct)} delay={i * 0.05} />
+                    <div className="flex flex-1 items-center">
+                      <HeatStrip timeline={row.timeline} />
                     </div>
-                    <span className="w-16 shrink-0 text-right tabular-nums text-slate-500">
-                      {row.pct !== null ? `%${row.pct}` : "—"}
+                    <span className="flex w-[70px] shrink-0 items-center justify-end gap-1 text-right">
+                      <TrendArrow delta={row.trend.delta} />
+                      <span
+                        className="text-sm font-bold tabular-nums"
+                        style={{ color: biasColor(row.trend.recentPct ?? row.pct) }}
+                      >
+                        {row.pct !== null ? `%${Math.round(row.pct)}` : "—"}
+                      </span>
                     </span>
                   </motion.button>
                 ))}
               </div>
-              <p className="mt-4 text-center text-[11px] text-slate-500">Hedef: ≥%65 iyi · ≥%55 canlıya alma alt sınırı</p>
+              <p className="mt-3 text-center text-[10px] text-slate-600">
+                şerit: eski → yeni karar · <span className="text-emerald-400">■</span> isabet ·{" "}
+                <span className="text-rose-400">■</span> ıska · <span className="text-slate-500">■</span> çekimser — renk son döneme göre
+              </p>
+              <p className="mt-2 text-center text-[11px] text-slate-500">Hedef: ≥%65 iyi · ≥%55 canlıya alma alt sınırı</p>
             </div>
           )}
         </GlassCard>
