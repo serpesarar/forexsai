@@ -37,7 +37,10 @@ def fakeout_context(sym_map: dict[str, str], fx_sym: str) -> dict | None:
         mt5_sym = sym_map.get(fx_sym)
         if not mt5_sym:
             return None
-        rates = mt5.copy_rates_from_pos(mt5_sym, mt5.TIMEFRAME_M5, 0, _FAKEOUT_BARS_N)
+        # pos=1: forming bar atlanır — dedektör yalnız KAPANMIŞ barlarla
+        # doğrulandı (2026-07-20 denetim; broker-saatli barda duvar-saati
+        # filtresi çalışmadığı için kaynakta dışlanır).
+        rates = mt5.copy_rates_from_pos(mt5_sym, mt5.TIMEFRAME_M5, 1, _FAKEOUT_BARS_N)
         if rates is None or len(rates) < _MIN_BARS:
             return None
         bars = [{"open": float(r["open"]), "high": float(r["high"]),

@@ -199,6 +199,17 @@ function CandleRadarChart({ data }: { data: Assessment }) {
   const tpPrice = bo ? bo.level_price + (dirUp ? 1 : -1) * lv.atr : null;
   const slPrice = bo ? bo.level_price - (dirUp ? 1 : -1) * lv.atr : null;
 
+  // Kırılan seviye işareti FİYAT eşleşmesiyle konur (2026-07-20 denetim fix'i:
+  // yalnız kind eşleşmesi, güncel en-yakın seviyeyi yanlışlıkla ⚡'liyordu —
+  // kırılan seviye artık snapshot'ta olmayabilir, ayrıca amber çizgiyle çizilir).
+  const isBrokenAt = (p: number) => !!bo && Math.abs(p - bo.level_price) < lv.atr * 0.15;
+  const BROKEN_KIND: Record<string, [string, string]> = {
+    resistance: ["KIRILAN DİRENÇ", "BROKEN RESISTANCE"],
+    support: ["KIRILAN DESTEK", "BROKEN SUPPORT"],
+    channel_upper: ["KIRILAN KANAL ÜSTÜ", "BROKEN CHAN TOP"],
+    channel_lower: ["KIRILAN KANAL ALTI", "BROKEN CHAN BOT"],
+  };
+
   return (
     <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-b from-[#0a1020] to-[#060a14] p-1.5">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
@@ -231,16 +242,24 @@ function CandleRadarChart({ data }: { data: Assessment }) {
               fill="#818cf8" fillOpacity="0.05" />
             <LevelLine p={lv.channel.upper} color="#818cf8" dash="5 4"
               label={L("KANAL ÜSTÜ", "CHAN TOP")} glowId="brp-glow"
-              broken={bo?.level_kind === "channel_upper"} />
+              broken={isBrokenAt(lv.channel.upper)} />
             <LevelLine p={lv.channel.lower} color="#818cf8" dash="5 4"
               label={L("KANAL ALTI", "CHAN BOT")} glowId="brp-glow"
-              broken={bo?.level_kind === "channel_lower"} />
+              broken={isBrokenAt(lv.channel.lower)} />
           </g>
         )}
 
-        {/* canlı kırılımda ±1 ATR hedef/stop bölgeleri */}
+        {/* canlı kırılımda: KIRILAN SEVİYE (amber) + ±1 ATR hedef/stop bölgeleri */}
         {bo && tpPrice !== null && slPrice !== null && (
           <g>
+            <line x1={PADL} x2={W - PADR + 4} y1={y(bo.level_price)} y2={y(bo.level_price)}
+              stroke="#fbbf24" strokeWidth="1.8" filter="url(#brp-glow)" />
+            <text x={PADL + 3} y={y(bo.level_price) - 3.5} fontSize="7.5" fill="#fbbf24"
+              letterSpacing="1.2" fontWeight="700" fontFamily="ui-monospace,monospace">
+              ⚡ {L(...((BROKEN_KIND[bo.level_kind] ?? ["KIRILAN SEVİYE", "BROKEN LEVEL"]) as [string, string]))}
+            </text>
+            <text x={W - 4} y={y(bo.level_price) + 2.5} fontSize="8" fill="#fbbf24"
+              textAnchor="end" fontFamily="ui-monospace,monospace">{fmt(bo.level_price)}</text>
             <rect x={PADL} width={plotW + 4}
               y={Math.min(y(tpPrice), y(bo.level_price))}
               height={Math.abs(y(tpPrice) - y(bo.level_price))} fill="url(#brp-tp)" />
@@ -262,12 +281,12 @@ function CandleRadarChart({ data }: { data: Assessment }) {
         {lv.resistance && (
           <LevelLine p={lv.resistance.price} color="#f87171"
             label={`${L("DİRENÇ", "RES")} ×${lv.resistance.touches}`} glowId="brp-glow"
-            broken={bo?.level_kind === "resistance"} />
+            broken={isBrokenAt(lv.resistance.price)} />
         )}
         {lv.support && (
           <LevelLine p={lv.support.price} color="#34d399"
             label={`${L("DESTEK", "SUP")} ×${lv.support.touches}`} glowId="brp-glow"
-            broken={bo?.level_kind === "support"} />
+            broken={isBrokenAt(lv.support.price)} />
         )}
 
         {/* mumlar */}

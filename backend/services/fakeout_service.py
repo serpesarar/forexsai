@@ -299,6 +299,40 @@ def _prep_df(bars: Sequence[dict]) -> Optional[pd.DataFrame]:
     df["volume"] = pd.to_numeric(df.get("volume", 0), errors="coerce").fillna(0.0)
     df = df.dropna(subset=["high", "low", "close"]).reset_index(drop=True)
 
+    # ── Zaman damgası (erken ayrıştırılır: forming-bar filtresi için) ──────
+    if "time" in df.columns:      # decider/MT5 barları: epoch saniye
+        ts = pd.to_datetime(df["time"], unit="s", utc=True, errors="coerce")
+    elif "timestamp" in df.columns:
+        tsv = pd.to_numeric(df["timestamp"], errors="coerce")
+        if tsv.notna().any():     # DataHub: epoch (ms > 1e12, s > 1e9)
+            unit = "ms" if float(tsv.dropna().iloc[-1]) > 1e12 else "s"
+            ts = pd.to_datetime(tsv, unit=unit, utc=True, errors="coerce")
+        else:                     # ISO string (candle_cache formatı)
+            ts = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
+    else:
+        ts = pd.Series([pd.NaT] * len(df))
+
+    # ── FORMING-BAR FİLTRESİ (2026-07-20 denetim düzeltmesi) ───────────────
+    # DataHub son bar(lar)ı henüz KAPANMAMIŞ olabilir (tek-tick embriyo bar,
+    # sahte gap'ler, bar-içi spike'lar). Doğrulanmış lab protokolü yalnız
+    # KAPANMIŞ barlarla karar verir — bucket'ı dolmamış kuyruk barları düşürülür.
+    # Kural yalnız zaman damgaları UTC-senkron görünüyorsa uygulanır (son bar
+    # now'a ≤10dk yakın): MT5 broker-saatli barlar (UTC+2/3) yanlışlıkla
+    # düşmesin — o yollar forming barı KAYNAKTA atlar (copy_rates pos=1).
+    # Zaman damgası yoksa fail-open (davranış değişmez).
+    if ts.notna().any():
+        now = pd.Timestamp.now(tz="UTC")
+        bar_delta = pd.Timedelta(minutes=5)
+        clock_ok = abs(ts.dropna().iloc[-1] - now) <= pd.Timedelta(minutes=10)
+        if clock_ok:
+            while len(df) and pd.notna(ts.iloc[-1]) and ts.iloc[-1] + bar_delta > now:
+                df = df.iloc[:-1]
+                ts = ts.iloc[:-1]
+            df = df.reset_index(drop=True)
+            ts = ts.reset_index(drop=True)
+    if len(df) < CH_WIN + PIVOT_W * 2 + 5:
+        return None
+
     h, l, c = df["high"], df["low"], df["close"]
     tr = pd.concat([(h - l), (h - c.shift(1)).abs(), (l - c.shift(1)).abs()], axis=1).max(axis=1)
     df["atr14"] = tr.ewm(alpha=1 / 14, adjust=False).mean()
@@ -326,17 +360,6 @@ def _prep_df(bars: Sequence[dict]) -> Optional[pd.DataFrame]:
     df["bb_width_pct"] = (4 * bb_std / bb_mid) * 100
     df["bb_width_rank"] = df["bb_width_pct"].rolling(288).rank(pct=True) * 100
 
-    if "time" in df.columns:      # decider MT5 barları: epoch saniye
-        ts = pd.to_datetime(df["time"], unit="s", utc=True, errors="coerce")
-    elif "timestamp" in df.columns:
-        tsv = pd.to_numeric(df["timestamp"], errors="coerce")
-        if tsv.notna().any():     # DataHub: epoch (ms > 1e12, s > 1e9)
-            unit = "ms" if float(tsv.dropna().iloc[-1]) > 1e12 else "s"
-            ts = pd.to_datetime(tsv, unit=unit, utc=True, errors="coerce")
-        else:                     # ISO string (candle_cache formatı)
-            ts = pd.to_datetime(df["timestamp"], utc=True, errors="coerce")
-    else:
-        ts = pd.Series([pd.NaT] * len(df))
     df["hour_utc"] = ts.dt.hour.fillna(-1)
     # Gün-çıpalı VWAP (madenci ile aynı: UTC günü başında sıfırlanır)
     if ts.notna().any():

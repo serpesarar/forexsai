@@ -32,7 +32,10 @@ def fakeout_check(mt5, mt5_symbol: str, forexsai_sym: str,
     if os.getenv("FAKEOUT_VETO", "1") == "0":
         return True, ""
     try:
-        rates = mt5.copy_rates_from_pos(mt5_symbol, mt5.TIMEFRAME_M5, 0, 400)
+        # pos=1: forming (oluşmakta olan) bar atlanır — dedektör yalnız KAPANMIŞ
+        # barlarla doğrulandı; broker-saatli MT5 barında duvar-saati filtresi
+        # çalışmaz, forming bar kaynakta dışlanır (2026-07-20 denetim).
+        rates = mt5.copy_rates_from_pos(mt5_symbol, mt5.TIMEFRAME_M5, 1, 400)
         if rates is None or len(rates) < _MIN_BARS:
             return True, ""
         bars = [{"open": float(r["open"]), "high": float(r["high"]),
