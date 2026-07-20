@@ -48,7 +48,7 @@ async def submit_report(report: FeedbackReport):
             data["email"] = report.email
             
         # 'user_reports' tablosu olmalı
-        client.table("user_reports").insert(data).execute()
+        client.table("user_reports").insert(data)
         return {"success": True, "message": "Report submitted successfully"}
     except Exception as e:
         logger.error(f"Failed to submit report: {e}")

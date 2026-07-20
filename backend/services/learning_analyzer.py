@@ -278,7 +278,7 @@ async def save_insights_to_db(insights: List[Dict[str, Any]]) -> int:
                 "is_active": True
             }
             
-            result = client.table("learning_insights").insert(record).execute()
+            result = client.table("learning_insights").insert(record)
             if safe_get_data(result):
                 saved += 1
         

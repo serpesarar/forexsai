@@ -488,7 +488,7 @@ async def save_failure_analysis(analysis: FailureAnalysis) -> bool:
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
-        result = client.table("failure_analyses").insert(data).execute()
+        result = client.table("failure_analyses").insert(data)
         return bool(safe_get_data(result))
         
     except Exception as e:

@@ -194,7 +194,7 @@ async def backfill_existing_records():
                     stats["expired"] += 1
 
             if updates:
-                client.table("prediction_logs").eq("id", rec["id"]).update(updates).execute()
+                client.table("prediction_logs").eq("id", rec["id"]).update(updates)
                 if "model_type" in updates:
                     stats["model_type_updated"] += 1
 

@@ -271,14 +271,24 @@ JSON formatında yanıt ver:
 
 Bu tahminin neden yanlış gittiğini analiz et ve öğrenme noktalarını belirle."""
 
-        response = client.messages.create(
-            model=ERROR_ANALYSIS_MODEL,
-            max_tokens=ERROR_ANALYSIS_MAX_TOKENS,
-            system=system_prompt,
-            messages=[{"role": "user", "content": user_prompt}]
-        )
-        
-        response_text = response.content[0].text
+        # Birincil: Anthropic (Haiku). Kredi/erişim hatasında llm_router'a
+        # (DeepSeek/Kimi) düş — analiz aracı tek sağlayıcıya rehin kalmasın.
+        try:
+            response = client.messages.create(
+                model=ERROR_ANALYSIS_MODEL,
+                max_tokens=ERROR_ANALYSIS_MAX_TOKENS,
+                system=system_prompt,
+                messages=[{"role": "user", "content": user_prompt}]
+            )
+            response_text = response.content[0].text
+        except Exception as anthropic_err:
+            logger.warning(f"Anthropic hata analizi başarısız ({anthropic_err}) — llm_router fallback deneniyor")
+            from services.llm_router import chat as router_chat
+            response_text, _provider = await router_chat(
+                system=system_prompt, user=user_prompt, importance="normal"
+            )
+            if not response_text or not response_text.strip():
+                return {"error": f"anthropic: {anthropic_err}; fallback boş yanıt"}
         
         # Parse JSON response
         try:
@@ -447,7 +457,7 @@ async def create_error_analysis(
             "improvement_suggestion": ai_analysis.get("pattern_to_avoid")
         }
         
-        result = client.table("error_analysis").insert(error_record).execute()
+        result = client.table("error_analysis").insert(error_record)
         
         if safe_get_data(result):
             logger.info(f"Created error analysis for prediction {prediction_id}: {error_type}")
@@ -527,7 +537,7 @@ async def create_learning_feedback_from_analysis(
             "is_active": True
         }
         
-        result = client.table("learning_feedback").insert(feedback).execute()
+        result = client.table("learning_feedback").insert(feedback)
         
         if safe_get_data(result):
             logger.info(f"Created learning feedback from error {error_id}")
@@ -571,9 +581,13 @@ async def check_and_analyze_failed_predictions(
         cutoff_iso = cutoff.isoformat()
         
         # Get outcomes that are failures
+        # order şart: sırasız sorgu her koşuda aynı fiziksel-en-eski (Şubat)
+        # satırları döndürüyordu — hepsi çoktan analizli → analyzed_count hep 0.
         query = client.table("outcome_results").select(
             "id, prediction_id, ml_correct, hit_stop, hit_target"
-        ).eq("ml_correct", False).lt("created_at", cutoff_iso).limit(limit * 2)
+        ).eq("ml_correct", False).lt("created_at", cutoff_iso).order(
+            "created_at", desc=True
+        ).limit(limit * 4)
         
         result = query.execute()
         outcomes = safe_get_data(result)

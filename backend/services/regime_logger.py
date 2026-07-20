@@ -109,9 +109,10 @@ async def log_signal(signal: dict, decision: dict,
             "notes": {"details": details} if details else None,
         }
         # None değerli alanları temizleme — Supabase nullable kabul ediyor
-        res = (client.table("entry_optimizer_logs").insert(row).execute()
-                if hasattr(client.table("entry_optimizer_logs").insert(row), "execute")
-                else client.table("entry_optimizer_logs").insert(row))
+        # NOT: özel REST istemcisinde insert() ANINDA çalışır ve dict döner.
+        # Eski hasattr'lı ternary, denetim amaçlı insert'i de gerçekten çalıştırıp
+        # HER KAYDI ÇİFT yazıyordu — tek çağrıya indirildi (2026-07-16).
+        res = client.table("entry_optimizer_logs").insert(row)
         data = (res.data if hasattr(res, "data")
                   else (res.get("data") if isinstance(res, dict) else None)) or []
         if data and isinstance(data, list) and data[0].get("id"):

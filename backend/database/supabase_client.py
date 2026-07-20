@@ -188,6 +188,30 @@ class SupabaseRestClient:
             self._http.close()
             logger.info("Supabase HTTP client closed gracefully.")
 
+    def count_rows(self, table_name: str, filters: str = "") -> Optional[int]:
+        """Satır sayısı — PostgREST count=exact başlığıyla, veri çekmeden.
+
+        filters: ham PostgREST filtre dizesi (ör. "is_active=eq.true").
+        supabase-py'nin select(count="exact") API'sinin bu istemcideki karşılığı.
+        """
+        if self.is_auth_failed():
+            return None
+        url = f"{self.url}/rest/v1/{table_name}?select=id{('&' + filters) if filters else ''}"
+        headers = {**self.headers, "Prefer": "count=exact", "Range-Unit": "items", "Range": "0-0"}
+        try:
+            resp = _retry_request(
+                lambda: self.http.get(url, headers=headers),
+                label=f"COUNT {table_name}", client=self,
+            )
+            content_range = resp.headers.get("content-range", "")
+            if "/" in content_range:
+                total = content_range.split("/")[1]
+                return int(total) if total != "*" else None
+            return None
+        except Exception as e:
+            logger.error(f"Supabase count error [{table_name}]: {e}")
+            return None
+
     def table(self, table_name: str) -> "TableQuery":
         return TableQuery(self, table_name)
 

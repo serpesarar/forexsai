@@ -254,6 +254,6 @@ def _resolve_one(client, sig: dict, df: pd.DataFrame | None) -> None:
     upd = {"status": status, "exit_time": datetime.now(timezone.utc).isoformat(),
            "exit_price": round(exit_price, 3), "pnl_points": round(pnl, 3),
            "r_multiple": round(r, 4), "updated_at": datetime.now(timezone.utc).isoformat()}
-    client.table("reflex_signals").eq("id", sig["id"]).update(upd).execute()
+    client.table("reflex_signals").eq("id", sig["id"]).update(upd)
     logger.info(f"♻️ REFLEX resolve id={sig['id']} {sig['direction']} {status} "
                 f"r={r:+.2f} ({reason})")

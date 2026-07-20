@@ -1382,21 +1382,13 @@ async def get_self_learning_status(symbol: Optional[str] = Query(None)):
         return {"error": "Database client not available"}
     
     try:
-        # Count predictions
-        pred_result = client.table("prediction_logs").select("id", count="exact").execute()
-        total_predictions = len(safe_get_data(pred_result))
-        
-        # Count outcomes
-        out_result = client.table("outcome_results").select("id", count="exact").execute()
-        total_outcomes = len(safe_get_data(out_result))
-        
-        # Count error analyses
-        err_result = client.table("error_analysis").select("id", count="exact").execute()
-        total_error_analyses = len(safe_get_data(err_result))
-        
-        # Count active feedback rules
-        fb_result = client.table("learning_feedback").select("id").eq("is_active", True).execute()
-        active_feedback_rules = len(safe_get_data(fb_result))
+        # count_rows: veri çekmeden gerçek toplamlar (eski select(count="exact")
+        # supabase-py API'siydi — özel istemcide TypeError veriyordu, endpoint ölüydü)
+        total_predictions = await asyncio.to_thread(client.count_rows, "prediction_logs") or 0
+        total_outcomes = await asyncio.to_thread(client.count_rows, "outcome_results") or 0
+        total_error_analyses = await asyncio.to_thread(client.count_rows, "error_analysis") or 0
+        active_feedback_rules = await asyncio.to_thread(
+            client.count_rows, "learning_feedback", "is_active=eq.true") or 0
         
         # Get recent error types distribution
         recent_errors = client.table("error_analysis").select(
