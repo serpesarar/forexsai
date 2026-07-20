@@ -260,7 +260,9 @@ def already_logged(ny_date: str, run_label: str) -> bool:
 # ama +60dk 4/6, +240dk 4/5 — backend/data/agent_debate_analysis_report.md).
 # ret_* ham (yönsüz) % değişimdir; isabet okuma tarafında tahmin yönüyle
 # işaretlenerek hesaplanır. mfe/mae_60m tahmin yönüne görelidir.
-HORIZONS_MIN = (10, 30, 60, 240)
+# Karar dayanıklılık merdiveni (2026-07-20): karar anından +10dk → +6 saat.
+# Panel ısı haritası bu ufuklarla "karar kaç dakika/saat geçerli kalıyor"u çizer.
+HORIZONS_MIN = (10, 30, 60, 90, 120, 180, 240, 300, 360)
 _HORIZON_LOOKBACK_BARS = 6   # hedef anda mum yoksa geriye en çok 30dk bak
 
 # Sembol başına BİRİNCİL ufuk (dk) — başarı karnesinin ana metriği bu ufukta
@@ -454,6 +456,39 @@ async def fill_pending(max_days: int = 10) -> dict:
         except BiasTestError as e:
             results[d] = f"skipped: {e}"
     return results
+
+
+def backfill_horizons(max_rows: int = 500) -> dict:
+    """Ufuk merdiveni genişleyince ESKİ satırların yeni kolonlarını doldur.
+
+    horizon_filled_at dolu olsa bile yeniden hesaplar (yeni ret_90m..360m
+    kolonları null kaldığı için) — _horizon_stats idempotent, 5m mumlardan
+    aynı çapayla üretir. Tek seferlik bakım aracı; panelden çağrılmaz.
+    """
+    client = _client()
+    if client is None:
+        raise BiasTestError("db unavailable")
+    rows = (client.table("bias_test_log")
+            .select("id,run_timestamp_utc,raw_payload,predicted_bias,run_label,ny_date")
+            .is_("ret_360m", "null")
+            .order("ny_time").limit(max_rows).execute()).get("data") or []
+    done, skipped = 0, 0
+    for r in rows:
+        try:
+            run_ts = datetime.fromisoformat(
+                str(r["run_timestamp_utc"]).replace("Z", "+00:00"))
+            sym = symbol_for_row(r)
+            h = _horizon_stats(client, sym, run_ts,
+                               _decision_price(r), r.get("predicted_bias") or "")
+        except Exception as e:
+            logger.warning("[bias-test] backfill error id=%s: %s", r.get("id"), e)
+            h = None
+        if h:
+            client.table("bias_test_log").eq("id", r["id"]).update(h)
+            done += 1
+        else:
+            skipped += 1
+    return {"candidates": len(rows), "filled": done, "skipped": skipped}
 
 
 async def fill_outcomes(ny_date: Optional[str] = None) -> dict:

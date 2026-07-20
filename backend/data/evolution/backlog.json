@@ -647,5 +647,16 @@
     "source": "manual",
     "created_at": "2026-07-20T04:23:18.514880+00:00",
     "updated_at": "2026-07-20T04:23:18.514889+00:00"
+  },
+  {
+    "id": "bl_a5d5db61a5",
+    "title": "Uygulama geneli hydration uyarisi (dev): server HTML replaced #document",
+    "detail": "Tum sayfalarda (evolution + nasdaq dogrulandi) hydration mismatch uyarisi — auth store/localStorage ilk render farki suphesi. Prod build davranisini etkilemiyor gorunuyor ama kok neden bulunmali (AuthGuard/zustand persist ilk render).",
+    "category": "idea",
+    "priority": "low",
+    "status": "pending",
+    "source": "manual",
+    "created_at": "2026-07-20T20:25:20.825792+00:00",
+    "updated_at": "2026-07-20T20:25:20.825799+00:00"
   }
 ]

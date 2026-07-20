@@ -59,6 +59,106 @@ function TrendArrow({ delta }: { delta: number | null }) {
   return <MoveRight size={13} className="text-slate-500" />;
 }
 
+// ── Karar dayanıklılık ısı haritası ──────────────────────────────────────
+// Satır = sembol, sütun = karardan sonra geçen süre (10dk → 6s).
+// Hücre rengi o ufuktaki yönlü isabet — karar zamanla bozuluyorsa satır
+// soldan sağa yeşilden kırmızıya söner.
+
+const HORIZON_ORDER = ["10m", "30m", "60m", "90m", "120m", "180m", "240m", "300m", "360m"];
+const HORIZON_LABELS: Record<string, string> = {
+  "10m": "10dk", "30m": "30dk", "60m": "1s", "90m": "1.5s", "120m": "2s",
+  "180m": "3s", "240m": "4s", "300m": "5s", "360m": "6s",
+};
+
+function heatCellStyle(pct: number | null, n: number): React.CSSProperties {
+  if (pct === null || n === 0) return { background: "rgba(148,163,184,0.06)", color: "#475569" };
+  const c = biasColor(pct);
+  const alpha = n < 3 ? "22" : "40"; // az veri → soluk
+  return { background: `${c}${alpha}`, color: c, boxShadow: `inset 0 0 0 1px ${c}33` };
+}
+
+function DurabilityHeatmap({
+  bias,
+  onSymbolClick,
+}: {
+  bias: BiasReport;
+  onSymbolClick: (sym: string) => void;
+}) {
+  const bySym = bias.by_symbol_horizon ?? {};
+  const overall = bias.by_horizon ?? {};
+  const symbols = Object.keys(bySym).sort();
+  if (symbols.length === 0 && Object.keys(overall).length === 0) return null;
+
+  const rows: { key: string; label: string; data: Record<string, { n: number; accuracy_pct: number | null }>; clickable: boolean }[] = [
+    { key: "__all__", label: "TÜMÜ", data: overall, clickable: false },
+    ...symbols.map((s) => ({
+      key: s,
+      label: s.replace(".INDX", "").replace(".FOREX", ""),
+      data: bySym[s],
+      clickable: true,
+    })),
+  ];
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <table className="w-full border-separate" style={{ borderSpacing: "3px" }}>
+        <thead>
+          <tr>
+            <th className="w-16 text-left text-[9px] font-medium text-slate-600">karardan sonra →</th>
+            {HORIZON_ORDER.map((h) => (
+              <th key={h} className="min-w-[34px] text-center text-[9px] font-semibold text-slate-500">
+                +{HORIZON_LABELS[h]}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, ri) => (
+            <motion.tr
+              key={row.key}
+              initial={{ opacity: 0, y: 6 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: ri * 0.06 }}
+            >
+              <td
+                onClick={row.clickable ? () => onSymbolClick(row.key) : undefined}
+                title={row.clickable ? "Detay panelini aç" : undefined}
+                className={cx(
+                  "pr-1 text-[11px] font-medium",
+                  row.key === "__all__" ? "font-bold text-slate-200" : "text-slate-300",
+                  row.clickable && "cursor-pointer hover:text-white"
+                )}
+              >
+                {row.label}
+              </td>
+              {HORIZON_ORDER.map((h) => {
+                const cell = row.data?.[h];
+                const pct = cell?.accuracy_pct ?? null;
+                const n = cell?.n ?? 0;
+                return (
+                  <td
+                    key={h}
+                    onClick={row.clickable ? () => onSymbolClick(row.key) : undefined}
+                    title={`+${HORIZON_LABELS[h]}: ${pct !== null ? `%${pct} isabet` : "veri yok"} (${n} çağrı)`}
+                    className={cx(
+                      "h-[30px] rounded-lg text-center align-middle text-[10px] font-bold tabular-nums transition-transform",
+                      row.clickable && "cursor-pointer hover:scale-110"
+                    )}
+                    style={heatCellStyle(pct, n)}
+                  >
+                    {pct !== null ? Math.round(pct) : "·"}
+                  </td>
+                );
+              })}
+            </motion.tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /** Isı şeridi — kronolojik kararlar (eski→yeni): yeşil isabet, kırmızı ıska, gri çekimser. */
 function HeatStrip({ timeline, tall = false }: { timeline: BiasTimelineCell[] | undefined; tall?: boolean }) {
   const cells = timeline ?? [];
@@ -365,53 +465,17 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                 {overallPct !== null && overallPct < 55 && <Badge tone="red">alt sınırın altında</Badge>}
               </div>
 
-              {/* Sembol satırları: ısı şeridi (eski→yeni) + trend oku + isabet */}
-              <div className="mt-5 w-full space-y-1">
-                {(primary
-                  ? Object.entries(primary.per_symbol).map(([sym, s]) => ({
-                      sym,
-                      pct: s.accuracy_pct,
-                      sub: `${s.horizon_min}dk · ${s.n} çağrı${s.abstain_n ? ` · ${s.abstain_n} çekimser` : ""}`,
-                      timeline: s.timeline,
-                      trend: timelineTrend(s.timeline),
-                    }))
-                  : Object.entries(bias.by_symbol ?? {}).map(([sym, r]) => ({
-                      sym,
-                      pct: r.accuracy_pct,
-                      sub: `${r.n} tahmin`,
-                      timeline: undefined as BiasTimelineCell[] | undefined,
-                      trend: timelineTrend(undefined),
-                    }))
-                ).map((row, i) => (
-                  <motion.button
-                    key={row.sym}
-                    {...stagger(i)}
-                    onClick={() => setOpenBiasSymbol(row.sym)}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-xs transition hover:bg-white/[0.05]"
-                    title="Detay panelini aç — saat, ufuk ve güven kırılımı"
-                  >
-                    <span className="w-[88px] shrink-0 truncate text-left">
-                      <span className="block font-medium text-slate-300">{row.sym.replace(".INDX", "").replace(".FOREX", "")}</span>
-                      <span className="block text-[9px] text-slate-600">{row.sub}</span>
-                    </span>
-                    <div className="flex flex-1 items-center">
-                      <HeatStrip timeline={row.timeline} />
-                    </div>
-                    <span className="flex w-[70px] shrink-0 items-center justify-end gap-1 text-right">
-                      <TrendArrow delta={row.trend.delta} />
-                      <span
-                        className="text-sm font-bold tabular-nums"
-                        style={{ color: biasColor(row.trend.recentPct ?? row.pct) }}
-                      >
-                        {row.pct !== null ? `%${Math.round(row.pct)}` : "—"}
-                      </span>
-                    </span>
-                  </motion.button>
-                ))}
+              {/* Karar dayanıklılık ısı haritası: karardan +10dk → +6s isabet seyri */}
+              <div className="mt-5 w-full">
+                <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  Karar dayanıklılığı — karardan sonra isabet nasıl seyrediyor?
+                </h4>
+                <DurabilityHeatmap bias={bias} onSymbolClick={setOpenBiasSymbol} />
               </div>
               <p className="mt-3 text-center text-[10px] text-slate-600">
-                şerit: eski → yeni karar · <span className="text-emerald-400">■</span> isabet ·{" "}
-                <span className="text-rose-400">■</span> ıska · <span className="text-slate-500">■</span> çekimser — renk son döneme göre
+                hücre = o ufuktaki yönlü isabet %'si · <span className="text-emerald-400">yeşil</span> tutuyor ·{" "}
+                <span className="text-amber-400">sarı</span> zayıflıyor · <span className="text-rose-400">kırmızı</span> bozuluyor
+                · soluk = az veri · satıra tıkla → detay
               </p>
               <p className="mt-2 text-center text-[11px] text-slate-500">Hedef: ≥%65 iyi · ≥%55 canlıya alma alt sınırı</p>
             </div>
