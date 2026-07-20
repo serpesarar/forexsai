@@ -33,14 +33,32 @@ export interface DetectedPattern {
   przLow: number;
   przHigh: number;
   ratios: { legFrom: number; legTo: number; label: string }[]; // pivot idx refs
-  candles: { o: number; h: number; l: number; c: number }[];
+  /** t: bar açılış zamanı (epoch saniye) — hover crosshair tarih etiketi için */
+  candles: { o: number; h: number; l: number; c: number; t?: number }[];
   /** kesin bozulma fiyatı — fiyat bu seviyeyi yön aleyhine geçerse formasyon geçersiz */
   invalidation?: number;
   /** fiyat bozulma sınırını zaten geçti mi */
   broken?: boolean;
   /** serinin son kapanışı (şimdiki fiyat çizgisi için) */
   lastPrice?: number;
+  /** GERÇEK işlem hedefi (yalnız tamamlanmış formasyonlarda) — D bölgesi DEĞİL.
+   *  Oluşan formasyonda hedef, D tamamlanmadan bilinmez; targetPrice o zaman
+   *  D bölgesini gösterir ve kart etiketi "D BÖLGESİ (PRZ)" olur. */
+  targetLevel?: number;
 }
+
+/** tf etiketi → dakika ("4H"→240). Demo mumlarına sentetik zaman üretmekte kullanılır. */
+function tfMinutes(tf: string): number {
+  const m = /^(\d+)\s*(m|h|d)$/i.exec(tf.trim());
+  if (!m) return 60;
+  const n = Number(m[1]);
+  return m[2].toLowerCase() === "h" ? n * 60 : m[2].toLowerCase() === "d" ? n * 1440 : n;
+}
+
+const fmtT = (epochS: number) => {
+  const d = new Date(epochS * 1000);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+};
 
 function genCandles(seedPath: number[], jitter = 8): { o: number; h: number; l: number; c: number }[] {
   const out: { o: number; h: number; l: number; c: number }[] = [];
@@ -160,6 +178,7 @@ function buildPatterns(): DetectedPattern[] {
     candles: abcdCandles,
     invalidation: 22015,
     lastPrice: abcdCandles[abcdCandles.length - 1]?.c,
+    targetLevel: 21700,
   };
 
   return [gartley, triangle, abcd];
@@ -215,7 +234,9 @@ export function mapLivePatterns(raws: LivePatternRaw[], candles: LiveCandle[]): 
 
     const start = Math.max(0, Math.min(...idxs) - 3);
     const endData = Math.min(candles.length - 1, Math.max(...idxs) + 3);
-    const slice = candles.slice(start, endData + 1).map(({ o, h, l, c }) => ({ o, h, l, c }));
+    const slice = candles
+      .slice(start, endData + 1)
+      .map(({ o, h, l, c, ts }) => ({ o, h, l, c, t: Math.round(ts / 1000) }));
 
     const pivots = pivotEntries
       .sort((a, b) => a[1].index - b[1].index)
@@ -232,7 +253,13 @@ export function mapLivePatterns(raws: LivePatternRaw[], candles: LiveCandle[]): 
       if (cd) ratios.push({ legFrom: 3, legTo: 4, label: `CD≈${cd.toFixed(2)}·BC` });
     }
 
-    const target = fmtP(projPrice);
+    // Ayrım: projPrice = D tamamlanma bölgesi; p.targetPrice = GERÇEK işlem
+    // hedefi (yalnız tamamlanmışta var). Oluşan formasyonda karta D bölgesi
+    // yazılır ve etiketi "D BÖLGESİ (PRZ)" olur — "HEDEF" değil (yanıltıcıydı).
+    const realTarget = !isForming && Number.isFinite(Number(p.targetPrice))
+      ? Number(p.targetPrice)
+      : undefined;
+    const target = fmtP(realTarget ?? projPrice);
     const barsAway = Math.max(0, projIdxRaw - endData);
 
     const invalidation = Number.isFinite(Number(p.invalidation)) ? Number(p.invalidation) : undefined;
@@ -257,12 +284,12 @@ export function mapLivePatterns(raws: LivePatternRaw[], candles: LiveCandle[]): 
       targetNote: (L) =>
         isForming
           ? L(
-              `Tahmini tamamlanma: ${target} bölgesi${barsAway ? ` (~${barsAway} mum içinde)` : ""} — motor güveni %${p.confidence}.`,
-              `Expected completion: ${target} zone${barsAway ? ` (~${barsAway} candles)` : ""} — engine confidence ${p.confidence}%.`
+              `Tahmini tamamlanma: ${fmtP(projPrice)} bölgesi${barsAway ? ` (~${barsAway} mum içinde)` : ""} — motor güveni %${p.confidence}. D bölgesi bir kâr hedefi değil, fiyatın dönmesi beklenen bölgedir.`,
+              `Expected completion: ${fmtP(projPrice)} zone${barsAway ? ` (~${barsAway} candles)` : ""} — engine confidence ${p.confidence}%. The D zone is not a profit target; it is where price is expected to reverse.`
             )
           : L(
-              `Formasyon tamamlandı. Hedef: ${p.targetPrice ? fmtP(p.targetPrice) : target}${p.stopLoss ? ` · Stop: ${fmtP(p.stopLoss)}` : ""}.`,
-              `Pattern completed. Target: ${p.targetPrice ? fmtP(p.targetPrice) : target}${p.stopLoss ? ` · Stop: ${fmtP(p.stopLoss)}` : ""}.`
+              `Formasyon tamamlandı. Hedef: ${target}${p.stopLoss ? ` · Stop: ${fmtP(p.stopLoss)}` : ""}.`,
+              `Pattern completed. Target: ${target}${p.stopLoss ? ` · Stop: ${fmtP(p.stopLoss)}` : ""}.`
             ),
       pivots,
       projected: { i: projectedI, p: projPrice },
@@ -273,6 +300,7 @@ export function mapLivePatterns(raws: LivePatternRaw[], candles: LiveCandle[]): 
       invalidation,
       broken,
       lastPrice,
+      targetLevel: realTarget,
     };
   });
 }
@@ -283,36 +311,77 @@ function PatternChart({ pat }: { pat: DetectedPattern }) {
   const { L } = useNeuralLocale();
   const W = 860, H = 380, PAD = 16, PAD_R = 104;
   const total = Math.max(pat.projected.i + 4, pat.candles.length + 2);
+  const [hover, setHover] = useState<{ x: number; y: number } | null>(null);
 
   let lo = Math.min(...pat.candles.map((c) => c.l), pat.przLow);
   let hi = Math.max(...pat.candles.map((c) => c.h), pat.przHigh);
-  // bozulma çizgisi görünür kalsın; ama aralığı en fazla %35 genişletsin
-  if (Number.isFinite(pat.invalidation)) {
-    const range = hi - lo || 1;
-    const inv = pat.invalidation!;
-    if (inv < lo) lo = Math.max(inv, lo - range * 0.35);
-    if (inv > hi) hi = Math.min(inv, hi + range * 0.35);
+  // bozulma + gerçek hedef çizgileri görünür kalsın; aralığı en fazla %35 genişletsinler
+  for (const lvl of [pat.invalidation, pat.targetLevel]) {
+    if (Number.isFinite(lvl)) {
+      const range = hi - lo || 1;
+      if (lvl! < lo) lo = Math.max(lvl!, lo - range * 0.35);
+      if (lvl! > hi) hi = Math.min(lvl!, hi + range * 0.35);
+    }
   }
   const vpad = (hi - lo) * 0.08;
   lo -= vpad; hi += vpad;
 
   const toY = (p: number) => PAD + (1 - (p - lo) / (hi - lo)) * (H - PAD * 2);
   const toX = (i: number) => PAD + (i / total) * (W - PAD - PAD_R);
+  const fromY = (y: number) => lo + (1 - (y - PAD) / (H - PAD * 2)) * (hi - lo);
+  const fromX = (x: number) => ((x - PAD) / (W - PAD - PAD_R)) * total;
 
   const lastPivot = pat.pivots[pat.pivots.length - 1];
   const isProjection = pat.completion < 100;
   const invY = Number.isFinite(pat.invalidation) ? toY(pat.invalidation!) : null;
+  const tpY =
+    Number.isFinite(pat.targetLevel) && pat.targetLevel! > lo && pat.targetLevel! < hi
+      ? toY(pat.targetLevel!)
+      : null;
   const nowY =
     Number.isFinite(pat.lastPrice) && pat.lastPrice! > lo && pat.lastPrice! < hi
       ? toY(pat.lastPrice!)
       : null;
+
+  // Demo mumlarında zaman yoksa sentetik üret (son bar = şimdi varsayımı)
+  const tfSec = tfMinutes(pat.tf) * 60;
+  const timeAt = (i: number): number | null => {
+    const c = pat.candles[Math.min(i, pat.candles.length - 1)];
+    if (c?.t) return c.t + (i > pat.candles.length - 1 ? (i - (pat.candles.length - 1)) * tfSec : 0);
+    const nowS = Math.floor(Date.now() / 1000);
+    return nowS - (pat.candles.length - 1 - i) * tfSec;
+  };
+
+  // ── Hover crosshair hesapları ──
+  const hoverInfo = (() => {
+    if (!hover) return null;
+    const iRaw = Math.round(fromX(hover.x));
+    if (iRaw < 0 || iRaw > total) return null;
+    const i = Math.max(0, Math.min(iRaw, total));
+    const snapX = toX(i);
+    const candle = i < pat.candles.length ? pat.candles[i] : null;
+    const t = timeAt(i);
+    return { i, snapX, candle, t, price: fromY(hover.y), y: hover.y };
+  })();
+
+  const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    setHover({ x: ((e.clientX - r.left) / r.width) * W, y: ((e.clientY - r.top) / r.height) * H });
+  };
 
   // pivot polyline
   const pivotPath = pat.pivots.map((pv, i) => `${i === 0 ? "M" : "L"} ${toX(pv.i)} ${toY(pv.p)}`).join(" ");
   const projPath = `M ${toX(lastPivot.i)} ${toY(lastPivot.p)} L ${toX(pat.projected.i)} ${toY(pat.projected.p)}`;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={pat.name(L)}>
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="w-full h-auto cursor-crosshair"
+      role="img"
+      aria-label={pat.name(L)}
+      onMouseMove={onMove}
+      onMouseLeave={() => setHover(null)}
+    >
       {/* candles */}
       {pat.candles.map((c, i) => {
         const x = toX(i);
@@ -418,12 +487,32 @@ function PatternChart({ pat }: { pat: DetectedPattern }) {
         )}
         <circle cx={toX(pat.projected.i)} cy={toY(pat.projected.p)} r="4.5" fill={pat.dirUp ? "#34d399" : "#f87171"} style={{ filter: `drop-shadow(0 0 8px ${pat.dirUp ? "#34d399" : "#f87171"})` }} />
         <text x={toX(pat.projected.i) + 12} y={toY(pat.projected.p) - 10} fill={pat.dirUp ? "#6ee7b7" : "#fca5a5"} fontSize="10" fontFamily="monospace" fontWeight="700" letterSpacing="0.08em">
-          {isProjection ? "D?" : "D"} {pat.targetPrice}
+          {isProjection ? "D?" : "D"} {fmtP(pat.projected.p)}
         </text>
         <text x={toX(pat.projected.i) + 12} y={toY(pat.projected.p) + 4} fill="#64748b" fontSize="8" fontFamily="monospace">
-          {isProjection ? L("tahmini bölge", "projected zone") : L("tamamlandı", "completed")}
+          {isProjection ? L("dönüş beklenen bölge (PRZ)", "expected reversal zone (PRZ)") : L("tamamlandı", "completed")}
         </text>
       </g>
+
+      {/* GERÇEK HEDEF çizgisi (yalnız tamamlanmış formasyon — D bölgesi değil) */}
+      {tpY !== null && (
+        <g>
+          <motion.line
+            x1={PAD} x2={W - PAD_R + 62} y1={tpY} y2={tpY}
+            stroke="#34d399" strokeWidth="1.4" strokeDasharray="7 5"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0.55, 0.9, 0.55] }}
+            transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+            style={{ filter: "drop-shadow(0 0 5px rgba(52,211,153,0.8))" }}
+          />
+          <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}>
+            <rect x={PAD + 2} y={tpY - 22} width={132} height={16} rx="3" fill="rgba(6,78,59,0.55)" stroke="#34d399" strokeOpacity="0.6" strokeWidth="0.6" />
+            <text x={PAD + 8} y={tpY - 10.5} fill="#a7f3d0" fontSize="9" fontFamily="monospace" fontWeight="700" letterSpacing="0.08em">
+              ◎ {L("HEDEF", "TARGET")} {fmtP(pat.targetLevel!)}
+            </text>
+          </motion.g>
+        </g>
+      )}
 
       {/* pivot dots + tags */}
       {pat.pivots.map((pv, i) => (
@@ -492,6 +581,64 @@ function PatternChart({ pat }: { pat: DetectedPattern }) {
           </motion.text>
         );
       })}
+
+      {/* ── HOVER CROSSHAIR: fiyat + tarih + mum OHLC ── */}
+      {hoverInfo && (
+        <g pointerEvents="none">
+          {/* dikey çizgi (mum hizasına yapışır) */}
+          <line x1={hoverInfo.snapX} x2={hoverInfo.snapX} y1={PAD} y2={H - PAD}
+            stroke="#67e8f9" strokeOpacity="0.35" strokeWidth="0.8" strokeDasharray="3 3" />
+          {/* yatay çizgi (imleç fiyatı) */}
+          <line x1={PAD} x2={W - PAD_R + 62} y1={hoverInfo.y} y2={hoverInfo.y}
+            stroke="#67e8f9" strokeOpacity="0.3" strokeWidth="0.8" strokeDasharray="3 3" />
+          {/* sağda fiyat rozeti */}
+          <g>
+            <rect x={W - PAD_R + 40} y={hoverInfo.y - 9} width={PAD_R - 44} height={18} rx="3"
+              fill="#0e7490" fillOpacity="0.92" stroke="#67e8f9" strokeOpacity="0.5" strokeWidth="0.6" />
+            <text x={W - PAD_R + 46} y={hoverInfo.y + 3.5} fill="#e0f2fe" fontSize="9.5"
+              fontFamily="monospace" fontWeight="700">
+              {fmtP(hoverInfo.price)}
+            </text>
+          </g>
+          {/* altta tarih rozeti */}
+          {hoverInfo.t !== null && (
+            <g>
+              <rect x={Math.min(Math.max(hoverInfo.snapX - 38, PAD), W - PAD_R - 40)} y={H - PAD - 16}
+                width={76} height={15} rx="3"
+                fill="#0e7490" fillOpacity="0.92" stroke="#67e8f9" strokeOpacity="0.5" strokeWidth="0.6" />
+              <text x={Math.min(Math.max(hoverInfo.snapX - 38, PAD), W - PAD_R - 40) + 38} y={H - PAD - 5}
+                textAnchor="middle" fill="#e0f2fe" fontSize="9" fontFamily="monospace" fontWeight="700">
+                {fmtT(hoverInfo.t)}{hoverInfo.candle ? "" : " ?"}
+              </text>
+            </g>
+          )}
+          {/* mumun üstünde OHLC bilgi çipi */}
+          {hoverInfo.candle && (() => {
+            const c = hoverInfo.candle;
+            const up = c.c >= c.o;
+            const boxX = Math.min(Math.max(hoverInfo.snapX - 92, PAD), W - PAD_R - 190);
+            return (
+              <g>
+                <rect x={boxX} y={PAD + 2} width={184} height={17} rx="4"
+                  fill="#0a0f1c" fillOpacity="0.94" stroke={up ? "#34d399" : "#f87171"} strokeOpacity="0.45" strokeWidth="0.7" />
+                <text x={boxX + 7} y={PAD + 14} fontSize="8.5" fontFamily="monospace" fill={up ? "#6ee7b7" : "#fca5a5"} letterSpacing="0.03em">
+                  {`A:${fmtP(c.o)} Y:${fmtP(c.h)} D:${fmtP(c.l)} K:${fmtP(c.c)}`}
+                </text>
+              </g>
+            );
+          })()}
+          {/* mum vurgusu */}
+          {hoverInfo.candle && (
+            <rect
+              x={hoverInfo.snapX - ((W - PAD - PAD_R) / total) * 0.4}
+              y={toY(hoverInfo.candle.h) - 2}
+              width={((W - PAD - PAD_R) / total) * 0.8}
+              height={Math.max(4, toY(hoverInfo.candle.l) - toY(hoverInfo.candle.h) + 4)}
+              rx="2" fill="none" stroke="#67e8f9" strokeOpacity="0.55" strokeWidth="0.8"
+            />
+          )}
+        </g>
+      )}
     </svg>
   );
 }
@@ -558,7 +705,9 @@ export default function PatternsPanel({ live, symbol }: { live?: DetectedPattern
             </span>
             <span className="text-right shrink-0">
               <span className="block font-mono text-xs text-gray-300">{p.targetPrice}</span>
-              <span className="font-mono text-[8px] tracking-[0.2em] text-gray-600">{L("HEDEF", "TARGET")}</span>
+              <span className="font-mono text-[8px] tracking-[0.2em] text-gray-600">
+                {p.completion < 100 ? L("D BÖLGESİ", "D ZONE") : L("HEDEF", "TARGET")}
+              </span>
             </span>
             <span className="font-mono text-[10px] text-cyan-400/0 group-hover:text-cyan-400/90 transition-colors shrink-0" aria-hidden>↗</span>
           </motion.button>
@@ -624,8 +773,15 @@ export default function PatternsPanel({ live, symbol }: { live?: DetectedPattern
                 {/* key levels */}
                 <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                   <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                    <div className="font-mono text-[8px] tracking-[0.2em] text-gray-600">{L("HEDEF", "TARGET")}</div>
+                    <div className="font-mono text-[8px] tracking-[0.2em] text-gray-600">
+                      {sel.completion < 100 ? L("D BÖLGESİ (PRZ)", "D ZONE (PRZ)") : L("HEDEF", "TARGET")}
+                    </div>
                     <div className={`mt-0.5 font-mono text-sm ${sel.dirUp ? "text-emerald-300" : "text-red-300"}`}>{sel.targetPrice}</div>
+                    {sel.completion < 100 && (
+                      <div className="font-mono text-[7.5px] text-gray-600">
+                        {L("dönüş beklenen bölge — kâr hedefi değil", "expected reversal zone — not a profit target")}
+                      </div>
+                    )}
                   </div>
                   <div className={`rounded-lg border px-3 py-2 ${sel.broken ? "border-red-500/50 bg-red-500/10" : "border-red-500/25 bg-red-500/[0.04]"}`}>
                     <div className="font-mono text-[8px] tracking-[0.2em] text-red-400/80">{L("BOZULMA SINIRI", "BREAK LEVEL")}</div>
