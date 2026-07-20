@@ -388,19 +388,63 @@ def run_weekly_jobs(client, state: dict) -> None:
 
 # ── Ana döngü ─────────────────────────────────────────────────────────────
 
+def _heartbeat_thread() -> None:
+    """Kalp atışını AYRI iş parçacığında at (60 sn'de bir).
+
+    2026-07-20 düzeltmesi: eskiden kalp atışı ana döngüdeydi — uzun süren bir
+    komut (ör. restart_bot'un açık-pozisyon bekleyişi) döngüyü bloklayınca
+    kalp atışı kesiliyor, MT5 kutusu gayet canlıyken panel 'çevrimdışı'
+    gösteriyordu. Artık komutlar ne yaparsa yapsın nabız atmaya devam eder.
+    """
+    hb_client = supa()
+    while True:
+        try:
+            push_heartbeat(hb_client)
+        except Exception as e:
+            log.warning("kalp atışı hatası (devam): %s", e)
+            try:
+                hb_client = supa()
+            except Exception:
+                pass
+        time.sleep(60)
+
+
+def reconcile_stale_commands(client) -> None:
+    """Başlangıçta yarım kalmış 'running' komutları 'failed' işaretle.
+
+    Ajan çökerse/yeniden başlarsa üstlendiği komutun süreci ölmüştür ama satır
+    'running' kalır — panelde sonsuza dek 'çalışıyor' görünür (canlıda 15 saat
+    asılı kalan bot restart bu yüzdendi). Taze başlangıçta bize ait koşan
+    komut OLAMAZ → hepsi kesinti sayılır.
+    """
+    try:
+        res = (client.table("evolution_commands").select("id,kind,started_at")
+               .eq("host", HOST).eq("status", "running").execute())
+        for cmd in (res.data or []):
+            _update_cmd(client, cmd["id"], status="failed", finished_at=now_iso(),
+                        output=(f"[ajan] yarıda kesildi — ajan yeniden başladı "
+                                f"({cmd.get('kind')}, başlangıç {cmd.get('started_at')}). "
+                                f"Gerekirse panelden tekrar gönder."),
+                        return_code=-1)
+            log.info("yarım kalmış komut kapatıldı: %s (%s)", cmd["id"], cmd.get("kind"))
+    except Exception as e:
+        log.warning("stale komut mutabakatı başarısız: %s", e)
+
+
 def main() -> None:
     log.info("Evrim Ajanı başlıyor | host=%s mt5=%s", HOST, HAS_MT5)
     client = supa()
     state = load_state()
     if HAS_MT5 and not mt5_connect():
         log.warning("MT5 bağlanamadı — trade push devre dışı, komut döngüsü sürüyor")
+    reconcile_stale_commands(client)
+    threading.Thread(target=_heartbeat_thread, daemon=True, name="heartbeat").start()
     last_push = 0.0
     while True:
         try:
             if time.time() - last_push > PUSH_SECONDS:
                 push_trades(client, state)
                 push_journal(client, state)
-                push_heartbeat(client)
                 run_weekly_jobs(client, state)
                 save_state(state)
                 last_push = time.time()

@@ -61,9 +61,16 @@ def get_remote_status(host: str = DEFAULT_HOST) -> Dict[str, Any]:
             online = last_seen_ago_s < ONLINE_WINDOW_SECONDS
 
     cmd_res = (client.table("evolution_commands").select(
-        "id,created_at,kind,status,requested_by,analysis_id,analysis_name,finished_at,return_code")
+        "id,created_at,kind,status,requested_by,analysis_id,analysis_name,started_at,finished_at,return_code")
         .eq("host", host).order("created_at", desc=True).limit(12).execute())
     commands = cmd_res.get("data") or []
+    # Güvenlik ağı: 3 saatten uzun 'running' = ajan o komutta öldü (kesinti).
+    # Ajan yeniden başlarken bunları failed'a çeker; panel beklerken de doğru göstersin.
+    for c in commands:
+        if c.get("status") == "running":
+            st = _parse_ts(c.get("started_at") or c.get("created_at"))
+            if st and (_now() - st).total_seconds() > 3 * 3600:
+                c["status"] = "interrupted"
     pending = sum(1 for c in commands if c.get("status") == "pending")
     running = sum(1 for c in commands if c.get("status") == "running")
 

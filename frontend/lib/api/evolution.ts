@@ -26,12 +26,31 @@ export interface BiasRate {
   accuracy_pct: number | null;
 }
 
+export interface PrimarySymbolStat {
+  horizon_min: number;
+  n: number;
+  correct: number;
+  accuracy_pct: number | null;
+  avg_signed_ret_pct: number | null;
+  abstain_n: number;
+  abstain_rate_pct: number | null;
+  abstain_quiet_day_pct: number | null;
+}
+
 export interface BiasReport {
   total_graded: number;
+  /** ANA METRİK (2026-07-18): sembolün birincil ufkunda yönlü isabet; çekimserler hariç. */
+  primary_intraday?: {
+    per_symbol: Record<string, PrimarySymbolStat>;
+    overall: { n: number; correct: number; accuracy_pct: number | null };
+  };
+  /** LEGACY gün-kapanışı metriği — yanıltıcı olabilir, ana metrik değil. */
   overall: BiasRate;
   by_symbol: Record<string, BiasRate>;
   by_run_label: Record<string, BiasRate>;
   by_confidence_bucket: Record<string, BiasRate>;
+  by_horizon?: Record<string, { n: number; correct: number; accuracy_pct: number | null; avg_signed_ret_pct: number | null }>;
+  by_symbol_horizon?: Record<string, Record<string, { n: number; correct: number; accuracy_pct: number | null; avg_signed_ret_pct: number | null }>>;
   go_live_hint: string;
 }
 

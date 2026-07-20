@@ -59,6 +59,26 @@ function BiasDetailSheet({ bias, symbol, onClose }: { bias: BiasReport; symbol: 
               isabet · {symRate.correct}/{symRate.n} tahmin
             </p>
           )}
+          {bias.by_symbol_horizon?.[symbol] && (
+            <>
+              <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Ufka göre isabet ({symbol})
+              </h4>
+              <div className="mb-4 space-y-2">
+                {Object.entries(bias.by_symbol_horizon[symbol]).map(([h, r]) => (
+                  <div key={h} className="flex items-center gap-2.5 text-xs">
+                    <span className="w-32 shrink-0 truncate font-medium text-slate-300">+{h.replace("m", " dk")}</span>
+                    <div className="flex-1">
+                      <ProgressBar pct={r.accuracy_pct ?? 0} color={biasColor(r.accuracy_pct)} />
+                    </div>
+                    <span className="w-20 shrink-0 text-right tabular-nums text-slate-500">
+                      {r.accuracy_pct !== null ? `%${r.accuracy_pct}` : "—"} · {r.n}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
             Çalıştırma etiketine göre (tüm semboller)
           </h4>
@@ -112,7 +132,11 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
   }, [overview]);
 
   const bias = overview?.bias ?? null;
-  const overallPct = bias?.overall.accuracy_pct ?? null;
+  // ANA METRİK: birincil ufukta yönlü isabet (çekimserler hariç). LEGACY
+  // gün-kapanışı overall'ı yalnız primary yoksa (eski backend) kullanılır.
+  const primary = bias?.primary_intraday ?? null;
+  const overallPct = primary?.overall?.accuracy_pct ?? bias?.overall.accuracy_pct ?? null;
+  const overallN = primary?.overall?.n ?? bias?.total_graded ?? 0;
 
   return (
     <Section
@@ -202,8 +226,15 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                 <span className="text-4xl font-bold tabular-nums text-white">
                   {overallPct !== null ? `%${overallPct}` : "—"}
                 </span>
-                <span className="mt-1 text-[11px] text-slate-500">{bias.total_graded} tahmin</span>
+                <span className="mt-1 text-[11px] text-slate-500">
+                  {overallN} yönlü çağrı
+                </span>
               </Ring>
+              {primary && (
+                <p className="mt-1.5 text-center text-[10px] text-slate-500">
+                  birincil ufukta yönlü isabet — çekimserler (nötr) hariç
+                </p>
+              )}
 
               <div className="mt-2 flex justify-center">
                 {overallPct !== null && overallPct >= 65 && <Badge tone="green">hedefin üstünde</Badge>}
@@ -212,20 +243,34 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
               </div>
 
               <div className="mt-5 w-full space-y-1">
-                {Object.entries(bias.by_symbol ?? {}).map(([sym, r], i) => (
+                {(primary
+                  ? Object.entries(primary.per_symbol).map(([sym, s]) => ({
+                      sym,
+                      pct: s.accuracy_pct,
+                      sub: `${s.horizon_min}dk · ${s.n} çağrı${s.abstain_n ? ` · ${s.abstain_n} çekimser` : ""}`,
+                    }))
+                  : Object.entries(bias.by_symbol ?? {}).map(([sym, r]) => ({
+                      sym,
+                      pct: r.accuracy_pct,
+                      sub: `${r.n} tahmin`,
+                    }))
+                ).map((row, i) => (
                   <motion.button
-                    key={sym}
+                    key={row.sym}
                     {...stagger(i)}
-                    onClick={() => setOpenBiasSymbol(sym)}
+                    onClick={() => setOpenBiasSymbol(row.sym)}
                     className="flex w-full items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-xs transition hover:bg-white/[0.04]"
-                    title="Etiket & güven kırılımını aç"
+                    title="Saat/etiket & ufuk kırılımını aç"
                   >
-                    <span className="w-24 shrink-0 truncate text-left font-medium text-slate-300">{sym}</span>
+                    <span className="w-24 shrink-0 truncate text-left">
+                      <span className="block font-medium text-slate-300">{row.sym}</span>
+                      <span className="block text-[9px] text-slate-600">{row.sub}</span>
+                    </span>
                     <div className="flex-1">
-                      <ProgressBar pct={r.accuracy_pct ?? 0} color={biasColor(r.accuracy_pct)} delay={i * 0.05} />
+                      <ProgressBar pct={row.pct ?? 0} color={biasColor(row.pct)} delay={i * 0.05} />
                     </div>
                     <span className="w-16 shrink-0 text-right tabular-nums text-slate-500">
-                      {r.accuracy_pct !== null ? `%${r.accuracy_pct}` : "—"}
+                      {row.pct !== null ? `%${row.pct}` : "—"}
                     </span>
                   </motion.button>
                 ))}
