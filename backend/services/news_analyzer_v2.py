@@ -363,34 +363,26 @@ class RealNewsAnalyzer:
         market_context: optional dict with current prices/direction for richer analysis.
         """
         logger.info(f"[RealAnalyzer] Analyzing: {headline[:60]}...")
-        logger.info(f"[RealAnalyzer] API key present: {bool(self.api_key)}")
 
-        if not self.api_key:
-            logger.warning("[RealAnalyzer] No API key, using fallback")
+        # Claude Code CLI (abonelik) VEYA Anthropic API key gerekiyor. DeepSeek
+        # key artık şart değil (kullanıcı Claude'a geçti).
+        from services.claude_cli import claude_cli_available
+        if not claude_cli_available() and not ANTHROPIC_API_KEY:
+            logger.warning("[RealAnalyzer] Ne Claude CLI ne Anthropic API — fallback")
             return self._fallback_analysis(headline, content)
 
+        # BİRİNCİL: Claude Code CLI + Sonnet (_call_anthropic içinde). DeepSeek
+        # KALDIRILDI (kullanıcı tercihi — panel yalnız Claude'a sadık).
         try:
             prompt = self._build_prompt(headline, content, source, market_context=market_context)
-            logger.info(f"[RealAnalyzer] Prompt built, calling DeepSeek...")
-            result = await self._call_deepseek(prompt, headline=headline, article_content=content)
-            
+            logger.info("[RealAnalyzer] Prompt built, calling Claude (CLI→API)...")
+            result = await self._call_anthropic(prompt, headline=headline, article_content=content)
             logger.info(f"[RealAnalyzer] AI analysis successful: confidence={result.confidence}")
             return result
-            
         except Exception as e:
             import traceback
-            logger.error(f"[RealAnalyzer] AI failed: {e}")
+            logger.error(f"[RealAnalyzer] Claude analiz başarısız: {e}")
             logger.error(f"[RealAnalyzer] Traceback: {traceback.format_exc()}")
-            print(f"[RealAnalyzer] AI failed: {e}")
-            print(f"[RealAnalyzer] Traceback: {traceback.format_exc()}")
-            if ANTHROPIC_API_KEY:
-                try:
-                    logger.info("[RealAnalyzer] Attempting Anthropic fallback")
-                    result = await self._call_anthropic(prompt, headline=headline, article_content=content)
-                    logger.info(f"[RealAnalyzer] Anthropic analysis successful: confidence={result.confidence}")
-                    return result
-                except Exception as anthropic_error:
-                    logger.error(f"[RealAnalyzer] Anthropic fallback failed: {anthropic_error}")
             return self._fallback_analysis(headline, content)
     
     @staticmethod
@@ -668,25 +660,38 @@ Analyze this news NOW:"""
             raise
 
     async def _call_anthropic(self, prompt: str, headline: str = "", article_content: str = "") -> NewsAnalysisResult:
-        logger.info(f"[Anthropic] Calling API with key present: {bool(ANTHROPIC_API_KEY)}")
-        client = Anthropic(api_key=ANTHROPIC_API_KEY)
-
-        def _invoke():
-            return client.messages.create(
-                model="claude-3-haiku-20240307",
-                max_tokens=1800,
-                temperature=0.1,
-                system="You are an expert financial analyst. Analyze news precisely and only report ACTUAL impacts, not generic patterns. Respond ONLY with valid JSON.",
-                messages=[{"role": "user", "content": prompt}],
-            )
-
-        response = await asyncio.to_thread(_invoke)
-
+        # BİRİNCİL: Claude Code CLI + SONNET (abonelikten, API key yok).
+        # YEDEK: Anthropic API (yalnız CLI yoksa + kredi varsa).
+        system_prompt = ("You are an expert financial analyst. Analyze news precisely "
+                         "and only report ACTUAL impacts, not generic patterns. "
+                         "Respond ONLY with valid JSON.")
+        from services.claude_cli import call_claude_cli, claude_cli_available
         text = ""
-        for block in getattr(response, "content", []) or []:
-            if getattr(block, "type", "") == "text":
-                text = str(getattr(block, "text", "") or "")
-                break
+        used_model = ""
+        if claude_cli_available():
+            text = await call_claude_cli(system_prompt, prompt, model="sonnet", timeout=120) or ""
+            if text.strip():
+                used_model = "claude_code_cli:sonnet"
+
+        if not text.strip() and ANTHROPIC_API_KEY:
+            logger.info("[Anthropic] CLI yok/boş — API key yedeği")
+            used_model = "anthropic_api:claude-3-haiku"
+            client = Anthropic(api_key=ANTHROPIC_API_KEY)
+
+            def _invoke():
+                return client.messages.create(
+                    model="claude-3-haiku-20240307",
+                    max_tokens=1800,
+                    temperature=0.1,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+
+            response = await asyncio.to_thread(_invoke)
+            for block in getattr(response, "content", []) or []:
+                if getattr(block, "type", "") == "text":
+                    text = str(getattr(block, "text", "") or "")
+                    break
 
         result = extract_json_object(text)
         if not isinstance(result, dict):
@@ -778,7 +783,7 @@ Analyze this news NOW:"""
             importance_level=importance_level,
             importance_score=importance_score,
             importance_reason=importance_reason,
-            ai_model=result.get("ai_model") or "claude-3-haiku-20240307",
+            ai_model=result.get("ai_model") or used_model or "claude_code_cli:sonnet",
         )
     
     def _fallback_analysis(self, headline: str, content: str) -> NewsAnalysisResult:

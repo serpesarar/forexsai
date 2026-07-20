@@ -36,47 +36,34 @@ async def translate_texts(texts: List[str], target_lang: str) -> List[str]:
                 missing.append(t)
                 missing_idx.append(i)
 
-    if not missing or not settings.anthropic_api_key:
-        # If no key, fall back to original English titles.
+    # Çeviri = düşük seviye iş → Claude Code CLI + HAIKU (hızlı/ucuz, abonelikten).
+    # CLI yoksa orijinal metne düş (fail-open; API key artık kullanılmıyor).
+    from services.claude_cli import call_claude_cli, claude_cli_available
+    if not missing or not claude_cli_available():
         for i in missing_idx:
             out[i] = texts[i]
         return out
 
-    prompt = f"""
-Translate the following list of texts into {lang.upper()}.
-Return STRICT JSON only as an array of strings, same length and order.
-Do not add commentary. Preserve tickers/symbols and numbers as-is.
-
-Input JSON:
-{json.dumps(missing, ensure_ascii=False)}
-""".strip()
+    system_prompt = (
+        "You are a precise translator. Return STRICT JSON only: an array of "
+        "strings, same length and order as the input. No commentary. Preserve "
+        "tickers/symbols and numbers as-is."
+    )
+    user_prompt = (
+        f"Translate the following list of texts into {lang.upper()}.\n\n"
+        f"Input JSON:\n{json.dumps(missing, ensure_ascii=False)}"
+    )
 
     try:
-        async with httpx.AsyncClient(timeout=25.0) as client:
-            resp = await client.post(
-                "https://api.anthropic.com/v1/messages",
-                headers={
-                    "x-api-key": settings.anthropic_api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                },
-                json={
-                    "model": "claude-3-haiku-20240307",
-                    "max_tokens": 900,
-                    "temperature": 0.2,
-                    "messages": [{"role": "user", "content": prompt}],
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            text = ""
-            for block in data.get("content", []) or []:
-                if block.get("type") == "text":
-                    text = block.get("text", "")
-                    break
-            translated = json.loads(text)
-            if not isinstance(translated, list) or len(translated) != len(missing):
-                raise ValueError("Invalid translation response shape")
+        text = await call_claude_cli(system_prompt, user_prompt, model="haiku", timeout=60)
+        if not text:
+            raise ValueError("claude CLI boş/yok")
+        # CLI bazen ```json fence ekleyebilir — soyup parse et
+        if "```" in text:
+            text = text.split("```json")[-1].split("```")[0] if "```json" in text else text.split("```")[1]
+        translated = json.loads(text.strip())
+        if not isinstance(translated, list) or len(translated) != len(missing):
+            raise ValueError("Invalid translation response shape")
 
         with _lock:
             for src, tr in zip(missing, translated):

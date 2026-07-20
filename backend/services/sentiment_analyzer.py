@@ -178,23 +178,32 @@ async def run_claude_sentiment(symbol: str = "NDX.INDX", lang: str = "en") -> di
 
     prompt = _build_prompt(sym, current_price, headlines, lang)
 
+    # BİRİNCİL: Claude Code CLI + SONNET (abonelikten, API key yok).
+    from services.claude_cli import call_claude_cli, claude_cli_available
+    cli_error = "claude CLI yok"
+    if claude_cli_available():
+        try:
+            market_data_summary["news_source"] = "claude_code_cli"
+            text = await call_claude_cli(
+                "Sen finansal duygu analisti bir asistansın. Yalnız istenen JSON'u döndür.",
+                prompt, model="sonnet", timeout=90,
+            )
+            if not text:
+                raise RuntimeError("claude CLI boş yanıt")
+            parsed = json.loads(_strip_markdown_fences(text))
+            return _attach_metadata(parsed, market_data_summary, headlines, None)
+        except Exception as exc:
+            cli_error = str(exc)
+
+    # YEDEK: Anthropic API (yalnız CLI yoksa + kredi varsa)
     anthropic_error = "ANTHROPIC_API_KEY missing"
     if settings.anthropic_api_key:
         try:
-            market_data_summary["news_source"] = "anthropic"
+            market_data_summary["news_source"] = "anthropic_api"
             parsed = await _call_anthropic_sentiment(prompt)
             return _attach_metadata(parsed, market_data_summary, headlines, None)
         except Exception as exc:
             anthropic_error = str(exc)
 
-    deepseek_error = "DEEP_SEEKR1 missing"
-    if settings.deepseek_api_key:
-        try:
-            market_data_summary["news_source"] = "deepseek"
-            parsed = await _call_deepseek_sentiment(prompt)
-            return _attach_metadata(parsed, market_data_summary, headlines, None)
-        except Exception as exc:
-            deepseek_error = str(exc)
-
-    reason = f"Claude unavailable: {anthropic_error}. DeepSeek unavailable: {deepseek_error}."
+    reason = f"Claude CLI unavailable: {cli_error}. Anthropic API unavailable: {anthropic_error}."
     return _fallback_response(market_data_summary, headlines, reason, "provider_fallback")

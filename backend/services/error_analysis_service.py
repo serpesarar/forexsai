@@ -4,11 +4,9 @@ Analyzes failed predictions with AI to understand what went wrong and learn from
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os
-import subprocess
 from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional
@@ -27,44 +25,11 @@ from services.target_config import (
 
 logger = logging.getLogger(__name__)
 
-# Claude Haiku 4.5 for error analysis
-# Claude Code CLI modeli (BİRİNCİL yol — abonelikten, API key yok).
-# Decider "opus" kullanıyor; hata otopsisi için "sonnet" (kullanıcı tercihi,
-# quota-dostu). Kısa ad CLI'da geçerli. Env ile değiştirilebilir.
+# Hata otopsisi model seçimi. BİRİNCİL: Claude Code CLI (ortak services.claude_cli
+# üzerinden, abonelikten — decider ile aynı). Model "sonnet" (kullanıcı tercihi,
+# yüksek seviye). YEDEK: Anthropic API (yalnız CLI yoksa + kredi varsa).
 ERROR_ANALYSIS_CLI_MODEL = os.getenv("ERROR_ANALYSIS_CLI_MODEL", "sonnet")
-# Anthropic API YEDEK modeli (yalnız CLI yoksa + kredi varsa).
 ERROR_ANALYSIS_MODEL = os.getenv("ERROR_ANALYSIS_MODEL", "claude-sonnet-5")
-
-
-def _call_claude_cli(system_prompt: str, user_prompt: str,
-                     model: str = "sonnet", timeout: int = 180) -> Optional[str]:
-    """Claude Code CLI (subprocess) ile çağrı — Claude Decider decide.py ile AYNI yol.
-
-    Kullanıcının Claude aboneliğinden gider: API key / kredi / IP gerekmez.
-    'claude' CLI kurulu ve girişli olan makinede çalışır (decider'ın koştuğu
-    kutu). CLI yoksa FileNotFoundError → None (çağıran Anthropic API'ye düşer).
-    """
-    cmd = ["claude", "--dangerously-skip-permissions", "-p",
-           "--model", model, "--output-format", "json"]
-    prompt = f"{system_prompt}\n\n{user_prompt}"  # claude -p tek prompt'u stdin'den okur
-    try:
-        r = subprocess.run(cmd, input=prompt, capture_output=True,
-                           text=True, timeout=timeout)
-    except FileNotFoundError:
-        logger.info("[error-analysis] 'claude' CLI bu makinede yok — Anthropic API'ye düşülüyor")
-        return None
-    except subprocess.TimeoutExpired:
-        logger.warning("[error-analysis] claude CLI zaman aşımı (%ss)", timeout)
-        return None
-    if r.returncode != 0:
-        logger.warning("[error-analysis] claude CLI exit %s: %s", r.returncode, (r.stderr or "")[:200])
-        return None
-    try:
-        meta = json.loads(r.stdout)
-    except json.JSONDecodeError:
-        # --output-format json başarısızsa ham stdout'u dene
-        return r.stdout or None
-    return meta.get("result") or None
 ERROR_ANALYSIS_MAX_TOKENS = 1000
 
 # Analysis check intervals
@@ -314,10 +279,11 @@ Bu tahminin neden yanlış gittiğini analiz et ve öğrenme noktalarını belir
         # Kullanıcının ABONELİĞİNDEN gider; API key / kredi / "cloud IP" YOK.
         # Yalnız CLI yoksa (ör. Railway) Anthropic API key'e düşer. DeepSeek/Kimi
         # KULLANILMAZ (kullanıcı tercihi — panel Claude'a sadık).
+        from services.claude_cli import call_claude_cli
         response_text = ""
         used_provider = ""
-        cli_text = await asyncio.to_thread(
-            _call_claude_cli, system_prompt, user_prompt, ERROR_ANALYSIS_CLI_MODEL
+        cli_text = await call_claude_cli(
+            system_prompt, user_prompt, model=ERROR_ANALYSIS_CLI_MODEL
         )
         if cli_text and cli_text.strip():
             response_text = cli_text
