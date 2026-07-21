@@ -210,6 +210,219 @@ def get_decider_stats(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, Any
     }
 
 
+def get_decider_breakdown(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, Any]:
+    """Decider yüzdesine tıkla → sembol × yön kırılımı + son kararlar.
+
+    Kaynak decider_journal: her OPEN kararının yönü decision JSON'unda,
+    sonucu outcome kolonunda (WIN/LOSS). WAIT'ler sembol başına ayrı sayılır.
+    """
+    client = _client()
+    since = (_now() - timedelta(days=days)).isoformat()
+    res = (client.table("decider_journal").select("decision,outcome,ts,symbol")
+           .eq("host", host).gte("inserted_at", since)
+           .order("ts", desc=True).limit(5000).execute())
+    rows = res.get("data") or []
+
+    def _oc(o: Any) -> Optional[str]:
+        s = (o if isinstance(o, str) else "").strip().upper()
+        return s if s in ("WIN", "LOSS") else None
+
+    by_symbol: Dict[str, dict] = {}
+    recent: List[dict] = []
+    for r in rows:
+        action, direction = _parse_decider_action(r.get("decision"))
+        sym = r.get("symbol") or "?"
+        s = by_symbol.setdefault(sym, {"waits": 0, "opens": 0, "wins": 0, "losses": 0,
+                                       "open_pending": 0, "by_direction": {}})
+        if action == "WAIT":
+            s["waits"] += 1
+            continue
+        if action not in ("OPEN", "BUY", "SELL"):
+            continue
+        d = direction or "?"
+        s["opens"] += 1
+        dd = s["by_direction"].setdefault(d, {"n": 0, "wins": 0, "losses": 0})
+        dd["n"] += 1
+        oc = _oc(r.get("outcome"))
+        if oc == "WIN":
+            s["wins"] += 1; dd["wins"] += 1
+        elif oc == "LOSS":
+            s["losses"] += 1; dd["losses"] += 1
+        else:
+            s["open_pending"] += 1
+        if len(recent) < 20:
+            reason = ""
+            dec = r.get("decision")
+            if isinstance(dec, str) and dec.startswith("{"):
+                try:
+                    reason = str(json.loads(dec).get("reason") or "")[:160]
+                except (ValueError, TypeError):
+                    pass
+            recent.append({"ts": r.get("ts"), "symbol": sym, "direction": d,
+                           "outcome": oc, "reason": reason})
+
+    def _wr(w: int, l: int) -> Optional[float]:
+        return round(100 * w / (w + l), 1) if (w + l) else None
+
+    for s in by_symbol.values():
+        s["win_rate"] = _wr(s["wins"], s["losses"])
+        for dd in s["by_direction"].values():
+            dd["win_rate"] = _wr(dd["wins"], dd["losses"])
+
+    return {"days": days, "by_symbol": by_symbol, "recent": recent}
+
+
+# Bot (broker sembolü) ↔ Decider (panel sembolü) eşlemesi.
+_BOT_SYMBOL_MAP = {
+    "NAS100": "NDX.INDX",
+    "GER40": "GDAXI.INDX",
+    "SpotCrude": "USOIL.FOREX",
+    "XAUUSD": "XAUUSD",
+    "US100": "NDX.INDX",
+    "USOIL": "USOIL.FOREX",
+}
+_PAIR_WINDOW_H = 3  # "yakın zaman dilimi" eşleme penceresi (saat)
+
+
+def get_bot_vs_decider(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, Any]:
+    """Forex botu ↔ Claude Decider yakın-zaman karşılaştırması + karşılıklı dersler.
+
+    Aynı sembolde ±3 saat penceresinde eşleştirir:
+      - agree_*: ikisi de aynı yönde açtı
+      - conflict_*: zıt yönde açtılar
+      - decider_korudu / decider_kacirdi: bot açtı, decider en yakın kararında WAIT dedi
+      - bot_kacirdi / bot_korundu: decider açtı, bot o pencerede hiç işlem yapmadı
+    'Dersler' bu istatistiklerden kural-bazlı üretilir (LLM yok — dürüst sayım).
+    """
+    client = _client()
+    since = (_now() - timedelta(days=days)).isoformat()
+
+    trades = (client.table("bot_trades")
+              .select("ticket,symbol,direction,close_time,profit,commission,swap")
+              .eq("host", host).gte("close_time", since)
+              .order("close_time").limit(3000).execute()).get("data") or []
+    for t in trades:
+        t["net"] = (t.get("profit") or 0) + (t.get("commission") or 0) + (t.get("swap") or 0)
+        t["nsym"] = _BOT_SYMBOL_MAP.get(t.get("symbol") or "", t.get("symbol"))
+        t["t"] = _parse_ts(t.get("close_time"))
+
+    jrows = (client.table("decider_journal").select("decision,outcome,ts,symbol")
+             .eq("host", host).gte("inserted_at", since)
+             .order("ts").limit(5000).execute()).get("data") or []
+    devents = []
+    for r in jrows:
+        action, direction = _parse_decider_action(r.get("decision"))
+        ts = _parse_ts(r.get("ts"))
+        if ts is None or action not in ("WAIT", "OPEN", "BUY", "SELL"):
+            continue
+        oc = (r.get("outcome") if isinstance(r.get("outcome"), str) else "") or ""
+        devents.append({"ts": ts, "sym": r.get("symbol"),
+                        "action": "WAIT" if action == "WAIT" else "OPEN",
+                        "direction": direction, "outcome": oc.strip().upper()})
+
+    window = timedelta(hours=_PAIR_WINDOW_H)
+    stats = {
+        "agree_n": 0, "agree_bot_win": 0, "agree_decider_win": 0,
+        "conflict_n": 0, "conflict_bot_win": 0, "conflict_decider_win": 0,
+        "decider_korudu": 0, "decider_kacirdi": 0,
+        "bot_korundu": 0, "bot_kacirdi": 0,
+    }
+    pairs: List[dict] = []
+    matched_open_ids: set = set()
+
+    for t in trades:
+        if t["t"] is None:
+            continue
+        near = [e for e in devents if e["sym"] == t["nsym"] and abs(e["ts"] - t["t"]) <= window]
+        if not near:
+            continue
+        opens = [e for e in near if e["action"] == "OPEN"]
+        ev = min(opens or near, key=lambda e: abs(e["ts"] - t["t"]))
+        bot_win = t["net"] > 0
+        cat = ""
+        if ev["action"] == "OPEN":
+            matched_open_ids.add(id(ev))
+            if (ev["direction"] or "?") == (t.get("direction") or "!"):
+                cat = "agree"
+                stats["agree_n"] += 1
+                stats["agree_bot_win"] += 1 if bot_win else 0
+                stats["agree_decider_win"] += 1 if ev["outcome"] == "WIN" else 0
+            else:
+                cat = "conflict"
+                stats["conflict_n"] += 1
+                stats["conflict_bot_win"] += 1 if bot_win else 0
+                stats["conflict_decider_win"] += 1 if ev["outcome"] == "WIN" else 0
+        else:  # en yakın karar WAIT
+            cat = "decider_kacirdi" if bot_win else "decider_korudu"
+            stats[cat] += 1
+        if len(pairs) < 40:
+            pairs.append({
+                "time": t["close_time"], "symbol": t["nsym"], "category": cat,
+                "bot_direction": t.get("direction"), "bot_net": round(t["net"], 2),
+                "decider_action": ev["action"], "decider_direction": ev["direction"],
+                "decider_outcome": ev["outcome"] or None,
+            })
+
+    # Decider'ın açıp botun hiç dokunmadığı pencereler
+    bot_by_sym: Dict[str, list] = {}
+    for t in trades:
+        if t["t"] is not None:
+            bot_by_sym.setdefault(t["nsym"], []).append(t["t"])
+    for e in devents:
+        if e["action"] != "OPEN" or id(e) in matched_open_ids or e["outcome"] not in ("WIN", "LOSS"):
+            continue
+        if any(abs(bt - e["ts"]) <= window for bt in bot_by_sym.get(e["sym"], [])):
+            continue
+        if e["outcome"] == "WIN":
+            stats["bot_kacirdi"] += 1
+        else:
+            stats["bot_korundu"] += 1
+
+    # ── Karşılıklı dersler (kural-bazlı, sayımlardan) ──
+    lessons: List[dict] = []
+
+    def _pct(a: int, b: int) -> Optional[int]:
+        return round(100 * a / b) if b else None
+
+    agree_wr = _pct(stats["agree_bot_win"], stats["agree_n"])
+    if stats["agree_n"] >= 3 and agree_wr is not None:
+        lessons.append({"to": "both", "text":
+            f"İkisi aynı yönde açtığında bot {stats['agree_n']} işlemde %{agree_wr} kazandı — "
+            "mutabakat en güçlü sinyal" + (", bu kesişim öncelikli değerlendirilmeli." if agree_wr >= 55 else
+            " değil; mutabakat bile yetmiyor, rejim filtresi gerekli.")})
+    if stats["conflict_n"] >= 3:
+        bw, dw = stats["conflict_bot_win"], stats["conflict_decider_win"]
+        winner = "bot" if bw > dw else ("decider" if dw > bw else "berabere")
+        lessons.append({"to": "both", "text":
+            f"Zıt yönde açtıkları {stats['conflict_n']} çatışmada bot {bw}, decider {dw} kez haklı çıktı — "
+            + ("bot'un momentum kuralları bu dönemde daha isabetli, decider zıt sinyalde temkin artırmalı."
+               if winner == "bot" else
+               "decider'ın bağlam okuması daha isabetli, bot zıt-decider anlarında boyut küçültmeli."
+               if winner == "decider" else "net bir üstün yok.")})
+    guard_total = stats["decider_korudu"] + stats["decider_kacirdi"]
+    if guard_total >= 5:
+        guard_rate = _pct(stats["decider_korudu"], guard_total)
+        lessons.append({"to": "bot", "text":
+            f"Decider'ın WAIT dediği anlarda bot {guard_total} işlem açtı; bunların {stats['decider_korudu']}'i "
+            f"(%{guard_rate}) kayıptı — " + ("decider'ın beklemesi değerli bir fren: bot, WAIT anlarında boyutu "
+            "kısmayı denemeli." if (guard_rate or 0) >= 55 else
+            f"ama {stats['decider_kacirdi']} kazancı da kaçırırdı; WAIT'i körü körüne fren yapma.")})
+    solo_total = stats["bot_kacirdi"] + stats["bot_korundu"]
+    if solo_total >= 3:
+        miss_rate = _pct(stats["bot_kacirdi"], solo_total)
+        lessons.append({"to": "decider", "text":
+            f"Decider'ın tek başına açtığı {solo_total} pencerede {stats['bot_kacirdi']} kazanç vardı (%{miss_rate}) — "
+            + ("bot bu kurulumları görmüyor; decider'ın kazandığı desenler bot scope'una aday."
+               if (miss_rate or 0) >= 55 else
+               "çoğu kayıptı; decider bot'un işlem açmadığı sularda daha seçici olmalı.")})
+    if not lessons:
+        lessons.append({"to": "both", "text":
+            "Henüz yeterli örtüşen işlem yok — veri biriktikçe karşılıklı dersler burada belirecek."})
+
+    return {"days": days, "window_hours": _PAIR_WINDOW_H, "stats": stats,
+            "lessons": lessons, "recent_pairs": list(reversed(pairs))[:15]}
+
+
 def get_bot_trades(symbol: str, days: int = 30, host: str = DEFAULT_HOST,
                    limit: int = 40) -> Dict[str, Any]:
     """Tek sembolün son MT5 işlemleri (panelde sembole tıkla → detay)."""

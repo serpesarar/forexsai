@@ -12,6 +12,7 @@ import {
   Bot,
   GitPullRequest,
   Loader2,
+  MessagesSquare,
   MonitorSmartphone,
   Power,
   Sparkles,
@@ -24,6 +25,8 @@ import {
   type RemoteCommandSummary,
   useBotPerformance,
   useBotTrades,
+  useBotVsDecider,
+  useDeciderBreakdown,
   useDeciderStats,
   useRemoteCommand,
   useRemoteStatus,
@@ -64,6 +67,238 @@ function CommandRow({ cmd }: { cmd: RemoteCommandSummary }) {
         {timeAgo(cmd.created_at)}
       </span>
     </button>
+  );
+}
+
+/** Decider yüzdesine tıkla → sembol × yön kırılımı + son kararlar (gerekçeli). */
+function DeciderDetailSheet({ days, onClose }: { days: number; onClose: () => void }) {
+  const { data, isLoading } = useDeciderBreakdown(days);
+  const symbols = Object.entries(data?.by_symbol ?? {}).sort((a, b) => b[1].opens - a[1].opens);
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center sm:p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: 40, opacity: 0, scale: 0.98 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 40, opacity: 0, scale: 0.98 }}
+        transition={{ type: "spring", damping: 28, stiffness: 320 }}
+        className="flex max-h-[86vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0B0F17] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-3.5">
+          <span className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+            <Wifi size={15} className="text-violet-300" /> Claude Decider — istatistik
+            <Badge tone="slate">son {days} gün</Badge>
+          </span>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="overflow-y-auto px-5 py-4">
+          {isLoading && <Skeleton className="h-32 w-full" />}
+          {symbols.length > 0 && (
+            <div className="space-y-3">
+              {symbols.map(([sym, s], i) => (
+                <motion.div
+                  key={sym}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3.5"
+                >
+                  <div className="mb-2 flex items-baseline justify-between">
+                    <span className="text-[13px] font-semibold text-slate-200">
+                      {sym.replace(".INDX", "").replace(".FOREX", "")}
+                    </span>
+                    <span className="text-xs tabular-nums text-slate-500">
+                      <span className="text-sm font-bold" style={{ color: wrColor(s.win_rate) }}>
+                        {s.win_rate !== null ? `%${Math.round(s.win_rate)}` : "—"}
+                      </span>{" "}
+                      · {s.opens} işlem kararı
+                    </span>
+                  </div>
+                  <ProgressBar pct={s.win_rate ?? 0} color={wrColor(s.win_rate)} />
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    {Object.entries(s.by_direction)
+                      .sort((a, b) => b[1].n - a[1].n)
+                      .map(([dir, d]) => (
+                        <Badge key={dir} tone={dir === "BUY" ? "green" : dir === "SELL" ? "red" : "slate"}>
+                          {dir} {d.win_rate !== null ? `%${Math.round(d.win_rate)}` : "—"} ({d.wins}K/{d.losses}Z)
+                        </Badge>
+                      ))}
+                    <Badge tone="slate">{s.waits} bekle</Badge>
+                    {s.open_pending > 0 && <Badge tone="blue">{s.open_pending} sonuç bekliyor</Badge>}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+          {(data?.recent?.length ?? 0) > 0 && (
+            <div className="mt-5">
+              <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                Son kararlar — gerekçeleriyle
+              </h4>
+              <div className="space-y-1.5">
+                {data!.recent.filter((r) => r.direction !== "?").slice(0, 10).map((r, i) => (
+                  <div key={i} className="rounded-xl px-2.5 py-1.5 text-[11px] odd:bg-white/[0.02]">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2 text-slate-300">
+                        <span className={cx("font-semibold", r.direction === "BUY" ? "text-emerald-300" : "text-rose-300")}>
+                          {r.direction}
+                        </span>
+                        {r.symbol.replace(".INDX", "").replace(".FOREX", "")}
+                      </span>
+                      <span className="flex items-center gap-2 text-slate-500">
+                        {r.outcome && (
+                          <Badge tone={r.outcome === "WIN" ? "green" : "red"}>
+                            {r.outcome === "WIN" ? "kazandı" : "kaybetti"}
+                          </Badge>
+                        )}
+                        {timeAgo(r.ts)}
+                      </span>
+                    </div>
+                    {r.reason && <p className="mt-1 leading-snug text-slate-500">{r.reason}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+const PAIR_CATEGORY: Record<string, { label: string; tone: "green" | "red" | "amber" | "blue" | "slate" }> = {
+  agree: { label: "aynı yön", tone: "blue" },
+  conflict: { label: "çatışma", tone: "amber" },
+  decider_korudu: { label: "decider korudu", tone: "green" },
+  decider_kacirdi: { label: "decider kaçırdı", tone: "red" },
+};
+
+/** Bot ↔ Decider diyaloğu — yakın-zaman kıyası + karşılıklı dersler. */
+function BotVsDeciderCard({ days }: { days: number }) {
+  const { data } = useBotVsDecider(days);
+  if (!data) return null;
+  const s = data.stats;
+  const total = s.agree_n + s.conflict_n + s.decider_korudu + s.decider_kacirdi;
+  return (
+    <GlassCard className="mt-5">
+      <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-300">
+        <MessagesSquare size={15} className="text-cyan-300" /> Bot ↔ Decider Diyaloğu
+        <span className="text-xs font-normal text-slate-500">
+          aynı sembol, ±{data.window_hours} saat penceresi · son {days} gün
+        </span>
+      </h3>
+      {total === 0 && s.bot_kacirdi + s.bot_korundu === 0 ? (
+        <p className="rounded-xl border border-dashed border-white/10 p-4 text-center text-[12px] text-slate-500">
+          Örtüşen işlem penceresi henüz yok — iki sistem veri ürettikçe kıyas burada belirecek.
+        </p>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          {/* Sol: sayılar */}
+          <div className="space-y-2 text-[12px]">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-xl border border-sky-400/15 bg-sky-400/[0.05] p-2.5">
+                <span className="block text-lg font-bold tabular-nums text-sky-300">{s.agree_n}</span>
+                <span className="text-slate-400">aynı yönde açtılar</span>
+                <span className="block text-[10px] text-slate-500">bot {s.agree_bot_win}K · decider {s.agree_decider_win}K</span>
+              </div>
+              <div className="rounded-xl border border-amber-400/15 bg-amber-400/[0.05] p-2.5">
+                <span className="block text-lg font-bold tabular-nums text-amber-300">{s.conflict_n}</span>
+                <span className="text-slate-400">zıt yönde (çatışma)</span>
+                <span className="block text-[10px] text-slate-500">bot {s.conflict_bot_win} · decider {s.conflict_decider_win} haklı</span>
+              </div>
+              <div className="rounded-xl border border-emerald-400/15 bg-emerald-400/[0.05] p-2.5">
+                <span className="block text-lg font-bold tabular-nums text-emerald-300">{s.decider_korudu}</span>
+                <span className="text-slate-400">decider WAIT dedi, bot kaybetti</span>
+                <span className="block text-[10px] text-slate-500">bekleme haklıydı (fren değeri)</span>
+              </div>
+              <div className="rounded-xl border border-rose-400/15 bg-rose-400/[0.05] p-2.5">
+                <span className="block text-lg font-bold tabular-nums text-rose-300">{s.decider_kacirdi}</span>
+                <span className="text-slate-400">decider WAIT dedi, bot kazandı</span>
+                <span className="block text-[10px] text-slate-500">fazla temkin (kaçan fırsat)</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex-1 rounded-xl border border-white/[0.07] bg-white/[0.02] p-2.5">
+                <span className="block text-base font-bold tabular-nums text-slate-200">{s.bot_kacirdi}</span>
+                <span className="text-[10px] text-slate-500">decider solo kazandı — bot görmedi</span>
+              </div>
+              <div className="flex-1 rounded-xl border border-white/[0.07] bg-white/[0.02] p-2.5">
+                <span className="block text-base font-bold tabular-nums text-slate-200">{s.bot_korundu}</span>
+                <span className="text-[10px] text-slate-500">decider solo kaybetti — bot uzak durdu</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Sağ: karşılıklı dersler */}
+          <div>
+            <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Birbirlerine dersleri
+            </h4>
+            <div className="space-y-2">
+              {data.lessons.map((l, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: 10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className={cx(
+                    "rounded-2xl border p-3 text-[11px] leading-relaxed",
+                    l.to === "bot"
+                      ? "border-orange-400/15 bg-orange-400/[0.05] text-orange-100/90"
+                      : l.to === "decider"
+                        ? "border-violet-400/15 bg-violet-400/[0.05] text-violet-100/90"
+                        : "border-cyan-400/15 bg-cyan-400/[0.05] text-cyan-100/90"
+                  )}
+                >
+                  <span className="mb-0.5 block text-[9px] font-bold uppercase tracking-wide opacity-70">
+                    {l.to === "bot" ? "🤖 Bot'a ders" : l.to === "decider" ? "🧠 Decider'a ders" : "⚖ Ortak ders"}
+                  </span>
+                  {l.text}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Son eşleşmeler */}
+      {(data.recent_pairs?.length ?? 0) > 0 && (
+        <div className="mt-4">
+          <h4 className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Son eşleşmeler</h4>
+          <div className="space-y-0.5">
+            {data.recent_pairs.slice(0, 8).map((p, i) => {
+              const cat = PAIR_CATEGORY[p.category] ?? { label: p.category, tone: "slate" as const };
+              return (
+                <div key={i} className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[11px] odd:bg-white/[0.02]">
+                  <span className="flex min-w-0 items-center gap-2 text-slate-300">
+                    <span className="shrink-0 font-medium">{p.symbol.replace(".INDX", "").replace(".FOREX", "")}</span>
+                    <span className={cx("shrink-0", (p.bot_net ?? 0) >= 0 ? "text-emerald-300/80" : "text-rose-300/80")}>
+                      bot {p.bot_direction} {p.bot_net >= 0 ? "+" : ""}{p.bot_net}$
+                    </span>
+                    <span className="truncate text-slate-500">
+                      decider {p.decider_action === "WAIT" ? "bekledi" : `${p.decider_direction ?? ""} ${p.decider_outcome === "WIN" ? "kazandı" : p.decider_outcome === "LOSS" ? "kaybetti" : ""}`}
+                    </span>
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2 text-slate-500">
+                    <Badge tone={cat.tone}>{cat.label}</Badge>
+                    {timeAgo(p.time)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </GlassCard>
   );
 }
 
@@ -135,6 +370,7 @@ export default function RemoteBotBoard({ days }: { days: number }) {
   const command = useRemoteCommand();
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [openSymbol, setOpenSymbol] = useState<string | null>(null);
+  const [deciderDetail, setDeciderDetail] = useState(false);
 
   const online = status?.online ?? false;
   const openPositions = status?.meta?.open_positions;
@@ -322,9 +558,15 @@ export default function RemoteBotBoard({ days }: { days: number }) {
               {/* İşlem kararlarının kazanma oranı (WAIT'ler sonuçsuz — WR'a girmez) */}
               <div className="mb-2.5 flex items-center gap-3">
                 {decider.win_rate !== null && (
-                  <Ring pct={decider.win_rate} color={wrColor(decider.win_rate)} size={64} stroke={6}>
-                    <span className="text-lg font-bold tabular-nums text-white">%{Math.round(decider.win_rate)}</span>
-                  </Ring>
+                  <button
+                    onClick={() => setDeciderDetail(true)}
+                    className="rounded-full transition hover:scale-105"
+                    title="Sembol × yön istatistiğini aç"
+                  >
+                    <Ring pct={decider.win_rate} color={wrColor(decider.win_rate)} size={64} stroke={6}>
+                      <span className="text-lg font-bold tabular-nums text-white">%{Math.round(decider.win_rate)}</span>
+                    </Ring>
+                  </button>
                 )}
                 <div className="text-xs leading-relaxed text-slate-400">
                   <div><span className="font-semibold text-slate-200">{decider.open_count}</span> işlem kararı · <span className="font-semibold text-slate-200">{decider.resolved}</span> sonuçlandı</div>
@@ -360,8 +602,13 @@ export default function RemoteBotBoard({ days }: { days: number }) {
           )}
         </GlassCard>
       </div>
+
+      {/* Bot ↔ Decider yakın-zaman kıyası + karşılıklı dersler */}
+      <BotVsDeciderCard days={days} />
+
       <AnimatePresence>
         {openSymbol && <TradesSheet symbol={openSymbol} days={days} onClose={() => setOpenSymbol(null)} />}
+        {deciderDetail && <DeciderDetailSheet days={days} onClose={() => setDeciderDetail(false)} />}
       </AnimatePresence>
     </Section>
   );

@@ -473,3 +473,55 @@ export function useBotTrades(symbol: string | null, days = 30) {
     staleTime: 60_000,
   });
 }
+
+// ── Decider kırılımı + Bot↔Decider diyaloğu ──────────────────────────────
+
+export interface DeciderBreakdown {
+  days: number;
+  by_symbol: Record<string, {
+    waits: number;
+    opens: number;
+    wins: number;
+    losses: number;
+    open_pending: number;
+    win_rate: number | null;
+    by_direction: Record<string, { n: number; wins: number; losses: number; win_rate: number | null }>;
+  }>;
+  recent: { ts: string; symbol: string; direction: string; outcome: string | null; reason: string }[];
+}
+
+export interface BotVsDecider {
+  days: number;
+  window_hours: number;
+  stats: {
+    agree_n: number; agree_bot_win: number; agree_decider_win: number;
+    conflict_n: number; conflict_bot_win: number; conflict_decider_win: number;
+    decider_korudu: number; decider_kacirdi: number;
+    bot_korundu: number; bot_kacirdi: number;
+  };
+  lessons: { to: "bot" | "decider" | "both"; text: string }[];
+  recent_pairs: {
+    time: string; symbol: string; category: string;
+    bot_direction: string | null; bot_net: number;
+    decider_action: string; decider_direction: string | null; decider_outcome: string | null;
+  }[];
+}
+
+export function useDeciderBreakdown(days = 30, enabled = true) {
+  return useQuery<DeciderBreakdown>({
+    queryKey: ["evolution", "remote", "decider-breakdown", days],
+    queryFn: () => getJson(`/api/evolution/remote/decider-breakdown?days=${days}`),
+    enabled,
+    staleTime: 2 * 60_000,
+  });
+}
+
+export function useBotVsDecider(days = 30) {
+  return useQuery<BotVsDecider>({
+    queryKey: ["evolution", "remote", "bot-vs-decider", days],
+    queryFn: () => getJson(`/api/evolution/remote/bot-vs-decider?days=${days}`),
+    refetchInterval: 5 * 60_000,
+    placeholderData: (prev) => prev,
+    retry: 1,
+  });
+}
