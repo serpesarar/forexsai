@@ -162,6 +162,14 @@ _DERIVED_OVERRIDES = {
         targets=[TargetLevel("TP1", 1.04), TargetLevel("TP2", 1.30),
                  TargetLevel("TP3", 1.60), TargetLevel("TP4", 2.00)],
         stoploss_pips=1.49, source="walkforward:USOIL-SELL/5of5-folds")),
+    # 2026-07-21 kullanıcı onayı: AI-Ops MFE/MAE grid önerisi (n=966, critical).
+    # TP merdiveni AYNI kalır (30); SL 50→81.3 — erken stop avlanması ana kayıp
+    # kaynağıydı (beklenen WR %38.7→%62.4, +9258 pip). Günlük Analist'in
+    # "canlıya alma adayı" tespiti üzerine onaylandı.
+    "GDAXI.INDX": ("BUY", DirectionOverride(
+        targets=[TargetLevel("TP1", 30), TargetLevel("TP2", 30),
+                 TargetLevel("TP3", 30), TargetLevel("TP4", 30)],
+        stoploss_pips=81.3, source="ai-ops:tp_sl/42acad10-n966")),
 }
 
 DERIVED_OVERRIDES_ACTIVE = _os.getenv("TP_SL_DERIVED_OVERRIDES", "1") == "1"
