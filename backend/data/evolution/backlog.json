@@ -757,5 +757,16 @@
     "source": "daily_analyst",
     "created_at": "2026-07-21T19:08:05.984243+00:00",
     "updated_at": "2026-07-21T19:08:05.984246+00:00"
+  },
+  {
+    "id": "bl_8a81dc0fdb",
+    "title": "NDX BUY BE@30dk kuralını bota gölge modda bağla",
+    "detail": "research/trade_mgmt_ndx/REPORT.md: BE@30dk BUY-only +16.2R [7.7,24.3] P=99.9; önce 2 hafta gölge (önerilen BE loglanır, gerçek SL değişmez), sonra canlı karar",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-21T21:09:28.840367+00:00",
+    "updated_at": "2026-07-21T21:09:28.840498+00:00"
   }
 ]

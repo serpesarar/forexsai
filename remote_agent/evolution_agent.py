@@ -17,6 +17,15 @@ AŞAĞI AKIŞ (Supabase → kutu, 30 sn'de bir komut kuyruğu):
   • git_pull          repoyu günceller (yeni kural/kod, commit'li olanlar)
   • restart_bot       botu GÜVENLİ pencerede yeniden başlatır
                       (açık pozisyon varsa bekler; payload {"force": true} beklemez)
+  • restart_process   payload {"target": "decider|bot|backend|agent"} — ilgili
+                      süreci öldürüp .bat'ıyla yeniden açar (bot güvenli-bekler)
+
+OTO-GÜNCELLEME (AUTO_UPDATE_ENABLED=True default): 10 dk'da bir git fetch;
+origin gerideyse pull + değişen klasöre göre İLGİLİ süreci kendiliğinden
+yeniden başlatır (claude_decider/ → decider, yeni deneme/ → bot [pozisyonsuz
+anda], backend/ → panel backend, remote_agent/ → ajan kendini yeniler —
+start_agent.bat döngüsü yeni kodla kaldırır). Ana bilgisayardan push etmek
+YETERLİ; kutuya dokunmak gerekmez.
 
 HAFTALIK İŞLER: agent_config.WEEKLY_JOBS — her hafta belirlenen gün/saatte
 kendi kendine koşar, sonuçlar komut kaydı olarak panele düşer.
@@ -31,6 +40,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import subprocess
 import sys
 import threading
@@ -318,11 +328,133 @@ def handle_restart_bot(client, cmd: dict) -> tuple[str, int]:
     return "\n".join(lines) + "\n" + out, rc
 
 
+# ── Süreç yönetimi: öldür + .bat ile yeniden aç ───────────────────────────
+# Hedef süreçler komut satırı imzasıyla bulunur (pencere başlığına güvenmez);
+# .bat yolları repo köküne göre. agent_config.PROCESS_TARGETS ile ezilebilir.
+
+DEFAULT_PROCESS_TARGETS = {
+    "decider": {"match": "run_decider.py", "bat": r"calistir\3_claude_decider.bat"},
+    "bot":     {"match": "forexsai_demo_bot.py", "bat": r"calistir\2_oto_trade_bot.bat",
+                "safe_wait": True},
+    "backend": {"match": "uvicorn", "bat": r"calistir\18_panel_backend.bat"},
+    "agent":   {"self": True},
+}
+
+
+def _process_targets() -> dict:
+    targets = dict(DEFAULT_PROCESS_TARGETS)
+    targets.update(getattr(cfg, "PROCESS_TARGETS", {}) or {})
+    return targets
+
+
+def _kill_by_cmdline(match: str) -> str:
+    """Komut satırında `match` geçen python süreçlerini öldür (Windows/Mac)."""
+    if sys.platform == "win32":
+        ps = ("Get-CimInstance Win32_Process | "
+              f"Where-Object {{ $_.CommandLine -like '*{match}*' -and $_.CommandLine -notlike '*Win32_Process*' }} | "
+              "ForEach-Object { Stop-Process -Id $_.ProcessId -Force; $_.ProcessId }")
+        r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
+                           capture_output=True, text=True, timeout=60)
+        return (r.stdout or r.stderr or "").strip()
+    r = subprocess.run(["pkill", "-f", match], capture_output=True, text=True)
+    return f"pkill rc={r.returncode}"
+
+
+def _start_bat(rel_bat: str) -> str:
+    path = Path(cfg.REPO_ROOT) / rel_bat
+    if not path.exists():
+        return f"HATA: {path} yok"
+    if sys.platform == "win32":
+        subprocess.Popen(["cmd", "/c", "start", "", str(path)], cwd=str(cfg.REPO_ROOT))
+        return f"başlatıldı: {rel_bat}"
+    return f"(windows-dışı: {rel_bat} elle başlatılmalı)"
+
+
+def restart_target(name: str, force: bool = False) -> tuple[str, int]:
+    """Bir süreci yeniden başlat. 'agent' → kendini kapatır (start_agent.bat
+    döngüsü yeni kodla kaldırır). Bot güvenli-bekler (pozisyon açıkken ertelenir)."""
+    t = _process_targets().get(name)
+    if not t:
+        return f"[ajan] bilinmeyen hedef: {name}", 2
+    if t.get("self"):
+        log.info("ajan kendini yeniliyor (start_agent.bat yeniden kaldıracak)")
+        threading.Timer(2.0, lambda: os._exit(0)).start()
+        return "[ajan] kendini kapatıyor — 30 sn içinde yeni kodla geri gelir", 0
+    if t.get("safe_wait") and not force and open_position_count() > 0:
+        return f"[ajan] {name}: açık pozisyon var — yeniden başlatma ERTELENDİ", 3
+    killed = _kill_by_cmdline(t["match"])
+    time.sleep(3)
+    started = _start_bat(t["bat"])
+    return f"[ajan] {name}: kill[{killed or 'süreç yoktu'}] → {started}", 0
+
+
+def handle_restart_process(client, cmd: dict) -> tuple[str, int]:
+    p = cmd.get("payload") or {}
+    return restart_target(str(p.get("target", "")), force=bool(p.get("force")))
+
+
+# ── Oto-güncelleme: push et → kutu kendini günceller ─────────────────────
+
+AUTO_UPDATE_ENABLED = getattr(cfg, "AUTO_UPDATE_ENABLED", True)
+AUTO_UPDATE_INTERVAL = int(getattr(cfg, "AUTO_UPDATE_INTERVAL_SECONDS", 600))
+
+# Değişen klasör → yeniden başlatılacak süreç ('agent' EN SON — kendimizi
+# kapatınca kalan restart'ları yeni ajan değil bu tur yapmış olmalıyız).
+AUTO_RESTART_MAP = [
+    ("claude_decider/", "decider"),
+    ("yeni deneme/", "bot"),
+    ("backend/", "backend"),
+    ("remote_agent/", "agent"),
+]
+
+
+def auto_update_tick(client) -> None:
+    """git fetch → gerideysek pull → değişen klasörlere göre süreçleri tazele."""
+    repo = str(cfg.REPO_ROOT)
+
+    def _git(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run(["git", *args], cwd=repo, capture_output=True,
+                              text=True, timeout=180)
+
+    if _git("fetch", "--quiet").returncode != 0:
+        return
+    behind = _git("rev-list", "--count", "HEAD..@{u}").stdout.strip()
+    if not behind or behind == "0":
+        return
+    old_head = _git("rev-parse", "HEAD").stdout.strip()
+    pull = _git("pull", "--ff-only")
+    if pull.returncode != 0:
+        log.warning("oto-güncelleme pull başarısız: %s", (pull.stderr or "")[:200])
+        return
+    changed = _git("diff", "--name-only", f"{old_head}..HEAD").stdout.splitlines()
+    log.info("oto-güncelleme: %s commit çekildi, %d dosya değişti", behind, len(changed))
+
+    results = []
+    for prefix, target in AUTO_RESTART_MAP:
+        if any(f.startswith(prefix) for f in changed):
+            out, rc = restart_target(target)
+            results.append(f"{target}: rc={rc} {out[:80]}")
+            log.info("oto-restart %s → rc=%s", target, rc)
+    # Panelde iz bırak: değişiklik akışında görünsün
+    try:
+        client.table("evolution_commands").insert({
+            "host": HOST, "kind": "run_analysis", "requested_by": "auto_update",
+            "analysis_id": "auto_update", "analysis_name": "Oto-güncelleme (git pull + restart)",
+            "payload": {"command": "(otomatik)"}, "status": "done",
+            "started_at": now_iso(), "finished_at": now_iso(), "return_code": 0,
+            "output": f"{behind} commit çekildi.\nDeğişen: " + "\n".join(changed[:30])
+                      + ("\nYeniden başlatılan:\n" + "\n".join(results) if results else "\nSüreç restart'ı gerekmedi."),
+        }).execute()
+    except Exception:
+        pass
+
+
 HANDLERS = {
     "run_analysis": handle_run_analysis,
     "sync_lessons": handle_sync_lessons,
     "git_pull": handle_git_pull,
     "restart_bot": handle_restart_bot,
+    "restart_process": handle_restart_process,
 }
 
 
@@ -440,6 +572,7 @@ def main() -> None:
     reconcile_stale_commands(client)
     threading.Thread(target=_heartbeat_thread, daemon=True, name="heartbeat").start()
     last_push = 0.0
+    last_update = time.time()  # açılışta pull zaten taze (start_agent döngüsü)
     while True:
         try:
             if time.time() - last_push > PUSH_SECONDS:
@@ -448,6 +581,9 @@ def main() -> None:
                 run_weekly_jobs(client, state)
                 save_state(state)
                 last_push = time.time()
+            if AUTO_UPDATE_ENABLED and time.time() - last_update > AUTO_UPDATE_INTERVAL:
+                last_update = time.time()
+                auto_update_tick(client)
             process_commands(client)
         except KeyboardInterrupt:
             log.info("kapanıyor")

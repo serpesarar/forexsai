@@ -40,6 +40,8 @@ Sonra `calistir\` klasöründeki bat'lara **çift tıkla** (her biri ayrı pence
 | `3_claude_decider.bat` | Opus decider (shadow) | Pepperstone + Claude login |
 | `4_vix_kaydedici.bat` | Canlı VIX → Supabase | Pepperstone |
 | `16_tick_kaydedici.bat` | bid/ask tick → YEREL disk (`yeni deneme\tickdata\`) | IC Markets |
+| `18_panel_backend.bat` | Panel backend (FastAPI): ajan tartışması + günlük analist + lifecycle — MacBook'a gerek kalmaz | — |
+| `remote_agent\start_agent.bat` | Evrim Ajanı: panel köprüsü + OTO-GÜNCELLEME (push → kutu kendini günceller) | — |
 | `5_decider_ozet.bat` | Decider WR/EV özeti (ara sıra) | — |
 | `6_decider_ogrenme.bat` | Haftalık öğrenme | — |
 | `7-14_*.bat` | Talep-üzerine analizler (kaçırılan, kalibrasyon, SL otopsi, model kıyas...) | — |

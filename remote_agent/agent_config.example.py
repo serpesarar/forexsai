@@ -26,6 +26,13 @@ MT5_SERVER = None
 #   start "forexsai_bot" cmd /k "cd /d %REPO%\yeni deneme && python forexsai_demo_bot.py"
 BOT_RESTART_SCRIPT = REPO_ROOT + r"\remote_agent\restart_bot.bat"
 
+# ── Oto-güncelleme (push et → kutu kendini günceller + süreçleri tazeler) ──
+AUTO_UPDATE_ENABLED = True
+AUTO_UPDATE_INTERVAL_SECONDS = 600   # 10 dk'da bir git fetch
+# Değişen klasöre göre yeniden başlatılan süreçler agent içinde tanımlı
+# (DEFAULT_PROCESS_TARGETS); farklı .bat adları kullanıyorsan burada ez:
+# PROCESS_TARGETS = {"decider": {"match": "run_decider.py", "bat": r"calistir\3_claude_decider.bat"}}
+
 # ── Haftalık işler (pazar 06:00 UTC varsayılan; panel komut kaydı olarak görür) ─
 WEEKLY_JOBS = [
     {
