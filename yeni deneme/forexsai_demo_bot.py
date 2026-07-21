@@ -855,6 +855,18 @@ def check_vix_regime() -> None:
     log.info("%s — VIX=%.1f favored=%s, %d model onaylıyor → market giriş",
              scope_key, vix, favored, len(voters))
     cfg = {"tp": config.VIX_REGIME_TP, "sl": config.VIX_REGIME_SL, "is_pct": False}
+    # SELL sabır kapısı (kanıt: Δ+39.3R — hızlı ölen SELL'ler ilk 10dk'da
+    # kendini ele veriyor; research/trade_mgmt_ndx). BUY'a UYGULANMAZ.
+    if favored == "SELL" and getattr(config, "VIXREG_SELL_PATIENCE", True):
+        tick = mt5.symbol_info_tick(mt5_symbol)
+        if tick:
+            import trade_manager
+            trade_manager.queue_sell(
+                log, scope_key, tick.bid,
+                float(config.VIX_REGIME_TP), float(config.VIX_REGIME_SL),
+                opener=lambda: open_trade(scope_key, forexsai_sym, mt5_symbol,
+                                          "SELL", cfg, voters, magic=magic))
+        return
     open_trade(scope_key, forexsai_sym, mt5_symbol, favored, cfg, voters, magic=magic)
 
 
@@ -940,6 +952,19 @@ def main():
                     reflex_exec.poll_reflex(log)
                 except Exception as e:
                     log.exception("reflex hata: %s", e)
+
+            # ── İŞLEM-SONRASI YÖNETİM: BE@30dk (NDX BUY) + kazananı-koştur
+            #    (NDX+DAX BUY) + vixreg SELL sabır kuyruğu (kanıt:
+            #    research/trade_mgmt_ndx/REPORT.md) ──
+            if getattr(config, "TRADE_MGMT_ENABLED", True):
+                try:
+                    import trade_manager
+                    trade_manager.manage_positions(mt5, log, resolve_symbol)
+                    ndx_mt5 = resolve_symbol("NDX.INDX")
+                    if ndx_mt5:
+                        trade_manager.process_pending(mt5, log, ndx_mt5)
+                except Exception as e:
+                    log.exception("trade_manager hata: %s", e)
             time.sleep(config.POLL_SECONDS)
     except KeyboardInterrupt:
         log.info("Durduruldu (Ctrl+C).")

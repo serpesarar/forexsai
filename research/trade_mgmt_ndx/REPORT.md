@@ -101,4 +101,41 @@ Spread/slippage modellenmedi (BE çıkışları gerçekte ~−1..2 puan realize 
 3. N2 ters-işlem ve N4 kısmi-kâr: gölge listede tut, canlı veri biriktikçe yeniden test.
 4. Tümü için önce **gölge mod** (öneri loglanır, MT5'e dokunulmaz) — in-sample bulgunun ileriye dönük teyidi şart. ~50 varyant tarandı; yalnız P(+)≥%97 + kohort-tutarlı + param-düz olanlar öneriye girdi.
 
-**Dosyalar:** `build_dataset.py` (veri), `replay.py` (motor+10 strateji), `analyze2.py` (segment/grid/bootstrap), `stage3.py` (teşhisler+10 yeni aile), `results*.json`, `per_trade.json`
+---
+
+# AŞAMA 4 — Tarih-Dilimi Doğrulaması + Çok-Sembol + CANLI BAĞLAMA (2026-07-21)
+
+`multi_symbol.py` — aynı sızıntısız pipeline 4 sembole; NDX'te seçilen SABİT parametreler (BE30, trail 0.6, sabır 10dk) diğer sembollere olduğu gibi uygulandı (sembol başına ayar = overfit). Haftalık tarih-dilimi kırılımı eklendi.
+
+## Dilim doğrulaması (haftalık kombo Δ)
+| Sembol/Yön | W25 | W26 | W27 | W28 | Karar |
+|---|---|---|---|---|---|
+| NDX BUY kombo | +6.4 | +22.6 | −0.1 | +0.6 | ✅ hiçbir dilim anlamlı negatif değil |
+| GDAXI BUY koştur | −0.9 | +12.4 | +0.6 | — | ✅ W26 ağırlıklı ama negatif dilim yok |
+| XAU SELL koştur | −1.2 | +10.6 | — | — | ⚠ tek haftada yoğun → yalnız decider dersi |
+| USOIL SELL kombo | −3.4 | −5.5 | +0.1 | +0.4 | ❌ |
+
+## Çok-sembol özet (Δ, bootstrap P(+))
+| | BE@30 | Kazananı-koştur (0.6R) | KOMBO | Sabır-10dk |
+|---|---|---|---|---|
+| **NDX BUY** (n=91) | +16.6 (%99.9) | +12.2 (%97) | **+29.5 (%100)** | −41.0 ❌ |
+| **NDX SELL** (n=132) | −7.6 ❌ | −0.7 | −5.8 | **+39.3 ✅** |
+| **GDAXI BUY** (n=43) | +0.1 (nötr) | **+12.1 (%98.3)** | +12.0 | −19.4 ❌ |
+| GDAXI SELL (n=79) | −3.4 | +0.3 | −3.3 | +52.2 (ama 15/79 giriş ≈ kapat) |
+| XAU BUY (n=71) | 0.0 (tetiklenmiyor) | −1.7 | −1.7 | +3.0 |
+| **XAU SELL** (n=75) | 0.0 | **+9.4 (%95)** | +9.4 | −2.4 |
+| USOIL BUY (n=28) | +1.6 | +7.0 (%93) | +4.2 | +2.1 |
+| USOIL SELL (n=60) | −10.7 ❌ | +1.0 (param-hassas) | −11.3 ❌ | +12.3 |
+
+## CANLI BAĞLANANLAR (ön-kayıtlı kriter: P≥%95 + param-düz + dilim-tutarlı)
+1. ✅ **Bot — NDX BUY: BE@30dk + kazananı-koştur** (`yeni deneme/trade_manager.py`, momentum+vixreg magic)
+2. ✅ **Bot — GDAXI BUY: yalnız kazananı-koştur** (BE yok — kanıt nötr)
+3. ✅ **Bot — NDX vixreg SELL: 10dk sabır kapısı** (`queue_sell`/`process_pending`; sinyalden 10dk sonra ±menzil görülmemişse ve aleyhte <0.3R ise gir)
+4. ✅ **claude_decider — LESSONS.md onaylı ders #4** (tüm yönetim kuralları + XAU SELL ihtiyatlı notu)
+5. ❌ Bağlanmayan: USOIL (param-hassas/n küçük), XAU bot tarafı (XAU trading kapalı), GDAXI SELL (zaten kapalı olmalı)
+
+Bayraklar: `TRADE_MGMT_ENABLED`, `MGMT_BE_MINUTES=30`, `MGMT_TRAIL_R=0.6`, `VIXREG_SELL_PATIENCE=1` (config.py). Durum: `mgmt_state.json` (restart-dayanıklı). Yaş ölçümü first_seen bazlı (broker TZ kaymasına bağışık; restart'ta BE gecikir = konservatif).
+
+**HEDEF/İZLEME:** 2 hafta sonra MT5 deal geçmişinden `[MGMT]` işlemlerinin gerçekleşen R'ı replay beklentisiyle karşılaştırılacak (beklenti: NDX BUY ort. +0.32R/işlem iyileşme). Sapma büyükse bayraklar kapatılır.
+
+**Dosyalar:** `build_dataset.py` (veri), `replay.py` (motor+10 strateji), `analyze2.py` (segment/grid/bootstrap), `stage3.py` (teşhisler+10 yeni aile), `multi_symbol.py` (dilim+4 sembol), `results*.json`, `per_trade.json`
