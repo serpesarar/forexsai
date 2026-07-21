@@ -63,4 +63,42 @@ Tüm iyileşme BUY segmentinden; SELL'de her kural nötr/negatif (SELL'ler çok 
 ## Sınırlamalar
 Spread/slippage modellenmedi (BE çıkışları gerçekte ~−1..2 puan realize eder; NAS100'de ≈0.01-0.02R — sonucu değiştirmez). Aynı-bar belirsizliği konservatif çözüldü. n=91 BUY; canlıya almadan önce bot tarafında **gölge modda** (önerilen BE seviyesi loglanır, gerçek SL değişmez) 2 hafta ileriye dönük doğrulama önerilir. Bu rapor geçmiş işlem seti üzerinde in-sample'dır; parametre-düzlüğü ve çift-kohort tutarlılığı overfit riskini azaltır ama sıfırlamaz.
 
-**Dosyalar:** `build_dataset.py` (veri), `replay.py` (motor+10 strateji), `analyze2.py` (segment/grid/bootstrap), `results*.json`, `per_trade.json`
+---
+
+# AŞAMA 3 — Genişletilmiş Hipotez Uzayı (2026-07-21, bar verisi 07-21'e uzatıldı)
+
+## Yeni teşhisler
+
+| Teşhis | Sonuç | Çıkarım |
+|---|---|---|
+| **TP sonrası devam** | TP olan 99 işlemin TP-sonrası ek hareketi: **medyan +1.42R, p75 +2.78R; %77'si ≥+0.5R daha gidiyor** | Sabit TP kazananın çoğunu masada bırakıyor → "kazananı koştur" ana fırsat |
+| **SL sonrası stop-avı** | SL olan 124 işlemin **%71'i 240dk içinde girişe geri dönüyor** (%46'sı 60dk'da) | SL'ler çoğunlukla gürültü/av; re-entry ve ters-işlem aileleri denenmeye değer |
+| Hızlı başlangıç | İlk 10dk'da +0.3R gören: **%66 kazanır**; görmeyen: %25.8 | Erken momentum güçlü ayrıştırıcı |
+| Dip zamanlaması | −0.5R dalışı NE ZAMAN olursa olsun kötü (P(win) %17-30); hiç dalmayan %59.5 | Dip-zamanı bazlı kural yok |
+| BE30 saat kırılımı (BUY) | 00-06 UTC +8.4R · 06-12 +3.9 · 18-24 +5.9 · **12-18 UTC −1.9** | İyileşme gece/Avrupa'da; ABD seansında nötr (bilgi amaçlı, koşullandırma önerilmez — overfit riski) |
+
+## Yeni strateji aileleri (BUY-only, baseline +16.1R)
+
+| Strateji | totR | Δ | Bootstrap [%5,%95] | P(+) | Karar |
+|---|---|---|---|---|---|
+| **⭐ KOMBO: BE30 + kazananı-koştur (TP'de çıkma, 0.6R iz süren SL)** | **+45.6** | **+29.5** | **[+16.9, +43.1]** | **%100** | **EN GÜÇLÜ BULGU** |
+| N3 kazananı-koştur (yalnız) | +28.2 | +12.2 | [+1.1, +24.2] | %97 | güçlü; trail 0.4/0.6/0.8 hepsi + (param-düz) |
+| N2 SL-sonrası ters işlem | +29.5 | +13.3 | [−2.2, +30.2] | %92 | umutlu ama CI sıfırı kesiyor; NDX'i şortlamak drift'e karşı — BEKLET |
+| N4 kısmi kâr (½@0.5TP + BE) | +29.4 | +13.5 | [−2.0, +28.8] | %92 | param-hassas (0.4/0.6 zayıf) — BEKLET |
+| N1 SL-sonrası re-entry | +20.7 | +4.6 | — | — | zayıf |
+| N6 −0.33R limit giriş | +11.2 | −4.9 | — | — | RED (kazananları kaçırıyor) |
+| N7 10dk teyit-gecikmeli giriş | −24.9 | −41.0 | — | — | BUY'da FELAKET (hızlı kazananları kaçırıyor) |
+| N8/N9/N10 (erken kes / yavaş-scratch / V-toparlanma BE) | +13..20 | ≤+4 | — | — | kanıtsız |
+
+**Kombo detayı:** Kohort A Δ+0.4 (n=19, düz), B Δ+29.0. En iyi 5 işlem Δ'nın %42'si (26 işlem R>1 koştu — tek aykırı değere bağlı değil). Koşan işlemlerde maks tutma 248dk (gecelik swap ihmal edilebilir). Uyarı: aynı anda açılmış paralel pozisyonlar var (küme etkisi) → efektif n bootstrap'ın imasından biraz küçük.
+
+## SELL tarafı — tek işe yarayan şey "sabır kapısı"
+10dk teyit gecikmesi (sinyalden 10dk sonra, işlem hâlâ yaşıyorsa ve −0.3R üstündeyse gir): SELL kanaması **−39.9R → −0.65R**. Mekanizma: 132 SELL'in 63'ü ilk 10dk'da kendi kendine ölüyor (bunlar atlanıyor), 22'si teyit veremiyor; girilen 47'si topluca başabaş. Bu alfa değil **filtre** — ama operasyonel değeri büyük: hızlı ölen SELL'ler kendini ele veriyor. (BUY'a UYGULAMA — orada −41R.)
+
+## Nihai öneri sıralaması
+1. **NDX BUY: BE@30dk + TP'de çıkmayıp 0.6R iz süren SL** — beklenen ~+29R/91 işlem (+0.32R/işlem); iki kural birbirini tamamlıyor (BE kaybedeni sıfırlar, trail kazananı büyütür).
+2. NDX SELL: 10dk teyit kapısı (veya SELL'i kapalı tut — mevcut bilgiyle aynı kapıya çıkar).
+3. N2 ters-işlem ve N4 kısmi-kâr: gölge listede tut, canlı veri biriktikçe yeniden test.
+4. Tümü için önce **gölge mod** (öneri loglanır, MT5'e dokunulmaz) — in-sample bulgunun ileriye dönük teyidi şart. ~50 varyant tarandı; yalnız P(+)≥%97 + kohort-tutarlı + param-düz olanlar öneriye girdi.
+
+**Dosyalar:** `build_dataset.py` (veri), `replay.py` (motor+10 strateji), `analyze2.py` (segment/grid/bootstrap), `stage3.py` (teşhisler+10 yeni aile), `results*.json`, `per_trade.json`
