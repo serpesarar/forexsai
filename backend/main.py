@@ -318,7 +318,7 @@ async def lifespan(app: FastAPI):
         if os.getenv("SHADOW_TRACKER_ENABLED", "1") == "1":
             from services.shadow_trade_tracker import tracker_loop as shadow_tracker_loop
             asyncio.create_task(shadow_tracker_loop())
-            print("✅ Shadow Trade Tracker başlatıldı (pattern %60+ / fakeout, 120s)")
+            print("✅ Shadow Trade Tracker başlatıldı (pattern %60+ / fakeout / meta-core, 120s)")
         else:
             print("⏸️ Shadow Trade Tracker kapalı (SHADOW_TRACKER_ENABLED=1 ile açılır)")
     except Exception as e:

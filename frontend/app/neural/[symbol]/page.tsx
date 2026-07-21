@@ -35,6 +35,7 @@ import ModelDetailModal, { type DetailKey } from "@/components/neural/ModelDetai
 import SignalHistoryChart from "@/components/neural/SignalHistoryChart";
 import PatternsPanel, { mapLivePatterns } from "@/components/neural/PatternsPanel";
 import BreakoutRadarPanel from "@/components/neural/BreakoutRadarPanel";
+import ShadowAccuracyCard from "@/components/neural/ShadowAccuracyCard";
 import { useHydrateLocale, useNeuralLocale, type LFn } from "@/components/neural/i18n";
 import { useNeuralLive } from "@/lib/api/neural";
 import {
@@ -438,6 +439,11 @@ export default function NeuralSymbolPage() {
             </div>
             <p className="text-[13px] font-light text-gray-400 leading-relaxed">{regimeComment}</p>
           </motion.div>
+
+          {/* Core sinyallerinin sızıntısız canlı karnesi (shadow tracker: meta) */}
+          <div className="mx-auto mt-6 max-w-3xl">
+            <ShadowAccuracyCard symbol={demo.code} sources={["meta"]} />
+          </div>
 
           {/* Tartışma Konseyi — CIO bias'ı Core'a akar */}
           <div className="mt-10">

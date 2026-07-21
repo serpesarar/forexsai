@@ -1,12 +1,17 @@
 """Shadow Trade Tracker — formasyon + fakeout tespitlerinin SIZINTISIZ
 ileriye dönük paper-trade doğrulaması.
 
-İki kaynak izlenir:
+Üç kaynak izlenir:
   1. ``pattern``  — harmonic_pattern_service tespitleri (confidence >= %60,
      status=COMPLETED, TAZE: son pivot son N bar içinde kapanmış).
   2. ``fakeout``  — fakeout_service dedektör çağrıları (call=fake/genuine,
      stage=confirm_bar|wave_k2; ``resolved_observed`` HARİÇ — o gözlemdir,
      tahmin değildir → hindsight sızıntısı olurdu).
+  3. ``meta``     — 6-model ensemble/core sinyali (meta_analysis_engine).
+     Core'un CANLI çıktısı olduğu gibi test edilir (XAUUSD dahil 4 sembol);
+     TP/SL = core'un kendi risk hesabı (SL=ATR×1.5, TP1=ATR×1.0). Aynı
+     sembol+yönde yalnız 1 açık meta işlem tutulur (dedup); sinyal sürerken
+     her turda yeni işlem AÇILMAZ.
 
 Sızıntı (leak) garantileri:
   * Giriş fiyatı = karar anındaki SON KAPANMIŞ 5m barın kapanışı; koşan bar
@@ -41,6 +46,13 @@ SYMBOLS: List[str] = [
 ]
 MIN_CONFIDENCE = float(os.getenv("SHADOW_TRACKER_MIN_CONF", "60"))
 INTERVAL_SECONDS = int(os.getenv("SHADOW_TRACKER_INTERVAL_SECONDS", "120"))
+
+# Meta/core kaynağı: core'un kendi min_confidence kapısı (40) olduğu gibi
+# korunur — amaç core'u OLDUĞU GİBİ ölçmek, üstüne filtre koymak değil.
+# Rapor güven-kovaları (<60/60-70/70-80/80+) kaliteyi zaten ayrıştırır.
+META_SHADOW_ENABLED = os.getenv("META_SHADOW_ENABLED", "1") == "1"
+META_MIN_CONF = float(os.getenv("META_SHADOW_MIN_CONF", "40"))
+META_EXPIRY_HOURS = float(os.getenv("META_SHADOW_EXPIRY_HOURS", "24"))
 
 PATTERN_TIMEFRAMES = ["4h", "1h"]
 PATTERN_FRESH_BARS = 4                    # son pivot en fazla N bar önce kapanmış olmalı
@@ -193,6 +205,21 @@ def _persist_trade(trade: Dict[str, Any]) -> bool:
         return True
     res = client.table(TABLE).insert_ignore(trade)
     if res.get("error"):
+        err_text = str(res["error"])
+        # DB şeması 'meta' kaynağını henüz tanımıyorsa (CHECK kısıtı eski) veri
+        # kaybetme: belleğe düş. Migration uygulanınca bu yol kendiliğinden ölür.
+        if trade["source"] == "meta" and ("check" in err_text.lower()
+                                          or "23514" in err_text):
+            key = (trade["source"], trade["symbol"], trade["pattern_type"],
+                   trade["direction"], trade["anchor_time"])
+            if any((t["source"], t["symbol"], t["pattern_type"], t["direction"],
+                    t["anchor_time"]) == key for t in _memory_trades):
+                return False
+            trade["id"] = f"mem_{len(_memory_trades) + 1}"
+            _memory_trades.append(trade)
+            logger.warning("[shadow-tracker] meta insert DB CHECK kısıtına takıldı "
+                           "— belleğe alındı (migration bekliyor): %s", err_text)
+            return True
         logger.warning("[shadow-tracker] insert hatası: %s", res["error"])
         return False
     return not res.get("duplicate", False)
@@ -352,6 +379,100 @@ async def scan_fakeouts(now: Optional[datetime] = None) -> int:
     return opened
 
 
+def _open_meta_keys() -> Optional[set]:
+    """Açık meta işlemlerin (symbol, direction) kümesi.
+
+    None = sorgu başarısız → bu turda meta işlem AÇMA (dup spam koruması,
+    fail-closed). In-memory modda her zaman küme döner.
+    """
+    client = _db()
+    if client is None:
+        return {(t["symbol"], t["direction"]) for t in _memory_trades
+                if t.get("status") == "open" and t.get("source") == "meta"}
+    res = (client.table(TABLE).select("symbol,direction")
+           .eq("status", "open").eq("source", "meta").limit(200).execute())
+    if res.get("error"):
+        logger.warning("[shadow-tracker] açık meta sorgusu hata: %s", res["error"])
+        return None
+    keys = {(r["symbol"], r["direction"]) for r in (res.get("data") or [])}
+    # CHECK-kısıtı fallback'iyle belleğe düşmüş açık meta işlemler de sayılır
+    keys |= {(t["symbol"], t["direction"]) for t in _memory_trades
+             if t.get("status") == "open" and t.get("source") == "meta"}
+    return keys
+
+
+async def scan_meta(now: Optional[datetime] = None) -> int:
+    """Core/meta ensemble sinyalini (XAUUSD dahil 4 sembol) sanal işleme çevir.
+
+    Sızıntı garantileri diğer kaynaklarla aynı: giriş = son KAPANMIŞ 5m bar
+    kapanışı; TP/SL = core'un KENDİ risk hesabı (üzerine oynanmaz); çözüm
+    yalnız girişten sonraki barlarla. Core HOLD derse işlem yok — çekimserlik
+    de olduğu gibi kaydedilmez (işlem yoksa istatistiğe girmez).
+    """
+    if not META_SHADOW_ENABLED:
+        return 0
+    from services.meta_analysis_engine import get_meta_signal
+    now = now or _utcnow()
+    opened = 0
+    open_keys = _open_meta_keys()
+    if open_keys is None:
+        return 0
+    for symbol in SYMBOLS:
+        snap = await _entry_snapshot(symbol, now)
+        if snap is None:
+            continue                       # piyasa kapalı/bayat → açma
+        _, entry_price, entry_time = snap
+        try:
+            sig = await get_meta_signal(symbol)
+        except Exception as exc:
+            logger.warning("[shadow-tracker] meta sinyal hata %s: %s", symbol, exc)
+            continue
+        if sig is None:
+            continue
+        direction = str(sig.direction or "HOLD").upper()
+        if direction not in ("BUY", "SELL"):
+            continue
+        conf = float(sig.confidence or 0)
+        if conf < META_MIN_CONF:
+            continue
+        if (symbol, direction) in open_keys:
+            continue                       # aynı yönde açık meta işlem var
+        tp = float(sig.take_profit_1 or 0)
+        sl = float(sig.stop_loss or 0)
+        if tp <= 0 or sl <= 0:
+            continue
+        # Geometri sanity: core'un TP/SL'i bizim sızıntısız girişimizle hâlâ
+        # tutarlı mı? (core kendi anlık fiyatından hesaplar; kayma olabilir)
+        if not _geometry_ok(direction, entry_price, tp, sl):
+            continue
+        trade = _build_trade(
+            source="meta", symbol=symbol, timeframe="live",
+            pattern_type=str(sig.strength or "UNKNOWN"),
+            pattern_name=f"Core Ensemble: {sig.source_combo or '?'}",
+            direction=direction, confidence=conf,
+            anchor_time=entry_time,        # bar-bazlı dedup (unique anchor)
+            entry_time=entry_time,
+            entry=entry_price, tp=tp, sl=sl,
+            expiry_hours=META_EXPIRY_HOURS,
+            details={
+                "regime": sig.regime,
+                "agreement_ratio": sig.agreement_ratio,
+                "technical_score": sig.technical_score,
+                "source_combo": sig.source_combo,
+                "raw_confidence": sig.raw_confidence,
+                "take_profit_2": sig.take_profit_2,
+                "risk_reward": sig.risk_reward,
+                "core_entry_price": sig.entry_price,   # audit: core'un kendi girişi
+            },
+        )
+        if _persist_trade(trade):
+            opened += 1
+            open_keys.add((symbol, direction))
+            logger.info("[shadow-tracker] meta işlem: %s %s conf=%.1f (%s)",
+                        symbol, direction, conf, sig.source_combo)
+    return opened
+
+
 # ─── Çözümleme (yalnız girişten SONRAKİ barlarla) ────────────────────────────
 
 def _resolve_against_bars(trade: Dict[str, Any], bars: List[dict],
@@ -416,6 +537,8 @@ async def resolve_open_trades(now: Optional[datetime] = None) -> int:
             logger.warning("[shadow-tracker] açık işlem sorgusu hata: %s", res["error"])
             return 0
         open_trades = res.get("data") or []
+        # bellek fallback'indeki açık işlemler de çözülür (id: mem_*)
+        open_trades += [t for t in _memory_trades if t.get("status") == "open"]
     if not open_trades:
         return 0
 
@@ -430,7 +553,7 @@ async def resolve_open_trades(now: Optional[datetime] = None) -> int:
         if not update:
             continue
         update["updated_at"] = _iso(now)
-        if client is None:
+        if client is None or str(trade.get("id", "")).startswith("mem_"):
             trade.update(update)
             resolved += 1
         else:
@@ -453,7 +576,9 @@ def _bucket(conf: float) -> str:
         return "80+"
     if conf >= 70:
         return "70-80"
-    return "60-70"
+    if conf >= 60:
+        return "60-70"
+    return "<60"       # meta kaynağı core'un kendi 40 kapısıyla açılabilir
 
 
 def _aggregate(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -485,6 +610,8 @@ async def build_report(days: int = 30, symbol: Optional[str] = None) -> Dict[str
             q = q.eq("symbol", symbol)
         res = q.order("created_at", desc=True).limit(2000).execute()
         rows = (res.get("data") or []) if not res.get("error") else []
+        # bellek fallback'i (meta CHECK kısıtı) rapora dahil
+        rows += [t for t in _memory_trades if t.get("entry_time", "") >= since]
     if symbol:
         rows = [r for r in rows if r.get("symbol") == symbol]
 
@@ -540,6 +667,11 @@ async def run_cycle() -> Dict[str, Any]:
         errors.append(f"scan_fakeouts: {exc}")
         logger.exception("[shadow-tracker] scan_fakeouts hata")
     try:
+        opened += await scan_meta(now)
+    except Exception as exc:
+        errors.append(f"scan_meta: {exc}")
+        logger.exception("[shadow-tracker] scan_meta hata")
+    try:
         resolved = await resolve_open_trades(now)
     except Exception as exc:
         errors.append(f"resolve: {exc}")
@@ -556,6 +688,9 @@ def get_status() -> Dict[str, Any]:
         "min_confidence": MIN_CONFIDENCE,
         "interval_seconds": INTERVAL_SECONDS,
         "pattern_timeframes": PATTERN_TIMEFRAMES,
+        "meta_shadow_enabled": META_SHADOW_ENABLED,
+        "meta_min_confidence": META_MIN_CONF,
+        "meta_expiry_hours": META_EXPIRY_HOURS,
         "db_degraded": _db_degraded,
         "memory_trades": len(_memory_trades),
         "last_cycle": _last_cycle,

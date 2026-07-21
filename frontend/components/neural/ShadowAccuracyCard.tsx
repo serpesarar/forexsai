@@ -107,7 +107,7 @@ export default function ShadowAccuracyCard({
   sources = ["fakeout", "pattern"],
 }: {
   symbol?: string;
-  sources?: ("fakeout" | "pattern")[];
+  sources?: ("fakeout" | "pattern" | "meta")[];
 }) {
   const { L } = useNeuralLocale();
   const [report, setReport] = useState<ShadowReport | null>(null);
@@ -145,8 +145,9 @@ export default function ShadowAccuracyCard({
   const labels: Record<string, [string, string]> = {
     fakeout: ["KIRILIM ÇAĞRILARI (AI DEDEKTÖR)", "BREAKOUT CALLS (AI DETECTOR)"],
     pattern: ["FORMASYON TESPİTLERİ (%60+ GÜVEN)", "PATTERN DETECTIONS (60%+ CONF)"],
+    meta: ["CORE ENSEMBLE SİNYALLERİ (6 MODEL)", "CORE ENSEMBLE SIGNALS (6 MODELS)"],
   };
-  const accents: Record<string, string> = { fakeout: "#f59e0b", pattern: "#22d3ee" };
+  const accents: Record<string, string> = { fakeout: "#f59e0b", pattern: "#22d3ee", meta: "#34d399" };
 
   return (
     <div className="space-y-2">
