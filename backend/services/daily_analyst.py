@@ -80,21 +80,105 @@ async def _gather() -> Dict[str, Any]:
 
     try:
         from services import evolution_service as evo
+        now = datetime.now(timezone.utc)
+
+        def _age_days(iso: str) -> Optional[int]:
+            try:
+                return (now - datetime.fromisoformat(str(iso).replace("Z", "+00:00"))).days
+            except (ValueError, TypeError):
+                return None
+
         out["acik_backlog"] = [
-            {"id": b["id"], "title": b["title"], "priority": b.get("priority")}
+            {"id": b["id"], "title": b["title"], "priority": b.get("priority"),
+             "yas_gun": _age_days(b.get("created_at", ""))}
             for b in evo.get_backlog(include_done=False)
             if b.get("status") in ("pending", "in_progress")
-        ][:25]
+        ][:30]
+
+        # Hiç çalıştırılmamış / 30 gündür dokunulmamış analiz araçları —
+        # "yapılmış ama unutulmuş" envanterinin bir parçası.
+        runs = evo.list_runs(limit=200)
+        ran_ids = {r.get("analysis_id") for r in runs}
+        out["hic_calistirilmamis_araclar"] = [
+            {"id": a["id"], "name": a["name"], "category": a.get("category")}
+            for a in evo.get_analyses() if a["id"] not in ran_ids
+        ][:20]
     except Exception as e:
         out["acik_backlog"] = {"error": str(e)[:200]}
+
+    # ── Unutulmuş hazineler: TP/SL önerileri + iyileştirme teklifleri ──
+    try:
+        from database.supabase_client import get_supabase_client
+        client = get_supabase_client()
+
+        tps = (client.table("tp_sl_recommendations")
+               .select("symbol,model_type,direction,timeframe,current_tp_pips,current_sl_pips,"
+                       "recommended_tp_pips,recommended_sl_pips,expected_pnl_delta_pips,"
+                       "expected_winrate_delta_pp,sample_size,status,severity")
+               .eq("status", "pending").order("created_at", desc=True)
+               .limit(60).execute()).get("data") or []
+        tps.sort(key=lambda r: abs(r.get("expected_pnl_delta_pips") or 0), reverse=True)
+        out["tp_sl_onerileri"] = {
+            "bekleyen_toplam": len(tps),
+            "en_etkili_10": tps[:10],
+            "not": "Sistem MFE/MAE grid'inden üretilmiş, İNCELENMEMİŞ TP/SL önerileri (status=pending).",
+        }
+
+        props = (client.table("improvement_proposals")
+                 .select("symbol,model_type,root_cause,severity,status,proposed_fixes,created_at")
+                 .order("created_at", desc=True).limit(120).execute()).get("data") or []
+        pending_p = [p for p in props if p.get("status") == "pending"]
+        for p in pending_p:
+            fx = p.get("proposed_fixes")
+            p["proposed_fixes"] = (json.dumps(fx, ensure_ascii=False)[:220]
+                                   if not isinstance(fx, str) else fx[:220])
+        out["iyilestirme_teklifleri"] = {
+            "bekleyen_toplam": len(pending_p),
+            "ornekler": pending_p[:8],
+            "not": "AI-Ops hattının ürettiği, insan incelemesi BEKLEYEN teklifler.",
+        }
+    except Exception as e:
+        out["tp_sl_onerileri"] = {"error": str(e)[:200]}
+
+    # ── Gölge sistemler: kurulu ama canlıya bağlanmamış her şey ──
+    try:
+        out["golge_sistemler"] = {
+            "env_bayraklari": {
+                k: os.getenv(k, "(default)") for k in (
+                    "FAKEOUT_GATE_ENABLED", "FAKEOUT_GATE_BLOCK",
+                    "DEBATE_BIAS_GATE_ENABLED", "DEBATE_BIAS_GATE_BLOCK",
+                    "PULSE_SHADOW_INVERSION_ENABLED", "SHADOW_TRACKER_ENABLED",
+                    "ENTRY_SCORE_GATE_ENABLED", "NDX_SMC_SELL_GATE",
+                    "MACRO_BIAS_ENABLED", "MIROSHARK_SHADOW_ONLY",
+                    "CORTEX_ANALOG_INJECT", "GDAXI_PULSE1_ENABLED",
+                )
+            },
+            "not": ("*_BLOCK=0 veya default = GÖLGE modda (loglar ama etkilemez). "
+                    "Kanıt eşiğini geçen gölge sistem canlıya alma ADAYIDIR — insan onayıyla."),
+        }
+        try:
+            from services.shadow_trade_tracker import build_report
+            sr = await build_report(days=30)
+            out["golge_sistemler"]["shadow_tracker_karnesi"] = {
+                k: sr.get(k) for k in list(sr.keys())[:8]
+            }
+        except Exception as e:
+            out["golge_sistemler"]["shadow_tracker_karnesi"] = {"error": str(e)[:150]}
+    except Exception as e:
+        out["golge_sistemler"] = {"error": str(e)[:200]}
 
     return out
 
 
 # ── Analist prompt'u ─────────────────────────────────────────────────────
 
-SYSTEM_PROMPT = """Sen ForexSAI trading sisteminin KIDEMLİ VERİ ANALİSTİ ve verimlilik mimarısın. \
-Günde bir kez tüm sistem verisini incelersin; işin sistemi yarın bugünden daha isabetli yapmak.
+SYSTEM_PROMPT = """Sen ForexSAI trading sisteminin KIDEMLİ VERİ ANALİSTİ ve SİSTEM KÂHYASISIN. \
+Günde bir kez TÜM sistemi incelersin. İki şapkan var:
+(A) VERİ ANALİSTİ — sistemi yarın bugünden daha isabetli yapmak;
+(B) ENVANTER KÂHYASI — bu sistemde ÇOK emek verilmiş ama unutulmuş/kullanılmayan/yarım kalmış \
+yetenekler birikiyor: bekleyen TP/SL optimizasyon önerileri, incelenmemiş iyileştirme teklifleri, \
+aylardır GÖLGE modda bekleyen kapılar, hiç çalıştırılmamış analiz araçları, bayatlayan backlog. \
+Senin işin HİÇBİR EMEĞİN ÇÜRÜMEMESİ: her gün en değerli unutulmuşu gün yüzüne çıkar.
 
 KİMLİK VE İLKELER (pazarlıksız):
 1. KANIT DIŞI KONUŞMA. Her iddiaya sayı iliştir (n, WR, dönem). Sayı yoksa iddia yok.
@@ -105,15 +189,30 @@ yönlü isabet, çekimserler hariç) ana metriktir. Dayanıklılık ufukları (+
 5. FLIP_CLOSED nötrdür (WR'a girmez); expired nötrdür. Bunları kayıp sayan analiz hatalıdır.
 6. Trade-off'suz öneri verme: her önerinin bedelini (kaçan fırsat, azalan hacim) söyle.
 7. Ders yazarken EYLEME DÖNÜK yaz: "şu koşulda şunu yap/yapma" netliğinde, en fazla 2 cümle.
+8. KÂHYA İLKESİ: canlı davranışı değiştiren her şey (TP/SL uygulama, gölge kapıyı açma, bot kuralı) \
+İNSAN ONAYI ister — sen aday gösterir, kanıtını serer, kararı sahibine bırakırsın. Gölge/loglama \
+düzeyindeki işler (deney, backfill, rapor) doğrudan önerilebilir.
+9. ÖNCELİKLENDİR: her kategoride EN değerli 1-2 şeyi seç; 20 maddelik liste = hiç liste.
+
+KÂHYA GÖREVLERİ (veride ilgili bölümler var):
+- tp_sl_onerileri: bekleyen veri-kaynaklı TP/SL önerileri. En yüksek beklenen etkilileri değerlendir — \
+sample_size yeterliyse (≥30) canlıya alma ADAYI olarak işaretle (insan onaylı).
+- iyilestirme_teklifleri: AI-Ops'un ürettiği, incelenmemiş teklifler. Değerli olan var mı, çöp mü?
+- golge_sistemler: *_BLOCK=0 = kurulmuş ama frenlemeyen kapılar. Karnesi kanıt eşiğini geçen var mı? \
+(ör. gölge doğrulama n≥30 ve isabet ≥%55 → canlıya alma adayı). Geçemeyeni de söyle: "hâlâ bekliyor, n=X".
+- hic_calistirilmamis_araclar: hiç koşulmamış analiz araçları — hangisi bugün değer üretir? 1 tanesini seç.
+- acik_backlog: 14+ gün bayatlamış yüksek öncelikli iş varsa hatırlat.
 
 GÖREV: Aşağıdaki JSON veriyi incele ve SADECE şu şemada tek bir JSON döndür (başka hiçbir şey yazma):
 {
   "ozet": "sistemin bugünkü sağlığı, 2-3 cümle, en kritik tek bulgusuyla",
   "bulgular": ["kanıtlı gözlem (sayılarla), en önemli 3-6 madde"],
   "decider_dersleri": ["Claude Decider'ın karar prompt'una girecek ders — eyleme dönük, sayılı, en fazla 3 adet. Sadece decider verisinden GÜÇLÜ kanıtı olanlar; yoksa boş bırak"],
-  "bot_onerileri": ["bot kuralları için İNSAN ONAYLI değişiklik önerisi — hangi scope/koşul, beklenen etki; en fazla 2; yoksa boş"],
+  "bot_onerileri": ["bot kuralları/TP-SL için İNSAN ONAYLI değişiklik önerisi — hangi scope/koşul, beklenen etki, kanıt (n, delta); en fazla 2; yoksa boş"],
+  "canliya_alma_adaylari": ["kanıt eşiğini GEÇMİŞ gölge sistem/TP-SL önerisi: hangi bayrak/öneri, kanıtı ne, açılırsa beklenen etki + risk; en fazla 2; geçen yoksa boş"],
+  "unutulanlar": ["unutulmuş/kullanılmamış yetenek + bugün yapılacak SOMUT adım (ör. 'X aracını şu soruyla çalıştır', 'Y teklifi incelemeye değer çünkü...'); en fazla 3"],
   "deney_onerileri": [{"baslik": "kısa", "detay": "hangi veriyle nasıl test edilir, başarı ölçütü ne"}],
-  "verimlilik_notu": "sistemde israf/kör nokta varsa tek paragraf (ör. hep çekimser kalan sembol, hiç okunmayan metrik); yoksa boş string"
+  "verimlilik_notu": "sistemde israf/kör nokta varsa tek paragraf; yoksa boş string"
 }
 
 Kalite çıtası: bu rapor her gün üretiliyor — dünkü raporun kopyası gibi genel geçer laflar değersizdir. \
@@ -173,6 +272,9 @@ def _distribute(report: dict, raw_text: str, mechanical: bool) -> Dict[str, int]
     for text in (report.get("bot_onerileri") or [])[:2]:
         if isinstance(text, str) and text.strip():
             panel_bits.append(f"BOT ÖNERİSİ (insan onayı gerekir): {text.strip()}")
+    for text in (report.get("canliya_alma_adaylari") or [])[:2]:
+        if isinstance(text, str) and text.strip():
+            panel_bits.append(f"CANLIYA ALMA ADAYI (insan onayı gerekir): {text.strip()}")
     if (report.get("verimlilik_notu") or "").strip():
         panel_bits.append(f"VERİMLİLİK: {report['verimlilik_notu'].strip()}")
     if report.get("ozet"):
@@ -192,6 +294,19 @@ def _distribute(report: dict, raw_text: str, mechanical: bool) -> Dict[str, int]
                 counts["backlog"] += 1
             except Exception as e:
                 logger.warning("[analyst] backlog eklenemedi: %s", e)
+
+    # Unutulmuş yetenekler → backlog (kâhya çıktısı; add_backlog_item başlıkla
+    # dedup yapar, aynı unutulmuş aynı gün tekrar tekrar birikmez)
+    for text in (report.get("unutulanlar") or [])[:3]:
+        if isinstance(text, str) and len(text.strip()) > 10:
+            try:
+                evo.add_backlog_item(title=f"[Analist-Envanter] {text.strip()[:150]}",
+                                     detail=text.strip()[:800],
+                                     category="decision", priority="medium",
+                                     source=ANALYST_SOURCE)
+                counts["backlog"] += 1
+            except Exception as e:
+                logger.warning("[analyst] envanter backlog eklenemedi: %s", e)
 
     # Kutudaki decider'a OTOMATİK senkron — panel bloğunu komut kuyruğuna koy;
     # ajan 30 sn içinde LESSONS.md'ye işler. Diğer bilgisayara dokunmak yok.
@@ -219,6 +334,12 @@ def _distribute(report: dict, raw_text: str, mechanical: bool) -> Dict[str, int]
         if report.get("bot_onerileri"):
             body += ["## Bot önerileri (insan onayı bekliyor)"] + \
                     [f"- {b}" for b in report["bot_onerileri"]] + [""]
+        if report.get("canliya_alma_adaylari"):
+            body += ["## Canlıya alma adayları (insan onayı bekliyor)"] + \
+                    [f"- {c}" for c in report["canliya_alma_adaylari"]] + [""]
+        if report.get("unutulanlar"):
+            body += ["## Unutulmuşlar — bugün gün yüzüne çıkanlar"] + \
+                    [f"- {u}" for u in report["unutulanlar"]] + [""]
         if report.get("verimlilik_notu"):
             body += ["## Verimlilik", str(report["verimlilik_notu"]), ""]
         (REPORT_DIR / f"{today}.md").write_text("\n".join(body), encoding="utf-8")

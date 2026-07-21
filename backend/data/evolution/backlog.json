@@ -691,5 +691,71 @@
     "source": "daily_analyst",
     "created_at": "2026-07-21T18:51:18.710144+00:00",
     "updated_at": "2026-07-21T18:51:18.710148+00:00"
+  },
+  {
+    "id": "bl_04e4e7275f",
+    "title": "[Analist] Pattern shadow ters-yön testi",
+    "detail": "shadow_pattern_trades'te source=pattern (n=124, WR %26.3) işlemlerini yönü ters çevirerek yeniden çöz; ters WR ≥%60 çıkarsa formasyon sinyalinin yön hatası vardır. Başarı ölçütü: inverted WR ≥%58 ve avg_r>0.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-07-21T19:08:05.978257+00:00",
+    "updated_at": "2026-07-21T19:08:05.978265+00:00"
+  },
+  {
+    "id": "bl_68088ee2a2",
+    "title": "[Analist] Inverse-pulse SAR-against filtresi gölge doğrulama",
+    "detail": "pulse1_inv/pulse3_inv SELL'i 'transition + sar_bearish=false + mtf all_up' iken bloklayan filtreyi gölgede logla; bu koşuldaki geçmiş kümelerde WR %0 (n=14+13). Başarı ölçütü: filtrelenen sinyallerin gerçek WR'ı <%40, kaçan kâr ihmal edilebilir.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-07-21T19:08:05.979895+00:00",
+    "updated_at": "2026-07-21T19:08:05.979901+00:00"
+  },
+  {
+    "id": "bl_d35c057a84",
+    "title": "[Analist] USOIL bot-decider hizalama analizi",
+    "detail": "SpotCrude bot işlemlerini (n=75) decider USOIL SELL kararlarıyla eşleştir; decider ile hizalı alt-kümenin WR/net'ini hizasızdan ayır. Başarı ölçütü: hizalı alt-küme WR ≥%55 ise botun USOIL girişini decider'a kapıla.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-07-21T19:08:05.981120+00:00",
+    "updated_at": "2026-07-21T19:08:05.981125+00:00"
+  },
+  {
+    "id": "bl_e139da2ab4",
+    "title": "[Analist-Envanter] Shadow tracker pattern kaynağı %26.3 WR (n=124) — harmonic_pattern_service tespitleri sistematik yanlış. BUGÜN: 'pattern shadow inversion' deneyi çalı",
+    "detail": "Shadow tracker pattern kaynağı %26.3 WR (n=124) — harmonic_pattern_service tespitleri sistematik yanlış. BUGÜN: 'pattern shadow inversion' deneyi çalıştır; anti-prediktifse ya formasyon güven eşiğini yükselt ya da ters-yön hipotezini test et.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-07-21T19:08:05.982257+00:00",
+    "updated_at": "2026-07-21T19:08:05.982261+00:00"
+  },
+  {
+    "id": "bl_ad48f56b3f",
+    "title": "[Analist-Envanter] AI-Ops 69 incelenmemiş teklif birikmiş; çoğu tek bir tutarlı kümede: pulse*_inv SELL sinyalleri 'transition rejim + SAR bearish değil + mtf all_up' ik",
+    "detail": "AI-Ops 69 incelenmemiş teklif birikmiş; çoğu tek bir tutarlı kümede: pulse*_inv SELL sinyalleri 'transition rejim + SAR bearish değil + mtf all_up' iken %0 WR (14 ve 13'lük kümeler). BUGÜN: bu tek filtre kuralını (transition+SAR-against inverse SELL blok) gölgede test etmeye değer — 5+ ayrı teklif aynı kök nedeni işaret ediyor.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-07-21T19:08:05.983248+00:00",
+    "updated_at": "2026-07-21T19:08:05.983252+00:00"
+  },
+  {
+    "id": "bl_706a00cb54",
+    "title": "[Analist-Envanter] 'decider_baseline_compare' (Opus değer katıyor mu? vs naive gate) aracı hiç çalıştırılmamış — bot_vs_decider çatışmasında decider 5/20 kaybederken bu",
+    "detail": "'decider_baseline_compare' (Opus değer katıyor mu? vs naive gate) aracı hiç çalıştırılmamış — bot_vs_decider çatışmasında decider 5/20 kaybederken bu tam bugün cevabı olan soru. BUGÜN: bu aracı son 30g decider kararlarıyla koştur.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-07-21T19:08:05.984243+00:00",
+    "updated_at": "2026-07-21T19:08:05.984246+00:00"
   }
 ]
