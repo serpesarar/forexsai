@@ -237,6 +237,19 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Lifecycle hatası: {e}")
 
+    # 4.4 GÜNLÜK VERİ ANALİSTİ (DAILY_ANALYST_ENABLED=1 default) — günde 1 kez
+    #     Opus (Claude CLI, abonelikten) tüm panel verisini inceler; dersleri
+    #     decider'a otomatik enjekte eder, önerileri backlog'a yazar.
+    try:
+        from services.daily_analyst import ENABLED as _analyst_enabled, analyst_loop
+        if _analyst_enabled:
+            asyncio.create_task(analyst_loop())
+            print("✅ Günlük Veri Analisti başlatıldı (Opus, günde 1)")
+        else:
+            print("⏸ Günlük Veri Analisti kapalı (DAILY_ANALYST_ENABLED=0)")
+    except Exception as e:
+        print(f"❌ Günlük analist hatası: {e}")
+
     # 4.5 BIAS AUTO-RUNNER (opt-in: BIAS_AUTO_RUN_ENABLED=1) — NY saatinde
     #     debate motorunu çalıştırır + gün sonu sonuçları doldurur. Her 60s tick.
     try:

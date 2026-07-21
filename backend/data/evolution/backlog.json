@@ -669,5 +669,27 @@
     "source": "session",
     "created_at": "2026-07-21T04:37:08.398157+00:00",
     "updated_at": "2026-07-21T04:37:08.398290+00:00"
+  },
+  {
+    "id": "bl_67a850ff48",
+    "title": "[Analist] 0800 vs 0945 bias penceresi kararı",
+    "detail": "0800_main %0 (n=7) çok küçük ama 0945_confirm ile net ayrışıyor; primary_intraday bazında iki pencereyi n≥30'a kadar biriktir, 0800 ≥%55'e çıkmazsa pencereyi kapat (token tasarrufu, ölçüt: 0945 ile aradaki fark istatistiksel kalıcı mı).",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-07-21T18:51:18.709032+00:00",
+    "updated_at": "2026-07-21T18:51:18.709039+00:00"
+  },
+  {
+    "id": "bl_2e2a217e05",
+    "title": "[Analist] XAUUSD Decider atıllığı otopsisi",
+    "detail": "518/519 WAIT — kapı XAU'da neden hiç ateşlemiyor? rev_vwap eşiği XAU volatilitesine mi kalibresiz? Son 30g XAU 5m aşırılık dağılımını çıkar, eşiği XAU'ya özel ayarla, ölçüt: en az 20 kurulum + backtest ≥%60 WR.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-07-21T18:51:18.710144+00:00",
+    "updated_at": "2026-07-21T18:51:18.710148+00:00"
   }
 ]

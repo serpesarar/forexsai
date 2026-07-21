@@ -198,6 +198,29 @@ async def remote_bot_trades(symbol: str = Query(..., min_length=2, max_length=20
         raise HTTPException(status_code=503, detail=str(e))
 
 
+@router.post("/analyst/run")
+async def run_analyst_now():
+    """Günlük Veri Analisti'ni ŞİMDİ çalıştır (panelden manuel tetik)."""
+    from services.daily_analyst import run_daily_analysis
+    try:
+        return await run_daily_analysis(force=True)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/analyst/latest")
+async def analyst_latest():
+    """Son analist raporu (markdown) + tarih."""
+    from services.daily_analyst import REPORT_DIR
+    try:
+        reports = sorted(REPORT_DIR.glob("2*.md"), reverse=True)
+        if not reports:
+            return {"date": None, "report": None}
+        return {"date": reports[0].stem, "report": reports[0].read_text(encoding="utf-8")}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("/remote/decider-breakdown")
 async def remote_decider_breakdown(days: int = Query(30, ge=1, le=365)):
     """Decider sembol × yön kırılımı + son kararlar (yüzdeye tıkla → detay)."""
