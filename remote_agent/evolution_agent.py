@@ -254,7 +254,12 @@ def _stream_process(client, cmd_id: str, proc: subprocess.Popen, timeout: int) -
     t.join(timeout=10)
     with lock:
         out = "".join(buf)[-OUTPUT_LIMIT:]
-    return out, (proc.returncode if proc.returncode is not None else -9)
+    rc = proc.returncode if proc.returncode is not None else -9
+    # Windows 0xFFFFFFFF gibi işaretsiz kodlar Postgres integer'a sığmaz —
+    # işaretli 32-bit'e indir (4294967295 → -1). 2026-07-21 canlı hatası.
+    if rc > 2**31 - 1 or rc < -(2**31):
+        rc = rc - 2**32 if rc > 0 else -1
+    return out, rc
 
 
 def handle_run_analysis(client, cmd: dict) -> tuple[str, int]:
