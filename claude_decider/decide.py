@@ -15,6 +15,7 @@ quota sürdürülebilir. Quota sıkışırsa DECIDE_MODEL="sonnet".
 """
 from __future__ import annotations
 import json
+import os
 import re
 import subprocess
 import sys
@@ -230,11 +231,15 @@ def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180) -> d
     return dec
 
 
-def _enforce_guardrails(symbol: str, dec: dict) -> dict:
-    """Sert güvenlik — Opus ne derse desin: yasak yön → WAIT; size [0,1.0]; WAIT → size 0."""
+def _enforce_guardrails(symbol: str, dec: dict, allow_banned: bool = False) -> dict:
+    """Sert güvenlik — Opus ne derse desin: yasak yön → WAIT; size [0,1.0]; WAIT → size 0.
+
+    allow_banned=True: SERT-YASAK atlanır — yalnız GÖLGE akışlar için (free mod;
+    execute() zaten stub). Canlı kanıt-akışı her zaman allow_banned=False çağırır.
+    """
     action = str(dec.get("action", "WAIT")).upper()
     direction = dec.get("direction")
-    if action == "OPEN" and direction and (symbol, str(direction).upper()) in HARD_BANS:
+    if (not allow_banned) and action == "OPEN" and direction and (symbol, str(direction).upper()) in HARD_BANS:
         dec["action"] = "WAIT"
         dec["reason"] = f"[SERT-YASAK: {symbol} {direction}] " + str(dec.get("reason", ""))
         dec["size_factor"] = 0.0
@@ -262,7 +267,14 @@ def decide_situation(situation: dict, model: str = DECIDE_MODEL,
 
 
 # ── XAU SERBEST-ZEKÂ modu (kanıt-tablosu YOK, saf muhakeme) ──────────────────
-FREE_SYSTEM = (
+# FREE_EXPLORER=1 (default): KEŞİF modu — gölge hesapta amaç VERİ ÜRETMEK;
+# her değerlendirmede yön seçilir, konviksiyon size_factor'da ifade edilir.
+# 977/979 WAIT problemi (2026-07): eski "çoğu zaman bekle" telkini + XAU SELL
+# yasağı gölge öğrenmeyi boğuyordu — 3 haftada 2 işlem = 0 öğrenilebilir veri.
+# FREE_EXPLORER=0 → eski seçici (sniper) davranış geri gelir.
+FREE_EXPLORER = os.getenv("FREE_EXPLORER", "1") == "1"
+
+_FREE_SYSTEM_SNIPER = (
     "Sen 50 yıllık deneyimli bir ALTIN (XAUUSD) trader'ısın. XAUUSD intraday'de bizim "
     "istatistiksel edge'imiz YOK — o yüzden sana kanıt-tablosu vermiyoruz; kendi piyasa "
     "okumanı kullan. Sana çok-zaman-dilimli (1m/5m/30m/1h) ham bağlam veriyorum: trend "
@@ -272,6 +284,22 @@ FREE_SYSTEM = (
     "destekliyor mu? Net bir kurulum YOKSA BEKLE (çoğu zaman doğru cevap budur). İşlem açacaksan "
     "yönünü, güvenini (size 0-1) ve mantığını söyle. Çıktın SADECE tek-satır JSON."
 )
+
+_FREE_SYSTEM_EXPLORER = (
+    "Sen 50 yıllık deneyimli bir ALTIN (XAUUSD) trader'ısın ve bu bir GÖLGE (kağıt) hesap — "
+    "gerçek para YOK, amaç VERİ ÜRETMEK ve kalibrasyon öğrenmek. Sana çok-zaman-dilimli "
+    "(1m/5m/30m/1h) ham bağlam veriyorum: trend dizilimi, trend-channel z (+üst −alt, |z|≈2 "
+    "sınır), momentum, en yakın destek/direnç (ATR mesafesiyle), VIX rejimi, DXY (dolar — "
+    "altına ters). KURAL: HER değerlendirmede piyasayı oku ve bir YÖN SEÇ — BUY veya SELL "
+    "(ikisi de serbest). WAIT yalnız veri bozuk/eksikse meşrudur; 'kurulum net değil' WAIT "
+    "sebebi DEĞİLDİR — kararsızlığını yön yerine DÜŞÜK size_factor ile ifade et. "
+    "size_factor = konviksiyon kalibrasyonun: 0.1-0.2 zayıf his, 0.3-0.5 makul kurulum, "
+    "0.6-1.0 güçlü çok-TF uyum. Bu kalibrasyon ölçülecek: hangi konviksiyon seviyen ve hangi "
+    "koşullar gerçekten kazanıyor — GERÇEK filtreyi bu veriden çıkaracağız. Dürüst ol: "
+    "emin değilken 0.15 ile yön seçmek, WAIT'ten çok daha değerlidir. Çıktın SADECE tek-satır JSON."
+)
+
+FREE_SYSTEM = _FREE_SYSTEM_EXPLORER if FREE_EXPLORER else _FREE_SYSTEM_SNIPER
 
 
 def build_free_prompt(ctx: dict) -> str:
@@ -288,10 +316,12 @@ GÖREV — bir altın uzmanı gibi bu resmi oku:
 - Konum: fiyat destek/dirence yakın mı (dönüş fırsatı), yoksa boşlukta mı (kovalama)?
 - channel_z: bir TF'de ±2'ye yakınsa mean-reversion; ortadaysa trend-devamı olabilir.
 - Makro: VIX stres + DXY zayıf = altın güçlü; DXY güçlü = altına baskı.
-- BELİRSİZSEN veya net kurulum yoksa WAIT (disiplin — zorlama).
+{("- GÖLGE KEŞİF: bir yön SEÇ (BUY veya SELL) + dürüst size_factor (0.1=zayıf his, 1.0=güçlü uyum). WAIT yalnız bozuk/eksik veri."
+  if FREE_EXPLORER else
+  "- BELİRSİZSEN veya net kurulum yoksa WAIT (disiplin — zorlama).")}
 SADECE şu tek-satır JSON:
-{{"action":"OPEN","direction":"BUY","size_factor":0.4,"reason":"çok-TF + S/R + makro mantığın","management":"stop/hedef notu"}}
-(açmıyorsan: {{"action":"WAIT","direction":null,"size_factor":0,"reason":"...","management":""}})"""
+{{"action":"OPEN","direction":"BUY|SELL","size_factor":0.4,"reason":"çok-TF + S/R + makro mantığın","management":"stop/hedef notu"}}
+(WAIT gerekiyorsa: {{"action":"WAIT","direction":null,"size_factor":0,"reason":"...","management":""}})"""
 
 
 def decide_free(ctx: dict, model: str = DECIDE_MODEL,
@@ -299,11 +329,15 @@ def decide_free(ctx: dict, model: str = DECIDE_MODEL,
     """XAU serbest-zekâ kararı — kanıt-tablosu yok, Opus'un çıplak muhakemesi. Guardrail: XAU
     SELL yasak (HARD_BANS), size [0,1.0]. Deneysel → çağıran journal'a mode='free' yazar.
     shadow_model verilirse Fable5 AYNI bağlama paralel karar verir (A/B)."""
+    # GÖLGE akış: SERT-YASAK atlanır (FREE_EXPLORER ile SELL de serbest) —
+    # execute() stub, gerçek emir yok; amaç iki yönde de öğrenme verisi.
     prompt = build_free_prompt(ctx)
-    dec = _enforce_guardrails("XAUUSD", call_claude(prompt, model=model))
+    dec = _enforce_guardrails("XAUUSD", call_claude(prompt, model=model),
+                              allow_banned=FREE_EXPLORER)
     dec["_mode"] = "free"
     if shadow_model:
-        dec["_shadow"] = _enforce_guardrails("XAUUSD", call_claude(prompt, model=shadow_model))
+        dec["_shadow"] = _enforce_guardrails("XAUUSD", call_claude(prompt, model=shadow_model),
+                                             allow_banned=FREE_EXPLORER)
     return dec
 
 
