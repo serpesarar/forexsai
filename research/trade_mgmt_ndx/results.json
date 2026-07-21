@@ -1,0 +1,240 @@
+{
+ "phenomena": {
+  "resolved": 223,
+  "tp": 99,
+  "sl": 124,
+  "sl_after_reaching_70pct_tp": 9,
+  "sl_after_reaching_50pct_tp": 21,
+  "p_win_given_reach_70pct": 88.2,
+  "p_win_given_reach_50pct": 79.0,
+  "dwell10_in_sl_half_count": 26,
+  "dwell10_recovered_to_tp": 8,
+  "p_win_given_dwell10": 30.8,
+  "winners_that_dipped_sl_half": 27,
+  "median_minutes_tp": 18,
+  "median_minutes_sl": 12.5
+ },
+ "strategies": {
+  "baseline": {
+   "n": 223,
+   "win": 99,
+   "loss": 124,
+   "scratch": 0,
+   "win_rate_pct": 44.4,
+   "avg_r": -0.107,
+   "total_r": -23.87,
+   "median_min": 14,
+   "full_sl_count": 124
+  },
+  "S1_be_at_halfTP": {
+   "n": 223,
+   "win": 82,
+   "loss": 103,
+   "scratch": 38,
+   "win_rate_pct": 44.3,
+   "avg_r": -0.0807,
+   "total_r": -18.01,
+   "median_min": 12,
+   "full_sl_count": 103,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": 0.0078,
+    "total_r": 0.8
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.1567,
+    "total_r": -18.81
+   }
+  },
+  "S2_be_after_30m": {
+   "n": 223,
+   "win": 74,
+   "loss": 128,
+   "scratch": 21,
+   "win_rate_pct": 36.6,
+   "avg_r": -0.0715,
+   "total_r": -15.95,
+   "median_min": 14,
+   "full_sl_count": 81,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": -0.0367,
+    "total_r": -3.78
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.1014,
+    "total_r": -12.17
+   }
+  },
+  "S3_halveSL_after_30m": {
+   "n": 223,
+   "win": 81,
+   "loss": 142,
+   "scratch": 0,
+   "win_rate_pct": 36.3,
+   "avg_r": -0.1239,
+   "total_r": -27.63,
+   "median_min": 14,
+   "full_sl_count": 81,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": -0.0628,
+    "total_r": -6.47
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.1763,
+    "total_r": -21.16
+   }
+  },
+  "S4_scratchTP_dwell10": {
+   "n": 223,
+   "win": 91,
+   "loss": 120,
+   "scratch": 12,
+   "win_rate_pct": 43.1,
+   "avg_r": -0.122,
+   "total_r": -27.2,
+   "median_min": 14,
+   "full_sl_count": 120,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": 0.0239,
+    "total_r": 2.46
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.2471,
+    "total_r": -29.66
+   }
+  },
+  "S5_cut_dwell10": {
+   "n": 223,
+   "win": 91,
+   "loss": 132,
+   "scratch": 0,
+   "win_rate_pct": 40.8,
+   "avg_r": -0.1347,
+   "total_r": -30.05,
+   "median_min": 14,
+   "full_sl_count": 106,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": 0.0011,
+    "total_r": 0.11
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.2513,
+    "total_r": -30.16
+   }
+  },
+  "S6_lock_at_07TP": {
+   "n": 223,
+   "win": 108,
+   "loss": 115,
+   "scratch": 0,
+   "win_rate_pct": 48.4,
+   "avg_r": -0.0878,
+   "total_r": -19.59,
+   "median_min": 13,
+   "full_sl_count": 115,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": -0.0078,
+    "total_r": -0.8
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.1566,
+    "total_r": -18.79
+   }
+  },
+  "S7_stallExit_07TP_15m": {
+   "n": 223,
+   "win": 104,
+   "loss": 119,
+   "scratch": 0,
+   "win_rate_pct": 46.6,
+   "avg_r": -0.0766,
+   "total_r": -17.08,
+   "median_min": 14,
+   "full_sl_count": 116,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": 0.018,
+    "total_r": 1.85
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.1578,
+    "total_r": -18.93
+   }
+  },
+  "S8_trail_after_halfTP": {
+   "n": 223,
+   "win": 97,
+   "loss": 126,
+   "scratch": 0,
+   "win_rate_pct": 43.5,
+   "avg_r": -0.1006,
+   "total_r": -22.44,
+   "median_min": 12,
+   "full_sl_count": 103,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": 0.0116,
+    "total_r": 1.19
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.197,
+    "total_r": -23.63
+   }
+  },
+  "S9_timestop_120m": {
+   "n": 223,
+   "win": 94,
+   "loss": 129,
+   "scratch": 0,
+   "win_rate_pct": 42.2,
+   "avg_r": -0.1297,
+   "total_r": -28.93,
+   "median_min": 14,
+   "full_sl_count": 114,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": -0.0414,
+    "total_r": -4.27
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.2055,
+    "total_r": -24.66
+   }
+  },
+  "S10_combo_S1S5S6": {
+   "n": 223,
+   "win": 93,
+   "loss": 109,
+   "scratch": 21,
+   "win_rate_pct": 46.0,
+   "avg_r": -0.0872,
+   "total_r": -19.45,
+   "median_min": 12,
+   "full_sl_count": 89,
+   "cohort_A": {
+    "n": 103,
+    "avg_r": -0.0282,
+    "total_r": -2.91
+   },
+   "cohort_B": {
+    "n": 120,
+    "avg_r": -0.1378,
+    "total_r": -16.54
+   }
+  }
+ }
+}
