@@ -30,6 +30,11 @@ STATE_FILE = Path(__file__).resolve().parent / "mgmt_state.json"
 
 BE_MINUTES = getattr(config, "MGMT_BE_MINUTES", 30)
 TRAIL_R = getattr(config, "MGMT_TRAIL_R", 0.6)
+# Kazananı-koştur yalnız kanıt-benzeri geometride (araştırma tp/sl≈0.73;
+# S/R girişleri bazen TP'yi çok yakına koyar — ör. tp16/sl91=0.18 — orada
+# 0.6R trail 16 puanlık kârı korumak için ~55 puan geri-verme payı bırakır,
+# kanıt bu geometriyi KAPSAMIYOR → TP'ye dokunma, normal TP'de çık).
+RUNNER_MIN_TP_SL_RATIO = getattr(config, "MGMT_RUNNER_MIN_TP_SL_RATIO", 0.4)
 PATIENCE_MIN = getattr(config, "VIXREG_SELL_PATIENCE_MIN", 10)
 PATIENCE_FLOOR_R = 0.3          # aleyhte 0.3R'dan fazla gitmişse teyit yok
 
@@ -115,7 +120,10 @@ def manage_positions(mt5, log, resolve_symbol) -> None:
                 continue
 
             # ── KAZANANI KOŞTUR: fiyat orijinal TP'ye vardı → TP kaldır, trail
-            if s["phase"] == "normal" and bid >= s["orig_tp"]:
+            #    (yalnız kanıt-benzeri geometri: tp_dist/sl_dist ≥ eşik)
+            tp_sl_ratio = abs(s["orig_tp"] - s["entry"]) / sl_dist
+            if (s["phase"] == "normal" and bid >= s["orig_tp"]
+                    and tp_sl_ratio >= RUNNER_MIN_TP_SL_RATIO):
                 trail_sl = max(pos.sl or 0, s["orig_tp"] - TRAIL_R * sl_dist)
                 if _modify(mt5, log, pos, trail_sl, 0.0, "runner: TP kaldırıldı, trail başladı"):
                     s["phase"] = "run"

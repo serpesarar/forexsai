@@ -60,14 +60,27 @@ PULSE_ENDPOINTS = {
 # ─── MT5 bağlantısı ──────────────────────────────────────────────────────────
 
 def connect_mt5() -> bool:
-    """Demo terminaline bağlan + hesaba giriş yap."""
-    kwargs = dict(login=config.MT5_ACCOUNT,
-                  password=config.MT5_PASSWORD,
-                  server=config.MT5_SERVER)
-    if config.MT5_TERMINAL_PATH:
-        ok = mt5.initialize(config.MT5_TERMINAL_PATH, **kwargs)
-    else:
-        ok = mt5.initialize(**kwargs)
+    """Demo terminaline bağlan + hesaba giriş yap.
+
+    İki mod (2026-07-22 kutu düzeltmesi):
+      * LOGIN modu  — MT5_ACCOUNT dolu: login/password/server ile bağlan.
+      * ATTACH modu — MT5_ACCOUNT 0/boş: AÇIK terminale kwargs'sız bağlan
+        (login=0 göndermek MT5'te '(-2, Invalid params)' verir ve bot açılışta
+        ölür — kutu 1 gün bu yüzden kapalı kaldı).
+    """
+    if config.MT5_ACCOUNT:
+        kwargs = dict(login=config.MT5_ACCOUNT,
+                      password=config.MT5_PASSWORD,
+                      server=config.MT5_SERVER)
+        if config.MT5_TERMINAL_PATH:
+            ok = mt5.initialize(config.MT5_TERMINAL_PATH, **kwargs)
+        else:
+            ok = mt5.initialize(**kwargs)
+    else:                                   # attach: açık terminale bağlan
+        if config.MT5_TERMINAL_PATH:
+            ok = mt5.initialize(config.MT5_TERMINAL_PATH)
+        else:
+            ok = mt5.initialize()
     if not ok:
         log.error("mt5.initialize başarısız: %s", mt5.last_error())
         return False
