@@ -278,6 +278,41 @@ def _mk_comment(prefix: str, tag: str) -> str:
     return c[:28]
 
 
+def _send_market_order(request: dict, mt5_symbol: str):
+    """order_send'i broker'ın DESTEKLEDİĞİ filling-mode'larla dene.
+
+    retcode=10030 düzeltmesi (2026-07-22): SpotCrude/XTIUSD gibi bazı semboller
+    IOC da FOK da kabul etmiyor → symbol_info.filling_mode bitmask'inden
+    desteklenenleri sırayla dene (IOC → FOK → RETURN). 34 USOIL:BUY emri bu
+    yüzden hiç açılamamıştı.
+    """
+    info = mt5.symbol_info(mt5_symbol)
+    fm = getattr(info, "filling_mode", 0) if info else 0
+    modes = []
+    if fm & 2:
+        modes.append(mt5.ORDER_FILLING_IOC)
+    if fm & 1:
+        modes.append(mt5.ORDER_FILLING_FOK)
+    modes.append(mt5.ORDER_FILLING_RETURN)      # son çare (bazı broker default'u)
+    # bitmask okunamadıysa eski davranışa yakın tam sıra dene
+    if not (fm & 3):
+        modes = [mt5.ORDER_FILLING_IOC, mt5.ORDER_FILLING_FOK,
+                 mt5.ORDER_FILLING_RETURN]
+    result = None
+    for mode in modes:
+        request["type_filling"] = mode
+        result = mt5.order_send(request)
+        if result is None:
+            log.error("order_send None (mode=%s): %s", mode, mt5.last_error())
+            continue
+        if result.retcode == mt5.TRADE_RETCODE_DONE:
+            return result
+        if result.retcode != 10030:             # filling hatası değilse deneme boşa
+            return result
+        log.info("filling mode %s reddedildi (10030) — sonraki deneniyor", mode)
+    return result
+
+
 def _fixed_distances(price: float, cfg: dict, bot_signal: dict | None) -> tuple[float, float]:
     """Araştırılmış sabit tp/sl mesafesi (index: puan, USOIL: %). Backend
     optimized SL varsa SL mesafesini ondan al."""
@@ -485,15 +520,8 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         "magic": magic,
         "comment": _mk_comment("fxs ", scope_key),
         "type_time": mt5.ORDER_TIME_GTC,
-        "type_filling": mt5.ORDER_FILLING_IOC,
     }
-    result = mt5.order_send(request)
-    if result is None:
-        log.error("order_send None: %s", mt5.last_error()); return
-    if result.retcode != mt5.TRADE_RETCODE_DONE:
-        # Bazı brokerlar FOK ister — bir kez FOK ile dene.
-        request["type_filling"] = mt5.ORDER_FILLING_FOK
-        result = mt5.order_send(request)
+    result = _send_market_order(request, mt5_symbol)
     if result and result.retcode == mt5.TRADE_RETCODE_DONE:
         log.info("[CANLI] ✅ Açıldı ticket=%s → %s", result.order, line)
         _log_trade("LIVE", scope_key, mt5_symbol, direction, price, tp, sl,
@@ -561,14 +589,8 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         "magic": config.MAGIC_NUMBER,
         "comment": _mk_comment("fxs-v2 ", action),
         "type_time": mt5.ORDER_TIME_GTC,
-        "type_filling": mt5.ORDER_FILLING_IOC,
     }
-    result = mt5.order_send(request)
-    if result is None:
-        log.error("order_send None: %s", mt5.last_error()); return
-    if result.retcode != mt5.TRADE_RETCODE_DONE:
-        request["type_filling"] = mt5.ORDER_FILLING_FOK
-        result = mt5.order_send(request)
+    result = _send_market_order(request, mt5_symbol)
     if result and result.retcode == mt5.TRADE_RETCODE_DONE:
         log.info("[CANLI] ✅ Açıldı ticket=%s → %s", result.order, line)
         _log_trade("LIVE", scope_key, mt5_symbol, direction, price, tp, sl,
