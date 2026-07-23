@@ -251,8 +251,18 @@ def _stage1_liquidity(symbol: str, direction: str, price: float,
     disc = _cfg(symbol, "liquidity_discount_threshold")
     details = {"zone_position": round(pos, 3), "range_high": hi, "range_low": lo,
                "premium_thr": prem, "discount_thr": disc}
+    # 2026-07-23 kanıt denetimi (research/next_candidates, 30g, bloklanan
+    # epizodlar 1m replay): premium_zone_buy NDX'te HAKLI (bloklananlar WR
+    # %16.7, −12.8R) ama USOIL'de PARA KAYBETTİRİYOR (83 epizod, WR %71.1,
+    # +17.2R — momentum-continuation edge'i tanım gereği premium bölgede
+    # tetikleniyor). USOIL premium-BUY vetodan muaf; env ile geri açılabilir.
+    _pz_exempt = set((os.getenv("PREMIUM_ZONE_BUY_EXEMPT", "USOIL.FOREX") or "")
+                     .split(","))
     if direction == "BUY" and pos >= prem:
-        return "premium_zone_buy", pos, details
+        if symbol in _pz_exempt:
+            details["premium_exempt"] = True
+        else:
+            return "premium_zone_buy", pos, details
     if direction == "SELL" and pos <= disc:
         return "discount_zone_sell", pos, details
     return None, pos, details

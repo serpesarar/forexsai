@@ -894,11 +894,35 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
     bars = candles_tf(mt5_symbol, tf_const, 60)
     if not bars or len(bars) < 55:
         return
-    ok, source, z = is_mean_reversion(bars, direction)     # kanal z≥2.5 VEYA vwap z≥2.0
+    ok, source, z = is_mean_reversion(bars, direction)     # kanal z≥2.0 VEYA vwap z≥1.5
     scope_key = f"{forexsai_sym}:{direction}:CHREV"
     if not ok:
         log.info("%s — mean-reversion YOK (z=%.2f) → açılmadı", scope_key, z)
         return
+    # ── Kanıt kapısı (2026-07-23, research/next_candidates 30g z-taraması) ──
+    # GDAXI BUY: düşen kanalda WR %28.6 / vwap-kaynak WR %25 → yalnız
+    #   kanal-kaynak + lehte eğim geçer (WR %73.7, be %64 üstü).
+    # NDX SELL: aynı kapıyla %68.8 (be %57.9) → kapılı devam.
+    # NDX BUY: WR %40 (be %57.9), kapı da kurtarmıyor (%31.8) → KAPALI.
+    # USOIL SELL: WR %40.6 (be %58.9), kapı yetersiz (%50) → KAPALI.
+    mode = {**{("GDAXI.INDX", "BUY"): "gated", ("NDX.INDX", "SELL"): "gated",
+               ("NDX.INDX", "BUY"): "off", ("USOIL.FOREX", "SELL"): "off"},
+            **getattr(config, "CHREV_MODE_OVERRIDE", {})
+            }.get((forexsai_sym, direction), "open")
+    if mode == "off":
+        log.info("%s — kanıt denetimi KAPALI dedi (30g WR başabaş altı) → açılmadı",
+                 scope_key)
+        return
+    if mode == "gated":
+        from channel_filter import channel_slope_atr
+        slope = channel_slope_atr(bars)
+        sign = 1 if direction == "BUY" else -1
+        slope_ok = slope is not None and sign * slope >= 0
+        if source != "channel" or not slope_ok:
+            log.info("%s — rejim kapısı: kaynak=%s eğim=%s → açılmadı "
+                     "(kanal-kaynak + lehte eğim şart)", scope_key, source,
+                     f"{slope:.3f}" if slope is not None else "?")
+            return
     log.info("%s — MEAN-REVERSION [%s] z=%.2f ✓ → market giriş", scope_key, source, z)
     open_trade(scope_key, forexsai_sym, mt5_symbol, direction, cfg, [model], magic=cr_magic)
 

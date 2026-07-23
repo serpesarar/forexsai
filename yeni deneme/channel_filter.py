@@ -48,6 +48,26 @@ def is_channel_rejection(closes, direction: str, n: int = CHAN_N,
     return ok, z
 
 
+def channel_slope_atr(bars, n: int = CHAN_N) -> float | None:
+    """Linreg kanal eğimi, ATR14 birimiyle (bar başına). Negatif = düşen kanal.
+
+    2026-07-23 rejim taraması (30g, z-epizodları 1m replay): GDAXI BUY chrev
+    düşen kanalda WR %28.6 (−7.8R), yatay/yükselen kanalda %73.7 (+2.9R) —
+    'düşen bıçağı satın alma' kapısının sayısal hali."""
+    if not bars or len(bars) < max(n, 15):
+        return None
+    closes = np.asarray([b["close"] for b in bars[-n:]], dtype=float)
+    a, _b = np.polyfit(np.arange(len(closes)), closes, 1)
+    trs = [max(bars[j]["high"] - bars[j]["low"],
+               abs(bars[j]["high"] - bars[j - 1]["close"]),
+               abs(bars[j]["low"] - bars[j - 1]["close"]))
+           for j in range(len(bars) - 14, len(bars))]
+    atr = sum(trs) / len(trs)
+    if atr <= 0:
+        return None
+    return float(a / atr)
+
+
 VWAP_Z_THRESH = 1.5       # rolling VWAP'tan ≥1.5σ (re-damıtma doğruladı; eski 2.0). Kanala
                           # EK değer (kanalın kaçırdığı kurulumlar; VP redundant, VWAP additive)
 
