@@ -384,7 +384,13 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         zones, direction, price,
         fixed_tp_dist=fixed_tp, fixed_sl_dist=fixed_sl,
         max_entry_dist=config.SR_MAX_ENTRY_DIST.get(forexsai_sym, fixed_sl * 2),
-        min_tp_dist=config.SR_MIN_TP_DIST.get(forexsai_sym, 0.0))
+        # RR tabanı (2026-07-23): S/R TP'si en az SL mesafesinin %30'u olsun.
+        # Mutlak taban (NDX 15p) tek başına yetersizdi — SL 91p iken 16p TP'ye
+        # izin verdi (RR 0.18, ekran görüntüsü ticket 345898883); USOIL'de
+        # RR~0.1 kırıntı-TP'ler açıldı. Yakın S/R bu tabanı geçemezse plan
+        # sabit TP'ye (araştırılmış geometri) düşer.
+        min_tp_dist=max(config.SR_MIN_TP_DIST.get(forexsai_sym, 0.0),
+                        0.3 * fixed_sl))
 
     if plan is None:
         kind = "destek" if direction == "BUY" else "direnç"
@@ -573,6 +579,21 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     sl = float(bot_signal.get("sl_price") or price)
     tp = float(bot_signal.get("tp_price") or price)
     price, sl, tp = round(price, digits), round(sl, digits), round(tp, digits)
+
+    # Geometri sanity (2026-07-23): backend planı LIMIT bölgesine göre hesaplanır;
+    # fiyat kaçtıysa TP/SL market fiyatının YANLIŞ tarafında kalır → broker 10016
+    # ("invalid stops") reddi (USOIL'de 15+ ret) ya da daha kötüsü RR~0 emir
+    # açılır (ticket 345913572: TP +0.14 / SL −2.05). Yanlış taraf veya
+    # TP < 0.3×SL mesafesi → araştırılmış sabit geometriye düş.
+    sign = 1 if direction == "BUY" else -1
+    tp_d, sl_d = sign * (tp - price), sign * (price - sl)
+    if tp_d <= 0 or sl_d <= 0 or tp_d < 0.3 * sl_d:
+        f_tp, f_sl = _fixed_distances(price, cfg, None)
+        log.warning("%s — backend TP/SL bayat/bozuk (tp_d=%.3f sl_d=%.3f, "
+                    "fiyat plandan kaçmış) → sabit mesafe (tp=%.3f sl=%.3f)",
+                    scope_key, tp_d, sl_d, f_tp, f_sl)
+        tp = round(price + sign * f_tp, digits)
+        sl = round(price - sign * f_sl, digits)
 
     lot_mult = float(bot_signal.get("effective_lot_multiplier") or 1.0)
     volume = round(float(config.LOT_SIZE) * lot_mult, 2)
@@ -809,6 +830,40 @@ _CR_TF = {"5m": "TIMEFRAME_M5", "15m": "TIMEFRAME_M15",
           "30m": "TIMEFRAME_M30", "1h": "TIMEFRAME_H1"}
 
 
+_chrev_tracked: dict[int, tuple[str, str]] = {}       # ticket → (sym, yön)
+_chrev_last_loss: dict[tuple[str, str], float] = {}   # (sym, yön) → duvar-saati ts
+CHREV_LOSS_COOLDOWN_SEC = 3600
+
+
+def _chrev_update_cooldown(mt5_symbol: str, forexsai_sym: str) -> None:
+    """CHREV pozisyonlarını izle; ZARARLA kapananı yakala → cooldown başlat.
+
+    2026-07-23 kanaması: GER40 CHREV BUY güçlü düşüş gününde SL yedi ve
+    0-1 dk içinde yeniden girdi (15:33 SL → 15:33 re-BUY → 16:05 SL →
+    16:06 re-BUY), gün sonu 1W/3L −1657$. Mean-rev z'si trendde ekstrem
+    kalmaya devam ediyor → SL sonrası 60dk bekleme döngüyü kırar.
+    history_deals_get(position=) broker saat-dilimi penceresi istemez."""
+    magic = config.CHANNEL_REVERSION_MAGIC
+    try:
+        live = {p.ticket: p for p in (mt5.positions_get(symbol=mt5_symbol) or [])
+                if p.magic == magic}
+        for t, p in live.items():
+            d = "BUY" if p.type == mt5.ORDER_TYPE_BUY else "SELL"
+            _chrev_tracked[t] = (forexsai_sym, d)
+        gone = [t for t, (s, _d) in list(_chrev_tracked.items())
+                if s == forexsai_sym and t not in live]
+        for t in gone:
+            s, d = _chrev_tracked.pop(t)
+            deals = mt5.history_deals_get(position=t) or []
+            pnl = sum(x.profit for x in deals if x.entry == mt5.DEAL_ENTRY_OUT)
+            if pnl < 0:
+                _chrev_last_loss[(s, d)] = time.time()
+                log.info("%s:%s:CHREV — zararla kapandı (%.2f) → %ddk cooldown",
+                         s, d, pnl, CHREV_LOSS_COOLDOWN_SEC // 60)
+    except Exception as exc:                            # fail-open
+        log.debug("chrev cooldown izleme hata: %s", exc)
+
+
 def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
     """MEAN-REVERSION scope (momentum'dan AYRI): pulse3 sinyali + fiyat 30m linreg
     trend-çizgisinden ≥2.5σ ötede (kanal-rejection) → market giriş, sabit tp/sl.
@@ -816,6 +871,7 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
     mt5_symbol = resolve_symbol(forexsai_sym)
     if not mt5_symbol:
         return
+    _chrev_update_cooldown(mt5_symbol, forexsai_sym)
     model = config.CHANNEL_REVERSION_MODEL
     payload = fetch_pulse(model, forexsai_sym)
     direction, stype = signal_direction(model, payload)
@@ -827,6 +883,12 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
         return
     cr_magic = config.CHANNEL_REVERSION_MAGIC                    # AYRI magic → momentum'u bloklamaz
     if open_count(mt5_symbol, direction, cr_magic) + pending_count(mt5_symbol, direction, cr_magic) >= config.MAX_OPEN_PER_SCOPE:
+        return
+    last_loss = _chrev_last_loss.get((forexsai_sym, direction))
+    if last_loss and time.time() - last_loss < CHREV_LOSS_COOLDOWN_SEC:
+        left = int((CHREV_LOSS_COOLDOWN_SEC - (time.time() - last_loss)) // 60)
+        log.info("%s:%s:CHREV — SL sonrası cooldown (%ddk kaldı) → açılmadı",
+                 forexsai_sym, direction, left)
         return
     tf_const = getattr(mt5, _CR_TF.get(config.CHANNEL_REVERSION_MT5_TF, "TIMEFRAME_M30"))
     bars = candles_tf(mt5_symbol, tf_const, 60)

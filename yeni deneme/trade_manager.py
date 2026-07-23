@@ -191,6 +191,14 @@ def process_pending(mt5, log, mt5_symbol: str) -> None:
         hi = max(float(r["high"]) for r in rates)
         lo = min(float(r["low"]) for r in rates)
         spx, sld, tpd = p["signal_px"], p["sl_dist"], p["tp_dist"]
+        # Donuk piyasa koruması (2026-07-23): 10+ dk sonra bid hâlâ sinyal
+        # fiyatının BİREBİR aynısıysa piyasa kapalı/donuk demektir (NDX 21-22
+        # UTC molasında bid 29000.10'da sabitti → her açma denemesi 10018
+        # 'market closed' reddi yedi). Açma, iptal et.
+        if abs(tick.bid - spx) < 1e-9 and hi == lo:
+            log.info("[SABIR] %s fiyat %ddk'dır DONUK (%.2f) — piyasa kapalı "
+                     "görünümü, İPTAL", p["scope_key"], PATIENCE_MIN, spx)
+            continue
         if hi >= spx + sld or lo <= spx - tpd:
             log.info("[SABIR] %s ilk %ddk'da ±menzil görüldü (işlem bizsiz "
                      "biterdi) — İPTAL", p["scope_key"], PATIENCE_MIN)
