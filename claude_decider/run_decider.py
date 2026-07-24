@@ -380,8 +380,11 @@ def preflight() -> list[str]:
     """Başlangıç hazırlık kontrolü — eksikleri net raporla (deployment doğrulaması)."""
     import shutil
     problems = []
-    if shutil.which("claude") is None:
-        problems.append("claude CLI PATH'te YOK — Claude Code kurulu + Pro-login olmalı (Opus çağrılamaz)")
+    from decide import _claude_bin
+    _cb = _claude_bin()
+    if _cb == "claude" and shutil.which("claude") is None:
+        problems.append("claude CLI bulunamadı — PATH'te yok ve CLAUDE_BIN tanımlı değil "
+                        "(Claude Code kurulu + Pro-login olmalı; CLAUDE_BIN=C:\\...\\claude.cmd)")
     if not Path(config.PEPPERSTONE_TERMINAL_PATH).exists():
         problems.append(f"Pepperstone terminali yok: {config.PEPPERSTONE_TERMINAL_PATH} — decider_config'te yolu düzelt")
     if not _TABLES:

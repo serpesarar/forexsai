@@ -208,8 +208,32 @@ def _extract_json(text: str) -> dict | None:
         return None
 
 
+def _claude_bin() -> str:
+    """Claude CLI yolunu çöz (2026-07-23 kutu düzeltmesi).
+
+    Çıplak "claude" Windows'ta PATH'te olmayabiliyor (npm global bin PATH'e
+    girmemiş) → her karar `claude exit 1` ile WAIT'e düşüyordu, sessizce.
+    Sıra: CLAUDE_BIN env → PATH → bilinen kurulum yolları.
+    """
+    import shutil
+    env_bin = os.getenv("CLAUDE_BIN")
+    if env_bin and Path(env_bin).exists():
+        return env_bin
+    found = shutil.which("claude")
+    if found:
+        return found
+    for cand in (Path.home() / "AppData/Roaming/npm/claude.cmd",
+                 Path.home() / "AppData/Roaming/npm/claude",
+                 Path.home() / ".local/bin/claude",
+                 Path("/usr/local/bin/claude"),
+                 Path("/opt/homebrew/bin/claude")):
+        if cand.exists():
+            return str(cand)
+    return "claude"          # son çare: eski davranış (hata mesajı net gelir)
+
+
 def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180) -> dict:
-    cmd = ["claude", "--dangerously-skip-permissions", "-p",
+    cmd = [_claude_bin(), "--dangerously-skip-permissions", "-p",
            "--model", model, "--output-format", "json"]
     try:
         r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout)

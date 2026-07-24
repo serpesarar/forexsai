@@ -21,6 +21,7 @@ import logging
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
+import numpy as np
 import requests
 
 try:
@@ -717,6 +718,46 @@ def _session_factor(forexsai_sym: str, now=None) -> tuple[float, str]:
     return config.SESSION_MOM_FACTOR["normal"], f"normal/{tag}"
 
 
+def trend_alignment(mt5_symbol: str, direction: str) -> tuple[bool, float | None]:
+    """1h EMA50 trend hizası — giriş anında botun KENDİ MT5 barlarıyla.
+
+    Kanıt (2026-07-24, research/trend_gate, 30g × 332 canlı bot işlemi,
+    hindsight testi 0/1/2/4/8h lag'de dayandı):
+      trend-yönü  n=210 WR %63.3 +9.710$
+      karşı-trend n=122 WR %43.4 −13.161$
+    En sert ayrışma USOIL SELL'de: EMA50 üstü SELL n=29 WR %31 −3.110$.
+    Kavramsal olarak da zorunlu: "momentum-continuation" trend yönünde olmalı;
+    EMA50'nin ters tarafında açılan momentum girişi tanım gereği çelişki.
+    Fail-open: veri yoksa (True, None) → giriş engellenmez.
+    """
+    bars = candles_tf(mt5_symbol, mt5.TIMEFRAME_H1, 60)
+    if not bars or len(bars) < 55:
+        return True, None
+    closes = np.asarray([b["close"] for b in bars], dtype=float)
+    k = 2.0 / 51.0
+    e = float(closes[-50])
+    for v in closes[-49:]:
+        e = float(v) * k + e * (1 - k)
+    px = float(closes[-1])
+    above = px > e
+    aligned = above if direction == "BUY" else (not above)
+    return aligned, px - e
+
+
+def _trend_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
+                       flag: str = "TREND_GATE_ENABLED") -> bool:
+    """True → giriş bloklanmalı. Log + config bayrağı ile kapatılabilir."""
+    if not getattr(config, flag, True):
+        return False
+    aligned, dist = trend_alignment(mt5_symbol, direction)
+    if aligned:
+        return False
+    log.info("%s — TREND KAPISI: fiyat 1h EMA50'nin ters tarafında "
+             "(mesafe %.2f) → karşı-trend %s açılmadı (30g kanıt: WR %%43 / −13k$)",
+             scope_key, dist if dist is not None else 0.0, direction)
+    return True
+
+
 def _market_open(scope_key, forexsai_sym, mt5_symbol, direction, cfg, voters, bot_signal):
     """Eski market girişi (momentum-continuation)."""
     if bot_signal:
@@ -790,6 +831,13 @@ def check_scope(scope_key: str, cfg: dict) -> None:
     if len(voters) < config.MIN_MODEL_VOTES:
         log.info("%s — yeterli sinyal yok (%d/%d)",
                  scope_key, len(voters), config.MIN_MODEL_VOTES)
+        return
+
+    # ── Trend hizası kapısı (2026-07-24 kanıtı; momentum-continuation'ın
+    #    tanımı gereği) — backend çağrısından ÖNCE, boş token harcamasın.
+    if _trend_gate_blocks(scope_key, mt5_symbol, direction):
+        _log_trade("TREND_GATE", scope_key, mt5_symbol, direction, 0, 0, 0,
+                   voters, "karsi-trend (1h EMA50)")
         return
 
     # ── Backend'den birleşik trade plan al ───────────────────────────────
@@ -905,7 +953,12 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
     # NDX SELL: aynı kapıyla %68.8 (be %57.9) → kapılı devam.
     # NDX BUY: WR %40 (be %57.9), kapı da kurtarmıyor (%31.8) → KAPALI.
     # USOIL SELL: WR %40.6 (be %58.9), kapı yetersiz (%50) → KAPALI.
-    mode = {**{("GDAXI.INDX", "BUY"): "gated", ("NDX.INDX", "SELL"): "gated",
+    # 2026-07-24 ek kanıt: GDAXI SELL dün tabloda EKSİKTİ (varsayılan "open"
+    # kaldı) ve 07-24'te 2 SL yedi (−1.350$). Taraması: 30g WR %73.1 (+3.7R),
+    # kapılı %83.3 → "gated". 30g canlı chrev toplamı −4.985$ olduğu için
+    # tüm kollar artık ya kapılı ya kapalı.
+    mode = {**{("GDAXI.INDX", "BUY"): "gated", ("GDAXI.INDX", "SELL"): "gated",
+               ("NDX.INDX", "SELL"): "gated",
                ("NDX.INDX", "BUY"): "off", ("USOIL.FOREX", "SELL"): "off"},
             **getattr(config, "CHREV_MODE_OVERRIDE", {})
             }.get((forexsai_sym, direction), "open")
@@ -969,6 +1022,12 @@ def check_vix_regime() -> None:
         if d == favored and (not config.ONLY_CONFIRM_SIGNALS or stype == "CONFIRM"):
             voters.append(model)
     scope_key = f"{forexsai_sym}:{favored}:VIXREG"
+    # Trend hizası: vixreg'de de net ayrışıyor (NDX SELL trend n=123 %63
+    # +5.5k$ / karşı n=51 %51 −3.5k$). Ayrı bayrak — VIXREG_TREND_GATE=0
+    # ile kapatılabilir (VIX rejimi kendi başına yön kanıtı taşıyor).
+    if voters and _trend_gate_blocks(scope_key, mt5_symbol, favored,
+                                     flag="VIXREG_TREND_GATE"):
+        return
     if not voters:
         log.info("%s — VIX=%.1f favored=%s ama model sinyali yok → açılmadı",
                  scope_key, vix, favored)
