@@ -208,28 +208,56 @@ def _extract_json(text: str) -> dict | None:
         return None
 
 
-def _claude_bin() -> str:
-    """Claude CLI yolunu çöz (2026-07-23 kutu düzeltmesi).
+_CLAUDE_BIN_CACHE: str | None = None
 
-    Çıplak "claude" Windows'ta PATH'te olmayabiliyor (npm global bin PATH'e
-    girmemiş) → her karar `claude exit 1` ile WAIT'e düşüyordu, sessizce.
-    Sıra: CLAUDE_BIN env → PATH → bilinen kurulum yolları.
+
+def _claude_bin() -> str:
+    """Claude CLI yolunu çöz (2026-07-23/25 kutu düzeltmeleri).
+
+    Çıplak "claude" Windows'ta PATH'te olmayabiliyor → her karar sessizce
+    `claude exit 1` ile WAIT'e düşüyordu. Sıra: CLAUDE_BIN env → PATH →
+    bilinen kurulum yolları. Sonuç cache'lenir (her kararda FS taraması yok).
+
+    2026-07-25: kutu raporu — orada claude npm-global DEĞİL, kullanıcı
+    node_modules'ına kurulu (`~/node_modules/@anthropic-ai/claude-code-
+    win32-x64/claude.exe`); eski liste bunu kaçırdığı için CLAUDE_BIN env'i
+    zorunlu hale geliyordu. Platform paketi adı değiştiği için glob ile aranır.
     """
+    global _CLAUDE_BIN_CACHE
+    if _CLAUDE_BIN_CACHE:
+        return _CLAUDE_BIN_CACHE
     import shutil
-    env_bin = os.getenv("CLAUDE_BIN")
-    if env_bin and Path(env_bin).exists():
-        return env_bin
-    found = shutil.which("claude")
-    if found:
-        return found
-    for cand in (Path.home() / "AppData/Roaming/npm/claude.cmd",
-                 Path.home() / "AppData/Roaming/npm/claude",
-                 Path.home() / ".local/bin/claude",
-                 Path("/usr/local/bin/claude"),
-                 Path("/opt/homebrew/bin/claude")):
-        if cand.exists():
-            return str(cand)
-    return "claude"          # son çare: eski davranış (hata mesajı net gelir)
+    home = Path.home()
+
+    def _pick() -> str:
+        env_bin = os.getenv("CLAUDE_BIN")
+        if env_bin and Path(env_bin).exists():
+            return env_bin
+        found = shutil.which("claude")
+        if found:
+            return found
+        for cand in (home / "node_modules/.bin/claude.cmd",
+                     home / "node_modules/.bin/claude",
+                     home / "AppData/Roaming/npm/claude.cmd",
+                     home / "AppData/Roaming/npm/claude",
+                     home / ".local/bin/claude",
+                     Path("/usr/local/bin/claude"),
+                     Path("/opt/homebrew/bin/claude")):
+            if cand.exists():
+                return str(cand)
+        # platform paketi (claude-code-win32-x64 / darwin-arm64 / linux-x64…)
+        for root in (home / "node_modules/@anthropic-ai",
+                     home / "AppData/Roaming/npm/node_modules/@anthropic-ai"):
+            if not root.is_dir():
+                continue
+            for pkg in sorted(root.glob("claude-code-*")):
+                for exe in ("claude.exe", "claude"):
+                    if (pkg / exe).exists():
+                        return str(pkg / exe)
+        return "claude"      # son çare: eski davranış (hata mesajı net gelir)
+
+    _CLAUDE_BIN_CACHE = _pick()
+    return _CLAUDE_BIN_CACHE
 
 
 def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180) -> dict:
