@@ -65,7 +65,11 @@ def journal_lock(timeout: float = 10.0):
         if fd is not None:
             os.close(fd)
             JOURNAL_LOCK.unlink(missing_ok=True)
-DECIDE_MODEL = "opus"                       # asıl (canlı) karar modeli
+# Asıl (canlı) karar modeli. 2026-07-26: "opus" alias'ı yerine AÇIK model
+# kimliği — alias CLI sürümüne göre farklı Opus'a çözülebiliyor, karar
+# kalitesi ve maliyet karşılaştırmaları model sabit olmadan anlamsızlaşır.
+# Env ile ezilebilir: DECIDE_MODEL=sonnet (quota sıkışırsa).
+DECIDE_MODEL = os.getenv("DECIDE_MODEL", "claude-opus-5")
 # GÖLGE model A/B: aynı veriye paralel karar verir, AYRI grade edilir (canlı değil, kıyas için).
 # 2026-07-03 KAPATILDI (None): canlı çift-çağrı 3 günde haftalık limitin %55'ini yedi.
 # Fable artık batch_eval.py ile ölçülür: kayıtlar birikir → TEK toplu çağrı → sızıntısız

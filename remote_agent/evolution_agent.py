@@ -520,6 +520,74 @@ def handle_restart_process(client, cmd: dict) -> tuple[str, int]:
     return restart_target(str(p.get("target", "")), force=bool(p.get("force")))
 
 
+# ── Ertelenen yeniden başlatma borcu ─────────────────────────────────────
+# 2026-07-26 canlı bulgu: 07-23'te oto-güncelleme kodu çekti ama bot açık
+# pozisyon yüzünden ERTELENDİ (rc=3) ve BİR DAHA DENENMEDİ → bot 3 gün eski
+# kodla çalıştı (07-23/24 düzeltmeleri hiç devreye girmedi, sessizce).
+# Artık erteleme "borç" olarak yazılır ve pozisyonlar kapanınca ödenir.
+
+PENDING_RESTART_KEY = "pending_restarts"
+PENDING_RESTART_MAX_AGE_H = 72
+
+
+def _queue_pending_restart(target: str, behind: str = "") -> None:
+    st = load_state()
+    pend = st.get(PENDING_RESTART_KEY) or {}
+    if target not in pend:
+        pend[target] = {"since": now_iso(), "commits": behind}
+        st[PENDING_RESTART_KEY] = pend
+        save_state(st)
+        log.warning("[oto] %s restart'ı ERTELENDİ → borç yazıldı, "
+                    "pozisyon kapanınca uygulanacak", target)
+
+
+def flush_pending_restarts(client) -> None:
+    """Bekleyen restart borçlarını uygun anda öde (her ana döngü turunda)."""
+    st = load_state()
+    pend = st.get(PENDING_RESTART_KEY) or {}
+    if not pend:
+        return
+    if open_position_count() > 0:
+        return                                  # hâlâ uygun değil
+    done = []
+    for target, info in list(pend.items()):
+        out, rc = restart_target(target)
+        log.info("[oto] ertelenmiş restart ödendi: %s → rc=%s", target, rc)
+        if rc == 0:
+            done.append((target, info, out))
+    for target, _info, _out in done:
+        pend.pop(target, None)
+    # 72 saati aşan borçlar: zorla uygula (pozisyon hiç kapanmıyorsa bile
+    # eski kodla çalışmak daha riskli — bu bulgu 3 günlük sessiz sapmadan geldi)
+    for target, info in list(pend.items()):
+        try:
+            age_h = (datetime.now(timezone.utc)
+                     - datetime.fromisoformat(info["since"])).total_seconds() / 3600
+        except Exception:
+            age_h = 0
+        if age_h > PENDING_RESTART_MAX_AGE_H:
+            out, rc = restart_target(target, force=True)
+            log.warning("[oto] %s borcu %.0f saattir bekliyordu → ZORLA "
+                        "yeniden başlatıldı (rc=%s)", target, age_h, rc)
+            if rc == 0:
+                done.append((target, info, out))
+                pend.pop(target, None)
+    st[PENDING_RESTART_KEY] = pend
+    save_state(st)
+    if done and client is not None:
+        try:
+            client.table("evolution_commands").insert({
+                "host": HOST, "kind": "run_analysis", "requested_by": "auto_update",
+                "analysis_id": "pending_restart", "status": "done",
+                "analysis_name": "Ertelenmiş yeniden başlatma ödendi",
+                "payload": {"targets": [d[0] for d in done]},
+                "started_at": now_iso(), "finished_at": now_iso(), "return_code": 0,
+                "output": "\n".join(f"{t}: {o}" for t, _i, o in done),
+            }).execute()
+        except Exception:
+            pass
+
+
 # ── Oto-güncelleme: push et → kutu kendini günceller ─────────────────────
 
 AUTO_UPDATE_ENABLED = getattr(cfg, "AUTO_UPDATE_ENABLED", True)
@@ -562,6 +630,8 @@ def auto_update_tick(client) -> None:
             out, rc = restart_target(target)
             results.append(f"{target}: rc={rc} {out[:80]}")
             log.info("oto-restart %s → rc=%s", target, rc)
+            if rc == 3:            # ertelendi (açık pozisyon) → borç yaz
+                _queue_pending_restart(target, behind)
     # Panelde iz bırak: değişiklik akışında görünsün
     try:
         client.table("evolution_commands").insert({
@@ -712,6 +782,7 @@ def main() -> None:
             if AUTO_UPDATE_ENABLED and time.time() - last_update > AUTO_UPDATE_INTERVAL:
                 last_update = time.time()
                 auto_update_tick(client)
+                flush_pending_restarts(client)   # ertelenmiş restart borcu
             process_commands(client)
         except KeyboardInterrupt:
             log.info("kapanıyor")

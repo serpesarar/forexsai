@@ -31,9 +31,20 @@ OUT = "sl_postmortem.jsonl"
 
 
 def connect() -> bool:
-    kw = dict(login=config.MT5_ACCOUNT, password=config.MT5_PASSWORD, server=config.MT5_SERVER)
-    ok = (mt5.initialize(config.MT5_TERMINAL_PATH, **kw) if config.MT5_TERMINAL_PATH
-          else mt5.initialize(**kw))
+    """LOGIN modu (MT5_ACCOUNT dolu) veya ATTACH modu (0/boş → açık terminal).
+
+    2026-07-26: attach kurulumunda login=0 gönderiliyordu → '(-2, Invalid
+    params)'; haftalık iş 3 haftadır rc=1 ile düşüyordu. Bot'taki connect_mt5
+    ile aynı mantık.
+    """
+    if config.MT5_ACCOUNT:
+        kw = dict(login=config.MT5_ACCOUNT, password=config.MT5_PASSWORD,
+                  server=config.MT5_SERVER)
+        ok = (mt5.initialize(config.MT5_TERMINAL_PATH, **kw)
+              if config.MT5_TERMINAL_PATH else mt5.initialize(**kw))
+    else:
+        ok = (mt5.initialize(config.MT5_TERMINAL_PATH)
+              if config.MT5_TERMINAL_PATH else mt5.initialize())
     if not ok:
         print(f"mt5.initialize başarısız: {mt5.last_error()}"); return False
     return True

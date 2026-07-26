@@ -52,9 +52,16 @@ HEADER = "time_msc,bid,ask,last,volume\n"
 
 
 def connect_mt5() -> bool:
-    kw = dict(login=config.MT5_ACCOUNT, password=config.MT5_PASSWORD, server=config.MT5_SERVER)
-    ok = (mt5.initialize(config.MT5_TERMINAL_PATH, **kw) if config.MT5_TERMINAL_PATH
-          else mt5.initialize(**kw))
+    # LOGIN modu / ATTACH modu (MT5_ACCOUNT boş → açık terminale bağlan).
+    # 2026-07-26: attach kurulumunda login=0 → '(-2, Invalid params)'.
+    if config.MT5_ACCOUNT:
+        kw = dict(login=config.MT5_ACCOUNT, password=config.MT5_PASSWORD,
+                  server=config.MT5_SERVER)
+        ok = (mt5.initialize(config.MT5_TERMINAL_PATH, **kw)
+              if config.MT5_TERMINAL_PATH else mt5.initialize(**kw))
+    else:
+        ok = (mt5.initialize(config.MT5_TERMINAL_PATH)
+              if config.MT5_TERMINAL_PATH else mt5.initialize())
     if not ok:
         log.error("mt5.initialize başarısız: %s", mt5.last_error()); return False
     info = mt5.account_info()
