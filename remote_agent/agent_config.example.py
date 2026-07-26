@@ -62,3 +62,13 @@ WEEKLY_JOBS = [
     #  "command": "python batch_eval.py", "cwd": "claude_decider",
     #  "day": "sun", "hour_utc": 9},
 ]
+
+# ─── Claude görev köprüsü (2026-07-26) ───────────────────────────────────────
+# Panel (Mac) → kutu: `python3 scripts/remote.py ask "<görev>"` ile buradaki
+# Claude Code headless çalışır, çıktısı panele geri akar. Panelin Claude'u ile
+# kutunun Claude'u arasında yapılandırılmış iş devri (=== SONUÇ === protokolü).
+CLAUDE_TASK_ENABLED = True          # False → köprü kapanır (komut reddedilir)
+CLAUDE_TASK_MODEL = "sonnet"        # varsayılan model; görev bazında ezilebilir
+# CLAUDE_BIN = r"C:\Users\Mael\node_modules\@anthropic-ai\claude-code-win32-x64\claude.exe"
+#   Ajan sırayla dener: agent_config.CLAUDE_BIN → CLAUDE_BIN env → PATH →
+#   bilinen npm/node_modules yolları. Hiçbiri yoksa görev net hatayla düşer.

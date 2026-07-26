@@ -19,6 +19,12 @@ AŞAĞI AKIŞ (Supabase → kutu, 30 sn'de bir komut kuyruğu):
                       (açık pozisyon varsa bekler; payload {"force": true} beklemez)
   • restart_process   payload {"target": "decider|bot|backend|agent"} — ilgili
                       süreci öldürüp .bat'ıyla yeniden açar (bot güvenli-bekler)
+  • claude_task       payload {"prompt", model?, cwd?, timeout?} — kutuda
+                      Claude Code'u headless koşturur, çıktı canlı geri akar.
+                      Panelden: `python3 scripts/remote.py ask "<görev>"`.
+                      Kutu Claude'u sonunda === SONUÇ === bloğu yazar; panel
+                      onu ayrıştırıp iki taraf arasında iş devri kurar.
+                      agent_config.CLAUDE_TASK_ENABLED=False ile kapatılır.
 
 OTO-GÜNCELLEME (AUTO_UPDATE_ENABLED=True default): 10 dk'da bir git fetch;
 origin gerideyse pull + değişen klasöre göre İLGİLİ süreci kendiliğinden
@@ -30,8 +36,11 @@ YETERLİ; kutuya dokunmak gerekmez.
 HAFTALIK İŞLER: agent_config.WEEKLY_JOBS — her hafta belirlenen gün/saatte
 kendi kendine koşar, sonuçlar komut kaydı olarak panele düşer.
 
-GÜVENLİK İLKESİ: Ajan yalnız TANIMLI komut türlerini işler; serbest shell
-komutu KABUL ETMEZ. run_analysis komutları paneldeki imzalı katalogdan gelir.
+GÜVENLİK İLKESİ: Ajan yalnız TANIMLI komut türlerini işler. Komutlar sadece
+projenin kendi Supabase'inden (service-role) gelir. run_analysis paneldeki
+imzalı katalogdan; claude_task repo kökü altına kilitli, prompt/timeout
+tavanlı ve tek bayrakla kapatılabilir. Görev protokolü kutudaki Claude'a
+"canlı trade süreçlerine izinsiz dokunma, MT5'te elle emir açma" der.
 
 Kurulum (Windows):  README.md'ye bak.  Çalıştırma:  python evolution_agent.py
 """
@@ -278,6 +287,119 @@ def handle_run_analysis(client, cmd: dict) -> tuple[str, int]:
     return _stream_process(client, cmd["id"], proc, timeout)
 
 
+CLAUDE_TASK_MAX_PROMPT = 100_000
+CLAUDE_TASK_MAX_TIMEOUT = 3600
+CLAUDE_TASK_DEFAULT_TIMEOUT = 900
+
+CLAUDE_TASK_PROTOCOL = """
+────────────────────────────────────────────────────────────
+Bu görevi ForexSAI MT5 kutusunda çalışan Claude Code olarak yapıyorsun.
+Görevi veren: panel tarafındaki (Mac) Claude — sonucu O okuyacak.
+
+KURALLAR
+1. Yalnız bu görevin kapsamındaki işi yap; kapsam dışı değişiklik yapma.
+2. Canlı trade süreçlerini (bot / decider / ajan) İZİNSİZ durdurma-yeniden
+   başlatma; gerekiyorsa SONUÇ'ta öner, kararı panel versin.
+3. MT5'te elle emir açma/kapatma YOK. Emir gönderen kod yazma.
+4. Gözlem ve teşhis önce gelir: log/dosya/süreç durumuna bak, sonra yorumla.
+5. Bulguyu olduğu gibi yaz — sayılar uydurma, göremediğine "göremedim" de.
+
+Bitirince ÇIKTININ SONUNA tam olarak şu bloğu ekle (panel bunu ayrıştırır):
+
+=== SONUÇ ===
+durum: ok | kismi | hata
+ozet: <en fazla 3 cümle>
+bulgular:
+- <madde>
+- <madde>
+onerilen_adim: <panelin yapması gereken tek şey; yoksa "yok">
+=== BITTI ===
+────────────────────────────────────────────────────────────
+""".strip()
+
+
+def handle_claude_task(client, cmd: dict) -> tuple[str, int]:
+    """Kutuda Claude Code'u headless çalıştır (panel→kutu ajan orkestrasyonu).
+
+    payload: {prompt (zorunlu), model?, cwd?, timeout?, raw?}
+      raw=True → protokol başlığı eklenmez (ham prompt).
+    Güvenlik: agent_config.CLAUDE_TASK_ENABLED ile kapatılabilir; cwd repo
+    kökünün ALTINDA olmalı; prompt ve timeout tavanlı.
+    """
+    if not getattr(cfg, "CLAUDE_TASK_ENABLED", True):
+        return "[ajan] claude_task devre dışı (agent_config.CLAUDE_TASK_ENABLED=False)", 2
+    p = cmd.get("payload") or {}
+    prompt = (p.get("prompt") or "").strip()
+    if not prompt:
+        return "[ajan] payload.prompt boş", 2
+    if len(prompt) > CLAUDE_TASK_MAX_PROMPT:
+        return f"[ajan] prompt çok uzun ({len(prompt)} > {CLAUDE_TASK_MAX_PROMPT})", 2
+
+    repo = Path(cfg.REPO_ROOT).resolve()
+    cwd = (repo / p["cwd"]).resolve() if p.get("cwd") else repo
+    if repo not in cwd.parents and cwd != repo:
+        return f"[ajan] cwd repo dışında reddedildi: {cwd}", 2
+    if not cwd.is_dir():
+        return f"[ajan] cwd yok: {cwd}", 2
+
+    timeout = min(int(p.get("timeout", CLAUDE_TASK_DEFAULT_TIMEOUT)), CLAUDE_TASK_MAX_TIMEOUT)
+    model = p.get("model") or getattr(cfg, "CLAUDE_TASK_MODEL", "sonnet")
+    full_prompt = prompt if p.get("raw") else f"{CLAUDE_TASK_PROTOCOL}\n\nGÖREV:\n{prompt}"
+
+    claude_bin = _resolve_claude_bin()
+    argv = [claude_bin, "-p", "--dangerously-skip-permissions", "--model", model]
+    log.info("claude_task: model=%s cwd=%s timeout=%ss prompt=%d karakter",
+             model, cwd, timeout, len(full_prompt))
+    try:
+        proc = subprocess.Popen(
+            argv, cwd=str(cwd), stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, encoding="utf-8", errors="replace", bufsize=1,
+        )
+    except FileNotFoundError:
+        return (f"[ajan] Claude CLI bulunamadı ({claude_bin}). CLAUDE_BIN env'i "
+                f"veya agent_config.CLAUDE_BIN ayarla.", 2)
+    try:
+        proc.stdin.write(full_prompt)
+        proc.stdin.close()
+    except Exception as exc:
+        proc.kill()
+        return f"[ajan] prompt yazılamadı: {exc}", 1
+    return _stream_process(client, cmd["id"], proc, timeout)
+
+
+def _resolve_claude_bin() -> str:
+    """CLAUDE_BIN (config/env) → PATH → bilinen kurulum yolları.
+
+    claude_decider/decide.py._claude_bin ile aynı mantık; ajan o modülü
+    import etmesin diye burada bağımsız duruyor (kutu kurulumu tek dosya).
+    """
+    import shutil
+    cand_env = getattr(cfg, "CLAUDE_BIN", None) or os.getenv("CLAUDE_BIN")
+    if cand_env and Path(cand_env).exists():
+        return cand_env
+    found = shutil.which("claude")
+    if found:
+        return found
+    home = Path.home()
+    for c in (home / "node_modules/.bin/claude.cmd",
+              home / "node_modules/.bin/claude",
+              home / "AppData/Roaming/npm/claude.cmd",
+              home / ".local/bin/claude",
+              Path("/usr/local/bin/claude"),
+              Path("/opt/homebrew/bin/claude")):
+        if c.exists():
+            return str(c)
+    for root in (home / "node_modules/@anthropic-ai",
+                 home / "AppData/Roaming/npm/node_modules/@anthropic-ai"):
+        if root.is_dir():
+            for pkg in sorted(root.glob("claude-code-*")):
+                for exe in ("claude.exe", "claude"):
+                    if (pkg / exe).exists():
+                        return str(pkg / exe)
+    return "claude"
+
+
 def handle_sync_lessons(client, cmd: dict) -> tuple[str, int]:
     """Panel derslerini LESSONS.md panel bloğuna yaz (git'e gerek yok)."""
     p = cmd.get("payload") or {}
@@ -456,6 +578,7 @@ def auto_update_tick(client) -> None:
 
 HANDLERS = {
     "run_analysis": handle_run_analysis,
+    "claude_task": handle_claude_task,
     "sync_lessons": handle_sync_lessons,
     "git_pull": handle_git_pull,
     "restart_bot": handle_restart_bot,
