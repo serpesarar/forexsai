@@ -1055,6 +1055,20 @@ def main():
     log.info("=" * 64)
     log.info("ForexSAI Demo Deney Botu başlıyor — MOD: %s", mode)
     log.info("Robust scope'lar: %s", ", ".join(config.ROBUST_SCOPES.keys()))
+    # Aktif kapı/ayar dökümü — bayrakların çoğu config.py'de TANIMLI DEĞİL ve
+    # getattr varsayılanıyla çalışıyor (config.py gitignore'da olduğu için
+    # push edilemiyor). Bu satır "hangi ayar nereden geliyor" sorusunu logdan
+    # cevaplanabilir kılar; (config) = dosyadan, (varsayılan) = koddan.
+    def _src(name: str, default):
+        return (getattr(config, name), "config") if hasattr(config, name) \
+            else (default, "varsayılan")
+    for _n, _d in (("TRADE_MGMT_ENABLED", True), ("MGMT_BE_MINUTES", 30),
+                   ("MGMT_TRAIL_R", 0.6), ("MGMT_RUNNER_MIN_TP_SL_RATIO", 0.4),
+                   ("TREND_GATE_ENABLED", True), ("VIXREG_TREND_GATE", True),
+                   ("VIXREG_SELL_PATIENCE", True), ("VIXREG_SELL_PATIENCE_MIN", 10),
+                   ("CHREV_MODE_OVERRIDE", {}), ("LIVE_TRADING", False)):
+        _v, _from = _src(_n, _d)
+        log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
     log.info("=" * 64)
 
     if not connect_mt5():

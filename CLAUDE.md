@@ -7,6 +7,49 @@
 
 ---
 
+## 🖥️ İKİ BİLGİSAYAR — Panel (Mac) ↔ MT5 Kutusu (Windows)
+
+Bu proje **iki makinede** çalışır. Mac'te geliştirme + panel backend'i; Windows
+kutusunda MT5 terminali, canlı bot (`yeni deneme/`), `claude_decider` ve
+`remote_agent/evolution_agent.py`. **Kutuda da Claude Code kurulu** ve oradaki
+ajan üzerinden ona iş verilebilir.
+
+### Kutuya iş verme (bu makineden, doğrudan sen çalıştır)
+```bash
+python3 scripts/remote.py ask "botun son 2 saatteki TREND KAPISI satırlarını say"
+python3 scripts/remote.py sh "git log --oneline -5"    # kabuk komutu
+python3 scripts/remote.py pull                          # kutuda git pull
+python3 scripts/remote.py restart decider|bot|backend|agent
+python3 scripts/remote.py status | watch <id> | health
+```
+`ask` → kutudaki **Claude Code headless** çalışır, çıktı canlı akar; sonunda
+`=== SONUÇ ===` bloğu (durum/özet/bulgular/önerilen_adım) döner ve panel onu
+ayrıştırır. Yani kullanıcıya "şu komutu kutuda çalıştır" DEME — köprüden kendin
+yap, sonucu raporla. Model seçimi: `--model opus` (varsayılan sonnet).
+
+Kanal: Supabase `evolution_commands` kuyruğu → ajan 30 sn'de bir çeker.
+Güvenlik: cwd repo köküne kilitli, prompt/timeout tavanlı, görev protokolü
+kutudaki Claude'a "canlı süreçlere izinsiz dokunma, MT5'te elle emir açma" der.
+
+### Kod dağıtımı — push YETERLİ
+Ajan 10 dk'da bir `git fetch`; `main` gerideyse pull + değişen klasöre göre
+ilgili süreci yeniden başlatır (`yeni deneme/`→bot, `claude_decider/`→decider,
+`backend/`→backend, `remote_agent/`→ajan). **Bu yüzden `main`'e push et** —
+feature branch'te bırakırsan kutu görmez.
+Bot restart'ı açık pozisyon varken ertelenir; erteleme artık **borç** olarak
+yazılır ve pozisyon kapanınca ödenir (72 saat sonra zorla). *2026-07-23'te bu
+borç mekanizması yokken bot 3 gün eski kodla çalıştı ve düzeltmeler sessizce
+devre dışı kaldı — tekrarlarsa ilk bakılacak yer burasıdır.*
+
+### Kutunun `config.py`'si gitignore'da
+`yeni deneme/config.py` (şifre içerir) push edilemez → yeni ayarlar koda
+`getattr(config, "AD", varsayılan)` ile yazılır. Yani **varsayılan koddadır**,
+kutunun config'inde görünmez. Bot açılışta aktif ayarları `ayar <AD> = <değer>
+(config|varsayılan)` satırlarıyla loglar. Bir ayarı kapatmak kutuda config'e
+elle yazmayı gerektirir.
+
+---
+
 ## 🥇 1. KURAL — Evrim Paneli Senkronu (HER OTURUMDA ZORUNLU)
 
 Bu projede anlamlı bir değişiklik yapan HER Claude Code oturumu, işi bitirmeden önce
