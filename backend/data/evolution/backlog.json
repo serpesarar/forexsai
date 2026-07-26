@@ -768,5 +768,137 @@
     "source": "session",
     "created_at": "2026-07-21T21:09:28.840367+00:00",
     "updated_at": "2026-07-21T21:09:28.840498+00:00"
+  },
+  {
+    "id": "bl_4dd4b6d2b4",
+    "title": "BE30+run-winners kombo + SELL 10dk sabır kapısını gölge moda bağla",
+    "detail": "REPORT.md Aşama 3: kombo BUY +29.5R P=%100, iki kohort tutarlı; N2 ters-işlem ve N4 kısmi-kâr gölge listede - canlı veri birikince yeniden test",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-21T21:27:25.919574+00:00",
+    "updated_at": "2026-07-21T21:27:25.919722+00:00"
+  },
+  {
+    "id": "bl_a03199b39c",
+    "title": "HEDEF: 2 hafta sonra MGMT işlemlerini gerçek MT5 deal geçmişiyle doğrula",
+    "detail": "Beklenti NDX BUY +0.32R/işlem; [MGMT] loglu işlemlerin gerçekleşen R'ı replay beklentisinden anlamlı sapıyorsa TRADE_MGMT_ENABLED/VIXREG_SELL_PATIENCE kapat (2026-08-04 civarı)",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-21T21:59:13.148468+00:00",
+    "updated_at": "2026-07-21T21:59:13.148608+00:00"
+  },
+  {
+    "id": "bl_2242529436",
+    "title": "VIXREG SELL terfi kararı (~2026-08-05)",
+    "detail": "magic ...71 SELL: n≥30 + WR>%57.9 + totR>0 ise NDX:SELL ana scope'a; MT5 deal export'uyla ölç (FINDINGS.md §C)",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-23T17:35:01.816006+00:00",
+    "updated_at": "2026-07-23T17:35:01.816140+00:00"
+  },
+  {
+    "id": "bl_089b5121e5",
+    "title": "Kutunun gerçekten f727601+ kodunda olduğunu doğrula",
+    "detail": "07-24'te USOIL hâlâ kırıntı-TP (0.15 puan) ile açtı — 07-23'teki RR tabanı fix'i (0.3xSL) uygulanmış olsaydı sabit TP'ye düşerdi. Oto-güncelleme çalışıyor mu, evolution agent restart edildi mi kontrol et",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-24T23:00:14.321289+00:00",
+    "updated_at": "2026-07-24T23:00:14.321422+00:00"
+  },
+  {
+    "id": "bl_32839f528f",
+    "title": "Tartışma ayı yanlılığını düzelt",
+    "detail": "25 ayı/7 boğa çağrısı (p=0.002) piyasa 50/50 iken; ayı çağrıları -EV (240dk -0.077%), boğa +EV (+0.316%). CIO promptuna son-20-çağrı yön dağılımı enjekte et veya recent_track_record'a yön dağılımı + yöne göre isabet ekle. NDX profilindeki 'stres olmadan ayı çağırma' uyarısı yanlılığı durduramamış (10 ayı/3 boğa).",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-26T17:18:28.933258+00:00",
+    "updated_at": "2026-07-26T17:18:28.933399+00:00"
+  },
+  {
+    "id": "bl_fa2cec8a0f",
+    "title": "DAX tartışması: 11:00 UTC'ye al veya durdur",
+    "detail": "10 koşunun 7'si nötr/choppy (cekimser %70) - token yakiyor. 08:10 UTC seansinin hareket siralamasinda 5/6; 11:00 UTC %19 daha fazla 4h hareket sunuyor. BIAS_SYMBOL_RUNS_UTC guncellemesi gerek.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-26T17:18:28.934489+00:00",
+    "updated_at": "2026-07-26T17:18:28.934493+00:00"
+  },
+  {
+    "id": "bl_71ff698643",
+    "title": "XAU tartışmasını 10:00 UTC'ye al",
+    "detail": "08:00 UTC hareket siralamasinda 8/24 (0.76 ATR); 10:00 UTC 1.28 ATR = %68 daha fazla sonraki-4-saat hareketi. Yon edge'i yok ama kararin uzerine dusecegi hareket artar.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-26T17:18:28.935147+00:00",
+    "updated_at": "2026-07-26T17:18:28.935150+00:00"
+  },
+  {
+    "id": "bl_d2a8f53070",
+    "title": "PRIMARY_HORIZON_MIN dayanağı n=13",
+    "detail": "NDX icin 240dk birincil ufuk secimi n=13 gozleme dayaniyor (9/13, p=0.27 - anlamli degil). n>=30 olana kadar panelde 'erken gozlem' etiketi gerekli, kanit gibi sunulmamali.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-26T17:18:28.935774+00:00",
+    "updated_at": "2026-07-26T17:18:28.935776+00:00"
+  },
+  {
+    "id": "bl_5bd0be09a7",
+    "title": "bias_test_log run_label veri hijyeni",
+    "detail": "2026-07-08'de GDAXI ve XAUUSD satirlari 0945_confirm etiketiyle 21:49/22:05 UTC'de yazilmis - run_label zaman kovasi olarak okundugu icin saat bazli raporlamayi kirletiyor.",
+    "category": "wiring",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-26T17:18:28.936647+00:00",
+    "updated_at": "2026-07-26T17:18:28.936652+00:00"
+  },
+  {
+    "id": "bl_14d75db4e0",
+    "title": "Ayı yanlılığı düzeltmesinin etkisini ölç",
+    "detail": "2026-07-26 sonrası koşularda yön dağılımını izle: hedef bearish payının %78'den piyasa taban oranına (~%50) yaklaşması. n>=15 yeni yönlü çağrı biriktiğinde bias_test_log'dan yön dağılımı + 60/240dk isabet yeniden hesaplanmalı. Düzelmezse müdahale prompt seviyesinde yetersiz demektir; CIO çıktısına sert kota/kural gerekebilir.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-26T18:44:01.641560+00:00",
+    "updated_at": "2026-07-26T18:44:01.641700+00:00"
+  },
+  {
+    "id": "bl_954e38bd3f",
+    "title": "Formasyon dedektörünün SELL tarafını kökten incele",
+    "detail": "shadow_tracker: SELL %22.6 (n=115) 4/4 sembolde kaybediyor, BUY %50 (n=124) notr. Bu simetrik bir hata degil - dedektorun ayi formasyon tanimlarinda yapisal bir kusur var. harmonic_pattern_service._detect_classic_patterns + _detect_harmonic_patterns ayi kollarini incele; ters-yon hipotezi de test edilebilir.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-26T18:44:01.642711+00:00",
+    "updated_at": "2026-07-26T18:44:01.642714+00:00"
+  },
+  {
+    "id": "bl_1f179ee572",
+    "title": "USOIL formasyon BUY dogrulanmis edge - kullan",
+    "detail": "shadow_tracker: USOIL.FOREX pattern BUY 30/39 = %76.9 (p=0.001). Tek gercek pozitif formasyon edge'i. Su an sadece +6/+10 teyit bonusu aliyor; bagimsiz sinyal veya daha yuksek agirlik hak ediyor olabilir. Once n>=60'a kadar dogrula.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-26T18:44:01.643379+00:00",
+    "updated_at": "2026-07-26T18:44:01.643381+00:00"
   }
 ]

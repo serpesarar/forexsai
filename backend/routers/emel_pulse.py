@@ -1784,9 +1784,18 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
             top_pattern = pattern_context.get("top_pattern") or {}
             top_name = top_pattern.get("name_tr") or top_pattern.get("name") or "Pattern"
             if pattern_context.get("aligned_count", 0) > 0 and pattern_context.get("opposing_count", 0) == 0:
-                pattern_pts = 10 if str(top_pattern.get("category") or "").lower() == "harmonic" else 6
-                score += pattern_pts
-                decision_notes.append(f"4H pattern onayı: {top_name}")
+                # Formasyon teyit bonusu yön kapısı (2026-07-26): shadow tracker
+                # ölçümünde formasyon SELL sinyalleri %22.6 (n=115, p≈3e-9) —
+                # ayı formasyonunu "teyit" sayıp skoru artırmak ölçülen zarar.
+                from services.signal_gates import pattern_bonus_allowed
+                if pattern_bonus_allowed(symbol, preferred_pattern_direction):
+                    pattern_pts = 10 if str(top_pattern.get("category") or "").lower() == "harmonic" else 6
+                    score += pattern_pts
+                    decision_notes.append(f"4H pattern onayı: {top_name}")
+                else:
+                    decision_notes.append(
+                        f"4H pattern onayı sayılmadı ({top_name}): bu yönde dedektör "
+                        f"canlı ölçümde kaybediyor")
             elif preferred_pattern_direction and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
                 decision_notes.append(f"4H pattern çelişkisi: {top_name}")
             else:
@@ -2273,8 +2282,15 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
             top_pattern = pattern_context.get("top_pattern") or {}
             top_name = top_pattern.get("name_tr") or top_pattern.get("name") or "Pattern"
             if pattern_context.get("aligned_count", 0) > 0 and pattern_context.get("opposing_count", 0) == 0:
-                pattern_pts = 10 if str(top_pattern.get("category") or "").lower() == "harmonic" else 6
-                notes.append(f"4H pattern confirms bias: {top_name}")
+                # Yön kapısı — bkz. signal_gates.pattern_bonus_allowed
+                # (formasyon SELL canlı ölçümde %22.6, n=115, p≈3e-9).
+                from services.signal_gates import pattern_bonus_allowed
+                if pattern_bonus_allowed(symbol, active_direction):
+                    pattern_pts = 10 if str(top_pattern.get("category") or "").lower() == "harmonic" else 6
+                    notes.append(f"4H pattern confirms bias: {top_name}")
+                else:
+                    notes.append(f"4H pattern confirmation withheld ({top_name}): "
+                                 f"detector loses in this direction (live measurement)")
             elif pattern_context.get("preferred_direction") in {"BUY", "SELL"} and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
                 notes.append(f"4H pattern opposes bias: {top_name}")
             else:
@@ -3008,8 +3024,15 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
             top_pattern = pattern_context.get("top_pattern") or {}
             top_name = top_pattern.get("name_tr") or top_pattern.get("name") or "Pattern"
             if pattern_context.get("aligned_count", 0) > 0 and pattern_context.get("opposing_count", 0) == 0:
-                total_score += 10 if str(top_pattern.get("category") or "").lower() == "harmonic" else 6
-                notes = [f"4H pattern confirms bias: {top_name}"]
+                # Yön kapısı (2026-07-26) — shadow tracker: formasyon SELL %22.6
+                # (n=115), NDX BUY %9.1 (n=22). Kaybeden yönde bonus verilmez.
+                from services.signal_gates import pattern_bonus_allowed
+                if pattern_bonus_allowed(symbol, direction):
+                    total_score += 10 if str(top_pattern.get("category") or "").lower() == "harmonic" else 6
+                    notes = [f"4H pattern confirms bias: {top_name}"]
+                else:
+                    notes = [f"4H pattern onayı sayılmadı ({top_name}): dedektör bu "
+                             f"yönde canlı ölçümde kaybediyor"]
             elif pattern_context.get("preferred_direction") in {"BUY", "SELL"} and pattern_context.get("opposing_count", 0) > pattern_context.get("aligned_count", 0):
                 notes = [f"4H pattern opposes bias: {top_name}"]
             else:

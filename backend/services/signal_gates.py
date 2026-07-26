@@ -118,6 +118,48 @@ def pulse1_symbol_enabled(symbol: str) -> bool:
     return True
 
 
+# ─── Kapı 1b: formasyon teyit-bonusu yön kapısı ─────────────────────────────
+#
+# ÖLÇÜM (shadow_trade_tracker, sızıntısız ileriye dönük kâğıt-işlem, 60 gün):
+#     formasyon SELL : 26/115 = %22.6   (iki-yönlü binom p ≈ 3e-9)
+#     formasyon BUY  : 62/124 = %50.0   (p = 1.0 — edge yok ama zararsız)
+# Sembol kırılımında SELL her sembolde kaybediyor (USOIL %19.5 n=41, GDAXI
+# %20.8 n=24, XAU %24.2 n=33, NDX %29.4 n=17) → tek bir sembolün artefaktı
+# değil, dedektörün ayı tarafı sistematik olarak yanlış.
+# Ayrıca NDX'te BUY tarafı da kırık: 2/22 = %9.1 (p ≈ 1e-4).
+#
+# emel_pulse.py formasyon "teyidi" için skora +6 (klasik) / +10 (harmonik)
+# ekliyor. Ölçülen isabete göre bu bonus ayı tarafında sinyali GÜÇLENDİRMEK
+# yerine zayıflatmalı. Bu kapı yalnızca bonusu GERİ ÇEKER — asla yeni sinyal
+# üretmez, yön çevirmez; en kötü ihtimalle sinyal eşiği geçemez (konservatif).
+
+_PATTERN_BONUS_BLOCKED = {
+    ("*", "SELL"),            # global: %22.6 (n=115)
+    ("NDX.INDX", "BUY"),      # NDX boğa formasyonları da kırık: %9.1 (n=22)
+}
+
+
+def pattern_bonus_allowed(symbol: str, direction: Optional[str]) -> bool:
+    """Formasyon teyit bonusu bu sembol+yön için verilebilir mi?
+
+    Args:
+        symbol: Enstrüman (normalize edilir).
+        direction: "BUY" | "SELL" (None → bonus yok sayılmaz, serbest).
+
+    Returns:
+        False ise çağıran taraf ``pattern_pts``'i eklememelidir.
+        ``PATTERN_BONUS_GATE_ENABLED=0`` ile tamamen kapatılır.
+    """
+    if not _flag("PATTERN_BONUS_GATE_ENABLED", "1"):
+        return True
+    d = (direction or "").upper()
+    if not d:
+        return True
+    sym = _norm_symbol(symbol)
+    return not (("*", d) in _PATTERN_BONUS_BLOCKED
+                or (sym, d) in _PATTERN_BONUS_BLOCKED)
+
+
 # ─── Kapı 2: XAUUSD trend-yönü SELL kapısı ──────────────────────────────────
 
 async def xau_trend_sell_gate(

@@ -330,6 +330,16 @@ async def _channel_snapshot(symbol: str) -> Optional[dict]:
         return None
 
 
+async def _fakeout_block_safe(symbol: str) -> Optional[str]:
+    """OOS doğrulanmış sahte-kırılım dedektörünün canlı çağrısı (fail-open)."""
+    try:
+        from services.debate_evidence import fakeout_prompt_block
+        return (await fakeout_prompt_block(symbol)) or None
+    except Exception as e:
+        logger.debug("[debate] fakeout block unavailable for %s: %s", symbol, e)
+        return None
+
+
 async def _projection_snapshot_safe(symbol: str, price: Optional[float]) -> Optional[dict]:
     """Fibonacci/ADR/vol/mean-rev/ORB/market-profile hedef seviyeleri (fail-open)."""
     try:
@@ -395,10 +405,15 @@ async def _gather_context(symbol: str, now_utc: datetime) -> dict:
         logger.warning("[debate] context fetch degraded: %s", e)
 
     # Side feeds (best-effort, nullable, run concurrently). QQQ proxy is NDX-only.
+    # `fakeout` (2026-07-26): sistemin en sıkı doğrulanmış bileşeni (4/4 sembolde
+    # OOS ≥%70, deploy edilen artefakt test edilenin aynısı) tartışmaya HİÇ
+    # bağlı değildi.
     side_names = ["smc", "patterns", "channel",
-                  "projections"]   # fib/ADR/vol/mean-rev/ORB/market-profile
+                  "projections",   # fib/ADR/vol/mean-rev/ORB/market-profile
+                  "fakeout"]
     side_calls = [_smc_snapshot(symbol), _pattern_snapshot(symbol), _channel_snapshot(symbol),
-                  _projection_snapshot_safe(symbol, market.get("price"))]
+                  _projection_snapshot_safe(symbol, market.get("price")),
+                  _fakeout_block_safe(symbol)]
     if symbol == _NDX:
         side_names.append("qqq")
         side_calls.append(_qqq_premarket())
@@ -483,6 +498,23 @@ def _context_block(market: dict, symbol: str) -> str:
             f"REAL chart patterns (4h, harmonic+classic detector): "
             f"{pat.get('strongest_signal')} ({pat.get('bullish_count')} bullish / "
             f"{pat.get('bearish_count')} bearish) — {', '.join(pat.get('top') or [])}")
+    # ── Sahte-kırılım dedektörü (OOS doğrulanmış) — canlı çağrı ──────────────
+    if market.get("fakeout"):
+        lines.append(market["fakeout"])
+
+    # ── Dedektörlerin CANLI karnesi (sızıntısız kâğıt-işlem ölçümü) ──────────
+    # Ajanlara "formasyon var" demek yetmez; o formasyonun gerçekte tutup
+    # tutmadığı da söylenmeli. Ayı formasyonları %22.6 tutuyor (n=115, p≈3e-9)
+    # — bu bilgi girmediği için ajanlar onları ayı kanıtı sayıp yanlılığı
+    # besliyordu (bkz. backend/data/agent_debate_hour_audit.md).
+    try:
+        from services.debate_evidence import shadow_prompt_block
+        sb = shadow_prompt_block(symbol)
+        if sb:
+            lines.append(sb)
+    except Exception as e:
+        logger.debug("[debate] shadow scorecard skipped: %s", e)
+
     proj = market.get("projections")
     if proj:
         try:
@@ -581,7 +613,15 @@ def _build_agents(symbol: str) -> dict[str, tuple[str, str]]:
             f"You are the Chart Pattern agent for {name}. Read the REAL chart "
             f"pattern detector output (harmonic + classic patterns, 4h) in the "
             f"context. {p.get('pattern_extra', 'If no patterns were detected, say so plainly — do not invent a pattern.')} "
-            f"Never invent a pattern that isn't in the data. <150 words."),
+            f"Never invent a pattern that isn't in the data. "
+            # 2026-07-26: dedektörün canlı karnesi prompt'a girdi — formasyonu
+            # kendi ölçülmüş isabetiyle ağırlıklandır, ham tespit olarak değil.
+            f"CRITICAL: the context contains a LIVE DETECTOR SCORECARD measuring "
+            f"how this very detector actually performed forward, leak-free. Weight "
+            f"every pattern by ITS OWN measured hit rate, not by how textbook it "
+            f"looks. If the scorecard marks pattern signals in some direction as "
+            f"CONTRARIAN, say so explicitly and lean the OTHER way — do not argue "
+            f"a direction the detector has been measured losing in. <150 words."),
         "price_targets": (
             "normal",
             f"You are the Price Targets agent for {name} — the 'how far can it "
@@ -645,7 +685,27 @@ def _build_cio_system(symbol: str) -> str:
         "guessing your own; if they disagree, pick the one nearer price or "
         "state why. If no real structure is available, set them to null. "
         "When ADR is near-exhausted, temper continuation confidence; in a "
-        "volatility squeeze, prefer choppy/neutral unless structure breaks."
+        "volatility squeeze, prefer choppy/neutral unless structure breaks.\n\n"
+        # ── Simetrik kanıt çıtası (2026-07-26 ölçümü) ────────────────────────
+        # Canlı denetim: 32 yönlü çağrının 25'i bearish (%78) iken piyasa 29
+        # yukarı / 28 aşağı kapadı (p=0.002); bearish çağrılar −EV, bullish
+        # çağrılar +EV. Kök neden: ayı anlatısı ucuz ("değerleme yüksek",
+        # "direnç var", "gap kapanır") ve aynı çıtaya tabi tutulmuyordu.
+        "SYMMETRY RULE (this system has a MEASURED bias — obey this):\n"
+        "Apply the SAME evidence bar to a bearish verdict as to a bullish one. "
+        "Bearish narratives are cheap — 'stretched valuation', 'at resistance', "
+        "'gap will fill', 'overbought' are NOT evidence. A directional verdict "
+        "in EITHER direction requires concrete, level-based confluence: a real "
+        "computed level being broken or held, with structure and macro agreeing. "
+        "If you cannot state that confluence in one sentence, the honest verdict "
+        "is neutral or choppy — abstaining is explicitly NOT penalised.\n"
+        "If the self-calibration block reports a directional TILT in your recent "
+        "calls, treat that tilt as a prior about YOUR OWN reasoning, not about "
+        "the market: the burden of proof for another call on the tilted side is "
+        "HIGHER, and you must name what makes today different.\n"
+        "If the live detector scorecard marks a source as CONTRARIAN in some "
+        "direction, you may NOT cite that source as evidence for that direction — "
+        "it has been measured losing, forward, leak-free."
     )
 
 

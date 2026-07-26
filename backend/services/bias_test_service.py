@@ -226,6 +226,42 @@ def recent_track_record(limit: int = 25, symbol: Optional[str] = None) -> str:
                   "predicted direction):" + hz + " — this horizon record is the "
                   "PRIMARY success metric, not the daily close.")
 
+        # YÖN DENGESİ (2026-07-26): asıl kusur isabet değil, YANLILIK. Ölçüm:
+        # 32 yönlü çağrının 25'i bearish (%78) iken piyasa 29 yukarı / 28 aşağı
+        # kapandı → binom p=0.002. Model kendi yön dağılımını GÖRMÜYORDU; karne
+        # bloğu yalnız yön-başına isabeti gösteriyordu, dağılımı değil. Burada
+        # çağrı dağılımını GERÇEKLEŞEN piyasa taban oranıyla yan yana koyuyoruz.
+        bal = ""
+        n_bear = sum(1 for r in directional
+                     if (r.get("predicted_bias") or "").lower() == "bearish")
+        n_bull = len(directional) - n_bear
+        if len(directional) >= 8:
+            moves = [r.get(f"ret_{prim}m") for r in rows]
+            moves = [m for m in moves if m is not None]
+            share = max(n_bear, n_bull) / len(directional)
+            side = "bearish" if n_bear >= n_bull else "bullish"
+            bal = (f" DIRECTIONAL BALANCE: of your last {len(directional)} directional "
+                   f"calls, {n_bear} were bearish and {n_bull} bullish — "
+                   f"{share*100:.0f}% {side}.")
+            if moves:
+                up = sum(1 for m in moves if m > 0)
+                # Yanlılık, piyasanın KENDİ asimetrisine göre ölçülür: gerçekten
+                # düşen bir piyasada ayı ağırlıklı çağrı doğru davranıştır.
+                # Tilt = çağrı payı − piyasanın aynı yöndeki payı.
+                mkt_side = (up if side == "bullish" else len(moves) - up) / len(moves)
+                bal += (f" Over the last {len(moves)} graded runs in this period the "
+                        f"market actually moved {'up' if side == 'bullish' else 'down'} "
+                        f"{mkt_side*100:.0f}% of the time (+{prim}min horizon).")
+                if share - mkt_side >= 0.20:
+                    bal += (f" ⚠ You call {side} {(share-mkt_side)*100:.0f} points more "
+                            f"often than the market actually goes that way — a "
+                            f"systematic {side.upper()} TILT in YOUR reasoning, not a "
+                            f"market read. Before issuing another {side} call, state "
+                            f"explicitly which concrete, level-based evidence makes "
+                            f"today different from that run of {side} calls. Apply the "
+                            f"SAME evidence bar you would demand for the opposite "
+                            f"direction.")
+
         ab = ""
         if abstain:
             realized = [abs(r.get("ret_240m")) for r in abstain if r.get("ret_240m") is not None]
@@ -238,7 +274,7 @@ def recent_track_record(limit: int = 25, symbol: Optional[str] = None) -> str:
         head = (f"SELF-CALIBRATION (your LAST {tot_n} DIRECTIONAL predictions, day-close "
                 f"legacy metric): {tot_w}/{tot_n}; breakdown → " + " | ".join(parts) + "."
                 ) if tot_n else "SELF-CALIBRATION: no directional calls graded yet."
-        return head + warn + hz + ab
+        return head + warn + bal + hz + ab
     except Exception as e:
         logger.debug("[bias-test] track record skipped: %s", e)
         return ""
