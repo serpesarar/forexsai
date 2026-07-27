@@ -26,12 +26,18 @@ ALLOW: dict[str, set[str]] = {
     "XAUUSD":      {"BUY"},
 }
 
-# Re-damıtılmış base rate'ler (gate_WR%, OOS_WR%) — Claude'a prior olarak verilir
+# Base rate'ler (kapı_WR%, OOS_WR%) — 2026-07-27 CANLI-BLEND vintage. Kaynak:
+# evidence_tables.json (refresh_evidence --apply: araştırma prior + 1894 grade'li canlı
+# karar Bayesyen blend + canlı-teyitsiz ≥%80 iddia kapağı @72). Eski araştırma-dönemi
+# değerler (ör. USOIL 91/92, XAU 91/84) canlıda ŞİŞİK ölçüldü (kalibrasyon ECE 12.9pp,
+# %90-100 vaadi canlıda %55). İlk değer = canlı-blend kapı WR, ikinci = OOS (kapaklı).
+# TEK GERÇEK KAYNAK evidence_tables'tır — bu dict yalnız hızlı prior/self-test içindir;
+# tabloyla ÇELİŞİK tutma (2026-07-27 öncesi çelişki her SELL promptunu kirletiyordu).
 GATE_WR: dict[tuple[str, str], tuple[int, int]] = {
-    ("GDAXI.INDX", "BUY"): (89, 80), ("GDAXI.INDX", "SELL"): (79, 66),
-    ("NDX.INDX", "BUY"): (84, 75),   ("NDX.INDX", "SELL"): (80, 74),
-    ("USOIL.FOREX", "SELL"): (91, 92),
-    ("XAUUSD", "BUY"): (91, 84),
+    ("GDAXI.INDX", "BUY"): (61, 78), ("GDAXI.INDX", "SELL"): (61, 58),
+    ("NDX.INDX", "BUY"): (63, 76),   ("NDX.INDX", "SELL"): (67, 62),
+    ("USOIL.FOREX", "SELL"): (62, 72),
+    ("XAUUSD", "BUY"): (70, 72),
 }
 
 # Re-damıtılmış kapı eşikleri (modele bağlı değil — sembol-agnostik fiziksel kapı)

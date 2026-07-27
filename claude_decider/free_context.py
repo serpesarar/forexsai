@@ -13,7 +13,7 @@ Verilen bağlam (kanıt DEĞİL, ham gözlem):
  - Çok-TF trend: 1m/5m/30m/1h EMA20/50 dizilimi + son 100 mum özeti (yön, momentum)
  - Trend-channel: linreg z (fiyat kanalın neresinde) her TF
  - S/R: son 100 mumdan pivot destek/direnç + mevcut fiyata mesafe
- - Makro: VIX (rejim) + DXY (dolar — altına ters)
+ - Makro: VIX + DXY ham değer (yön kanıtı DEĞİL — makro→XAU bağı bizim veride çöktü)
  - ATR (stop boyutu için)
 """
 from __future__ import annotations
@@ -104,8 +104,11 @@ def build_free_context(bars_by_tf: dict, vix=None, dxy=None) -> dict | None:
         "resistance": round(near_res, 3) if near_res else None,
         "dist_to_support_atr": round((price - near_sup) / atr5, 2) if (near_sup and atr5) else None,
         "dist_to_resistance_atr": round((near_res - price) / atr5, 2) if (near_res and atr5) else None,
-        "macro": {"vix": vix, "vix_regime": ("stres" if vix and vix >= 18.4 else "sakin" if vix else None),
-                  "dxy": dxy, "dxy_note": "yüksek DXY → altına baskı" if dxy else None},
+        # 2026-07-27: vix_regime etiketi + "yüksek DXY → altına baskı" notu KALDIRILDI —
+        # makro→XAU yön bağı bizim veride çöktü (xauusd-macro-direction: 2024-26 işaret
+        # değişimi; VIX rejimi yalnız NDX'te doğrulandı). Ham sayı kalır, anlatı kalmaz.
+        "macro": {"vix": vix, "dxy": dxy,
+                  "note": "ham bağlam — makro→XAU yön bağı bizim veride ÇÖKTÜ; yön kanıtı sayma"},
     }
 
 

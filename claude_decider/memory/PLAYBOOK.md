@@ -37,19 +37,28 @@
 - **RSI/MACD tek başına:** zayıf. Yalnız kombinasyonda (ör. adx<23 & macd_hist<0) işe yaradı.
 - **Yüksek-ADX/yüksek-momentumda naive giriş** → SL (mean-reversion için; momentum scope ayrı).
 
-## 📊 SEMBOL-YÖN ÖZETİ (5m mean-rev kapısı, dedup + dürüst OOS, 2026-06-27)
-| Sembol | Yön | Kapı WR | OOS WR | Karar |
+## 📊 SEMBOL-YÖN ÖZETİ (5m mean-rev kapısı — 2026-07-27 CANLI-BLEND vintage)
+Kapı WR = araştırma prior + 1894 grade'li CANLI karar Bayesyen blend'i (refresh_evidence).
+OOS = araştırma out-of-sample; † = canlı-teyitsiz ≥%80 iddia 72'ye kapaklandı.
+| Sembol | Yön | Kapı WR (canlı-blend) | OOS WR | Karar |
 |---|---|---|---|---|
-| **GDAXI** | BUY | %89 | %80 | ✅ en güçlü index |
-| GDAXI | SELL | %79 | %66 | ✅ |
-| **NDX** | BUY | %84 | %75 | ✅ (yön için VIX-rejim) |
-| NDX | SELL | %80 | %74 | ✅ (yön için VIX-rejim) |
-| **USOIL** | SELL | %91 | %92 | ✅ en güçlü — ama base %80 = dönem trendi (oil düştü); regime flip riski |
+| **GDAXI** | BUY | %61 | %78 | ✅ hâlâ en güçlü index — ama eski %89 ŞİŞİKTİ; ekstrem kovalar (rev>2.5) hâlâ %79-81 |
+| GDAXI | SELL | %61 | %58 | ⚠ OOS breakeven (%60) ALTINDA — yalnız ekstrem kova (rev_chan>3) + küçük boyut (≤0.3) |
+| **NDX** | BUY | %63 | %76 | ✅ (yön için VIX-rejim) |
+| NDX | SELL | %67 | %62 | ✅ ince marj ama canlıda DÜZELDİ (canlı %68, n=170) |
+| **USOIL** | SELL | %62 | %72† | ⚠ **REJİM-FLIP ŞÜPHESİ GERÇEKLEŞİYOR**: canlı %58 (n=173) breakeven altı — eski %91 dönem trendiydi. Kanıt eşiğini yüksek tut, boyut küçült |
 | USOIL | BUY | %30 | %10 | ❌ mean-rev ÇÖKER (momentum scope ayrı, +EV) |
-| **XAUUSD** | BUY | %91 | %84 | ✅ ama PATIENT WR — **GENİŞ stop şart** (dar MT5 stop→−EV); base %78=yapısal bias |
-| XAUUSD | SELL | %42 | %20 | ❌ **KALICI YASAK** |
+| **XAUUSD** | BUY | %70 | %72† | ✅ ama PATIENT WR — **GENİŞ stop şart** (dar MT5 stop→−EV); canlı %67 (n=150); NY seansında canlı %15 (n=20) — NY'de XAU BUY'a aşırı temkin |
+| XAUUSD | SELL | %42 | %21 | ❌ **KALICI YASAK** |
 
-> ⚠️ **Base-rate drift uyarısı:** USOIL SELL (%80 base) ve XAU BUY (%78 base) yüksek base'leri kısmen dönem trendini yansıtır (oil düştü, gold yükseldi). Mean-rev kapısı üstüne +%11-13 ekler ama **rejim dönerse base düşer**. Canlı WR'ı izle.
+> 🔬 **CANLI KALİBRASYON (2026-07-27, 1894 grade'li karar):** araştırma-dönemi yüksek iddialar
+> canlıda ŞİŞİK çıktı (%80-90 vaadi → canlı ~%64, %90-100 → %55; ECE 12.9pp). evidence_tables
+> artık canlı-blend + kapaklı: hücrelerdeki `live_n` = canlı örnek, `capped:true` = iddia
+> kapaklandı. `live_n` küçük + WR yüksek hücreye temkinle yaklaş; tablo tek gerçek kaynaktır.
+
+> ⚠️ **Base-rate drift uyarısı (2026-07-27 GÜNCELLEME — tahmin gerçekleşti):** USOIL SELL'in
+> eski %91'i canlıda %58'e indi (n=173) — dönem-trendi şüphesi DOĞRULANDI. XAU BUY %67'de
+> tutunuyor. Rejim dönerse base düşer; canlı WR (`live_n` hücreleri) her zaman esastır.
 
 ## ⚙️ RİSK
 - RR ~0.67, breakeven %60 → WR≥%65 hedefle. · Günlük zarar limiti var. · Aynı yönde aşırı yığılma yapma.

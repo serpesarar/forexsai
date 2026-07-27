@@ -330,14 +330,23 @@ def decide_situation(situation: dict, model: str = DECIDE_MODEL,
 # FREE_EXPLORER=0 → eski seçici (sniper) davranış geri gelir.
 FREE_EXPLORER = os.getenv("FREE_EXPLORER", "1") == "1"
 
+# FREE_EVIDENCE=1 (default): HİBRİT mod — 2026-07-27 denetimi: XAU'nun 5m mean-rev BUY
+# kapısı (2026-06-27 re-damıtmasında OOS+placebo ile doğrulandı, gates.ALLOW'da mevcut)
+# FREE_SYMBOL ayrımı yüzünden karar anında HİÇ kullanılmıyordu — sistemin en yüksek OOS'lu
+# hücre seti karara kördü ("edge yok" iddiası 1m scalp/canlı model kapsamında doğru; 5m
+# mean-rev KAPISI ayrı nesne). Bu bayrak free prompt'a kanıt paketi + PLAYBOOK/LESSONS/
+# REGIME enjekte eder; journal'daki free_ctx etiketi kohortları ayırır (A/B ölçülebilir).
+# 0 → eski çıplak-muhakeme davranışı.
+FREE_EVIDENCE = os.getenv("FREE_EVIDENCE", "1") == "1"
+
 _FREE_SYSTEM_SNIPER = (
-    "Sen 50 yıllık deneyimli bir ALTIN (XAUUSD) trader'ısın. XAUUSD intraday'de bizim "
-    "istatistiksel edge'imiz YOK — o yüzden sana kanıt-tablosu vermiyoruz; kendi piyasa "
-    "okumanı kullan. Sana çok-zaman-dilimli (1m/5m/30m/1h) ham bağlam veriyorum: trend "
+    "Sen 50 yıllık deneyimli bir ALTIN (XAUUSD) trader'ısın. XAUUSD 1m-scalp/canlı-model "
+    "tarafında istatistiksel edge çıkmadı — kendi piyasa okuman esastır. Sana çok-zaman-dilimli "
+    "(1m/5m/30m/1h) ham bağlam veriyorum: trend "
     "dizilimi, trend-channel z (fiyatın kanaldaki yeri; +üst −alt, |z|≈2 sınır), momentum, "
-    "en yakın destek/direnç (ATR mesafesiyle), VIX rejimi, DXY (dolar — altına ters). "
-    "Bir insan trader gibi BÜTÜNE bak: TF'ler uyumlu mu, fiyat anlamlı bir S/R'de mi, makro "
-    "destekliyor mu? Net bir kurulum YOKSA BEKLE (çoğu zaman doğru cevap budur). İşlem açacaksan "
+    "en yakın destek/direnç (ATR mesafesiyle), VIX ve DXY ham değerleri (yön kanıtı DEĞİL). "
+    "Bir insan trader gibi BÜTÜNE bak: TF'ler uyumlu mu, fiyat anlamlı bir S/R'de mi? "
+    "Net bir kurulum YOKSA BEKLE (çoğu zaman doğru cevap budur). İşlem açacaksan "
     "yönünü, güvenini (size 0-1) ve mantığını söyle. Çıktın SADECE tek-satır JSON."
 )
 
@@ -345,8 +354,8 @@ _FREE_SYSTEM_EXPLORER = (
     "Sen 50 yıllık deneyimli bir ALTIN (XAUUSD) trader'ısın ve bu bir GÖLGE (kağıt) hesap — "
     "gerçek para YOK, amaç VERİ ÜRETMEK ve kalibrasyon öğrenmek. Sana çok-zaman-dilimli "
     "(1m/5m/30m/1h) ham bağlam veriyorum: trend dizilimi, trend-channel z (+üst −alt, |z|≈2 "
-    "sınır), momentum, en yakın destek/direnç (ATR mesafesiyle), VIX rejimi, DXY (dolar — "
-    "altına ters). KURAL: HER değerlendirmede piyasayı oku ve bir YÖN SEÇ — BUY veya SELL "
+    "sınır), momentum, en yakın destek/direnç (ATR mesafesiyle), VIX ve DXY ham değerleri "
+    "(yön kanıtı DEĞİL). KURAL: HER değerlendirmede piyasayı oku ve bir YÖN SEÇ — BUY veya SELL "
     "(ikisi de serbest). WAIT yalnız veri bozuk/eksikse meşrudur; 'kurulum net değil' WAIT "
     "sebebi DEĞİLDİR — kararsızlığını yön yerine DÜŞÜK size_factor ile ifade et. "
     "size_factor = konviksiyon kalibrasyonun: 0.1-0.2 zayıf his, 0.3-0.5 makul kurulum, "
@@ -362,16 +371,42 @@ def build_free_prompt(ctx: dict) -> str:
     # forensics varken multi_tf ÇİFTE veri (channel_z/adx/trend iki kez) → prompt'tan düş
     # (~%40 token tasarrufu her XAU çağrısında; journal'da ikisi de durur)
     pctx = {k: v for k, v in ctx.items() if not (k == "multi_tf" and ctx.get("forensics"))}
-    return f"""{FREE_SYSTEM}
+    evb = pctx.pop("evidence_buy", None)   # kanıt paketi ayrı bölümde sunulur (JSON'a gömülü kalmasın)
+    ev_block = ""
+    if evb:
+        ev_block = f"""
+=== DOĞRULANMIŞ KANIT — XAU BUY 5m mean-rev kapısı (re-damıtma 2026-06-27, OOS+placebo) ===
+{json.dumps(evb, ensure_ascii=False, indent=1)}
 
-=== XAUUSD ÇOK-TF HAM BAĞLAM (kanıt değil, senin yorumlaman için) ===
+=== PLAYBOOK (doğrulanmış priorlar) ===
+{_read('PLAYBOOK.md')}
+
+=== LESSONS (terfi etmiş dersler) ===
+{_read('LESSONS.md')}
+
+=== REGIME (güncel piyasa bağlamı) ===
+{_read('REGIME.md')}
+
+KANIT OKUMA KURALLARI (zorunlu):
+- Yukarıdaki WR'lar cf/araştırma geometrisiyle ölçüldü; canlı XAU geometrisi TP 1.0×ATR /
+  SL 2.5×ATR (RR 0.4 → breakeven WR ~%71). WR'ı bire bir taşıma; çıtayı breakeven'a göre koy.
+- Kalibrasyon (2026-07, 928 canlı çift): yüksek iddialı hücreler canlıda ŞİŞİK çıktı
+  (%80-90 vaadi → canlı %64). `capped`/`live_n` alanları düzeltme izleridir; yüksek WR'a
+  yine de temkinli yaklaş.
+- rev_chan/rev_vwap BUY yönünde aşırılık + hücre WR breakeven üstü → kanıtla hizalı fırsat;
+  kanıt zayıf/çelişkiliyse çıplak muhakemene dön ve size_factor'ı küçült.
+"""
+    return f"""{FREE_SYSTEM}
+{ev_block}
+=== XAUUSD ÇOK-TF HAM BAĞLAM (senin yorumlaman için) ===
 {json.dumps(pctx, ensure_ascii=False, indent=2)}
 
 GÖREV — bir altın uzmanı gibi bu resmi oku:
 - Çok-TF uyum: 1m/5m/30m/1h trendleri hizalı mı, yoksa çelişiyor mu (çelişki=belirsizlik)?
 - Konum: fiyat destek/dirence yakın mı (dönüş fırsatı), yoksa boşlukta mı (kovalama)?
 - channel_z: bir TF'de ±2'ye yakınsa mean-reversion; ortadaysa trend-devamı olabilir.
-- Makro: VIX stres + DXY zayıf = altın güçlü; DXY güçlü = altına baskı.
+- Makro (VIX/DXY): SADECE ham bağlam — makro→XAU yön bağı bizim veride ÇÖKTÜ (2024-26'da
+  işaret değiştirdi, xauusd-macro-direction kanıtı); yön kanıtı SAYMA.
 {("- GÖLGE KEŞİF: bir yön SEÇ (BUY veya SELL) + dürüst size_factor (0.1=zayıf his, 1.0=güçlü uyum). WAIT yalnız bozuk/eksik veri."
   if FREE_EXPLORER else
   "- BELİRSİZSEN veya net kurulum yoksa WAIT (disiplin — zorlama).")}
@@ -427,6 +462,10 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
     entry = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "symbol": "XAUUSD", "mode": "free",
+        # A/B kohort etiketi (2026-07-27 hibrit mod): hybrid_v1 = kanıt paketi prompt'a girdi,
+        # naked = eski çıplak muhakeme. Önce/sonra WR kıyası bu etiketle yapılır.
+        "free_ctx": "hybrid_v1" if ctx.get("evidence_buy") else "naked",
+        "evidence_buy": ctx.get("evidence_buy"),   # karar anında vaat edilen kanıt (kalibrasyon izi)
         "decision": {k: dec.get(k) for k in ("action", "direction", "size_factor", "reason", "management")},
         "trade": trade,
         "counterfactual": cf,                      # "açsaydı BUY" — outcomes grade eder

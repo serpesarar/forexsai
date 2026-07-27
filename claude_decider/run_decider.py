@@ -23,7 +23,7 @@ sys.path.insert(0, str(HERE))
 import decider_config as config  # noqa: E402
 from gates import ALLOW, vix_regime  # noqa: E402
 from decide import (decide_situation, decide_free, append_journal, append_free_journal,  # noqa: E402
-                    JOURNAL_JSONL, DECIDE_MODEL, HARD_BANS)
+                    JOURNAL_JSONL, DECIDE_MODEL, HARD_BANS, FREE_EVIDENCE)
 import evidence as ev  # noqa: E402
 import free_context as fx  # noqa: E402
 import forensics  # noqa: E402
@@ -355,13 +355,34 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                 ctx["forensics"] = forensics.build_forensics(mtf, vix=vix, dxy=dxy)
             except Exception as e:
                 print("  forensics hatası (devam):", e)
-            print(f"[{now:%H:%M}] {FREE_SYMBOL} → Opus (SERBEST-ZEKÂ, çok-TF)...")
+            # HİBRİT KANIT (2026-07-27): XAU'nun doğrulanmış 5m mean-rev BUY kapısı free
+            # akışta karara kördü (FREE_SYMBOL, build_situation'dan dışlanır) — en yüksek
+            # OOS'lu hücre seti kullanılmıyordu. FREE_EVIDENCE=1 iken kanıt paketi ctx'e
+            # eklenir; build_free_prompt onu PLAYBOOK/LESSONS/REGIME ile birlikte sunar.
+            if FREE_EVIDENCE:
+                try:
+                    b5 = mtf.get("5m")
+                    if b5 and len(b5) >= ev.WIN_N:
+                        lf = ev.live_features(b5, "BUY", vix=vix)
+                        ctx["evidence_buy"] = {"live": lf,
+                                               "evidence": ev.evidence_pack("XAUUSD", "BUY", lf, _TABLES)}
+                except Exception as e:
+                    print("  free-evidence hatası (devam):", e)
+            mode_tag = "HİBRİT" if ctx.get("evidence_buy") else "SERBEST-ZEKÂ"
+            print(f"[{now:%H:%M}] {FREE_SYMBOL} → Opus ({mode_tag}, çok-TF)...")
             dec = decide_free(ctx, model=model)
             append_free_journal(ctx, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}·free] {FREE_SYMBOL}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
             if not shadow and act == "OPEN" and (sf or 0) > 0:
-                execute({"symbol": FREE_SYMBOL, "price": ctx.get("price")}, dec)
+                # SERT-YASAK icra kilidi (2026-07-27): FREE_EXPLORER gölge akışta XAU SELL'i
+                # öğrenme verisi için serbest bırakır (decide.py allow_banned) — o serbesti
+                # İCRA yoluna ASLA inmemeli. execute() bugün stub; wire edildiği gün bu satır
+                # kanıtla-yasak emri (XAU SELL: base OOS %15) keser.
+                if (FREE_SYMBOL, str(d or "").upper()) in HARD_BANS:
+                    print(f"  ⛔ {FREE_SYMBOL} {d}: SERT YASAK — free karar icra edilmez (yalnız journal).")
+                else:
+                    execute({"symbol": FREE_SYMBOL, "price": ctx.get("price")}, dec)
             out.append({"sit": ctx, "dec": dec})
 
     if not out:
