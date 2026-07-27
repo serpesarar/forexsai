@@ -155,6 +155,17 @@ def manage_positions(mt5, log, resolve_symbol) -> None:
 
 # ─── SELL sabır kapısı (vixreg NDX) ──────────────────────────────────────────
 
+def _skip_log(scope_key, px, tp_d, sl_d, reason, extra=None):
+    """Kapının elediği SELL niyetini kaydet (gevşetme kararı için kanıt)."""
+    try:
+        import forexsai_demo_bot as bot
+        sym = scope_key.split(":")[0]
+        bot.log_gate_skip(scope_key, "", sym, "SELL", px, reason,
+                          tp_dist=tp_d, sl_dist=sl_d, extra=extra)
+    except Exception:
+        pass
+
+
 def queue_sell(log, scope_key: str, signal_px: float, tp_dist: float,
                sl_dist: float, opener) -> None:
     """SELL sinyalini hemen açma — 10dk sabır kuyruğuna al."""
@@ -180,6 +191,8 @@ def process_pending(mt5, log, mt5_symbol: str) -> None:
         done.append(p)
         if age > 30 * 60:                 # bayat niyet — açma
             log.info("[SABIR] %s bayat (%.0fdk) — iptal", p["scope_key"], age / 60)
+            _skip_log(p["scope_key"], p["signal_px"], p["tp_dist"], p["sl_dist"],
+                      "patience_stale", {"age_min": round(age / 60, 1)})
             continue
         # sinyalden bu yana 1m yüksek/alçak — "işlem bizsiz bitti mi?"
         n = max(2, int(age // 60) + 2)
@@ -198,14 +211,18 @@ def process_pending(mt5, log, mt5_symbol: str) -> None:
         if abs(tick.bid - spx) < 1e-9 and hi == lo:
             log.info("[SABIR] %s fiyat %ddk'dır DONUK (%.2f) — piyasa kapalı "
                      "görünümü, İPTAL", p["scope_key"], PATIENCE_MIN, spx)
-            continue
+            continue          # donuk piyasa = sinyal değil, kanıt kaydına girmez
         if hi >= spx + sld or lo <= spx - tpd:
             log.info("[SABIR] %s ilk %ddk'da ±menzil görüldü (işlem bizsiz "
                      "biterdi) — İPTAL", p["scope_key"], PATIENCE_MIN)
+            _skip_log(p["scope_key"], spx, tpd, sld, "patience_range_hit",
+                      {"hi": round(hi, 2), "lo": round(lo, 2)})
             continue
         if tick.bid >= spx + PATIENCE_FLOOR_R * sld:
             log.info("[SABIR] %s teyit yok (aleyhte ≥%.1fR) — İPTAL",
                      p["scope_key"], PATIENCE_FLOOR_R)
+            _skip_log(p["scope_key"], spx, tpd, sld, "patience_no_confirm",
+                      {"bid": round(tick.bid, 2)})
             continue
         log.info("[SABIR] %s teyit TAMAM (%.0fdk yaşadı) → giriş", p["scope_key"], age / 60)
         try:

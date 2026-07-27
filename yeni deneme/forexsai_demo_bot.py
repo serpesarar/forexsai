@@ -639,6 +639,31 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         log.error("[CANLI] ❌ Emir reddedildi retcode=%s → %s", rc, line)
 
 
+GATE_SKIP_JSONL = "gate_skipped.jsonl"
+
+
+def log_gate_skip(scope_key: str, mt5_symbol: str, forexsai_sym: str,
+                  direction: str, price: float, reason: str,
+                  tp_dist: float | None = None, sl_dist: float | None = None,
+                  extra: dict | None = None) -> None:
+    """Bir KAPININ eledigi giris niyetini kaydet — 'filtre hakli miydi?' sorusu
+    ancak boyle olculebilir (elenen sinyalin sonucu bilinmezse gevsetme karari
+    tahmine dayanir). Sizintisiz: karar anindaki fiyat ve geometri yazilir,
+    sonuc SONRADAN 1m barlarla replay edilir (research/gate_audit.py).
+    Fail-open: yazma hatasi girisi etkilemez."""
+    try:
+        rec = {"ts": datetime.now(timezone.utc).isoformat(), "scope": scope_key,
+               "mt5_symbol": mt5_symbol, "symbol": forexsai_sym,
+               "direction": direction, "price": round(float(price), 5),
+               "reason": reason, "tp_dist": tp_dist, "sl_dist": sl_dist}
+        if extra:
+            rec.update(extra)
+        with open(GATE_SKIP_JSONL, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except Exception as exc:
+        log.debug("gate_skip log yazilamadi: %s", exc)
+
+
 def _log_trade(mode, scope, sym, direction, price, tp, sl, voters, note):
     """İşlemi CSV'ye yaz."""
     new = False
@@ -755,6 +780,12 @@ def _trend_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
     log.info("%s — TREND KAPISI: fiyat 1h EMA50'nin ters tarafında "
              "(mesafe %.2f) → karşı-trend %s açılmadı (30g kanıt: WR %%43 / −13k$)",
              scope_key, dist if dist is not None else 0.0, direction)
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    if tick:
+        fxs = scope_key.split(":")[0]
+        log_gate_skip(scope_key, mt5_symbol, fxs, direction,
+                      tick.ask if direction == "BUY" else tick.bid,
+                      "trend_gate", extra={"ema50_dist": round(dist, 3) if dist else None})
     return True
 
 
