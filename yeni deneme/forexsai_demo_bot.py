@@ -238,6 +238,16 @@ def _bot_magics() -> set:
     return m
 
 
+def scope_lot(scope_key: str) -> float:
+    """Scope'a özel lot (2026-07-28). LOT_SIZE global; kanıtı zayıf/yeni bir scope'u
+    yarı riskle canlıya almak için scope başına çarpan gerekiyordu.
+
+    config.SCOPE_LOT_FACTOR = {"XAUUSD:BUY": 0.5} gibi; tanımsızsa 1.0 (davranış aynı).
+    Backend'in effective_lot_multiplier'ı bunun ÜSTÜNE çarpılır (ikisi bağımsız)."""
+    factor = float(getattr(config, "SCOPE_LOT_FACTOR", {}).get(scope_key, 1.0))
+    return round(float(config.LOT_SIZE) * factor, 2)
+
+
 def open_count(mt5_symbol: str, direction: str, magic: int | None = None) -> int:
     """Bu sembol+yön+magic'teki açık pozisyon sayısı (magic=None → momentum magic)."""
     magic = config.MAGIC_NUMBER if magic is None else magic
@@ -424,7 +434,7 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                    voters, f"gap={gap:.5f}")
         return
 
-    volume = float(config.LOT_SIZE)
+    volume = scope_lot(scope_key)
     if bot_signal and bot_signal.get("effective_lot_multiplier"):
         volume = round(volume * float(bot_signal["effective_lot_multiplier"]), 2)
         if volume < 0.01:
@@ -516,9 +526,10 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
 
     digits = info.digits
     tp, sl, price = round(tp, digits), round(sl, digits), round(price, digits)
+    volume = scope_lot(scope_key)
 
     line = (f"{scope_key} | {mt5_symbol} {direction} @ {price} "
-            f"TP={tp} SL={sl} lot={config.LOT_SIZE} (oy: {','.join(voters)})")
+            f"TP={tp} SL={sl} lot={volume} (oy: {','.join(voters)})")
 
     if not config.LIVE_TRADING:
         log.info("[GÖZLEM] Açardım → %s", line)
@@ -534,7 +545,7 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     request = {
         "action": mt5.TRADE_ACTION_DEAL,
         "symbol": mt5_symbol,
-        "volume": float(config.LOT_SIZE),
+        "volume": volume,
         "type": order_type,
         "price": price,
         "sl": sl,
@@ -600,7 +611,7 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         sl = round(price - sign * f_sl, digits)
 
     lot_mult = float(bot_signal.get("effective_lot_multiplier") or 1.0)
-    volume = round(float(config.LOT_SIZE) * lot_mult, 2)
+    volume = round(scope_lot(scope_key) * lot_mult, 2)
     if volume < 0.01:
         log.info("%s — lot çok düşük (×%.2f), atlanıyor", scope_key, lot_mult)
         return
