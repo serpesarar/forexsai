@@ -140,6 +140,30 @@ def _shadow_pack(symbol: str, dec: dict, atr, price, bar_time) -> dict | None:
 HARD_BANS: set[tuple[str, str]] = {("XAUUSD", "SELL"), ("USOIL.FOREX", "BUY")} | \
     set(getattr(config, "BLOCKED_SYMBOL_DIRECTIONS", set()))
 
+# ── CANLI-İCRA UYGUNLUK LİSTESİ (HARD_BANS'ten AYRI) ─────────────────────────
+# HARD_BANS = "değerlendirme bile yapma" (kanıt -EV, gölge veri de istemiyoruz).
+# LIVE_BLOCKED = "değerlendir, gölgede ÖLÇMEYE DEVAM ET, ama gerçek emir GÖNDERME".
+# Ayrım kasıtlı: bir kapı canlıya değmeyecek kadar zayıf olabilir ama ölçülmeye devam
+# etmesi gerekir — hem toparlanırsa görürüz, hem drift nöbetçisi çıtasını korur.
+#
+# NDX.INDX BUY (2026-07-28, kullanıcı kararı + ölçüm):
+#   · canlı 225 sonuçta WR %59 → EV −0.020R ±0.055 (%95 aralık sıfırı kapsıyor)
+#   · ölçülen spread sonrası ≈ −0.05R; breakeven %60'ın altında
+#   · araştırma OOS %76 ile uyumsuz (p=7.3e-9) — kapı çökmedi, HİÇ yeterince iyi olmadı
+#   · kurtarıcı ayırt edici YOK: rev kovası / ADX / seans / VIX / üst-TF trendi / çıkış
+#     geometrisi (be30_runner dahil) hiçbiri ayırmadı → daraltma kanıtsız olurdu
+LIVE_BLOCKED: set[tuple[str, str]] = {("NDX.INDX", "BUY")}
+
+
+def live_eligible(symbol: str, direction: str | None) -> tuple[bool, str]:
+    """Gerçek emir gönderilebilir mi? (execute() yolunun tek kapısı.)"""
+    key = (symbol, str(direction or "").upper())
+    if key in HARD_BANS:
+        return False, "SERT YASAK (kanıtlı -EV)"
+    if key in LIVE_BLOCKED:
+        return False, "CANLI-DIŞI (EV≈0 ölçüldü; gölgede ölçüm sürüyor)"
+    return True, ""
+
 SYSTEM = (
     "Sen ForexSAI'nin baş trader'ısın — 50 yıllık deneyimli, soğukkanlı, KANITA dayalı bir "
     "veteran. Sana bir sembolün canlı durumu VE benzer geçmiş kurulumların gerçek WR kanıtı "

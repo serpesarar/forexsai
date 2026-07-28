@@ -25,7 +25,7 @@ sys.path.insert(0, str(HERE))
 import decider_config as config  # noqa: E402
 from gates import ALLOW, vix_regime  # noqa: E402
 from decide import (decide_situation, decide_free, append_journal, append_free_journal,  # noqa: E402
-                    JOURNAL_JSONL, DECIDE_MODEL, HARD_BANS, FREE_EVIDENCE)
+                    JOURNAL_JSONL, DECIDE_MODEL, HARD_BANS, FREE_EVIDENCE, live_eligible)
 import evidence as ev  # noqa: E402
 import event_calendar as evcal  # noqa: E402  (yüksek-etkili olay penceresi)
 import free_context as fx  # noqa: E402
@@ -511,7 +511,12 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
             if not shadow and act == "OPEN" and (sf or 0) > 0:
-                execute(sit, dec)
+                ok, why = live_eligible(sit["symbol"], d)
+                if ok:
+                    execute(sit, dec)
+                else:
+                    print(f"  🚫 {sit['symbol']} {d}: {why} → gerçek emir gönderilmedi "
+                          f"(karar journal'da, ölçüm sürüyor).")
             out.append({"sit": sit, "dec": dec})
 
     # XAU SERBEST-ZEKÂ (kanıt-tablosu yok; çok-TF ham bağlam → Opus çıplak muhakeme)
@@ -563,14 +568,15 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}·free] {FREE_SYMBOL}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
             if not shadow and act == "OPEN" and (sf or 0) > 0:
-                # SERT-YASAK icra kilidi (2026-07-27): FREE_EXPLORER gölge akışta XAU SELL'i
+                # İCRA UYGUNLUK kilidi (2026-07-27): FREE_EXPLORER gölge akışta XAU SELL'i
                 # öğrenme verisi için serbest bırakır (decide.py allow_banned) — o serbesti
                 # İCRA yoluna ASLA inmemeli. execute() bugün stub; wire edildiği gün bu satır
                 # kanıtla-yasak emri (XAU SELL: base OOS %15) keser.
-                if (FREE_SYMBOL, str(d or "").upper()) in HARD_BANS:
-                    print(f"  ⛔ {FREE_SYMBOL} {d}: SERT YASAK — free karar icra edilmez (yalnız journal).")
-                else:
+                ok, why = live_eligible(FREE_SYMBOL, d)
+                if ok:
                     execute({"symbol": FREE_SYMBOL, "price": ctx.get("price")}, dec)
+                else:
+                    print(f"  ⛔ {FREE_SYMBOL} {d}: {why} — free karar icra edilmez (yalnız journal).")
             out.append({"sit": ctx, "dec": dec})
 
     if not out:
