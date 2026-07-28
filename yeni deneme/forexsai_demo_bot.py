@@ -340,16 +340,96 @@ def _send_market_order(request: dict, mt5_symbol: str):
     return result
 
 
-def _fixed_distances(price: float, cfg: dict, bot_signal: dict | None) -> tuple[float, float]:
-    """Araştırılmış sabit tp/sl mesafesi (index: puan, USOIL: %). Backend
-    optimized SL varsa SL mesafesini ondan al."""
-    if cfg["is_pct"]:
+# ── ATR-ÖLÇEKLİ GEOMETRİ (2026-07-28, research/ndx_buy_lab/RAPOR.md) ─────────
+# BULGU: NDX BUY'ın sabit TP 80 / SL 110 geometrisi (RR 0.73 = hedef yalnız
+# 0.67 ATR) 11 yılda EV −0.056R, hafta-bloklu %95 GA [−0.068, −0.044], P(EV>0)=%0.
+# Hedef çok yakın olduğu için momentum filtresinin seçtiği "devam edecek"
+# hareketler devam etmeden kâr alınıyor.
+#
+# ÖLÇÜM (3.4 yıl, 79.902 deneme, saat-eşitlenmiş taban, 1.3 puan ÖLÇÜLMÜŞ
+# sürtünme, hafta-bloklu güven aralığı):
+#     geometri                    kapı yok    + momentum filtresi
+#     bot eski (0.67/0.92 ATR)     −0.020R      +0.012R  (P=%77,   2/4 yıl)
+#     ATR 2.0 / 1.0                +0.019R      +0.079R  (P=%96.4, 4/4 yıl)
+#     ATR 3.0 / 1.0                +0.059R      +0.111R  (P=%97.9, 4/4 yıl)
+# Filtrenin katkısı sürükleme çıkarılmış seride de ayakta (+0.054R) → beta değil.
+#
+# KAPSAM: yalnız "NDX.INDX:BUY" (momentum/SR). CHREV ve VIXREG scope anahtarları
+# farklı (":CHREV" / ":VIXREG") → ETKİLENMEZ. SELL ve diğer semboller dışarıda —
+# kanıt onları kapsamıyor.
+# config.py gitignore'da olduğu için VARSAYILAN BURADADIR; kutuda config.py'a
+# ATR_GEOMETRY_ENABLED = False yazılarak kapatılabilir.
+ATR_GEOMETRY_DEFAULT = {
+    "NDX.INDX:BUY": {
+        "tf": "1h", "period": 14, "tp_mult": 2.0, "sl_mult": 1.0,
+        # Emniyet kelepçeleri — son 30 gün H1 ATR aralığı 76-205 puan (medyan 120).
+        "sl_min": 70.0, "sl_max": 200.0, "tp_min": 140.0, "tp_max": 400.0,
+    },
+}
+
+_ATR_TF_MAP = {"5m": mt5.TIMEFRAME_M5, "15m": mt5.TIMEFRAME_M15,
+               "30m": mt5.TIMEFRAME_M30, "1h": mt5.TIMEFRAME_H1,
+               "4h": mt5.TIMEFRAME_H4}
+
+
+def _atr_distances(scope_key: str, mt5_symbol: str) -> tuple[float, float] | None:
+    """ATR-ölçekli tp/sl mesafesi (config.ATR_GEOMETRY). Kapsam dışıysa veya
+    hesaplanamıyorsa None → çağıran sabit geometriye düşer (fail-open).
+
+    Gerekçe: research/ndx_buy_lab/RAPOR.md — sabit 80/110 (hedef 0.67 ATR)
+    11 yılda −EV; momentum filtresinin kenarı ancak TP ≥ 1.5-2 ATR'de ödüyor.
+    """
+    if not getattr(config, "ATR_GEOMETRY_ENABLED", True):
+        return None
+    spec = (getattr(config, "ATR_GEOMETRY", None) or ATR_GEOMETRY_DEFAULT).get(scope_key)
+    if not spec:
+        return None
+    try:
+        tf = _ATR_TF_MAP.get(spec.get("tf", "1h"), mt5.TIMEFRAME_H1)
+        period = int(spec.get("period", 14))
+        rates = mt5.copy_rates_from_pos(mt5_symbol, tf, 1, period * 6)
+        if rates is None or len(rates) < period + 2:
+            log.warning("[ATR-GEO] %s: bar yok → sabit geometri", scope_key)
+            return None
+        h = [float(r["high"]) for r in rates]
+        l = [float(r["low"]) for r in rates]
+        c = [float(r["close"]) for r in rates]
+        # Wilder ATR (indicators._atr ile aynı tanım)
+        trs = [max(h[i] - l[i], abs(h[i] - c[i - 1]), abs(l[i] - c[i - 1]))
+               for i in range(1, len(c))]
+        atr = sum(trs[:period]) / period
+        for x in trs[period:]:
+            atr = (atr * (period - 1) + x) / period
+        if not atr or atr <= 0:
+            return None
+        tp_d = atr * float(spec.get("tp_mult", 2.0))
+        sl_d = atr * float(spec.get("sl_mult", 1.0))
+        tp_d = min(max(tp_d, float(spec.get("tp_min", 0))), float(spec.get("tp_max", 1e9)))
+        sl_d = min(max(sl_d, float(spec.get("sl_min", 0))), float(spec.get("sl_max", 1e9)))
+        log.info("[ATR-GEO] %s: ATR(%s,%d)=%.1f → TP %.1f / SL %.1f (RR %.2f)",
+                 scope_key, spec.get("tf", "1h"), period, atr, tp_d, sl_d, tp_d / sl_d)
+        return tp_d, sl_d
+    except Exception as e:
+        log.warning("[ATR-GEO] %s hesaplanamadı (%s) → sabit geometri", scope_key, e)
+        return None
+
+
+def _fixed_distances(price: float, cfg: dict, bot_signal: dict | None,
+                     scope_key: str = "", mt5_symbol: str = "") -> tuple[float, float]:
+    """tp/sl mesafesi. Scope ATR_GEOMETRY kapsamındaysa ATR-ölçekli, değilse
+    araştırılmış sabit değerler (index: puan, USOIL: %)."""
+    atr_geo = _atr_distances(scope_key, mt5_symbol) if scope_key and mt5_symbol else None
+    if atr_geo is not None:
+        tp_d, sl_d = atr_geo
+    elif cfg["is_pct"]:
         tp_d = price * cfg["tp"] / 100.0
         sl_d = price * cfg["sl"] / 100.0
     else:
         tp_d = float(cfg["tp"])
         sl_d = float(cfg["sl"])
-    if bot_signal and bot_signal.get("sl_price"):
+    # Backend'in optimize SL'i yalnız SABİT geometride devreye girer — ATR
+    # geometrisi kendi stop mesafesini araştırmadan alır, ezilmemeli.
+    if atr_geo is None and bot_signal and bot_signal.get("sl_price"):
         d = abs(price - float(bot_signal["sl_price"]))
         if d > 0:
             sl_d = d
@@ -381,7 +461,8 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     except Exception as _fx_exc:
         log.debug("fakeout veto fail-open: %s", _fx_exc)
 
-    fixed_tp, fixed_sl = _fixed_distances(price, cfg, bot_signal)
+    fixed_tp, fixed_sl = _fixed_distances(price, cfg, bot_signal,
+                                          scope_key, mt5_symbol)
 
     if candles is None:
         candles = candles_1m(mt5_symbol, config.ZONE_LOOKBACK)
@@ -509,13 +590,9 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         log.debug("fakeout veto fail-open: %s", _fx_exc)
 
     price = tick.ask if direction == "BUY" else tick.bid
-    # Türetilmiş TP/SL mesafesi — index: puan, USOIL: yüzde.
-    if cfg["is_pct"]:
-        tp_dist = price * cfg["tp"] / 100.0
-        sl_dist = price * cfg["sl"] / 100.0
-    else:
-        tp_dist = float(cfg["tp"])
-        sl_dist = float(cfg["sl"])
+    # Türetilmiş TP/SL mesafesi — ATR_GEOMETRY kapsamındaysa ATR-ölçekli,
+    # değilse araştırılmış sabit (index: puan, USOIL: yüzde).
+    tp_dist, sl_dist = _fixed_distances(price, cfg, None, scope_key, mt5_symbol)
 
     if direction == "BUY":
         tp, sl = price + tp_dist, price - sl_dist
@@ -603,7 +680,7 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     sign = 1 if direction == "BUY" else -1
     tp_d, sl_d = sign * (tp - price), sign * (price - sl)
     if tp_d <= 0 or sl_d <= 0 or tp_d < 0.3 * sl_d:
-        f_tp, f_sl = _fixed_distances(price, cfg, None)
+        f_tp, f_sl = _fixed_distances(price, cfg, None, scope_key, mt5_symbol)
         log.warning("%s — backend TP/SL bayat/bozuk (tp_d=%.3f sl_d=%.3f, "
                     "fiyat plandan kaçmış) → sabit mesafe (tp=%.3f sl=%.3f)",
                     scope_key, tp_d, sl_d, f_tp, f_sl)
