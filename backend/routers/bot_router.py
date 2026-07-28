@@ -33,11 +33,37 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/bot", tags=["MT5 Bot"])
 
 
-# ── Momentum-continuation entry filter (OOS-validated 2026-06-12/14) ──────────
+# ── Momentum-continuation entry filter ────────────────────────────────────────
+#
+# ⚠️ 2026-07-28 DENETİMİ — AŞAĞIDAKİ NDX RAKAMLARI GEÇERSİZ (SIZINTI).
+# research/ndx_buy_lab/audit_momo_validation.py: o doğrulama filtre değerlerini
+# `prediction_logs.factors`ten (GERÇEK UTC) alırken sonuçları `candle_cache`
+# 1m barlarından (o tarihte MT5 BROKER saati, +3 saat ileri) okuyordu. İki saat
+# ekseni karışınca işlem sinyalden 3 saat ÖNCE açılıyor ve momentum filtresi
+# işlemin ilk 3 saatini ZATEN GÖRMÜŞ oluyor. Ölçülen sızıntı:
+#     kaymış eksende   : filtre geçen WR %84.2 / kalan %53.0  (Δ +31.2 puan)
+#     saat düzeltilmiş : filtre geçen WR %50.8 / kalan %56.9  (Δ  −6.1 puan)
+#     kesin kanıt: kaymış eksende filtre "sonraki" 180 dk'da +148 puan hareket
+#     öngörüyor (kalan +0.9) — fiziksel olarak imkânsız.
+# Kök neden düzeltildi (yeni deneme/data_recorder.py: sunucu offset'i artık
+# çalışma anında ölçülüyor) ve candle_cache onarıldı.
+#
+# FİLTRE YİNE DE KORUNUYOR — ama artık TEMİZ kanıta dayanıyor: yalnız bar-bar
+# ölçümü (bu hatadan etkilenmez), 3.4 yıl / 79.902 deneme, saat-eşitlenmiş taban,
+# sürükleme çıkarılmış kontrol → filtrenin katkısı +0.054R ile ayakta. AMA
+# katkı ancak hedef UZAKKEN paraya dönüyor: botun eski 0.67 ATR hedefinde
+# +0.012R (P=%77), TP 2×ATR'de +0.079R (P=%96.4, 4/4 yıl). Bu yüzden NDX BUY
+# geometrisi ATR-ölçekliye alındı (yeni deneme/forexsai_demo_bot.py).
+# Ayrıntı: research/ndx_buy_lab/RAPOR.md
+#
+# Diğer scope'ların (USOIL/GDAXI) doğrulamaları aynı kurguyu kullandığı için
+# ONLAR DA ŞÜPHELİ — henüz yeniden ölçülmedi (backlog).
+#
+# ── orijinal (artık güvenilmeyen) not ──
 # Against the bot's FIXED tp/sl, only momentum-CONTINUATION entries reach the far
 # target; mean-reversion entries tag near and revert into the wide SL. Confirmed
 # out-of-sample (held-out TEST + blind-threshold TEST + 7/7 weekly walk-forward):
-#   NDX.INDX:BUY     unfilt TEST 51.4% (−EV) → filtered 78.6%; blind 81.8%
+#   NDX.INDX:BUY     unfilt TEST 51.4% (−EV) → filtered 78.6%; blind 81.8%   [GEÇERSİZ]
 #   USOIL.FOREX:SELL unfilt TEST 71.4%       → filtered 96.6%; blind 100%
 # Added 2026-06-14 after a hardening battery (3-window multi-split + 0/1/2x
 # friction sweep + pessimistic tie-break + 2000x bootstrap + placebo-vs-random):
