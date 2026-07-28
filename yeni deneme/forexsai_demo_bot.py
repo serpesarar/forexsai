@@ -769,6 +769,75 @@ def trend_alignment(mt5_symbol: str, direction: str) -> tuple[bool, float | None
     return aligned, px - e
 
 
+POS_LOOKBACK_M5 = 48                 # 48×5dk = son 4 saatlik dalga penceresi
+POS_SELL_MIN = 0.40                  # SELL: dalganın üst %60'ı (kanıt aşağıda)
+POS_BUY_MAX = 0.60                   # BUY : dalganın alt %60'ı
+
+
+def entry_position(mt5_symbol: str, price: float | None = None
+                   ) -> tuple[float | None, float, float]:
+    """Fiyatın son 4 saatlik dalga içindeki KONUMU: 0.0=dip, 1.0=tepe.
+
+    KANIT (2026-07-28, 175 canlı NDX VIXREG SELL + 50 USOIL, 1m sızıntısız
+    konum ölçümü — giriş anı öncesi pencere, hindsight yok):
+      NDX VIXREG SELL — dip bölge (0-0.33): n=88 WR %53.4  −3.738$
+                        tepe bölge (0.66+): n=38 WR %65.8  +2.860$
+        konum ≥0.40 kapısı: n=76 WR %67.1 → +6.487$ (filtresiz +500$)
+      USOIL mom BUY   — konum ≤0.60 kapısı: n=16 WR %93.8 (filtresiz %80)
+    Yani SELL'i dalganın DİBİNDEN açmak sistematik zarar; tepeden açmak kâr.
+    Kullanıcı gözlemiyle birebir örtüşüyor (2026-07-27 ekran görüntüsü:
+    27862'den — dibin dibinden — açılan SELL, 27958'de SL).
+
+    Dönüş: (konum, dalga_dibi, dalga_tepesi). Veri yoksa (None, 0, 0) → fail-open.
+    """
+    bars = candles_tf(mt5_symbol, mt5.TIMEFRAME_M5, POS_LOOKBACK_M5)
+    if not bars or len(bars) < 20:
+        return None, 0.0, 0.0
+    hi = max(float(b["high"]) for b in bars)
+    lo = min(float(b["low"]) for b in bars)
+    if hi <= lo:
+        return None, lo, hi
+    if price is None:
+        tick = mt5.symbol_info_tick(mt5_symbol)
+        if tick is None:
+            return None, lo, hi
+        price = (tick.bid + tick.ask) / 2.0
+    return (float(price) - lo) / (hi - lo), lo, hi
+
+
+def _position_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
+                          flag: str = "POSITION_GATE_ENABLED") -> bool:
+    """True → giriş bloklanmalı: SELL dalganın dibinde / BUY tepesinde.
+
+    'Kırılım teyidi olmadan dipten satma' kuralının ölçülebilir hali. Fiyat
+    kapının yanlış tarafındaysa bot BEKLER — dalga tepeye döndüğünde sinyal
+    hâlâ geçerliyse oradan girer (kovalama yok, sadece konum disiplini)."""
+    if not getattr(config, flag, True):
+        return False
+    pos, lo, hi = entry_position(mt5_symbol)
+    if pos is None:
+        return False                                   # veri yok → fail-open
+    sell_min = float(getattr(config, "POS_SELL_MIN", POS_SELL_MIN))
+    buy_max = float(getattr(config, "POS_BUY_MAX", POS_BUY_MAX))
+    bad = (direction == "SELL" and pos < sell_min) or \
+          (direction == "BUY" and pos > buy_max)
+    if not bad:
+        return False
+    nerede = "DİBİNDE" if direction == "SELL" else "TEPESİNDE"
+    log.info("%s — KONUM KAPISI: fiyat 4s dalganın %s (konum %.2f, dalga "
+             "%.1f–%.1f) → %s açılmadı; dalga dönünce yeniden bakılacak "
+             "(kanıt: dipten SELL WR %%53 −3.7k$ / tepeden %%66 +2.9k$)",
+             scope_key, nerede, pos, lo, hi, direction)
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    if tick:
+        log_gate_skip(scope_key, mt5_symbol, scope_key.split(":")[0], direction,
+                      tick.ask if direction == "BUY" else tick.bid,
+                      "position_gate",
+                      extra={"pos": round(pos, 3), "wave_lo": round(lo, 2),
+                             "wave_hi": round(hi, 2)})
+    return True
+
+
 def _trend_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
                        flag: str = "TREND_GATE_ENABLED") -> bool:
     """True → giriş bloklanmalı. Log + config bayrağı ile kapatılabilir."""
@@ -869,6 +938,12 @@ def check_scope(scope_key: str, cfg: dict) -> None:
     if _trend_gate_blocks(scope_key, mt5_symbol, direction):
         _log_trade("TREND_GATE", scope_key, mt5_symbol, direction, 0, 0, 0,
                    voters, "karsi-trend (1h EMA50)")
+        return
+    # ── Konum kapısı (2026-07-28 kanıtı): SELL dalganın dibinden, BUY
+    #    tepesinden açılmaz — kırılım/teyit gelmeden ters uçtan girme.
+    if _position_gate_blocks(scope_key, mt5_symbol, direction):
+        _log_trade("POSITION_GATE", scope_key, mt5_symbol, direction, 0, 0, 0,
+                   voters, "dalga ters ucu")
         return
 
     # ── Backend'den birleşik trade plan al ───────────────────────────────
@@ -1059,6 +1134,13 @@ def check_vix_regime() -> None:
     if voters and _trend_gate_blocks(scope_key, mt5_symbol, favored,
                                      flag="VIXREG_TREND_GATE"):
         return
+    # Konum kapısı — VIXREG'in EN KRİTİK eksiğiydi: bu scope backend'e hiç
+    # sormadığı için Precision Veto'nun discount_zone_sell koruması da
+    # uygulanmıyordu ve SELL'ler dalganın dibinden açılıyordu (n=88, WR %53,
+    # −3.738$). 2026-07-27 kullanıcı ekran görüntüsündeki SL tam bu vaka.
+    if voters and _position_gate_blocks(scope_key, mt5_symbol, favored,
+                                        flag="VIXREG_POSITION_GATE"):
+        return
     if not voters:
         log.info("%s — VIX=%.1f favored=%s ama model sinyali yok → açılmadı",
                  scope_key, vix, favored)
@@ -1097,7 +1179,10 @@ def main():
                    ("MGMT_TRAIL_R", 0.6), ("MGMT_RUNNER_MIN_TP_SL_RATIO", 0.4),
                    ("TREND_GATE_ENABLED", True), ("VIXREG_TREND_GATE", True),
                    ("VIXREG_SELL_PATIENCE", True), ("VIXREG_SELL_PATIENCE_MIN", 10),
-                   ("CHREV_MODE_OVERRIDE", {}), ("LIVE_TRADING", False)):
+                   ("CHREV_MODE_OVERRIDE", {}),
+                   ("POSITION_GATE_ENABLED", True), ("VIXREG_POSITION_GATE", True),
+                   ("POS_SELL_MIN", 0.40), ("POS_BUY_MAX", 0.60),
+                   ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
     log.info("=" * 64)
