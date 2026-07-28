@@ -17,7 +17,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from decide import JOURNAL_JSONL  # noqa: E402
-from exits import POLICIES, DEFAULT_POLICY  # noqa: E402
+from exits import POLICIES, DEFAULT_POLICY, policies_for, baseline_for  # noqa: E402
 
 MIN_N = 15        # bir sembol için güvenilir çıkış kıyası
 MIN_EDGE = 0.10   # en iyi, varsayılanı en az bu kadar ATR/işlem geçmeli → öneri
@@ -39,37 +39,44 @@ def _stats(vals):
     return mean, (var / n) ** 0.5, n   # ortalama, std-err, n
 
 
-def _report(title, rows):
-    graded = [r for r in rows if isinstance(r.get("exit_grades"), dict) and r["exit_grades"]]
+def _report(title, rows, symbol=None, grades_key="exit_grades"):
+    """symbol verilirse sembol-özel politika seti + CANLI geometri bazı kullanılır
+    (2026-07-27: XAU'nun 1.0/2.5 bazı eski sette yoktu — kıyas yanlış bazlaydı).
+    grades_key='exit_grades_real' → gerçek OPEN trade'lerin grade'leri (cf değil)."""
+    graded = [r for r in rows if isinstance(r.get(grades_key), dict) and r[grades_key]]
     print("=" * 72)
     print(f"{title}  |  exit-grade'li işlem: {len(graded)}")
     print("=" * 72)
     if len(graded) < MIN_N:
-        print(f"  ⏳ yetersiz ({len(graded)}/{MIN_N}) — exit_grades YENİ özellik, veri biriktikçe dolar.\n")
+        print(f"  ⏳ yetersiz ({len(graded)}/{MIN_N}) — {grades_key} veri biriktikçe dolar.\n")
         return None
     by_pol = defaultdict(list)
     for r in graded:
-        for pol, pnl in r["exit_grades"].items():
+        for pol, pnl in r[grades_key].items():
             if isinstance(pnl, (int, float)):
                 by_pol[pol].append(pnl)
+    base_pol = baseline_for(symbol)
     ranked = []
-    for pol in POLICIES:
+    for pol in policies_for(symbol):
         m, se, n = _stats(by_pol.get(pol, []))
-        ranked.append((pol, m, se, n))
+        if n:                                    # yön-kapsamlı/yeni politikalar boş olabilir
+            ranked.append((pol, m, se, n))
+    if not ranked:
+        print("  ⏳ politika verisi yok.\n"); return None
     ranked.sort(key=lambda x: -x[1])
-    base = next((m for p, m, se, n in ranked if p == DEFAULT_POLICY), 0.0)
-    print(f"  {'çıkış politikası':<18}{'EV(ATR)':>9}{'±se':>7}{'n':>5}   (varsayılan {DEFAULT_POLICY} = {base:+.3f})")
-    print("  " + "-" * 56)
+    base = next((m for p, m, se, n in ranked if p == base_pol), 0.0)
+    print(f"  {'çıkış politikası':<22}{'EV(ATR)':>9}{'±se':>7}{'n':>5}   (baz {base_pol} = {base:+.3f})")
+    print("  " + "-" * 60)
     for pol, m, se, n in ranked:
-        star = "  ⬅ varsayılan" if pol == DEFAULT_POLICY else ""
+        star = "  ⬅ baz" if pol == base_pol else ""
         best = "  🏆" if pol == ranked[0][0] else ""
-        print(f"  {pol:<18}{m:>+9.3f}{se:>7.3f}{n:>5}{best}{star}")
+        print(f"  {pol:<22}{m:>+9.3f}{se:>7.3f}{n:>5}{best}{star}")
     best_pol, best_m = ranked[0][0], ranked[0][1]
     edge = best_m - base
-    if best_pol != DEFAULT_POLICY and edge >= MIN_EDGE and ranked[0][3] >= MIN_N:
-        print(f"  → ✅ ÖNERİ: '{best_pol}' varsayılanı +{edge:.3f} ATR/işlem geçiyor → bu çıkışı düşün.")
+    if best_pol != base_pol and edge >= MIN_EDGE and ranked[0][3] >= MIN_N:
+        print(f"  → ✅ ÖNERİ: '{best_pol}' bazı +{edge:.3f} ATR/işlem geçiyor → bu çıkışı düşün.")
     else:
-        print(f"  → varsayılan ({DEFAULT_POLICY}) savunulabilir (en iyi fark +{edge:.3f} < {MIN_EDGE} ya da n az).")
+        print(f"  → baz ({base_pol}) savunulabilir (en iyi fark +{edge:.3f} < {MIN_EDGE} ya da n az).")
     print()
     return best_pol, edge
 
@@ -82,7 +89,9 @@ def main():
     for r in rows:
         by_sym[r.get("symbol")].append(r)
     for sym, items in sorted(by_sym.items()):
-        _report(f"SEMBOL: {sym}", items)
+        _report(f"SEMBOL: {sym}", items, symbol=sym)
+        _report(f"SEMBOL: {sym} — GERÇEK OPEN trade'ler", items, symbol=sym,
+                grades_key="exit_grades_real")
     print("Not: pnl_atr = işlem başı beklenen ATR kazancı (lot×ATR-değeri = para). En yüksek")
     print("ortalama = en kârlı çıkış. Öneri çıkarsa decide.py stop_mults / yeni exit-config'e wire edilir.")
 

@@ -152,6 +152,16 @@ def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
                         e["pnl_r"] = pnl_r(outcome, tr.get("rr", 0.667)); changed += 1
                     elif now - datetime.fromisoformat(e["ts"]).timestamp() > max_horizon_h * 3600:
                         e["outcome"] = "EXPIRE"; e["pnl_r"] = 0.0; changed += 1
+                    # SÜRTÜNME-NET (2026-07-27): karar anında ÖLÇÜLEN spread journal'a girdi
+                    # (trade.spread_atr). Net = brüt − spread maliyeti (R biriminde; tur başı
+                    # 1 tam spread — konservatif). Ham seri değişmez; ince-marjlı kapılarda
+                    # (GDAXI SELL %58-66 bandı) işaretin dönüp dönmediğini bu kolon söyler.
+                    if e.get("outcome") in ("WIN", "LOSS", "EXPIRE") and e.get("pnl_r_net") is None \
+                            and tr.get("spread_atr") and tr.get("atr"):
+                        risk_atr = abs(tr["entry_price"] - tr["sl"]) / tr["atr"]
+                        if risk_atr > 0:
+                            e["pnl_r_net"] = round((e.get("pnl_r") or 0.0)
+                                                   - tr["spread_atr"] / risk_atr, 3); changed += 1
                     if e.get("outcome") and e.get("path") is None:      # YOL analizi (SL/TP otopsisi)
                         e["path"] = _path_metrics(e["decision"]["direction"], tr["entry_price"],
                                                   tr["tp"], tr["sl"], bars)
@@ -166,12 +176,19 @@ def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
                 e["cf_pnl_r"] = pnl_r(cfo, cf.get("rr", 0.667)); changed += 1
             elif mature:
                 e["cf_outcome"] = "EXPIRE"; e["cf_pnl_r"] = 0.0; changed += 1
+            if e.get("cf_outcome") in ("WIN", "LOSS", "EXPIRE") and e.get("cf_pnl_r_net") is None \
+                    and cf.get("spread_atr") and cf.get("atr"):
+                risk_atr = abs(cf["entry_price"] - cf["sl"]) / cf["atr"]
+                if risk_atr > 0:
+                    e["cf_pnl_r_net"] = round((e.get("cf_pnl_r") or 0.0)
+                                              - cf["spread_atr"] / risk_atr, 3); changed += 1
             if e.get("cf_outcome") and e.get("cf_path") is None and bars:   # cf YOL analizi
                 e["cf_path"] = _path_metrics(cf["dir"], cf["entry_price"], cf["tp"], cf["sl"], bars)
             # Çıkış politikaları: tam ileri pencere üzerinde 6 çıkışı grade et (sembol başına
             # en iyi çıkışı öğrenmek için — exit_compare.py analiz eder). cf çözülünce/olgunlaşınca.
             if e.get("exit_grades") is None and cf.get("atr") and bars and (cfo or mature):
-                eg = exits.grade_all(cf["dir"], cf["entry_price"], cf["atr"], bars)
+                eg = exits.grade_all(cf["dir"], cf["entry_price"], cf["atr"], bars,
+                                     symbol=e.get("symbol"))
                 if eg:
                     e["exit_grades"] = eg; changed += 1
         # 2b) GERÇEK OPEN trade'in çoklu-çıkış grade'i + SEÇİLİ politika sonucu (mature'da)
@@ -182,7 +199,7 @@ def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
                     bars, ts = _bars_after(e)
                 if bars:
                     eg = exits.grade_all(e["decision"]["direction"], tr_real["entry_price"],
-                                         tr_real["atr"], bars)
+                                         tr_real["atr"], bars, symbol=e.get("symbol"))
                     if eg:
                         e["exit_grades_real"] = eg; changed += 1
                         pol = tr_real.get("exit_policy")
@@ -232,8 +249,10 @@ def summary(rows: list) -> str:
     realized = sum(r.get("pnl_r") or 0 for r in graded)
     foregone = sum(r.get("cf_pnl_r") or 0 for r in waits
                    if r.get("cf_outcome") in ("WIN", "LOSS"))
+    nets = [r["pnl_r_net"] for r in graded if r.get("pnl_r_net") is not None]
+    net_txt = (f" | NET(spread) {sum(nets)/len(nets):+.3f}R n={len(nets)}" if nets else "")
     return (f"OPEN kararlar: {len(graded)} grade | WR {100*w/len(graded):.0f}% ({w}/{len(graded)}) | "
-            f"EV {ev:+.3f}R/işlem | açık={len(opens)} bekle={len(waits)} expire={len(exp)}\n"
+            f"EV {ev:+.3f}R/işlem{net_txt} | açık={len(opens)} bekle={len(waits)} expire={len(exp)}\n"
             f"  💰 FIRSAT MUHASEBESİ: gerçekleşen {realized:+.1f}R | VAZGEÇİLEN {foregone:+.1f}R "
             f"(WAIT'lerin cf toplamı — çekingenlik bedava değil)")
 

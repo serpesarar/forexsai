@@ -184,6 +184,24 @@ def open_positions_summary() -> dict:
     return {"count": len(poss), "by": by, "note": note}
 
 
+def fetch_spread(fx_sym: str) -> float | None:
+    """Karar anında ÖLÇÜLEN bid/ask farkı (fiyat birimi). Sürtünme-net grade için journal'a
+    girer (2026-07-27 denetimi: grading ham high/low değmesiyle sayıyordu — spread yok →
+    gölge WR yapısal iyimser; ince-marjlı kapılarda işaret dönebilir). Fail-open: None."""
+    if not _HAS_MT5:
+        return None
+    mt5_sym = _SYM_MAP.get(fx_sym)
+    if not mt5_sym:
+        return None
+    t = mt5.symbol_info_tick(mt5_sym)
+    if t is None:
+        return None
+    bid, ask = getattr(t, "bid", 0.0), getattr(t, "ask", 0.0)
+    if bid and ask and ask >= bid > 0:
+        return float(ask - bid)
+    return None
+
+
 def fetch_vix() -> tuple[float | None, str]:
     """VIX'i Pepperstone MT5'ten DOĞRUDAN oku — canlı 24h, gerçek-zamanlı (poller/yfinance/dosya YOK)."""
     if not _HAS_MT5 or not _VIX_SYM:
@@ -396,6 +414,7 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
     if sits:
         print(f"[{now:%H:%M}] {len(sits)} ilginç sembol → Opus (kanıt-temelli, {model})...")
         for sit in sits:
+            sit["spread_price"] = fetch_spread(sit["symbol"])   # ölçülen spread → sürtünme-net grade
             # FORENSİK snapshot (hacim/VIX/DXY/kanal/multi-TF S/R+güç) — model GÖRÜR + journal'a yazılır
             if _HAS_MT5:
                 try:
@@ -436,6 +455,7 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             if not _state_changed(FREE_SYMBOL, free_sig):     # olay-tetikli (free)
                 ctx = None
         if ctx:
+            ctx["spread_price"] = fetch_spread(FREE_SYMBOL)     # sürtünme-net grade (free)
             try:
                 ctx["forensics"] = forensics.build_forensics(mtf, vix=vix, dxy=dxy)
             except Exception as e:

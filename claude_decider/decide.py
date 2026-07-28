@@ -102,17 +102,22 @@ def stop_mults(symbol: str) -> tuple[float, float]:
     return STOP_ATR.get(symbol, DEFAULT_STOP_ATR)
 
 
-def build_trade(symbol: str, direction: str, atr, price, bar_time=None) -> dict | None:
-    """Entry + per-sembol ATR TP/SL (grade edilebilir trade). Opus/Fable/free ortak kullanır."""
+def build_trade(symbol: str, direction: str, atr, price, bar_time=None, spread=None) -> dict | None:
+    """Entry + per-sembol ATR TP/SL (grade edilebilir trade). Opus/Fable/free ortak kullanır.
+    spread: karar anında ÖLÇÜLEN bid/ask farkı (fiyat birimi) — sürtünme-net grade için."""
     if not atr or not price or not direction:
         return None
     buy = str(direction).upper() == "BUY"
     tp_atr, sl_atr = stop_mults(symbol)
     tp = price + tp_atr * atr if buy else price - tp_atr * atr
     sl = price - sl_atr * atr if buy else price + sl_atr * atr
-    return {"entry_price": round(price, 5), "atr": round(atr, 5), "tp": round(tp, 5),
-            "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2), "entry_bar_time": bar_time,
-            "exit_policy": EXIT_POLICY.get(symbol)}   # seçili çıkış (None = fixed varsayılan)
+    t = {"entry_price": round(price, 5), "atr": round(atr, 5), "tp": round(tp, 5),
+         "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2), "entry_bar_time": bar_time,
+         "exit_policy": EXIT_POLICY.get(symbol)}   # seçili çıkış (None = fixed varsayılan)
+    if spread and spread > 0:
+        t["spread"] = round(float(spread), 5)
+        t["spread_atr"] = round(float(spread) / atr, 4)
+    return t
 
 
 def _shadow_pack(symbol: str, dec: dict, atr, price, bar_time) -> dict | None:
@@ -452,7 +457,8 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
     entry+ATR TP/SL (XAU geniş stop) → outcomes.py grade eder. Kanıt-temelli akıştan ayrı analiz."""
     d = dec.get("direction")
     atr, price, bt = ctx.get("atr_5m"), ctx.get("price"), ctx.get("bar_time_5m")
-    trade = build_trade("XAUUSD", d, atr, price, bt) if str(dec.get("action", "")).upper() == "OPEN" else None
+    trade = build_trade("XAUUSD", d, atr, price, bt, ctx.get("spread_price")) \
+        if str(dec.get("action", "")).upper() == "OPEN" else None
     shadow = _shadow_pack("XAUUSD", dec.get("_shadow"), atr, price, bt)
 
     # KARŞI-OLGU (Paket 2): free mod WAIT dese bile "açsaydı BUY" grade edilir — yoksa
@@ -470,7 +476,7 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
               "adx": f5.get("adx"), "atr": atr,
               "gate_fired": bool((rev_c is not None and rev_c > GATE_CHAN_Z)
                                  or (rev_v is not None and rev_v > GATE_VWAP_Z))}
-        t = build_trade("XAUUSD", "BUY", atr, price, bt)
+        t = build_trade("XAUUSD", "BUY", atr, price, bt, ctx.get("spread_price"))
         if t:
             cf = {"dir": "BUY", **t, "live": lf}
 
@@ -514,8 +520,9 @@ def append_journal(situation: dict, dec: dict) -> dict:
     # ATR yön-bağımsız → chosen live yoksa herhangi bir yönün live'ından al (shadow/WAIT için)
     atr_any = live.get("atr") or next((b.get("live", {}).get("atr") for b in dl.values() if b.get("live")), None)
 
+    spread = situation.get("spread_price")   # karar anında ölçülen bid/ask (sürtünme-net grade)
     # OPEN ise: entry + ATR TP/SL (sonra outcome'da WIN/LOSS taranır)
-    trade = build_trade(sym, chosen, live.get("atr"), price, bt) \
+    trade = build_trade(sym, chosen, live.get("atr"), price, bt, spread) \
         if str(dec.get("action", "")).upper() == "OPEN" and chosen else None
 
     # KARŞI-OLGU: primary_dir "açsaydı" — HER kayda (recall/analyze_missed grade eder)
@@ -523,7 +530,7 @@ def append_journal(situation: dict, dec: dict) -> dict:
     primary = situation.get("primary_dir")
     if primary:
         plive = (dl.get(primary) or {}).get("live") or {}
-        ptrade = build_trade(sym, primary, plive.get("atr"), price, bt)
+        ptrade = build_trade(sym, primary, plive.get("atr"), price, bt, spread)
         if ptrade:
             cf = {"dir": primary, **ptrade, "live": plive}
 

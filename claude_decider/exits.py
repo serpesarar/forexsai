@@ -92,6 +92,33 @@ def exit_time(direction, entry, atr, bars, sl_mult=1.5, n_bars=24):
     return _eod(direction, entry, atr, bars)
 
 
+def exit_be30_runner(direction, entry, atr, bars, sl_mult=1.5, be_bars=6, tp_mult=1.0, trail_r=0.6):
+    """ÖLÇÜLMÜŞ NDX BUY yönetimi (trade-mgmt-be30-runner-2026-07: 223 gerçek işlem, 1m
+    sızıntısız replay, Δ+29.5R [16.4,43.5] P=%100; TP olan işlemler TP sonrası medyan +1.42R
+    devam ediyor): girişten be_bars×5m (~30dk) sonra kârdaysa SL→girişe (BE); TP'ye VARINCA
+    TP KALDIRILIR ve HWM−trail_r×R iz süren stopla koşturulur (R = sl_mult×ATR).
+    YALNIZ BUY — SELL pozisyonuna BE/trail aynı araştırmada Δ−7.5R ölçüldü → SELL'de None
+    (grade edilmez; havuz istatistiğini kirletmesin). Konservatif intrabar: önce SL/trail."""
+    if str(direction).upper() != "BUY":
+        return None
+    sl = entry - sl_mult * atr
+    tp = entry + tp_mult * atr
+    trail_dist = trail_r * sl_mult * atr      # 0.6R (sl1.5'te 0.9×ATR)
+    hwm, runner, moved_be = entry, False, False
+    for i, b in enumerate(bars):
+        if b["low"] <= sl:                    # konservatif: önce stop
+            pnl = (sl - entry) / atr
+            return ("TRAIL" if runner else "BE" if moved_be else "SL"), round(pnl, 3)
+        if not runner and b["high"] >= tp:
+            runner = True                     # TP kaldırıldı — kazananı koştur
+        if runner:
+            hwm = max(hwm, b["high"])
+            sl = max(sl, hwm - trail_dist)
+        if not moved_be and i + 1 >= be_bars and b["close"] > entry:
+            sl = max(sl, entry); moved_be = True   # BE@30dk (yalnız kârdayken)
+    return _eod(direction, entry, atr, bars)
+
+
 # Politika seti — isim → fonksiyon. 'fixed_1.0/1.5' mevcut varsayılan (baz).
 POLICIES = {
     "fixed_1.0/1.5":  lambda d, e, a, b: exit_fixed(d, e, a, b, 1.0, 1.5),   # mevcut default
@@ -100,19 +127,47 @@ POLICIES = {
     "trail_1.0":      lambda d, e, a, b: exit_trail(d, e, a, b, 1.5, 1.0, 1.0),
     "breakeven_tp2":  lambda d, e, a, b: exit_breakeven(d, e, a, b, 1.5, 1.0, 2.0),
     "time_2h":        lambda d, e, a, b: exit_time(d, e, a, b, 1.5, 24),
+    "be30_runner":    lambda d, e, a, b: exit_be30_runner(d, e, a, b),       # yalnız BUY (SELL→None)
 }
 DEFAULT_POLICY = "fixed_1.0/1.5"
 
+# Sembol-özel ek politikalar (2026-07-27 denetimi): XAU'nun CANLI geometrisi (1.0/2.5) eski
+# sette HİÇ yoktu (hepsi sl=1.5) → exit_compare XAU'yu yanlış bazla kıyaslıyordu ve 2.5×ATR
+# katsayısı kendi kendini asla doğrulayamıyordu. fixed_0.75/1.0 = XAU fakeout dedektörünün
+# OOS-doğrulanmış geometrisi (fakeout_rules_XAUUSD.json detector.tp_atr/sl_atr).
+XAU_POLICIES = {
+    "fixed_1.0/2.5":        lambda d, e, a, b: exit_fixed(d, e, a, b, 1.0, 2.5),   # canlı XAU bazı
+    "fixed_0.75/1.0":       lambda d, e, a, b: exit_fixed(d, e, a, b, 0.75, 1.0),  # dedektör geometrisi
+    "fixed_1.5/2.5":        lambda d, e, a, b: exit_fixed(d, e, a, b, 1.5, 2.5),
+    "trail_1.0/sl2.5":      lambda d, e, a, b: exit_trail(d, e, a, b, 2.5, 1.0, 1.0),
+    "breakeven_tp2/sl2.5":  lambda d, e, a, b: exit_breakeven(d, e, a, b, 2.5, 1.0, 2.0),
+}
 
-def grade_all(direction: str, entry: float, atr: float, bars: list) -> dict:
-    """Tüm politikaları grade et → {politika: pnl_atr}. Geçersiz girdi → {}."""
+
+def policies_for(symbol: str | None = None) -> dict:
+    """Sembolün grade edileceği politika seti (temel + sembol-özel varyantlar)."""
+    if symbol == "XAUUSD":
+        return {**POLICIES, **XAU_POLICIES}
+    return POLICIES
+
+
+def baseline_for(symbol: str | None = None) -> str:
+    """exit_compare kıyas bazı = sembolün CANLI geometrisi (decide.STOP_ATR ile tutarlı)."""
+    return "fixed_1.0/2.5" if symbol == "XAUUSD" else DEFAULT_POLICY
+
+
+def grade_all(direction: str, entry: float, atr: float, bars: list,
+              symbol: str | None = None) -> dict:
+    """Tüm politikaları grade et → {politika: pnl_atr}. Geçersiz girdi → {}.
+    Yön-kapsamlı politikalar (be30_runner SELL'de) None döner → atlanır."""
     if not atr or atr <= 0 or not bars:
         return {}
     out = {}
-    for name, fn in POLICIES.items():
+    for name, fn in policies_for(symbol).items():
         try:
-            _, pnl = fn(direction, entry, atr, bars)
-            out[name] = pnl
+            res = fn(direction, entry, atr, bars)
+            if res is not None:
+                out[name] = res[1]
         except Exception:
             pass
     return out
