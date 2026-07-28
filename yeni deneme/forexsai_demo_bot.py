@@ -838,6 +838,53 @@ def _position_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
     return True
 
 
+def backend_veto_advice(scope_key: str, forexsai_sym: str, mt5_symbol: str,
+                        direction: str, voters: list[str],
+                        block_flag: str) -> bool:
+    """Backend Precision Veto DANIŞMASI — VIXREG/CHREV için (2026-07-28).
+
+    NEDEN: Bu iki scope `fetch_bot_trade_signal` çağırmıyordu, yani Precision
+    Veto'nun likidite/MTF/wick/macro-bias katmanları ve Stage-4 meta modeli
+    bu girişlerde HİÇ çalışmıyordu. Yalnız ROBUST_SCOPES backend'e soruyordu.
+
+    NEDEN GEOMETRİ ALINMIYOR: backend'in entry_optimizer'ı SL/TP'yi kendi
+    hesabıyla döndürür; VIXREG'in +2.071$/30g performansı ise ARAŞTIRILMIŞ
+    80/110 geometrisiyle ölçüldü. Geometriyi değiştirmek o kanıtı geçersiz
+    kılar (ayrıca 2026-07-24'te bayat backend planı RR 0.07'lik emir açtırdı).
+    Bu yüzden buradan YALNIZ "aç/açma" bilgisi alınır; tp/sl/lot'a dokunulmaz.
+
+    NEDEN VARSAYILAN GÖLGE: Precision Veto'nun bu scope'lardaki etkisi HİÇ
+    ölçülmedi. Gölgede kararı loglar (gate_skipped.jsonl → gate_audit.py),
+    2 hafta sonra "veto etseydi ne olurdu" veriyle görülür; ancak o zaman
+    <block_flag>=1 ile gerçek blok açılır.
+
+    True → giriş bloklanmalı (yalnız block_flag açıksa). Fail-open.
+    """
+    if not getattr(config, "BACKEND_ADVICE_ENABLED", True):
+        return False
+    try:
+        bs = fetch_bot_trade_signal(forexsai_sym, direction,
+                                    confidence=70.0 + len(voters) * 5,
+                                    model_type=",".join(voters) or "vixreg")
+    except Exception as exc:
+        log.debug("%s — backend danışması hata (fail-open): %s", scope_key, exc)
+        return False
+    if bs is None or bs.get("should_trade"):
+        return False
+    reason = bs.get("veto_reason") or "?"
+    blocking = bool(getattr(config, block_flag, False))     # default GÖLGE
+    log.info("%s — BACKEND VETO%s: %s", scope_key,
+             "" if blocking else " (GÖLGE — engellemedi)", reason)
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    if tick:
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
+                      tick.ask if direction == "BUY" else tick.bid,
+                      "backend_veto" if blocking else "backend_veto_shadow",
+                      extra={"veto_reason": reason,
+                             "zone_pos": (bs.get("notes") or {}).get("zone_position")})
+    return blocking
+
+
 def _trend_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
                        flag: str = "TREND_GATE_ENABLED") -> bool:
     """True → giriş bloklanmalı. Log + config bayrağı ile kapatılabilir."""
@@ -1082,6 +1129,12 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
                      "(kanal-kaynak + lehte eğim şart)", scope_key, source,
                      f"{slope:.3f}" if slope is not None else "?")
             return
+    # Backend danışması (CHREV de backend'e hiç sormuyordu) — GÖLGE varsayılan.
+    # NOT: CHREV mean-reversion olduğu için konum kapısı UYGULANMAZ — bu scope
+    # zaten tanımı gereği dipten alır / tepeden satar (kanal ekstremi).
+    if backend_veto_advice(scope_key, forexsai_sym, mt5_symbol, direction,
+                           [model], "CHREV_BACKEND_VETO"):
+        return
     log.info("%s — MEAN-REVERSION [%s] z=%.2f ✓ → market giriş", scope_key, source, z)
     open_trade(scope_key, forexsai_sym, mt5_symbol, direction, cfg, [model], magic=cr_magic)
 
@@ -1141,6 +1194,11 @@ def check_vix_regime() -> None:
     if voters and _position_gate_blocks(scope_key, mt5_symbol, favored,
                                         flag="VIXREG_POSITION_GATE"):
         return
+    # Backend Precision Veto danışması — geometri ALINMAZ, yalnız aç/açma.
+    # Varsayılan GÖLGE: VIXREG_BACKEND_VETO=1 olana kadar sadece loglar.
+    if voters and backend_veto_advice(scope_key, forexsai_sym, mt5_symbol,
+                                      favored, voters, "VIXREG_BACKEND_VETO"):
+        return
     if not voters:
         log.info("%s — VIX=%.1f favored=%s ama model sinyali yok → açılmadı",
                  scope_key, vix, favored)
@@ -1182,6 +1240,8 @@ def main():
                    ("CHREV_MODE_OVERRIDE", {}),
                    ("POSITION_GATE_ENABLED", True), ("VIXREG_POSITION_GATE", True),
                    ("POS_SELL_MIN", 0.40), ("POS_BUY_MAX", 0.60),
+                   ("BACKEND_ADVICE_ENABLED", True),
+                   ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
