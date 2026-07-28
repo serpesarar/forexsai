@@ -71,3 +71,40 @@ ile hükme bağlanacak. Kullanıcı isterse tek bayrakla kapatılır
 
 **Dosyalar:** `sim.py` · `sim2.py` (S/R limit varyantları) · `regime_test.py`
 (haftalık dayanıklılık) · `walkforward.py` · `FINDINGS.md`
+
+---
+
+## EK — 2026-07-28 gece: uygulananlar + bir öz-düzeltme
+
+### Öz-düzeltme: "candle_cache 400 puan sapmış" teşhisi YANLIŞTI
+Bot log satırlarındaki saati UTC sandım; aslında **UTC−4** (kutu lokal saati).
+Botun `10:03`'te gördüğü 28153 fiyatı, gerçekte **14:03 UTC** — ve candle_cache
+o saatte 27790–28207 aralığında, yani **tam uyumlu**. Kutudan alınan canlı MT5
+bid'i (NAS100 27930.4) ile candle_cache son barı (27928.4) de örtüşüyor.
+**Veri sağlam, simülasyonlar geçerli** (zaten prediction_logs + candle_cache
+kullanıyorlar, ikisi de gerçek UTC; bot log saati simülasyona hiç girmiyor).
+
+### Uygulanan 1: SABIR kapısı varsayılan KAPATILDI
+Kanıt dengesi kapatma yönünde: timelapse OUT 3/3 SELL scope'ta zararlı ·
+haftalık dilim testinde en iyi varyant sabırsız · canlıda geçen tek işlem SL.
+Kod silinmedi (karşı kanıt çürütülmedi) — `VIXREG_SELL_PATIENCE=True` ile döner.
+
+### Uygulanan 2: XAUUSD GÖLGE scope'u
+Kapsam testinde XAU açık ara en kârlı çıktı (B varyantı: BUY +55.3R/6-9 hafta,
+SELL +103.7R/8-9; spread 0.30'da bile +44/+51R; ~11.6 işlem/gün — kullanıcının
+istediği hacim). **AMA canlıya AÇILMADI**, gerekçe:
+- XAU 2026-06'da canlıda para kaybettiği için icra dışı bırakılmıştı
+- Hafızada iki bağımsız araştırma: "XAU intraday edge yok", "dar stop öldürür"
+  (sim'deki SL 6 puan = %0.148 — tam da o dar stop)
+- Simülasyonda **A varyantı da pozitif** (+33/+70.7R) çıkıyor ama canlı A
+  negatifti → simülasyonun modellemediği bir şey var (icra, slippage, seans)
+
+Bu çelişki çözülmeden gerçek para riske edilmez. Onun yerine `check_shadow_scopes()`:
+bot XAU sinyallerini her taramada kapılardan geçirir, geçenleri
+`gate_skipped.jsonl`'e `shadow_signal` olarak yazar, **işlem AÇMAZ**.
+2 hafta sonra `gate_audit.py --reason shadow_signal` ile gerçek sonuç ölçülüp
+açma kararı verilecek.
+
+### Uygulanmayan: GDAXI SELL / NDX SELL momentum
+Haftalık dilim testinde ikisi de zayıf çıktı (GDAXI SELL B: 4/7 hafta, +1.1R;
+NDX SELL zaten VIXREG üzerinden açık). Kapsam genişletmede tek güçlü aday XAU.

@@ -838,6 +838,55 @@ def _position_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
     return True
 
 
+def check_shadow_scopes() -> None:
+    """KANIT BİRİKTİRME: canlıya alınmamış scope'ları değerlendirir, kapıdan
+    geçen sinyalleri KAYDEDER ama İŞLEM AÇMAZ.
+
+    Neden (2026-07-28): timelapse deneyi XAUUSD'yi trend+konum kapılarıyla en
+    kârlı sembol gösterdi (B varyantı: BUY +55.3R/6-9 hafta, SELL +103.7R/8-9;
+    spread 0.30'da bile +44/+51R; ~11 işlem/gün). AMA XAU 2026-06'da canlıda
+    para kaybettiği için icra dışı bırakılmıştı ve hafızadaki iki bağımsız
+    araştırma "XAU intraday edge yok / dar stop öldürür" diyor. Simülasyon ile
+    canlı geçmiş ÇELİŞİYOR → simülasyonun modellemediği bir şey var (icra,
+    slippage, seans). Bu yüzden XAU canlıya AÇILMIYOR; kapıdan geçen sinyaller
+    gölgede kaydedilip 2 hafta sonra gerçek fiyatla karşılaştırılacak
+    (research/gate_audit.py --reason shadow_signal).
+    """
+    scopes = getattr(config, "SHADOW_SCOPES", {"XAUUSD:BUY": {}, "XAUUSD:SELL": {}})
+    for scope_key in scopes:
+        try:
+            forexsai_sym, direction = scope_key.split(":")[:2]
+            mt5_symbol = resolve_symbol(forexsai_sym)
+            if not mt5_symbol:
+                continue
+            models = getattr(config, "SHADOW_SCOPE_MODELS", ["pulse1", "pulse2", "pulse3"])
+            voters = [m for m in models
+                      if signal_direction(m, fetch_pulse(m, forexsai_sym))[0] == direction]
+            if not voters:
+                continue
+            aligned, _ = trend_alignment(mt5_symbol, direction)
+            if not aligned:
+                continue
+            pos, lo, hi = entry_position(mt5_symbol)
+            if pos is not None:
+                if (direction == "SELL" and pos < float(getattr(config, "POS_SELL_MIN", 0.40))) \
+                   or (direction == "BUY" and pos > float(getattr(config, "POS_BUY_MAX", 0.60))):
+                    continue
+            tick = mt5.symbol_info_tick(mt5_symbol)
+            if tick is None:
+                continue
+            px = tick.ask if direction == "BUY" else tick.bid
+            log.info("[GÖLGE] %s — kapıları geçti (konum %.2f, oy %s) → KAYDEDİLDİ, "
+                     "işlem AÇILMADI", scope_key, pos if pos is not None else -1,
+                     ",".join(voters))
+            log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction, px,
+                          "shadow_signal",
+                          extra={"pos": round(pos, 3) if pos is not None else None,
+                                 "voters": voters})
+        except Exception as exc:                 # gölge asla canlıyı etkilemez
+            log.debug("gölge scope hata %s: %s", scope_key, exc)
+
+
 def backend_veto_advice(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                         direction: str, voters: list[str],
                         block_flag: str) -> bool:
@@ -1249,7 +1298,7 @@ def main():
                    ("CHREV_MODE_OVERRIDE", {}),
                    ("POSITION_GATE_ENABLED", True), ("VIXREG_POSITION_GATE", True),
                    ("POS_SELL_MIN", 0.40), ("POS_BUY_MAX", 0.60),
-                   ("BACKEND_ADVICE_ENABLED", True),
+                   ("BACKEND_ADVICE_ENABLED", True), ("SHADOW_SCOPES_ENABLED", True),
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
@@ -1335,6 +1384,13 @@ def main():
             # ── İŞLEM-SONRASI YÖNETİM: BE@30dk (NDX BUY) + kazananı-koştur
             #    (NDX+DAX BUY) + vixreg SELL sabır kuyruğu (kanıt:
             #    research/trade_mgmt_ndx/REPORT.md) ──
+            # ── GÖLGE scope'lar (XAU): kanıt biriktir, işlem açma ──
+            if getattr(config, "SHADOW_SCOPES_ENABLED", True):
+                try:
+                    check_shadow_scopes()
+                except Exception as e:
+                    log.debug("gölge scope döngü hatası: %s", e)
+
             if getattr(config, "TRADE_MGMT_ENABLED", True):
                 try:
                     import trade_manager
