@@ -131,10 +131,11 @@ POLICIES = {
 }
 DEFAULT_POLICY = "fixed_1.0/1.5"
 
-# Sembol-özel ek politikalar (2026-07-27 denetimi): XAU'nun CANLI geometrisi (1.0/2.5) eski
-# sette HİÇ yoktu (hepsi sl=1.5) → exit_compare XAU'yu yanlış bazla kıyaslıyordu ve 2.5×ATR
-# katsayısı kendi kendini asla doğrulayamıyordu. fixed_0.75/1.0 = XAU fakeout dedektörünün
-# OOS-doğrulanmış geometrisi (fakeout_rules_XAUUSD.json detector.tp_atr/sl_atr).
+# Sembol-özel ek politikalar (2026-07-27 denetimi): XAU'nun o günkü CANLI geometrisi (1.0/2.5)
+# eski sette HİÇ yoktu (hepsi sl=1.5) → exit_compare yanlış bazla kıyaslıyordu ve 2.5 katsayısı
+# kendini asla doğrulayamıyordu. Ölçüm yapılınca (2026-07-28) 2.5 ELENDİ ve XAU ev varsayılanına
+# döndü; sl2.5 varyantları kıyas setinde KALIYOR — dönüşün yanlış olup olmadığı ancak onlar
+# ölçülmeye devam ederse görülür. fixed_0.75/1.0 = XAU fakeout dedektörünün OOS geometrisi.
 XAU_POLICIES = {
     "fixed_1.0/2.5":        lambda d, e, a, b: exit_fixed(d, e, a, b, 1.0, 2.5),   # canlı XAU bazı
     "fixed_0.75/1.0":       lambda d, e, a, b: exit_fixed(d, e, a, b, 0.75, 1.0),  # dedektör geometrisi
@@ -152,8 +153,17 @@ def policies_for(symbol: str | None = None) -> dict:
 
 
 def baseline_for(symbol: str | None = None) -> str:
-    """exit_compare kıyas bazı = sembolün CANLI geometrisi (decide.STOP_ATR ile tutarlı)."""
-    return "fixed_1.0/2.5" if symbol == "XAUUSD" else DEFAULT_POLICY
+    """exit_compare kıyas bazı = sembolün CANLI geometrisi. decide.stop_mults'tan TÜRETİLİR —
+    sabit yazılırsa geometri değişince kıyas yanlış baza kayar (2026-07-28 XAU dersi)."""
+    try:
+        from decide import stop_mults
+        tp, sl = stop_mults(symbol)
+        name = f"fixed_{tp:g}/{sl:g}"
+        if name in policies_for(symbol):
+            return name
+    except Exception:
+        pass
+    return DEFAULT_POLICY
 
 
 def grade_all(direction: str, entry: float, atr: float, bars: list,

@@ -48,7 +48,7 @@ OOS = araştırma out-of-sample; † = canlı-teyitsiz ≥%80 iddia 72'ye kapakl
 | NDX | SELL | %67 | %62 | ✅ ince marj ama canlıda DÜZELDİ (canlı %68, n=170) |
 | **USOIL** | SELL | %62 | %72† | ⚠ **REJİM-FLIP ŞÜPHESİ GERÇEKLEŞİYOR**: canlı %58 (n=173) breakeven altı — eski %91 dönem trendiydi. Kanıt eşiğini yüksek tut, boyut küçült |
 | USOIL | BUY | %30 | %10 | ❌ mean-rev ÇÖKER (momentum scope ayrı, +EV) |
-| **XAUUSD** | BUY | %70 | %72† | ✅ ama PATIENT WR — **GENİŞ stop şart** (dar MT5 stop→−EV); canlı %67 (n=150); NY seansında canlı %15 (n=20) — NY'de XAU BUY'a aşırı temkin |
+| **XAUUSD** | BUY | %70 | %72† | ✅ PATIENT WR — DAR stop (13-25 puan ≈0.3-0.6×ATR) −EV; ama 2026-07-28 ölçümü 2.5×ATR'yi de ELEDİ (12 politikada iki havuzda da alttan 3'te) → geometri ev varsayılanına döndü: TP1.0/SL1.5, breakeven %60. Canlı %67 (n=150); NY seansında canlı %15 (n=20) — NY'de XAU BUY'a aşırı temkin |
 | XAUUSD | SELL | %42 | %21 | ❌ **KALICI YASAK** |
 
 > 🔬 **CANLI KALİBRASYON (2026-07-27, 1894 grade'li karar):** araştırma-dönemi yüksek iddialar

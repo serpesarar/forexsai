@@ -81,9 +81,15 @@ SHADOW_MODEL = None
 # XAUUSD "patient WR" ([[xauusd-meta-stop-sizing]]): dar stop → dönüş tamamlanmadan SL.
 # Geniş SL ver → sabırlı bounce stop yemeden realize olsun (canlı gözlem: XAU BUY %43/−0.29R dar stopla).
 DEFAULT_STOP_ATR = (1.0, 1.5)
-STOP_ATR = {
-    "XAUUSD": (1.0, 2.5),       # TP 1×ATR (VWAP'a dönüş), SL 2.5×ATR (geniş — sabırlı)
-}
+# 2026-07-28 ÖLÇÜM: XAU'nun 2.5×ATR stop'u (kanıtsız "patient WR" teorisiyle seçilmişti)
+# 12 politikalık kıyasta karşı-olgu havuzunda 10., gerçek OPEN havuzunda 11. sırada — İKİ
+# BAĞIMSIZ havuzda da alttan 3'te (P≈0.06). Bu bir "kazanan politika seçimi" değil, bazın
+# kendisinin sistematik kötü olduğu bulgusu; tüm alternatifler onu geçiyor (+0.05..+0.30 ATR).
+# Aritmetik de aynı yönde: RR 0.40 → breakeven WR %71.4, oysa XAU BUY canlı WR ~%67-70 →
+# YAPISAL −EV. RR 0.67'de breakeven %60 → aynı WR +EV'ye döner. Ev varsayılanına dönüldü
+# (cherry-pick değil). NOT: [[xauusd-meta-stop-sizing]] dersi ÇELİŞMİYOR — orada öldüren
+# stop 13-25 PUAN (~0.3-0.6×ATR) idi; 1.5×ATR hâlâ o ölçekten çok geniş.
+STOP_ATR: dict[str, tuple[float, float]] = {}
 TP_ATR, SL_ATR = DEFAULT_STOP_ATR   # geriye-uyum (varsayılan)
 
 # Per-sembol SEÇİLİ ÇIKIŞ POLİTİKASI (exit_compare kanıt kapısından geçenler).
