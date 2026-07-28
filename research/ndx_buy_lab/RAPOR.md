@@ -287,3 +287,38 @@ SL = 1.0×ATR(H1)** (bugün ≈ TP 240 / SL 120 puan; önceki 80/110).
    aynı hatayı yapma riski**. İşlem-mum eşleştiren her analiz offset çıkarmalı.
 3. Yeni geometride beklenen WR ~%34 (önceki ~%58). İlk işlemlerde "kaybediyoruz"
    izlenimi normaldir — karar n≥30'da EV ile verilmeli.
+
+---
+
+## 9. USOIL & GDAXI doğrulamalarının yeniden ölçümü (2026-07-28)
+
+`audit_usoil_gdaxi.py` — aynı sinyaller, aynı geometriler, İKİ saat ekseninde.
+
+| Scope | KAYMIŞ eksen ΔWR (orijinal kurgu) | **DOĞRU eksen ΔWR** | P(Δ>0) | Sızıntı imzası (kaymış eksende "sonraki" 180 dk) |
+|---|---|---|---|---|
+| USOIL:SELL | +18.5 puan (P=%100) | **+4.2 puan** | %80 | geçen −0.790% / kalan −0.042% |
+| USOIL:BUY | +38.4 puan (P=%100) | **+8.3 puan** | %92 | geçen +1.000% / kalan −0.088% |
+| GDAXI:BUY | +39.1 puan (P=%100) | **+2.4 puan** | %58 | geçen +0.568% / kalan −0.093% |
+
+**Üçü de aynı sızıntıyı taşıyordu.** Kaymış eksende filtre girişten "sonraki" 3 saatin
+yönünü biliyor (SELL filtresi düşüşü, BUY filtreleri yükselişi); doğru eksende bu
+"öngörü" sıfıra iner. `bot_router.py`'deki %96.6 / bootstrap %99.9 / placebo p=0.000
+rakamlarının hepsi bu artefaktın ürünü.
+
+### Paraya çevirisi — botun GERÇEK geometrisiyle
+
+| Scope | RR | başabaş WR | filtresiz | EV | filtreli | EV |
+|---|---|---|---|---|---|---|
+| **USOIL:SELL** | 0.70 | %58.9 | %66.3 | **+0.106R** ✅ | %68.8 | **+0.148R** ✅ |
+| **USOIL:BUY** | 0.70 | %58.9 | %55.1 | −0.085R ❌ | %60.7 | **+0.011R** ✅ |
+| **GDAXI:BUY** | 0.56 | %64.0 | %58.9 | −0.088R ❌ | %60.2 | **−0.067R** ❌ |
+| NDX:BUY (eski) | 0.73 | %57.9 | %54.0 | −0.076R ❌ | %50.8 | −0.132R ❌ |
+
+**Sonuçlar:**
+1. **USOIL:SELL gerçekten kârlı** (+0.148R) — filtre de küçük ama pozitif katkı veriyor.
+   Abartılmıştı (%96.6 değil %68.8) ama iddia ÖZÜNDE doğru. Dokunma.
+2. **USOIL:BUY yalnız filtreyle başabaşı geçiyor** (+0.011R) — kıl payı. Filtre şart.
+3. **GDAXI:BUY filtreyle bile −EV** (−0.067R). Sebep NDX ile aynı: RR 0.56, başabaş
+   %64 — piyasanın verdiği %60'ın üstünde. Canlı MT5 de bunu doğruluyor:
+   GER40 BUY 15 işlem **−1.243$**. → **Askıya alınmalı veya NDX gibi ATR-ölçekli
+   geometriye geçirilmeli** (henüz ölçülmedi; NDX'teki gibi 11 yıllık tarama gerekir).
