@@ -233,3 +233,57 @@ Değerin geldiği yer sinyal değil, **filtre + geometri**.
 (sürükleme atfetme + al-tut kıyası) · `regime_gate_10y.py` `final_combo_10y.py`
 `long_atr_gates.py` `mom_fair_test.py` `mgmt_interaction.py` `final_signal_test.py` ·
 `diagnose.py` · veri: `data/`
+
+---
+
+## 8. UYGULANANLAR (2026-07-28, kullanıcı onayıyla)
+
+### Ö1 — Saat hatası ✅
+| Adım | Sonuç |
+|---|---|
+| Kök neden | `data_recorder.py:74` MT5 **sunucu** epoch'unu UTC sanıyordu. Kutuda ölçülen offset **tam +180 dk** (sunucu UTC+3) |
+| Kod düzeltmesi | Offset artık çalışma anında ölçülüyor (`tick.time − gerçek UTC`, 15 dk'ya yuvarlanır) + saatte bir tazeleniyor → DST kendiliğinden çözülür |
+| Veri onarımı | 4 sembol × 6 TF MT5'ten doğru UTC ile yeniden yazıldı; **121.092 hayalet satır** silindi (MT5'in otoriter serisinde bulunmayan damgalar) |
+| Doğrulama | ABD nakit açılışı artık 13-14 UTC'de en yüksek 1m volatiliteyi gösteriyor: NDX **30.0** vs 16-17'de 18.5 (onarım öncesi tersiydi). 4 sembolde de aynı |
+| Yan bulgu | Kirlenme `data_recorder`'dan (24 Haz) ÖNCE de vardı — Şubat'tan beri tüm aylar kaymıştı. İki yazıcı (backend köprüsü = doğru UTC, data_recorder = broker) birbirinin üzerine yazıyordu |
+
+### Ö2 — Momentum filtresi doğrulama denetimi ✅ → **SIZINTI DOĞRULANDI**
+`audit_momo_validation.py`, aynı kurguyu iki saat ekseninde koşturur:
+
+| | filtresiz | filtre GEÇEN | filtre KALAN | Δ |
+|---|---|---|---|---|
+| **Kaymış eksen (orijinal kurgu)** | %68.1 | **%84.2** | %53.0 | **+31.2 puan** |
+| **Saat düzeltilmiş (dürüst)** | %54.0 | **%50.8** | %56.9 | **−6.1 puan** |
+
+**Kesin kanıt:** kaymış eksende filtre, girişten "sonraki" 180 dakikada **+148.1 puan**
+hareket öngörüyor (elenenler +0.9). Fiziksel olarak imkânsız — o 180 dakika aslında
+sinyalden **önceki** 3 saattir. Momentum filtresi geleceği öngörmüyor, **geçmişi ölçüyor**.
+`bot_router.py`'deki kayıt düzeltildi.
+
+⚠️ **USOIL.FOREX:SELL (%71.4→%96.6) ve GDAXI.INDX:BUY doğrulamaları aynı kurguyu
+kullanıyor → aynı sızıntıya açık, henüz yeniden ölçülmedi** (backlog'a yazıldı).
+
+**Filtre yine de korundu** — çünkü bağımsız, bu hatadan etkilenmeyen bar-bar kanıtı var
+(§4.2): 3.4 yıl, saat-eşitlenmiş, sürükleme çıkarılmış → katkı +0.054R.
+
+### Ö3 — ATR-ölçekli geometri ✅
+`forexsai_demo_bot.py`: `NDX.INDX:BUY` momentum scope'u artık **TP = 2.0×ATR(H1),
+SL = 1.0×ATR(H1)** (bugün ≈ TP 240 / SL 120 puan; önceki 80/110).
+
+- **Kapsam kilidi:** yalnız `"NDX.INDX:BUY"`. CHREV (`:CHREV`) ve VIXREG (`:VIXREG`)
+  scope anahtarları farklı → etkilenmez. SELL ve diğer semboller dokunulmadı.
+- **Emniyet:** SL 70-200 / TP 140-400 puan kelepçesi; ATR hesaplanamazsa sessizce
+  eski sabit geometriye düşer (fail-open — işlem asla bu yüzden bloklanmaz).
+- Varsayılan bot kodunda (config.py gitignore'da); kutuda `ATR_GEOMETRY_ENABLED=False`
+  ile kapatılabilir.
+- Bot yeniden başlatması **3 açık pozisyon nedeniyle ertelendi**, borç yazıldı —
+  pozisyonlar kapanınca ajan otomatik uygular.
+
+### Kalan riskler
+1. **BE@30dk + 0.6R trail** yönetimiyle etkileşim ölçülmedi; o araştırma (`trade_mgmt_ndx`)
+   MT5 işlem zamanı + candle_cache kullanıyordu — ikisi de o dönemde broker saatinde
+   olduğu için **kendi içinde tutarlı**, ama yeni geometriyle etkileşimi bilinmiyor.
+2. Artık candle_cache UTC, MT5 işlem export'ları hâlâ broker saatinde → **ters yönde
+   aynı hatayı yapma riski**. İşlem-mum eşleştiren her analiz offset çıkarmalı.
+3. Yeni geometride beklenen WR ~%34 (önceki ~%58). İlk işlemlerde "kaybediyoruz"
+   izlenimi normaldir — karar n≥30'da EV ile verilmeli.
