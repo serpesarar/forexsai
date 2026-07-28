@@ -53,8 +53,18 @@ FREE_SYMBOL = "XAUUSD"   # serbest-zekâ modu (kanıt-tablosu yok; edge yok, ç�
 DRIFT_GUARD = os.getenv("DRIFT_GUARD", "1") == "1"
 DRIFT_WIN = 30          # rolling pencere (grade'li sonuç)
 DRIFT_MIN_N = 15        # altında sinyal üretme (gürültü — şüpheci şartı)
-DRIFT_WARN_PP = 15      # REGIME.md eşiği: canlı, OOS vaadinin bu kadar altında → uyarı
+DRIFT_WARN_PP = 15      # REGIME.md eşiği: canlı, vaadin bu kadar altında → uyarı
 DRIFT_SUSPEND_PP = 25   # bu kadar altında → kapı askısı (OPEN → WAIT)
+# 2026-07-28 NDX BUY kök-neden analizi (n=225 canlı sonuç) iki metodolojik hata gösterdi:
+#  (a) ÇITA: nöbetçi araştırma OOS'unu (NDX BUY %76) çıta alıyordu; oysa canlı tüm ay %59 —
+#      OOS'la uyumsuz (p=7e-9) ama tazelenmiş tablo wr'ı (%63) ile UYUMLU (p=0.10). Yani
+#      "39pp çöküş"ün büyük kısmı araştırma-canlı farkıydı, taze rejim kırılması değil.
+#      → Çıta artık Opus'a FİİLEN enjekte edilen inanç: tablonun blend'li `wr`'ı.
+#  (b) KÜMELENME: 30 karar yalnız 3 güne sıkışmıştı (aynı 5m trendin tekrarları, bağımsız
+#      değil). Gün-düzeyinde 3/3 gün tabanın altında olması p≈0.125 = anlamsız; dahası
+#      18 günün 9'u zaten tabanın altındaydı. → Askı için pencerenin ≥DRIFT_MIN_DAYS güne
+#      yayılması şart; daha dar kümede yalnız UYARI verilir (Opus yargısı devrede kalır).
+DRIFT_MIN_DAYS = 5      # askı için pencere en az bu kadar farklı güne yayılmalı
 FREE_TFS = {"1m": None, "5m": None, "30m": None, "1h": None}  # MT5 TF sabitleri runtime'da doldurulur
 try:
     import MetaTrader5 as mt5  # noqa: E402
@@ -278,37 +288,43 @@ def _live_drift_map() -> dict:
     except Exception as e:
         print("  drift-nöbetçi journal hatası (devam):", e)
         return {}
-    seq: dict = defaultdict(list)               # (sym, dir) → [0/1 ...] kronolojik
+    seq: dict = defaultdict(list)               # (sym, dir) → [(0/1, gün) ...] kronolojik
     for e in rows:
         sym = e.get("symbol")
         dec = e.get("decision") or {}
+        day = str(e.get("ts") or "")[:10]
         opened = str(dec.get("action", "")).upper() == "OPEN"
         if opened and e.get("outcome") in ("WIN", "LOSS"):
-            seq[(sym, dec.get("direction"))].append(1 if e["outcome"] == "WIN" else 0)
+            seq[(sym, dec.get("direction"))].append((1 if e["outcome"] == "WIN" else 0, day))
         cf = e.get("counterfactual")
         if cf and e.get("cf_outcome") in ("WIN", "LOSS") and \
                 not (opened and dec.get("direction") == cf.get("dir")):   # çifte sayma yok
-            seq[(sym, cf.get("dir"))].append(1 if e["cf_outcome"] == "WIN" else 0)
+            seq[(sym, cf.get("dir"))].append((1 if e["cf_outcome"] == "WIN" else 0, day))
     out = {}
     for (sym, d), ws in seq.items():
         last = ws[-DRIFT_WIN:]
         if len(last) < DRIFT_MIN_N:
             continue
-        live_wr = round(100 * sum(last) / len(last))
+        live_wr = round(100 * sum(w for w, _ in last) / len(last))
+        days = len({day for _, day in last})
         cell = (_TABLES.get(f"{sym}|{d}") or {})
-        base = (cell.get("gate") or {}).get("oos_wr") or (cell.get("base") or {}).get("oos_wr")
+        gate, bs = cell.get("gate") or {}, cell.get("base") or {}
+        # ÇITA = Opus'a fiilen enjekte edilen inanç (blend'li canlı wr); yoksa OOS'a düş
+        base = gate.get("wr") or bs.get("wr") or gate.get("oos_wr") or bs.get("oos_wr")
         if base is None:
             continue
         drift = base - live_wr
-        info = {"live_wr_30": live_wr, "n": len(last), "baseline_oos": base,
-                "drift_pp": drift}
-        if drift >= DRIFT_SUSPEND_PP:
-            info["note"] = (f"⛔ KAPI ASKIDA: canlı son {len(last)} sonuç %{live_wr} — OOS vaadi "
-                            f"%{base}'in {drift}pp altında (rejim-flip). OPEN önerme; kod OPEN'ı "
-                            f"WAIT'e çevirir.")
+        info = {"live_wr_30": live_wr, "n": len(last), "days": days,
+                "baseline_wr": base, "drift_pp": drift}
+        if drift >= DRIFT_SUSPEND_PP and days >= DRIFT_MIN_DAYS:
+            info["note"] = (f"⛔ KAPI ASKIDA: canlı son {len(last)} sonuç ({days} güne yayılı) "
+                            f"%{live_wr} — tablo vaadi %{base}'in {drift}pp altında (rejim-flip). "
+                            f"OPEN önerme; kod OPEN'ı WAIT'e çevirir.")
         elif drift >= DRIFT_WARN_PP:
-            info["note"] = (f"⚠ canlı son {len(last)}: %{live_wr} — OOS vaadi %{base}'in {drift}pp "
-                            f"altında; kanıt hücrelerine güveni düşür, boyut küçült.")
+            clust = (f" (yalnız {days} güne sıkışık — kararlar bağımsız değil, askı YOK)"
+                     if drift >= DRIFT_SUSPEND_PP else "")
+            info["note"] = (f"⚠ canlı son {len(last)}: %{live_wr} — tablo vaadi %{base}'in "
+                            f"{drift}pp altında{clust}; kanıt hücrelerine güveni düşür, boyut küçült.")
         out[(sym, d)] = info
     return out
 
@@ -335,15 +351,18 @@ def _drift_guard(symbol: str, dec: dict, drift_map: dict) -> dict:
     if not DRIFT_GUARD or str(dec.get("action", "")).upper() != "OPEN":
         return dec
     info = drift_map.get((symbol, dec.get("direction")))
-    if info and info.get("drift_pp", 0) >= DRIFT_SUSPEND_PP:
+    if info and info.get("drift_pp", 0) >= DRIFT_SUSPEND_PP \
+            and info.get("days", 0) >= DRIFT_MIN_DAYS:      # gün-kümelenmesi şartı
         print(f"  🛑 drift-nöbetçi: {symbol} {dec.get('direction')} OPEN → WAIT "
-              f"(canlı %{info['live_wr_30']} vs OOS %{info['baseline_oos']}, n={info['n']})")
+              f"(canlı %{info['live_wr_30']} vs tablo %{info['baseline_wr']}, "
+              f"n={info['n']}/{info['days']} gün)")
         dec = dict(dec)
         dec["action"] = "WAIT"
         dec["size_factor"] = 0.0
         dec["drift_suspended"] = True
-        dec["reason"] = (f"[DRIFT-ASKI: canlı %{info['live_wr_30']} < OOS %{info['baseline_oos']} "
-                         f"−{DRIFT_SUSPEND_PP}pp] " + str(dec.get("reason") or ""))[:500]
+        dec["reason"] = (f"[DRIFT-ASKI: canlı %{info['live_wr_30']} < tablo "
+                         f"%{info['baseline_wr']} −{DRIFT_SUSPEND_PP}pp, {info['days']} gün] "
+                         + str(dec.get("reason") or ""))[:500]
     return dec
 
 
