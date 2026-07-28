@@ -114,6 +114,15 @@ def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
 
     for e in rows:
         need_real = e.get("outcome") is None
+        # Seçili çıkış politikası + gerçek-trade exit-grade'i (2026-07-27): şimdiye dek 6 çıkış
+        # yalnız KARŞI-OLGU trade'inde grade ediliyordu — seçili politikanın (ör. USOIL trail_1.0)
+        # gerçek OPEN performansı ölçülemiyordu. Olgunlaşınca (48h, tam pencere) gerçek trade de
+        # grade edilir; trail gibi TP-sonrası devam eden politikalar kısa pencerede kırpılmasın
+        # diye SADECE mature'da (fixed-çözümde değil) hesaplanır.
+        tr_real = e.get("trade")
+        need_xr = (tr_real is not None and e.get("exit_grades_real") is None
+                   and str(e.get("decision", {}).get("action", "")).upper() == "OPEN"
+                   and (tr_real.get("atr") or 0) > 0)
         # KARŞI-OLGU grade: primary_dir trade "açsaydı" ne olurdu (recall analizi, HER kayıtta)
         cf = e.get("counterfactual")
         need_cf = cf is not None and e.get("cf_outcome") is None
@@ -122,7 +131,7 @@ def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
         sm_tr = (sm or {}).get("trade")
         need_sm = sm is not None and sm.get("outcome") is None and \
             (sm_tr is not None or str((sm.get("decision") or {}).get("action", "")).upper() != "OPEN")
-        if not need_real and not need_cf and not need_sm:
+        if not need_real and not need_cf and not need_sm and not need_xr:
             continue
         bars = None
         # 1) gerçek karar (yalnız OPEN'lar P&L sayılır)
@@ -165,6 +174,29 @@ def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
                 eg = exits.grade_all(cf["dir"], cf["entry_price"], cf["atr"], bars)
                 if eg:
                     e["exit_grades"] = eg; changed += 1
+        # 2b) GERÇEK OPEN trade'in çoklu-çıkış grade'i + SEÇİLİ politika sonucu (mature'da)
+        if need_xr:
+            mature_r = now - datetime.fromisoformat(e["ts"]).timestamp() > max_horizon_h * 3600
+            if mature_r:
+                if bars is None:
+                    bars, ts = _bars_after(e)
+                if bars:
+                    eg = exits.grade_all(e["decision"]["direction"], tr_real["entry_price"],
+                                         tr_real["atr"], bars)
+                    if eg:
+                        e["exit_grades_real"] = eg; changed += 1
+                        pol = tr_real.get("exit_policy")
+                        if pol and pol in eg:
+                            # policy_pnl_r: R birimi = fixed SL riski (1.5×ATR) — pnl_r ile
+                            # doğrudan kıyaslanabilir (aynı payda). outcome/pnl_r'a DOKUNULMAZ.
+                            e["policy_pnl_atr"] = eg[pol]
+                            e["policy_pnl_r"] = round(eg[pol] / 1.5, 3)
+                            try:   # çıkış etiketi (TP/SL/TRAIL/BE/TIME/EOD) — otopsi okunurluğu
+                                e["policy_exit"] = exits.POLICIES[pol](
+                                    e["decision"]["direction"], tr_real["entry_price"],
+                                    tr_real["atr"], bars)[0]
+                            except Exception:
+                                pass
         # 3) GÖLGE model (Fable) kararını grade et
         if need_sm:
             act = str((sm.get("decision") or {}).get("action", "")).upper()

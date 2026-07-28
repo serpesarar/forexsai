@@ -86,6 +86,17 @@ STOP_ATR = {
 }
 TP_ATR, SL_ATR = DEFAULT_STOP_ATR   # geriye-uyum (varsayılan)
 
+# Per-sembol SEÇİLİ ÇIKIŞ POLİTİKASI (exit_compare kanıt kapısından geçenler).
+# 2026-07-27: USOIL trail_1.0 — 222 exit-grade'li işlemde +0.217 vs fixed +0.032 ATR/işlem
+# (fark +0.186 > MIN_EDGE 0.10; 4 sembolde eşiği geçen TEK öneri). ÖLÇÜM-ÖNCE yaklaşımı:
+# outcome/pnl_r SABİT geometriyle çözülmeye devam eder (seri sürekliliği + kalibrasyon
+# eşleşmesi bozulmaz); seçili politika journal'a policy_* alanları olarak AYRICA grade
+# edilir (outcomes.py, gerçek OPEN trade'lerde). execute() bağlandığında icra yöneticisi
+# bu alandan okur. Uyarı: +0.217 friction'sız ölçüm, se=0.178 geniş — n büyürken izlenir.
+EXIT_POLICY: dict[str, str] = {
+    "USOIL.FOREX": "trail_1.0",
+}
+
 
 def stop_mults(symbol: str) -> tuple[float, float]:
     return STOP_ATR.get(symbol, DEFAULT_STOP_ATR)
@@ -100,7 +111,8 @@ def build_trade(symbol: str, direction: str, atr, price, bar_time=None) -> dict 
     tp = price + tp_atr * atr if buy else price - tp_atr * atr
     sl = price - sl_atr * atr if buy else price + sl_atr * atr
     return {"entry_price": round(price, 5), "atr": round(atr, 5), "tp": round(tp, 5),
-            "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2), "entry_bar_time": bar_time}
+            "sl": round(sl, 5), "rr": round(tp_atr / sl_atr, 2), "entry_bar_time": bar_time,
+            "exit_policy": EXIT_POLICY.get(symbol)}   # seçili çıkış (None = fixed varsayılan)
 
 
 def _shadow_pack(symbol: str, dec: dict, atr, price, bar_time) -> dict | None:
@@ -197,6 +209,9 @@ GÖREV — {sym} için KENDİ görüşünü oluştur (kanıttan muhakeme et):
     kanıtınla AYNI yönü gösteriyorsa konviksiyonu artırabilir; tek başına giriş sebebi DEĞİL.
   · breakout_leaning_genuine → sadece "engel yok" demektir (OOS %55 — edge değil), yön kanıtı sayma.
 - XAU BUY ise: "patient WR", GENİŞ stop şart (management'a yaz, boyut düşür).
+- `live_drift` alanı varsa: bu yönün SON 30 canlı sonucu. drift_pp ≥15 (canlı, vaadin 15pp+
+  altında) → kanıt hücrelerine güveni DÜŞÜR, boyut küçült; "KAPI ASKIDA" notu varsa OPEN
+  önerme (rejim-flip şüphesi — kod OPEN'ı zaten WAIT'e çevirir, sen de gerekçende belirt).
 SADECE şu tek-satır JSON'u döndür:
 {{"action":"OPEN","direction":"BUY","size_factor":0.7,"entry":"market","reason":"kanıta dayalı kısa gerekçe","management":"stop/hedef/çıkış notu"}}
 (işlem açmıyorsan: {{"action":"WAIT","direction":null,"size_factor":0,"reason":"...","management":""}})"""

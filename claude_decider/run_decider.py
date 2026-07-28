@@ -13,8 +13,10 @@ Sert yasaklar (XAU SELL, USOIL BUY) decide._enforce_guardrails'te kodla zorlanı
 from __future__ import annotations
 import argparse
 import json
+import os
 import sys
 import time
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -37,6 +39,21 @@ BARS_N = 120
 # "sınırda fırsat" Opus'a gider; prompt gevşediği için orada daha CESUR açar (2026-07-02).
 CONSULT_REV = 1.6
 FREE_SYMBOL = "XAUUSD"   # serbest-zekâ modu (kanıt-tablosu yok; edge yok, çıplak muhakeme)
+
+# ── REJİM-FLİP NÖBETÇİSİ (2026-07-27 denetimi) ───────────────────────────────
+# PLAYBOOK/REGIME.md ">15pp düşerse izle" kuralını YAZIYORDU ama hiçbir kod hesaplamıyordu —
+# USOIL SELL bunun bedelini ölçtü (araştırma %88 → canlı %58, n=173; dönem-trendi çöküşü
+# ancak elle calibration koşulunca görüldü). Bu nöbetçi her pass'ta journal'dan (sembol,yön)
+# başına SON 30 grade'li sonucun (gerçek OPEN + karşı-olgu) rolling WR'ını çıkarır:
+#  - drift ≥ WARN: situation'a live_drift uyarısı → Opus kanıta güveni düşürür
+#  - drift ≥ SUSPEND: kapı ASKIDA — Opus'un OPEN'ı kodla WAIT'e çevrilir (gölge veri/cf
+#    birikmeye DEVAM eder → toparlanma da aynı nöbetçiyle görülür; sert ALLOW değişikliği
+#    insan kararı olarak kalır)
+DRIFT_GUARD = os.getenv("DRIFT_GUARD", "1") == "1"
+DRIFT_WIN = 30          # rolling pencere (grade'li sonuç)
+DRIFT_MIN_N = 15        # altında sinyal üretme (gürültü — şüpheci şartı)
+DRIFT_WARN_PP = 15      # REGIME.md eşiği: canlı, OOS vaadinin bu kadar altında → uyarı
+DRIFT_SUSPEND_PP = 25   # bu kadar altında → kapı askısı (OPEN → WAIT)
 FREE_TFS = {"1m": None, "5m": None, "30m": None, "1h": None}  # MT5 TF sabitleri runtime'da doldurulur
 try:
     import MetaTrader5 as mt5  # noqa: E402
@@ -207,6 +224,68 @@ def recent_journal_summary(n: int = 8) -> str:
 NEAR_EVENT = False   # TODO(news): kullanıcının haber panelini bağla → yüksek-etkili olay penceresi
 
 
+def _live_drift_map() -> dict:
+    """(sembol, yön) → son DRIFT_WIN grade'li sonucun rolling WR'ı + OOS vaadine karşı drift.
+    Kaynak: journal (gerçek OPEN outcome'ları + karşı-olgu outcome'ları; WAIT'ler cf ile
+    sayılır — kapının kendisi ölçülür, Opus'un seçiciliği değil). Fail-open: hata → {}."""
+    try:
+        from decide import load_journal
+        rows = load_journal(clean=True)
+    except Exception as e:
+        print("  drift-nöbetçi journal hatası (devam):", e)
+        return {}
+    seq: dict = defaultdict(list)               # (sym, dir) → [0/1 ...] kronolojik
+    for e in rows:
+        sym = e.get("symbol")
+        dec = e.get("decision") or {}
+        opened = str(dec.get("action", "")).upper() == "OPEN"
+        if opened and e.get("outcome") in ("WIN", "LOSS"):
+            seq[(sym, dec.get("direction"))].append(1 if e["outcome"] == "WIN" else 0)
+        cf = e.get("counterfactual")
+        if cf and e.get("cf_outcome") in ("WIN", "LOSS") and \
+                not (opened and dec.get("direction") == cf.get("dir")):   # çifte sayma yok
+            seq[(sym, cf.get("dir"))].append(1 if e["cf_outcome"] == "WIN" else 0)
+    out = {}
+    for (sym, d), ws in seq.items():
+        last = ws[-DRIFT_WIN:]
+        if len(last) < DRIFT_MIN_N:
+            continue
+        live_wr = round(100 * sum(last) / len(last))
+        cell = (_TABLES.get(f"{sym}|{d}") or {})
+        base = (cell.get("gate") or {}).get("oos_wr") or (cell.get("base") or {}).get("oos_wr")
+        if base is None:
+            continue
+        drift = base - live_wr
+        info = {"live_wr_30": live_wr, "n": len(last), "baseline_oos": base,
+                "drift_pp": drift}
+        if drift >= DRIFT_SUSPEND_PP:
+            info["note"] = (f"⛔ KAPI ASKIDA: canlı son {len(last)} sonuç %{live_wr} — OOS vaadi "
+                            f"%{base}'in {drift}pp altında (rejim-flip). OPEN önerme; kod OPEN'ı "
+                            f"WAIT'e çevirir.")
+        elif drift >= DRIFT_WARN_PP:
+            info["note"] = (f"⚠ canlı son {len(last)}: %{live_wr} — OOS vaadi %{base}'in {drift}pp "
+                            f"altında; kanıt hücrelerine güveni düşür, boyut küçült.")
+        out[(sym, d)] = info
+    return out
+
+
+def _drift_guard(symbol: str, dec: dict, drift_map: dict) -> dict:
+    """SUSPEND eşiğini aşan (sembol, yön) için OPEN → WAIT (gölge veri birikimi sürer)."""
+    if not DRIFT_GUARD or str(dec.get("action", "")).upper() != "OPEN":
+        return dec
+    info = drift_map.get((symbol, dec.get("direction")))
+    if info and info.get("drift_pp", 0) >= DRIFT_SUSPEND_PP:
+        print(f"  🛑 drift-nöbetçi: {symbol} {dec.get('direction')} OPEN → WAIT "
+              f"(canlı %{info['live_wr_30']} vs OOS %{info['baseline_oos']}, n={info['n']})")
+        dec = dict(dec)
+        dec["action"] = "WAIT"
+        dec["size_factor"] = 0.0
+        dec["drift_suspended"] = True
+        dec["reason"] = (f"[DRIFT-ASKI: canlı %{info['live_wr_30']} < OOS %{info['baseline_oos']} "
+                         f"−{DRIFT_SUSPEND_PP}pp] " + str(dec.get("reason") or ""))[:500]
+    return dec
+
+
 def _context(positions: dict, now: datetime) -> dict:
     return {"now_utc": now.isoformat(timespec="minutes"),
             "session": ev._session(now.hour),
@@ -218,7 +297,7 @@ def _context(positions: dict, now: datetime) -> dict:
 
 
 def build_situation(symbol: str, bars: list[dict], vix, positions: dict, now: datetime,
-                    vix_source: str = "yfinance"):
+                    vix_source: str = "yfinance", drift_map: dict | None = None):
     """Sembol için yasak-olmayan yönlerin canlı feature + kanıtı. İlginç değilse None."""
     if not bars or len(bars) < ev.WIN_N:
         return None
@@ -236,6 +315,9 @@ def build_situation(symbol: str, bars: list[dict], vix, positions: dict, now: da
         if ext > best_ext:
             best_ext, primary_dir = ext, d
         directions[d] = {"live": lf, "evidence": ev.evidence_pack(symbol, d, lf, _TABLES)}
+        ld = (drift_map or {}).get((symbol, d))
+        if ld:
+            directions[d]["live_drift"] = ld    # rejim-flip nöbetçisi (rolling canlı WR)
     if not interesting:
         return None
     live_24h = (vix_source == "pepperstone")     # Pepperstone MT5 futures 24h canlı → RTH-kapısı yok
@@ -302,8 +384,10 @@ def _feed_is_frozen(sym: str, bars: list | None) -> bool:
 def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
              model: str = DECIDE_MODEL, vix_source: str = "yfinance", dxy=None):
     now = datetime.now(timezone.utc)
+    drift_map = _live_drift_map() if DRIFT_GUARD else {}     # rejim-flip nöbetçisi (pass başına 1 kez)
     # Kanıt-temelli semboller (XAU HARİÇ — o serbest-zekâ moduna gider) + donuk-feed filtresi
-    sits = [s for s in (build_situation(sym, bars_by_symbol.get(sym), vix, positions, now, vix_source)
+    sits = [s for s in (build_situation(sym, bars_by_symbol.get(sym), vix, positions, now,
+                                        vix_source, drift_map)
                         for sym in ALLOW
                         if sym != FREE_SYMBOL and not _feed_is_frozen(sym, bars_by_symbol.get(sym))) if s]
     sits = [s for s in sits if _state_changed(s["symbol"], _sit_signature(s))]   # olay-tetikli
@@ -331,6 +415,7 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                 except Exception as e:
                     print("  fakeout hatası (devam):", e)
             dec = decide_situation(sit, model=model)
+            dec = _drift_guard(sit["symbol"], dec, drift_map)   # rejim-flip askısı (journal'dan önce)
             append_journal(sit, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
@@ -366,11 +451,15 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                         lf = ev.live_features(b5, "BUY", vix=vix)
                         ctx["evidence_buy"] = {"live": lf,
                                                "evidence": ev.evidence_pack("XAUUSD", "BUY", lf, _TABLES)}
+                        ld = drift_map.get((FREE_SYMBOL, "BUY"))
+                        if ld:
+                            ctx["evidence_buy"]["live_drift"] = ld   # rejim-flip nöbetçisi
                 except Exception as e:
                     print("  free-evidence hatası (devam):", e)
             mode_tag = "HİBRİT" if ctx.get("evidence_buy") else "SERBEST-ZEKÂ"
             print(f"[{now:%H:%M}] {FREE_SYMBOL} → Opus ({mode_tag}, çok-TF)...")
             dec = decide_free(ctx, model=model)
+            dec = _drift_guard(FREE_SYMBOL, dec, drift_map)     # rejim-flip askısı (free de dahil)
             append_free_journal(ctx, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}·free] {FREE_SYMBOL}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
