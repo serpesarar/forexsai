@@ -63,6 +63,30 @@ SYMBOLS = dict(getattr(config, "RECORDER_SYMBOLS", None)
 CHUNK = 1000
 
 
+# ── MT5 sunucu saati → gerçek UTC (bkz. RAPOR.md §1) ────────────────────────
+# MT5'in `time` alanı epoch GİBİ görünür ama BROKER saatindedir (UTC+2/+3).
+# Bu düzeltme olmadan yazılan her bar 2-3 saat ileri damgalanır.
+_OFFSET_SEC = 0
+
+
+def detect_offset() -> int:
+    import time as _t
+    for sym in list(SYMBOLS.values()):
+        try:
+            if not mt5.symbol_select(sym, True):
+                continue
+            tk = mt5.symbol_info_tick(sym)
+            if tk and tk.time:
+                return int(round((tk.time - _t.time()) / 900.0) * 900)
+        except Exception:
+            continue
+    return 0
+
+
+def to_utc(epoch: int) -> datetime:
+    return datetime.fromtimestamp(int(epoch) - _OFFSET_SEC, tz=timezone.utc)
+
+
 def connect() -> bool:
     if getattr(config, "MT5_ACCOUNT", None):
         kw = dict(login=config.MT5_ACCOUNT, password=config.MT5_PASSWORD,
@@ -105,7 +129,7 @@ def backfill_bars(client, fx_symbol: str, broker_sym: str) -> None:
             continue
         rows = []
         for r in rates:
-            ts = datetime.fromtimestamp(int(r["time"]), tz=timezone.utc)
+            ts = to_utc(r["time"])
             rows.append({
                 "symbol": fx_symbol, "timeframe": tf,
                 "candle_time": ts.isoformat(),
@@ -160,9 +184,9 @@ def export_deals() -> str:
         w.writerow([
             pid, i0.symbol, "BUY" if i0.type == mt5.DEAL_TYPE_BUY else "SELL",
             i0.magic, i0.comment, o_last.comment,
-            datetime.fromtimestamp(i0.time, tz=timezone.utc).isoformat(),
+            to_utc(i0.time).isoformat(),
             i0.price,
-            datetime.fromtimestamp(o_last.time, tz=timezone.utc).isoformat(),
+            to_utc(o_last.time).isoformat(),
             o_last.price, i0.volume, round(profit, 2), round(comm, 2), round(swap, 2),
         ])
         n += 1
@@ -173,6 +197,9 @@ def export_deals() -> str:
 def main() -> None:
     if not connect():
         sys.exit(1)
+    global _OFFSET_SEC
+    _OFFSET_SEC = detect_offset()
+    print(f"MT5 sunucu offset'i: {_OFFSET_SEC/60:+.0f} dk -> UTC'ye cevriliyor")
     print("== BAR BACKFILL ==")
     print("  semboller:", SYMBOLS)
     client = sb()

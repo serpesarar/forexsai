@@ -70,8 +70,53 @@ def supa():
     return create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_KEY)
 
 
+# ── MT5 SUNUCU SAATİ → GERÇEK UTC (2026-07-28 düzeltmesi) ───────────────────
+# MT5'in copy_rates/tick `time` alanı epoch GİBİ görünür ama BROKER SUNUCU
+# saatindedir (IC Markets: kış UTC+2, ABD-yaz UTC+3). Bunu doğrudan
+# `fromtimestamp(..., tz=utc)` ile yazmak barları 2-3 saat İLERİ etiketler.
+#
+# Bulunan hasar (research/ndx_buy_lab/RAPOR.md §1): candle_cache'e 3 saat kaymış
+# damgalar yazılıyordu → (a) sinyal↔mum eşleşmesi bozuk, (b) bayatlık kontrolleri
+# "gelecekten gelen bar" gördüğü için hep taze sanıyor, (c) backend'in Redis
+# köprüsü DOĞRU UTC yazdığı için bu script periyodik toplu yazımda doğru
+# satırların ÜZERİNE kaymış veri basıyordu.
+#
+# Çözüm: offset'i çalışma anında ÖLÇ (sunucu tick zamanı − gerçek UTC), 15 dk'ya
+# yuvarla. Böylece DST geçişleri ve broker değişiklikleri kendiliğinden çözülür.
+_SERVER_OFFSET_SEC = 0
+
+
+def detect_server_offset() -> int:
+    """MT5 sunucu saati ile gerçek UTC arasındaki farkı saniye olarak ölç."""
+    import time as _time
+    best = None
+    for sym in list(config.RECORDER_SYMBOLS.values()):
+        try:
+            if not mt5.symbol_select(sym, True):
+                continue
+            tick = mt5.symbol_info_tick(sym)
+            if not tick or not tick.time:
+                continue
+            delta = tick.time - _time.time()
+            # 15 dk'ya yuvarla (tick gecikmesi/saat sapması gürültüsünü at)
+            snapped = round(delta / 900.0) * 900
+            if best is None or abs(delta - snapped) < abs(best[1] - best[0]):
+                best = (snapped, delta)
+        except Exception:
+            continue
+    if best is None:
+        log.warning("sunucu saat offset'i ölçülemedi — 0 varsayılıyor "
+                    "(barlar broker saatinde kalabilir!)")
+        return 0
+    snapped, raw = best
+    log.info("MT5 sunucu saat offset'i: %+.1f dk (ham %+.1f) → UTC'ye çevriliyor",
+             snapped / 60.0, raw / 60.0)
+    return int(snapped)
+
+
 def _iso(epoch: int) -> str:
-    return datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat()
+    """Broker sunucu epoch'unu GERÇEK UTC ISO damgasına çevir."""
+    return datetime.fromtimestamp(epoch - _SERVER_OFFSET_SEC, tz=timezone.utc).isoformat()
 
 
 def record(client, fx_symbol: str, mt5_symbol: str, tf_name: str, tf_const,
@@ -144,9 +189,22 @@ def main():
     last_seen: dict = {}
     resolved = {fx: resolve(m) for fx, m in config.RECORDER_SYMBOLS.items()}
 
+    global _SERVER_OFFSET_SEC
+    _SERVER_OFFSET_SEC = detect_server_offset()
+
     try:
+        loops = 0
         while True:
             log.info("─── kayıt @ %s ───", datetime.now(timezone.utc).strftime("%H:%M:%S"))
+            # DST geçişi / broker değişikliği: offset'i saatte bir tazele
+            loops += 1
+            if loops % max(1, int(3600 / max(config.RECORDER_POLL, 1))) == 0:
+                new_off = detect_server_offset()
+                if new_off != _SERVER_OFFSET_SEC:
+                    log.warning("sunucu offset'i değişti: %+d dk → %+d dk",
+                                _SERVER_OFFSET_SEC // 60, new_off // 60)
+                    _SERVER_OFFSET_SEC = new_off
+                    last_seen.clear()   # damgalar yeniden hesaplanmalı
             for fx, mt5_symbol in config.RECORDER_SYMBOLS.items():
                 rs = resolved.get(fx)
                 if not rs:
