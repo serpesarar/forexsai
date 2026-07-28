@@ -106,11 +106,22 @@ def _resolve_locked(fetcher, max_horizon_h: float) -> tuple[int, list]:
     rows = [json.loads(l) for l in JOURNAL_JSONL.read_text(encoding="utf-8").splitlines() if l.strip()]
     now = time.time(); changed = 0
 
+    # Hafta sonu köprüsü: girişten sonraki ilk barın >WEEKEND_GAP_H uzakta olması = piyasa
+    # kapalıydı; o barın high/low'u GAP fiyatıdır, sürekli işlem değil. Grade edilir (ölçüm
+    # sürekliliği) ama İŞARETLENİR → analiz katmanı bu kayıtları ayırabilir (2026-07-09
+    # otopsisi: Pazartesi gap'i konservatif SL sayılıyor, gerçek dolum daha kötü olurdu).
+    WEEKEND_GAP_H = 8.0
+
     def _bars_after(e):
         anchor = (e.get("trade") or e.get("counterfactual") or {}).get("entry_bar_time")
         ts = datetime.fromisoformat(e["ts"]).timestamp()
         since = anchor or ts
-        return [b for b in fetcher(e["symbol"], since) if b["time"] > since], ts
+        fwd = [b for b in fetcher(e["symbol"], since) if b["time"] > since]
+        if fwd and e.get("weekend_bridge") is None:
+            gap_h = (fwd[0]["time"] - since) / 3600.0
+            if gap_h > WEEKEND_GAP_H:
+                e["weekend_bridge"] = round(gap_h, 1)
+        return fwd, ts
 
     for e in rows:
         need_real = e.get("outcome") is None
@@ -251,6 +262,9 @@ def summary(rows: list) -> str:
                    if r.get("cf_outcome") in ("WIN", "LOSS"))
     nets = [r["pnl_r_net"] for r in graded if r.get("pnl_r_net") is not None]
     net_txt = (f" | NET(spread) {sum(nets)/len(nets):+.3f}R n={len(nets)}" if nets else "")
+    wb = sum(1 for r in graded if r.get("weekend_bridge"))
+    if wb:
+        net_txt += f" | ⚠ hafta-sonu köprülü {wb}"
     return (f"OPEN kararlar: {len(graded)} grade | WR {100*w/len(graded):.0f}% ({w}/{len(graded)}) | "
             f"EV {ev:+.3f}R/işlem{net_txt} | açık={len(opens)} bekle={len(waits)} expire={len(exp)}\n"
             f"  💰 FIRSAT MUHASEBESİ: gerçekleşen {realized:+.1f}R | VAZGEÇİLEN {foregone:+.1f}R "

@@ -1,9 +1,12 @@
 """fakeout_bridge.py — backend sahte-kırılım radarının decider köprüsü.
 
 backend/services/fakeout_service.assess_bars SAF çekirdeğini decider'ın kendi
-MT5 barlarıyla çağırır (backend HTTP'sine bağımlılık yok). Kurallar
-backend/data/fakeout_rules.json'dan gelir (şimdilik yalnız NDX.INDX; diğer
-sembollerde çekirdek "no_rules" döner → None).
+MT5 barlarıyla çağırır (backend HTTP'sine bağımlılık yok). Kurallar sembol-başına
+çözülür (fakeout_service._rules_path_for): NDX legacy `fakeout_rules.json`,
+diğerleri `fakeout_rules_<BASE>.json` — 4 sembol de destekli (NDX/GDAXI/XAU/USOIL,
+hepsi OOS ≥%70). Kural dosyası olmayan sembolde çekirdek "no_rules" → None.
+Dönüşteki `detector.oos` sembolün KENDİ isabet/kapsamını taşır; prompt metni
+bunu okur (decide._fakeout_stats_line) — sabit NDX rakamı YAZILMAZ.
 
 Neden ayrı 400-bar çekim: run_decider BARS_N=120 bar kullanır; fakeout
 çekirdeği ≥125 bar ister (kanal penceresi 96 + pivot teyidi 24). Mevcut

@@ -181,9 +181,27 @@ def _read(name: str) -> str:
     return p.read_text(encoding="utf-8") if p.exists() else ""
 
 
+_FAKEOUT_STATS_FALLBACK = "+1-bar LGBM, 4 sembolde OOS ≥%70 doğrulandı"
+
+
+def _fakeout_stats_line(situation: dict) -> str:
+    """Dedektörün KENDİ sembolündeki OOS isabet/kapsamını prompt'a yaz (2026-07-27 denetimi:
+    metin NDX'in %70/%83'üne sabit-kodluydu ve DAX/XAU/USOIL'e yanlış kalibrasyonla gidiyordu —
+    ör. USOIL gerçekte %86/%81 ama kapsam yalnız %27/%15). Alan yoksa jenerik cümle."""
+    oos = (((situation.get("fakeout") or {}).get("detector") or {}).get("oos")) or {}
+    fake, gen = oos.get("fake_call") or {}, oos.get("genuine_call") or {}
+    if not (fake.get("precision") and gen.get("precision")):
+        return _FAKEOUT_STATS_FALLBACK
+    return (f"+1-bar LGBM, bu sembolün OOS'u: SAHTE çağrısı %{fake['precision']:.0f} isabet "
+            f"(kapsam %{fake.get('coverage', 0):.0f}), GERÇEK çağrısı %{gen['precision']:.0f} "
+            f"(kapsam %{gen.get('coverage', 0):.0f}); taban sahte oranı "
+            f"%{oos.get('base_fake_test', 0):.0f}")
+
+
 def build_prompt(situation: dict) -> str:
     sym = situation["symbol"]
     bans = [f"{s} {d}" for (s, d) in HARD_BANS if s == sym]
+    fk_stats = _fakeout_stats_line(situation)
     return f"""{SYSTEM}
 
 === PLAYBOOK (doğrulanmış priorlar) ===
@@ -205,14 +223,21 @@ GÖREV — {sym} için KENDİ görüşünü oluştur (kanıttan muhakeme et):
 - Her yönün `evidence`'ı: benzer geçmiş kurulumda gerçek WR + örnek (n) + OOS. Buna dayan.
 - rev_chan/rev_vwap yüksek (ters yönde aşırı) = mean-reversion fırsatı; düşük/negatif = kovalama (kanıtta düşük WR).
 - NDX'te VIX rejimi yönü etkiler AMA yalnız vix.fresh=true ise; vix.fresh=false (off-hours/neutral_band → ^VIX donuk/bıçak-sırtı) → VIX'e GÜVENME, yalnız fiyat-kanıtına dayan.
-- Açık pozisyon/korelasyon yığılması, near_event=true → küçült/bekle.
+- Açık pozisyon/korelasyon yığılması → küçült/bekle.
+- `context.near_event=true` (detay `context.event`): yüksek-etkili olay penceresindesin
+  (EIA/NFP/FOMC...). Olay-kaynaklı 5m aşırılığı NORMAL mean-reversion DEĞİLDİR — kanıt
+  hücreleri bu rejimi içermez. Yön tahmin etme; WAIT ya da belirgin küçült.
+- `context.weekend_close_in_h` varsa haftalık kapanış yakın: hafta sonu gap riski nedeniyle
+  yeni pozisyon kod kapısıyla ZATEN engellenir (gerekçende bunu belirt, zorlama).
 - `fakeout` alanı varsa: TAZE bir seviye kırılımı var demektir. `detector.call` en güçlü kanıttır
-  (+1-bar LGBM, OOS: SAHTE çağrısı %70, GERÇEK çağrısı %83 isabet; "pending_next_bar" = teyit barı
+  ({fk_stats}; "pending_next_bar" = teyit barı
   kapanmadı, kesin karar ~5dk sonra — o zamana dek temkinli ol). `recommendation` alanını oku:
   · avoid_breakout_direction / fake_probability ≥%75 → kırılım YÖNÜNDE AÇMA ("kırdı, kesin gidecek" tuzağı).
-  · fade_candidate (skor≤−2, OOS %87 sahte) → TERS yön lehine EK kanıt — rev_chan/rev_vwap mean-rev
-    kanıtınla AYNI yönü gösteriyorsa konviksiyonu artırabilir; tek başına giriş sebebi DEĞİL.
-  · breakout_leaning_genuine → sadece "engel yok" demektir (OOS %55 — edge değil), yön kanıtı sayma.
+  · fade_candidate (klimaks skoru ≤−2; NDX'te ölçülen OOS %87 sahte — diğer sembollerde skor
+    ayrıca doğrulanmadı) → TERS yön lehine EK kanıt; rev_chan/rev_vwap mean-rev kanıtınla AYNI
+    yönü gösteriyorsa konviksiyonu artırabilir; tek başına giriş sebebi DEĞİL.
+  · breakout_leaning_genuine → sadece "engel yok" demektir (NDX'te skor-tabanlı gerçek-taraf OOS
+    %55 = edge değil), yön kanıtı sayma. Sayısal karar için `detector.call` esastır.
 - XAU BUY ise: "patient WR", GENİŞ stop şart (management'a yaz, boyut düşür).
 - `live_drift` alanı varsa: bu yönün SON 30 canlı sonucu. drift_pp ≥15 (canlı, vaadin 15pp+
   altında) → kanıt hücrelerine güveni DÜŞÜR, boyut küçült; "KAPI ASKIDA" notu varsa OPEN

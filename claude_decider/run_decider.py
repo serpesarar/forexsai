@@ -27,6 +27,7 @@ from gates import ALLOW, vix_regime  # noqa: E402
 from decide import (decide_situation, decide_free, append_journal, append_free_journal,  # noqa: E402
                     JOURNAL_JSONL, DECIDE_MODEL, HARD_BANS, FREE_EVIDENCE)
 import evidence as ev  # noqa: E402
+import event_calendar as evcal  # noqa: E402  (yüksek-etkili olay penceresi)
 import free_context as fx  # noqa: E402
 import forensics  # noqa: E402
 from data_contract import validate_bars, validate_multi  # noqa: E402  (sıfır-güven)
@@ -239,7 +240,32 @@ def recent_journal_summary(n: int = 8) -> str:
             f"pozitifse kazananları kaçırıyorsun demektir)")
 
 
-NEAR_EVENT = False   # TODO(news): kullanıcının haber panelini bağla → yüksek-etkili olay penceresi
+# ── HAFTA SONU GAP KORUMASI (2026-07-09 otopsisi) ────────────────────────────
+# Cuma-geç açılan kararlar 48h duvar-saati horizonla hafta sonunu KÖPRÜLÜYOR; Pazartesi
+# gap'i konservatif SL sayılıyor (gerçek dolum daha kötü olurdu → hem iyimser hem gürültülü).
+# _feed_is_frozen yalnız donuk feed'de YENİ kararı keser; Cuma canlıyken açılanı kesmez.
+# Haftalık kapanış retail CFD'de ~Cuma 17:00 ET (tüm semboller birlikte roll eder).
+# Maliyeti ölçülebilir: bloklanan durumların karşı-olgusu yine grade edilir (VAZGEÇİLEN R).
+WEEKEND_GUARD = os.getenv("WEEKEND_GUARD", "1") == "1"
+WEEKEND_GUARD_HOURS = float(os.getenv("WEEKEND_GUARD_HOURS", "2"))   # kapanıştan önceki N saat
+_WEEKLY_CLOSE_ET_H = 17.0        # Cuma 17:00 ET — haftalık roll
+
+
+def _near_weekend_close(now: datetime) -> float | None:
+    """Cuma haftalık kapanışına kalan saat (koruma penceresindeyse), değilse None."""
+    if not WEEKEND_GUARD:
+        return None
+    try:
+        from zoneinfo import ZoneInfo
+        t = now.astimezone(ZoneInfo("America/New_York"))
+    except Exception:
+        return None
+    if t.weekday() != 4:                       # yalnız Cuma
+        return None
+    hours_left = _WEEKLY_CLOSE_ET_H - (t.hour + t.minute / 60.0)
+    if 0 <= hours_left <= WEEKEND_GUARD_HOURS:
+        return round(hours_left, 2)
+    return None
 
 
 def _live_drift_map() -> dict:
@@ -287,6 +313,23 @@ def _live_drift_map() -> dict:
     return out
 
 
+def _weekend_guard(symbol: str, dec: dict, now: datetime) -> dict:
+    """Cuma haftalık kapanışına <WEEKEND_GUARD_HOURS kala yeni OPEN üretme (gap koruması).
+    Karşı-olgu grade edilmeye devam eder → bu kapının maliyeti VAZGEÇİLEN-R'de görünür."""
+    if str(dec.get("action", "")).upper() != "OPEN":
+        return dec
+    left = _near_weekend_close(now)
+    if left is None:
+        return dec
+    print(f"  📅 hafta-sonu kapısı: {symbol} OPEN → WAIT (kapanışa {left}s, gap riski)")
+    dec = dict(dec)
+    dec["action"] = "WAIT"
+    dec["size_factor"] = 0.0
+    dec["weekend_blocked"] = True
+    dec["reason"] = (f"[HAFTA-SONU KAPISI: kapanışa {left}s] " + str(dec.get("reason") or ""))[:500]
+    return dec
+
+
 def _drift_guard(symbol: str, dec: dict, drift_map: dict) -> dict:
     """SUSPEND eşiğini aşan (sembol, yön) için OPEN → WAIT (gölge veri birikimi sürer)."""
     if not DRIFT_GUARD or str(dec.get("action", "")).upper() != "OPEN":
@@ -304,14 +347,23 @@ def _drift_guard(symbol: str, dec: dict, drift_map: dict) -> dict:
     return dec
 
 
-def _context(positions: dict, now: datetime) -> dict:
-    return {"now_utc": now.isoformat(timespec="minutes"),
-            "session": ev._session(now.hour),
-            "open_positions": positions.get("count", 0),
-            "positions_by_symbol": positions.get("by", {}),
-            "exposure_note": positions.get("note", ""),
-            "near_event": NEAR_EVENT,
-            "recent": recent_journal_summary()}
+def _context(positions: dict, now: datetime, symbol: str | None = None) -> dict:
+    nev = evcal.near_event(symbol, now) if symbol else None
+    wk = _near_weekend_close(now)
+    ctx = {"now_utc": now.isoformat(timespec="minutes"),
+           "session": ev._session(now.hour),
+           "open_positions": positions.get("count", 0),
+           "positions_by_symbol": positions.get("by", {}),
+           "exposure_note": positions.get("note", ""),
+           "near_event": bool(nev),
+           "recent": recent_journal_summary()}
+    if nev:
+        ctx["event"] = nev            # {"event", "impact", "minutes_to", "window_min"}
+    if wk is not None:
+        ctx["weekend_close_in_h"] = wk
+        ctx["weekend_note"] = (f"haftalık kapanışa {wk}s — hafta sonu gap riski; yeni pozisyon "
+                               f"AÇILMAZ (kod kapısı)")
+    return ctx
 
 
 def build_situation(symbol: str, bars: list[dict], vix, positions: dict, now: datetime,
@@ -349,7 +401,7 @@ def build_situation(symbol: str, bars: list[dict], vix, positions: dict, now: da
                     "note": ("US RTH kapalı, ^VIX donuk — yön bağlamına güvenme" if label == "stale_offhours"
                              else "eşik bıçak-sırtı — yön belirsiz" if label == "neutral_band"
                              else "Pepperstone canlı 24h (futures, ~spot)" if vix_source == "pepperstone" else "")},
-            "context": _context(positions, now),
+            "context": _context(positions, now, symbol),
             "directions": directions}
 
 
@@ -435,6 +487,7 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                     print("  fakeout hatası (devam):", e)
             dec = decide_situation(sit, model=model)
             dec = _drift_guard(sit["symbol"], dec, drift_map)   # rejim-flip askısı (journal'dan önce)
+            dec = _weekend_guard(sit["symbol"], dec, now)       # hafta sonu gap koruması
             append_journal(sit, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
@@ -456,6 +509,12 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                 ctx = None
         if ctx:
             ctx["spread_price"] = fetch_spread(FREE_SYMBOL)     # sürtünme-net grade (free)
+            fev = evcal.near_event(FREE_SYMBOL, now)
+            if fev:
+                ctx["event"] = fev                              # olay penceresi (küçült/bekle)
+            fwk = _near_weekend_close(now)
+            if fwk is not None:
+                ctx["weekend_close_in_h"] = fwk
             try:
                 ctx["forensics"] = forensics.build_forensics(mtf, vix=vix, dxy=dxy)
             except Exception as e:
@@ -480,6 +539,7 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             print(f"[{now:%H:%M}] {FREE_SYMBOL} → Opus ({mode_tag}, çok-TF)...")
             dec = decide_free(ctx, model=model)
             dec = _drift_guard(FREE_SYMBOL, dec, drift_map)     # rejim-flip askısı (free de dahil)
+            dec = _weekend_guard(FREE_SYMBOL, dec, now)         # hafta sonu gap koruması
             append_free_journal(ctx, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}·free] {FREE_SYMBOL}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
