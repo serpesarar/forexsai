@@ -516,8 +516,18 @@ def restart_target(name: str, force: bool = False) -> tuple[str, int]:
 
 
 def handle_restart_process(client, cmd: dict) -> tuple[str, int]:
+    """ELLE istenen restart. 2026-07-28 bulgusu: borç yalnız OTO-güncelleme yolunda
+    yazılıyordu (auto_update rc==3); panelden/köprüden elle istenen restart ertelenince
+    (rc=3) borç YAZILMIYOR ve bir daha denenmiyordu → süreç eski kod/config ile çalışmaya
+    devam ediyordu. Bu, 07-23'teki '3 gün eski kodla çalıştı' vakasının elle-tetikleme
+    versiyonu. Artık iki yol da aynı borç mekanizmasına yazar."""
     p = cmd.get("payload") or {}
-    return restart_target(str(p.get("target", "")), force=bool(p.get("force")))
+    target = str(p.get("target", ""))
+    out, rc = restart_target(target, force=bool(p.get("force")))
+    if rc == 3:
+        _queue_pending_restart(target, "elle istendi")
+        out += " → BORÇ yazıldı (pozisyon kapanınca ödenecek, 72s sonra zorla)"
+    return out, rc
 
 
 # ── Ertelenen yeniden başlatma borcu ─────────────────────────────────────
