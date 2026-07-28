@@ -238,13 +238,22 @@ def _bot_magics() -> set:
     return m
 
 
+# Kod-seviyesi lot çarpanı varsayılanları (config.py gitignore'da olduğu için
+# yeni scope'un DÜŞÜK lotu burada; config.SCOPE_LOT_FACTOR bunları ezer).
+# DAYCOMBO 0.2 → kutudaki LOT_SIZE=5 ile 1.0 lot (kullanıcı kararı 2026-07-28:
+# canlı ama düşük lot; n≥30 işlem doğrulaması sonrası artırılır).
+SCOPE_LOT_FACTOR_DEFAULT = {"NDX.INDX:BUY:DAYCOMBO": 0.2}
+
+
 def scope_lot(scope_key: str) -> float:
     """Scope'a özel lot (2026-07-28). LOT_SIZE global; kanıtı zayıf/yeni bir scope'u
     yarı riskle canlıya almak için scope başına çarpan gerekiyordu.
 
     config.SCOPE_LOT_FACTOR = {"XAUUSD:BUY": 0.5} gibi; tanımsızsa 1.0 (davranış aynı).
     Backend'in effective_lot_multiplier'ı bunun ÜSTÜNE çarpılır (ikisi bağımsız)."""
-    factor = float(getattr(config, "SCOPE_LOT_FACTOR", {}).get(scope_key, 1.0))
+    defaults = dict(SCOPE_LOT_FACTOR_DEFAULT)
+    defaults.update(getattr(config, "SCOPE_LOT_FACTOR", {}) or {})
+    factor = float(defaults.get(scope_key, 1.0))
     return round(float(config.LOT_SIZE) * factor, 2)
 
 
@@ -1305,6 +1314,111 @@ def get_vix() -> float | None:
     return _vix_cache["v"]
 
 
+
+# ─── DAYCOMBO: gün-yönü (gece pozitif) + 15m trend + yeşil 5m mum (2026-07-28) ───
+# Kanıt: research/ndx_buy_lab/daygate_combo.py — 160 kombodan üç kronolojik
+# dilimde de pozitif kalan TEK kombo. n=165 / 57 gün, WR %63.0 (çıta %58.6),
+# EV +0.077R; düşen test döneminde bile +0.060R. Geometri sabit 80/110 —
+# trade_manager _RULES bu magic'i İÇERMEZ → BE/trail dokunmaz (ölçüm sabit
+# TP/SL ile yapıldı, öyle kalmalı).
+# Kural: (1) gün 00:00→13:25 UTC getirisi > 0  (2) son KAPALI 15m: kapanış
+# EMA20 üstünde VE EMA20 3-bar eğimi yukarı  (3) son KAPALI 5m: yeşil ve
+# gövde/aralık > 0.5  (4) pencere 14:00–19:30 UTC  → sonraki mumda market BUY.
+# ⚠️ MT5 bar saatleri BROKER saatindedir (research/ndx_buy_lab RAPOR §1) —
+# UTC pencereler ölçülen offset ile çevrilir.
+DAYCOMBO_MAGIC = config.MAGIC_NUMBER + 4
+_daycombo_state = {"offset": None, "offset_t": 0.0, "last_bar": None}
+
+
+def _daycombo_offset(mt5_symbol: str) -> int:
+    """Broker sunucu saati − gerçek UTC (saniye; 15dk'ya yuvarlı, 1s cache)."""
+    now = time.time()
+    st = _daycombo_state
+    if st["offset"] is not None and now - st["offset_t"] < 3600:
+        return st["offset"]
+    off = 0
+    try:
+        tick = mt5.symbol_info_tick(mt5_symbol)
+        if tick and tick.time:
+            off = int(round((tick.time - now) / 900.0) * 900)
+    except Exception:
+        pass
+    st["offset"], st["offset_t"] = off, now
+    return off
+
+
+def check_daycombo() -> None:
+    if not getattr(config, "DAYCOMBO_ENABLED", True):
+        return
+    forexsai_sym = "NDX.INDX"
+    mt5_symbol = resolve_symbol(forexsai_sym)
+    if not mt5_symbol:
+        return
+    scope_key = f"{forexsai_sym}:BUY:DAYCOMBO"
+    if open_count(mt5_symbol, "BUY", DAYCOMBO_MAGIC) >= 1:
+        return
+    off = _daycombo_offset(mt5_symbol)
+    now_utc = datetime.now(timezone.utc)
+    hm = now_utc.hour * 60 + now_utc.minute
+    if not (14 * 60 <= hm <= 19 * 60 + 30):          # giriş penceresi (UTC)
+        return
+
+    # ── son KAPALI 5m bar (pozisyon 1 = oluşan barı atla) ──
+    r5 = mt5.copy_rates_from_pos(mt5_symbol, mt5.TIMEFRAME_M5, 1, 300)
+    if r5 is None or len(r5) < 60:
+        return
+    last5 = r5[-1]
+    bar_utc = int(last5["time"]) - off
+    if _daycombo_state["last_bar"] == bar_utc:
+        return                                        # bu 5m bar zaten işlendi
+    if time.time() - bar_utc > 360:
+        return                                        # bayat bar (>6dk) — atla
+    _daycombo_state["last_bar"] = bar_utc
+
+    # (3) gövdeli yeşil 5m mum
+    o5, h5, l5, c5 = (float(last5[k]) for k in ("open", "high", "low", "close"))
+    rng = h5 - l5
+    if not (c5 > o5 and rng > 0 and (c5 - o5) / rng > 0.5):
+        return
+
+    # (1) gece pozitif: bugünün 00:00 UTC açılışı → 13:25 UTC fiyatı
+    day_utc = datetime.fromtimestamp(bar_utc, tz=timezone.utc).date()
+    gece_acilis = premkt = None
+    for r in r5:
+        t_utc = datetime.fromtimestamp(int(r["time"]) - off, tz=timezone.utc)
+        if t_utc.date() != day_utc:
+            continue
+        if gece_acilis is None:
+            if t_utc.hour == 0 and t_utc.minute < 10:
+                gece_acilis = float(r["open"])
+            else:
+                break                                 # günün başı pencerede yok
+        if t_utc.hour * 60 + t_utc.minute <= 13 * 60 + 20:
+            premkt = float(r["close"])
+    if gece_acilis is None or premkt is None or premkt <= gece_acilis:
+        return
+
+    # (2) 15m trend: kapanış > EMA20 ve EMA20 3-bar eğimi yukarı
+    r15 = mt5.copy_rates_from_pos(mt5_symbol, mt5.TIMEFRAME_M15, 1, 80)
+    if r15 is None or len(r15) < 30:
+        return
+    closes = [float(x["close"]) for x in r15]
+    ema, k = closes[0], 2.0 / 21.0
+    hist = []
+    for cx in closes:
+        ema = cx * k + ema * (1 - k)
+        hist.append(ema)
+    if not (closes[-1] > hist[-1] and hist[-1] > hist[-4]):
+        return
+
+    log.info("%s — gece +%.2f%% & 15m trend↑ & gövdeli yeşil 5m → market BUY",
+             scope_key, (premkt / gece_acilis - 1) * 100)
+    cfg = {"tp": float(getattr(config, "DAYCOMBO_TP", 80.0)),
+           "sl": float(getattr(config, "DAYCOMBO_SL", 110.0)), "is_pct": False}
+    open_trade(scope_key, forexsai_sym, mt5_symbol, "BUY", cfg,
+               ["daycombo"], magic=DAYCOMBO_MAGIC)
+
+
 def check_vix_regime() -> None:
     """VIX-rejim NDX yön scope'u: VIX<eşik→SELL favored, ≥eşik→BUY favored; model
     favored yönde sinyal verirse market giriş. Momentum/channel'dan AYRI magic."""
@@ -1397,6 +1511,8 @@ def main():
                    ("POS_SELL_MIN", 0.40), ("POS_BUY_MAX", 0.60),
                    ("BACKEND_ADVICE_ENABLED", True), ("SHADOW_SCOPES_ENABLED", True),
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
+                   ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
+                   ("DAYCOMBO_SL", 110.0),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
@@ -1468,6 +1584,14 @@ def main():
                     check_vix_regime()
                 except Exception as e:
                     log.exception("vix-regime hata: %s", e)
+
+            # ── DAYCOMBO: gece-pozitif + 15m trend + yeşil 5m (AYRI magic+4, düşük lot) ──
+            if getattr(config, "DAYCOMBO_ENABLED", True) and \
+                    total_open_positions() < config.MAX_TOTAL_POSITIONS:
+                try:
+                    check_daycombo()
+                except Exception as e:
+                    log.exception("daycombo hata: %s", e)
 
             # ── REFLEX ENGINE (NDX momentum-continuation + 15dk time-stop, AYRI magic+3) ──
             #    Backend /api/reflex/live sinyallerini uygular. SHADOW varsayılan
