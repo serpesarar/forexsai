@@ -327,6 +327,19 @@ def main():
     piv_lows = confirmed_pivot_lows(l)
     piv_confirm_idx = [p[0] for p in piv_lows]          # onay barı (sıralı)
     piv_bar_idx = [p[1] for p in piv_lows]              # pivotun kendi barı (sıralı)
+    # ── H1 EMA50 trend hizası (botun trend_alignment'ıyla aynı tarif) ────────
+    # SIZINTI ÖNLEMİ: 5m barı içinde bulunduğu H1 barının KAPANIŞI henüz
+    # bilinmiyor → yalnız KAPANMIŞ H1 barından (h1t + 3600 ≤ t[i]) EMA al.
+    trend_down = np.zeros(n, dtype=bool)
+    trend_known = np.zeros(n, dtype=bool)
+    if h1 is not None:
+        ema_h1 = bot_ema50_h1(h1["close"])
+        h1t = h1["time"]
+        for i in range(n):
+            j = int(np.searchsorted(h1t, t[i] - 3600, side="right")) - 1
+            if j >= 0 and np.isfinite(ema_h1[j]):
+                trend_known[i] = True
+                trend_down[i] = c[i] < ema_h1[j]
 
     d0 = datetime.fromtimestamp(int(t[0]), tz=timezone.utc)
     d1 = datetime.fromtimestamp(int(t[-1]), tz=timezone.utc)
@@ -372,6 +385,8 @@ def main():
             klass = "BOSLUKTA"
         else:
             klass = "ARADA"
+        # "KIRDI": mum bir önceki kapanışın ALTINDAKİ bir seviyeyi kapanışla deldi
+        broke_level = any(c[i] < lv < c[i - 1] for lv, _tc in levels)
 
         # kırılma olayı (yalnız altında seviye varsa anlamlı)
         broke = None
@@ -388,6 +403,10 @@ def main():
             "n_levels": len(levels), "klass": klass, "broke": broke,
             "near_below": near_below, "pos": float(pos[i]) if np.isfinite(pos[i]) else np.nan,
             "session": session_of(int(t[i])),
+            "trend_down": bool(trend_down[i]), "trend_known": bool(trend_known[i]),
+            "broke_level": bool(broke_level),
+            "prev_red": bool(o[i - 1] > c[i - 1]),
+            "atr_pctile": float((atr[max(0, i - 500):i + 1] <= a).mean()),
         })
 
     reds = [e for e in events if e["red"]]
@@ -539,11 +558,91 @@ def main():
         nets = [r["net"] for r, _k, _e in rowsb]; risks = [k for _r, k, _e in rowsb]
         print(fmt(stats(nets, risks, "TABAN " + gname)))
 
+    print("\n[B1b] SONUÇ DAĞILIMI (TP / SL / zaman-stopu) — 'WR' kâr eden işlem oranıdır")
+    for gname in ("BOT 80/110 (canlı VIXREG)", "ATR 1.0 : 1.0"):
+        rowsx = res_all[gname]
+        mix = {}
+        for r, _k, _e in rowsx:
+            mix[r["outcome"]] = mix.get(r["outcome"], 0) + 1
+        tot = len(rowsx)
+        bars_ = np.mean([r["bars"] for r, _k, _e in rowsx])
+        print(f"  {gname:<34} TP=%{100 * mix.get('WIN', 0) / tot:.1f}  "
+              f"SL=%{100 * mix.get('LOSS', 0) / tot:.1f}  "
+              f"ZAMAN=%{100 * mix.get('TIME', 0) / tot:.1f}  ort.süre={bars_:.0f} bar")
+
     print("\n[B8] AYNA KONTROLÜ — büyük YEŞİL mum sonrası BUY (aynı kurallar)")
     res_g = run(greens, "BUY")
     for gname, rowsg in res_g.items():
         nets = [r["net"] for r, _k, _e in rowsg]; risks = [k for _r, k, _e in rowsg]
         print(fmt(stats(nets, risks, gname)))
+
+    # ── BÖLÜM D — KURTARMA DENEMESİ: filtre taraması + KÖR TEST ─────────────
+    print("\n" + "─" * 96)
+    print("BÖLÜM D — BU FİKİR KURTARILABİLİR Mİ? filtre taraması (eğitim) → KÖR TEST")
+    print("─" * 96)
+    print("  protokol: aday filtreler YALNIZ ilk %70'te sıralanır; kazananın son %30'daki")
+    print("  (hiç bakılmamış) sonucu yazılır. Eğitimde iyi + testte çöken = gürültü.")
+
+    FILTERS = {
+        "trend AŞAĞI (H1 EMA50 altı)": lambda e: e["trend_known"] and e["trend_down"],
+        "trend YUKARI (H1 EMA50 üstü)": lambda e: e["trend_known"] and not e["trend_down"],
+        "konum ≤0.35 (dalga dibi)": lambda e: np.isfinite(e["pos"]) and e["pos"] <= 0.35,
+        "konum ≥0.65 (dalga tepesi)": lambda e: np.isfinite(e["pos"]) and e["pos"] >= 0.65,
+        "hacim ≥1.3×": lambda e: np.isfinite(e["vol_ratio"]) and e["vol_ratio"] >= 1.3,
+        "hacim <1.0× (sakin)": lambda e: np.isfinite(e["vol_ratio"]) and e["vol_ratio"] < 1.0,
+        "gövde ≥1.5×ATR": lambda e: e["body_atr"] >= 1.5,
+        "ABD seansı": lambda e: e["session"] == "ABD",
+        "AVRUPA seansı": lambda e: e["session"] == "AVRUPA",
+        "destek BOŞLUKTA": lambda e: e["klass"] == "BOSLUKTA",
+        "destek DESTEKTE": lambda e: e["klass"] == "DESTEKTE",
+        "seviye KIRDI (kapanışla)": lambda e: e["broke_level"],
+        "önceki mum da kırmızı": lambda e: e["prev_red"],
+        "yüksek volatilite (ATR %70+)": lambda e: e["atr_pctile"] >= 0.70,
+        "düşük volatilite (ATR %30-)": lambda e: e["atr_pctile"] <= 0.30,
+    }
+    geo_for_sweep = ("BOT 80/110 (canlı VIXREG)", "ATR 1.0 : 1.0", "ATR 0.75 : 1.0 (yüksek WR)")
+    cache = {}
+    for gname in geo_for_sweep:
+        for r, k, e in res_all[gname]:
+            cache.setdefault(gname, {})[e["i"]] = (r["net"], k, e)
+
+    names = list(FILTERS)
+    combos = [(a,) for a in names] + [(a, b) for ia, a in enumerate(names)
+                                      for b in names[ia + 1:]]
+    ranked = []
+    for gname in geo_for_sweep:
+        rows_g = list(cache[gname].values())
+        for combo in combos:
+            fns = [FILTERS[x] for x in combo]
+            tr = [(net, k) for net, k, e in rows_g
+                  if e["ts"] < cut and all(f(e) for f in fns)]
+            if len(tr) < 100:
+                continue
+            ev_tr = float(np.mean([x[0] / x[1] for x in tr]))
+            ranked.append((ev_tr, gname, combo, len(tr)))
+    ranked.sort(reverse=True)
+    print(f"\n  {'#':>2} {'geometri + filtre':<62}{'EĞİTİM':>18}{'KÖR TEST':>26}")
+    for rank, (ev_tr, gname, combo, n_tr) in enumerate(ranked[:12], 1):
+        fns = [FILTERS[x] for x in combo]
+        te = [(net, k) for net, k, e in cache[gname].values()
+              if e["ts"] >= cut and all(f(e) for f in fns)]
+        label = f"{gname.split(' (')[0]} + " + " + ".join(combo)
+        if len(te) < 25:
+            print(f"  {rank:>2} {label[:60]:<62}{ev_tr:>+9.3f}R n={n_tr:<6}  TEST n<25 (atlandı)")
+            continue
+        rr = np.asarray([x[0] / x[1] for x in te])
+        wr = 100.0 * float((rr > 0).mean())
+        print(f"  {rank:>2} {label[:60]:<62}{ev_tr:>+9.3f}R n={n_tr:<6}"
+              f"{float(rr.mean()):>+10.3f}R n={len(te):<5} WR=%{wr:.0f}")
+    surv = 0
+    for ev_tr, gname, combo, _n in ranked[:12]:
+        fns = [FILTERS[x] for x in combo]
+        te = [(net, k) for net, k, e in cache[gname].values()
+              if e["ts"] >= cut and all(f(e) for f in fns)]
+        if len(te) >= 25 and float(np.mean([x[0] / x[1] for x in te])) > 0:
+            surv += 1
+    print(f"\n  → eğitimin en iyi 12 adayından KÖR TESTTE de +EV kalan: {surv}/12 "
+          f"(şans beklentisi ≈6/12 — bu sayı 6'nın belirgin üstünde değilse kenar YOK)")
 
     # ── BÖLÜM C — bot teşhisi: konum kapısı ─────────────────────────────────
     print("\n" + "─" * 96)
@@ -552,13 +651,9 @@ def main():
     if h1 is None:
         print("  H1 verisi yok → atlandı (MT5'siz koşuluyor).")
     else:
-        ema = bot_ema50_h1(h1["close"])
-        h1t = h1["time"]
-        aligned = np.zeros(n, dtype=bool)
-        for i in range(n):
-            j = int(np.searchsorted(h1t, t[i], side="right")) - 1
-            if j >= 0 and np.isfinite(ema[j]):
-                aligned[i] = c[i] < ema[j]              # SELL hizası
+        aligned = trend_down & trend_known              # SELL hizası (sızıntısız)
+        print("  (örtüşen işlemler var: min 24 bar arayla örneklendi, ufuk 72 bar "
+              "→ n şişkin, güven aralığı dar okunmalı)")
         band_defs = [("0.40–0.50 (kapının hemen üstü)", 0.40, 0.50),
                      ("0.50–0.65", 0.50, 0.65),
                      ("0.65–0.80", 0.65, 0.80),
@@ -594,6 +689,66 @@ def main():
             s = stats(nets, risks, f"konum {thr:.2f} geçişinde SELL")
             p = bootstrap_p_positive(nets, risks)
             print(fmt(s) + f"  P(EV>0)={'-' if p is None else f'%{100 * p:.0f}'}")
+
+    # ── BÖLÜM E — kullanıcının gözlemi: SELL yükselen mumların içine açılıyor ─
+    print("\n" + "─" * 96)
+    print("BÖLÜM E — KULLANICI GÖZLEMİ: bot SELL'i YÜKSELEN mumların içine açınca ne oluyor?")
+    print("─" * 96)
+    if h1 is None:
+        print("  H1 verisi yok → atlandı.")
+    else:
+        aligned = trend_down & trend_known
+        gate_pos = 0.40                                # botun mevcut konum kapısı
+        pool = []                                      # (i, mom2, mom1)
+        last = -10 ** 9
+        for i in range(warmup, n - args.horizon - 1):
+            if not aligned[i] or not np.isfinite(pos[i]) or not np.isfinite(atr[i]):
+                continue
+            if pos[i] < gate_pos or i - last < 24:
+                continue
+            last = i
+            pool.append((i, (c[i] - c[i - 2]) / atr[i], (c[i] - c[i - 1]) / atr[i]))
+        print(f"  popülasyon: botun BUGÜNKÜ kapılarını geçen anlar "
+              f"(H1 EMA50 altı + konum ≥{gate_pos:.2f}), n={len(pool)}, geometri 80/110")
+
+        def run_pool(sel, label):
+            nets, risks = [], []
+            for i, m2, m1 in pool:
+                if not sel(m2, m1):
+                    continue
+                r = simulate(i, c[i], c[i] - BOT_TP_POINTS, c[i] + BOT_SL_POINTS,
+                             h, l, c, args.horizon, args.spread, "SELL")
+                nets.append(r["net"]); risks.append(BOT_SL_POINTS)
+            s = stats(nets, risks, label)
+            p = bootstrap_p_positive(nets, risks)
+            print(fmt(s) + f"  P(EV>0)={'-' if p is None else f'%{100 * p:.0f}'}")
+            return nets, risks
+
+        print("\n  [E1] SON 2 MUMUN NET HAREKETİ (giriş anında, ATR birimi)")
+        for label, lo_b, hi_b in (("son 2 mum GÜÇLÜ YUKARI (≥+1.0 ATR)", 1.0, 99.0),
+                                  ("son 2 mum yukarı (0 … +1.0)", 0.0, 1.0),
+                                  ("son 2 mum aşağı (−1.0 … 0)", -1.0, 0.0),
+                                  ("son 2 mum GÜÇLÜ AŞAĞI (≤−1.0 ATR)", -99.0, -1.0)):
+            run_pool(lambda m2, m1, a=lo_b, b=hi_b: a <= m2 < b, label)
+        print("\n  [E2] SON MUM yeşil mi kırmızı mı")
+        run_pool(lambda m2, m1: m1 > 0, "son mum YEŞİL")
+        run_pool(lambda m2, m1: m1 <= 0, "son mum kırmızı")
+        print("\n  [E3] ÖNERİLEN EK KAPI — 'yukarı momentumun içine SELL açma'")
+        for thr in (0.5, 0.75, 1.0):
+            run_pool(lambda m2, m1, x=thr: m2 < x, f"mom2 < +{thr:.2f} ATR ise aç (kapılı)")
+        run_pool(lambda m2, m1: True, "KAPISIZ (bugünkü davranış)")
+        print("\n  [E4] AYNI KURAL — kronolojik KÖR TEST (ilk %70 / son %30)")
+        for label, keep in (("EĞİTİM", lambda ts: ts < cut), ("TEST  ", lambda ts: ts >= cut)):
+            for tag, sel in (("kapısız", lambda m2: True),
+                             ("mom2<+0.75 kapılı", lambda m2: m2 < 0.75)):
+                nets, risks = [], []
+                for i, m2, m1 in pool:
+                    if not keep(t[i]) or not sel(m2):
+                        continue
+                    r = simulate(i, c[i], c[i] - BOT_TP_POINTS, c[i] + BOT_SL_POINTS,
+                                 h, l, c, args.horizon, args.spread, "SELL")
+                    nets.append(r["net"]); risks.append(BOT_SL_POINTS)
+                print(fmt(stats(nets, risks, f"{label} | {tag}")))
 
     if args.json_out:
         with open(args.json_out, "w", encoding="utf-8") as f:
