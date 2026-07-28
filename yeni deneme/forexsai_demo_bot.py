@@ -150,6 +150,9 @@ def resolve_symbol(forexsai_sym: str) -> str | None:
         "NDX.INDX":    ["USTEC", "NAS100", "US100", "NDX100", "USTECH", "NQ100"],
         "GDAXI.INDX":  ["DE40", "GER40", "GER30", "DAX40", "GERMANY40", "DAX30"],
         "USOIL.FOREX": ["XTIUSD", "USOIL", "WTIUSD", "WTI", "CRUDOIL"],
+        # 2026-07-28: XAU gölge scope'u için — SYMBOL_MAP'te yoktu, bu yüzden
+        # gölge hiç tetiklenmiyordu (sinyal vardı ama sembol çözülemiyordu).
+        "XAUUSD":      ["XAUUSD", "GOLD", "XAUUSDm", "XAU_USD"],
     }.get(forexsai_sym, [])
 
     for s in mt5.symbols_get() or []:
@@ -864,6 +867,8 @@ def check_shadow_scopes() -> None:
                       if signal_direction(m, fetch_pulse(m, forexsai_sym))[0] == direction]
             if not voters:
                 continue
+            log.info("[GÖLGE] %s — %d oy geldi, kapılar değerlendiriliyor",
+                     scope_key, len(voters))
             aligned, _ = trend_alignment(mt5_symbol, direction)
             if not aligned:
                 continue
@@ -884,7 +889,10 @@ def check_shadow_scopes() -> None:
                           extra={"pos": round(pos, 3) if pos is not None else None,
                                  "voters": voters})
         except Exception as exc:                 # gölge asla canlıyı etkilemez
-            log.debug("gölge scope hata %s: %s", scope_key, exc)
+            # WARNING (debug değil): 2026-07-28'de gölge hiç tetiklenmedi ve
+            # sebebi debug seviyesinde yutulduğu için görünmedi. Sessiz
+            # başarısızlık, kanıt biriktirmeyi durdurur.
+            log.warning("gölge scope hata %s: %s", scope_key, exc)
 
 
 def backend_veto_advice(scope_key: str, forexsai_sym: str, mt5_symbol: str,
@@ -1389,7 +1397,7 @@ def main():
                 try:
                     check_shadow_scopes()
                 except Exception as e:
-                    log.debug("gölge scope döngü hatası: %s", e)
+                    log.warning("gölge scope döngü hatası: %s", e)
 
             if getattr(config, "TRADE_MGMT_ENABLED", True):
                 try:
