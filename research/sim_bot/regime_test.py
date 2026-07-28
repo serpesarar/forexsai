@@ -26,9 +26,8 @@ from sim import _client, fetch_bars, fetch_signals, stats  # noqa: E402
 from sim2 import Ctx2, run, SINCE  # noqa: E402
 
 WEEK = 7 * 86400
-SYMBOLS = ["NDX.INDX", "GDAXI.INDX", "USOIL.FOREX"]
-MODES = [("A ham-market", "A"), ("B kapı-at", "B"),
-         ("C kapı+SR-limit", "C"), ("D hepsi-SR-limit", "D")]
+SYMBOLS = ["NDX.INDX", "GDAXI.INDX", "USOIL.FOREX", "XAUUSD"]
+MODES = [("A ham-market", "A"), ("B kapı-at", "B")]
 
 
 def weekly_slices(sigs):

@@ -1208,7 +1208,16 @@ def check_vix_regime() -> None:
     cfg = {"tp": config.VIX_REGIME_TP, "sl": config.VIX_REGIME_SL, "is_pct": False}
     # SELL sabır kapısı (kanıt: Δ+39.3R — hızlı ölen SELL'ler ilk 10dk'da
     # kendini ele veriyor; research/trade_mgmt_ndx). BUY'a UYGULANMAZ.
-    if favored == "SELL" and getattr(config, "VIXREG_SELL_PATIENCE", True):
+    # SABIR KAPISI — 2026-07-28'de VARSAYILAN KAPATILDI.
+    # Kanıt dengesi kapatma yönünde döndü:
+    #   * timelapse OUT-of-sample (research/sim_bot): 3/3 SELL scope'ta ZARARLI
+    #     (NDX trend+konum +10.27R → sabırla +5.18R; GDAXI +4.32→+0.63)
+    #   * haftalık dilim testi: en iyi varyant B = trend+konum, SABIRSIZ
+    #   * canlı 2026-07-27: 8 kuyruktan geçen tek işlem SL
+    # Karşı kanıt (bot_trades replay +39.3R) farklı popülasyondu (VIXREG alt
+    # kümesi) ve çürütülmedi — bu yüzden kod SİLİNMEDİ, yalnız varsayılan
+    # kapatıldı. VIXREG_SELL_PATIENCE=True ile geri açılır.
+    if favored == "SELL" and getattr(config, "VIXREG_SELL_PATIENCE", False):
         tick = mt5.symbol_info_tick(mt5_symbol)
         if tick:
             import trade_manager
@@ -1236,7 +1245,7 @@ def main():
     for _n, _d in (("TRADE_MGMT_ENABLED", True), ("MGMT_BE_MINUTES", 30),
                    ("MGMT_TRAIL_R", 0.6), ("MGMT_RUNNER_MIN_TP_SL_RATIO", 0.4),
                    ("TREND_GATE_ENABLED", True), ("VIXREG_TREND_GATE", True),
-                   ("VIXREG_SELL_PATIENCE", True), ("VIXREG_SELL_PATIENCE_MIN", 10),
+                   ("VIXREG_SELL_PATIENCE", False), ("VIXREG_SELL_PATIENCE_MIN", 10),
                    ("CHREV_MODE_OVERRIDE", {}),
                    ("POSITION_GATE_ENABLED", True), ("VIXREG_POSITION_GATE", True),
                    ("POS_SELL_MIN", 0.40), ("POS_BUY_MAX", 0.60),
