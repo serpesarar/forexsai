@@ -357,8 +357,9 @@ def _send_market_order(request: dict, mt5_symbol: str):
 # KAPSAM: yalnız "NDX.INDX:BUY" (momentum/SR). CHREV ve VIXREG scope anahtarları
 # farklı (":CHREV" / ":VIXREG") → ETKİLENMEZ. SELL ve diğer semboller dışarıda —
 # kanıt onları kapsamıyor.
-# config.py gitignore'da olduğu için VARSAYILAN BURADADIR; kutuda config.py'a
-# ATR_GEOMETRY_ENABLED = False yazılarak kapatılabilir.
+# 2026-07-28 KULLANICI KARARI: varsayılan KAPALI. Kullanıcı yüksek kazanma
+# oranı istiyor; uzak-hedef/düşük-WR profili istemiyor. Açmak için kutuda
+# config.py'a ATR_GEOMETRY_ENABLED = True yaz.
 ATR_GEOMETRY_DEFAULT = {
     "NDX.INDX:BUY": {
         "tf": "1h", "period": 14, "tp_mult": 2.0, "sl_mult": 1.0,
@@ -379,7 +380,7 @@ def _atr_distances(scope_key: str, mt5_symbol: str) -> tuple[float, float] | Non
     Gerekçe: research/ndx_buy_lab/RAPOR.md — sabit 80/110 (hedef 0.67 ATR)
     11 yılda −EV; momentum filtresinin kenarı ancak TP ≥ 1.5-2 ATR'de ödüyor.
     """
-    if not getattr(config, "ATR_GEOMETRY_ENABLED", True):
+    if not getattr(config, "ATR_GEOMETRY_ENABLED", False):
         return None
     spec = (getattr(config, "ATR_GEOMETRY", None) or ATR_GEOMETRY_DEFAULT).get(scope_key)
     if not spec:
