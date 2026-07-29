@@ -595,10 +595,16 @@ PATTERN_BONUS_GATE_ENABLED=1      # formasyon "teyidi" +6/+10 skor bonusunu öl�
 # Kök neden: pulse satırları DB'de sabit TP30/SL50 (RR 0.6, başabaş %62.5) +
 # 10dk pencereyle notlanıyordu; PULSE_ATR_GEOMETRY yalnız ml_target/stop'a
 # yazıyordu, lifecycle okumuyordu (±%15 statik bant + SL yeniden hesaplama).
-PULSE_ATR_LADDER=1                # pulse1/2/3: panel SL mesafesinden (1.0×ATR) RR≥1 merdiven
+PULSE_ATR_LADDER=1                # sinyalin SL mesafesinden (d) RR≥1 merdiven:
                                   # TP1..4 = 1.0/1.5/2.0/2.5×d; factors.target_type=atr_ladder_v1
                                   # (epoch etiketi — eski static_pips dönemiyle KARIŞTIRMA)
 PULSE_ATR_LADDER_SYMBOLS=NDX.INDX # kanıt NDX; DAX'a genişletme ayrı ölçüm ister
+PULSE_ATR_LADDER_MODELS=pulse1,pulse2,pulse3,ml,emel,emel_inverse,meta,smc
+# (aynı gün genellendi — env adları tarihsel, pulse'ta doğdu. Mesafe kaynağı:
+#  pulse=panel _scalp_tp_sl SL'i; ml/emel=ML prediction stop'u; meta=risk
+#  katmanının canlı stop_loss'u (meta_signal_logger); smc=feature snapshot'ın
+#  TF'e uygun ATR'si (_snapshot_atr_distance; 5m/15m→M15, 1h→H1, 4h→H4).
+#  ai_panel kapsam DIŞI — NY-seans DeepSeek analizi kendi seviyelerini taşır.)
 PULSE_ATR_LADDER_MULTS=1.0,1.5,2.0,2.5
 PULSE_ATR_WINDOW_MIN=60           # ATR-merdivenli sinyalin lifecycle çözüm penceresi (dk)
 TREND_ALIGN_GATE_ENABLED=1        # NDX pulse 1h EMA50 hizası (bot 30g/332: %63.3 vs %43.4) — GÖLGE

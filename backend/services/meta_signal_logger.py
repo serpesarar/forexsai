@@ -179,11 +179,29 @@ async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h"
         targets = calculate_target_prices(entry_price, direction, symbol, normalized_timeframe)
         stop_loss = calculate_stoploss_price(entry_price, direction, symbol, normalized_timeframe)
         targets["SL"] = round(stop_loss, 4)
-
         stop_loss_pips = abs(pips_from_price_change(abs(entry_price - stop_loss), symbol))
+
+        # ── ATR merdiveni (2026-07-28 genelleme): meta'nın kendi canlı stop'u
+        # (risk katmanı, ATR bazlı) varsa RR≥1 merdiven ondan kurulur; statik
+        # NDX 30/50 düz merdiveni başabaş %62.5 istiyordu (meta 60g %55.1).
+        # Uygun değilse legacy statik kalır (fail-open).
+        atr_ladder = None
+        try:
+            from services.prediction_logger import _atr_ladder_targets
+            atr_ladder = _atr_ladder_targets(
+                symbol, META_MODEL_TYPE, direction, entry_price,
+                _coerce_float(signal_data.get("stop_loss")))
+            if atr_ladder:
+                targets = dict(atr_ladder["targets"])
+                stop_loss = targets["SL"]
+                stop_loss_pips = atr_ladder["stop_loss_pips"]
+        except Exception as _ladder_err:
+            logger.debug("[MetaSignalLogger] atr ladder skipped: %s", _ladder_err)
+
         factors = {
             "session": _get_current_session(),
-            "target_type": "static_pips",
+            "target_type": "atr_ladder_v1" if atr_ladder else "static_pips",
+            "atr_ladder_sl_dist": atr_ladder["stop_loss_pips"] if atr_ladder else None,
             "strategy": META_STRATEGY,
             "source": META_STRATEGY,
             "source_combo": signal_data.get("source_combo"),

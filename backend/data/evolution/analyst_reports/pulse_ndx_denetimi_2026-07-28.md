@@ -140,8 +140,15 @@ Pulse düzelirse botun oylayıcıları da düzelir.
    panel SL mesafesinden (1.0×ATR) RR≥1 merdivenle yazılır: SL=1.0×d, TP1..4 =
    1.0/1.5/2.0/2.5×d. Satır `factors.target_type="atr_ladder_v1"` ile etiketlenir
    (epoch ayrımı; eski satırlar `static_pips` olarak kalır ve eski kurala göre çözülür).
-   `target_config.py`'ın statik değerlerine DOKUNULMADI — ml/emel/meta/smc etkilenmez
-   (onların 30/50 sorunu ayrı backlog).
+   `target_config.py`'ın statik değerlerine DOKUNULMADI.
+   **GÜNCELLEME (aynı gün, kullanıcı isteğiyle):** ameliyat ml/emel/emel_inverse/meta/smc'ye
+   genellendi (`PULSE_ATR_LADDER_MODELS`). Mesafe kaynakları: ml/emel → ML prediction
+   stop'u; meta → risk katmanının canlı `stop_loss`u (meta_signal_logger.py kendi insert
+   yolunda merdiven kurar); smc → zaten çekilen feature snapshot'ın TF'e uygun ATR'si
+   (`_snapshot_atr_distance`: 5m/15m→M15, 1h→H1, 4h→H4); smc_inv aynalı stop alır.
+   ai_panel bilinçli kapsam dışı (kendi seviyelerini taşır, NDX 60g %63.1 ile tek
+   başabaş-üstü akış). NDX'te artık TÜM ölçülen modeller RR≥1 merdivende; 60g kanıtı:
+   ml:main %54.5, meta %55.1, emel %58.0, smc %33.3 — hepsi %62.5 çıtasının altındaydı.
 2. ✅ Lifecycle: `_resolve_target_prices(honor_stored=)` — etiketli satırın kendi
    merdiveni ±%15 statik banda takılmadan esas alınır; SL de satırın kendi seviyesi
    (statik 50p yeniden-hesap ezmesi kaldırıldı); pencere 5m/15m için

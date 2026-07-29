@@ -598,6 +598,7 @@ async def log_smc_prediction(
             factors["signal_reasoning"] = [str(item) for item in reasoning]
 
         # SMC enrich with feature snapshot (failsafe — same shared snapshot as ML logs)
+        snap = None
         try:
             from services.signal_feature_snapshot import build_signal_feature_snapshot
             snap = await build_signal_feature_snapshot(symbol)
@@ -606,6 +607,25 @@ async def log_smc_prediction(
                     factors.setdefault(k, v)
         except Exception as snap_err:
             logger.debug("signal_feature_snapshot enrich (smc) failed: %s", snap_err)
+
+        # ── ATR merdiveni (2026-07-28 genelleme): SMC bu fonksiyona kendi
+        # stop'unu geçirmiyor; mesafe, zaten çekilen snapshot'ın TF'e uygun
+        # ATR'sinden türetilir (1.0×ATR). Snapshot/ATR yoksa legacy statik
+        # merdiven kalır (fail-open).
+        try:
+            _atr_dist = _snapshot_atr_distance(snap, normalized_timeframe)
+            if _atr_dist:
+                _sl_guess = (parsed_entry_price - _atr_dist if direction == "BUY"
+                             else parsed_entry_price + _atr_dist)
+                _ladder = _atr_ladder_targets(
+                    symbol, SMC_MODEL_TYPE, direction, parsed_entry_price, _sl_guess)
+                if _ladder:
+                    targets_dict = dict(_ladder["targets"])
+                    stop_loss_pips = _ladder["stop_loss_pips"]
+                    factors["target_type"] = "atr_ladder_v1"
+                    factors["atr_ladder_sl_dist"] = _ladder["stop_loss_pips"]
+        except Exception as _ladder_err:
+            logger.debug("smc atr ladder skipped (%s): %s", symbol, _ladder_err)
 
         record = {
             "symbol": symbol,
@@ -670,6 +690,13 @@ async def log_smc_prediction(
                     and _shadow_inversion_enabled(symbol, SMC_MODEL_TYPE)):
                 try:
                     inv_dir = "SELL" if direction == "BUY" else "BUY"
+                    # ATR merdivenli SMC satırında aynayı aynı geometride tut —
+                    # stop None kalırsa smc_inv legacy 30/50'ye düşer, kıyas bozulur.
+                    inv_stop = None
+                    if factors.get("target_type") == "atr_ladder_v1":
+                        _sl_level = targets_dict.get("SL")
+                        if _sl_level:
+                            inv_stop = round(2 * parsed_entry_price - float(_sl_level), 4)
                     inv_ctx = {
                         "symbol": symbol,
                         "source": SMC_STRATEGY,
@@ -678,7 +705,7 @@ async def log_smc_prediction(
                             "confidence": float(confidence or 0),
                             "entry_price": entry_price,
                             "target_price": None,
-                            "stop_price": None,
+                            "stop_price": inv_stop,
                         },
                         "_shadow_inverted": True,
                     }
@@ -781,20 +808,44 @@ def _shadow_inversion_enabled(symbol: str, model_type: str) -> bool:
     return (model_type or "").lower() in models
 
 
-# ─── Pulse ATR merdiveni (2026-07-28 NDX denetimi) ───────────────────────────
+# ─── ATR merdiveni (2026-07-28 NDX denetimi; aynı gün ml/emel/meta/smc'ye genellendi) ─
 # Kanıt: backend/data/evolution/analyst_reports/pulse_ndx_denetimi_2026-07-28.md
 # Statik TP30/SL50 merdiveni (RR 0.6) başabaş için %62.5 WR ister; 60 günde
-# hiçbir NDX pulse akışı ulaşamadı (BUY %32-41, SELL %54-60). Panelin ATR
-# geometrisi (_scalp_tp_sl: SL=1.0×ATR14-5m) yalnız ml_target/stop alanına
-# gidiyor, lifecycle onu okumuyordu. Bu yardımcı panel SL mesafesinden RR≥1
-# gerçek merdiven kurar: SL=1.0×d, TP1..4 = 1.0/1.5/2.0/2.5×d.
+# NDX'te HİÇBİR akış ulaşamadı (pulse BUY %32-41; ml:main %54.5, meta %55.1,
+# emel %58, smc %33). Bu yardımcı sinyalin kendi SL mesafesinden RR≥1 merdiven
+# kurar: SL=1.0×d, TP1..4 = 1.0/1.5/2.0/2.5×d (d = |entry − stop|).
 # Lifecycle merdiveni factors.target_type == "atr_ladder_v1" etiketiyle tanır
-# (statik ±%15 doğrulama bandına takılmadan). PULSE_ATR_LADDER=0 ile kapanır.
+# (statik ±%15 doğrulama bandına takılmadan). PULSE_ATR_LADDER=0 ile kapanır;
+# model kapsamı PULSE_ATR_LADDER_MODELS (env adları tarihsel, pulse'ta doğdu).
 
-_PULSE_LADDER_MODELS = {"pulse1", "pulse2", "pulse3"}
+_ATR_LADDER_DEFAULT_MODELS = "pulse1,pulse2,pulse3,ml,emel,emel_inverse,meta,smc"
+
+#: SMC gibi kendi stop'unu geçmeyen modeller için snapshot ATR'sinden mesafe.
+#: TF → tercih sırasıyla snapshot ATR anahtarı öneki (NDX snapshot: M15/H1/H4).
+_SNAPSHOT_ATR_PREFS = {
+    "1m": ("M15", "M30", "H1"), "5m": ("M15", "M30", "H1"),
+    "15m": ("M15", "M30", "H1"), "20m": ("M15", "M30", "H1"),
+    "30m": ("M30", "M15", "H1"),
+    "1h": ("H1", "M30", "H4"), "4h": ("H4", "H1"), "1d": ("H4", "H1"),
+}
 
 
-def _pulse_atr_ladder(
+def _snapshot_atr_distance(snap: Any, timeframe: str) -> Optional[float]:
+    """Feature snapshot'tan sinyal TF'ine uygun ATR mesafesi (yoksa None)."""
+    if not isinstance(snap, dict):
+        return None
+    prefs = _SNAPSHOT_ATR_PREFS.get((timeframe or "").lower(), ("M30", "M15", "H1"))
+    for suffix in prefs:
+        try:
+            val = float(snap.get(f"{suffix}_atr_14"))
+        except (TypeError, ValueError):
+            continue
+        if val > 0:
+            return val
+    return None
+
+
+def _atr_ladder_targets(
     symbol: str,
     model_type: Optional[str],
     direction: str,
@@ -809,10 +860,12 @@ def _pulse_atr_ladder(
         "PULSE_ATR_LADDER_SYMBOLS", "NDX.INDX").split(",") if s.strip()}
     if (symbol or "").upper() not in syms:
         return None
+    allowed = {m.strip().lower() for m in _os.getenv(
+        "PULSE_ATR_LADDER_MODELS", _ATR_LADDER_DEFAULT_MODELS).split(",") if m.strip()}
     base = (model_type or "").lower().strip().split(":")[0]
     if base.endswith("_inv"):
         base = base[:-4]
-    if base not in _PULSE_LADDER_MODELS:
+    if base not in allowed:
         return None
     if direction not in ("BUY", "SELL") or not entry_price or entry_price <= 0:
         return None
@@ -1094,7 +1147,7 @@ async def log_prediction(
             is_xauusd_v2 = (symbol == "XAUUSD"
                             and (effective_model_type or "").lower().startswith("ml")
                             and ml.get("target_price") and ml.get("stop_price"))
-            pulse_ladder = _pulse_atr_ladder(
+            pulse_ladder = _atr_ladder_targets(
                 symbol, effective_model_type, direction, entry_price, ml.get("stop_price"))
             if is_xauusd_v2:
                 tp_price = float(ml["target_price"])
