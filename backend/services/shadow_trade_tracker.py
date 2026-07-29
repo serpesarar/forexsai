@@ -1,7 +1,7 @@
 """Shadow Trade Tracker — formasyon + fakeout tespitlerinin SIZINTISIZ
 ileriye dönük paper-trade doğrulaması.
 
-Üç kaynak izlenir:
+Dört kaynak izlenir:
   1. ``pattern``  — harmonic_pattern_service tespitleri (confidence >= %60,
      status=COMPLETED, TAZE: son pivot son N bar içinde kapanmış).
   2. ``fakeout``  — fakeout_service dedektör çağrıları (call=fake/genuine,
@@ -12,6 +12,9 @@ ileriye dönük paper-trade doğrulaması.
      TP/SL = core'un kendi risk hesabı (SL=ATR×1.5, TP1=ATR×1.0). Aynı
      sembol+yönde yalnız 1 açık meta işlem tutulur (dedup); sinyal sürerken
      her turda yeni işlem AÇILMAZ.
+  4. ``redcandle``— büyük kırmızı 5m mum + teyit mumu → SELL (2026-07-29, NDX-only).
+     17 aylık ölçümde kör testten geçen TEK aday; kenarı zaman-stopundan geldiği
+     ve kaymaya çok duyarlı olduğu için CANLIYA DEĞİL yalnız gölgeye alındı.
 
 Sızıntı (leak) garantileri:
   * Giriş fiyatı = karar anındaki SON KAPANMIŞ 5m barın kapanışı; koşan bar
@@ -54,6 +57,27 @@ META_SHADOW_ENABLED = os.getenv("META_SHADOW_ENABLED", "1") == "1"
 META_MIN_CONF = float(os.getenv("META_SHADOW_MIN_CONF", "40"))
 META_EXPIRY_HOURS = float(os.getenv("META_SHADOW_EXPIRY_HOURS", "24"))
 
+# ─── redcandle kaynağı (2026-07-29) ──────────────────────────────────────────
+# Büyük kırmızı 5m mum + teyit mumu (kapanışı önceki mumun DİBİNİN altında) → SELL.
+# Kanıt: research/RAPOR_SELL_MUM_DESTEK_2026-07-28.md (EK bölümü). 17 ay / 2.147 olay:
+# kör testte TP120/SL25 +0,150R, TP80/SL30 +0,079R; koşulsuz SELL tabanını iki
+# dönemde de yeniyor ve komşu hücrelerin hepsi pozitif (knife-edge değil).
+# AMA: TP/SL kısmı tam başabaş (0,257×80 − 0,689×30 = −0,11p); artı bakiyenin
+# TAMAMI işlemlerin %5,4'ünü oluşturan zaman-stopu çıkışlarından geliyor ve kenar
+# 3 puanlık kaymada ölüyor (canlıda 14 puan kayma gözlendi). Bu yüzden CANLIYA
+# BAĞLANMADI — yalnız gölge. Limit-emir varyantı ayrıca test edildi ve DAHA KÖTÜ
+# çıktı (ters seçilim: fiyat geri gelen işlemler sistematik olarak kötü), o yüzden
+# gölge market girişini ölçer; limit fiyatları details'e yazılır ki sonradan
+# karşı-olgusal replay yapılabilsin.
+REDCANDLE_SHADOW_ENABLED = os.getenv("REDCANDLE_SHADOW_ENABLED", "1") == "1"
+REDCANDLE_SYMBOLS = [s.strip() for s in os.getenv(
+    "REDCANDLE_SHADOW_SYMBOLS", "NDX.INDX").split(",") if s.strip()]
+REDCANDLE_BODY_ATR = float(os.getenv("REDCANDLE_BODY_ATR", "1.0"))
+REDCANDLE_BODY_RATIO = float(os.getenv("REDCANDLE_BODY_RATIO", "0.55"))
+REDCANDLE_EXPIRY_HOURS = float(os.getenv("REDCANDLE_EXPIRY_HOURS", "6"))  # 72×5m
+# (TP, SL) puan cinsinden — kanıt NAS100 puanlarında ölçüldü, ATR katı DEĞİL.
+REDCANDLE_GEOMETRIES: List[Tuple[int, int]] = [(120, 25), (80, 30)]
+
 PATTERN_TIMEFRAMES = ["4h", "1h"]
 PATTERN_FRESH_BARS = 4                    # son pivot en fazla N bar önce kapanmış olmalı
                                           # (fraktal pivot +2 bar teyit ister → efektif pencere ~2 bar)
@@ -70,6 +94,57 @@ TABLE = "shadow_pattern_trades"
 _memory_trades: List[Dict[str, Any]] = []      # DB yokken fail-open depo
 _last_cycle: Dict[str, Any] = {"time": None, "opened": 0, "resolved": 0, "errors": []}
 _db_degraded = False
+
+# Bellek deposu artık DİSKE de yazılır. Neden: yeni bir kaynak (ör. redcandle)
+# DB'nin CHECK kısıtı güncellenmeden önce eklenirse satırlar belleğe düşüyordu ve
+# her backend yeniden başlatmasında SİLİNİYORDU — haftalarca gölge kanıt biriktirme
+# amacını boşa çıkarıyor. Migration uygulanınca bu yol kendiliğinden ölür.
+FALLBACK_PATH = os.getenv(
+    "SHADOW_FALLBACK_PATH",
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                 "data", "shadow_fallback_trades.jsonl"))
+_fallback_loaded = False
+
+
+def _load_fallback() -> None:
+    """Diskteki bellek-yedeğini bir kez yükle (fail-open)."""
+    global _fallback_loaded
+    if _fallback_loaded:
+        return
+    _fallback_loaded = True
+    try:
+        import json
+        if not os.path.exists(FALLBACK_PATH):
+            return
+        with open(FALLBACK_PATH, encoding="utf-8") as f:
+            loaded = [json.loads(line) for line in f if line.strip()]
+        known = {(t.get("source"), t.get("symbol"), t.get("pattern_type"),
+                  t.get("direction"), t.get("anchor_time")) for t in _memory_trades}
+        for t in loaded:
+            key = (t.get("source"), t.get("symbol"), t.get("pattern_type"),
+                   t.get("direction"), t.get("anchor_time"))
+            if key not in known:
+                _memory_trades.append(t)
+                known.add(key)
+        logger.info("[shadow-tracker] disk yedeği yüklendi: %d işlem", len(loaded))
+    except Exception as exc:
+        logger.warning("[shadow-tracker] disk yedeği okunamadı (fail-open): %s", exc)
+
+
+def _save_fallback() -> None:
+    """Bellek deposunu diske yaz (tmp + replace; fail-open)."""
+    if not _memory_trades:
+        return
+    try:
+        import json
+        os.makedirs(os.path.dirname(FALLBACK_PATH), exist_ok=True)
+        tmp = FALLBACK_PATH + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            for t in _memory_trades:
+                f.write(json.dumps(t, ensure_ascii=False, default=str) + "\n")
+        os.replace(tmp, FALLBACK_PATH)
+    except Exception as exc:
+        logger.warning("[shadow-tracker] disk yedeği yazılamadı (fail-open): %s", exc)
 
 
 def _utcnow() -> datetime:
@@ -208,8 +283,9 @@ def _persist_trade(trade: Dict[str, Any]) -> bool:
         err_text = str(res["error"])
         # DB şeması 'meta' kaynağını henüz tanımıyorsa (CHECK kısıtı eski) veri
         # kaybetme: belleğe düş. Migration uygulanınca bu yol kendiliğinden ölür.
-        if trade["source"] == "meta" and ("check" in err_text.lower()
-                                          or "23514" in err_text):
+        # DB şeması bu kaynağı henüz tanımıyorsa (CHECK kısıtı eski) veri kaybetme.
+        if trade["source"] in ("meta", "redcandle") and (
+                "check" in err_text.lower() or "23514" in err_text):
             key = (trade["source"], trade["symbol"], trade["pattern_type"],
                    trade["direction"], trade["anchor_time"])
             if any((t["source"], t["symbol"], t["pattern_type"], t["direction"],
@@ -217,8 +293,9 @@ def _persist_trade(trade: Dict[str, Any]) -> bool:
                 return False
             trade["id"] = f"mem_{len(_memory_trades) + 1}"
             _memory_trades.append(trade)
-            logger.warning("[shadow-tracker] meta insert DB CHECK kısıtına takıldı "
-                           "— belleğe alındı (migration bekliyor): %s", err_text)
+            logger.warning("[shadow-tracker] %s insert DB CHECK kısıtına takıldı "
+                           "— belleğe alındı (migration bekliyor): %s",
+                           trade["source"], err_text)
             return True
         logger.warning("[shadow-tracker] insert hatası: %s", res["error"])
         return False
@@ -376,6 +453,97 @@ async def scan_fakeouts(now: Optional[datetime] = None) -> int:
             opened += 1
             logger.info("[shadow-tracker] fakeout işlem: %s %s %s conf=%.1f",
                         symbol, trade["pattern_type"], direction, conf)
+    return opened
+
+
+def detect_redcandle_setup(bars: List[dict]) -> Optional[Dict[str, Any]]:
+    """SAF ÇEKİRDEK (test edilebilir): son iki KAPANMIŞ 5m bardan kurulum çıkar.
+
+    bars[-2] = sinyal mumu (büyük kırmızı), bars[-1] = teyit mumu.
+    Kurulum şartları (backtest ile BİREBİR aynı):
+      * gövde = open−close > 0 ve gövde ≥ REDCANDLE_BODY_ATR × ATR14
+      * gövde / menzil ≥ REDCANDLE_BODY_RATIO
+      * teyit: bars[-1].close < bars[-2].low  ("lowbreak")
+    Dönen dict veya None. Hiçbir yan etkisi yok.
+    """
+    if len(bars) < 20:
+        return None
+    atr = _atr14(bars)
+    if not atr or atr <= 0:
+        return None
+    sig, conf_bar = bars[-2], bars[-1]
+    o, c = float(sig["open"]), float(sig["close"])
+    hi, lo = float(sig["high"]), float(sig["low"])
+    body, rng = o - c, hi - lo
+    if rng <= 0 or body <= 0:
+        return None
+    if body < REDCANDLE_BODY_ATR * atr or body / rng < REDCANDLE_BODY_RATIO:
+        return None
+    if float(conf_bar["close"]) >= lo:              # teyit yok → kurulum yok
+        return None
+    vols = [float(b.get("volume") or 0) for b in bars[-22:-2]]
+    vmean = sum(vols) / len(vols) if vols and sum(vols) > 0 else None
+    vol_ratio = (float(sig.get("volume") or 0) / vmean) if vmean else None
+    return {
+        "atr": round(atr, 4),
+        "body_atr": round(body / atr, 3),
+        "body_ratio": round(body / rng, 3),
+        "signal_ts_ms": sig["_ts_ms"],
+        "signal_low": lo,
+        "entry": float(conf_bar["close"]),
+        "vol_ratio": round(vol_ratio, 3) if vol_ratio else None,
+        # limit-emir karşı-olgusalı (canlıda KULLANILMIYOR, sonradan replay için):
+        "limit_px_010atr": round(float(conf_bar["close"]) + 0.10 * atr, 2),
+        "limit_px_confirm_high": round(float(conf_bar["high"]), 2),
+    }
+
+
+async def scan_redcandle(now: Optional[datetime] = None) -> int:
+    """Büyük kırmızı mum + teyit → SELL (GÖLGE; canlı emir AÇMAZ)."""
+    if not REDCANDLE_SHADOW_ENABLED:
+        return 0
+    now = now or _utcnow()
+    opened = 0
+    for symbol in REDCANDLE_SYMBOLS:
+        snap = await _entry_snapshot(symbol, now)
+        if snap is None:
+            continue
+        bars, entry_price, entry_time = snap
+        setup = detect_redcandle_setup(bars)
+        if setup is None:
+            continue
+        # entry_price zaten bars[-1].close; tutarlılığı doğrula (bayat snapshot koruması)
+        if abs(setup["entry"] - entry_price) > 1e-6:
+            logger.warning("[shadow-tracker] redcandle giriş uyumsuz (%s): %s vs %s",
+                           symbol, setup["entry"], entry_price)
+            continue
+        anchor = datetime.fromtimestamp(setup["signal_ts_ms"] / 1000.0, tz=timezone.utc)
+        # "confidence" bir OLASILIK DEĞİL — gövde gücünden türetilmiş sıralama
+        # skoru (rapor kovaları anlamlı olsun diye). Kalibre edilmemiştir.
+        conf = round(min(90.0, 50.0 + 15.0 * (setup["body_atr"] - 1.0)), 1)
+        for tp_pts, sl_pts in REDCANDLE_GEOMETRIES:
+            tp = entry_price - tp_pts
+            sl = entry_price + sl_pts
+            if not _geometry_ok("SELL", entry_price, tp, sl):
+                continue
+            trade = _build_trade(
+                source="redcandle", symbol=symbol, timeframe="5m",
+                pattern_type=f"tp{tp_pts}_sl{sl_pts}",
+                pattern_name=f"Büyük kırmızı mum + teyit (TP{tp_pts}/SL{sl_pts})",
+                direction="SELL", confidence=conf,
+                anchor_time=anchor, entry_time=entry_time,
+                entry=entry_price, tp=tp, sl=sl,
+                expiry_hours=REDCANDLE_EXPIRY_HOURS,
+                details={**setup, "tp_points": tp_pts, "sl_points": sl_pts,
+                         "confirm": "lowbreak", "entry_type": "market_close",
+                         "note": "gölge — canlı emir yok; kanıt raporu "
+                                 "research/RAPOR_SELL_MUM_DESTEK_2026-07-28.md"},
+            )
+            if _persist_trade(trade):
+                opened += 1
+                logger.info("[shadow-tracker] redcandle işlem: %s SELL TP%s/SL%s "
+                            "gövde=%.2fATR hacim=%s", symbol, tp_pts, sl_pts,
+                            setup["body_atr"], setup["vol_ratio"])
     return opened
 
 
@@ -600,6 +768,7 @@ def _aggregate(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 async def build_report(days: int = 30, symbol: Optional[str] = None) -> Dict[str, Any]:
     """Kaynak/sembol/formasyon/güven-kovası kırılımlı isabet raporu."""
+    _load_fallback()
     client = _db()
     since = _iso(_utcnow() - timedelta(days=days))
     if client is None:
@@ -672,6 +841,11 @@ async def run_cycle() -> Dict[str, Any]:
         errors.append(f"scan_meta: {exc}")
         logger.exception("[shadow-tracker] scan_meta hata")
     try:
+        opened += await scan_redcandle(now)
+    except Exception as exc:
+        errors.append(f"scan_redcandle: {exc}")
+        logger.exception("[shadow-tracker] scan_redcandle hata")
+    try:
         resolved = await resolve_open_trades(now)
     except Exception as exc:
         errors.append(f"resolve: {exc}")
@@ -691,6 +865,9 @@ def get_status() -> Dict[str, Any]:
         "meta_shadow_enabled": META_SHADOW_ENABLED,
         "meta_min_confidence": META_MIN_CONF,
         "meta_expiry_hours": META_EXPIRY_HOURS,
+        "redcandle_shadow_enabled": REDCANDLE_SHADOW_ENABLED,
+        "redcandle_symbols": REDCANDLE_SYMBOLS,
+        "redcandle_geometries": [f"tp{t}_sl{s_}" for t, s_ in REDCANDLE_GEOMETRIES],
         "db_degraded": _db_degraded,
         "memory_trades": len(_memory_trades),
         "last_cycle": _last_cycle,

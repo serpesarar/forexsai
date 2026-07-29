@@ -1,191 +1,133 @@
 #!/usr/bin/env python3
-"""limit_entry_lab.py — LİMİT EMİRLE GİRİŞ: market yerine geri çekilmeden sat.
+"""limit_entry_lab.py — MARKET yerine LIMIT emirle giriş: icra maliyetini sıfırlamak
+kenarı anlamlı hale getiriyor mu?
 
-Neden: market girişinin kenarı spread + kayma kadar. Bugün canlıda 14 puan kayma
-gözlendi. SELL LİMİT emri (a) daha iyi fiyattan doldurur, (b) girişte kayma yemez
-— karşılığında (c) HER ZAMAN DOLMAZ ve (d) hemen kaçan (yani en iyi) işlemleri
-ıskalayabilir. Bu dosya dördünü birlikte ölçer.
+Kurgu: büyük kırmızı 5m mum (i) + teyit mumu (i+1). Karar teyit mumunun kapanışında,
+ama market'ten KOVALAMAK yerine kapanışın ÜSTÜNE (short için daha iyi fiyat) SELL LIMIT
+bırakılır. Emir X bar içinde dolmazsa iptal.
 
-Model: barlar BID. SELL LİMİT L'de → bid L'ye yükselince dolar (high >= L), fiyat
-tam L. Çıkışta ask'ten alınır → spread çıkışa gömülü (market versiyonuyla AYNI).
-Yani buradaki tek avantaj daha iyi giriş fiyatı; kayma avantajı MODELLENMEDİ
-(gerçekte ek artı). Dolum barında SL de mümkünse KAYIP sayılır (konservatif).
+Ölçülen iki ayrı sayı (ikisi de gerekli):
+  * dolan işlem başına EV  → fiyat avantajı ne kadar?
+  * SİNYAL başına EV       → dolmayanlar 0 sayılır; portföy gerçeği bu.
+Market girişi her zaman dolduğu için karşılaştırma yalnız 'sinyal başına'da adil.
+
+Doluş modeli (konservatif): sell-limit, sonraki barın HIGH'ı limit fiyata değerse dolar.
+Dolduğu barda SL de görüldüyse KAYIP sayılır (aynı bar belirsizliği aleyhte çözülür).
 """
 from datetime import datetime, timezone
 import numpy as np
 import lab_vol_tpsl_grid as G
 
+SPREAD = 1.5
 H = 72
-LOT = 5.0
+CONFIRM = "lowbreak"
+GEOS = ((80, 30), (120, 25), (80, 110))
+EXPIRIES = (3, 6, 12)
+
+
+def build_events(c, o, h, l, v, t, atr, vmean, n, confirm):
+    ev = []
+    for i in range(G.VOL_WINDOW + G.ATR_PERIOD + 2, n - H - 20):
+        a = atr[i]
+        if not np.isfinite(a) or a <= 0 or not np.isfinite(vmean[i]) or vmean[i] <= 0:
+            continue
+        body = o[i] - c[i]; rng_ = h[i] - l[i]
+        if rng_ <= 0 or body <= 0 or body < a or body / rng_ < 0.55:
+            continue
+        if confirm == "red" and not (c[i + 1] < o[i + 1]):
+            continue
+        if confirm == "lowbreak" and not (c[i + 1] < l[i]):
+            continue
+        ev.append(i)
+    return ev
+
+
+def sim_from(fill_idx, fill_px, tp, sl, h, l, c, n, horizon=H):
+    """fill barından İTİBAREN (dahil) çöz. Dönen: (net_puan, sonuç)."""
+    tp_px = fill_px - tp; sl_px = fill_px + sl
+    end = min(fill_idx + horizon, n - 1)
+    for j in range(fill_idx, end + 1):
+        hit_sl = h[j] >= sl_px - SPREAD
+        hit_tp = l[j] <= tp_px - SPREAD
+        if hit_sl and hit_tp:
+            return fill_px - sl_px, "LOSS"
+        if hit_sl:
+            return fill_px - sl_px, "LOSS"
+        if hit_tp:
+            return fill_px - tp_px, "WIN"
+    return fill_px - c[end] - SPREAD, "TIME"
 
 
 def main():
     t, o, h, l, c, v = G.load_csv("nas100_m5.csv")
     n = len(c)
     atr = G.wilder_atr(h, l, c)
+    vmean = np.full(n, np.nan)
+    for i in range(G.VOL_WINDOW, n):
+        vmean[i] = v[i - G.VOL_WINDOW:i].mean()
     cut = t[int(n * 0.7)]
-
-    def events(confirm):
-        out = []
-        for i in range(G.ATR_PERIOD + 5, n - H - 20):
-            a = atr[i]
-            if not np.isfinite(a) or a <= 0:
-                continue
-            body = o[i] - c[i]; rng_ = h[i] - l[i]
-            if rng_ <= 0 or body <= 0 or body < a or body / rng_ < 0.55:
-                continue
-            if confirm == "red" and not (c[i + 1] < o[i + 1]):
-                continue
-            if confirm == "lowbreak" and not (c[i + 1] < l[i]):
-                continue
-            out.append((i, a))
-        return out
-
-    def market(e, tp_d, sl_d, spread):
-        px = c[e]
-        tp_px, sl_px = px - tp_d, px + sl_d
-        end = min(e + H, n - 1)
-        for j in range(e + 1, end + 1):
-            if h[j] >= sl_px - spread:
-                return "LOSS", px - sl_px
-            if l[j] <= tp_px - spread:
-                return "WIN", px - tp_px
-        return "TIME", px - c[end] - spread
-
-    def limit(e, L, expiry, tp_d, sl_d, spread, same_bar=True):
-        fill = None
-        for j in range(e + 1, min(e + expiry, n - 1) + 1):
-            if h[j] >= L:
-                fill = j
-                break
-        if fill is None:
-            return None
-        tp_px, sl_px = L - tp_d, L + sl_d
-        start = fill if same_bar else fill + 1
-        end = min(fill + H, n - 1)
-        for j in range(start, end + 1):
-            if h[j] >= sl_px - spread:
-                return "LOSS", L - sl_px, fill - e
-            if l[j] <= tp_px - spread:
-                return "WIN", L - tp_px, fill - e
-        return "TIME", L - c[end] - spread, fill - e
-
-    def stats(rows, n_signal, label):
-        """rows = [(outcome, net)]; n_signal = toplam sinyal (dolmayanlar dahil)"""
-        if not rows:
-            print(f"  {label:<40} dolum yok")
-            return None
-        net = np.asarray([r[1] for r in rows], dtype=float)
-        fill_pct = 100.0 * len(rows) / n_signal
-        tp = 100.0 * sum(1 for r in rows if r[0] == "WIN") / len(rows)
-        sl = 100.0 * sum(1 for r in rows if r[0] == "LOSS") / len(rows)
-        ev_fill = float(net.mean())
-        ev_sig = float(net.sum() / n_signal)
-        print(f"  {label:<40}{len(rows):>6}{fill_pct:>8.1f}{tp:>7.1f}{sl:>7.1f}"
-              f"{ev_fill:>+9.2f}{ev_sig:>+10.2f}{net.sum() * LOT:>+11,.0f}")
-        return {"n": len(rows), "fill": fill_pct, "tp": tp, "ev_fill": ev_fill,
-                "ev_sig": ev_sig, "usd": float(net.sum() * LOT)}
-
-    GEOS = [("TP80/SL30", 80.0, 30.0), ("TP120/SL25", 120.0, 25.0),
-            ("TP80/SL110 (canlı)", 80.0, 110.0)]
-    OFFSETS = [("market (offset 0)", 0.0), ("+0.10×ATR", 0.10), ("+0.20×ATR", 0.20),
-               ("+0.30×ATR", 0.30), ("+0.50×ATR", 0.50), ("+0.75×ATR", 0.75),
-               ("+1.00×ATR", 1.00)]
-    EXPIRIES = (1, 2, 3, 6, 12)
-    SPREAD = 1.5
-
-    for confirm in ("lowbreak", "red"):
-        evs = events(confirm)
-        print("\n" + "=" * 118)
-        print(f"LİMİT GİRİŞ — teyit={confirm} · n={len(evs):,} sinyal · spread={SPREAD} · "
-              f"ufuk {H} bar · lot {LOT}")
-        print("  'EV/sinyal' = dolmayanlar 0 sayılarak sinyal başına beklenti (asıl ölçüt)")
-        print("=" * 118)
-        for gname, tp_d, sl_d in GEOS:
-            print(f"\n▸ {gname}")
-            print(f"  {'giriş / geçerlilik':<40}{'n':>6}{'dolum%':>8}{'TP%':>7}{'SL%':>7}"
-                  f"{'EV/işlem':>9}{'EV/sinyal':>10}{'$':>11}")
-            rows_m = [market(e + 1, tp_d, sl_d, SPREAD) for e, a in evs]
-            stats(rows_m, len(evs), "MARKET (teyit mumu kapanışı)")
-            for oname, off in OFFSETS[1:]:
-                for exp in EXPIRIES:
-                    rows = []
-                    for i, a in evs:
-                        e = i + 1
-                        r = limit(e, c[e] + off * a, exp, tp_d, sl_d, SPREAD)
-                        if r:
-                            rows.append((r[0], r[1]))
-                    stats(rows, len(evs), f"{oname} / {exp} bar geçerli")
-
-    # ── odak: en iyi konfigürasyonun kör testi + ters seçilim + kayma ──────
-    evs = events("lowbreak")
-    print("\n" + "=" * 118)
-    print("ODAK — teyit=lowbreak, TP80/SL30: KÖR TEST · TERS SEÇİLİM · KAYMA")
+    events = build_events(c, o, h, l, v, t, atr, vmean, n, CONFIRM)
     print("=" * 118)
-    tp_d, sl_d = 80.0, 30.0
-    for off, exp in ((0.20, 3), (0.30, 3), (0.30, 6), (0.50, 6), (0.50, 12)):
-        for tag, want_train in (("EĞİTİM", True), ("TEST  ", False)):
-            sub = [(i, a) for i, a in evs if (t[i] < cut) == want_train]
-            rows = []
-            for i, a in sub:
-                e = i + 1
-                r = limit(e, c[e] + off * a, exp, tp_d, sl_d, SPREAD)
-                if r:
-                    rows.append((r[0], r[1]))
-            print(f"  {tag} ", end="")
-            stats(rows, len(sub), f"+{off:.2f}×ATR / {exp} bar")
+    print(f"LIMIT EMİRLE GİRİŞ — NAS100 5m · teyit={CONFIRM} · n={len(events):,} sinyal · "
+          f"spread {SPREAD}p · ufuk {H} bar")
+    print("=" * 118)
 
-    print("\nTERS SEÇİLİM — limit dolmayan sinyaller market'te ne yapardı? (+0.30×ATR / 6 bar)")
-    filled, missed = [], []
-    for i, a in evs:
+    def limit_price(i, kind):
         e = i + 1
-        r = limit(e, c[e] + 0.30 * a, 6, tp_d, sl_d, SPREAD)
-        m = market(e, tp_d, sl_d, SPREAD)
-        (filled if r else missed).append(m[1])
-    print(f"  DOLAN sinyaller  n={len(filled):>5}  market'te EV={np.mean(filled):+.2f} p")
-    print(f"  IŞKALANANLAR     n={len(missed):>5}  market'te EV={np.mean(missed):+.2f} p"
-          f"  ← bu belirgin (+) ise limit iyi işlemleri kaçırıyor")
+        a = atr[i]
+        if kind.startswith("+"):
+            return c[e] + float(kind[1:]) * a
+        if kind == "kirmizi_%50":
+            return (o[i] + c[i]) / 2.0
+        if kind == "kirmizi_acilis":
+            return o[i]
+        if kind == "teyit_tepesi":
+            return h[e]
+        raise ValueError(kind)
 
-    print("\nKAYMA/FRİKSİYON DAYANIKLILIĞI (+0.30×ATR / 6 bar, TP80/SL30)")
-    print(f"  {'spread':<10}{'n':>6}{'dolum%':>8}{'TP%':>7}{'SL%':>7}{'EV/işlem':>9}"
-          f"{'EV/sinyal':>10}{'$':>11}")
-    for sp in (1.5, 3.0, 5.0, 8.0):
+    KINDS = ("+0.10", "+0.20", "+0.30", "+0.50", "kirmizi_%50", "kirmizi_acilis", "teyit_tepesi")
+
+    for tp, sl in GEOS:
+        print(f"\n▸ GEOMETRİ TP {tp} / SL {sl}")
+        # market referansı
         rows = []
-        for i, a in evs:
+        for i in events:
             e = i + 1
-            r = limit(e, c[e] + 0.30 * a, 6, tp_d, sl_d, sp)
-            if r:
-                rows.append((r[0], r[1]))
-        stats(rows, len(evs), f"spread {sp}")
-    print("  (market karşılaştırması aynı spread'lerde:)")
-    for sp in (1.5, 3.0, 5.0, 8.0):
-        rows = [market(i + 1, tp_d, sl_d, sp) for i, a in evs]
-        stats(rows, len(evs), f"MARKET spread {sp}")
-
-    print("\nDOLUM BARI VARSAYIMI (konservatif vs iyimser) — +0.30×ATR / 6 bar")
-    for same, tag in ((True, "konservatif (dolum barında SL sayılır)"),
-                      (False, "iyimser (çözüm sonraki bardan)")):
-        rows = []
-        for i, a in evs:
-            e = i + 1
-            r = limit(e, c[e] + 0.30 * a, 6, tp_d, sl_d, SPREAD, same_bar=same)
-            if r:
-                rows.append((r[0], r[1]))
-        stats(rows, len(evs), tag)
-
-    print("\nÇEYREKLİK (+0.30×ATR / 6 bar, TP80/SL30)")
-    byq = {}
-    for i, a in evs:
-        e = i + 1
-        r = limit(e, c[e] + 0.30 * a, 6, tp_d, sl_d, SPREAD)
-        d = datetime.fromtimestamp(int(t[i]), tz=timezone.utc)
-        q = f"{d.year}Ç{(d.month - 1) // 3 + 1}"
-        byq.setdefault(q, {"rows": [], "sig": 0})
-        byq[q]["sig"] += 1
-        if r:
-            byq[q]["rows"].append((r[0], r[1]))
-    for q in sorted(byq):
-        stats(byq[q]["rows"], byq[q]["sig"], q)
+            net, out = sim_from(e + 1, c[e], tp, sl, h, l, c, n)
+            rows.append((t[i], net, out, True))
+        arr = np.asarray([r[1] for r in rows])
+        tr = np.asarray([r[0] < cut for r in rows])
+        print(f"  {'giriş türü':<20}{'exp':>5}{'doluş%':>8}{'| DOLAN EV(p)':>15}"
+              f"{'| SİNYAL EV(p)':>15}{'eğitim':>9}{'test':>9}{'$ (5 lot)':>12}")
+        print(f"  {'MARKET (referans)':<20}{'-':>5}{100.0:>8.1f}{arr.mean():>15.2f}"
+              f"{arr.mean():>15.2f}{arr[tr].mean():>9.2f}{arr[~tr].mean():>9.2f}"
+              f"{arr.sum() * G.LOT:>12,.0f}")
+        for kind in KINDS:
+            for exp in EXPIRIES:
+                nets, filled, ts_list = [], 0, []
+                for i in events:
+                    e = i + 1
+                    lp = limit_price(i, kind)
+                    if lp <= c[e]:                      # limit market'in altında → anlamsız
+                        nets.append(0.0); ts_list.append(t[i]); continue
+                    fill_j = None
+                    for j in range(e + 1, min(e + exp, n - 1) + 1):
+                        if h[j] >= lp:
+                            fill_j = j; break
+                    if fill_j is None:
+                        nets.append(0.0); ts_list.append(t[i]); continue
+                    filled += 1
+                    net, _out = sim_from(fill_j, lp, tp, sl, h, l, c, n)
+                    nets.append(net); ts_list.append(t[i])
+                nets = np.asarray(nets); ts_a = np.asarray(ts_list)
+                if filled < 50:
+                    continue
+                fill_mask = nets != 0.0
+                trm = ts_a < cut
+                print(f"  {kind:<20}{exp:>5}{100.0 * filled / len(events):>8.1f}"
+                      f"{nets[fill_mask].mean():>15.2f}{nets.mean():>15.2f}"
+                      f"{nets[trm].mean():>9.2f}{nets[~trm].mean():>9.2f}"
+                      f"{nets.sum() * G.LOT:>12,.0f}")
 
 
 if __name__ == "__main__":
