@@ -70,3 +70,52 @@ En yüksek güven `TP 1.5×ATR / SL 2.5×ATR` (%98.3) ve `SL 3.0×ATR` (%95.4).
    geometriye hemen dokunma.
 
 **Dosya:** `ndx_sell_sl.py`
+
+---
+
+# DERİN TEST — 5.5 AY (2026-02-18 → 07-29, 8.129 sinyal)
+
+## Zaman kayması düzeltildi ve KANITLANDI
+Bar damgalarına dönem-bazlı düzeltme (`<03-08: −120dk`, `03-08→07-16: −180dk`,
+`≥07-16: 0`). **Doğrulama:** 07-16 sonrası dilimde bu script `n=60, WR %65.0,
+totR +7.36` üretti — bağımsız yazılmış önceki scriptle **birebir aynı**.
+
+## 1. ÖNCEKİ BULGUM ÇÜRÜDÜ — 13 gün gürültüymüş
+
+| Geometri | 13 gün (önceki) | **5.5 ay (kapısız)** |
+|---|---|---|
+| TP80 / SL 2.0×ATR | +10.14R | **−13.57R** |
+| TP 1.5×ATR / SL 2.5×ATR | +9.60R | **−20.60R** |
+| TP80/SL110 (canlı) | +7.36R | **−7.82R** |
+
+36 kombinasyonun 35'i negatif; en iyisi +1.00R, P(kâr>0)=%50.9 (yazı tura).
+Dönem kırılımı: `02-18→03-08` +1.9R · `03-08→07-16` **−16.4R** · `07-16→` +7.4R.
+
+## 2. ASIL BULGU: kapılar belirleyici, geometri ikincil
+
+| Geometri | Kapısız | **trend+konum KAPILI** | P(kâr>0) |
+|---|---|---|---|
+| TP80/SL110 (canlı) | −7.82 | **+37.18** (WR %73.4) | %100 |
+| TP80 / SL150 | +4.73 | +31.80 (WR %82.5) | %100 |
+| **TP80 / SL 2.0×ATR** | −13.57 | **+73.53** | %100 |
+| **TP 2.0×ATR / SL 2.0×ATR** | −14.00 | **+75.00** | %100 |
+| TP 1.5×ATR / SL 2.5×ATR | −20.60 | +55.60 | %100 |
+
+## 3. TP'yi de ATR'ye bağlamak — evet kârlı, ama SL kadar dayanıklı değil
+
+| | Aylık pozitif | Mart hariç | IN (%60) | OUT (%40) | P(OUT>0) |
+|---|---|---|---|---|---|
+| TP80/SL110 (canlı) | 4/6 | +14.0 | +27.73 | +10.18 | %93.6 |
+| **TP80 / SL 2.0×ATR** | **6/6** | **+36.2** | +51.34 | **+23.61** | %99.5 |
+| TP 2.0×ATR / SL 2.0×ATR | 5/6 | +28.0 | +57.00 | +19.00 | %99.5 |
+| TP 1.5×ATR / SL 2.5×ATR | **6/6** | +23.0 | +39.80 | +16.40 | %100 |
+
+## Öneri
+1. **Kapılar doğrulandı** (5.5 ayda −7.8R → +37.2R) — canlıda kalsın.
+2. **SL = 2.0×ATR(14, 5m), TP 80 sabit** — 6/6 ay pozitif, Mart'sız +36.2R
+   (canlının 2.6 katı), OUT +23.61R, P=%99.5, işlem sayısı korunuyor (175/139).
+   Ortalama SL ≈104p ≈ mevcut 110 → kazanç genişlikten değil, uyumdan.
+3. TP'yi de ATR'ye bağlamak +75R veriyor ama aylık dayanıklılığı düşük (5/6)
+   ve Mart'a bağımlı → önce yalnız SL'i uyarlamalı yapmak daha az riskli.
+4. 36 varyant tarandı; aylık+split+blok-bootstrap dengeliyor ama ileriye
+   dönük teyit yine de şart.
