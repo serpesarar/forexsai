@@ -414,9 +414,38 @@ def _send_market_order(request: dict, mt5_symbol: str):
 # config.py'a ATR_GEOMETRY_ENABLED = True yaz.
 ATR_GEOMETRY_DEFAULT = {
     "NDX.INDX:BUY": {
+        # 2026-07-28 kullanıcı kararı: KAPALI (uzak-hedef/düşük-WR profili
+        # istenmiyor). Kayıt olarak duruyor; "enabled": True ile açılır.
+        "enabled": False,
         "tf": "1h", "period": 14, "tp_mult": 2.0, "sl_mult": 1.0,
-        # Emniyet kelepçeleri — son 30 gün H1 ATR aralığı 76-205 puan (medyan 120).
         "sl_min": 70.0, "sl_max": 200.0, "tp_min": 140.0, "tp_max": 400.0,
+    },
+    # ── DAX: TP SABİT + SL uyarlamalı (2026-07-29 kullanıcı onayı) ──────────
+    # Kanıt: research/sl_opt/USOIL_DAX_RAPOR.md — 5.5 ay, 14.043 sinyal,
+    # zaman kayması düzeltilmiş, trend+konum kapılı:
+    #   BUY  sabit 67/119 → 4/6 ay pozitif, +16.6R  |  SL 2.0×ATR → 6/6 ay, +72.4R
+    #   SELL sabit 67/119 → 4/6 ay pozitif, +50.9R  |  SL 2.0×ATR → 5/6 ay, +110.4R
+    # KAYMA TESTİ belirleyici oldu: sürtünme 3× yapıldığında DAX'ta ATR-SL hâlâ
+    # sabitten iyi (SELL +90 vs +40) — USOIL'de tersi olduğu için USOIL'e
+    # DOKUNULMADI (orada 3× kaymada −134'e düşüyor).
+    # ⚠️ Ödünleşim kayıtlı: WR düşüyor (BUY %73.6→%56.5, SELL %81.9→%64.7);
+    # kâr 2-4 kat artıyor. Kullanıcı bu ödünleşimi bilerek onayladı.
+    # TP bilerek SABİT: TP'yi de ATR'ye bağlamak aylık dayanıklılığı düşürüyor.
+    "GDAXI.INDX:BUY": {
+        "enabled": True, "tf": "5m", "period": 14,
+        "tp_fixed": 67.0, "sl_mult": 2.0,
+        # 5m ATR ort. 23.6p → SL ~47p; test aralığı 35-83p.
+        "sl_min": 30.0, "sl_max": 120.0,
+    },
+    # NOT: GDAXI.INDX:SELL momentum scope'u config.ROBUST_SCOPES'ta YOK
+    # (2026-06-24'te OOS'ta çöktüğü için çıkarıldı) → bu girdi şu an ÖLÜ.
+    # DAX SELL ileride açılırsa hazır olsun diye bırakıldı. CHREV'in anahtarı
+    # "GDAXI.INDX:SELL:CHREV" olduğu için mean-reversion kolu ETKİLENMEZ
+    # (kanıt momentum sinyallerinden geldi, chrev farklı popülasyon).
+    "GDAXI.INDX:SELL": {
+        "enabled": True, "tf": "5m", "period": 14,
+        "tp_fixed": 67.0, "sl_mult": 2.0,
+        "sl_min": 30.0, "sl_max": 120.0,          # 5m ATR ort. 27.6p → SL ~55p
     },
 }
 
@@ -432,10 +461,15 @@ def _atr_distances(scope_key: str, mt5_symbol: str) -> tuple[float, float] | Non
     Gerekçe: research/ndx_buy_lab/RAPOR.md — sabit 80/110 (hedef 0.67 ATR)
     11 yılda −EV; momentum filtresinin kenarı ancak TP ≥ 1.5-2 ATR'de ödüyor.
     """
-    if not getattr(config, "ATR_GEOMETRY_ENABLED", False):
-        return None
     spec = (getattr(config, "ATR_GEOMETRY", None) or ATR_GEOMETRY_DEFAULT).get(scope_key)
     if not spec:
+        return None
+    # Kapsam artık SCOPE BAZLI ("enabled"). Eskiden tek global bayrak vardı ve
+    # onu açmak kullanıcının reddettiği NDX:BUY profilini de açıyordu.
+    # ATR_GEOMETRY_ENABLED=False hâlâ hepsini birden kapatır (acil fren).
+    if not spec.get("enabled", False):
+        return None
+    if getattr(config, "ATR_GEOMETRY_ENABLED", True) is False:
         return None
     try:
         tf = _ATR_TF_MAP.get(spec.get("tf", "1h"), mt5.TIMEFRAME_H1)
@@ -455,12 +489,18 @@ def _atr_distances(scope_key: str, mt5_symbol: str) -> tuple[float, float] | Non
             atr = (atr * (period - 1) + x) / period
         if not atr or atr <= 0:
             return None
-        tp_d = atr * float(spec.get("tp_mult", 2.0))
+        # tp_fixed verilmişse TP SABİT kalır, yalnız SL uyarlamalı olur
+        # (DAX/NDX-SELL kanıtı bu biçimde ölçüldü — TP'yi de ATR'ye bağlamak
+        #  aylık dayanıklılığı düşürüyordu).
+        tp_fixed = spec.get("tp_fixed")
+        tp_d = float(tp_fixed) if tp_fixed else atr * float(spec.get("tp_mult", 2.0))
         sl_d = atr * float(spec.get("sl_mult", 1.0))
-        tp_d = min(max(tp_d, float(spec.get("tp_min", 0))), float(spec.get("tp_max", 1e9)))
+        if not tp_fixed:
+            tp_d = min(max(tp_d, float(spec.get("tp_min", 0))), float(spec.get("tp_max", 1e9)))
         sl_d = min(max(sl_d, float(spec.get("sl_min", 0))), float(spec.get("sl_max", 1e9)))
-        log.info("[ATR-GEO] %s: ATR(%s,%d)=%.1f → TP %.1f / SL %.1f (RR %.2f)",
-                 scope_key, spec.get("tf", "1h"), period, atr, tp_d, sl_d, tp_d / sl_d)
+        log.info("[ATR-GEO] %s: ATR(%s,%d)=%.1f → TP %.1f%s / SL %.1f (RR %.2f)",
+                 scope_key, spec.get("tf", "1h"), period, atr, tp_d,
+                 " sabit" if tp_fixed else "", sl_d, tp_d / sl_d)
         return tp_d, sl_d
     except Exception as e:
         log.warning("[ATR-GEO] %s hesaplanamadı (%s) → sabit geometri", scope_key, e)
