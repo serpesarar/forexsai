@@ -361,3 +361,89 @@ tetiklendiği için kaymaya en açık kurgu.
 > tutarlı biçimde ~+2 puan/işlem daha iyi (her iki dönemde de). Bu gerçek ama
 > spread kadar; ancak icra maliyeti sıfıra yakın bir kurgu (limit emirle giriş)
 > üzerine inşa edilirse anlam kazanır.
+
+---
+
+# EK-2 — LİMİT EMİRLE GİRİŞ (2026-07-29)
+
+**Neden:** market girişinin kenarı spread + kaymaya eşit. SELL LİMİT emri (a) daha iyi
+fiyattan doldurur, (b) girişte kayma yemez — karşılığında (c) her zaman dolmaz,
+(d) hemen kaçan işlemleri ıskalar. Lab: `research/limit_entry_lab.py`,
+`limit_deep_probe.py`, `limit_baseline_control.py`.
+
+Model: barlar BID; SELL LİMİT L'de high ≥ L olunca **tam L'den** dolar (kayma yok);
+çıkışta spread ödenir (market versiyonuyla aynı); dolum barında SL mümkünse KAYIP
+(konservatif). Sinyal: büyük kırmızı mum + teyit (2. mum 1.'in dibini kırdı),
+limit teyit mumunun kapanışının X×ATR ÜSTÜNE konur.
+
+## L1. Küçük geri çekilme limitleri ÖLDÜRÜCÜ — ters seçilim
+
+| giriş | dolum% | EV/işlem | EV/sinyal |
+|---|---|---|---|
+| MARKET (teyit mumu kapanışı) | %100 | +1,03 p | **+1,03 p** |
+| +0,20×ATR / 3 bar | %87,6 | −0,25 | −0,22 |
+| +0,30×ATR / 6 bar | %86,9 | −0,47 | −0,41 |
+| +0,50×ATR / 6 bar | %78,8 | −0,06 | −0,05 |
+
+**Sebep — ters seçilim ölçüldü:** +0,30×ATR/6 bar kurgusunda limitin **dolmadığı**
+282 sinyalin market'teki beklentisi **+43,08 puan**; dolan 1.863 sinyalin ise **−5,33 puan**.
+Yani market versiyonunun tüm kârı, hemen kaçan (%13) işlemlerden geliyor ve küçük
+limit tam olarak onları eliyor.
+
+## L2. BÜYÜK geri çekilme limitleri farklı bir işlem — ve çalışıyor
+
++0,75 … +1,00×ATR'de limit, "kırılımı satmak"tan çıkıp **"gerilmiş tepkiyi satmak"**
+oluyor (mean-reversion). TP 80 / SL 30:
+
+| konfig | dolum% | EĞİTİM EV/sinyal | KÖR TEST EV/sinyal | TÜMÜ |
+|---|---|---|---|---|
+| +0,75×ATR / 12 bar | %77,5 | +0,51 | +1,54 | +0,82 |
+| +0,75×ATR / 24 bar | %83,9 | +0,37 | +2,19 | +0,93 |
+| +1,00×ATR / 6 bar | %58,1 | +0,47 | +2,06 | +0,96 |
+| **+1,00×ATR / 12 bar** | %69,4 | **+0,97** | **+2,15** | **+1,33** |
+| +1,00×ATR / 24 bar | %78,4 | +0,89 | +2,55 | +1,40 |
+| +1,50×ATR / 6 bar | %41,7 | +0,86 | −0,42 | +0,47 |
+
+9 konfigürasyonun 8'i hem eğitimde hem kör testte pozitif (yalnız +1,50/6 bar çöküyor).
+Market karşılaştırması: +1,03 → **+1,33** (ve limit girişte kayma yemez, market yer).
+
+## L3. TABAN KONTROLÜ — koşul gerçekten bilgi taşıyor mu? (asıl kanıt)
+
+Aynı limit mekaniği (+1,00×ATR / 12 bar / TP80 SL30) üç popülasyonda:
+
+| popülasyon | sinyal | EĞİTİM EV/sinyal | KÖR TEST EV/sinyal | TÜMÜ |
+|---|---|---|---|---|
+| **büyük kırmızı mum + teyit** | 2.145 | **+0,97** | **+2,15** | **+1,33** |
+| yalnız büyük kırmızı mum (teyitsiz) | 5.589 | −0,27 | +1,48 | +0,25 |
+| **KOŞULSUZ her 6. bar (taban)** | 16.479 | **−1,15** | **−0,91** | **−1,07** |
+
+**Monoton merdiven:** koşul eklendikçe sonuç düzeliyor ve taban her iki dönemde de
+belirgin negatif. Yani "her tepkiyi sat" çalışmıyor; kırmızı mum + teyit koşulu
+**+2,41 puan/sinyal** taşıyor. Offset taramasında fark 0,25→1,50 ATR arasında her
+noktada pozitif (tepe +1,00'de, +2,41).
+
+## L4. Zayıflıklar (dürüstlük)
+
+* **Çeyreklik istikrarsız:** +6,56 / −0,75 / −1,69 / +1,02 / +6,44 / −0,98 / +4,39
+  → 7 çeyreğin 3'ü negatif; ortalamayı iki çeyrek (2025Ç1, 2026Ç1) taşıyor.
+* **Friksiyon payı ince:** spread 1,5 → +1,33 · 3,0 → +0,10 · 5,0 → −1,51.
+  (Market aynı seviyelerde +1,03 / −0,48 / −2,07 → limit her seviyede daha iyi,
+  ayrıca girişte kayma yemiyor.)
+* **Mutlak büyüklük küçük:** +1,33 p/sinyal ≈ 6,65 $/sinyal (5 lot), ~126 sinyal/ay,
+  %69 dolum → ~87 işlem/ay, ~840 $/ay. Tek sembol, tek broker, 17 ay.
+* **Çoklu test riski:** bu sonuç, bugün taranan yüzlerce konfigürasyonun içinden çıktı.
+  Onu ayakta tutan şey grid sıralaması değil, **eşleştirilmiş taban kontrolü + monoton
+  koşul merdiveni + komşu parametrelerin de pozitif olması**.
+
+## L5. Verdikt
+
+> Limit girişli versiyon, bu soruşturmada **eğitim + kör test + eşleştirilmiş taban +
+> parametre komşuluğu** dördünü birden geçen ilk konfigürasyon. Ama çeyreklik
+> istikrarsızlığı ve ince friksiyon payı nedeniyle doğrudan canlıya alınmamalı.
+> Doğru adım: **gölge ölçüm** (sanal emir, gerçek fiyatla çözüm, 3-4 hafta) — proje
+> zaten `shadow_trade_tracker` altyapısına sahip. Riski sıfır, kanıtı gerçek.
+>
+> Konfigürasyon: NAS100 5m · büyük kırmızı mum (gövde ≥1×ATR14, gövde/menzil ≥0,55)
+> · teyit: sonraki mum 1. mumun dibinin altında kapanır · SELL LİMİT = teyit mumu
+> kapanışı + 1,00×ATR · 12 bar geçerli (dolmazsa iptal) · TP 80 / SL 30 puan
+> · 72 bar (6 saat) zaman-stopu.
