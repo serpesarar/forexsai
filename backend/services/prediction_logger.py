@@ -781,6 +781,72 @@ def _shadow_inversion_enabled(symbol: str, model_type: str) -> bool:
     return (model_type or "").lower() in models
 
 
+# ─── Pulse ATR merdiveni (2026-07-28 NDX denetimi) ───────────────────────────
+# Kanıt: backend/data/evolution/analyst_reports/pulse_ndx_denetimi_2026-07-28.md
+# Statik TP30/SL50 merdiveni (RR 0.6) başabaş için %62.5 WR ister; 60 günde
+# hiçbir NDX pulse akışı ulaşamadı (BUY %32-41, SELL %54-60). Panelin ATR
+# geometrisi (_scalp_tp_sl: SL=1.0×ATR14-5m) yalnız ml_target/stop alanına
+# gidiyor, lifecycle onu okumuyordu. Bu yardımcı panel SL mesafesinden RR≥1
+# gerçek merdiven kurar: SL=1.0×d, TP1..4 = 1.0/1.5/2.0/2.5×d.
+# Lifecycle merdiveni factors.target_type == "atr_ladder_v1" etiketiyle tanır
+# (statik ±%15 doğrulama bandına takılmadan). PULSE_ATR_LADDER=0 ile kapanır.
+
+_PULSE_LADDER_MODELS = {"pulse1", "pulse2", "pulse3"}
+
+
+def _pulse_atr_ladder(
+    symbol: str,
+    model_type: Optional[str],
+    direction: str,
+    entry_price: Optional[float],
+    stop_price: Any,
+) -> Optional[Dict[str, Any]]:
+    """ATR tabanlı TP/SL merdiveni kur; koşullar sağlanmazsa None (legacy akış)."""
+    import os as _os
+    if _os.getenv("PULSE_ATR_LADDER", "1") == "0":
+        return None
+    syms = {s.strip().upper() for s in _os.getenv(
+        "PULSE_ATR_LADDER_SYMBOLS", "NDX.INDX").split(",") if s.strip()}
+    if (symbol or "").upper() not in syms:
+        return None
+    base = (model_type or "").lower().strip().split(":")[0]
+    if base.endswith("_inv"):
+        base = base[:-4]
+    if base not in _PULSE_LADDER_MODELS:
+        return None
+    if direction not in ("BUY", "SELL") or not entry_price or entry_price <= 0:
+        return None
+    try:
+        stop = float(stop_price) if stop_price is not None else None
+    except (TypeError, ValueError):
+        return None
+    if stop is None or stop <= 0:
+        return None
+    # Mesafe yön-bağımsızdır (|entry−stop| = 1.0×ATR): pulse1 suggestion
+    # geometrisi trend yönüne göre kurulduğundan stop bazen sinyalin ters
+    # tarafında gelir — SL'i doğru tarafa burada kendimiz koyarız.
+    dist = abs(entry_price - stop)
+    # Sanite bandı: SL mesafesi girişin %0.04-%2'si arasında olmalı (NDX ~28000
+    # için 11-560 puan) — bunun dışı bozuk panel verisidir, legacy'ye düş.
+    if not (entry_price * 0.0004 <= dist <= entry_price * 0.02):
+        return None
+    sl_signed = entry_price - dist if direction == "BUY" else entry_price + dist
+    mults_raw = _os.getenv("PULSE_ATR_LADDER_MULTS", "1.0,1.5,2.0,2.5")
+    try:
+        mults = [float(m) for m in mults_raw.split(",")]
+    except ValueError:
+        mults = [1.0, 1.5, 2.0, 2.5]
+    if len(mults) != 4 or any(m <= 0 for m in mults) or mults != sorted(mults):
+        mults = [1.0, 1.5, 2.0, 2.5]
+    sgn = 1.0 if direction == "BUY" else -1.0
+    targets = {
+        f"TP{i + 1}": round(entry_price + sgn * dist * mult, 4)
+        for i, mult in enumerate(mults)
+    }
+    targets["SL"] = round(sl_signed, 4)
+    return {"targets": targets, "stop_loss_pips": round(dist, 2)}
+
+
 async def log_prediction(
     symbol: str,
     context: Dict[str, Any],
@@ -1018,8 +1084,9 @@ async def log_prediction(
         )
         
         cfg = get_symbol_config(symbol)
-        
+
         # Calculate actual price targets for DB storage using fixed pip values
+        pulse_ladder = None
         if entry_price and entry_price > 0:
             # XAUUSD v2 model emits a single-target risk profile (TP=$10, SL=$15);
             # honor it instead of the legacy TP1/2/3/4 ladder so lifecycle does not
@@ -1027,12 +1094,17 @@ async def log_prediction(
             is_xauusd_v2 = (symbol == "XAUUSD"
                             and (effective_model_type or "").lower().startswith("ml")
                             and ml.get("target_price") and ml.get("stop_price"))
+            pulse_ladder = _pulse_atr_ladder(
+                symbol, effective_model_type, direction, entry_price, ml.get("stop_price"))
             if is_xauusd_v2:
                 tp_price = float(ml["target_price"])
                 sl_price = float(ml["stop_price"])
                 targets_dict = {"TP1": round(tp_price, 4)}
                 targets_dict["SL"] = round(sl_price, 4)
                 stop_loss_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
+            elif pulse_ladder:
+                targets_dict = dict(pulse_ladder["targets"])
+                stop_loss_pips = pulse_ladder["stop_loss_pips"]
             else:
                 target_prices = calculate_target_prices(entry_price, direction, symbol, normalized_timeframe)
                 sl_price = calculate_stoploss_price(entry_price, direction, symbol, normalized_timeframe)
@@ -1043,10 +1115,14 @@ async def log_prediction(
             targets_dict = {tl.name: tl.pips for tl in cfg.targets}
             targets_dict["SL"] = cfg.stoploss_pips
             stop_loss_pips = cfg.stoploss_pips
-        
+
         factors = _extract_factors(context, analysis)
         factors["session"] = _get_current_session()
-        factors["target_type"] = "static_pips"
+        # Geometri epoch etiketi: lifecycle ATR merdivenini bu etiketten tanır;
+        # analizler de eski (static_pips) / yeni (atr_ladder_v1) dönemi ayırır.
+        factors["target_type"] = "atr_ladder_v1" if pulse_ladder else "static_pips"
+        if pulse_ladder:
+            factors["atr_ladder_sl_dist"] = pulse_ladder["stop_loss_pips"]
         if _correlation_tag:
             factors["correlation_warning"] = _correlation_tag
 
@@ -1206,8 +1282,18 @@ async def log_prediction(
                 try:
                     inv_ml = dict(ml)
                     inv_ml["direction"] = "SELL" if direction == "BUY" else "BUY"
-                    inv_ml["target_price"] = None
-                    inv_ml["stop_price"] = None
+                    if pulse_ladder and entry_price:
+                        # ATR merdivenli pulse satırında ayna geometriyi koru:
+                        # None bırakmak _inv'i legacy 30/50 merdivene düşürür ve
+                        # düz/ters kıyası farklı geometrilerde ölçülürdü.
+                        _orig_tp, _orig_sp = ml.get("target_price"), ml.get("stop_price")
+                        inv_ml["target_price"] = (
+                            round(2 * entry_price - float(_orig_tp), 4) if _orig_tp else None)
+                        inv_ml["stop_price"] = (
+                            round(2 * entry_price - float(_orig_sp), 4) if _orig_sp else None)
+                    else:
+                        inv_ml["target_price"] = None
+                        inv_ml["stop_price"] = None
                     inv_ml["probability_up"], inv_ml["probability_down"] = (
                         inv_ml.get("probability_down"), inv_ml.get("probability_up"))
                     inv_ctx = {**context, "ml_prediction": inv_ml, "_shadow_inverted": True}

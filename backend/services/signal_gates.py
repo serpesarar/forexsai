@@ -32,6 +32,16 @@ Env bayrakları:
   DEBATE_BIAS_GATE_ENABLED=1 → tartışma-bias karşıt-sinyal freni (default açık — logla)
   DEBATE_BIAS_GATE_BLOCK=0   → 1 ise GERÇEKTEN bloklar (default GÖLGE: sadece log)
   DEBATE_BIAS_VALID_MIN=240  → tartışma kararının geçerlilik penceresi (dakika)
+
+2026-07-28 eki (Pulse NDX denetimi — pulse_ndx_denetimi_2026-07-28.md):
+  MT5 botunun canlı-kanıtlı ön-giriş filtreleri Pulse'a GÖLGE modda taşındı.
+  TREND_ALIGN_GATE_ENABLED=1   → 1h EMA50 hizası (bot 30g/332: hizalı %63.3 vs karşıt %43.4)
+  TREND_ALIGN_GATE_BLOCK=0     → 1 ise gerçekten bloklar (default GÖLGE)
+  WAVE_POSITION_GATE_ENABLED=1 → 4h dalga pozisyonu: tepe %60+ BUY / dip %40− SELL frenle
+  WAVE_POSITION_GATE_BLOCK=0   → 1 ise gerçekten bloklar (default GÖLGE)
+  VIX_REGIME_GATE_ENABLED=1    → VIX≥eşik→BUY lehte, altı→SELL lehte (plasebo p=0, OOS +17pp)
+  VIX_REGIME_GATE_BLOCK=0      → 1 ise gerçekten bloklar (default GÖLGE)
+  VIX_REGIME_GATE_THRESHOLD=18.4
 """
 
 from __future__ import annotations
@@ -541,6 +551,154 @@ async def fakeout_gate(
     return True, None
 
 
+# ─── Kapı 8-10: Bot-taşıması kapılar (2026-07-28 Pulse NDX denetimi) ─────────
+#
+# Kaynak: backend/data/evolution/analyst_reports/pulse_ndx_denetimi_2026-07-28.md
+# Denetim: 60g NDX'te pulse BUY %32-41 WR (yukarı günlerde bile %33.7 — giriş
+# zamanlaması yapısal olarak kötü). MT5 botu ("yeni deneme/") aynı pulse
+# oylarını bu üç YEREL filtreden geçirerek kullanıyor ve üçü de canlı işlem
+# verisiyle ölçülü. Panele GÖLGE modda taşındı: default yalnız loglar,
+# *_BLOCK=1 ile gerçek blok. Hepsi fail-open.
+
+_BOT_PORT_GATE_SYMBOLS = {"NDX.INDX"}
+
+#: Bot-taşıması kapılar yalnız pulse ailesine uygulanır (SMC'nin kendi NDX
+#: SELL kapısı var; EMEL/ML kendi eşiklerini yönetir).
+BOT_PORT_GATED_MODELS = {"pulse1", "pulse2", "pulse3"}
+
+
+async def trend_align_gate(symbol: str, direction: str) -> Tuple[bool, Optional[str]]:
+    """1h EMA50 trend-hiza kapısı (botun _trend_gate'inin panel karşılığı).
+
+    Kanıt (bot, 30g/332 gerçek MT5 işlemi): 1h EMA50 ile hizalı girişler
+    WR %63.3 / +9.710$, karşıt girişler %43.4 / −13.161$. Pulse'ın NDX BUY
+    kanaması tam bu karşıt-trend desenindeydi (denetim §KN-3).
+    Default GÖLGE: TREND_ALIGN_GATE_BLOCK=1 olana dek sadece loglar.
+    """
+    if not _flag("TREND_ALIGN_GATE_ENABLED"):
+        return True, None
+    if _norm_symbol(symbol) not in _BOT_PORT_GATE_SYMBOLS:
+        return True, None
+
+    try:
+        from services.market_data_service import get_ohlcv_data
+        candles = await get_ohlcv_data(symbol, timeframe="1h", limit=60)
+        if not candles or len(candles) < 55:
+            return True, None
+        closes = [c.get("close") for c in candles]
+        ema50 = _ema(closes, 50)
+        last_close = float(closes[-1]) if closes[-1] is not None else None
+        if ema50 is None or last_close is None:
+            return True, None
+        sgn = 1.0 if direction == "BUY" else -1.0
+        if sgn * (last_close - ema50) <= 0:
+            reason = (
+                f"Trend-hiza kapısı: 1h close {last_close:.1f}, EMA50 {ema50:.1f} "
+                f"— {direction} counter-trend (bot kanıtı: karşıt WR %43.4)"
+            )
+            if _flag("TREND_ALIGN_GATE_BLOCK", "0"):
+                logger.info(f"trend_align_gate BLOCK {symbol} {direction}: {reason}")
+                return False, reason
+            logger.info(f"trend_align_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
+    except Exception as exc:  # fail-open
+        logger.debug(f"trend_align_gate fail-open ({symbol}): {exc}")
+
+    return True, None
+
+
+async def wave_position_gate(symbol: str, direction: str) -> Tuple[bool, Optional[str]]:
+    """4h dalga pozisyon kapısı (botun _position_gate'inin panel karşılığı).
+
+    Son 48×5m barın hi-lo aralığında fiyatın konumu: tepe bölgede (>%60)
+    BUY, dip bölgede (<%40) SELL frenlenir — "tepeden alma / dipten satma"
+    deseni. Bot kanıtı: NDX VIXREG SELL dip-üçlükte %53.4 WR / −3.738$ vs
+    tepe-üçlükte %65.8 / +2.860$. Pulse kaybedenlerinin medyan MFE'si +2-5
+    puan (girişte yanlış) — bu kapının hedeflediği desen.
+    Default GÖLGE: WAVE_POSITION_GATE_BLOCK=1 olana dek sadece loglar.
+    """
+    if not _flag("WAVE_POSITION_GATE_ENABLED"):
+        return True, None
+    if _norm_symbol(symbol) not in _BOT_PORT_GATE_SYMBOLS:
+        return True, None
+
+    try:
+        buy_max = float(os.getenv("WAVE_POS_BUY_MAX", "0.60"))
+        sell_min = float(os.getenv("WAVE_POS_SELL_MIN", "0.40"))
+    except ValueError:
+        buy_max, sell_min = 0.60, 0.40
+
+    try:
+        from services.market_data_service import get_ohlcv_data
+        candles = await get_ohlcv_data(symbol, timeframe="5m", limit=48)
+        if not candles or len(candles) < 36:
+            return True, None
+        highs = [float(c["high"]) for c in candles]
+        lows = [float(c["low"]) for c in candles]
+        last_close = float(candles[-1]["close"])
+        hi, lo = max(highs), min(lows)
+        if hi <= lo:
+            return True, None
+        pos = (last_close - lo) / (hi - lo)
+        blocked = (direction == "BUY" and pos > buy_max) or \
+                  (direction == "SELL" and pos < sell_min)
+        if blocked:
+            reason = (
+                f"Dalga pozisyon kapısı: fiyat 4h dalgasının %{pos*100:.0f} "
+                f"konumunda — {'tepe bölgede BUY' if direction == 'BUY' else 'dip bölgede SELL'} "
+                "frenli (bot kanıtı: dip-üçlük SELL %53.4 vs tepe %65.8)"
+            )
+            if _flag("WAVE_POSITION_GATE_BLOCK", "0"):
+                logger.info(f"wave_position_gate BLOCK {symbol} {direction}: {reason}")
+                return False, reason
+            logger.info(f"wave_position_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
+    except Exception as exc:  # fail-open
+        logger.debug(f"wave_position_gate fail-open ({symbol}): {exc}")
+
+    return True, None
+
+
+async def vix_regime_gate(symbol: str, direction: str) -> Tuple[bool, Optional[str]]:
+    """VIX rejim yön kapısı (botun VIXREG yön kuralının freni olarak).
+
+    Kanıt: VIX rejimi NDX yönünü öngörüyor (+25pp, plasebo p=0.000, OOS +17;
+    bot: lehte yön WR %70 vs karşıt %45). Kural: VIX ≥ eşik → lehte yön BUY,
+    altı → SELL. Karşıt yöndeki pulse sinyali frenlenir (lehte yöne bonus
+    verilmez — o iş Precision Veto katmanının).
+    Default GÖLGE: VIX_REGIME_GATE_BLOCK=1 olana dek sadece loglar.
+    """
+    if not _flag("VIX_REGIME_GATE_ENABLED"):
+        return True, None
+    if _norm_symbol(symbol) not in _BOT_PORT_GATE_SYMBOLS:
+        return True, None
+
+    try:
+        threshold = float(os.getenv("VIX_REGIME_GATE_THRESHOLD", "18.4"))
+    except ValueError:
+        threshold = 18.4
+
+    try:
+        from services.macro_data_service import get_macro_dict
+        vix_raw = ((get_macro_dict() or {}).get("vix") or {}).get("price")
+        if vix_raw is None:
+            return True, None
+        vix = float(vix_raw)
+        favored = "BUY" if vix >= threshold else "SELL"
+        if direction != favored:
+            reason = (
+                f"VIX rejim kapısı: VIX {vix:.1f} ({'≥' if vix >= threshold else '<'} "
+                f"{threshold}) → lehte yön {favored}, sinyal {direction} karşıt "
+                "(kanıt: lehte %70 vs karşıt %45 WR)"
+            )
+            if _flag("VIX_REGIME_GATE_BLOCK", "0"):
+                logger.info(f"vix_regime_gate BLOCK {symbol} {direction}: {reason}")
+                return False, reason
+            logger.info(f"vix_regime_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
+    except Exception as exc:  # fail-open
+        logger.debug(f"vix_regime_gate fail-open ({symbol}): {exc}")
+
+    return True, None
+
+
 # ─── Kapı: Tartışma-bias kapısı (agent debate → intraday karşıt-sinyal freni) ─
 #
 # Kanıt (backend/data/agent_debate_analysis_report.md, 2026-07-18, n=18 yönlü —
@@ -736,6 +894,14 @@ async def apply_signal_gates(
         if not allowed:
             notes.append(reason or "Giriş skoru kapısı")
             return "HOLD", notes
+
+    # 5b) Bot-taşıması kapılar (2026-07-28 denetimi; default GÖLGE — sadece log)
+    if base in BOT_PORT_GATED_MODELS:
+        for _bot_gate in (trend_align_gate, wave_position_gate, vix_regime_gate):
+            allowed, reason = await _bot_gate(symbol, direction)
+            if not allowed:
+                notes.append(reason or "Bot-taşıması kapı")
+                return "HOLD", notes
 
     # 6) Sahte kırılım kapısı (60s cache'li; default GÖLGE modda — sadece loglar)
     if base in FAKEOUT_GATED_MODELS:

@@ -658,7 +658,8 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
                            entry_price: float, model_type: str, strategy: str,
                            timeframe: str = "5m",
                            ta: dict = None, extra: dict = None,
-                           bypass_quality_filters: bool = False):
+                           bypass_quality_filters: bool = False,
+                           target_price: float = None, stop_price: float = None):
     """Helper: log a Pulse/EMEL signal to prediction_logs via log_prediction()."""
     try:
         from services.prediction_logger import log_prediction
@@ -671,8 +672,11 @@ async def _log_pulse_signal(symbol: str, direction: str, confidence: float,
                 "direction": direction,
                 "confidence": confidence,
                 "entry_price": entry_price,
-                "target_price": None,
-                "stop_price": None,
+                # Panel geometrisi (ATR bazlı TP/SL) — cache-hit yolunda endpoint
+                # kendi içinde loglamadığı için buradan taşınır; prediction_logger
+                # pulse ATR merdivenini bu stop mesafesinden kurar (2026-07-28).
+                "target_price": target_price,
+                "stop_price": stop_price,
             },
             "distances": {},
             "volume": {},
@@ -754,9 +758,23 @@ async def _check_and_log_pulse(symbol: str, model_type: str, client, timeframe: 
             logger.debug(f"{model_type} {symbol}: no valid entry price, skipping")
             return
         conf = result.get("confidence", 50) or 50
-        
+
+        # TP/SL'i endpoint yanıtından çıkar (panel ATR geometrisi): pulse2 kökte
+        # target/stop, pulse1 suggestion.*, pulse3 levels.* taşır. Cache-hit
+        # yolunda endpoint içi log çalışmadığından geometri buradan geçmezse
+        # satır legacy statik merdivene düşüyordu (60g'de satırların ~%13'ü).
+        _sugg = result.get("suggestion") if isinstance(result.get("suggestion"), dict) else {}
+        _levels = result.get("levels") if isinstance(result.get("levels"), dict) else {}
+        tp_val = result.get("target") or _sugg.get("target") or _levels.get("target")
+        sl_val = result.get("stop") or _sugg.get("stop") or _levels.get("stop")
+        if not isinstance(tp_val, (int, float)) or tp_val <= 0:
+            tp_val = None
+        if not isinstance(sl_val, (int, float)) or sl_val <= 0:
+            sl_val = None
+
         final_model_type = model_type
-        await _log_pulse_signal(symbol, sig, conf, entry, final_model_type, strategy, timeframe)
+        await _log_pulse_signal(symbol, sig, conf, entry, final_model_type, strategy, timeframe,
+                                target_price=tp_val, stop_price=sl_val)
         # NOTE: inverted "<model>_inv" shadow signals are now logged generically
         # inside prediction_logger.log_prediction (covers all models), so no
         # pulse-specific inversion hook is needed here anymore.

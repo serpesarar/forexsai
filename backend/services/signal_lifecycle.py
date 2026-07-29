@@ -321,12 +321,40 @@ def _is_reasonable_price_level(
     return 0.85 <= ratio <= 1.15
 
 
+def _is_sane_stored_level(
+    entry_price: float,
+    candidate_price: Optional[float],
+    direction: str,
+    *,
+    is_stop: bool = False,
+) -> bool:
+    """ATR-merdivenli satırlar için saklanan seviye doğrulaması.
+
+    Statik-config oran bandı (±%15, _is_reasonable_price_level) ATR bazlı
+    seviyeleri reddedip 30/50'ye geri düşürüyordu (2026-07-28 denetimi KN-1).
+    Burada yalnız yön-tarafı + %0.04-%3 göreli mesafe sanitesi aranır.
+    """
+    if candidate_price is None or candidate_price <= 0 or not entry_price:
+        return False
+    if direction == "BUY":
+        ok_side = candidate_price < entry_price if is_stop else candidate_price > entry_price
+    elif direction == "SELL":
+        ok_side = candidate_price > entry_price if is_stop else candidate_price < entry_price
+    else:
+        return False
+    if not ok_side:
+        return False
+    rel = abs(candidate_price - entry_price) / entry_price
+    return 0.0004 <= rel <= 0.03
+
+
 def _resolve_target_prices(
     signal: dict,
     entry_price: float,
     direction: str,
     symbol: str,
     timeframe: str,
+    honor_stored: bool = False,
 ) -> Dict[str, float]:
     stored_targets = signal.get("targets") or {}
     if not isinstance(stored_targets, dict):
@@ -336,7 +364,11 @@ def _resolve_target_prices(
     resolved_targets: Dict[str, float] = {}
     for tp_name, fallback_price in fallback_targets.items():
         stored_price = _coerce_float(stored_targets.get(tp_name))
-        if _is_reasonable_price_level(entry_price, stored_price, fallback_price, direction):
+        if honor_stored and _is_sane_stored_level(entry_price, stored_price, direction):
+            # ATR merdiveni (factors.target_type=atr_ladder_v1): saklanan seviye
+            # esas alınır — statik ±%15 bandına takılmaz.
+            resolved_targets[tp_name] = round(stored_price, 4)
+        elif _is_reasonable_price_level(entry_price, stored_price, fallback_price, direction):
             resolved_targets[tp_name] = round(stored_price or fallback_price, 4)
         else:
             resolved_targets[tp_name] = round(fallback_price, 4)
@@ -669,6 +701,21 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     parse_json_fields(signal, ["targets", "targets_hit", "factors"])
 
+    # ── ATR merdivenli pulse sinyali (2026-07-28 denetimi) ──────────────────
+    # factors.target_type == "atr_ladder_v1" → satırın kendi TP/SL merdiveni
+    # esas alınır ve 5m/15m'nin 10-15dk penceresi geometriye yetecek süreye
+    # uzatılır (10dk'lık pencerede 1×ATR SL hiç test edilemeden window_resolve
+    # üretiyordu; kayıpların ~üçte biri bu muhasebeydi).
+    _row_factors = signal.get("factors") if isinstance(signal.get("factors"), dict) else {}
+    is_atr_ladder = str(_row_factors.get("target_type") or "") == "atr_ladder_v1"
+    if is_atr_ladder:
+        import os as _os
+        try:
+            _atr_window = int(_os.getenv("PULSE_ATR_WINDOW_MIN", "60"))
+        except ValueError:
+            _atr_window = 60
+        evaluation_window = max(evaluation_window, _atr_window)
+
     # Invalid tradeable signal -> stopped, not expired
     if entry_price is None or direction not in {"BUY", "SELL"}:
         _update_signal_status(client, signal_id, "stopped", entry_price)
@@ -704,8 +751,15 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # ------------------------------------------------------------------
     # Chronological Candle Evaluation (Strict Verification Logic)
     # ------------------------------------------------------------------
-    target_prices = _resolve_target_prices(signal, entry_price, direction, symbol, timeframe)
+    target_prices = _resolve_target_prices(
+        signal, entry_price, direction, symbol, timeframe, honor_stored=is_atr_ladder)
     sl_price = calculate_stoploss_price(entry_price, direction, symbol, timeframe)
+    if is_atr_ladder:
+        # ATR merdivenli satırda SL de satırın kendi seviyesidir — statik config
+        # SL'i (NDX 50p) ezerse ölçüm yine eski geometriye döner (denetim KN-1).
+        _stored_sl = _coerce_float((signal.get("targets") or {}).get("SL"))
+        if _is_sane_stored_level(entry_price, _stored_sl, direction, is_stop=True):
+            sl_price = _stored_sl
     resolved_sl_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
 
     pip_size = _get_pip_size(symbol)

@@ -590,6 +590,25 @@ PATTERN_BONUS_GATE_ENABLED=1      # formasyon "teyidi" +6/+10 skor bonusunu öl�
 # NDX BUY 2/22=%9.1 (p≈1e-4). formasyon BUY global %50 (n=124) → dokunulmadı.
 # SALT SUPRESİF: yeni sinyal üretmez, yön çevirmez; yalnız bonusu vermez.
 
+# ─── 2026-07-28 Pulse NDX denetimi: ATR merdiveni + bot-taşıması kapılar ───
+# Rapor: backend/data/evolution/analyst_reports/pulse_ndx_denetimi_2026-07-28.md
+# Kök neden: pulse satırları DB'de sabit TP30/SL50 (RR 0.6, başabaş %62.5) +
+# 10dk pencereyle notlanıyordu; PULSE_ATR_GEOMETRY yalnız ml_target/stop'a
+# yazıyordu, lifecycle okumuyordu (±%15 statik bant + SL yeniden hesaplama).
+PULSE_ATR_LADDER=1                # pulse1/2/3: panel SL mesafesinden (1.0×ATR) RR≥1 merdiven
+                                  # TP1..4 = 1.0/1.5/2.0/2.5×d; factors.target_type=atr_ladder_v1
+                                  # (epoch etiketi — eski static_pips dönemiyle KARIŞTIRMA)
+PULSE_ATR_LADDER_SYMBOLS=NDX.INDX # kanıt NDX; DAX'a genişletme ayrı ölçüm ister
+PULSE_ATR_LADDER_MULTS=1.0,1.5,2.0,2.5
+PULSE_ATR_WINDOW_MIN=60           # ATR-merdivenli sinyalin lifecycle çözüm penceresi (dk)
+TREND_ALIGN_GATE_ENABLED=1        # NDX pulse 1h EMA50 hizası (bot 30g/332: %63.3 vs %43.4) — GÖLGE
+TREND_ALIGN_GATE_BLOCK=0          # 1 → gerçekten bloklar (≥2-3 hafta gölge ölçümü sonrası)
+WAVE_POSITION_GATE_ENABLED=1      # 4h dalga (48×5m) pozisyonu: tepe %60+ BUY / dip %40− SELL — GÖLGE
+WAVE_POSITION_GATE_BLOCK=0
+VIX_REGIME_GATE_ENABLED=1         # VIX≥18.4→BUY lehte, altı→SELL (plasebo p=0, OOS +17pp) — GÖLGE
+VIX_REGIME_GATE_BLOCK=0
+VIX_REGIME_GATE_THRESHOLD=18.4
+
 # ─── 2026-07-19 shadow trade tracker (services/shadow_trade_tracker.py) ───
 SHADOW_TRACKER_ENABLED=1          # %60+ formasyon + fakeout dedektör çağrıları için sızıntısız paper-trade doğrulaması
 SHADOW_TRACKER_MIN_CONF=60        # sanal işlem açma güven eşiği (%)
