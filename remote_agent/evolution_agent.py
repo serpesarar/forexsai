@@ -174,22 +174,51 @@ def push_trades(client, state: dict) -> int:
     return len(rows)
 
 
+# journal senkronu: kaç günlük pencere her turda YENİDEN gönderilsin
+JOURNAL_RESYNC_DAYS = float(getattr(cfg, "JOURNAL_RESYNC_DAYS", 5))
+
+
+def _journal_id(rec: dict) -> str:
+    """DETERMİNİSTİK kayıt kimliği — outcome değişse bile AYNI kalır.
+
+    2026-07-29 hata düzeltmesi: eskiden id = satırın SHA1'iydi. outcomes.resolve
+    kayda `outcome` eklediğinde satır değişiyor → hash değişiyor → upsert
+    GÜNCELLEMİYOR, İKİNCİ SATIR açıyordu. Sonuç: panelde aynı karar iki kez
+    (biri NULL, biri WIN/LOSS) ve "çözülmemiş" görünen yüzlerce kayıt.
+    Kimlik artık kararın kendisinden türer (ts+sembol+mod).
+    """
+    key = f"{rec.get('ts')}|{rec.get('symbol')}|{rec.get('mode', '')}"
+    return "v2" + hashlib.sha1(key.encode()).hexdigest()[:14]
+
+
 def push_journal(client, state: dict) -> int:
-    """journal.jsonl'in yeni satırlarını decider_journal'a yaz (byte offset takibi)."""
+    """journal.jsonl → decider_journal.
+
+    İKİ AŞAMA (2026-07-29):
+      1. YENİ satırlar: byte offset'ten sonrası (hızlı yol).
+      2. GÜNCELLENEN satırlar: son JOURNAL_RESYNC_DAYS günlük pencere her turda
+         yeniden upsert edilir. Bu şart, çünkü `outcomes.resolve` dosyayı TAM
+         yeniden yazarak eski satırlara outcome ekliyor; offset'in gerisinde
+         kalan bu güncellemeler aksi halde panele HİÇ ulaşmıyordu (470 karar
+         "çözülmemiş" görünüyordu, oysa kutuda çözülmüştü).
+    """
     path = Path(getattr(cfg, "DECIDER_JOURNAL", ""))
     if not path.exists():
         return 0
-    offset = state.get("journal_offset", 0)
     size = path.stat().st_size
-    if size < offset:      # dosya döndürülmüş/sıfırlanmış
+    offset = state.get("journal_offset", 0)
+    if size < offset:            # dosya küçüldü (döndürüldü/yeniden yazıldı)
         offset = 0
-    if size == offset:
+
+    try:
+        all_lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except Exception as e:
+        log.warning("journal okunamadı: %s", e)
         return 0
-    with open(path, "rb") as fh:
-        fh.seek(offset)
-        chunk = fh.read()
-    rows = []
-    for line in chunk.decode("utf-8", errors="replace").splitlines():
+
+    cutoff = time.time() - JOURNAL_RESYNC_DAYS * 86400
+    rows, seen = [], set()
+    for line in all_lines:
         line = line.strip()
         if not line:
             continue
@@ -197,11 +226,21 @@ def push_journal(client, state: dict) -> int:
             rec = json.loads(line)
         except Exception:
             continue
-        rid = hashlib.sha1(line.encode()).hexdigest()[:16]
+        ts_raw = rec.get("ts") or rec.get("timestamp")
+        try:
+            ts_epoch = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00")).timestamp()
+        except Exception:
+            ts_epoch = cutoff        # ayrıştırılamazsa pencereye dahil et
+        if ts_epoch < cutoff:
+            continue                 # pencere dışı — zaten senkron
+        rid = _journal_id(rec)
+        if rid in seen:              # aynı anahtar iki kez varsa SONRAKİ kazanır
+            rows = [r for r in rows if r["id"] != rid]
+        seen.add(rid)
         rows.append({
             "id": rid,
             "host": HOST,
-            "ts": rec.get("ts") or rec.get("timestamp"),
+            "ts": ts_raw,
             "symbol": rec.get("symbol"),
             "decision": rec.get("decision") or rec.get("action"),
             "confidence": rec.get("confidence"),
@@ -211,7 +250,9 @@ def push_journal(client, state: dict) -> int:
     if rows:
         for i in range(0, len(rows), 200):
             client.table("decider_journal").upsert(rows[i:i + 200]).execute()
-        log.info("decider_journal += %d", len(rows))
+        n_res = sum(1 for r in rows if r.get("outcome") is not None)
+        log.info("decider_journal senkron: %d satır (%d sonuçlu, pencere %.0fg)",
+                 len(rows), n_res, JOURNAL_RESYNC_DAYS)
     state["journal_offset"] = size
     return len(rows)
 
