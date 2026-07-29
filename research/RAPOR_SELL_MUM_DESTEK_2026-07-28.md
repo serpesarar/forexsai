@@ -447,3 +447,65 @@ noktada pozitif (tepe +1,00'de, +2,41).
 > · teyit: sonraki mum 1. mumun dibinin altında kapanır · SELL LİMİT = teyit mumu
 > kapanışı + 1,00×ATR · 12 bar geçerli (dolmazsa iptal) · TP 80 / SL 30 puan
 > · 72 bar (6 saat) zaman-stopu.
+
+---
+
+# EK-2 — LİMİT EMİRLE GİRİŞ TESTİ + GÖLGE BAĞLANTISI (2026-07-29)
+
+## L1. Limit emir kurguyu kurtarmıyor — BOZUYOR
+
+Karar teyit mumunun kapanışında; market yerine kapanışın ÜSTÜNE SELL LIMIT
+(daha iyi fiyat), X bar içinde dolmazsa iptal. Lab: `research/limit_entry_lab.py`.
+Karşılaştırma "sinyal başına EV" ile (dolmayan = 0; market %100 dolduğu için tek adil ölçü).
+
+Kazanan geometri **TP 120 / SL 25** üzerinde:
+
+| giriş türü | doluş% | sinyal başına EV | kör test EV |
+|---|---|---|---|
+| **MARKET (referans)** | %100 | **+1,99 p** | +3,88 p |
+| limit +0,10 ATR (exp 6 bar) | %94,8 | +0,88 p | +2,71 p |
+| limit +0,20 ATR | %91,2 | +0,36 p | +2,74 p |
+| limit +0,30 ATR | %86,9 | −0,04 p | +2,08 p |
+| kırmızı mumun %50'si (exp 12) | %57,4 | +0,36 p | +0,41 p |
+| kırmızı mumun açılışı (exp 12) | %40,5 | +0,98 p | +1,14 p |
+
+**Neden:** ters seçilim. Limit yalnız fiyat GERİ GELİRSE dolar; kırılım gerçekten
+işleyecekse (en kârlı senaryolar) fiyat geri gelmez ve tam o işlemler kaçar.
+Dolan işlemler bile daha kötü — "dolan başına EV" market'in altında. Birkaç puanlık
+fiyat iyileştirmesi, kaçan kazananları ödemiyor. Eski 80/110 geometrisinde derin
+limitler (+0,50 ATR, %50 seviyesi) marjinal iyileşme veriyor ama o geometri
+kör testte zaten negatifti.
+
+**Karar:** limit-emir varyantı reddedildi; gölge MARKET girişini ölçer. Yine de
+her gölge işleminin `details`'ine iki limit fiyatı yazılıyor
+(`limit_px_010atr`, `limit_px_confirm_high`) — 2-3 hafta sonra gerçek verili
+karşı-olgusal replay yapılabilsin diye.
+
+## L2. Gölge bağlantısı (canlı emir YOK)
+
+`shadow_trade_tracker`'a 4. kaynak: **`redcandle`** (commit 41fed6a).
+
+| | |
+|---|---|
+| Tetik | büyük kırmızı 5m mum (gövde ≥1×ATR14, gövde/menzil ≥0,55) + teyit mumu kapanışı önceki dibin altında |
+| Giriş | teyit mumunun kapanışı (son KAPANMIŞ bar — koşan bar asla) |
+| Geometri | **tp120_sl25** ve **tp80_sl30** paralel (iki ayrı gölge işlem) |
+| Zaman-stopu | 6 saat (72×5m — kenarın kaynağı, kısaltma!) |
+| Sembol | NDX.INDX (kanıt NAS100 puanlarında; env `REDCANDLE_SHADOW_SYMBOLS`) |
+| Kapatma | `REDCANDLE_SHADOW_ENABLED=0` |
+| İzolasyon | `shadow_pattern_trades` tablosu; prediction_logs/lifecycle'a dokunmaz |
+
+Doğrulama: saf çekirdek `detect_redcandle_setup` birim testli — 2026-07-28'in
+gerçek barlarında 16:35 mumunu yakalıyor (gövde 1,82 ATR, teyit 27588,8 < 27628,0);
+fitilli/yeşil/küçük/teyitsiz mumları eliyor. Uçtan uca test: tespit → insert →
+çözümleme (win R=4,8 / 2,67) geçti.
+
+⚠️ **Migration bekliyor:** `shadow_pattern_trades.source` CHECK kısıtına
+`redcandle` ekleyen `supabase/migrations/20260729_shadow_redcandle_source.sql`
+DB erişimi salt-okunur olduğu için UYGULANAMADI. Bu yüzden satırlar şimdilik
+disk yedeğine düşüyor (`backend/data/shadow_fallback_trades.jsonl` — yeni eklendi;
+önceden bellekteydi ve her restart'ta siliniyordu). Migration uygulanınca DB'ye
+akmaya kendiliğinden başlar.
+
+**Değerlendirme kriteri (2-3 hafta sonra):** n≥30 çözülmüş işlemde sinyal başına
+EV > 0 VE gerçek doluş fiyatlarıyla kayma ölçümü < 3 puan değilse aile çöpe.
