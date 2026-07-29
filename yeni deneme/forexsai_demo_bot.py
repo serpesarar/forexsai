@@ -306,6 +306,49 @@ def candles_tf(mt5_symbol: str, timeframe: int, n: int) -> list[dict] | None:
             for r in rates]
 
 
+def atr_5m(mt5_symbol: str, n: int = 14) -> float | None:
+    """ATR(n) — son KAPANMIŞ 5m barlardan (koşan bar hariç). Sızıntısız."""
+    rates = mt5.copy_rates_from_pos(mt5_symbol, mt5.TIMEFRAME_M5, 1, n + 1)
+    if rates is None or len(rates) < n + 1:
+        return None
+    trs = []
+    for i in range(1, len(rates)):
+        h, l = float(rates[i]["high"]), float(rates[i]["low"])
+        pc = float(rates[i - 1]["close"])
+        trs.append(max(h - l, abs(h - pc), abs(l - pc)))
+    return sum(trs) / len(trs) if trs else None
+
+
+def adaptive_sl(mt5_symbol: str, scope_key: str, fallback_sl: float) -> float:
+    """Volatiliteye uyarlamalı SL = MULT × ATR(14, 5m), taban/tavan sınırlı.
+
+    KANIT (research/sl_opt/RAPOR.md, 5.5 ay · 8.129 NDX SELL sinyali · zaman
+    kayması düzeltilmiş · trend+konum kapılı):
+        sabit TP80/SL110  → 4/6 ay pozitif · OUT +10.18R · P=%93.6
+        TP80 / SL 2.0×ATR → 6/6 ay pozitif · OUT +23.61R · P=%99.5
+    Mart hariç bile canlının 2.6 katı. Ortalama SL ≈104p (mevcut 110'a yakın) —
+    kazanç "daha geniş stop"tan DEĞİL, stopun sakin piyasada daralıp oynak
+    piyasada genişlemesinden geliyor. 36 varyant tarandı; aylık dayanıklılık +
+    kronolojik split + blok-bootstrap ile dengelendi.
+
+    Fail-safe: ATR alınamazsa sabit değere döner (davranış değişmez).
+    """
+    if not getattr(config, "VIXREG_SL_ATR_ENABLED", True):
+        return fallback_sl
+    atr = atr_5m(mt5_symbol)
+    if not atr or atr <= 0:
+        log.warning("%s — ATR alınamadı, sabit SL %.0f kullanılıyor",
+                    scope_key, fallback_sl)
+        return fallback_sl
+    mult = float(getattr(config, "VIXREG_SL_ATR_MULT", 2.0))
+    lo = float(getattr(config, "VIXREG_SL_MIN", 60.0))
+    hi = float(getattr(config, "VIXREG_SL_MAX", 200.0))
+    sl = max(lo, min(hi, mult * atr))
+    log.info("%s — uyarlamalı SL: ATR(5m)=%.1f × %.1f = %.1f puan "
+             "(sabit %.0f yerine)", scope_key, atr, mult, sl, fallback_sl)
+    return round(sl, 1)
+
+
 def _mk_comment(prefix: str, tag: str) -> str:
     """MT5 order comment'i GÜVENLİ üret: ASCII + ≤28 karakter. UZUN comment (≥31) →
     order_send '(-2, Invalid "comment" argument)' verir ve emir HİÇ açılmaz (CHREV/VIXREG
@@ -1465,7 +1508,11 @@ def check_vix_regime() -> None:
         return
     log.info("%s — VIX=%.1f favored=%s, %d model onaylıyor → market giriş",
              scope_key, vix, favored, len(voters))
-    cfg = {"tp": config.VIX_REGIME_TP, "sl": config.VIX_REGIME_SL, "is_pct": False}
+    # TP sabit (80p — araştırmada ATR'ye bağlamak ek fayda vermedi, aylık
+    # dayanıklılığı düşürdü), SL uyarlamalı (2.0×ATR — 6/6 ay pozitif).
+    cfg = {"tp": config.VIX_REGIME_TP,
+           "sl": adaptive_sl(mt5_symbol, scope_key, float(config.VIX_REGIME_SL)),
+           "is_pct": False}
     # SELL sabır kapısı (kanıt: Δ+39.3R — hızlı ölen SELL'ler ilk 10dk'da
     # kendini ele veriyor; research/trade_mgmt_ndx). BUY'a UYGULANMAZ.
     # SABIR KAPISI — 2026-07-28'de VARSAYILAN KAPATILDI.
@@ -1510,6 +1557,8 @@ def main():
                    ("POSITION_GATE_ENABLED", True), ("VIXREG_POSITION_GATE", True),
                    ("POS_SELL_MIN", 0.40), ("POS_BUY_MAX", 0.60),
                    ("BACKEND_ADVICE_ENABLED", True), ("SHADOW_SCOPES_ENABLED", True),
+                   ("VIXREG_SL_ATR_ENABLED", True), ("VIXREG_SL_ATR_MULT", 2.0),
+                   ("VIXREG_SL_MIN", 60.0), ("VIXREG_SL_MAX", 200.0),
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
                    ("DAYCOMBO_SL", 110.0),
