@@ -241,3 +241,123 @@ TEST kapısız +0,011R (n=407) → kapılı +0,003R (n=240).
 * Bölüm 3–4 popülasyonu VIX rejimi ve pulse oylarını İÇERMİYOR (canlı VIXREG'in tam kopyası değil);
   işlemler örtüşüyor.
 * Friksiyon yalnız spread (1,5 p); komisyon/swap yok, kayma modellenmedi (bugün ~14 puan görüldü).
+
+---
+
+# EK — HACİM × TP/SL GRID TARAMASI (kullanıcı isteği, 2026-07-28 gece)
+
+**Soru:** "hacimleri ve TP/SL seviyelerini oynayarak en yüksek başarı oranına sahip,
+büyük düşüş mumundan sonraki mumda işlem açma kurgusunu bulabilir misin?"
+
+**Kurulum:** giriş HER ZAMAN 2. mumun (teyit mumu) kapanışında. 6 hacim kovası ×
+11 TP × 11 SL (ATR katı) = **726 hücre**, ayrı olarak 64 sabit-puan hücresi,
+3 teyit varyantı (yok / 2.mum kırmızı / 2.mum 1.'in dibini kırdı).
+Sıralama YALNIZ eğitimde (%70), sonuç kör testte (%30).
+Labs: `research/vol_tpsl_grid.py`, `research/tight_stop_probe.py`, `research/horizon_probe.py`.
+
+## E1. Grid gerçekten bir şey buluyor mu? (çoklu-test kontrolü)
+
+| ölçüm | değer |
+|---|---|
+| eğitimde +EV olan hücre | 70 / 726 |
+| eğitim EV ↔ test EV korelasyonu | r = +0,597 |
+| TÜM hücrelerde testte +EV oranı (şans çıtası) | %11 |
+| eğitimde +EV olanların testte +EV kalma oranı | %11 |
+| **seçimin sağladığı avantaj** | **+0 puan** |
+
+"Her çeyrekte tutan hücre" (istikrar seçimi) denendi: 726 hücreden 8'i eğitim
+çeyreklerinin ≥%75'inde pozitifti; **kör testte 8'den yalnız 1'i pozitif kaldı**
+(+0,002R ≈ sıfır). Yani klasik "en iyi hücreyi seç" de, "istikrarlı hücreyi seç" de
+işe yaramıyor.
+
+## E2. Hacme dayalı TP/SL — her kovanın kendi optimumu
+
+| hacim kovası | eğitimde en iyi TP/SL | eğitim EV | KÖR TEST EV |
+|---|---|---|---|
+| hepsi | 2,00/3,00 ATR | +0,001R | −0,036R |
+| <0,9× (sakin) | eğitimde +EV hücre yok | — | — |
+| 0,9–1,2× | 3,00/3,00 ATR | +0,030R | +0,001R |
+| 1,2–1,5× | eğitimde +EV hücre yok | — | — |
+| 1,5–2,0× | 2,50/2,50 ATR | **+0,176R** | **−0,183R** |
+| ≥2,0× (patlama) | eğitimde +EV hücre yok | — | — |
+
+En parlak eğitim sonucu (hacim 1,5–2,0×, +0,176R) kör testte tam tersine döndü.
+**Hacme dayalı TP/SL diye tutarlı bir yapı yok.**
+
+Hacim deseni boyutu (geometri sabit): teyit mumunun hacmi ≥1,2× → ±0,00R;
+hacim ARTIYOR → −0,019/−0,025R (iki dönemde de eksi); hacim DÜŞÜYOR → +0,001/+0,006R.
+Tek tutarlı işaret bu ve büyüklüğü ihmal edilebilir.
+
+## E3. Tek hayatta kalan aile: SIKI STOP + UZAK HEDEF
+
+Sabit-puan gridinde bir aile hem eğitimde hem kör testte pozitif çıktı ve tabanı
+(koşulsuz SELL) iki dönemde de yendi:
+
+| geometri | eğitim EV | kör test EV | tümü | taban farkı (tümü) |
+|---|---|---|---|---|
+| TP 80 / SL 30 | +0,016R | +0,079R | +0,035R (+1,06 p/işlem) | **+0,069R** |
+| TP 120 / SL 25 | +0,046R | +0,150R | +0,078R (+1,95 p/işlem) | — |
+| TP 80 / SL 110 (canlı) | +0,013R | −0,014R | +0,004R | +0,028R |
+
+Knife-edge değil: SL 20→50 arası **tüm** komşu hücreler pozitif (+0,004…+0,051R),
+TP 80→150 arası aynı. Üç teyit varyantında da aynı aile tepede. Çeyreklik:
+7 çeyreğin 5'i pozitif.
+
+## E4. …ama kenar girişten DEĞİL, zaman-stopundan geliyor
+
+TP 80 / SL 30, ufuk 72 bar, n=2.147 sonuç anatomisi:
+
+| sonuç | oran | ortalama |
+|---|---|---|
+| TP | %25,7 | +80,0 p |
+| SL | %68,9 | −30,0 p |
+| zaman-stopu | %5,4 | +21,9 p (bunların %79'u kârda) |
+
+Hesap: 0,257×80 + 0,689×(−30) = **−0,11 p** → TP/SL kısmı tam başabaş.
+Zaman çıkışları: +1,18 p → **toplam +1,06 p'nin tamamı, işlemlerin %5,4'ünden geliyor.**
+Ufuk taraması bunu doğruluyor: EV ufukla birlikte monoton büyüyor
+(12 bar −0,018R → 24 −0,006 → 48 +0,017 → 72 +0,035 → 96 +0,044).
+Yani sinyalin kendisi değil, "6 saat tut" kuralı para kazandırıyor — 116 işlemlik
+ince bir dilim.
+
+## E5. "En yüksek başarı oranı" sorusunun doğrudan cevabı
+
+| TP/SL (puan) | isabet% | başabaş% | fark | EV | sonuç |
+|---|---|---|---|---|---|
+| 20/80 | **%77,4** | %80,0 | −2,6 | −0,009R | **zarar** |
+| 25/60 | %68,3 | %70,6 | −2,3 | −0,013R | zarar |
+| 30/50 | %59,8 | %62,5 | −2,7 | −0,026R | zarar |
+| 50/50 | %46,9 | %50,0 | −3,1 | −0,008R | zarar |
+| 80/30 | %25,7 | %27,3 | −1,6 | +0,035R | ≈başabaş (zaman-stopu sayesinde) |
+| 120/25 | %15,7 | %17,2 | −1,5 | +0,078R | ≈başabaş (zaman-stopu sayesinde) |
+
+**Yapısal bulgu:** "fark" sütunu her geometride −1,5 … −3,4 puan. Yani isabet oranı
+her zaman başabaşın ALTINDA ve TP/SL oynatarak bu açık kapanmıyor — bu, friksiyon +
+yukarı sürüklenmenin sabit vergisi. **Yüksek başarı oranı isteyen her ayar zarar
+ediyor;** artıya geçen tek profil %15–26 isabetli, 2,7–4,8:1 risk-getirili olan.
+
+## E6. Kayma (slippage) testi — asıl öldürücü
+
+| spread/kayma | TP 80/SL 30 EV (tümü) |
+|---|---|
+| 1,5 p (canlı ölçüm) | +0,035R |
+| 3,0 p | −0,015R |
+| 5,0 p | −0,068R |
+| 8,0 p | −0,180R |
+
+30 puanlık stop ile kenar ~2,5 puanlık friksiyonda ölüyor. **Bugün canlıda 14 puanlık
+kayma gözlendi** (16:31'deki hızlı piyasa emri). Bu kurgu tam da hızlı piyasada
+tetiklendiği için kaymaya en açık kurgu.
+
+## E7. Verdikt
+
+> Hacim koşulu veya TP/SL ayarı ile **güvenilir yüksek başarı oranı bulunamadı**.
+> Grid'in seçim gücü sıfır (şansla aynı), hacme dayalı TP/SL kör testte çöküyor,
+> yüksek-isabet geometrilerinin hepsi zararda. Artıya geçen tek aile (sıkı stop +
+> uzak hedef) kenarını girişten değil zaman-stopundan alıyor ve 3 puanlık kaymada
+> ölüyor. **Canlıya bağlanacak bir şey yok.**
+>
+> Kayda değer tek pozitif: büyük kırmızı mum + teyit girişi, koşulsuz SELL'e göre
+> tutarlı biçimde ~+2 puan/işlem daha iyi (her iki dönemde de). Bu gerçek ama
+> spread kadar; ancak icra maliyeti sıfıra yakın bir kurgu (limit emirle giriş)
+> üzerine inşa edilirse anlam kazanır.
