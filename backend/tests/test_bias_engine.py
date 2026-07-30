@@ -74,9 +74,11 @@ async def test_run_debate_produces_verdict(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_run_debate_rejects_non_nasdaq():
+async def test_run_debate_rejects_unsupported_symbol():
+    # Çok-sembol motoru (2026-07-08) XAU/DAX/USOIL'i de destekler — ValueError
+    # yalnız profili olmayan sembollerde beklenir.
     with pytest.raises(ValueError):
-        await engine.run_debate(symbol="XAUUSD")
+        await engine.run_debate(symbol="BTCUSD")
 
 
 # ── QQQ / macro side feeds ────────────────────────────────────────────────────
@@ -132,7 +134,7 @@ def test_context_block_renders_qqq_and_macro():
         "qqq": {"price": 488.0, "premarket_change_pct": 0.4, "prior_close": 486},
         "macro": {"dxy": {"price": 104.2, "chg_1h": -0.1}, "vix": {"price": 15.3, "chg_1h": 2.0},
                   "us10y": {"price": 4.3, "chg_1h": 0.5}}}
-    block = engine._context_block(market)
+    block = engine._context_block(market, "NDX.INDX")
     assert "QQQ" in block and "488.0" in block
     assert "Macro" in block and "VIX 15.3" in block
 

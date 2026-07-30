@@ -33,11 +33,28 @@ export interface BiasTimelineCell {
   label: string | null;
 }
 
+/** Ufuk hücresi — ham isabet + baseline-göreli beceri (2026-07-30). */
+export interface BiasHorizonCell {
+  n: number;
+  correct: number;
+  accuracy_pct: number | null;
+  /** Aynı satırlarda en iyi SABİT yönün (hep-boğa/hep-ayı) isabeti. */
+  baseline_acc_pct: number | null;
+  /** Beceri = isabet − baseline. Pozitif değilse öngörü yok demektir. */
+  skill_vs_baseline_pp: number | null;
+  avg_signed_ret_pct: number | null;
+  /** n<30 → erken gözlem, kanıt değil. */
+  early_observation: boolean;
+}
+
 export interface PrimarySymbolStat {
   horizon_min: number;
   n: number;
   correct: number;
   accuracy_pct: number | null;
+  baseline_acc_pct: number | null;
+  skill_vs_baseline_pp: number | null;
+  early_observation: boolean;
   avg_signed_ret_pct: number | null;
   abstain_n: number;
   abstain_rate_pct: number | null;
@@ -46,20 +63,37 @@ export interface PrimarySymbolStat {
   timeline?: BiasTimelineCell[];
 }
 
+/** Yön dağılımı izleme — ayı/boğa çağrı sayısı + yöne göre isabet (2026-07-30). */
+export interface DirectionBalance {
+  bearish: { n: number; accuracy_pct: number | null; avg_signed_ret_pct: number | null };
+  bullish: { n: number; accuracy_pct: number | null; avg_signed_ret_pct: number | null };
+  bearish_share_pct: number | null;
+}
+
 export interface BiasReport {
   total_graded: number;
   /** ANA METRİK (2026-07-18): sembolün birincil ufkunda yönlü isabet; çekimserler hariç. */
   primary_intraday?: {
     per_symbol: Record<string, PrimarySymbolStat>;
-    overall: { n: number; correct: number; accuracy_pct: number | null };
+    overall: {
+      n: number;
+      correct: number;
+      accuracy_pct: number | null;
+      /** Genel baseline (sembollerin birincil ufuklarında havuzlanmış) + beceri. */
+      baseline_acc_pct?: number | null;
+      skill_vs_baseline_pp?: number | null;
+      early_observation?: boolean;
+    };
   };
+  /** Yön dağılımı (ayı/boğa dengesi + yöne göre isabet) — yanlılık takibi. */
+  direction_balance?: Record<string, DirectionBalance>;
   /** LEGACY gün-kapanışı metriği — yanıltıcı olabilir, ana metrik değil. */
   overall: BiasRate;
   by_symbol: Record<string, BiasRate>;
   by_run_label: Record<string, BiasRate>;
   by_confidence_bucket: Record<string, BiasRate>;
-  by_horizon?: Record<string, { n: number; correct: number; accuracy_pct: number | null; avg_signed_ret_pct: number | null }>;
-  by_symbol_horizon?: Record<string, Record<string, { n: number; correct: number; accuracy_pct: number | null; avg_signed_ret_pct: number | null }>>;
+  by_horizon?: Record<string, BiasHorizonCell>;
+  by_symbol_horizon?: Record<string, Record<string, BiasHorizonCell>>;
   go_live_hint: string;
 }
 

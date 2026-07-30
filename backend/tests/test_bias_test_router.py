@@ -150,6 +150,12 @@ def test_fill_and_report(api, monkeypatch):
 
 def test_fill_no_candle_404(api, monkeypatch):
     client, _ = api
+    # Verisi olmayan bir güne karşılık loglanmış bir koşu olsun — fill_outcomes
+    # ancak notlanacak satır varken "no session/horizon data" hatası verir
+    # (boş gün artık sessizce 200 döner; 1h-synth fallback eklendikten sonra).
+    client.post("/api/bias-test/log", json={
+        "run_label": "0945_confirm", "run_timestamp_utc": "2026-07-06T13:30:00Z",
+        "nasdaq_daily_bias": "bullish", "confidence": 70})
 
     async def none_daily(symbol, timeframe, limit=60):
         return []
@@ -169,3 +175,56 @@ def test_routing_status(api):
     r = client.get("/api/bias-test/routing-status")
     assert r.status_code == 200
     assert "important" in r.json() and "normal" in r.json()
+
+
+# ── accuracy_report: dup dışlama + baseline beceri + yön dengesi (2026-07-30) ──
+def _acc_row(label, bias, rets, sym="NDX.INDX", correct=True, date="2026-07-28"):
+    return {"run_label": label, "predicted_bias": bias, "was_correct": correct,
+            "ny_date": date, "ny_time": f"{date}T13:45:00-04:00",
+            "raw_payload": {"symbol": sym},
+            **{f"ret_{m}m": v for m, v in rets.items()}}
+
+
+def test_accuracy_report_excludes_dup_rows(store):
+    store.rows.extend([
+        _acc_row("0945_confirm", "bearish", {240: -0.5}),
+        _acc_row("0945_confirm_dup", "bullish", {240: 0.9}),   # dışlanmalı
+    ])
+    rep = bts.accuracy_report()
+    cell = rep["by_symbol_horizon"]["NDX.INDX"]["240m"]
+    assert cell["n"] == 1                       # dup hiçbir istatistiğe girmedi
+    assert "0945_confirm_dup" not in rep["by_run_label"]
+    assert rep["primary_intraday"]["per_symbol"]["NDX.INDX"]["n"] == 1
+
+
+def test_accuracy_report_baseline_and_early_observation(store):
+    # 6 bearish çağrı; piyasa 4/6 kez düştü → ham isabet 4/6 ama hep-ayı
+    # baseline'ı da 4/6 → beceri sıfır olmalı (ham yüzde ≠ öngörü).
+    for i, r in enumerate([-0.5, -0.4, 0.3, -0.2, 0.1, -0.6]):
+        store.rows.append(_acc_row("0945_confirm", "bearish", {60: r, 240: r},
+                                   date=f"2026-07-2{i}"))
+    rep = bts.accuracy_report()
+    cell = rep["by_symbol_horizon"]["NDX.INDX"]["60m"]
+    assert cell["accuracy_pct"] == pytest.approx(66.7, abs=0.1)
+    assert cell["baseline_acc_pct"] == pytest.approx(66.7, abs=0.1)
+    assert cell["skill_vs_baseline_pp"] == pytest.approx(0.0, abs=0.2)
+    assert cell["early_observation"] is True     # n=6 < 30
+    prim = rep["primary_intraday"]["per_symbol"]["NDX.INDX"]
+    assert prim["baseline_acc_pct"] == pytest.approx(66.7, abs=0.1)
+    assert prim["early_observation"] is True
+
+
+def test_accuracy_report_direction_balance(store):
+    store.rows.extend([
+        _acc_row("0945_confirm", "bearish", {240: -0.5}, date="2026-07-27"),
+        _acc_row("0945_confirm", "bearish", {240: 0.2}, date="2026-07-28"),
+        _acc_row("0800_main", "bullish", {240: 0.4}, date="2026-07-29"),
+        _acc_row("xau_daily", "bullish", {60: 0.3}, sym="XAUUSD", date="2026-07-29"),
+    ])
+    rep = bts.accuracy_report()
+    bal = rep["direction_balance"]
+    ndx = bal["NDX.INDX"]
+    assert ndx["bearish"]["n"] == 2 and ndx["bullish"]["n"] == 1
+    assert ndx["bearish_share_pct"] == pytest.approx(66.7, abs=0.1)
+    assert ndx["bearish"]["accuracy_pct"] == 50.0    # bir isabet, bir ıska
+    assert bal["XAUUSD"]["bullish"]["n"] == 1

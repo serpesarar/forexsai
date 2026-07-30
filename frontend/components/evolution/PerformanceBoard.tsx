@@ -10,7 +10,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, MoveRight, TrendingDown, TrendingUp, Users, X } from "lucide-react";
 
-import type { BiasReport, BiasTimelineCell, Overview } from "@/lib/api/evolution";
+import type { BiasHorizonCell, BiasReport, BiasTimelineCell, Overview } from "@/lib/api/evolution";
 import ModelDetailDrawer from "./ModelDetailDrawer";
 import { Badge, EmptyState, GlassCard, ProgressBar, Ring, Section, Skeleton, cx, modelColor, stagger } from "./ui";
 
@@ -89,7 +89,7 @@ function DurabilityHeatmap({
   const symbols = Object.keys(bySym).sort();
   if (symbols.length === 0 && Object.keys(overall).length === 0) return null;
 
-  const rows: { key: string; label: string; data: Record<string, { n: number; accuracy_pct: number | null }>; clickable: boolean }[] = [
+  const rows: { key: string; label: string; data: Record<string, BiasHorizonCell>; clickable: boolean }[] = [
     { key: "__all__", label: "TÜMÜ", data: overall, clickable: false },
     ...symbols.map((s) => ({
       key: s,
@@ -136,16 +136,23 @@ function DurabilityHeatmap({
                 const cell = row.data?.[h];
                 const pct = cell?.accuracy_pct ?? null;
                 const n = cell?.n ?? 0;
+                const early = cell?.early_observation ?? n < 30;
+                const skill = cell?.skill_vs_baseline_pp ?? null;
+                const style = heatCellStyle(pct, n);
                 return (
                   <td
                     key={h}
                     onClick={row.clickable ? () => onSymbolClick(row.key) : undefined}
-                    title={`+${HORIZON_LABELS[h]}: ${pct !== null ? `%${pct} isabet` : "veri yok"} (${n} çağrı)`}
+                    title={
+                      `+${HORIZON_LABELS[h]}: ${pct !== null ? `%${pct} isabet` : "veri yok"} (${n} çağrı)` +
+                      (skill !== null ? ` · beceri ${skill > 0 ? "+" : ""}${skill}pp (baseline %${cell?.baseline_acc_pct ?? "—"})` : "") +
+                      (pct !== null && early ? " · erken gözlem — kanıt değil" : "")
+                    }
                     className={cx(
                       "h-[30px] rounded-lg text-center align-middle text-[10px] font-bold tabular-nums transition-transform",
                       row.clickable && "cursor-pointer hover:scale-110"
                     )}
-                    style={heatCellStyle(pct, n)}
+                    style={pct !== null && early ? { ...style, opacity: 0.45 } : style}
                   >
                     {pct !== null ? Math.round(pct) : "·"}
                   </td>
@@ -155,6 +162,10 @@ function DurabilityHeatmap({
           ))}
         </tbody>
       </table>
+      <p className="mt-1.5 text-[9px] text-slate-600">
+        Soluk hücre = n&lt;30 erken gözlem (kanıt değil). Üzerine gel: baseline-göreli beceri —
+        pozitif değilse ham yüzde dönem driftidir, öngörü değil.
+      </p>
     </div>
   );
 }
@@ -231,6 +242,14 @@ function BiasDetailSheet({ bias, symbol, onClose }: { bias: BiasReport; symbol: 
               {symRate && (
                 <span className="mt-0.5 block text-[10px] text-slate-600">
                   gün-kapanışı (eski metrik): %{symRate.accuracy_pct ?? "—"} · {symRate.n} tahmin
+                </span>
+              )}
+              {primaryStat.skill_vs_baseline_pp !== null && primaryStat.skill_vs_baseline_pp !== undefined && (
+                <span className="mt-0.5 block text-[10px] text-slate-600">
+                  baseline %{primaryStat.baseline_acc_pct ?? "—"} → beceri{" "}
+                  {primaryStat.skill_vs_baseline_pp > 0 ? "+" : ""}
+                  {primaryStat.skill_vs_baseline_pp}pp
+                  {primaryStat.early_observation ? " · erken gözlem — kanıt değil" : ""}
                 </span>
               )}
             </p>
@@ -333,6 +352,10 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
   const primary = bias?.primary_intraday ?? null;
   const overallPct = primary?.overall?.accuracy_pct ?? bias?.overall.accuracy_pct ?? null;
   const overallN = primary?.overall?.n ?? bias?.total_graded ?? 0;
+  // Yeni başarı çerçevesi (2026-07-30): ham yüzde değil, baseline-göreli BECERİ.
+  const overallSkill = primary?.overall?.skill_vs_baseline_pp ?? null;
+  const overallBase = primary?.overall?.baseline_acc_pct ?? null;
+  const overallEarly = primary?.overall?.early_observation ?? overallN < 30;
 
   // Genel trend: tüm sembollerin şeritleri tarih sırasında birleştirilir —
   // gösterge rengi ve "son dönem vs önceki" çipi buradan.
@@ -438,9 +461,26 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                   {overallPct !== null ? `%${overallPct}` : "—"}
                 </span>
                 <span className="mt-1 text-[11px] text-slate-500">
-                  {overallN} yönlü çağrı
+                  ham isabet · {overallN} çağrı
                 </span>
               </Ring>
+
+              {/* BECERİ çipi — asıl bakılacak sayı: baseline'ı geçiyor mu? */}
+              {overallSkill !== null && (
+                <div
+                  className="mt-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px]"
+                  title="Beceri = ham isabet − en iyi sabit yön (baseline). Pozitif değilse sistemin yön öngörüsü ölçülemedi demektir."
+                >
+                  <span className="text-slate-500">beceri </span>
+                  <span
+                    className="font-bold tabular-nums"
+                    style={{ color: overallSkill > 5 ? "#34D399" : overallSkill < -5 ? "#FB7185" : "#FBBF24" }}
+                  >
+                    {overallSkill > 0 ? "+" : ""}{overallSkill}pp
+                  </span>
+                  <span className="text-slate-600"> · baseline %{overallBase ?? "—"}</span>
+                </div>
+              )}
 
               {/* Trend çipi: son dönem vs önceki dönem */}
               {overallTrend.delta !== null && (
@@ -459,11 +499,38 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                 </p>
               )}
 
-              <div className="mt-2 flex justify-center">
-                {overallPct !== null && overallPct >= 65 && <Badge tone="green">hedefin üstünde</Badge>}
-                {overallPct !== null && overallPct >= 55 && overallPct < 65 && <Badge tone="amber">sınırda</Badge>}
-                {overallPct !== null && overallPct < 55 && <Badge tone="red">alt sınırın altında</Badge>}
+              {/* Karar rozeti: eski ham-yüzde eşikleri (≥65/≥55) yanlış soruyu
+                  soruyordu — önce örneklem yeterli mi, sonra beceri pozitif mi. */}
+              <div className="mt-2 flex flex-wrap justify-center gap-1.5">
+                {overallEarly && <Badge tone="slate">erken gözlem — kanıt değil (n&lt;30)</Badge>}
+                {!overallEarly && overallSkill !== null && overallSkill > 5 && <Badge tone="green">baseline üstü — beceri adayı</Badge>}
+                {!overallEarly && overallSkill !== null && overallSkill >= -5 && overallSkill <= 5 && <Badge tone="amber">baseline&apos;a eşit — ölçülen edge yok</Badge>}
+                {!overallEarly && overallSkill !== null && overallSkill < -5 && <Badge tone="red">baseline altı — sistem geride</Badge>}
               </div>
+
+              {/* Yön dengesi: tek yöne kilitlenme (≥%70) o sembolün çağrısını güvenilmez yapar */}
+              {bias.direction_balance && Object.keys(bias.direction_balance).length > 0 && (
+                <div className="mt-3 w-full rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2">
+                  <p className="mb-1 text-center text-[9px] font-semibold uppercase tracking-wide text-slate-500">
+                    Yön dengesi — ayı/boğa çağrı dağılımı
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px]">
+                    {Object.entries(bias.direction_balance).map(([sym, d]) => {
+                      const share = d.bearish_share_pct ?? 50;
+                      const tilted = share >= 70 || share <= 30;
+                      return (
+                        <span
+                          key={sym}
+                          className={tilted ? "text-rose-300" : "text-slate-400"}
+                          title={`${sym}: ${d.bearish.n} ayı / ${d.bullish.n} boğa · ayı isabet %${d.bearish.accuracy_pct ?? "—"} · boğa isabet %${d.bullish.accuracy_pct ?? "—"}${tilted ? " · TEK YÖNE YANLILIK — bu sembolün yön çağrılarına güvenme" : ""}`}
+                        >
+                          {sym.replace(".INDX", "").replace(".FOREX", "")} {d.bearish.n}A/{d.bullish.n}B{tilted ? " ⚠" : ""}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Karar dayanıklılık ısı haritası: karardan +10dk → +6s isabet seyri */}
               <div className="mt-5 w-full">
@@ -473,11 +540,16 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                 <DurabilityHeatmap bias={bias} onSymbolClick={setOpenBiasSymbol} />
               </div>
               <p className="mt-3 text-center text-[10px] text-slate-600">
-                hücre = o ufuktaki yönlü isabet %'si · <span className="text-emerald-400">yeşil</span> tutuyor ·{" "}
+                hücre = o ufuktaki yönlü isabet %&apos;si · <span className="text-emerald-400">yeşil</span> tutuyor ·{" "}
                 <span className="text-amber-400">sarı</span> zayıflıyor · <span className="text-rose-400">kırmızı</span> bozuluyor
-                · soluk = az veri · satıra tıkla → detay
+                · soluk = n&lt;30 erken gözlem · satıra tıkla → detay
               </p>
-              <p className="mt-2 text-center text-[11px] text-slate-500">Hedef: ≥%65 iyi · ≥%55 canlıya alma alt sınırı</p>
+              <p className="mt-2 max-w-[300px] text-center text-[10px] leading-relaxed text-slate-500">
+                <span className="font-semibold text-slate-300">Nasıl okunur:</span> ① n≥30 değilse yüzde kanıt değildir
+                ② beceri pozitif değilse ham yüzde dönem driftidir, öngörü değil
+                ③ ⚠ tek-yön yanlılığı olan sembolün çağrısına güvenme — sistemi yön sinyali değil;
+                çekimserlik filtresi + seviye + veto olarak kullan
+              </p>
             </div>
           )}
         </GlassCard>

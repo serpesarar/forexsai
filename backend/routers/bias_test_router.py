@@ -99,8 +99,9 @@ async def fill_outcomes(ny_date: Optional[str] = Query(default=None)):
     try:
         return await bts.fill_outcomes(ny_date)
     except bts.BiasTestError as e:
-        # missing candle → 404, db down → 503
-        code = 404 if "no NDX daily candle" in str(e) else 503
+        # missing candle/session data → 404, db down → 503
+        code = 404 if ("no NDX daily candle" in str(e)
+                       or "no session/horizon data" in str(e)) else 503
         raise HTTPException(status_code=code, detail=str(e))
 
 

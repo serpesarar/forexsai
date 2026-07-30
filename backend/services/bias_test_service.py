@@ -317,6 +317,12 @@ PRIMARY_HORIZON_MIN = {
 #: cezalandırıyordu; 0.5 altı gün "sakin gün" kabul edilir.
 ABSTAIN_QUIET_PCT = 0.5
 
+#: Bu sayının altındaki örneklem "erken gözlem"dir — yüzde gösterilir ama kanıt
+#: olarak işaretlenmez (2026-07-30: 48 yönlü çağrının tamamı ±14pp güven
+#: aralığında; sembol×ufuk hücreleri n=6-18). Rapor hücreleri bu eşiğin altında
+#: `early_observation: true` taşır; panel soluk gösterir.
+EARLY_OBS_MIN_N = 30
+
 
 def signed_ret(row: dict, minutes: int) -> Optional[float]:
     """Tahmin yönünde işaretli ufuk getirisi (%); yönsüz çağrıda None."""
@@ -691,6 +697,11 @@ def accuracy_report() -> dict:
         raise BiasTestError("db unavailable")
     rows = (client.table("bias_test_log").select("*")
             .order("ny_time", desc=True).limit(2000).execute()).get("data") or []
+    # Çift-yazar kalıntıları (`*_dup`) TÜM istatistiklerden dışlanır (2026-07-30:
+    # daha önce yalnız timeline şeridinden dışlanıyorlardı; by_run_label'da sahte
+    # kovalar oluşturuyor ve ufuk oranlarını çift sayımla şişiriyorlardı).
+    rows = [r for r in rows
+            if not str(r.get("run_label") or "").endswith("_dup")]
     graded = [r for r in rows if r.get("was_correct") is not None]
 
     def group(key_fn):
@@ -700,20 +711,36 @@ def accuracy_report() -> dict:
         return {k: _rate(v) for k, v in sorted(out.items())}
 
     def horizon_rates(rws: list[dict]) -> dict:
-        """Yönlü çağrıların ufuk-bazlı isabeti (işaretli getiri > 0)."""
+        """Yönlü çağrıların ufuk-bazlı isabeti (işaretli getiri > 0).
+
+        Her hücre baseline taşır (2026-07-30): aynı satırlar üzerinde en iyi
+        SABİT yönün (hep-boğa / hep-ayı) isabeti. Ham isabet dönem drift'ini de
+        sayar — beceri = isabet − baseline; pozitif olmayan beceri = öngörü yok
+        (EK A placebo düzeltmesi: USOIL'in '3/3'ü koşulsuz-ayı ile de tutuyordu)."""
         out = {}
         for m in HORIZONS_MIN:
             sgn = []
+            raw = []
             for r in rws:
                 b, v = (r.get("predicted_bias") or "").lower(), r.get(f"ret_{m}m")
                 if v is None or b not in ("bullish", "bearish"):
                     continue
                 sgn.append(v if b == "bullish" else -v)
+                raw.append(v)
             n, w = len(sgn), sum(1 for x in sgn if x > 0)
+            acc = round(w / n * 100.0, 1) if n else None
+            base = None
+            if n:
+                up = sum(1 for x in raw if x > 0)
+                base = round(max(up, n - up) / n * 100.0, 1)
             out[f"{m}m"] = {
                 "n": n, "correct": w,
-                "accuracy_pct": round(w / n * 100.0, 1) if n else None,
+                "accuracy_pct": acc,
+                "baseline_acc_pct": base,
+                "skill_vs_baseline_pp": (round(acc - base, 1)
+                                         if acc is not None and base is not None else None),
                 "avg_signed_ret_pct": round(sum(sgn) / n, 3) if n else None,
+                "early_observation": n < EARLY_OBS_MIN_N,
             }
         return out
 
@@ -727,10 +754,24 @@ def accuracy_report() -> dict:
         oranına karıştırılmaz (haklı çekimserlik cezalandırılmaz)."""
         out: dict[str, Any] = {"per_symbol": {}}
         tot_n = tot_w = 0
+        tot_raw: list[float] = []   # genel baseline havuzu (sembol birincil ufkunda)
         for sym, rws in sorted(by_sym_rows.items()):
             m = PRIMARY_HORIZON_MIN.get(sym, 60)
             sgn = [x for x in (signed_ret(r, m) for r in rws) if x is not None]
             n, w = len(sgn), sum(1 for x in sgn if x > 0)
+            acc = round(w / n * 100.0, 1) if n else None
+            # Baseline (2026-07-30): aynı yönlü satırlar üzerinde en iyi SABİT
+            # yönün isabeti. Beceri = isabet − baseline; ham yüzde tek başına
+            # dönem drift'ini de saydığı için beceri sayılmaz.
+            raw_prim = []
+            for r in rws:
+                b, v = (r.get("predicted_bias") or "").lower(), r.get(f"ret_{m}m")
+                if v is not None and b in ("bullish", "bearish"):
+                    raw_prim.append(v)
+            base = None
+            if n:
+                up = sum(1 for x in raw_prim if x > 0)
+                base = round(max(up, n - up) / n * 100.0, 1)
             ab_rows = [r for r in rws
                        if (r.get("predicted_bias") or "").lower() not in ("bullish", "bearish")]
             ab_meas = [r for r in ab_rows if r.get("actual_change_pct") is not None]
@@ -757,7 +798,11 @@ def accuracy_report() -> dict:
                                      "label": r.get("run_label")})
             out["per_symbol"][sym] = {
                 "horizon_min": m, "n": n, "correct": w,
-                "accuracy_pct": round(w / n * 100.0, 1) if n else None,
+                "accuracy_pct": acc,
+                "baseline_acc_pct": base,
+                "skill_vs_baseline_pp": (round(acc - base, 1)
+                                         if acc is not None and base is not None else None),
+                "early_observation": n < EARLY_OBS_MIN_N,
                 "avg_signed_ret_pct": round(sum(sgn) / n, 3) if n else None,
                 "abstain_n": len(ab_rows),
                 "abstain_rate_pct": round(len(ab_rows) / len(rws) * 100.0, 1) if rws else None,
@@ -767,13 +812,49 @@ def accuracy_report() -> dict:
             }
             tot_n += n
             tot_w += w
+            tot_raw.extend(raw_prim)
+        tot_acc = round(tot_w / tot_n * 100.0, 1) if tot_n else None
+        tot_base = None
+        if tot_raw:
+            up = sum(1 for x in tot_raw if x > 0)
+            tot_base = round(max(up, len(tot_raw) - up) / len(tot_raw) * 100.0, 1)
         out["overall"] = {"n": tot_n, "correct": tot_w,
-                          "accuracy_pct": round(tot_w / tot_n * 100.0, 1) if tot_n else None}
+                          "accuracy_pct": tot_acc,
+                          "baseline_acc_pct": tot_base,
+                          "skill_vs_baseline_pp": (round(tot_acc - tot_base, 1)
+                                                   if tot_acc is not None and tot_base is not None else None),
+                          "early_observation": tot_n < EARLY_OBS_MIN_N}
+        return out
+
+    def direction_balance() -> dict:
+        """YÖN DAĞILIMI İZLEME (2026-07-30) — SYMMETRY RULE işe yarıyor mu?
+        Sembol başına ayı/boğa çağrı sayısı + yöne göre birincil-ufuk isabeti.
+        07-26 denetimi: 32 yönlü çağrının 25'i ayıydı (binom p=0.002) ve ayı
+        çağrıları −EV üretiyordu; bu blok yanlılığın kırılıp kırılmadığını ölçer."""
+        out: dict[str, Any] = {}
+        for sym, rws in sorted(by_sym_rows.items()):
+            m = PRIMARY_HORIZON_MIN.get(sym, 60)
+            entry: dict[str, Any] = {}
+            for side in ("bearish", "bullish"):
+                sgn = [x for x in (signed_ret(r, m) for r in rws
+                                   if (r.get("predicted_bias") or "").lower() == side)
+                       if x is not None]
+                w = sum(1 for x in sgn if x > 0)
+                entry[side] = {
+                    "n": len(sgn),
+                    "accuracy_pct": round(w / len(sgn) * 100.0, 1) if sgn else None,
+                    "avg_signed_ret_pct": round(sum(sgn) / len(sgn), 3) if sgn else None,
+                }
+            tot = entry["bearish"]["n"] + entry["bullish"]["n"]
+            entry["bearish_share_pct"] = (round(entry["bearish"]["n"] / tot * 100.0, 1)
+                                          if tot else None)
+            out[sym] = entry
         return out
 
     return {
         "total_graded": len(graded),
         "primary_intraday": primary_block(),
+        "direction_balance": direction_balance(),
         "overall": _rate(graded),
         "by_horizon": horizon_rates(rows),
         "by_symbol_horizon": {s: horizon_rates(v) for s, v in sorted(by_sym_rows.items())},
@@ -786,7 +867,10 @@ def accuracy_report() -> dict:
         "by_current_session": group(lambda r: r.get("current_session")),
         "go_live_hint": (
             "ANA METRİK: primary_intraday (sembolün birincil ufkunda yönlü isabet; "
-            "çekimserler ayrı). ≥65% iyi, ≥55% + n≥30 canlıya bağlama eşiği; "
-            "overall/by_* gün-kapanışı LEGACY metriktir."
+            "çekimserler ayrı). Canlıya bağlama eşiği: n≥30 VE skill_vs_baseline_pp "
+            "açık pozitif (ham isabet değil — baseline dönem drift'ini ayıklar). "
+            "early_observation=true hücreler (n<30) kanıt değildir. "
+            "overall/by_* gün-kapanışı LEGACY metriktir. '*_dup' satırlar tüm "
+            "istatistiklerden dışlanır."
         ),
     }

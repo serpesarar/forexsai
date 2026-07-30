@@ -478,7 +478,7 @@ async function loadReport(){try{const r=await api("/api/bias-test/accuracy-repor
     h+=`<div style="font:600 10px/1 var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:15px 0 5px">Sembol · birincil ufuk (yönlü isabet + çekimser)</div><table><tbody>`;
     for(const[sym,s]of Object.entries(p.per_symbol||{})){
       h+=rateRow(`${sym.replace(/\.(INDX|FOREX)$/,"")} <span class="muted">@${s.horizon_min}dk</span>`,s);
-      h+=`<tr><td colspan="4" class="muted" style="font-size:10px;padding:0 0 6px 12px">çekimser: ${s.abstain_n} koşu (%${s.abstain_rate_pct??0})${s.abstain_quiet_day_pct!=null?` · çekimser günlerin %${s.abstain_quiet_day_pct}'i sakindi`:""}${s.avg_signed_ret_pct!=null?` · ort.işaretli ${s.avg_signed_ret_pct>0?"+":""}${s.avg_signed_ret_pct}%`:""}</td></tr>`;}
+      h+=`<tr><td colspan="4" class="muted" style="font-size:10px;padding:0 0 6px 12px">çekimser: ${s.abstain_n} koşu (%${s.abstain_rate_pct??0})${s.abstain_quiet_day_pct!=null?` · çekimser günlerin %${s.abstain_quiet_day_pct}'i sakindi`:""}${s.avg_signed_ret_pct!=null?` · ort.işaretli ${s.avg_signed_ret_pct>0?"+":""}${s.avg_signed_ret_pct}%`:""}${s.skill_vs_baseline_pp!=null?` · baseline %${s.baseline_acc_pct??"—"} → beceri ${s.skill_vs_baseline_pp>0?"+":""}${s.skill_vs_baseline_pp}pp`:""}${s.early_observation?` · <b>erken gözlem — kanıt değil</b>`:""}</td></tr>`;}
     h+=`</tbody></table>`;}
   h+=`<div style="font:600 10px/1 var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin:15px 0 5px">Gün-kapanışı (legacy)</div>`;
   h+=`<table><tbody>${rateRow("GENEL (gün)",r.overall)}</tbody></table>`;
