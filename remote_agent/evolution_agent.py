@@ -135,6 +135,18 @@ def open_position_count() -> int:
         return -1  # bilinmiyor
 
 
+# Broker sembolü → ForexSAI kanonik adı. bot_trades.symbol broker adını korur,
+# normalized_symbol ise sistemin geri kalanıyla (prediction_logs, candle_cache,
+# decider_journal) JOIN edilebilir kanonik adı taşır. 2026-07-31 denetimi:
+# bu kolon yokken her çapraz analiz elle eşleme gerektiriyordu.
+BROKER_SYMBOL_MAP = dict(getattr(cfg, "BROKER_SYMBOL_MAP", {}) or {
+    "NAS100": "NDX.INDX",
+    "GER40": "GDAXI.INDX",
+    "SpotCrude": "USOIL.FOREX",
+    "XAUUSD": "XAUUSD",
+})
+
+
 def push_trades(client, state: dict) -> int:
     """MT5 kapanan deal'leri watermark'tan itibaren bot_trades'e yaz."""
     if not HAS_MT5:
@@ -155,6 +167,7 @@ def push_trades(client, state: dict) -> int:
             "ticket": d.ticket,
             "host": HOST,
             "symbol": d.symbol,
+            "normalized_symbol": BROKER_SYMBOL_MAP.get(d.symbol),
             "direction": "SELL" if d.type == 0 else "BUY",  # kapatan deal ters yönlüdür
             "volume": d.volume,
             "close_time": datetime.fromtimestamp(d.time, tz=timezone.utc).isoformat(),
@@ -176,6 +189,16 @@ def push_trades(client, state: dict) -> int:
 
 # journal senkronu: kaç günlük pencere her turda YENİDEN gönderilsin
 JOURNAL_RESYNC_DAYS = float(getattr(cfg, "JOURNAL_RESYNC_DAYS", 5))
+
+# Kimlik şeması sürümü. _journal_id'nin ürettiği anahtar DEĞİŞİRSE bunu artır:
+# ajan bir kez TAM senkron yapıp eski şemadaki satırları tazeler.
+# 2026-07-31: v1(satır-SHA1) → v2(ts|symbol|mode) geçişi 5 günlük pencerenin
+# dışındaki 3.617 satırı geride bırakmıştı; 387 karar iki kimlikle birden
+# duruyordu ve panelde çözülme oranı %80 görünüyordu (gerçek %99,9).
+JOURNAL_ID_VERSION = 2
+# Pencere dışında geç çözülen kararlar da bir gün içinde panele ulaşsın diye
+# günde bir kez tam senkron (2-3 bin satır, ~15 batch — ihmal edilebilir).
+JOURNAL_FULL_RESYNC_SEC = float(getattr(cfg, "JOURNAL_FULL_RESYNC_SEC", 86400))
 
 
 def _journal_id(rec: dict) -> str:
@@ -216,7 +239,12 @@ def push_journal(client, state: dict) -> int:
         log.warning("journal okunamadı: %s", e)
         return 0
 
-    cutoff = time.time() - JOURNAL_RESYNC_DAYS * 86400
+    # TAM senkron gerekiyor mu? (a) kimlik şeması değişti, (b) günlük tazeleme.
+    # Aksi halde yalnız son JOURNAL_RESYNC_DAYS günlük pencere gönderilir.
+    now_s = time.time()
+    full = (state.get("journal_id_version") != JOURNAL_ID_VERSION
+            or now_s - float(state.get("last_full_resync", 0)) > JOURNAL_FULL_RESYNC_SEC)
+    cutoff = 0.0 if full else now_s - JOURNAL_RESYNC_DAYS * 86400
     rows, seen = [], set()
     for line in all_lines:
         line = line.strip()
@@ -251,8 +279,14 @@ def push_journal(client, state: dict) -> int:
         for i in range(0, len(rows), 200):
             client.table("decider_journal").upsert(rows[i:i + 200]).execute()
         n_res = sum(1 for r in rows if r.get("outcome") is not None)
-        log.info("decider_journal senkron: %d satır (%d sonuçlu, pencere %.0fg)",
-                 len(rows), n_res, JOURNAL_RESYNC_DAYS)
+        log.info("decider_journal senkron: %d satır (%d sonuçlu, %s)",
+                 len(rows), n_res,
+                 "TAM senkron" if full else f"pencere {JOURNAL_RESYNC_DAYS:.0f}g")
+    # Tam senkron ancak GERÇEKTEN yazdıysak işaretlenir; boş dosyada işaretleyip
+    # bir sonraki gerçek tam senkronu bir gün ertelemeyelim.
+    if full and rows:
+        state["journal_id_version"] = JOURNAL_ID_VERSION
+        state["last_full_resync"] = now_s
     state["journal_offset"] = size
     return len(rows)
 

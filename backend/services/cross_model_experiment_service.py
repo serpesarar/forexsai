@@ -15,7 +15,9 @@ Isolation guarantees (CRITICAL — must not pollute production):
   - Does NOT mirror to meta_signals (MT5 bot won't trade these)
   - AI-Ops orchestrator's AUDITED_MODELS set does NOT include this key,
     so failure clustering & DeepSeek proposals don't trigger on it
-  - Kill switch:  CROSS_MODEL_EXPERIMENT_ENABLED env (default "1")
+  - Kill switch:  CROSS_MODEL_EXPERIMENT_ENABLED env (default "0" — KAPALI;
+    2026-07-01'de kanıt sonrası varsayılan kapatıldı. is_enabled() her tick'te
+    yeniden okunur, yani env'i 0 yapmak süreç yeniden başlatmadan da durdurur.)
 
 Cache TTL:  60 seconds for the live preview endpoint (no Redis needed,
 in-memory dict). Cron writes don't read this cache.

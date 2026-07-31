@@ -84,12 +84,36 @@ def supa():
 # Çözüm: offset'i çalışma anında ÖLÇ (sunucu tick zamanı − gerçek UTC), 15 dk'ya
 # yuvarla. Böylece DST geçişleri ve broker değişiklikleri kendiliğinden çözülür.
 _SERVER_OFFSET_SEC = 0
+_OFFSET_KNOWN = False        # ilk başarılı ölçüm yapıldı mı (0 = "bilinmiyor" ile karışmasın)
+
+# ── OFFSET ÖLÇÜM SAĞLAMLIĞI (2026-07-31 düzeltmesi) ─────────────────────────
+# Eski sürüm 15 dk'ya yuvarlıyor ve TEK sembolün tick'ine güveniyordu. İki kaza:
+#   1. Bayat tick (piyasa kapalı/sembol donmuş) → delta saatlerce sapar, 900'e
+#      yuvarlanınca "makul" görünür. 2026-07-30 17:45'te ölçüm +135 dk çıktı
+#      (doğrusu +180) → 68 dakika boyunca barlar 45 dk kaymış damgayla yazıldı.
+#   2. 15 dk'lık yuvarlama 30m/1h ızgarasını BOZAR: 45 dk kayma :15/:45
+#      damgaları üretir, upsert anahtarı farklı olduğu için doğru satırı EZMEZ →
+#      hayalet bar kalıcı olarak birikir (temizlik öncesi 1h'te 18.006 satır).
+# Çözüm: (a) TAM SAATE yuvarla — gerçek broker offset'leri tam saattir
+# (Pepperstone UTC+2/+3); (b) her sembolün ölçümü toleranstan geçsin;
+# (c) semboller arası ÇOĞUNLUK uzlaşması ara; (d) ölçülemezse 0'a düşme,
+# bilinen son offset'i KORU.
+OFFSET_SNAP_SEC = 3600       # tam saate yuvarla (30m/1h ızgarası korunur)
+OFFSET_TOLERANCE_SEC = 240   # ham ölçüm, yuvarlanmış değerden en fazla bu kadar sapabilir
+OFFSET_MAX_ABS_SEC = 14 * 3600   # |offset| bu değeri aşarsa ölçüm saçmadır
 
 
-def detect_server_offset() -> int:
-    """MT5 sunucu saati ile gerçek UTC arasındaki farkı saniye olarak ölç."""
+def detect_server_offset() -> int | None:
+    """MT5 sunucu saati − gerçek UTC farkı (saniye).
+
+    Dönüş: uzlaşılan offset, ya da güvenilir ölçüm yoksa None (çağıran mevcut
+    offset'i korur — asla sessizce 0'a düşmez).
+    """
     import time as _time
-    best = None
+    from collections import Counter
+
+    votes: list[int] = []
+    detail: list[str] = []
     for sym in list(config.RECORDER_SYMBOLS.values()):
         try:
             if not mt5.symbol_select(sym, True):
@@ -98,20 +122,34 @@ def detect_server_offset() -> int:
             if not tick or not tick.time:
                 continue
             delta = tick.time - _time.time()
-            # 15 dk'ya yuvarla (tick gecikmesi/saat sapması gürültüsünü at)
-            snapped = round(delta / 900.0) * 900
-            if best is None or abs(delta - snapped) < abs(best[1] - best[0]):
-                best = (snapped, delta)
+            snapped = int(round(delta / OFFSET_SNAP_SEC) * OFFSET_SNAP_SEC)
+            if abs(delta - snapped) > OFFSET_TOLERANCE_SEC:
+                # bayat tick / donmuş sembol: tam saate oturmuyor → OYU SAYMA
+                detail.append(f"{sym}=RED({delta/60:+.1f}dk)")
+                continue
+            if abs(snapped) > OFFSET_MAX_ABS_SEC:
+                detail.append(f"{sym}=RED(sınır dışı {snapped/3600:+.1f}s)")
+                continue
+            votes.append(snapped)
+            detail.append(f"{sym}={snapped/60:+.0f}dk")
         except Exception:
             continue
-    if best is None:
-        log.warning("sunucu saat offset'i ölçülemedi — 0 varsayılıyor "
-                    "(barlar broker saatinde kalabilir!)")
-        return 0
-    snapped, raw = best
-    log.info("MT5 sunucu saat offset'i: %+.1f dk (ham %+.1f) → UTC'ye çevriliyor",
-             snapped / 60.0, raw / 60.0)
-    return int(snapped)
+
+    if not votes:
+        log.warning("sunucu saat offset'i ölçülemedi (%s) — mevcut offset korunuyor: %+.0f dk",
+                    ", ".join(detail) or "tick yok", _SERVER_OFFSET_SEC / 60.0)
+        return None
+
+    winner, n = Counter(votes).most_common(1)[0]
+    if n * 2 <= len(votes) and len(votes) > 1:
+        # net çoğunluk yok (ör. 2'ye 2) — belirsiz ölçümle damga kaydırma
+        log.warning("offset uzlaşması yok (%s) — mevcut offset korunuyor: %+.0f dk",
+                    ", ".join(detail), _SERVER_OFFSET_SEC / 60.0)
+        return None
+
+    log.info("MT5 sunucu saat offset'i: %+.1f dk (%d/%d sembol uzlaştı: %s)",
+             winner / 60.0, n, len(votes), ", ".join(detail))
+    return int(winner)
 
 
 def _iso(epoch: int) -> str:
@@ -158,16 +196,47 @@ def record(client, fx_symbol: str, mt5_symbol: str, tf_name: str, tf_const,
         ind_rows.append({"symbol": fx_symbol, "timeframe": tf_name, "candle_time": _iso(t[i]),
                          "open": o[i], "high": h[i], "low": l[i], "close": c[i],
                          "volume": v[i], "ind": ind})
-    if ind_rows:
-        try:
-            client.table("indicator_snapshots").upsert(
-                ind_rows, on_conflict="symbol,timeframe,candle_time").execute()
-        except Exception as e:
-            log.warning("%s %s indicator upsert hata: %s", fx_symbol, tf_name, e)
+    # indicator satırları 29 anahtarlı JSONB taşır; 120'lik tek upsert Supabase
+    # statement timeout'una (57014) düşüyordu ve hata YUTULUP tekrar denenmiyordu
+    # → o barın göstergeleri kalıcı olarak kayboluyordu (denetimde XAUUSD 1h
+    # kapsamı %54'e inmişti). Küçük parça + azalan boyutla yeniden deneme.
+    _upsert_indicators(client, fx_symbol, tf_name, ind_rows)
 
     last_seen[key] = t[-1]
     log.info("  %-12s %-3s: +%d bar (son %s)", fx_symbol, tf_name, len(new_idx),
              _iso(t[-1])[11:16])
+
+
+IND_CHUNK = 25            # JSONB ağır → küçük parça
+IND_RETRY_CHUNKS = (25, 10, 1)
+
+
+def _upsert_indicators(client, fx_symbol: str, tf_name: str, ind_rows: list) -> None:
+    """indicator_snapshots upsert — parçalı ve zaman aşımına dayanıklı."""
+    if not ind_rows:
+        return
+    failed = 0
+    for j in range(0, len(ind_rows), IND_CHUNK):
+        batch = ind_rows[j:j + IND_CHUNK]
+        for size in IND_RETRY_CHUNKS:      # aynı batch'i giderek küçülterek dene
+            ok = True
+            for k in range(0, len(batch), size):
+                try:
+                    client.table("indicator_snapshots").upsert(
+                        batch[k:k + size],
+                        on_conflict="symbol,timeframe,candle_time").execute()
+                except Exception as e:
+                    ok = False
+                    if size == IND_RETRY_CHUNKS[-1]:   # tek satır bile geçmedi
+                        failed += 1
+                        log.warning("%s %s indicator upsert BAŞARISIZ (%d satır): %s",
+                                    fx_symbol, tf_name, len(batch[k:k + size]), e)
+                    break
+            if ok:
+                break
+    if failed:
+        log.warning("%s %s: %d indicator parçası yazılamadı — kapsama boşluğu oluştu",
+                    fx_symbol, tf_name, failed)
 
 
 def resolve(mt5_symbol: str) -> str | None:
@@ -189,8 +258,22 @@ def main():
     last_seen: dict = {}
     resolved = {fx: resolve(m) for fx, m in config.RECORDER_SYMBOLS.items()}
 
-    global _SERVER_OFFSET_SEC
-    _SERVER_OFFSET_SEC = detect_server_offset()
+    # Açılışta güvenilir offset ŞART — bilinen önceki değer yok, yanlış damga
+    # tüm backfill'i zehirler. Ölçülemezse yaz(ma)dan çık (fail-closed).
+    global _SERVER_OFFSET_SEC, _OFFSET_KNOWN
+    for attempt in range(1, 6):
+        off = detect_server_offset()
+        if off is not None:
+            _SERVER_OFFSET_SEC, _OFFSET_KNOWN = off, True
+            break
+        log.warning("açılış offset ölçümü %d/5 başarısız — 10 sn sonra tekrar", attempt)
+        time.sleep(10)
+    if not _OFFSET_KNOWN:
+        log.error("sunucu saat offset'i açılışta ölçülemedi — YAZMADAN ÇIKILIYOR "
+                  "(yanlış damgalı bar yazmaktansa hiç yazma). MT5 bağlantısını/"
+                  "Market Watch sembollerini kontrol et.")
+        mt5.shutdown()
+        sys.exit(2)
 
     try:
         loops = 0
@@ -200,11 +283,23 @@ def main():
             loops += 1
             if loops % max(1, int(3600 / max(config.RECORDER_POLL, 1))) == 0:
                 new_off = detect_server_offset()
-                if new_off != _SERVER_OFFSET_SEC:
-                    log.warning("sunucu offset'i değişti: %+d dk → %+d dk",
+                # None = güvenilir ölçüm yok → mevcut offset'i KORU (eski sürüm
+                # burada 0'a düşüp tüm barları broker saatinde yazıyordu)
+                if new_off is not None and new_off != _SERVER_OFFSET_SEC:
+                    log.warning("sunucu offset'i değişti: %+d dk → %+d dk (DST/broker)",
                                 _SERVER_OFFSET_SEC // 60, new_off // 60)
                     _SERVER_OFFSET_SEC = new_off
-                    last_seen.clear()   # damgalar yeniden hesaplanmalı
+                    # SADECE SON PENCEREYİ yeniden yaz — last_seen.clear() DEĞİL.
+                    # clear() `key not in last_seen` yaptığı için DERİN BACKFILL
+                    # tetikliyordu ve aylarca geçmişi YENİ offset'le yeniden
+                    # damgalıyordu. Oysa MT5 tarihsel barları kendi döneminin
+                    # sunucu saatinde tutar: DST geçişinde tüm geçmişi 1 saat
+                    # kaydırıp piyasanın KAPALI olduğu saate hayalet bar basıyordu
+                    # (NDX 21:00 UTC'de 946 satır, MT5'te o saatte 0 bar).
+                    # 0'a çekmek pencereyi HIST_BARS ile sınırlar: yakın geçmiş
+                    # düzeltilir, eski geçmişe dokunulmaz.
+                    for k in last_seen:
+                        last_seen[k] = 0
             for fx, mt5_symbol in config.RECORDER_SYMBOLS.items():
                 rs = resolved.get(fx)
                 if not rs:
