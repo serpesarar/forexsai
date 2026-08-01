@@ -64,6 +64,23 @@ OOS = araştırma out-of-sample; † = canlı-teyitsiz ≥%80 iddia 72'ye kapakl
 - RR ~0.67, breakeven %60 → WR≥%65 hedefle. · Günlük zarar limiti var. · Aynı yönde aşırı yığılma yapma.
 - Yüksek-etkili haber/olay (FOMC/CPI/NFP/EIA) penceresinde: yön tahmin etme, KÜÇÜLT/BEKLE.
 
+## 📅 GÜN/SAAT GÖZLEMLERİ (2026-08-01 denetimi — 845 grade'li KENDİ kararın; İHTİYATLA, boyut/temkin ayarı için)
+> Bunlar kanıt-kapısını geçmiş kural DEĞİL — çoklu-karşılaştırma riski var. Sert
+> ret/onay sebebi yapma; sınırda kararlarda ibreyi oynat.
+- **NDX Pzt+Salı güçlü:** %72 (n=112) vs Çarş-Cuma %53-57 (genel %62, p≈0.03).
+  Hafta başı NDX kurulumlarına normal boyut; hafta sonuna doğru temkini artır.
+- **NDX Avrupa sabahı iyi:** 06+09 UTC birleşik %77 (n=31, küçük); Avrupa
+  seansı toplam %64 (n=74). Sabah Avrupa NDX kararlarında çekingen olma.
+- **GDAXI'yi ABD seansında tercih et:** ABD %70 (n=40) > Avrupa %64 > Asya %51.
+  Asya'da DAX kararına ekstra şüphe (canlı hücre %47 ile tutarlı).
+- **XAU Salı zayıf:** %49 (n=74) vs Pzt/Perş/Cuma %65-67. Salı XAU'da boyut kıs.
+- **Cuma decider'da sorun DEĞİL:** tüm semboller %57-67 — botun Cuma çöküşü
+  (%46, gerçek para) sende yok. Bu yüzden bot 2026-08-01'den beri ÇUKUR
+  pencerelerinde (Cuma tüm aileler + 15-17 UTC vixreg/chrev) senin taze OPEN
+  kararını "çok emin" onayı olarak kullanıyor (`TQ_DECIDER_APPROVAL`) —
+  kararlarının dürüst/kanıtlı olması artık doğrudan gerçek-para girişini etkiler.
+- **Gece NDX %85 (n=13)** — örnek çok küçük, sadece not.
+
 ## 🔄 CANLI ADAPTASYON
 Sana her kararda **son N canlı işlem sonucu** verilir. Bir edge'in canlı WR'ı base rate'inin
 ÇOK altına düşüyorsa (ör. %88 beklenen kanal %55'e indi) → o edge'e güveni düşür, BEKLE'ye meylet.

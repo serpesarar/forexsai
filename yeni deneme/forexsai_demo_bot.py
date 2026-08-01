@@ -1152,6 +1152,57 @@ def _tq_cool(family: str) -> tuple[bool, str]:
     return False, ""
 
 
+def _tq_decider_approval(forexsai_sym: str, direction: str) -> tuple[bool, str]:
+    """ÇUKUR penceresinde Claude Decider onayı köprüsü (2026-08-01).
+
+    Aynı kutudaki decider'ın journal'ında (claude_decider/memory/journal.jsonl)
+    bu sembol için EN TAZE karar ≤TQ_DECIDER_FRESH_MIN dk önce, action=OPEN,
+    aynı yönde ve size_factor ≥ TQ_DECIDER_MIN_SIZE ise → "çok emin" sayılır,
+    çukur kuralı aşılır. Kanıt: botun çukurlarında decider NEGATİF DEĞİL —
+    Cuma tüm semboller WR %57-67 (bot %46/−3.9k$), 15-17 UTC NDX %65 (n=31),
+    DAX %62 (n=13); decider genel %60.7 (n=845).
+    Fail-closed: journal yok/okunamaz/bayat → onay YOK (çukur kuralı uygulanır).
+    """
+    if not getattr(config, "TQ_DECIDER_APPROVAL", True):
+        return False, ""
+    try:
+        from pathlib import Path
+        jp = (Path(__file__).resolve().parent.parent
+              / "claude_decider" / "memory" / "journal.jsonl")
+        if not jp.exists():
+            return False, ""
+        with open(jp, "rb") as f:                    # dev dosya: yalnız kuyruk
+            f.seek(0, 2)
+            f.seek(max(0, f.tell() - 262144))
+            tail = f.read().decode("utf-8", "ignore")
+        fresh_min = float(getattr(config, "TQ_DECIDER_FRESH_MIN", 45))
+        min_size = float(getattr(config, "TQ_DECIDER_MIN_SIZE", 0.3))
+        now = datetime.now(timezone.utc)
+        for line in reversed(tail.splitlines()):
+            try:
+                r = json.loads(line)
+            except Exception:
+                continue                              # kuyruğun kırpık ilk satırı vb.
+            if r.get("symbol") != forexsai_sym:
+                continue
+            # Bu sembolün EN TAZE kararı — ne derse o geçerli, gerisine bakılmaz.
+            ts = datetime.fromisoformat(str(r.get("ts")))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            age_min = (now - ts).total_seconds() / 60
+            d = r.get("decision") or {}
+            if (age_min <= fresh_min
+                    and str(d.get("action", "")).upper() == "OPEN"
+                    and d.get("direction") == direction
+                    and float(d.get("size_factor") or 0) >= min_size):
+                return True, (f"decider onayı: {age_min:.0f}dk önce OPEN "
+                              f"{direction} size={d.get('size_factor')}")
+            return False, ""
+    except Exception as exc:
+        log.debug("tq decider onay okunamadı (fail-closed): %s", exc)
+    return False, ""
+
+
 def _trend_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
                        flag: str = "TREND_GATE_ENABLED") -> bool:
     """True → giriş bloklanmalı. Log + config bayrağı ile kapatılabilir."""
@@ -1253,13 +1304,20 @@ def check_scope(scope_key: str, cfg: dict) -> None:
     if _cool:
         _need = config.MIN_MODEL_VOTES + int(getattr(config, "TQ_FRIDAY_EXTRA_VOTES", 1))
         if len(voters) < _need:
-            log.info("%s — TQ ÇUKUR (%s): %d oy var, çok-emin eşiği %d → açılmadı",
+            _ok, _dnote = _tq_decider_approval(forexsai_sym, direction)
+            if _ok:
+                log.info("%s — TQ ÇUKUR (%s): oy %d/%d ama %s → çok-emin sayıldı, devam",
+                         scope_key, _why, len(voters), _need, _dnote)
+            else:
+                log.info("%s — TQ ÇUKUR (%s): %d oy var, çok-emin eşiği %d ve "
+                         "decider onayı yok → açılmadı",
+                         scope_key, _why, len(voters), _need)
+                _log_trade("TQ_COOL", scope_key, mt5_symbol, direction, 0, 0, 0,
+                           voters, _why)
+                return
+        else:
+            log.info("%s — TQ ÇUKUR (%s) ama %d oy ≥ %d (çok-emin) → devam",
                      scope_key, _why, len(voters), _need)
-            _log_trade("TQ_COOL", scope_key, mt5_symbol, direction, 0, 0, 0,
-                       voters, _why)
-            return
-        log.info("%s — TQ ÇUKUR (%s) ama %d oy ≥ %d (çok-emin) → devam",
-                 scope_key, _why, len(voters), _need)
 
     # ── Trend hizası kapısı (2026-07-24 kanıtı; momentum-continuation'ın
     #    tanımı gereği) — backend çağrısından ÖNCE, boş token harcamasın.
@@ -1382,16 +1440,23 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
         log.info("%s — mean-reversion YOK (z=%.2f) → açılmadı", scope_key, z)
         return
     # ── TQ kapısı: CHREV çukur pencerede (15-17 UTC %38 −1.820$) ve Cuma
-    #    HİÇ açılmaz — tek-model scope'ta "çok emin" ölçütü yok.
+    #    yalnız Claude Decider onayıyla açılır — tek-model scope'ta başka
+    #    "çok emin" ölçütü yok; decider'ın 5m mean-rev kanıt kapısı aynı
+    #    kurulumun daha sıkı hali (çukurlarda decider %57-67).
     _cool, _why = _tq_cool("chrev")
     if _cool:
-        log.info("%s — TQ ÇUKUR (%s) → CHREV açılmadı", scope_key, _why)
-        tick = mt5.symbol_info_tick(mt5_symbol)
-        if tick:
-            log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
-                          tick.ask if direction == "BUY" else tick.bid,
-                          "tq_cool", extra={"why": _why, "z": round(z, 2)})
-        return
+        _ok, _dnote = _tq_decider_approval(forexsai_sym, direction)
+        if _ok:
+            log.info("%s — TQ ÇUKUR (%s) ama %s → devam", scope_key, _why, _dnote)
+        else:
+            log.info("%s — TQ ÇUKUR (%s), decider onayı yok → CHREV açılmadı",
+                     scope_key, _why)
+            tick = mt5.symbol_info_tick(mt5_symbol)
+            if tick:
+                log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
+                              tick.ask if direction == "BUY" else tick.bid,
+                              "tq_cool", extra={"why": _why, "z": round(z, 2)})
+            return
     # ── Kanıt kapısı (2026-07-23, research/next_candidates 30g z-taraması) ──
     # GDAXI BUY: düşen kanalda WR %28.6 / vwap-kaynak WR %25 → yalnız
     #   kanal-kaynak + lehte eğim geçer (WR %73.7, be %64 üstü).
@@ -1584,14 +1649,20 @@ def check_vix_regime() -> None:
         _cool, _why = _tq_cool("vixreg")
         _need = int(getattr(config, "TQ_COOL_MIN_VOTERS", 2))
         if _cool and len(voters) < _need:
-            log.info("%s — TQ ÇUKUR (%s): %d oy < çok-emin eşiği %d → açılmadı",
-                     scope_key, _why, len(voters), _need)
-            tick = mt5.symbol_info_tick(mt5_symbol)
-            if tick:
-                log_gate_skip(scope_key, mt5_symbol, forexsai_sym, favored,
-                              tick.ask if favored == "BUY" else tick.bid,
-                              "tq_cool", extra={"why": _why, "voters": voters})
-            return
+            _ok, _dnote = _tq_decider_approval(forexsai_sym, favored)
+            if _ok:
+                log.info("%s — TQ ÇUKUR (%s): oy %d/%d ama %s → çok-emin sayıldı, devam",
+                         scope_key, _why, len(voters), _need, _dnote)
+            else:
+                log.info("%s — TQ ÇUKUR (%s): %d oy < çok-emin eşiği %d ve "
+                         "decider onayı yok → açılmadı",
+                         scope_key, _why, len(voters), _need)
+                tick = mt5.symbol_info_tick(mt5_symbol)
+                if tick:
+                    log_gate_skip(scope_key, mt5_symbol, forexsai_sym, favored,
+                                  tick.ask if favored == "BUY" else tick.bid,
+                                  "tq_cool", extra={"why": _why, "voters": voters})
+                return
     # Trend hizası: vixreg'de de net ayrışıyor (NDX SELL trend n=123 %63
     # +5.5k$ / karşı n=51 %51 −3.5k$). Ayrı bayrak — VIXREG_TREND_GATE=0
     # ile kapatılabilir (VIX rejimi kendi başına yön kanıtı taşıyor).
@@ -1664,6 +1735,8 @@ def main():
                    ("TQ_COOL_HOURS_UTC", (15, 16, 17)),
                    ("TQ_COOL_FAMILIES", ("vixreg", "chrev")),
                    ("TQ_COOL_MIN_VOTERS", 2), ("TQ_FRIDAY_EXTRA_VOTES", 1),
+                   ("TQ_DECIDER_APPROVAL", True), ("TQ_DECIDER_FRESH_MIN", 45),
+                   ("TQ_DECIDER_MIN_SIZE", 0.3),
                    ("TREND_GATE_ENABLED", True), ("VIXREG_TREND_GATE", True),
                    ("VIXREG_SELL_PATIENCE", False), ("VIXREG_SELL_PATIENCE_MIN", 10),
                    ("CHREV_MODE_OVERRIDE", {}),

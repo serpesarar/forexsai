@@ -642,6 +642,10 @@ TQ_SESSION_EXCEPTION=1            # NDX 18 UTC hard-bloğuna altın-istisna:
 # (Cuma bot %46 WR/−3.9k$: momentum +1 ek oy, vixreg ≥TQ_COOL_MIN_VOTERS=2 oy,
 # chrev açılmaz), TQ_COOL_HOURS_UTC=(15,16,17) yalnız TQ_COOL_FAMILIES=
 # (vixreg,chrev) — momentum'un en iyi dilimi 15-17 (%62) olduğundan saat freni YOK.
+# TQ_DECIDER_APPROVAL=True: çukurda oy/eşik tutmasa bile claude_decider'ın taze
+# (≤TQ_DECIDER_FRESH_MIN=45dk) aynı-yön OPEN kararı (size≥TQ_DECIDER_MIN_SIZE=0.3,
+# lokal journal.jsonl kuyruğundan) "çok emin" onayı sayılır — kanıt: çukur
+# pencerelerde decider %57-67 (Cuma) / NDX %65 (15-17 UTC); fail-closed.
 # Bot (yeni deneme): MGMT_INCLUDE_CHREV=True default — CHREV BUY pozisyonları da
 # BE30/koştur yönetimine dahil (kanıt seti CHREV işlemlerini içeriyordu; SELL kapsam dışı).
 # ml_cross: log_prediction'a kill-switch güvenlik ağı eklendi — bayrak 0 iken
