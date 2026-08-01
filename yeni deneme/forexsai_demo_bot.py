@@ -1591,6 +1591,7 @@ def main():
             else (default, "varsayılan")
     for _n, _d in (("TRADE_MGMT_ENABLED", True), ("MGMT_BE_MINUTES", 30),
                    ("MGMT_TRAIL_R", 0.6), ("MGMT_RUNNER_MIN_TP_SL_RATIO", 0.4),
+                   ("MGMT_INCLUDE_CHREV", True),
                    ("TREND_GATE_ENABLED", True), ("VIXREG_TREND_GATE", True),
                    ("VIXREG_SELL_PATIENCE", False), ("VIXREG_SELL_PATIENCE_MIN", 10),
                    ("CHREV_MODE_OVERRIDE", {}),

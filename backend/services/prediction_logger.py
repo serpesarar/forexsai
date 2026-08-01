@@ -618,7 +618,8 @@ async def log_smc_prediction(
                 _sl_guess = (parsed_entry_price - _atr_dist if direction == "BUY"
                              else parsed_entry_price + _atr_dist)
                 _ladder = _atr_ladder_targets(
-                    symbol, SMC_MODEL_TYPE, direction, parsed_entry_price, _sl_guess)
+                    symbol, SMC_MODEL_TYPE, direction, parsed_entry_price, _sl_guess,
+                    min_dist=_atr_ladder_floor(symbol, snap, normalized_timeframe))
                 if _ladder:
                     targets_dict = dict(_ladder["targets"])
                     stop_loss_pips = _ladder["stop_loss_pips"]
@@ -820,6 +821,11 @@ def _shadow_inversion_enabled(symbol: str, model_type: str) -> bool:
 
 _ATR_LADDER_DEFAULT_MODELS = "pulse1,pulse2,pulse3,ml,emel,emel_inverse,meta,smc"
 
+# 2026-08-01 genişleme: XAUUSD + USOIL eklendi (30g ölçüm: XAU pulse %16-18 WR
+# — 15-pip statik SL "patient WR" edge'ini boğuyordu; USOIL statik SL ~0-1 pip
+# bozuk veriydi). GDAXI bilinçli DIŞARIDA — ayrı ölçüm ister (CLAUDE.md notu).
+_ATR_LADDER_DEFAULT_SYMBOLS = "NDX.INDX,XAUUSD,USOIL.FOREX"
+
 #: SMC gibi kendi stop'unu geçmeyen modeller için snapshot ATR'sinden mesafe.
 #: TF → tercih sırasıyla snapshot ATR anahtarı öneki (NDX snapshot: M15/H1/H4).
 _SNAPSHOT_ATR_PREFS = {
@@ -845,19 +851,45 @@ def _snapshot_atr_distance(snap: Any, timeframe: str) -> Optional[float]:
     return None
 
 
+def _atr_ladder_floor(symbol: str, snap: Any, timeframe: str) -> Optional[float]:
+    """Dar-stop koruması: XAU/USOIL'de merdiven mesafesi 1.5×ATR altına inmesin.
+
+    Kanıt: XAU BUY "patient WR" — dar stop canlıda −EV'ye çeviriyor
+    (xauusd-meta-stop-sizing; PLAYBOOK 2026-07-28 geometri ölçümü ev
+    varsayılanı TP1.0/SL1.5). Snapshot/ATR yoksa None (fail-open: gelen
+    stop mesafesi neyse o kullanılır).
+    """
+    import os as _os
+    syms = {s.strip().upper() for s in _os.getenv(
+        "PULSE_ATR_FLOOR_SYMBOLS", "XAUUSD,USOIL.FOREX").split(",") if s.strip()}
+    if (symbol or "").upper() not in syms:
+        return None
+    try:
+        mult = float(_os.getenv("PULSE_ATR_FLOOR_MULT", "1.5"))
+    except ValueError:
+        mult = 1.5
+    atr = _snapshot_atr_distance(snap, timeframe)
+    return mult * atr if (atr and mult > 0) else None
+
+
 def _atr_ladder_targets(
     symbol: str,
     model_type: Optional[str],
     direction: str,
     entry_price: Optional[float],
     stop_price: Any,
+    min_dist: Optional[float] = None,
 ) -> Optional[Dict[str, Any]]:
-    """ATR tabanlı TP/SL merdiveni kur; koşullar sağlanmazsa None (legacy akış)."""
+    """ATR tabanlı TP/SL merdiveni kur; koşullar sağlanmazsa None (legacy akış).
+
+    min_dist: SL mesafesi tabanı (fiyat birimi) — XAU/USOIL dar-stop koruması
+    (_atr_ladder_floor). Gelen stop mesafesi tabandan küçükse taban kullanılır.
+    """
     import os as _os
     if _os.getenv("PULSE_ATR_LADDER", "1") == "0":
         return None
     syms = {s.strip().upper() for s in _os.getenv(
-        "PULSE_ATR_LADDER_SYMBOLS", "NDX.INDX").split(",") if s.strip()}
+        "PULSE_ATR_LADDER_SYMBOLS", _ATR_LADDER_DEFAULT_SYMBOLS).split(",") if s.strip()}
     if (symbol or "").upper() not in syms:
         return None
     allowed = {m.strip().lower() for m in _os.getenv(
@@ -879,6 +911,8 @@ def _atr_ladder_targets(
     # geometrisi trend yönüne göre kurulduğundan stop bazen sinyalin ters
     # tarafında gelir — SL'i doğru tarafa burada kendimiz koyarız.
     dist = abs(entry_price - stop)
+    if min_dist and min_dist > dist:
+        dist = min_dist          # dar-stop koruması (XAU/USOIL 1.5×ATR tabanı)
     # Sanite bandı: SL mesafesi girişin %0.04-%2'si arasında olmalı (NDX ~28000
     # için 11-560 puan) — bunun dışı bozuk panel verisidir, legacy'ye düş.
     if not (entry_price * 0.0004 <= dist <= entry_price * 0.02):
@@ -923,14 +957,27 @@ async def log_prediction(
     Returns:
         prediction_id (UUID string) if successful, None otherwise
     """
+    # ── ml_cross kill-switch güvenlik ağı (2026-08-01 envanter denetimi) ──
+    # CROSS_MODEL_EXPERIMENT_ENABLED=0 iken hiçbir yazar (eski deploy'un cron'u,
+    # elle çağrı, inversion aynası) ml_cross satırı ekleyemez. Kanıt: bayrak
+    # kapalı denmesine rağmen son 7 günde 456 satır yazılmıştı (XAU %25.4 WR).
+    if (model_type or "").lower().startswith("ml_cross"):
+        try:
+            from services.cross_model_experiment_service import is_enabled as _cross_on
+            if not _cross_on():
+                logger.info("ml_cross log ENGELLENDİ (CROSS_MODEL_EXPERIMENT_ENABLED=0)")
+                return None
+        except Exception:
+            return None  # deney servisi yoksa da yazma — deney izole kalmalı
+
     if not is_db_available():
         logger.debug("Database not available, skipping prediction log.")
         return None
-    
+
     client = get_supabase_client()
     if client is None:
         return None
-    
+
     try:
         ml = context.get("ml_prediction", {}) or {}
         direction = ml.get("direction", "HOLD")
@@ -1138,6 +1185,16 @@ async def log_prediction(
         
         cfg = get_symbol_config(symbol)
 
+        # ── Feature snapshot'ı ERKEN kur (2026-08-01): XAU/USOIL merdiven tabanı
+        # (1.5×ATR, _atr_ladder_floor) buradan gelir; aşağıdaki factors enrich
+        # aynı snapshot'ı yeniden kullanır (ekstra çağrı YOK; hata fail-open).
+        snap = None
+        try:
+            from services.signal_feature_snapshot import build_signal_feature_snapshot
+            snap = await build_signal_feature_snapshot(symbol)
+        except Exception as snap_err:
+            logger.debug("signal_feature_snapshot early build failed: %s", snap_err)
+
         # Calculate actual price targets for DB storage using fixed pip values
         pulse_ladder = None
         if entry_price and entry_price > 0:
@@ -1148,7 +1205,8 @@ async def log_prediction(
                             and (effective_model_type or "").lower().startswith("ml")
                             and ml.get("target_price") and ml.get("stop_price"))
             pulse_ladder = _atr_ladder_targets(
-                symbol, effective_model_type, direction, entry_price, ml.get("stop_price"))
+                symbol, effective_model_type, direction, entry_price, ml.get("stop_price"),
+                min_dist=_atr_ladder_floor(symbol, snap, normalized_timeframe))
             if is_xauusd_v2:
                 tp_price = float(ml["target_price"])
                 sl_price = float(ml["stop_price"])
@@ -1191,8 +1249,9 @@ async def log_prediction(
         # Adds ~60 fields covering momentum, trend, S/R, exhaustion, macro, session
         # so that the AI-ops loop can later cluster and analyze failures.
         try:
-            from services.signal_feature_snapshot import build_signal_feature_snapshot
-            snap = await build_signal_feature_snapshot(symbol)
+            if snap is None:  # erken kurulum başarısızsa bir kez daha dene
+                from services.signal_feature_snapshot import build_signal_feature_snapshot
+                snap = await build_signal_feature_snapshot(symbol)
             if snap:
                 # Caller-provided values take precedence; snapshot fills the gaps.
                 for k, v in snap.items():

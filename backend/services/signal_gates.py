@@ -40,8 +40,17 @@ Env bayrakları:
   WAVE_POSITION_GATE_ENABLED=1 → 4h dalga pozisyonu: tepe %60+ BUY / dip %40− SELL frenle
   WAVE_POSITION_GATE_BLOCK=0   → 1 ise gerçekten bloklar (default GÖLGE)
   VIX_REGIME_GATE_ENABLED=1    → VIX≥eşik→BUY lehte, altı→SELL lehte (plasebo p=0, OOS +17pp)
-  VIX_REGIME_GATE_BLOCK=0      → 1 ise gerçekten bloklar (default GÖLGE)
+  VIX_REGIME_GATE_BLOCK=1      → default BLOK (2026-08-01: 30g gölge-eşdeğeri ölçüm
+                                 lehte %58.0 vs karşıt %42.5, n=1098 — 0 ile gölgeye döner)
   VIX_REGIME_GATE_THRESHOLD=18.4
+
+2026-08-01 eki (AI işlem envanteri denetimi):
+  XAU_SCALP_GATE_ENABLED=1     → XAUUSD pulse1/2/3+smc scalp sinyali kapısı
+                                 (30g: pulse XAU %16-18 WR, smc %25 — statik
+                                 15-pip SL epoch'unda ölçüldü; aynı gün geometri
+                                 atr_ladder_v1 + 1.5×ATR tabanına taşındı)
+  XAU_SCALP_GATE_BLOCK=0       → default GÖLGE: yeni geometri epoch'u ölçülmeden
+                                 bloklanmaz; 1 → XAU pulse/smc BUY+SELL → HOLD
 """
 
 from __future__ import annotations
@@ -560,6 +569,33 @@ async def fakeout_gate(
 # verisiyle ölçülü. Panele GÖLGE modda taşındı: default yalnız loglar,
 # *_BLOCK=1 ile gerçek blok. Hepsi fail-open.
 
+# ─── Kapı: XAU scalp kapısı (2026-08-01 AI işlem envanteri denetimi) ─────────
+#
+# Kanıt (30g prediction_logs): XAUUSD'de pulse1 %18.2 (n=965), pulse2 %16.3
+# (n=995), pulse3 %18.2 (n=853), smc %25.2 (n=131) — hepsi statik 15-pip SL
+# epoch'unda ölçüldü. Kök neden geometri (XAU BUY "patient WR", dar stop −EV);
+# aynı gün geometri atr_ladder_v1 + 1.5×ATR tabanına taşındı. Bu kapı default
+# GÖLGE: yeni epoch ölçülmeden bloklamaz; epoch da kurtarmazsa
+# XAU_SCALP_GATE_BLOCK=1 ile XAU pulse/smc üretimi tamamen durdurulur.
+
+XAU_SCALP_GATED_MODELS = {"pulse1", "pulse2", "pulse3", "smc"}
+
+
+def xau_scalp_gate(symbol: str, direction: str) -> Tuple[bool, Optional[str]]:
+    """XAUUSD scalp-modeli sinyal kapısı (default GÖLGE — sadece loglar)."""
+    if not _flag("XAU_SCALP_GATE_ENABLED"):
+        return True, None
+    if not _is_xau(symbol) or direction not in ("BUY", "SELL"):
+        return True, None
+    reason = ("XAU scalp kapısı: 30g WR pulse %16-18 / smc %25 (statik-SL "
+              "epoch) — XAU'da 5m scalp edge'i yok, geometri epoch'u izleniyor")
+    if _flag("XAU_SCALP_GATE_BLOCK", "0"):
+        logger.info(f"xau_scalp_gate BLOCK {symbol} {direction}: {reason}")
+        return False, reason
+    logger.info(f"xau_scalp_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
+    return True, None
+
+
 _BOT_PORT_GATE_SYMBOLS = {"NDX.INDX"}
 
 #: Bot-taşıması kapılar yalnız pulse ailesine uygulanır (SMC'nin kendi NDX
@@ -664,7 +700,9 @@ async def vix_regime_gate(symbol: str, direction: str) -> Tuple[bool, Optional[s
     bot: lehte yön WR %70 vs karşıt %45). Kural: VIX ≥ eşik → lehte yön BUY,
     altı → SELL. Karşıt yöndeki pulse sinyali frenlenir (lehte yöne bonus
     verilmez — o iş Precision Veto katmanının).
-    Default GÖLGE: VIX_REGIME_GATE_BLOCK=1 olana dek sadece loglar.
+    Default BLOK (2026-08-01): 30g gölge-eşdeğeri ölçüm (NDX pulse1-3, n=1098,
+    factors.macro_vix_price ile) lehte %58.0 vs karşıt %42.5 (+15.5pp) — bot
+    kanıtı (+25pp) ve OOS (+17pp) ile tutarlı. VIX_REGIME_GATE_BLOCK=0 → gölge.
     """
     if not _flag("VIX_REGIME_GATE_ENABLED"):
         return True, None
@@ -689,7 +727,7 @@ async def vix_regime_gate(symbol: str, direction: str) -> Tuple[bool, Optional[s
                 f"{threshold}) → lehte yön {favored}, sinyal {direction} karşıt "
                 "(kanıt: lehte %70 vs karşıt %45 WR)"
             )
-            if _flag("VIX_REGIME_GATE_BLOCK", "0"):
+            if _flag("VIX_REGIME_GATE_BLOCK", "1"):
                 logger.info(f"vix_regime_gate BLOCK {symbol} {direction}: {reason}")
                 return False, reason
             logger.info(f"vix_regime_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
@@ -866,6 +904,13 @@ async def apply_signal_gates(
         allowed, reason = await xau_trend_sell_gate(symbol, direction, regime=regime)
         if not allowed:
             notes.append(reason or "XAU SELL kapısı")
+            return "HOLD", notes
+
+    # 2a) XAU scalp kapısı (2026-08-01; default GÖLGE — sadece loglar)
+    if base in XAU_SCALP_GATED_MODELS:
+        allowed, reason = xau_scalp_gate(symbol, direction)
+        if not allowed:
+            notes.append(reason or "XAU scalp kapısı")
             return "HOLD", notes
 
     # 2b) NDX SMC counter-trend SELL kapısı (2026-07-15 denetimi: 1W/28L)

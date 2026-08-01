@@ -13,6 +13,8 @@ dilim doğrulamalı):
                kendini SL'e taşıyordu). BUY'A UYGULANMAZ (orada −41R).
   * SELL pozisyonlarına BE/trail UYGULANMAZ (kanıt: NDX SELL BE Δ−7.5R).
   * USOIL/XAU: kanıt eşiği geçilemedi — dokunulmaz.
+  * 2026-08-01: CHREV BUY pozisyonları da aynı sembol-kurallarıyla yönetilir
+    (MGMT_INCLUDE_CHREV=False ile eski davranış).
 
 Durum `mgmt_state.json`'da (ticket bazlı orijinal geometri; restart-dayanıklı).
 Yaş ölçümü first_seen bazlı (broker saat-dilimi kaymasından bağımsız;
@@ -39,10 +41,25 @@ PATIENCE_MIN = getattr(config, "VIXREG_SELL_PATIENCE_MIN", 10)
 PATIENCE_FLOOR_R = 0.3          # aleyhte 0.3R'dan fazla gitmişse teyit yok
 
 # hangi (forexsai_sym, magic'ler) BUY pozisyonları yönetilir + BE uygulanır mı
+# 2026-08-01: CHREV magic'i de kapsama alındı (MGMT_INCLUDE_CHREV=False ile
+# çıkar). Gerekçe: kanıt veri seti (trade_mgmt_ndx, 223 NDX + 122 DAX gerçek
+# işlem) CHREV işlemlerini de İÇERİYORDU ve kurallar sembol+yön (NDX BUY /
+# DAX BUY) seviyesinde doğrulandı; canlıda CHREV ort. kayıp 610$ vs ort.
+# kazanç 390$ — kayıp kuyruğunu BE, kazanç tarafını koştur düzeltir.
+# SELL tarafı bilinçli KAPSAM DIŞI (BE/trail SELL'de Δ−7.5R; sabır kapısı
+# 2026-07-28 OOS kanıtıyla varsayılan kapalı — genellenmedi).
+
+
+def _managed_magics() -> set:
+    m = {config.MAGIC_NUMBER, getattr(config, "VIX_REGIME_MAGIC", -1)}
+    if getattr(config, "MGMT_INCLUDE_CHREV", True):
+        m.add(getattr(config, "CHANNEL_REVERSION_MAGIC", -1))
+    return m
+
+
 _RULES = {
-    "NDX.INDX":   {"be": True,  "magics": lambda: {config.MAGIC_NUMBER,
-                                                   getattr(config, "VIX_REGIME_MAGIC", -1)}},
-    "GDAXI.INDX": {"be": False, "magics": lambda: {config.MAGIC_NUMBER}},
+    "NDX.INDX":   {"be": True,  "magics": _managed_magics},
+    "GDAXI.INDX": {"be": False, "magics": _managed_magics},
 }
 
 _state: dict | None = None

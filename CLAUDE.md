@@ -598,7 +598,11 @@ PATTERN_BONUS_GATE_ENABLED=1      # formasyon "teyidi" +6/+10 skor bonusunu öl�
 PULSE_ATR_LADDER=1                # sinyalin SL mesafesinden (d) RR≥1 merdiven:
                                   # TP1..4 = 1.0/1.5/2.0/2.5×d; factors.target_type=atr_ladder_v1
                                   # (epoch etiketi — eski static_pips dönemiyle KARIŞTIRMA)
-PULSE_ATR_LADDER_SYMBOLS=NDX.INDX # kanıt NDX; DAX'a genişletme ayrı ölçüm ister
+PULSE_ATR_LADDER_SYMBOLS=NDX.INDX,XAUUSD,USOIL.FOREX
+# 2026-08-01: XAU+USOIL eklendi (XAU pulse %16-18 WR'ın kök nedeni 15-pip statik
+# SL'di; USOIL statik SL ~0-1 pip bozuk veriydi). DAX hâlâ DIŞARIDA — ayrı ölçüm.
+PULSE_ATR_FLOOR_SYMBOLS=XAUUSD,USOIL.FOREX  # dar-stop koruması: merdiven SL mesafesi
+PULSE_ATR_FLOOR_MULT=1.5                    # 1.5×ATR(TF'e uygun snapshot) altına inmez
 PULSE_ATR_LADDER_MODELS=pulse1,pulse2,pulse3,ml,emel,emel_inverse,meta,smc
 # (aynı gün genellendi — env adları tarihsel, pulse'ta doğdu. Mesafe kaynağı:
 #  pulse=panel _scalp_tp_sl SL'i; ml/emel=ML prediction stop'u; meta=risk
@@ -611,9 +615,20 @@ TREND_ALIGN_GATE_ENABLED=1        # NDX pulse 1h EMA50 hizası (bot 30g/332: %63
 TREND_ALIGN_GATE_BLOCK=0          # 1 → gerçekten bloklar (≥2-3 hafta gölge ölçümü sonrası)
 WAVE_POSITION_GATE_ENABLED=1      # 4h dalga (48×5m) pozisyonu: tepe %60+ BUY / dip %40− SELL — GÖLGE
 WAVE_POSITION_GATE_BLOCK=0
-VIX_REGIME_GATE_ENABLED=1         # VIX≥18.4→BUY lehte, altı→SELL (plasebo p=0, OOS +17pp) — GÖLGE
-VIX_REGIME_GATE_BLOCK=0
+VIX_REGIME_GATE_ENABLED=1         # VIX≥18.4→BUY lehte, altı→SELL (plasebo p=0, OOS +17pp)
+VIX_REGIME_GATE_BLOCK=1           # 2026-08-01 GÖLGE→BLOK: 30g gölge-eşdeğeri ölçüm
+                                  # (NDX pulse1-3, n=1098, factors.macro_vix_price):
+                                  # lehte %58.0 vs karşıt %42.5 (+15.5pp). 0 → gölge.
 VIX_REGIME_GATE_THRESHOLD=18.4
+
+# ─── 2026-08-01 AI işlem envanteri denetimi kapıları ───
+XAU_SCALP_GATE_ENABLED=1          # XAU pulse1/2/3+smc scalp kapısı (30g pulse %16-18 WR)
+XAU_SCALP_GATE_BLOCK=0            # default GÖLGE — atr_ladder_v1 epoch'u XAU'da ölçülmeden
+                                  # bloklanmaz; epoch da kurtarmazsa 1 yap
+# Bot (yeni deneme): MGMT_INCLUDE_CHREV=True default — CHREV BUY pozisyonları da
+# BE30/koştur yönetimine dahil (kanıt seti CHREV işlemlerini içeriyordu; SELL kapsam dışı).
+# ml_cross: log_prediction'a kill-switch güvenlik ağı eklendi — bayrak 0 iken
+# ml_cross* satırı hiçbir yazardan DB'ye giremez (eski deploy dahil, o pull edince).
 
 # ─── 2026-07-19 shadow trade tracker (services/shadow_trade_tracker.py) ───
 SHADOW_TRACKER_ENABLED=1          # %60+ formasyon + fakeout dedektör çağrıları için sızıntısız paper-trade doğrulaması

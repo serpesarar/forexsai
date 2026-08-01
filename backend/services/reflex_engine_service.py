@@ -19,6 +19,11 @@ Env:
   REFLEX_ENABLED=1        turn the loop on (default off)
   REFLEX_MODE=shadow|live tag written on signals (default shadow)
   REFLEX_SYMBOL=NDX.INDX
+
+⚠️ CANLIYA ALMA (2026-08-01 envanter denetimi): gölge sonuçlar NEGATİF —
+mom_cont BUY ort. −0.46R (n=19), SELL ort. −0.06R (n=26); doğrulanan +0.29R
+canlı-gölgede tutmadı. Yeniden kalibrasyon + pozitif gölge dönemi olmadan
+REFLEX_MODE=live veya bot REFLEX_LIVE=1 YAPMA.
 """
 from __future__ import annotations
 
