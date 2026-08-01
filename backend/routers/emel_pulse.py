@@ -1909,7 +1909,7 @@ async def get_pulse_analysis(symbol: str, timeframe: str = "5m", refresh: bool =
             try:
                 from services.signal_gates import apply_signal_gates
                 _gated_signal, _gate_notes = await apply_signal_gates(
-                    symbol, pulse_signal, "pulse1", regime=regime
+                    symbol, pulse_signal, "pulse1", regime=regime, confidence=score
                 )
                 if _gate_notes:
                     decision_notes.extend(_gate_notes)
@@ -2476,7 +2476,7 @@ async def get_pulse_ml_analysis(symbol: str, timeframe: str = "15m", refresh: bo
             try:
                 from services.signal_gates import apply_signal_gates
                 _gated_signal, _gate_notes = await apply_signal_gates(
-                    symbol, signal, "pulse2", regime=regime
+                    symbol, signal, "pulse2", regime=regime, confidence=score
                 )
                 if _gate_notes:
                     notes.extend(_gate_notes)
@@ -3060,7 +3060,7 @@ async def get_pulse_v3_analysis(symbol: str, refresh: bool = False):
             try:
                 from services.signal_gates import apply_signal_gates
                 _gated_dir, _gate_notes = await apply_signal_gates(
-                    symbol, direction, "pulse3", regime=regime
+                    symbol, direction, "pulse3", regime=regime, confidence=total_score
                 )
                 if _gate_notes:
                     notes.extend(_gate_notes)

@@ -51,6 +51,22 @@ Env bayrakları:
                                  atr_ladder_v1 + 1.5×ATR tabanına taşındı)
   XAU_SCALP_GATE_BLOCK=0       → default GÖLGE: yeni geometri epoch'u ölçülmeden
                                  bloklanmaz; 1 → XAU pulse/smc BUY+SELL → HOLD
+
+2026-08-01 eki-2 (gün/saat denetimi — zaman-kalitesi katmanı):
+  Kanıt (30g panel, çözülmüş, inv/ml_cross hariç):
+    NDX 13-14 UTC %58 (n=683, taban %50, p<1e-4) → ALTIN pencere (dokunulmaz,
+    factors.time_quality=golden etiketi). NDX 16 %45 (n=261) / 19 %45 (n=334)
+    → ÇUKUR. NDX 18 UTC seans bloğu KALIR ama yüksek-güven sinyale altın-istisna
+    açılır (kullanıcı kararı 2026-08-01: çukurda yalnız çok-emin işlem).
+    USOIL Perşembe %35 (n=941) vs Salı/Çarş %50-52 → ÇUKUR günü.
+    NOT: Cuma freni PANELDE YOK (NDX panel Cuma %53 — kanıt bot tarafında;
+    Cuma kuralı bot'ta uygulanır).
+  TQ_GATE_ENABLED=1            → zaman-kalitesi kapısı (pulse1/2/3+smc)
+  TQ_GATE_BLOCK=1              → çukurda güven < eşik sinyali BLOKLAR (0 → gölge)
+  TQ_COOL_MIN_CONF=80          → çukur penceresinde "çok emin" güven eşiği
+  TQ_NDX_COOL_HOURS=16,17,19   → NDX çukur saatleri (UTC; 15 hariç — panel %53)
+  TQ_USOIL_COOL_DOWS=4         → USOIL çukur günleri (ISO; 4=Perşembe)
+  TQ_SESSION_EXCEPTION=1       → NDX 18 UTC: güven ≥ eşik ise seans bloğunu aş
 """
 
 from __future__ import annotations
@@ -569,6 +585,113 @@ async def fakeout_gate(
 # verisiyle ölçülü. Panele GÖLGE modda taşındı: default yalnız loglar,
 # *_BLOCK=1 ile gerçek blok. Hepsi fail-open.
 
+# ─── Zaman-kalitesi katmanı (2026-08-01 gün/saat denetimi) ───────────────────
+#
+# Fikir: kötü pencereleri tamamen kapatmak yerine "yalnız çok emin sinyal"
+# çıtası koy (kullanıcı kararı). Altın pencerede davranış DEĞİŞMEZ (zaten tam
+# çalışıyor) — yalnız factors.time_quality etiketiyle ileriki analize işaretlenir.
+
+TQ_GATED_MODELS = {"pulse1", "pulse2", "pulse3", "smc"}
+
+_TQ_GOLDEN_HOURS = {"NDX.INDX": {13, 14}}        # ABD açılışı — %58 (n=683)
+_TQ_SESSION_EXCEPTION_HOURS = {"NDX.INDX": {18}}  # hard-bloklu saat, yüksek güvene açılır
+
+
+def _tq_cool_hours(symbol: str) -> set:
+    if _norm_symbol(symbol) != "NDX.INDX":
+        return set()
+    raw = os.getenv("TQ_NDX_COOL_HOURS", "16,17,19")
+    try:
+        return {int(h) for h in raw.split(",") if h.strip()}
+    except ValueError:
+        return {16, 17, 19}
+
+
+def _tq_cool_dows(symbol: str) -> set:
+    if _norm_symbol(symbol) != "USOIL.FOREX":
+        return set()
+    raw = os.getenv("TQ_USOIL_COOL_DOWS", "4")
+    try:
+        return {int(d) for d in raw.split(",") if d.strip()}
+    except ValueError:
+        return {4}
+
+
+def _tq_conf_min() -> float:
+    try:
+        return float(os.getenv("TQ_COOL_MIN_CONF", "80"))
+    except ValueError:
+        return 80.0
+
+
+def _tq_norm_conf(confidence: Optional[float]) -> Optional[float]:
+    """Güveni 0-100 ölçeğine getir (bazı üreticiler 0-1 kesir geçer)."""
+    if confidence is None:
+        return None
+    try:
+        c = float(confidence)
+    except (TypeError, ValueError):
+        return None
+    return c * 100.0 if 0.0 < c <= 1.0 else c
+
+
+def time_quality_tier(symbol: str, when: Optional[datetime] = None) -> Tuple[str, Optional[str]]:
+    """('golden'|'cool'|'normal', sebep). Yalnız UTC saat/gün — veri çekmez."""
+    now = when or datetime.now(timezone.utc)
+    sym = _norm_symbol(symbol)
+    if now.hour in _TQ_GOLDEN_HOURS.get(sym, set()):
+        return "golden", f"altın pencere {now.hour:02d} UTC (NDX ABD açılışı %58, n=683)"
+    if now.hour in _tq_cool_hours(symbol):
+        return "cool", f"çukur saat {now.hour:02d} UTC (NDX %44-45 kanıtı)"
+    if now.isoweekday() in _tq_cool_dows(symbol):
+        return "cool", "çukur günü Perşembe (USOIL %35, n=941)"
+    return "normal", None
+
+
+def time_quality_gate(
+    symbol: str, direction: str, confidence: Optional[float],
+) -> Tuple[bool, Optional[str]]:
+    """Çukur penceresinde güven < eşik sinyali frenle (TQ_GATE_BLOCK=0 → gölge).
+
+    Fail-open: güven bilinmiyorsa (None) bloklamaz — yalnız loglar.
+    """
+    if not _flag("TQ_GATE_ENABLED"):
+        return True, None
+    tier, why = time_quality_tier(symbol)
+    if tier != "cool":
+        return True, None
+    conf = _tq_norm_conf(confidence)
+    if conf is None:
+        logger.info(f"time_quality_gate {symbol} {direction}: {why} ama güven "
+                    "bilinmiyor — fail-open geçti")
+        return True, None
+    if conf >= _tq_conf_min():
+        return True, None      # "çok emin" sinyal — çukurda da açılır
+    reason = (f"Zaman-kalitesi kapısı: {why}; güven {conf:.0f} < eşik "
+              f"{_tq_conf_min():.0f} — çukurda yalnız çok-emin sinyal")
+    if _flag("TQ_GATE_BLOCK", "1"):
+        logger.info(f"time_quality_gate BLOCK {symbol} {direction}: {reason}")
+        return False, reason
+    logger.info(f"time_quality_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
+    return True, None
+
+
+def tq_session_exception(symbol: str, confidence: Optional[float]) -> bool:
+    """NDX 18 UTC seans bloğu altın-istisnası: güven ≥ eşik ise saat açılır.
+
+    Kullanıcı kararı (2026-08-01): 18-20 penceresi 'çok emin' işlemlere aktif —
+    panel kanıtı 18 UTC'de zayıf (%44) olduğundan tam açmak yerine yüksek-güven
+    şartıyla açılır. TQ_SESSION_EXCEPTION=0 ile eski tam-blok davranışı.
+    """
+    if not _flag("TQ_SESSION_EXCEPTION"):
+        return False
+    now = datetime.now(timezone.utc)
+    if now.hour not in _TQ_SESSION_EXCEPTION_HOURS.get(_norm_symbol(symbol), set()):
+        return False
+    conf = _tq_norm_conf(confidence)
+    return conf is not None and conf >= _tq_conf_min()
+
+
 # ─── Kapı: XAU scalp kapısı (2026-08-01 AI işlem envanteri denetimi) ─────────
 #
 # Kanıt (30g prediction_logs): XAUUSD'de pulse1 %18.2 (n=965), pulse2 %16.3
@@ -873,6 +996,7 @@ async def apply_signal_gates(
     direction: str,
     model_type: str,
     regime: Any = None,
+    confidence: Optional[float] = None,
 ) -> Tuple[str, List[str]]:
     """Tüm kapıları sırasıyla uygula; bloklanırsa yönü HOLD'a düşür.
 
@@ -884,6 +1008,8 @@ async def apply_signal_gates(
         direction: "BUY" | "SELL" | diğer (dokunulmaz).
         model_type: "pulse1" | "pulse2" | "pulse3" | "smc" | "emel" | "ml:*" ...
         regime: Varsa RegimeResult (tekrar tespit maliyetini önler).
+        confidence: Sinyal güveni (0-100 veya 0-1; zaman-kalitesi kapısı ve NDX
+            18 UTC altın-istisnası kullanır; None → o kontroller fail-open).
 
     Returns:
         (yeni_direction, notlar): Bloklanırsa ("HOLD", [sebepler]).
@@ -919,11 +1045,22 @@ async def apply_signal_gates(
         notes.append(reason or "NDX SMC SELL kapısı")
         return "HOLD", notes
 
-    # 3) Seans kapısı
+    # 3) Seans kapısı (+ NDX 18 UTC altın-istisnası: güven ≥ TQ eşiği ise geç)
     if base in SESSION_GATED_MODELS:
         allowed, reason = session_gate(symbol)
         if not allowed:
-            notes.append(reason or "Seans kapısı")
+            if tq_session_exception(symbol, confidence):
+                notes.append("NDX 18 UTC altın-istisna: yüksek güvenli sinyal "
+                             "seans bloğunu aştı (TQ_SESSION_EXCEPTION)")
+            else:
+                notes.append(reason or "Seans kapısı")
+                return "HOLD", notes
+
+    # 3b) Zaman-kalitesi kapısı (çukur pencerede yalnız çok-emin sinyal)
+    if base in TQ_GATED_MODELS:
+        allowed, reason = time_quality_gate(symbol, direction, confidence)
+        if not allowed:
+            notes.append(reason or "Zaman-kalitesi kapısı")
             return "HOLD", notes
 
     # 4) Takvim kapısı

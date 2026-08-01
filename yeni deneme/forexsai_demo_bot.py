@@ -1123,6 +1123,35 @@ def backend_veto_advice(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     return blocking
 
 
+# ─── Zaman-kalitesi (TQ) kapısı — 2026-08-01 gün/saat denetimi ───────────────
+# Kanıt (385 gerçek işlem, broker→UTC −3s düzeltmeli):
+#   * Cuma bot-geneli: WR %46 / −3.933$ (diğer günler %57-60) → Cuma yalnız
+#     "çok emin" girişler (momentum: +1 fazla oy; vixreg: ≥TQ_COOL_MIN_VOTERS oy;
+#     chrev: açılmaz).
+#   * VIXREG 15-17 UTC: %44 / −5.483$ (12-14 %67 +4.095$, 18-20 %75 +2.594$)
+#     → çukurda vixreg yalnız çok-emin; 18-20 penceresi AKTİF kalır.
+#   * CHREV 15-17 UTC: %38 / −1.820$ → çukurda chrev açılmaz.
+#   * Momentum'a SAAT freni YOK: 15-17 momentum'un EN İYİ dilimi (%62 +1.330$)
+#     — yalnız Cuma kuralı uygulanır.
+# Hepsi config ile kapatılır: TQ_ENABLED=False → katman tamamen devre dışı.
+
+def _tq_cool(family: str) -> tuple[bool, str]:
+    """(çukurda_mı, sebep). family: 'momentum' | 'vixreg' | 'chrev'. Fail-open."""
+    if not getattr(config, "TQ_ENABLED", True):
+        return False, ""
+    try:
+        now = datetime.now(timezone.utc)
+        if now.isoweekday() == 5 and getattr(config, "TQ_FRIDAY_COOL", True):
+            return True, "Cuma (bot 385 işlem: WR %46 / −3.9k$)"
+        cool_hours = set(getattr(config, "TQ_COOL_HOURS_UTC", (15, 16, 17)))
+        cool_fams = set(getattr(config, "TQ_COOL_FAMILIES", ("vixreg", "chrev")))
+        if now.hour in cool_hours and family in cool_fams:
+            return True, f"{now.hour:02d} UTC çukuru ({family})"
+    except Exception:
+        return False, ""
+    return False, ""
+
+
 def _trend_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
                        flag: str = "TREND_GATE_ENABLED") -> bool:
     """True → giriş bloklanmalı. Log + config bayrağı ile kapatılabilir."""
@@ -1217,6 +1246,20 @@ def check_scope(scope_key: str, cfg: dict) -> None:
         log.info("%s — yeterli sinyal yok (%d/%d)",
                  scope_key, len(voters), config.MIN_MODEL_VOTES)
         return
+
+    # ── TQ kapısı: çukur pencerede (momentum için yalnız Cuma) çıta yükselir —
+    #    normal oy eşiğinin ÜSTÜNE TQ_FRIDAY_EXTRA_VOTES kadar ek oy istenir.
+    _cool, _why = _tq_cool("momentum")
+    if _cool:
+        _need = config.MIN_MODEL_VOTES + int(getattr(config, "TQ_FRIDAY_EXTRA_VOTES", 1))
+        if len(voters) < _need:
+            log.info("%s — TQ ÇUKUR (%s): %d oy var, çok-emin eşiği %d → açılmadı",
+                     scope_key, _why, len(voters), _need)
+            _log_trade("TQ_COOL", scope_key, mt5_symbol, direction, 0, 0, 0,
+                       voters, _why)
+            return
+        log.info("%s — TQ ÇUKUR (%s) ama %d oy ≥ %d (çok-emin) → devam",
+                 scope_key, _why, len(voters), _need)
 
     # ── Trend hizası kapısı (2026-07-24 kanıtı; momentum-continuation'ın
     #    tanımı gereği) — backend çağrısından ÖNCE, boş token harcamasın.
@@ -1337,6 +1380,17 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
     scope_key = f"{forexsai_sym}:{direction}:CHREV"
     if not ok:
         log.info("%s — mean-reversion YOK (z=%.2f) → açılmadı", scope_key, z)
+        return
+    # ── TQ kapısı: CHREV çukur pencerede (15-17 UTC %38 −1.820$) ve Cuma
+    #    HİÇ açılmaz — tek-model scope'ta "çok emin" ölçütü yok.
+    _cool, _why = _tq_cool("chrev")
+    if _cool:
+        log.info("%s — TQ ÇUKUR (%s) → CHREV açılmadı", scope_key, _why)
+        tick = mt5.symbol_info_tick(mt5_symbol)
+        if tick:
+            log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
+                          tick.ask if direction == "BUY" else tick.bid,
+                          "tq_cool", extra={"why": _why, "z": round(z, 2)})
         return
     # ── Kanıt kapısı (2026-07-23, research/next_candidates 30g z-taraması) ──
     # GDAXI BUY: düşen kanalda WR %28.6 / vwap-kaynak WR %25 → yalnız
@@ -1524,6 +1578,20 @@ def check_vix_regime() -> None:
         if d == favored and (not config.ONLY_CONFIRM_SIGNALS or stype == "CONFIRM"):
             voters.append(model)
     scope_key = f"{forexsai_sym}:{favored}:VIXREG"
+    # ── TQ kapısı: 15-17 UTC çukuru (−5.483$) + Cuma → yalnız çok-emin
+    #    (≥TQ_COOL_MIN_VOTERS model oyu). 12-14 ve 18-20 pencereleri AKTİF.
+    if voters:
+        _cool, _why = _tq_cool("vixreg")
+        _need = int(getattr(config, "TQ_COOL_MIN_VOTERS", 2))
+        if _cool and len(voters) < _need:
+            log.info("%s — TQ ÇUKUR (%s): %d oy < çok-emin eşiği %d → açılmadı",
+                     scope_key, _why, len(voters), _need)
+            tick = mt5.symbol_info_tick(mt5_symbol)
+            if tick:
+                log_gate_skip(scope_key, mt5_symbol, forexsai_sym, favored,
+                              tick.ask if favored == "BUY" else tick.bid,
+                              "tq_cool", extra={"why": _why, "voters": voters})
+            return
     # Trend hizası: vixreg'de de net ayrışıyor (NDX SELL trend n=123 %63
     # +5.5k$ / karşı n=51 %51 −3.5k$). Ayrı bayrak — VIXREG_TREND_GATE=0
     # ile kapatılabilir (VIX rejimi kendi başına yön kanıtı taşıyor).
@@ -1592,6 +1660,10 @@ def main():
     for _n, _d in (("TRADE_MGMT_ENABLED", True), ("MGMT_BE_MINUTES", 30),
                    ("MGMT_TRAIL_R", 0.6), ("MGMT_RUNNER_MIN_TP_SL_RATIO", 0.4),
                    ("MGMT_INCLUDE_CHREV", True),
+                   ("TQ_ENABLED", True), ("TQ_FRIDAY_COOL", True),
+                   ("TQ_COOL_HOURS_UTC", (15, 16, 17)),
+                   ("TQ_COOL_FAMILIES", ("vixreg", "chrev")),
+                   ("TQ_COOL_MIN_VOTERS", 2), ("TQ_FRIDAY_EXTRA_VOTES", 1),
                    ("TREND_GATE_ENABLED", True), ("VIXREG_TREND_GATE", True),
                    ("VIXREG_SELL_PATIENCE", False), ("VIXREG_SELL_PATIENCE_MIN", 10),
                    ("CHREV_MODE_OVERRIDE", {}),

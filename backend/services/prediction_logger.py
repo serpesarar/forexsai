@@ -1047,7 +1047,7 @@ async def log_prediction(
             try:
                 from services.signal_gates import apply_signal_gates
                 gated_direction, gate_notes = await apply_signal_gates(
-                    symbol, direction, effective_model_type
+                    symbol, direction, effective_model_type, confidence=confidence
                 )
                 if gated_direction != direction:
                     logger.info(
@@ -1229,6 +1229,13 @@ async def log_prediction(
 
         factors = _extract_factors(context, analysis)
         factors["session"] = _get_current_session()
+        # Zaman-kalitesi etiketi (2026-08-01): golden/cool/normal — gün-saat
+        # epoch analizleri ve TQ kapısının etki ölçümü bu etiketten yapılır.
+        try:
+            from services.signal_gates import time_quality_tier
+            factors["time_quality"] = time_quality_tier(symbol)[0]
+        except Exception:
+            pass
         # Geometri epoch etiketi: lifecycle ATR merdivenini bu etiketten tanır;
         # analizler de eski (static_pips) / yeni (atr_ladder_v1) dönemi ayırır.
         factors["target_type"] = "atr_ladder_v1" if pulse_ladder else "static_pips"

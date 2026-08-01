@@ -625,6 +625,23 @@ VIX_REGIME_GATE_THRESHOLD=18.4
 XAU_SCALP_GATE_ENABLED=1          # XAU pulse1/2/3+smc scalp kapısı (30g pulse %16-18 WR)
 XAU_SCALP_GATE_BLOCK=0            # default GÖLGE — atr_ladder_v1 epoch'u XAU'da ölçülmeden
                                   # bloklanmaz; epoch da kurtarmazsa 1 yap
+
+# ─── 2026-08-01 zaman-kalitesi (TQ) katmanı — gün/saat denetimi ───
+# Kanıt: NDX 13-14 UTC %58 (n=683, p<1e-4) ALTIN; NDX 16/19 UTC %45 ÇUKUR;
+# USOIL Perşembe %35 (n=941) ÇUKUR. Çukurda tam blok değil "yalnız çok-emin"
+# çıtası. Cuma freni PANELDE YOK (panel NDX Cuma %53) — Cuma kuralı bot'ta.
+TQ_GATE_ENABLED=1                 # pulse1/2/3+smc; çukurda güven<eşik → HOLD
+TQ_GATE_BLOCK=1                   # 0 → gölge (sadece log)
+TQ_COOL_MIN_CONF=80               # "çok emin" güven eşiği (0-100)
+TQ_NDX_COOL_HOURS=16,17,19        # NDX çukur saatleri (15 hariç: panel %53)
+TQ_USOIL_COOL_DOWS=4              # USOIL çukur günü (ISO 4=Perşembe)
+TQ_SESSION_EXCEPTION=1            # NDX 18 UTC hard-bloğuna altın-istisna:
+                                  # güven ≥ TQ_COOL_MIN_CONF ise sinyal geçer
+# log_prediction her satıra factors.time_quality=golden|cool|normal etiketi yazar.
+# Bot tarafı (yeni deneme/, config getattr): TQ_ENABLED=True, TQ_FRIDAY_COOL=True
+# (Cuma bot %46 WR/−3.9k$: momentum +1 ek oy, vixreg ≥TQ_COOL_MIN_VOTERS=2 oy,
+# chrev açılmaz), TQ_COOL_HOURS_UTC=(15,16,17) yalnız TQ_COOL_FAMILIES=
+# (vixreg,chrev) — momentum'un en iyi dilimi 15-17 (%62) olduğundan saat freni YOK.
 # Bot (yeni deneme): MGMT_INCLUDE_CHREV=True default — CHREV BUY pozisyonları da
 # BE30/koştur yönetimine dahil (kanıt seti CHREV işlemlerini içeriyordu; SELL kapsam dışı).
 # ml_cross: log_prediction'a kill-switch güvenlik ağı eklendi — bayrak 0 iken
