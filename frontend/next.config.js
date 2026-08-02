@@ -11,13 +11,7 @@ const nextConfig = {
     unoptimized: true,
   },
   async redirects() {
-    return [
-      {
-        source: '/news-correlation',
-        destination: '/',
-        permanent: false,
-      },
-    ];
+    return [];
   },
 };
 
