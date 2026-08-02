@@ -1516,5 +1516,27 @@
     "source": "session",
     "created_at": "2026-08-02T21:50:24.971240+00:00",
     "updated_at": "2026-08-02T21:50:24.971242+00:00"
+  },
+  {
+    "id": "bl_19b88149e6",
+    "title": "Saat A/B testi — artık ölçülebilir",
+    "detail": "Karar ömrü altyapısı hazır (durability.by_session_clock). Sembol başına >=2 koşu saati paralel çalıştırılıp kova başına n>=30 yönlü çağrı biriktirilsin; 3 sembol hâlâ tek saatte koşuyor, alternatif saat hiç denenmedi",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T22:31:48.069702+00:00",
+    "updated_at": "2026-08-02T22:31:48.069898+00:00"
+  },
+  {
+    "id": "bl_0ca6f35c36",
+    "title": "Birincil ufuklar yeniden türetilsin",
+    "detail": "PRIMARY_HORIZON_MIN (NDX 240dk, digerleri 60dk) 2026-07-18'de KIRLI eksende secilmisti. Temiz olcumde +10dk %57 / +30dk %36 -> birincil ufuk muhtemelen 10-30dk. n>=30 olunca yeniden turet",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T22:31:48.071276+00:00",
+    "updated_at": "2026-08-02T22:31:48.071281+00:00"
   }
 ]

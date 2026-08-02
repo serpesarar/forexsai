@@ -534,6 +534,61 @@ def _durability(bars: list, run_ts: datetime, anchor: float, sign: float,
         out["peak"] = {"min": int(round(pk[0])), "pct": round(pk[1], 4)}
         out["trough"] = {"min": int(round(tr[0])), "pct": round(tr[1], 4)}
 
+    # ── TAKİP SÜRESİ: fiyat KARAR FİYATININ tahmin edilen tarafında kaç dakika
+    #    kaldı? Kullanıcının asıl sorusu bu: "29.000'de BUY dendi, fiyat kaç
+    #    dakika 29.000'in üstünde kaldı?" Merdivendeki alive_until_min kaba
+    #    (10/30/60... noktalarına bakar); bu 5 dakikalık çözünürlükte ölçer.
+    #      follow_min          → çapayı KAPANIŞLA ilk kez geri kesene kadar
+    #      first_cross_min     → bar İÇİNDE (high/low) ilk kez çapayı deldiği an
+    #      time_on_side_pct    → seans boyunca doğru tarafta geçen bar oranı
+    #    max_run_min         → seans içindeki EN UZUN kesintisiz doğru-taraf serisi
+    #
+    #    follow_min tek başına yanıltıcıdır: karardan hemen sonraki tek bir 5m
+    #    barın teğet geçmesi seriyi sıfırlar. 2026-07-23 NDX kararı seansın
+    #    %98.7'sinde doğru taraftaydı ama follow_min=0 çıkıyordu. Üç ölçüyü
+    #    birlikte okumak gerekir: hemen tuttu mu (follow), toplamda ne kadar
+    #    doğru taraftaydı (time_on_side), en uzun kesintisiz ne kadar sürdü (max_run).
+    if sign:
+        follow_min, still_following = 0, True
+        first_cross: Optional[int] = None
+        on_side = total = 0
+        run_start: Optional[int] = None
+        max_run = 0
+        prev_min = 0
+        for t, h, l, c in bars:
+            if t <= run_ts:
+                continue
+            mins = int(round((t - run_ts).total_seconds() / 60.0))
+            if first_cross is None and ((l < anchor) if sign > 0 else (h > anchor)):
+                first_cross = mins
+            good = (c > anchor) if sign > 0 else (c < anchor)
+            total += 1
+            on_side += 1 if good else 0
+            if still_following:
+                if good:
+                    follow_min = mins
+                else:
+                    still_following = False
+            if good:
+                if run_start is None:
+                    run_start = prev_min
+            elif run_start is not None:
+                max_run = max(max_run, prev_min - run_start)
+                run_start = None
+            prev_min = mins
+        if run_start is not None:
+            max_run = max(max_run, prev_min - run_start)
+        out["follow_min"] = follow_min
+        out["max_run_min"] = max_run
+        out["first_adverse_cross_min"] = first_cross
+        out["time_on_side_pct"] = (round(on_side / total * 100.0, 1) if total else None)
+
+    # Seans kapanışı: ızgaranın SON noktası — "kapanışta nerede kapattı?"
+    if clock:
+        last_label = list(clock.keys())[-1]
+        out["session_close"] = {"at": last_label, "pct": clock[last_label],
+                                "ok": (clock[last_label] > 0) if sign else None}
+
     # Merdiven üzerinde yaşam süresi: yön KESİNTİSİZ lehteyken geçilen son ufuk.
     # 10dk'da bile lehte değilse 0 → karar hiç tutmadı.
     if sign:
@@ -1085,6 +1140,58 @@ def accuracy_report() -> dict:
                  "early_observation": c["n"] < EARLY_OBS_MIN_N}
             for hh, c in sorted(clock.items()) if c["n"] >= 5}
 
+        # TAKİP SÜRESİ özeti — "karar verildikten sonra fiyat kaç dakika o
+        # yönde gitti?" Üç ölçü birlikte okunur (tek başına hiçbiri yeterli
+        # değil, bkz. _durability içindeki not).
+        def _agg(field: str) -> dict:
+            vals = [r["durability"].get(field) for r in dir_rows]
+            vals = [v for v in vals if v is not None]
+            if not vals:
+                return {"n": 0, "median": None, "avg": None}
+            s = sorted(vals)
+            med = (s[len(s) // 2] if len(s) % 2
+                   else (s[len(s) // 2 - 1] + s[len(s) // 2]) / 2)
+            return {"n": len(vals), "median": med,
+                    "avg": round(sum(vals) / len(vals), 1)}
+
+        closes = [r["durability"].get("session_close") for r in dir_rows]
+        closes = [c for c in closes if isinstance(c, dict) and c.get("ok") is not None]
+        follow = {
+            "immediate_follow_min": _agg("follow_min"),
+            "longest_run_min": _agg("max_run_min"),
+            "first_adverse_cross_min": _agg("first_adverse_cross_min"),
+            "time_on_side_pct": _agg("time_on_side_pct"),
+            "session_close_accuracy_pct": (round(sum(1 for c in closes if c["ok"])
+                                                 / len(closes) * 100, 1) if closes else None),
+            "session_close_n": len(closes),
+        }
+
+        # KARAR İZLERİ — panelde tek tek okunabilsin diye son 30 yönlü karar.
+        traces = []
+        for r in sorted(rows, key=lambda x: str(x.get("run_timestamp_utc") or ""),
+                        reverse=True):
+            d = r.get("durability")
+            if (r.get("predicted_bias") or "").lower() not in ("bullish", "bearish") \
+                    or not isinstance(d, dict) or not d.get("clock_signed"):
+                continue
+            traces.append({
+                "ny_date": str(r.get("ny_date") or "")[:10],
+                "symbol": symbol_for_row(r),
+                "run_label": r.get("run_label"),
+                "utc_time": str(r.get("run_timestamp_utc") or "")[11:16],
+                "bias": (r.get("predicted_bias") or "").lower(),
+                "confidence": r.get("confidence"),
+                "anchor_price": r.get("anchor_price"),
+                "follow_min": d.get("follow_min"),
+                "max_run_min": d.get("max_run_min"),
+                "time_on_side_pct": d.get("time_on_side_pct"),
+                "first_adverse_cross_min": d.get("first_adverse_cross_min"),
+                "session_close": d.get("session_close"),
+                "clock": d.get("clock") or {},
+            })
+            if len(traces) >= 30:
+                break
+
         tgt = [r["durability"].get("first_target_min") for r in dir_rows]
         tgt = [t for t in tgt if t is not None]
         pre = [r["durability"].get("invalid_prebreached") for r in dir_rows]
@@ -1093,6 +1200,8 @@ def accuracy_report() -> dict:
             "n": len(alive),
             "median_alive_min": med,
             "alive_buckets": buckets,
+            "follow_summary": follow,
+            "traces": traces,
             "dead_within_10min_pct": (round(sum(1 for a in alive if a <= 10)
                                             / len(alive) * 100, 1) if alive else None),
             "by_session_clock": clock_out,

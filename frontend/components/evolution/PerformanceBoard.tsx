@@ -10,7 +10,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronRight, MoveRight, TrendingDown, TrendingUp, Users, X } from "lucide-react";
 
-import type { BiasHorizonCell, BiasReport, BiasTimelineCell, Overview } from "@/lib/api/evolution";
+import type { BiasHorizonCell, BiasReport, BiasTimelineCell, DecisionTrace, FollowStat, Overview } from "@/lib/api/evolution";
 import ModelDetailDrawer from "./ModelDetailDrawer";
 import { Badge, EmptyState, GlassCard, ProgressBar, Ring, Section, Skeleton, cx, modelColor, stagger } from "./ui";
 
@@ -237,6 +237,29 @@ function DecisionLifespan({ bias }: { bias: BiasReport }) {
         </div>
       )}
 
+      {d.follow_summary && (
+        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 rounded-lg bg-black/25 p-2 text-[10px] sm:grid-cols-4">
+          {[
+            ["hemen takip", d.follow_summary.immediate_follow_min, "dk", "Karardan sonra kesintisiz doğru tarafta kalınan süre"],
+            ["en uzun seri", d.follow_summary.longest_run_min, "dk", "Seans içindeki en uzun kesintisiz doğru-taraf serisi"],
+            ["ilk delme", d.follow_summary.first_adverse_cross_min, "dk", "Karar fiyatının bar içinde ilk kez delindiği an"],
+            ["doğru tarafta", d.follow_summary.time_on_side_pct, "%", "Seansın yüzde kaçında fiyat doğru taraftaydı"],
+          ].map(([label, stat, unit, tip]) => {
+            const s = stat as FollowStat;
+            return (
+              <div key={label as string} title={tip as string}>
+                <div className="text-[8px] uppercase tracking-wide text-slate-600">{label as string}</div>
+                <div className="tabular-nums text-slate-200">
+                  medyan <b>{s?.median ?? "—"}</b>
+                  {unit as string}
+                </div>
+                <div className="text-[9px] tabular-nums text-slate-600">ort {s?.avg ?? "—"}{unit as string}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {clock.length > 0 && (
         <>
           <p className="mt-3 text-[9px] font-medium uppercase tracking-wider text-slate-500">
@@ -264,6 +287,123 @@ function DecisionLifespan({ bias }: { bias: BiasReport }) {
           </p>
         </>
       )}
+
+      {d.traces && d.traces.length > 0 && <DecisionTraceTable traces={d.traces} />}
+    </div>
+  );
+}
+
+/**
+ * KARAR İZLERİ — "29.000'de BUY dendi, fiyat ne yaptı?"
+ *
+ * Her satır tek bir karardır: karar fiyatı referans çizgisi, saat saat o
+ * çizginin hangi tarafında kalındığı (yeşil = kararın dediği yön), hemen
+ * takip süresi, en uzun kesintisiz seri ve seans kapanışı.
+ */
+function DecisionTraceTable({ traces }: { traces: DecisionTrace[] }) {
+  const [open, setOpen] = useState(false);
+  if (!traces.length) return null;
+  const shown = open ? traces : traces.slice(0, 8);
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          Karar izleri — karar fiyatına göre saat saat
+        </h4>
+        {traces.length > 8 && (
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="text-[9px] text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+          >
+            {open ? "daralt" : `tümü (${traces.length})`}
+          </button>
+        )}
+      </div>
+
+      <div className="mt-2 w-full overflow-x-auto">
+        <table className="w-full text-[10px]">
+          <thead>
+            <tr className="text-[9px] text-slate-600">
+              <th className="pb-1 text-left font-medium">tarih · sembol</th>
+              <th className="pb-1 text-left font-medium">yön · karar fiyatı</th>
+              <th className="pb-1 text-center font-medium" title="Karardan sonra kesintisiz doğru tarafta kalınan süre">
+                hemen
+              </th>
+              <th className="pb-1 text-center font-medium" title="Seans içindeki en uzun kesintisiz doğru-taraf serisi">
+                en uzun
+              </th>
+              <th className="pb-1 text-center font-medium" title="Seansın yüzde kaçında doğru taraftaydı">
+                tarafta
+              </th>
+              <th className="pb-1 text-left font-medium">saat saat (yeşil = kararın yönünde)</th>
+              <th className="pb-1 text-right font-medium">kapanış</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((t, i) => {
+              const hours = Object.entries(t.clock);
+              return (
+                <tr key={`${t.ny_date}-${t.symbol}-${t.utc_time}-${i}`} className="border-t border-white/5">
+                  <td className="py-1 pr-2 whitespace-nowrap text-slate-400">
+                    {t.ny_date.slice(5)} · <span className="text-slate-300">{t.symbol.replace(".INDX", "").replace(".FOREX", "")}</span>
+                    <span className="ml-1 text-slate-600">{t.utc_time}</span>
+                  </td>
+                  <td className="py-1 pr-2 whitespace-nowrap">
+                    <span className={t.bias === "bullish" ? "text-emerald-400" : "text-rose-400"}>
+                      {t.bias === "bullish" ? "▲" : "▼"}
+                    </span>{" "}
+                    <span className="tabular-nums text-slate-300">
+                      {t.anchor_price?.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
+                    </span>
+                  </td>
+                  <td className={cx("py-1 text-center tabular-nums", (t.follow_min ?? 0) > 0 ? "text-slate-300" : "text-rose-400")}>
+                    {t.follow_min ?? "—"}dk
+                  </td>
+                  <td className="py-1 text-center tabular-nums text-slate-400">{t.max_run_min ?? "—"}dk</td>
+                  <td
+                    className={cx(
+                      "py-1 text-center tabular-nums",
+                      (t.time_on_side_pct ?? 0) >= 50 ? "text-emerald-400" : "text-slate-500"
+                    )}
+                  >
+                    %{t.time_on_side_pct ?? "—"}
+                  </td>
+                  <td className="py-1 pr-2">
+                    <div className="flex gap-[2px]">
+                      {hours.map(([hh, v]) => (
+                        <span
+                          key={hh}
+                          title={`${hh} · ${v > 0 ? "kararın yönünde" : "ters"} %${v.toFixed(2)}`}
+                          className={cx(
+                            "h-3.5 w-[13px] shrink-0 rounded-[2px] text-center text-[7px] leading-[14px] text-black/60",
+                            v > 0 ? "bg-emerald-500/80" : "bg-rose-500/70"
+                          )}
+                        >
+                          {hh.slice(0, 2)}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td
+                    className={cx(
+                      "py-1 text-right tabular-nums",
+                      t.session_close?.ok ? "text-emerald-400" : "text-rose-400"
+                    )}
+                  >
+                    {t.session_close ? `${t.session_close.pct > 0 ? "+" : ""}${t.session_close.pct.toFixed(2)}%` : "—"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-1.5 text-[9px] leading-relaxed text-slate-600">
+        <b>hemen</b> = karardan sonra kesintisiz doğru tarafta kalınan süre (tek bir 5dk barın teğet geçmesi
+        sıfırlar) · <b>en uzun</b> = seans içindeki en uzun kesintisiz seri · <b>tarafta</b> = seansın yüzde kaçında
+        fiyat karar fiyatının doğru tarafındaydı. Üçü birlikte okunur.
+      </p>
     </div>
   );
 }

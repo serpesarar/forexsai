@@ -77,10 +77,51 @@ export interface DirectionBalance {
  * kararın +240dk'sı ile 09:45'te verilenin +240dk'sı aynı saate düşmediği için
  * "hangi saatten sonra bozuluyor" ancak duvar saatiyle sorulabilir.
  */
+/** Tek bir kararın izi: "29.000'de BUY dendi, fiyat ne yaptı?" */
+export interface DecisionTrace {
+  ny_date: string;
+  symbol: string;
+  run_label: string;
+  /** Kararın verildiği an (UTC, HH:MM). */
+  utc_time: string;
+  bias: "bullish" | "bearish";
+  confidence: number | null;
+  /** Karar anındaki fiyat — tüm ölçümlerin referans çizgisi. */
+  anchor_price: number | null;
+  /** Karardan hemen sonra KESİNTİSİZ doğru tarafta kalınan dakika. */
+  follow_min: number | null;
+  /** Seans içindeki EN UZUN kesintisiz doğru-taraf serisi (dk). */
+  max_run_min: number | null;
+  /** Seansın yüzde kaçında fiyat karar fiyatının doğru tarafındaydı. */
+  time_on_side_pct: number | null;
+  /** Karar fiyatının bar İÇİNDE ilk kez delindiği dakika. */
+  first_adverse_cross_min: number | null;
+  session_close: { at: string; pct: number; ok: boolean | null } | null;
+  /** Seans saati → karar yönünde işaretli % (pozitif = karar tutuyor). */
+  clock: Record<string, number>;
+}
+
+export interface FollowStat {
+  n: number;
+  median: number | null;
+  avg: number | null;
+}
+
 export interface DecisionDurability {
   n: number;
   median_alive_min: number | null;
   alive_buckets: Record<string, number>;
+  /** Takip süresi özeti — üçü BİRLİKTE okunur, tek başına hiçbiri yeterli değil. */
+  follow_summary?: {
+    immediate_follow_min: FollowStat;
+    longest_run_min: FollowStat;
+    first_adverse_cross_min: FollowStat;
+    time_on_side_pct: FollowStat;
+    session_close_accuracy_pct: number | null;
+    session_close_n: number;
+  };
+  /** Son 30 yönlü kararın tek tek izi. */
+  traces?: DecisionTrace[];
   dead_within_10min_pct: number | null;
   by_session_clock: Record<string, {
     n: number;
