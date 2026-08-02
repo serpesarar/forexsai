@@ -666,9 +666,33 @@ def _resample(candles: List[Dict], period: int, base_ms: Optional[int] = None) -
     return result
 
 
+def _merge_1h_tail(real_candles: List[Dict], derived_candles: List[Dict]) -> List[Dict]:
+    """Preserve the full real 1h history and APPEND freshly-derived 1h bars that
+    fall strictly AFTER the last real bar.
+
+    2026-08-02: guards against a frozen upstream mt5:bar:1h stream silently
+    freezing the chart. The 2026-07-01 fix (don't clobber ~2400 real 1h bars with
+    the ~125 we can derive from the 5m window) meant that when the real 1h stream
+    stalled (indices/XAU froze 2026-07-31) the system clung to stale real bars and
+    refused to advance from the LIVE 5m/30m feed. This merges the two: deep real
+    history is kept, the live-derived tail extends it, dedup by timestamp. Bars are
+    bucket-start aligned on both sides, so the strict `> last_real_ts` cut never
+    double-counts. Self-heals the moment the real stream resumes.
+    """
+    if not real_candles:
+        return derived_candles or []
+    if not derived_candles:
+        return real_candles
+    last_real_ts = max(int(c.get("timestamp", 0) or 0) for c in real_candles)
+    tail = [c for c in derived_candles if int(c.get("timestamp", 0) or 0) > last_real_ts]
+    if not tail:
+        return real_candles
+    return real_candles + tail
+
+
 def _rebuild_derived(symbol: str):
     """Rebuild derived timeframes from raw data.
-    
+
     NDX.INDX: 5m→15m, 5m→30m, 1h(fetched)→4h
     XAUUSD:   5m→15m, 30m(fetched)→1h→4h  (30m also from 5m if not fetched)
     """
@@ -700,10 +724,21 @@ def _rebuild_derived(symbol: str):
                 len(existing_1h_candles) > len(raw_5m) // 12
                 or ("derived" not in existing_1h_source and existing_1h_source not in {"", "unknown"})
             )
+            derived_1h = _resample(raw_5m, 12, base_ms=300_000)
             if not richer_1h_available:
-                derived_1h = _resample(raw_5m, 12, base_ms=300_000)
                 if derived_1h:
                     _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_5m"}
+            elif derived_1h:
+                # Real 1h present: keep its deep history but append any fresh
+                # 5m-derived 1h bars beyond its last timestamp so a stalled
+                # mt5:bar:1h stream cannot freeze the chart (self-heals on resume).
+                merged = _merge_1h_tail(existing_1h_candles, derived_1h)
+                if len(merged) > len(existing_1h_candles):
+                    _candles_1h[symbol] = {
+                        "candles": merged,
+                        "timestamp": now,
+                        "source": f"{existing_1h_source or 'mt5_redis'}+5m_tail",
+                    }
     
     # XAUUSD keeps its 1h/4h chain on top of 30m, whether 30m was fetched or derived.
     if derive_from_30m:
@@ -724,15 +759,29 @@ def _rebuild_derived(symbol: str):
             and _existing_1h_source not in {"", "unknown"}
         )
 
-        if raw_30m and not _real_1h_available:
+        if raw_30m:
             derived_1h = _resample(raw_30m, 2, base_ms=1_800_000)  # 1h = 30m × 2
-            if derived_1h:
-                _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_30m"}
+            if not _real_1h_available:
+                if derived_1h:
+                    _candles_1h[symbol] = {"candles": derived_1h, "timestamp": now, "source": "derived_from_30m"}
+            elif derived_1h:
+                # Real 1h present: preserve history, append fresh 30m-derived tail
+                # beyond its last bar (self-heals a stalled mt5:bar:1h stream).
+                merged = _merge_1h_tail(_existing_1h_candles, derived_1h)
+                if len(merged) > len(_existing_1h_candles):
+                    _candles_1h[symbol] = {
+                        "candles": merged,
+                        "timestamp": now,
+                        "source": f"{_existing_1h_source or 'mt5_redis'}+30m_tail",
+                    }
 
+        # 4h is built from the FINAL 1h series (already merged above), so the fresh
+        # tail flows into 4h too instead of freezing with the stale real 1h.
+        final_1h = _candles_1h.get(symbol, {}).get("candles", [])
         derived_4h = None
         _src_4h = "derived_from_30m"
-        if _real_1h_available:
-            derived_4h = _resample(_existing_1h_candles, 4, base_ms=3_600_000)  # 4h = gerçek 1h × 4
+        if final_1h:
+            derived_4h = _resample(final_1h, 4, base_ms=3_600_000)  # 4h = 1h × 4
             _src_4h = "derived_from_1h"
         if not derived_4h and raw_30m:
             derived_4h = _resample(raw_30m, 8, base_ms=1_800_000)  # 4h = 30m × 8 (fallback)
