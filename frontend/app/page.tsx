@@ -11,7 +11,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, LineChart, Radar, Ship } from "lucide-react";
+import { ArrowRight, LineChart, Newspaper, Radar, Ship } from "lucide-react";
 
 import AuthGuard from "@/components/AuthGuard";
 import NeuralNav from "@/components/neural/NeuralNav";
@@ -169,6 +169,16 @@ function HomeInner() {
       ),
       accent: "text-cyan-400",
     },
+    {
+      href: "/news-correlation",
+      icon: <Newspaper size={18} />,
+      title: L("Haber Radarı", "News Radar"),
+      desc: L(
+        "Haberleri grafikteki fiyat hareketleriyle eşleştiren korelasyon paneli.",
+        "The correlation panel matching news to price moves on the chart."
+      ),
+      accent: "text-amber-400",
+    },
   ];
 
   return (
@@ -211,7 +221,7 @@ function HomeInner() {
         </div>
 
         {/* hızlı erişim */}
-        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {quick.map((qk, i) => (
             <motion.div
               key={qk.href + qk.title}
