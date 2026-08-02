@@ -28,6 +28,7 @@ export default function NeuralNav() {
     { href: "/neural/xauusd", label: L("ALTIN", "GOLD"), match: (p: string) => p.startsWith("/neural/xauusd") },
     { href: "/neural/usoil", label: L("PETROL", "OIL"), match: (p: string) => p.startsWith("/neural/usoil") },
     { href: "/oil", label: L("GEMİ HARİTASI", "SHIP MAP"), match: (p: string) => p.startsWith("/oil") },
+    { href: "/news-correlation", label: L("HABER", "NEWS"), match: (p: string) => p.startsWith("/news-correlation") },
     // EVRİM sekmesi yalnızca panel sahibine görünür (OwnerGuard e-postası)
     ...(isOwner
       ? [{ href: "/evolution", label: L("EVRİM", "EVOLUTION"), match: (p: string) => p.startsWith("/evolution") }]
