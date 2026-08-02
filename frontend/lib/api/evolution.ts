@@ -70,6 +70,30 @@ export interface DirectionBalance {
   bearish_share_pct: number | null;
 }
 
+/**
+ * Karar ömrü (2026-08-02). `alive_until_min` = kararın merdiven üzerinde
+ * KESİNTİSİZ lehte kaldığı son ufuk; 0 = ilk 10 dakikada bile tutmadı.
+ * `by_session_clock` sembolün KENDİ seans saatinde ölçülür — 08:00'de verilen
+ * kararın +240dk'sı ile 09:45'te verilenin +240dk'sı aynı saate düşmediği için
+ * "hangi saatten sonra bozuluyor" ancak duvar saatiyle sorulabilir.
+ */
+export interface DecisionDurability {
+  n: number;
+  median_alive_min: number | null;
+  alive_buckets: Record<string, number>;
+  dead_within_10min_pct: number | null;
+  by_session_clock: Record<string, {
+    n: number;
+    accuracy_pct: number;
+    avg_signed_ret_pct: number;
+    early_observation: boolean;
+  }>;
+  reached_own_target_n: number;
+  median_minutes_to_target: number | null;
+  levels_prebreached_pct: number | null;
+  note: string;
+}
+
 export interface BiasReport {
   total_graded: number;
   /** ANA METRİK (2026-07-18): sembolün birincil ufkunda yönlü isabet; çekimserler hariç. */
@@ -87,6 +111,8 @@ export interface BiasReport {
   };
   /** Yön dağılımı (ayı/boğa dengesi + yöne göre isabet) — yanlılık takibi. */
   direction_balance?: Record<string, DirectionBalance>;
+  /** KARAR ÖMRÜ (2026-08-02): karar kaç dakika lehte kalıyor, hangi saatte bozuluyor. */
+  decision_durability?: DecisionDurability;
   /** LEGACY gün-kapanışı metriği — yanıltıcı olabilir, ana metrik değil. */
   overall: BiasRate;
   by_symbol: Record<string, BiasRate>;

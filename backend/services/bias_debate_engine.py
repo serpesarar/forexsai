@@ -379,6 +379,91 @@ def _daily_from_1h(h1: list[dict]) -> list[dict]:
     return [days[k] for k in sorted(days)]
 
 
+#: Referans bar bu kadar tazeyse canlı fiyatı denetlemeye yetkilidir.
+_PRICE_MAX_AGE_MIN = 15
+#: Referans bar bu yaştan eskiyse hiç kullanılmaz (piyasa kapalı olabilir).
+_BAR_MAX_AGE_MIN = 30
+#: Canlı fiyat referans bardan bu kadar saparsa bayat sayılır (%).
+_PRICE_MAX_DRIFT_PCT = 0.25
+
+
+async def _price_freshness_guard(symbol: str, price: Optional[float],
+                                 now_utc: datetime) -> dict:
+    """DataHub fiyatını son KAPALI 5m barla karşılaştır; bayatsa barla değiştir.
+
+    2026-08-02 denetimi: NDX 08:00 ET (12:00 UTC) koşusunda MT5 köprüsü tick
+    yollamadığı için ``data_hub.get_price`` bir ÖNCEKİ SEANS KAPANIŞINI
+    dönüyordu — ~16 saat bayat, 100-400 puan (%1.45'e kadar) sapma. CIO
+    "Current price" olarak onu görüyor, destek/direnç ve ``invalid_if``
+    seviyelerini onun üstüne kuruyordu; 47 yönlü kararın 8'inde seviye daha
+    karar anında yanlış taraftaydı (DAX'ta 7'de 3).
+
+    Fail-open: mum da yoksa eldeki fiyat aynen kalır, yalnız bayrak düşer.
+    """
+    out: dict[str, Any] = {"price_source": "datahub_live", "price_age_min": None}
+    try:
+        bar_close, age_min = _last_5m_bar(symbol, now_utc)
+        if bar_close is None:
+            return out
+        out["price_age_min"] = round(age_min, 1) if age_min is not None else None
+        if not price:
+            out.update({"price": bar_close, "price_source": "candle_cache_5m"})
+            return out
+        drift_pct = abs(price - bar_close) / bar_close * 100.0
+        # Bar taze VE canlı fiyat ondan belirgin sapıyorsa canlı fiyat bayattır.
+        if (age_min is None or age_min <= _PRICE_MAX_AGE_MIN) and drift_pct > _PRICE_MAX_DRIFT_PCT:
+            logger.warning("[debate] %s canlı fiyat bayat (%%%.2f sapma, bar yaşı "
+                           "%s dk) → 5m bar kapanışına düşülüyor", symbol,
+                           drift_pct, out["price_age_min"])
+            out.update({"price": bar_close, "price_source": "candle_cache_5m_stale_fix",
+                        "price_drift_pct": round(drift_pct, 3)})
+    except Exception as e:
+        logger.debug("[debate] price freshness guard skipped: %s", e)
+    return out
+
+
+def _last_5m_bar(symbol: str, now_utc: datetime) -> tuple[Optional[float], Optional[float]]:
+    """Son kapalı 5m barın kapanışı + yaşı (dk). Kaynak sırası: DataHub → Supabase.
+
+    DataHub'a güvenilemez: canlı akış NDX için 12:00 UTC civarında sessiz ve
+    mum deposu yalnız açılışta ``candle_cache``'ten yükleniyor. Notlama tarafı
+    (``bias_test_service._horizon_stats``) zaten doğrudan ``candle_cache``
+    okuyor — karar tarafı da aynı kaynağa düşer ki ikisi aynı eksende olsun.
+    """
+    from services.data_hub import get_candles
+    for src in ("hub", "db"):
+        try:
+            if src == "hub":
+                bars = get_candles(symbol, "5m", 3) or []
+                if not bars:
+                    continue
+                last = bars[-1]
+                close = _c(last, "close", "c")
+                ts = last.get("timestamp") or last.get("time")
+                age = ((now_utc.timestamp() - (ts / 1000.0 if ts and ts > 1e11 else ts)) / 60.0
+                       if ts else None)
+            else:
+                from database.supabase_client import get_supabase_client, is_db_available
+                if not is_db_available():
+                    continue
+                rows = (get_supabase_client().table("candle_cache")
+                        .select("candle_time,close").eq("symbol", symbol)
+                        .eq("timeframe", "5m").order("candle_time", desc=True)
+                        .limit(1).execute()).get("data") or []
+                if not rows:
+                    continue
+                close = float(rows[0]["close"])
+                bt = datetime.fromisoformat(str(rows[0]["candle_time"]).replace("Z", "+00:00"))
+                if bt.tzinfo is None:
+                    bt = bt.replace(tzinfo=timezone.utc)
+                age = (now_utc - bt).total_seconds() / 60.0
+            if close and (age is None or age <= _BAR_MAX_AGE_MIN):
+                return close, age
+        except Exception as e:
+            logger.debug("[debate] 5m bar (%s) okunamadı: %s", src, e)
+    return None, None
+
+
 async def _gather_context(symbol: str, now_utc: datetime) -> dict:
     ctx = await sc.enrich_price_context(now_utc)
     market: dict[str, Any] = {"session": ctx, "price": None, "prior_day": None,
@@ -386,6 +471,7 @@ async def _gather_context(symbol: str, now_utc: datetime) -> dict:
     try:
         from services.data_fetcher import fetch_latest_price, fetch_ohlc_data
         market["price"] = await fetch_latest_price(symbol)
+        market.update(await _price_freshness_guard(symbol, market["price"], now_utc))
         daily = await fetch_ohlc_data(symbol, "1d", limit=10)
         if not daily:
             # 1d feed dead (bridge streams none for NDX, sparse for others) →
@@ -859,6 +945,11 @@ async def run_debate(symbol: str = _NDX, now_utc: Optional[datetime] = None) -> 
     price = market.get("price")
     verdict["symbol"] = symbol
     verdict["price_at_decision"] = price
+    # Notlama tarafı çapanın nereden geldiğini görsün (2026-08-02 bayat-fiyat
+    # otopsisi): bias_test_service artık kendi çapasını son kapalı 5m bardan
+    # alır ve bu alanları p0_stale_pct teşhisiyle karşılaştırır.
+    verdict["price_source"] = market.get("price_source")
+    verdict["price_age_min"] = market.get("price_age_min")
     ch = market.get("channel") or {}
     smc = market.get("smc") or {}
     real_levels = {

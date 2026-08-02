@@ -1,0 +1,35 @@
+Error processing line 7 of C:\Users\Mael\AppData\Local\Programs\Python\Python313\Lib\site-packages\pywin32.pth:
+
+  Traceback (most recent call last):
+    File "<frozen site>", line 207, in addpackage
+    File "<string>", line 1, in <module>
+  ModuleNotFoundError: No module named 'pywin32_bootstrap'
+
+Remainder of file ignored
+======================================================================
+OPUS vs NAIVE-GATE — beyin (LLM seçimi) değer katıyor mu?
+======================================================================
+Journal: 1274 karar | gate-fired: 549 | grade'li: 534
+
+[1] SEÇİM KALİTESİ (gate-fired'ları cf-grading ile; apples-to-apples)
+    Naive (HEPSİNİ aç):  WR 46% (247/534)  EV -0.248R
+    Opus AÇTI:           WR 62% (48/78)  EV +0.021R
+    Opus ATLADI:         WR 44% (199/456)  EV -0.294R
+    → Seçim lift (açtı−atladı): +18pp  (permütasyon p=0.004)  ✅ Opus kazananı SEÇİP kaybedeni eliyor (değerli)
+
+[2] GERÇEKLEŞEN (Opus gerçek OPEN, kendi yön+boyut) vs naive-gate
+    Opus OPEN (gerçek):  WR 63% (51/81)  EV +0.041R
+    Naive-gate (cf):     WR 46% (534 işlem)  EV -0.248R
+    → Fark: +0.289R/işlem  (Opus daha iyi)
+
+[3] BOYUT (size_factor) değer katıyor mu?
+    size>0.40: WR 57% (n=14) · size≤: WR 64% (n=67) → boyut zayıf sinyal
+
+[4] PER SEMBOL (seçim kalitesi, n≥8)
+    GDAXI.INDX     açtı 50%(24)    atladı 27%(249)   lift +23pp
+    NDX.INDX       açtı 69%(35)    atladı 65%(105)   lift +4pp
+    USOIL.FOREX    açtı 77%(13)    atladı 62%(42)    lift +15pp
+    XAUUSD         açtı 33%(6)     atladı 63%(60)    lift -30pp
+
+Not: [1] permütasyon p<0.05 + lift≥8pp = beyin GERÇEKTEN seçici. Aksi halde
+gate tek başına ~yeterli → Opus'u sadeleştir/quota düşür düşünülebilir.

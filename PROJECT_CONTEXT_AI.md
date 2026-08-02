@@ -2,18 +2,33 @@
 format_version: "1.0"
 project_type: "trading_portal"
 last_updated: "2026-02-13"
-symbols_tracked: ["NDX.INDX", "XAUUSD"]
+symbols_tracked: ["NDX.INDX", "GDAXI.INDX", "XAUUSD", "USOIL.FOREX"]
 deployment: "Railway (Nixpacks)"
 api_base_url: "https://upbeat-flow-production.up.railway.app"
 ws_base_url: "wss://upbeat-flow-production.up.railway.app"
 database: "Supabase (PostgreSQL)"
 frontend_framework: "Next.js 14 (App Router)"
 state_management: "Zustand + React Query"
-external_data_api: "EODHD (market data)"
-ai_apis: ["Anthropic Claude", "DeepSeek", "Groq", "xAI"]
+external_data_api: "NONE — price/candle: MT5 → Redis → DataHub (own pipeline); macro: yfinance. EODHD/Tiingo/marketaux REMOVED 2026-06."
+ai_apis: ["Anthropic Claude", "DeepSeek", "Groq", "xAI", "Kimi/Moonshot"]
 ---
 
 # PROJECT_CONTEXT_AI — ForexSAI Trading Portal
+
+> ⚠️ **STALENESS WARNING (added 2026-08-01):** This registry was last substantively updated
+> **2026-02-13** and describes an OBSOLETE architecture. Do NOT treat its model names, data
+> source, or symbol list as authoritative. Two things changed materially since:
+> 1. **Data source:** the "EODHD data pump" described below NO LONGER EXISTS. Price/candle data
+>    now flows **MT5 → Redis → DataHub** (the project's own bridge); macro comes from yfinance.
+>    EODHD/Tiingo/marketaux were fully removed 2026-06. Ignore every `EODHD*` reference here.
+> 2. **Symbols:** the system now trades **4** symbols (NDX.INDX, GDAXI.INDX, XAUUSD, USOIL.FOREX),
+>    not the 2 listed in older sections.
+>
+> **The current source of truth is `/CLAUDE.md` (+ `.kimi/context/master-config.md`, its port).**
+> Model names are exactly: **ML, PULSE 1/2/3, EMEL, SMC** (panel) + **Meta** (fusion) +
+> **AI Panel** + **Claude Decider** + **MT5 Bot** (`yeni deneme/`). There is NO "Cloud Desa",
+> NO "MetaBrain / Meta5", NO "Stage 4 pipeline" — if you see those anywhere, they are garbled
+> legacy names. Read CLAUDE.md/master-config.md before quoting anything from this file.
 
 ## ARCHITECTURE OVERVIEW
 
@@ -28,7 +43,7 @@ ai_apis: ["Anthropic Claude", "DeepSeek", "Groq", "xAI"]
 ├─────────────────────────────────────────────────────────────────┤
 │  BACKEND (FastAPI)                             [Railway]         │
 │  ├─ main.py (FastAPI app, 28 routers)                           │
-│  ├─ DataHub (centralized EODHD data pump)                       │
+│  ├─ DataHub (MT5→Redis→DataHub in-memory cache; no EODHD)       │
 │  ├─ BackgroundScheduler (periodic updates)                      │
 │  ├─ ML Prediction Service (LightGBM models)                     │
 │  ├─ Signal Lifecycle (active signal tracking)                   │
@@ -80,21 +95,27 @@ ai_apis: ["Anthropic Claude", "DeepSeek", "Groq", "xAI"]
 ### BACKEND — DATA PIPELINE
 
 #### MOD-010: DataHub (Centralized Market Data)
+> ⚠️ CORRECTED 2026-08-01 — this block described the removed EODHD pump. Current reality below.
 - **file_path**: `backend/services/data_hub.py`
-- **purpose**: Single source of truth for all market data. Background pump fetches from EODHD, stores in memory, persists to Supabase.
+- **purpose**: Single in-memory source of truth for all price/candle data. Fed by the MT5→Redis
+  bridge listener (`services/mt5_redis_client.py`), NOT by any external HTTP data vendor.
+  Persists to Supabase `candle_cache`; broadcasts to the frontend over WebSocket.
 - **entry_points**:
-  - `start_data_hub()` — trigger: `auto_load` (from lifespan) — starts background pump loop
-  - `_pump_cycle()` — trigger: `auto_load` (every 15s) — fetches prices and candles
-  - `force_reseed()` — trigger: `api_call` — clears all cache, forces full re-download
-  - `get_candles(symbol, timeframe)` — trigger: `api_call` — returns in-memory candles
-  - `get_price(symbol)` — trigger: `api_call` — returns latest price
-- **external_api**: EODHD (`api.eod-cloud.com`)
-- **data_flow**: EODHD API → in-memory dicts → Supabase `candle_cache` (every 15min)
-- **timeframes_stored**: 5m, 15m (derived), 30m, 1h, 4h (derived), EOD
-- **symbols**: NDX.INDX, XAUUSD + macro (DXY.INDX, VIX.INDX, USDTRY)
+  - `get_candles(symbol, timeframe)` — returns in-memory candles (derives 15m/30m/1h/4h)
+  - `get_price(symbol)` — latest price from the MT5 tick stream
+  - `ingest_live_price()` / `ingest_candles()` — called by `mt5_redis_client` on tick/bar
+- **data source**: **MT5 → Redis (`mt5:tick`, `mt5:bar:5m/1h/1d`) → DataHub.** Macro
+  (DXY/VIX/US10Y/EURUSD/USDTRY) is a SEPARATE service (`macro_data_service`, yfinance, hourly).
+  **No EODHD / no external market-data API** (removed 2026-06).
+- **data_flow**: MT5 bridge → Redis pub/sub + streams → `mt5_redis_client` → DataHub in-memory →
+  Supabase `candle_cache`; `data_fetcher.py`/`market_data_service.py` read from DataHub ONLY.
+- **timeframes_stored**: 5m (native), 15m/30m (derived from 5m), 1h/4h (derived; XAU from real 1h
+  when available), 1d
+- **symbols**: NDX.INDX, GDAXI.INDX, XAUUSD, USOIL.FOREX + macro references (DXY, VIX, US10Y) + QQQ (reference-only)
 - **known_issues**:
-  - ISS-010: If EODHD API key is exhausted, pump silently returns empty data. Symptom: stale prices, charts freeze.
-  - ISS-011: On Railway cold start, `_load_from_persistent_cache()` may timeout if Supabase is slow. Symptom: empty charts for first 2-3 minutes.
+  - If the MT5 Redis bridge disconnects, DataHub goes stale — the fix is
+    `mt5_redis_client.py` reconnect logic, NOT a fallback vendor. Check `/health/ready`.
+  - On Railway cold start, persistent-cache load may lag Supabase — empty charts for 2-3 min.
 
 #### MOD-011: Background Scheduler
 - **file_path**: `backend/services/background_scheduler.py`
@@ -488,8 +509,8 @@ ai_apis: ["Anthropic Claude", "DeepSeek", "Groq", "xAI"]
 - pattern: "prices frozen / charts not updating"
   likely_module: "MOD-010"
   function: "_pump_cycle()"
-  param_to_check: "_last_fetch timestamps, EODHD_API_KEY"
-  fix: "Check /health/ready, verify EODHD key quota"
+  param_to_check: "MT5 Redis bridge connection, _last ingest timestamps"
+  fix: "Check /health/ready, verify mt5_redis_client reconnect (NOT an API key — no vendor)"
 
 - pattern: "new code not appearing on live site"
   likely_module: "BUILD_PIPELINE"
@@ -569,7 +590,7 @@ rule_13: "backend/railway.toml: Nixpacks auto-detects Python. Dockerfile is alte
 # User complaint → What to check
 
 - "user_says: 'risk wrong'" -> check: "MOD-030: trading_engine/portfolio_risk_manager.py"
-- "user_says: 'chart stuck'" -> check: "MOD-010: _pump_cycle(), EODHD API key"
+- "user_says: 'chart stuck'" -> check: "MOD-010: MT5 Redis bridge (mt5_redis_client) reconnect"
 - "user_says: 'signal late'" -> check: "MOD-020: SIGNAL_COOLDOWN_MINUTES (default 15)"
 - "user_says: 'panel disappeared'" -> check: "MOD-050: page.tsx renderCardContent(), check cardId mapping"
 - "user_says: 'confidence too low'" -> check: "MOD-020: _apply_layered_confidence(), strategy presets"
@@ -589,7 +610,7 @@ rule_13: "backend/railway.toml: Nixpacks auto-detects Python. Dockerfile is alte
 ## DEPENDENCY_GRAPH
 
 ```
-EODHD_API ──→ MOD-010 (DataHub) ──→ MOD-011 (Scheduler) ──→ Supabase
+MT5→Redis ──→ MOD-010 (DataHub) ──→ MOD-011 (Scheduler) ──→ Supabase
                 │                        │
                 ├──→ MOD-020 (ML Prediction) ──→ MOD-028 (Prediction Logger) ──→ Supabase
                 │       │
@@ -628,8 +649,8 @@ EODHD_API ──→ MOD-010 (DataHub) ──→ MOD-011 (Scheduler) ──→ Su
     monitor: "/health/ready"
 
 - spof_2:
-    component: "EODHD API Key"
-    impact: "No new market data if quota exhausted"
+    component: "MT5 Redis bridge (mt5_redis_client)"
+    impact: "No new market data if the MT5→Redis bridge disconnects (reconnect logic, not a vendor quota)"
     mitigation: "None — single data provider"
     monitor: "Check DataHub logs for empty responses"
 
@@ -673,7 +694,7 @@ frontend/components/InfoTooltip.tsx    42,023 bytes — tooltip system
 
 ```yaml
 # Critical (app won't work without these)
-EODHD_API_KEY: "EODHD market data API key"
+REDIS_URL: "Railway Redis URL — MT5 bridge pub/sub + streams (price/candle source)"
 SUPABASE_URL: "Supabase project URL"
 SUPABASE_KEY: "Supabase service role key"
 

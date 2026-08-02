@@ -1,0 +1,78 @@
+Error processing line 7 of C:\Users\Mael\AppData\Local\Programs\Python\Python313\Lib\site-packages\pywin32.pth:
+
+  Traceback (most recent call last):
+    File "<frozen site>", line 207, in addpackage
+    File "<string>", line 1, in <module>
+  ModuleNotFoundError: No module named 'pywin32_bootstrap'
+
+Remainder of file ignored
+
+ÇIKIŞ STRATEJİSİ OPTİMİZASYONU — hangi çıkış sembol başına en kârlı?
+
+========================================================================
+TÜM SEMBOLLER  |  exit-grade'li işlem: 1036
+========================================================================
+  çıkış politikası    EV(ATR)    ±se    n   (varsayılan fixed_1.0/1.5 = -0.065)
+  --------------------------------------------------------
+  time_2h              +0.069  0.050 1036  🏆
+  breakeven_tp2        +0.054  0.046 1036
+  fixed_2.0/1.5        +0.038  0.047 1036
+  fixed_1.5/1.5        -0.015  0.043 1036
+  trail_1.0            -0.047  0.042 1036
+  fixed_1.0/1.5        -0.065  0.038 1036  ⬅ varsayılan
+  → ✅ ÖNERİ: 'time_2h' varsayılanı +0.134 ATR/işlem geçiyor → bu çıkışı düşün.
+
+========================================================================
+SEMBOL: GDAXI.INDX  |  exit-grade'li işlem: 353
+========================================================================
+  çıkış politikası    EV(ATR)    ±se    n   (varsayılan fixed_1.0/1.5 = -0.735)
+  --------------------------------------------------------
+  fixed_1.0/1.5        -0.735  0.061  353  🏆  ⬅ varsayılan
+  trail_1.0            -0.735  0.065  353
+  breakeven_tp2        -0.745  0.064  353
+  fixed_1.5/1.5        -0.763  0.064  353
+  fixed_2.0/1.5        -0.777  0.065  353
+  time_2h              -0.796  0.064  353
+  → varsayılan (fixed_1.0/1.5) savunulabilir (en iyi fark +0.000 < 0.1 ya da n az).
+
+========================================================================
+SEMBOL: NDX.INDX  |  exit-grade'li işlem: 213
+========================================================================
+  çıkış politikası    EV(ATR)    ±se    n   (varsayılan fixed_1.0/1.5 = +0.202)
+  --------------------------------------------------------
+  fixed_1.0/1.5        +0.202  0.080  213  🏆  ⬅ varsayılan
+  fixed_1.5/1.5        +0.106  0.088  213
+  trail_1.0            +0.099  0.085  213
+  breakeven_tp2        +0.092  0.087  213
+  time_2h              +0.071  0.097  213
+  fixed_2.0/1.5        +0.060  0.090  213
+  → varsayılan (fixed_1.0/1.5) savunulabilir (en iyi fark +0.000 < 0.1 ya da n az).
+
+========================================================================
+SEMBOL: USOIL.FOREX  |  exit-grade'li işlem: 95
+========================================================================
+  çıkış politikası    EV(ATR)    ±se    n   (varsayılan fixed_1.0/1.5 = +0.237)
+  --------------------------------------------------------
+  trail_1.0            +0.290  0.140   95  🏆
+  fixed_2.0/1.5        +0.273  0.144   95
+  fixed_1.5/1.5        +0.263  0.134   95
+  breakeven_tp2        +0.254  0.138   95
+  fixed_1.0/1.5        +0.237  0.118   95  ⬅ varsayılan
+  time_2h              +0.191  0.145   95
+  → varsayılan (fixed_1.0/1.5) savunulabilir (en iyi fark +0.053 < 0.1 ya da n az).
+
+========================================================================
+SEMBOL: XAUUSD  |  exit-grade'li işlem: 375
+========================================================================
+  çıkış politikası    EV(ATR)    ±se    n   (varsayılan fixed_1.0/1.5 = +0.337)
+  --------------------------------------------------------
+  time_2h              +0.851  0.086  375  🏆
+  fixed_2.0/1.5        +0.733  0.077  375
+  breakeven_tp2        +0.733  0.076  375
+  fixed_1.5/1.5        +0.551  0.067  375
+  trail_1.0            +0.434  0.064  375
+  fixed_1.0/1.5        +0.337  0.057  375  ⬅ varsayılan
+  → ✅ ÖNERİ: 'time_2h' varsayılanı +0.514 ATR/işlem geçiyor → bu çıkışı düşün.
+
+Not: pnl_atr = işlem başı beklenen ATR kazancı (lot×ATR-değeri = para). En yüksek
+ortalama = en kârlı çıkış. Öneri çıkarsa decide.py stop_mults / yeni exit-config'e wire edilir.

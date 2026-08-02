@@ -1,0 +1,36 @@
+Error processing line 7 of C:\Users\Mael\AppData\Local\Programs\Python\Python313\Lib\site-packages\pywin32.pth:
+
+  Traceback (most recent call last):
+    File "<frozen site>", line 207, in addpackage
+    File "<string>", line 1, in <module>
+  ModuleNotFoundError: No module named 'pywin32_bootstrap'
+
+Remainder of file ignored
+======================================================================
+RECALL ANALİZİ — 1274 karar, 1035 karşı-olgu grade edilmiş
+======================================================================
+
+[1] AÇMADIKLARI (WAIT) — açsaydı kazanır mıydı? (per sembol)
+    sembol          WAIT-cf     WR  yorum
+    GDAXI.INDX       96/329    29%  ✓ koruma YERİNDE (açsaydı kaybederdi)
+    NDX.INDX        121/178    68%  ⚠️ FAZLA KORUMACI — kazananları kaçırıyor
+    USOIL.FOREX       56/82    68%  ⚠️ FAZLA KORUMACI — kazananları kaçırıyor
+    XAUUSD          299/368    81%  ⚠️ FAZLA KORUMACI — kazananları kaçırıyor
+
+[2] YENİ FİLTRE ADAYI — kazanan WAIT'leri kaybedenlerden ayıran özellik?
+    (placebo p<0.05 + min örnek; yoksa gürültü → aday değil)
+    ✅ WAIT iken rev_chan < -0.88 → +33pp kazanma (kanal aşırılığı); placebo p=0.003
+       → bu kurulumda Opus FAZLA temkinli; filtreyi burada gevşetmeyi değerlendir.
+    ✅ WAIT iken rev_vwap < -1.1 → +30pp kazanma (VWAP aşırılığı); placebo p=0.003
+       → bu kurulumda Opus FAZLA temkinli; filtreyi burada gevşetmeyi değerlendir.
+    ✅ WAIT iken adx > 35 → +17pp kazanma (ADX); placebo p=0.003
+       → bu kurulumda Opus FAZLA temkinli; filtreyi burada gevşetmeyi değerlendir.
+    ✅ WAIT iken open_positions > 4 → +25pp kazanma (açık pozisyon); placebo p=0.003
+       → bu kurulumda Opus FAZLA temkinli; filtreyi burada gevşetmeyi değerlendir.
+
+[3] ÖZET
+    AÇTIKLARI (gerçek): 62% WR (48/78)
+    AÇMADIKLARI (karşı-olgu): 60% WR (572/957) → doğru reddetmiş
+
+    Not: aday filtreler distill_journal n≥20'de placebo ile teyit edilince
+    LESSONS '✅ onaylı'ya taşınır. Otomatik karar etkisi YOK (güvenli).

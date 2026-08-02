@@ -1259,10 +1259,10 @@
     "detail": "target_config.py NDX 30/50 duz merdiveni ATR tabanli merdivene cevir (SL 1.0 / TP1 1.0 / TP2 1.5 / TP3 2.0 / TP4 2.5 x ATR14-5m) + lifecycle 5m penceresini 10dk'dan 45-60dk'ya uzat + TP4>TP1 guard + epoch isareti. Lifecycle targets jsonb'yi okuyor, ml_target_price'i degil (prediction_logger.py:1013-1041, signal_lifecycle.py:324)",
     "category": "wiring",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-07-28T22:00:32.356618+00:00",
-    "updated_at": "2026-07-28T22:00:32.356890+00:00"
+    "updated_at": "2026-07-29T00:37:22.984716+00:00"
   },
   {
     "id": "bl_860ea92423",
@@ -1270,10 +1270,10 @@
     "detail": "1h EMA50 trend-hiza kapisi (bot kaniti %63.3 vs %43.4) + 4h dalga pozisyon kapisi (48xM5 hi-lo, ust %60 BUY yok / alt %40 SELL yok) + VIX rejim yonu (>=18.4 BUY) signal_gates.py'a golge sayacla eklenip signal_vetoes'a loglanacak; 2-3 hafta sonra karar",
     "category": "experiment",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-07-28T22:00:32.357872+00:00",
-    "updated_at": "2026-07-28T22:00:32.357874+00:00"
+    "updated_at": "2026-07-29T00:37:22.985842+00:00"
   },
   {
     "id": "bl_7c8906f58c",
@@ -1318,5 +1318,203 @@
     "source": "session",
     "created_at": "2026-07-28T22:00:32.361108+00:00",
     "updated_at": "2026-07-28T22:00:32.361110+00:00"
+  },
+  {
+    "id": "bl_ab8c7c765c",
+    "title": "Siki-stop ailesi: icra maliyeti sifira yakin giris denemesi",
+    "detail": "TP 80-120 / SL 25-30 ailesi 17 ayda tabani iki donemde de yeniyor (+0.069R fark) ama kenari zaman-stopundan geliyor ve 3 puan kaymada oluyor. Market emri yerine LIMIT emirle giris (teyit mumunun kapanisi +/- birkac puan) ve gercek fill kalitesi olculursa anlam kazanabilir. Once golge: shadow_trade_tracker'a kaynak olarak eklenip 3 hafta gercek fiyatla dogrulansin.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-29T01:58:42.412537+00:00",
+    "updated_at": "2026-07-29T01:58:42.412698+00:00"
+  },
+  {
+    "id": "bl_b6724c2b4b",
+    "title": "5m mum kurgulari icin isabet-orani vergisi belgelendi",
+    "detail": "NAS100 5m'de buyuk kirmizi mum sonrasi HER geometride isabet orani basabasin 1.5-3.4 puan altinda kaliyor (20/80'de %77.4 isabet ama basabas %80). Bu sabit vergi friksiyon+yukari suruklenme; TP/SL oynatarak kapanmiyor. Yeni 'yuksek WR' fikirleri gelmeden once bu tablo hatirlatilsin (research/RAPOR_SELL_MUM_DESTEK_2026-07-28.md EK bolumu).",
+    "category": "decision",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-29T01:58:42.413923+00:00",
+    "updated_at": "2026-07-29T01:58:42.413926+00:00"
+  },
+  {
+    "id": "bl_ab1bdef00e",
+    "title": "NDX SELL ATR-uyarlamalı SL'i gölgede doğrula",
+    "detail": "research/sl_opt/RAPOR.md: TP80/SL2.0xATR (+%38 totR) ve TP1.5xATR/SL2.5xATR (avgR 1.6x, P=%98.3) adayları. 13 günlük pencere + 24 varyant tarandı, in-sample baskısı var. Canlı geometriye dokunmadan gölgede ölç, 2 hafta sonra karar",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-29T19:23:34.299795+00:00",
+    "updated_at": "2026-07-29T19:23:34.299947+00:00"
+  },
+  {
+    "id": "bl_06b097e0bb",
+    "title": "GOLGE: limit-girisli tepki-satisi kurgusu (NDX 5m)",
+    "detail": "Konfig: buyuk kirmizi mum (govde>=1xATR14, govde/menzil>=0.55) + teyit (sonraki mum 1.'in dibinin altinda kapanir) -> SELL LIMIT = teyit mumu kapanisi + 1.00xATR, 12 bar gecerli, TP 80 / SL 30 puan, 72 bar zaman-stopu. 17 ayda egitim +0.97 / kor test +2.15 p/sinyal, eslestirilmis taban -1.07 (fark +2.41). Bu sorusturmada egitim+test+taban+parametre komsulugu dordunu birden gecen ILK konfigurasyon. shadow_trade_tracker'a ucuncu kaynak olarak eklenip 3-4 hafta gercek fiyatla dogrulanmali; ozellikle DOLUM orani ve gercek fill kalitesi olculmeli (backtest %69 dolum varsayiyor).",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-29T19:27:58.343929+00:00",
+    "updated_at": "2026-07-29T19:27:58.344085+00:00"
+  },
+  {
+    "id": "bl_aae05c53a9",
+    "title": "NDX SELL: SL'i 2.0xATR'ye bağla (TP80 sabit)",
+    "detail": "RAPOR.md derin test: 6/6 ay pozitif, OUT-of-sample +23.61R (canlının 2.3 katı), P=%99.5, işlem sayısı korunuyor",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-29T19:36:48.984862+00:00",
+    "updated_at": "2026-07-29T19:36:48.985006+00:00"
+  },
+  {
+    "id": "bl_593a05ead1",
+    "title": "shadow_pattern_trades CHECK migration'ini uygula",
+    "detail": "supabase/migrations/20260729_shadow_redcandle_source.sql — source CHECK'e 'redcandle' ekler. MCP salt-okunur oldugu icin uygulanamadi; Supabase dashboard SQL editorden calistir. Uygulanana kadar redcandle satirlari backend/data/shadow_fallback_trades.jsonl'a dusuyor (veri kaybolmuyor ama panel karnesi DB'den okur).",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-29T21:00:03.471106+00:00",
+    "updated_at": "2026-07-29T21:00:03.471264+00:00"
+  },
+  {
+    "id": "bl_303b4a6c57",
+    "title": "redcandle golge degerlendirmesi (2026-08-12 civari)",
+    "detail": "GET /api/shadow-tracker/report ile redcandle kaynagini oku: n>=30 cozulmus islemde sinyal-basina EV>0 VE limit_px detaylarıyla karsi-olgusal kayma olcumu. Gecemezse REDCANDLE_SHADOW_ENABLED=0 yap ve aileyi kapat. Kanit esigi: rapor EK-2, research/RAPOR_SELL_MUM_DESTEK_2026-07-28.md",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-29T21:00:03.472332+00:00",
+    "updated_at": "2026-07-29T21:00:03.472335+00:00"
+  },
+  {
+    "id": "bl_52778e0681",
+    "title": "Uyarlamalı SL'in canlı teyidi (~2026-08-12)",
+    "detail": "bot_trades'ten VIXREG SELL islemlerinin gerceklesen SL mesafelerini ve R'larini cek; beklenti ortalama SL ~104p ve isabet sabit-SL donemine gore yukari. Sapma varsa VIXREG_SL_ATR_ENABLED=False",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-29T21:11:28.180256+00:00",
+    "updated_at": "2026-07-29T21:11:28.180411+00:00"
+  },
+  {
+    "id": "bl_a083b68d02",
+    "title": "DAX/USOIL ATR-SL uygulama kararı",
+    "detail": "USOIL_DAX_RAPOR.md: DAX BUY+SELL 2.0xATR kaymaya dayanıklı ve 6/6-5/6 ay pozitif. USOIL kaymaya kırılgan (3x kaymada 2.0xATR −134) → 3.0xATR veya dokunma. Ayrıca ATR-SL tüm sembollerde WR'ı düşürüyor; kullanıcının yüksek-WR tercihiyle çelişiyor",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-07-29T21:22:50.788474+00:00",
+    "updated_at": "2026-07-29T21:22:50.788624+00:00"
+  },
+  {
+    "id": "bl_6a88d70232",
+    "title": "XAU free-explorer verdict",
+    "detail": "Temmuz verisiyle XAU serbest-zeka modu net -27R (281 karar); FREE_EXPLORER=0'a donme veya kanit-kapili XAU BUY'a siniirla karari bekliyor",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-01T17:09:38.805888+00:00",
+    "updated_at": "2026-08-01T17:09:38.806039+00:00"
+  },
+  {
+    "id": "bl_9aa2c4cd07",
+    "title": "pulse1 regime-disable olu dal",
+    "detail": "emel_pulse.py:1555 weight==0 kosulu hic tetiklenmiyor (matris min 0.05-0.15 uretiyor); ya weight'i gercekten 0 yap ya da dali kaldir ve docstring'i duzelt",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-01T17:27:24.566944+00:00",
+    "updated_at": "2026-08-01T17:27:24.567102+00:00"
+  },
+  {
+    "id": "bl_8581648c71",
+    "title": "ml_cross hala prediction_logs'a yaziyor",
+    "detail": "CROSS_MODEL_EXPERIMENT_ENABLED=0 olmasina ragmen ml_cross_xau_nasdaq(+_inv) son 7 gunde 456 satir yazdi (son: 2026-07-31). Ya Railway/kutu env'inde bayrak yok ya da bayrak loglamayi kapatmiyor. XAU'da %25 WR ile DB kirletiyor — kapat veya bayragi loglamaya da bagla",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-01T17:40:02.809982+00:00",
+    "updated_at": "2026-08-01T17:40:02.810289+00:00"
+  },
+  {
+    "id": "bl_ec17ea1975",
+    "title": "XAU/USOIL atr_ladder_v1 epoch olcumu",
+    "detail": "2-3 hafta sonra XAU+USOIL pulse/smc WR'ini factors.target_type=atr_ladder_v1 kirilimiyla olc; XAU hala <%45 ise XAU_SCALP_GATE_BLOCK=1 yap. VIXREG BLOK etkisini de ayni pencerede izle (bloklanan karsit sinyallerin gerceklesen WR'i)",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-01T17:58:08.743778+00:00",
+    "updated_at": "2026-08-01T17:58:08.743945+00:00"
+  },
+  {
+    "id": "bl_ee20c01a2b",
+    "title": "TQ katmani etki olcumu",
+    "detail": "2 hafta sonra: (1) factors.time_quality=cool satirlarin WR'i (gecen cok-emin sinyaller cukurda gercekten >%55 mi), (2) NDX 18 UTC altin-istisna sinyallerinin sonucu, (3) bot gate_skipped tq_cool kayitlarinin karsi-olgusal PnL'i (gate_audit.py), (4) Cuma cok-emin girislerin performansi. Kotu ise TQ_SESSION_EXCEPTION=0 ve esikleri sikilastir",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-01T18:14:43.087090+00:00",
+    "updated_at": "2026-08-01T18:14:43.087242+00:00"
+  },
+  {
+    "id": "bl_51b1bbc4f4",
+    "title": "bias_test notlama eksenini onar",
+    "detail": "backfill_horizons'a force parametresi ekle (ret_360m null filtresi kaldır) + 91 satırı temiz candle_cache üzerinde yeniden notla; grading anchor'ı raw_payload.price_at_decision yerine run_ts'teki son kapalı 5m bar kapanışı yap, p0'ı yalnız tazelik teşhisi olarak sakla",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T21:50:24.967786+00:00",
+    "updated_at": "2026-08-02T21:50:24.968095+00:00"
+  },
+  {
+    "id": "bl_e5523b3959",
+    "title": "NDX 08:00 ET debate bayat fiyatla karar veriyor",
+    "detail": "DataHub get_price 12:00 UTC'de NDX icin onceki seans kapanisini donuyor (16sa bayat); _gather_context'e tazelik guardi + candle_cache fallback ekle veya kosu saatini feed canliyken kaydir",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T21:50:24.969307+00:00",
+    "updated_at": "2026-08-02T21:50:24.969313+00:00"
+  },
+  {
+    "id": "bl_26f68f1de0",
+    "title": "Ajan tartismasi ayi yanliligi devam ediyor",
+    "detail": "33/47 (%70) ayi cagri vs piyasa %57 yukari (p~0.0002); 07-26'da eklenen debate_evidence yon-dengesi blogu + SYMMETRY RULE olcusen etkiyi vermemis, prompt katmani yeniden denetlensin",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T21:50:24.970241+00:00",
+    "updated_at": "2026-08-02T21:50:24.970244+00:00"
+  },
+  {
+    "id": "bl_a747867bbd",
+    "title": "Kosu saati A/B testi",
+    "detail": "Saat optimizasyonu ancak sembol basina >=2 saatte paralel kosuyla olculebilir (su an 3 sembol tek saatte); n>=30 yonlu cagri/kova hedefiyle plan cikar",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T21:50:24.971240+00:00",
+    "updated_at": "2026-08-02T21:50:24.971242+00:00"
   }
 ]

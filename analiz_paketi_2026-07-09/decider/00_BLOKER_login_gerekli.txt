@@ -1,0 +1,48 @@
+FABLE/OPUS TOPLU ANALIZ CALISTIRILAMADI — CLAUDE CLI LOGIN GEREKLI
+====================================================================
+
+Tarih: 2026-07-09
+Denenen: claude_decider/batch_eval.py --model=claude-fable-5 --write
+
+SONUC: claude exit 1
+STDOUT (tam): {"type":"result","subtype":"success","is_error":true,...,
+              "result":"Not logged in · Please run /login", ...}
+
+TESHIS:
+- CLAUDE_BIN dogru binary'i buluyor:
+  C:\Users\Mael\node_modules\@anthropic-ai\claude-code-win32-x64\claude.exe
+- Binary calisiyor (crash/WinError yok), ama bu headless CLI oturumu
+  Claude hesabina GIRIS YAPMAMIS durumda.
+
+COZUM (kullanicinin yapmasi gereken, terminalde):
+  1) Bir terminal ac (PowerShell/CMD)
+  2) Su komutu calistir:
+       "C:\Users\Mael\node_modules\@anthropic-ai\claude-code-win32-x64\claude.exe" /login
+     (veya PATH'e ekliyse sadece: claude /login)
+  3) Acilan tarayici akisinda Claude hesabina giris yap (Pro/Max abonelik).
+  4) Giris tamamlandiktan sonra 14_fable_toplu_analiz.bat'i tekrar calistir.
+
+NOT: Bu, "claude CLI PATH'te YOK" uyarisindan FARKLI bir sorun — CLI artik
+bulunuyor ve calisiyor, sadece authenticate degil. Muhtemelen bu profil/
+kullanici oturumu ilk kez headless (-p) modda calistirildi ve login hic
+yapilmamis, ya da onceki login suresi/oturumu duatt.
+
+BEKLEYEN KAYIT SAYISI (login sonrasi calistirilmayi bekliyor):
+  - Fable icin isaretsiz (grade'li): 965 kayit (~14 toplu cagriya bolunur, cap=70/cagri)
+  - Opus icin isaretsiz (grade'li):  1035 kayit (~15 toplu cagriya bolunur)
+  - Zaten fable ile isaretli (onceki calistirmadan, 2026-07-07): 70 kayit
+
+====================================================================
+COZULDU — 2026-07-09 14:03 UTC
+====================================================================
+Kullanici "claude /login" komutunu calistirip tarayicidan giris yapti.
+Sonraki deneme basarili oldu:
+  - Fable --write: 70 yeni kayit, maliyet $0.46, WR %62 (10/16 OPEN), EV +0.010R
+  - Opus  --write: 70 yeni kayit (ayni paketler), maliyet $1.17, WR %83 (5/6 OPEN), EV +0.392R
+  - Kumulatif rapor: batch_eval_kumulatif_rapor.txt (isaretli toplam 210 kayit)
+
+KALAN BEKLEYEN (bu calistirmadan sonra):
+  - Fable icin hala isaretsiz: 898 kayit (~13 tur daha)
+  - Opus icin hala isaretsiz:  898 kayit (~13 tur daha)
+Not: Gunluk 1 tur (~70 kayit/model) onerilen kullanim; backlog'u tamamen
+eritmek icin 14_fable_toplu_analiz.bat birden fazla gun/tur calistirilmali.

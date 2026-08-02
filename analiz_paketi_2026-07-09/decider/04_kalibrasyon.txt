@@ -1,0 +1,33 @@
+Error processing line 7 of C:\Users\Mael\AppData\Local\Programs\Python\Python313\Lib\site-packages\pywin32.pth:
+
+  Traceback (most recent call last):
+    File "<frozen site>", line 207, in addpackage
+    File "<string>", line 1, in <module>
+  ModuleNotFoundError: No module named 'pywin32_bootstrap'
+
+Remainder of file ignored
+============================================================
+KALİBRASYON — tahminler gerçeği tutuyor mu?
+============================================================
+Journal: 1274 | kalibrasyon çifti (gate-fired+grade): 534
+
+[1] KANIT BASE-RATE KALİBRASYONU (evidence ne vaat etti vs ne oldu)
+    tahmin kovası   söz~     gerçek    n    sapma
+    ------------------------------------------------
+    50-60%        ~56%       52%    42   -4pp  ✓
+    60-70%        ~67%       27%   220   -39pp  🔴 şişik
+    70-80%        ~75%       66%   126   -9pp  ⚠
+    80-90%        ~84%       55%    86   -30pp  🔴 şişik
+    90-100%        ~92%       61%    38   -32pp  🔴 şişik
+    → Ortalama kalibrasyon hatası (ECE): 26.8pp | bias -26.8pp → kanıt base'leri ŞİŞİK (canlı altında) → evidence_tables TAZELE (Plan #5)
+
+[2] size_factor GÜVENİLİRLİĞİ (Opus konviksiyon → gerçek WR)
+    size kovası    gerçek WR    n
+    --------------------------------
+    0.0-0.4          54%   39
+    0.4-0.6          72%   39
+    0.6-0.8      (n=3 az)
+    → en yüksek − en düşük kova: +18pp → konviksiyon GERÇEK (büyük size → çok kazanıyor) ✓
+
+Not: [1] kanıt şişikse → evidence_tables tazele. [2] monoton değilse → Opus'un
+güveni gürültü; sizing'i sadeleştir. İkisi de sistemin 'kendini tanıması'.

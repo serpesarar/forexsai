@@ -1,0 +1,42 @@
+version: 1
+agent:
+  name: forexsai
+  description: "ForexSAI — AI-powered trading dashboard (ML + SMC + multi-model signals for NASDAQ/DAX/Gold/WTI)"
+  extend: default
+
+  system_prompt_path: ./.kimi/system_prompt.md
+  system_prompt_args:
+    PROJECT_NAME: "ForexSAI Trading Portal"
+    PRIMARY_MARKETS: "NDX.INDX, GDAXI.INDX, XAUUSD, USOIL.FOREX"
+    SIGNAL_MODELS: "ML, PULSE1, PULSE2, PULSE3, EMEL, SMC"
+    FRONTEND_FRAMEWORK: "Next.js 14 App Router"
+    DATA_SOURCE: "own MT5-to-Redis bridge (DataHub) — no third-party market-data vendor"
+
+  tools:
+    - "kimi_cli.tools.shell:Shell"
+    - "kimi_cli.tools.file:ReadFile"
+    - "kimi_cli.tools.file:WriteFile"
+    - "kimi_cli.tools.file:ListDirectory"
+    - "kimi_cli.tools.web:SearchWeb"
+    - "kimi_cli.tools.web:FetchURL"
+    - "kimi_cli.tools.code:ReadCode"
+
+  exclude_tools:
+    - "kimi_cli.tools.web:Browser"  # not needed for this project's workflow
+
+  subagents:
+    frontend-coder:
+      path: ./.kimi/agents/frontend.yaml
+      description: "Next.js/TypeScript dashboard, panels, and charts"
+
+    ml-engineer:
+      path: ./.kimi/agents/ml-engineer.yaml
+      description: "Python ML models, signal pipelines (PULSE/EMEL/SMC), and evidence-backed rule mining"
+
+    backend-dev:
+      path: ./.kimi/agents/backend.yaml
+      description: "FastAPI routers, Supabase schema, DataHub/MT5-Redis bridge, WebSocket broadcast"
+
+    trading-reviewer:
+      path: ./.kimi/agents/reviewer.yaml
+      description: "Code review with trading-logic and risk-management validation"

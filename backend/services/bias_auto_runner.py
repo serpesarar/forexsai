@@ -177,6 +177,19 @@ async def tick(now_utc: Optional[datetime] = None) -> Optional[dict]:
             _filled_utc.add(ny_date)
             actions["fill_utc"] = f"{res['rows_updated']} rows"
             logger.info("[bias-auto] UTC fill %s: %s", ny_date, res)
+            # ÖZ-ÖĞRENME (2026-08-02): günün notlaması biter bitmez karneyi
+            # dersе çevir. LLM kullanmaz, token harcamaz — tamamen ölçümden
+            # türer ve eşiği (n≥12, binom p≤0.01) geçmeyen bulgu ders olmaz.
+            # Buraya bağlı olmasının sebebi: notlanmamış satır üzerinden ders
+            # damıtmak dünün yarım verisini öğretirdi.
+            try:
+                from services.bias_self_learning import distill_scorecard_lessons
+                lr = distill_scorecard_lessons()
+                actions["self_learn"] = (f"{len(lr.get('written') or [])} ders · "
+                                         f"{lr.get('retired', 0)} arşiv")
+                logger.info("[bias-auto] öz-öğrenme %s: %s", ny_date, lr)
+            except Exception as e:
+                logger.warning("[bias-auto] öz-öğrenme atlandı: %s", e)
         except Exception as e:
             logger.warning("[bias-auto] UTC fill %s failed: %s", ny_date, e)
         finally:

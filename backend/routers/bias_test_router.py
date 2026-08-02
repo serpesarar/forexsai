@@ -114,6 +114,33 @@ async def accuracy_report(days: int = Query(default=30, ge=1, le=365)):
         raise HTTPException(status_code=503, detail=str(e))
 
 
+@router.post("/regrade")
+async def regrade(force: bool = Query(default=False),
+                  max_rows: int = Query(default=500, ge=1, le=2000)):
+    """Ufuk + dayanıklılık kolonlarını yeniden hesapla (bakım aracı).
+
+    ``force=true`` TÜM satırları yeniden notlar. 2026-08-02'de bir kez böyle
+    koşuldu: mumlar 07-28'de broker-saati kaymasından düzeltilmişti ama ret_*
+    kolonları onarımdan önce donmuştu (91 satırın 90'ı yeniden notlandı, 77'sinde
+    birincil ufuk değeri değişti). Mum verisi yeniden onarılırsa tekrar gerekir.
+    """
+    try:
+        return bts.backfill_horizons(max_rows=max_rows, force=force)
+    except bts.BiasTestError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
+@router.post("/self-learn")
+async def self_learn(dry_run: bool = Query(default=False)):
+    """Karneyi derse çevir (öz-öğrenme). Auto-runner bunu notlamadan sonra çağırır.
+
+    LLM kullanmaz. Eşiği (n≥12, iki-yanlı binom p≤0.01) geçmeyen bulgu ders
+    OLMAZ; kanıtı düşen eski otomatik dersler arşivlenir.
+    """
+    from services.bias_self_learning import distill_scorecard_lessons
+    return distill_scorecard_lessons(dry_run=dry_run)
+
+
 @router.get("/cortex-signals")
 async def cortex_signals(days: int = Query(default=30, ge=1, le=365)):
     """Recent CORTEX confluence SHADOW signals + running hit-rate (log-only)."""

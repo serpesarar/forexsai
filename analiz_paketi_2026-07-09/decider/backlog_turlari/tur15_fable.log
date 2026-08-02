@@ -1,0 +1,20 @@
+Error processing line 7 of C:\Users\Mael\AppData\Local\Programs\Python\Python313\Lib\site-packages\pywin32.pth:
+
+  Traceback (most recent call last):
+    File "<frozen site>", line 207, in addpackage
+    File "<string>", line 1, in <module>
+  ModuleNotFoundError: No module named 'pywin32_bootstrap'
+
+Remainder of file ignored
+[claude-fable-5] ölçülebilir (cf-grade'li, bu modelce sorulmamış) kayıt: 63
+Tek toplu çağrı → claude-fable-5 (63 durum, ~3310 token)...
+
+============================================================
+TOPLU DEĞERLENDİRME [claude-fable-5] — 63 durum, maliyet $0.84
+============================================================
+  OPEN: 19 (grade'li 19, yön-eşleşmedi 0) | WAIT: 44
+  claude-fable-5 WR: 47% (9/19) | EV: -0.223R/işlem
+  Opus (canlı, aynı kayıtlar): WR 43% (3/7), 7 OPEN
+  Naive-gate (hepsini aç): WR 49% (31/63)
+  💰 Tasarruf: canlı shadow olsaydı ~$35; toplu çağrı $0.84 (~41× ucuz)
+  → journal'a batch_eval[claude-fable-5] işlendi (bu model için tekrar sorulmaz).

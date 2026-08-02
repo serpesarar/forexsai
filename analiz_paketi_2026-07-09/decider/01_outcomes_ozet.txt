@@ -1,0 +1,10 @@
+Error processing line 7 of C:\Users\Mael\AppData\Local\Programs\Python\Python313\Lib\site-packages\pywin32.pth:
+
+  Traceback (most recent call last):
+    File "<frozen site>", line 207, in addpackage
+    File "<string>", line 1, in <module>
+  ModuleNotFoundError: No module named 'pywin32_bootstrap'
+
+Remainder of file ignored
+Decider performans özeti:
+  OPEN kararlar: 81 grade | WR 63% (51/81) | EV +0.041R/işlem | açık=3 bekle=1190 expire=0

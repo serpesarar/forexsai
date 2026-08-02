@@ -1,0 +1,27 @@
+Error processing line 7 of C:\Users\Mael\AppData\Local\Programs\Python\Python313\Lib\site-packages\pywin32.pth:
+
+  Traceback (most recent call last):
+    File "<frozen site>", line 207, in addpackage
+    File "<string>", line 1, in <module>
+  ModuleNotFoundError: No module named 'pywin32_bootstrap'
+
+Remainder of file ignored
+====================================================================
+MODEL KIYAS — opus (asıl) vs None (gölge)
+====================================================================
+Gölge-model'li karar: 196
+
+[1] KARAR ANLAŞMASI (n=196)
+    Aynı aksiyon (OPEN/WAIT): 97%
+    Aynı aksiyon+yön:         97%
+
+[2] AÇILAN İŞLEM KALİTESİ (kendi OPEN'larında)
+    opus             WR 20% (1/5)  EV -0.666R
+Traceback (most recent call last):
+  File "C:\Users\Mael\OneDrive\Masaüstü\forexsai-bot\claude_decider\model_compare.py", line 128, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Mael\OneDrive\Masaüstü\forexsai-bot\claude_decider\model_compare.py", line 98, in main
+    print(f"    {name:<16} " + (f"WR {res[2]:.0f}% ({res[0]}/{res[1]})  EV {res[3]:+.3f}R" if res else "grade'li OPEN yok"))
+                ^^^^^^^^^^
+TypeError: unsupported format string passed to NoneType.__format__

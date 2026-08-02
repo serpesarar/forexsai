@@ -1,5 +1,5 @@
 # Price Action Pattern Mining Report
-_2026-07-20T05:52:38.099356Z_
+_2026-07-21T20:58:26.219922Z_
 
 Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 Üç bağımsız layer:
@@ -10,49 +10,33 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 ---
 
 ## XAUUSD · 5m
-- Candles: **10000**  ·  Swing pivots: 1307  ·  FVG: 1841
-- CHoCH/BOS events: 884  ·  Order Blocks: 1546
-- Trend Ladders detected: 105  ·  Candle patterns: 2741  ·  Breakouts: 1003
+- Candles: **10000**  ·  Swing pivots: 1320  ·  FVG: 1835
+- CHoCH/BOS events: 897  ·  Order Blocks: 1571
+- Trend Ladders detected: 104  ·  Candle patterns: 2742  ·  Breakouts: 1003
 
 ### S/R Cluster Seviyeleri (top 8)
-- 4094.7658 (touches: **1020**, strong)
+- 4091.0642 (touches: **1088**, strong)
 - 4328.5248 (touches: **156**, strong)
-- 4465.4796 (touches: **50**, strong)
 - 4266.2111 (touches: **36**, strong)
 - 4234.4613 (touches: **16**, strong)
 - 4365.56 (touches: **7**, strong)
-- 4435.83 (touches: **4**, moderate)
-- 4492.2074 (touches: **4**, moderate)
+- 4468.6 (touches: **4**, moderate)
+- 4294.32 (touches: **3**, moderate)
+- 4459.5967 (touches: **3**, moderate)
 
-### 🪜 Trend Ladder Analizi (105 ladder)
-- Continued: 36  ·  Reversed: 47  ·  Baseline continuation: **34.3%**
-
-**🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
-- **71.4%** (10/14)
-   - `ladder_slope_atr_bucket = (-inf, 0.2]`
-   - `before_rsi_last_bucket ≠ (30.0, 50.0]`
-   - `ladder_total_atr_bucket = (1.0, 2.5]`
+### 🪜 Trend Ladder Analizi (104 ladder)
+- Continued: 37  ·  Reversed: 46  ·  Baseline continuation: **35.6%**
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **30.0%** (3/10)
-   - `ladder_slope_atr_bucket ≠ (-inf, 0.2]`
-   - `before_adx_avg_bucket ≠ (25.0, inf]`
-   - `before_rsi_avg_bucket = (50.0, 70.0]`
-- **20.0%** (2/10)
-   - `ladder_slope_atr_bucket ≠ (-inf, 0.2]`
-   - `before_adx_avg_bucket = (25.0, inf]`
-   - `start_dist_ema50_atr_bucket ≠ (-inf, -1.0]`
-- **16.7%** (2/12)
-   - `ladder_slope_atr_bucket = (-inf, 0.2]`
-   - `before_rsi_last_bucket = (30.0, 50.0]`
-   - `before_volz_avg_bucket = (-0.5, 0.5]`
-- **7.1%** (1/14)
-   - `ladder_slope_atr_bucket ≠ (-inf, 0.2]`
-   - `before_adx_avg_bucket ≠ (25.0, inf]`
-   - `before_rsi_avg_bucket ≠ (50.0, 70.0]`
+- **21.4%** (6/28)
+   - `ladder_slope_atr_bucket ≠ (0.5, 1.0]`
+   - `before_rsi_avg_bucket = (30.0, 50.0]`
+   - `before_adx_avg_bucket ≠ (18.0, 25.0]`
+- **18.8%** (3/16)
+   - `ladder_slope_atr_bucket = (0.5, 1.0]`
 
 ### 📊 XAUUSD/5m · ALL EVENTS
-- Events: 6819  ·  Baseline continuation: **45.7%**
+- Events: 6863  ·  Baseline continuation: **45.7%**
 
   - 🟢 **100.0%** (22/22)
       - `type ≠ bearish_OB`
@@ -69,7 +53,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `type = bullish_OB`
       - `atr_pct_b = (0.4, inf]`
       - `dow ≠ Mon`
-  - 🟢 **84.0%** (110/131)
+  - 🟢 **83.6%** (107/128)
       - `type = bearish_OB`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b ≠ (18.0, 25.0]`
@@ -78,12 +62,12 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `type = bearish_OB`
       - `atr_pct_b = (0.05, 0.15]`
       - `rsi_b = (70.0, inf]`
-  - 🔴 **22.2%** (42/189)
+  - 🔴 **21.5%** (41/191)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
       - `type = BOS_bearish`
       - `atr_pct_b ≠ (0.4, inf]`
-  - 🔴 **17.8%** (29/163)
+  - 🔴 **18.8%** (30/160)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
       - `type ≠ BOS_bearish`
@@ -95,160 +79,188 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b = (0.4, inf]`
 
 ### 📊 XAUUSD/5m · BOS_bearish
-- Events: 208  ·  Baseline continuation: **20.2%**
+- Events: 210  ·  Baseline continuation: **19.5%**
 
-  - 🔴 **19.0%** (8/42)
+  - 🔴 **28.6%** (6/21)
       - `atr_pct_b ≠ (0.4, inf]`
       - `dow ≠ Mon`
-      - `dow ≠ Thu`
+      - `adx_b ≠ (25.0, inf]`
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🔴 **27.3%** (3/11)
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `dow = Mon`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **16.4%** (11/67)
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `dow ≠ Mon`
+      - `adx_b ≠ (25.0, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🔴 **13.3%** (2/15)
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `dow ≠ Mon`
+      - `adx_b = (25.0, inf]`
       - `dow = Fri`
-  - 🔴 **18.2%** (4/22)
-      - `atr_pct_b ≠ (0.4, inf]`
-      - `dow ≠ Mon`
-      - `dow = Thu`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **17.6%** (3/17)
+  - 🔴 **6.2%** (1/16)
       - `atr_pct_b ≠ (0.4, inf]`
       - `dow = Mon`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **9.1%** (1/11)
-      - `atr_pct_b ≠ (0.4, inf]`
-      - `dow ≠ Mon`
-      - `dow = Thu`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **5.0%** (1/20)
-      - `atr_pct_b ≠ (0.4, inf]`
-      - `dow = Mon`
-      - `vol_z_b = (0.5, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `adx_b = (25.0, inf]`
 
 ### 📊 XAUUSD/5m · BOS_bullish
-- Events: 163  ·  Baseline continuation: **17.8%**
+- Events: 160  ·  Baseline continuation: **18.8%**
 
-  - 🔴 **26.7%** (4/15)
-      - `adx_b ≠ (18.0, 25.0]`
-      - `dow ≠ Thu`
+  - 🔴 **30.0%** (3/10)
       - `vol_z_b = (0.5, inf]`
-      - `atr_pct_b = (0.15, 0.4]`
-  - 🔴 **21.4%** (3/14)
-      - `adx_b ≠ (18.0, 25.0]`
-      - `dow = Thu`
       - `atr_pct_b ≠ (0.05, 0.15]`
-  - 🔴 **20.7%** (6/29)
-      - `adx_b ≠ (18.0, 25.0]`
-      - `dow ≠ Thu`
+      - `rsi_b = (70.0, inf]`
+  - 🔴 **28.6%** (4/14)
       - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **20.0%** (3/15)
-      - `adx_b = (18.0, 25.0]`
-      - `dow = Tue`
-  - 🔴 **18.8%** (3/16)
-      - `adx_b ≠ (18.0, 25.0]`
-      - `dow ≠ Thu`
-      - `vol_z_b = (0.5, inf]`
+      - `dow ≠ Mon`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🔴 **25.0%** (5/20)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Mon`
       - `atr_pct_b ≠ (0.15, 0.4]`
+      - `dow = Tue`
+  - 🔴 **15.4%** (2/13)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Mon`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🔴 **10.0%** (1/10)
+      - `vol_z_b = (0.5, inf]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `rsi_b ≠ (70.0, inf]`
+      - `adx_b ≠ (25.0, inf]`
 
 ### 📊 XAUUSD/5m · CHoCH_bearish
-- Events: 246  ·  Baseline continuation: **43.5%**
+- Events: 254  ·  Baseline continuation: **43.7%**
 
-  - 🟢 **86.0%** (37/43)
+  - 🟢 **85.4%** (35/41)
       - `rsi_b = (50.0, 70.0]`
       - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow ≠ Thu`
       - `adx_b ≠ (25.0, inf]`
-  - 🔴 **25.0%** (4/16)
+      - `dow ≠ Thu`
+  - 🟢 **70.0%** (7/10)
+      - `rsi_b = (50.0, 70.0]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `adx_b ≠ (25.0, inf]`
+      - `dow = Thu`
+  - 🔴 **30.0%** (3/10)
       - `rsi_b ≠ (50.0, 70.0]`
-      - `dow = Tue`
+      - `dow ≠ Wed`
+      - `dow = Thu`
+      - `adx_b = (18.0, 25.0]`
+  - 🔴 **27.3%** (3/11)
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow = Wed`
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🔴 **19.5%** (8/41)
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow ≠ Wed`
+      - `dow ≠ Thu`
       - `vol_z_b = (0.5, inf]`
-  - 🔴 **20.3%** (14/69)
+  - 🔴 **11.1%** (2/18)
       - `rsi_b ≠ (50.0, 70.0]`
-      - `dow ≠ Tue`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `dow ≠ Fri`
-  - 🔴 **5.3%** (1/19)
+      - `dow ≠ Wed`
+      - `dow = Thu`
+      - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **0.0%** (0/15)
       - `rsi_b ≠ (50.0, 70.0]`
-      - `dow ≠ Tue`
-      - `rsi_b = (-inf, 30.0]`
+      - `dow = Wed`
+      - `atr_pct_b ≠ (0.15, 0.4]`
 
 ### 📊 XAUUSD/5m · CHoCH_bullish
-- Events: 252  ·  Baseline continuation: **38.5%**
+- Events: 258  ·  Baseline continuation: **38.4%**
 
   - 🟢 **100.0%** (10/10)
       - `rsi_b = (30.0, 50.0]`
       - `atr_pct_b = (0.4, inf]`
-  - 🔴 **30.0%** (3/10)
+  - 🟢 **77.3%** (17/22)
+      - `rsi_b = (30.0, 50.0]`
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `dow = Thu`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🔴 **27.8%** (15/54)
       - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b = (25.0, inf]`
-      - `rsi_b ≠ (70.0, inf]`
-      - `dow = Mon`
-  - 🔴 **22.0%** (9/41)
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow ≠ Tue`
+      - `atr_pct_b ≠ (0.4, inf]`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **16.7%** (2/12)
+      - `dow ≠ Mon`
+  - 🔴 **25.0%** (4/16)
       - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b = (25.0, inf]`
-      - `rsi_b = (70.0, inf]`
-  - 🔴 **10.3%** (3/29)
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow ≠ Tue`
+      - `atr_pct_b ≠ (0.4, inf]`
       - `vol_z_b = (0.5, inf]`
-  - 🔴 **0.0%** (0/19)
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🔴 **12.5%** (2/16)
       - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow = Tue`
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow = Mon`
+  - 🔴 **7.4%** (2/27)
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `vol_z_b = (0.5, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🔴 **0.0%** (0/12)
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `atr_pct_b = (0.4, inf]`
 
 ### 📊 XAUUSD/5m · bearish
-- Events: 959  ·  Baseline continuation: **43.7%**
+- Events: 954  ·  Baseline continuation: **43.6%**
 
-  - 🟢 **80.0%** (16/20)
+  - 🟢 **78.6%** (22/28)
       - `dow ≠ Thu`
       - `vol_z_b = (-0.5, 0.5]`
+      - `rsi_b = (50.0, 70.0]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🟢 **71.4%** (10/14)
+      - `dow ≠ Thu`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Mon`
+      - `rsi_b = (50.0, 70.0]`
+  - 🔴 **29.7%** (11/37)
+      - `dow = Thu`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `rsi_b = (30.0, 50.0]`
+      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **29.4%** (30/102)
+      - `dow ≠ Thu`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Mon`
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **26.7%** (4/15)
+      - `dow = Thu`
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `rsi_b = (50.0, 70.0]`
-  - 🔴 **29.6%** (16/54)
+  - 🔴 **15.0%** (3/20)
       - `dow = Thu`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `adx_b ≠ (-inf, 18.0]`
       - `atr_pct_b = (0.15, 0.4]`
-  - 🔴 **29.2%** (7/24)
-      - `dow = Thu`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `adx_b = (-inf, 18.0]`
-      - `vol_z_b = (0.5, inf]`
-  - 🔴 **28.0%** (7/25)
-      - `dow = Thu`
-      - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **23.8%** (5/21)
-      - `dow = Thu`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `adx_b = (-inf, 18.0]`
-      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b = (30.0, 50.0]`
+      - `adx_b = (25.0, inf]`
 
 ### 📊 XAUUSD/5m · bearish_OB
-- Events: 785  ·  Baseline continuation: **73.5%**
+- Events: 784  ·  Baseline continuation: **72.2%**
 
   - 🟢 **100.0%** (32/32)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b ≠ (18.0, 25.0]`
       - `dow = Wed`
       - `vol_z_b ≠ (-inf, -0.5]`
-  - 🟢 **100.0%** (12/12)
+  - 🟢 **100.0%** (10/10)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b = (18.0, 25.0]`
       - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **92.3%** (24/26)
+  - 🟢 **92.9%** (26/28)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b ≠ (18.0, 25.0]`
       - `dow ≠ Wed`
       - `dow = Mon`
-  - 🟢 **92.3%** (12/13)
+  - 🟢 **86.4%** (19/22)
       - `atr_pct_b = (0.05, 0.15]`
       - `rsi_b = (70.0, inf]`
-      - `vol_z_b = (-inf, -0.5]`
+      - `vol_z_b ≠ (0.5, inf]`
   - 🟢 **85.7%** (12/14)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b ≠ (18.0, 25.0]`
@@ -256,23 +268,23 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 XAUUSD/5m · breakdown
-- Events: 568  ·  Baseline continuation: **39.4%**
+- Events: 561  ·  Baseline continuation: **39.0%**
 
-  - 🔴 **29.5%** (13/44)
+  - 🔴 **25.0%** (3/12)
       - `atr_pct_b ≠ (0.4, inf]`
-      - `dow = Thu`
-      - `adx_b ≠ (25.0, inf]`
-      - `atr_pct_b = (0.05, 0.15]`
-  - 🔴 **22.6%** (7/31)
-      - `atr_pct_b ≠ (0.4, inf]`
-      - `dow ≠ Thu`
       - `dow = Fri`
       - `adx_b = (18.0, 25.0]`
-  - 🔴 **15.4%** (2/13)
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **22.2%** (4/18)
       - `atr_pct_b ≠ (0.4, inf]`
-      - `dow = Thu`
-      - `adx_b ≠ (25.0, inf]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `dow = Fri`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🔴 **6.7%** (1/15)
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `dow = Fri`
+      - `adx_b = (18.0, 25.0]`
+      - `vol_z_b = (0.5, inf]`
   - 🔴 **4.5%** (1/22)
       - `atr_pct_b = (0.4, inf]`
       - `dow = Wed`
@@ -281,61 +293,61 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Wed`
 
 ### 📊 XAUUSD/5m · breakout_up
-- Events: 420  ·  Baseline continuation: **34.0%**
+- Events: 428  ·  Baseline continuation: **35.0%**
 
-  - 🔴 **25.7%** (9/35)
-      - `atr_pct_b ≠ (0.4, inf]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `vol_z_b = (-0.5, 0.5]`
-  - 🔴 **20.0%** (2/10)
+  - 🟢 **70.0%** (7/10)
       - `atr_pct_b ≠ (0.4, inf]`
       - `vol_z_b = (0.5, inf]`
-      - `dow = Tue`
       - `adx_b = (18.0, 25.0]`
+      - `dow = Wed`
+  - 🔴 **29.4%** (10/34)
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b = (70.0, inf]`
+      - `vol_z_b ≠ (-inf, -0.5]`
   - 🔴 **18.9%** (7/37)
       - `atr_pct_b ≠ (0.4, inf]`
       - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b = (50.0, 70.0]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-  - 🔴 **3.3%** (1/30)
+      - `rsi_b ≠ (70.0, inf]`
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🔴 **6.7%** (2/30)
       - `atr_pct_b ≠ (0.4, inf]`
       - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `rsi_b = (70.0, inf]`
+      - `vol_z_b = (-inf, -0.5]`
   - 🔴 **0.0%** (0/22)
       - `atr_pct_b = (0.4, inf]`
 
 ### 📊 XAUUSD/5m · bullish
-- Events: 867  ·  Baseline continuation: **35.2%**
+- Events: 862  ·  Baseline continuation: **35.7%**
 
-  - 🔴 **27.6%** (16/58)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Fri`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow = Tue`
-  - 🔴 **22.4%** (17/76)
-      - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `dow ≠ Mon`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **20.0%** (3/15)
+  - 🔴 **27.6%** (8/29)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow = Fri`
       - `adx_b ≠ (-inf, 18.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **26.3%** (5/19)
+      - `vol_z_b = (-inf, -0.5]`
       - `rsi_b = (70.0, inf]`
-  - 🔴 **20.0%** (2/10)
+      - `dow ≠ Fri`
+  - 🔴 **20.0%** (3/15)
       - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b = (30.0, 50.0]`
-      - `dow = Tue`
-  - 🔴 **17.4%** (4/23)
+      - `rsi_b ≠ (70.0, inf]`
+      - `dow = Fri`
+      - `adx_b = (-inf, 18.0]`
+  - 🔴 **19.6%** (9/46)
       - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b ≠ (30.0, 50.0]`
+      - `rsi_b ≠ (70.0, inf]`
+      - `dow ≠ Fri`
       - `dow = Mon`
-      - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **14.3%** (2/14)
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow = Fri`
+      - `adx_b = (-inf, 18.0]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
 
 ### 📊 XAUUSD/5m · bullish_OB
-- Events: 761  ·  Baseline continuation: **66.2%**
+- Events: 786  ·  Baseline continuation: **67.0%**
 
   - 🟢 **100.0%** (28/28)
       - `atr_pct_b = (0.4, inf]`
@@ -343,136 +355,132 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🟢 **92.9%** (13/14)
       - `atr_pct_b = (0.4, inf]`
       - `dow = Wed`
-  - 🟢 **80.2%** (97/121)
+  - 🟢 **80.3%** (98/122)
       - `atr_pct_b ≠ (0.4, inf]`
-      - `rsi_b = (30.0, 50.0]`
       - `dow ≠ Wed`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-  - 🔴 **23.1%** (3/13)
+      - `rsi_b = (30.0, 50.0]`
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🟢 **78.3%** (18/23)
       - `atr_pct_b ≠ (0.4, inf]`
+      - `dow = Wed`
+      - `rsi_b = (50.0, 70.0]`
+  - 🟢 **70.1%** (61/87)
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `dow ≠ Wed`
       - `rsi_b ≠ (30.0, 50.0]`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `dow = Mon`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 XAUUSD/5m · engulfing_bear
-- Events: 328  ·  Baseline continuation: **47.3%**
+- Events: 323  ·  Baseline continuation: **46.1%**
 
-  - 🟢 **75.0%** (30/40)
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow ≠ Tue`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-  - 🔴 **25.0%** (5/20)
-      - `rsi_b = (30.0, 50.0]`
-      - `dow = Thu`
-      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🟢 **71.4%** (10/14)
+      - `dow = Fri`
+      - `vol_z_b ≠ (-0.5, 0.5]`
       - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **18.2%** (2/11)
-      - `rsi_b = (30.0, 50.0]`
-      - `dow = Thu`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🔴 **14.3%** (2/14)
-      - `rsi_b = (30.0, 50.0]`
-      - `dow ≠ Thu`
-      - `dow = Mon`
+      - `rsi_b ≠ (30.0, 50.0]`
+  - 🟢 **71.4%** (10/14)
+      - `dow = Fri`
       - `vol_z_b = (-0.5, 0.5]`
+  - 🔴 **29.4%** (5/17)
+      - `dow ≠ Fri`
+      - `rsi_b = (50.0, 70.0]`
+      - `dow = Tue`
+      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🔴 **27.3%** (3/11)
+      - `dow = Fri`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `adx_b = (18.0, 25.0]`
+  - 🔴 **15.4%** (2/13)
+      - `dow ≠ Fri`
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `dow = Mon`
 
 ### 📊 XAUUSD/5m · engulfing_bull
-- Events: 356  ·  Baseline continuation: **36.8%**
+- Events: 374  ·  Baseline continuation: **37.2%**
 
-  - 🟢 **72.7%** (8/11)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **29.4%** (5/17)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `dow = Tue`
-  - 🔴 **24.2%** (16/66)
+  - 🔴 **29.2%** (7/24)
       - `atr_pct_b = (0.05, 0.15]`
       - `rsi_b ≠ (30.0, 50.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow ≠ Mon`
-  - 🔴 **23.8%** (5/21)
-      - `atr_pct_b = (0.05, 0.15]`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `vol_z_b = (0.5, inf]`
-      - `dow ≠ Mon`
-  - 🔴 **21.4%** (3/14)
+      - `dow = Mon`
+      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🔴 **28.3%** (15/53)
       - `atr_pct_b = (0.05, 0.15]`
       - `rsi_b = (30.0, 50.0]`
-      - `dow = Mon`
-  - 🔴 **10.7%** (3/28)
+      - `adx_b ≠ (25.0, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🔴 **23.1%** (6/26)
       - `atr_pct_b = (0.05, 0.15]`
       - `rsi_b ≠ (30.0, 50.0]`
-      - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Mon`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **6.2%** (1/16)
+      - `atr_pct_b = (0.05, 0.15]`
+      - `rsi_b ≠ (30.0, 50.0]`
       - `dow = Mon`
+      - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 XAUUSD/5m · hammer
-- Events: 433  ·  Baseline continuation: **40.0%**
+- Events: 437  ·  Baseline continuation: **40.3%**
 
-  - 🔴 **26.3%** (5/19)
-      - `dow ≠ Tue`
+  - 🟢 **92.3%** (12/13)
       - `vol_z_b = (0.5, inf]`
-      - `dow = Wed`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **24.0%** (6/25)
+      - `dow = Mon`
+      - `rsi_b = (30.0, 50.0]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+  - 🟢 **70.6%** (12/17)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b = (30.0, 50.0]`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `dow = Thu`
+  - 🔴 **22.2%** (8/36)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
       - `dow = Tue`
+      - `atr_pct_b = (0.05, 0.15]`
+  - 🔴 **21.4%** (6/28)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `dow ≠ Tue`
+      - `adx_b = (-inf, 18.0]`
+  - 🔴 **18.8%** (3/16)
+      - `vol_z_b ≠ (0.5, inf]`
       - `rsi_b = (30.0, 50.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **18.8%** (6/32)
-      - `dow ≠ Tue`
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🔴 **7.7%** (1/13)
       - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b = (-inf, 18.0]`
       - `rsi_b ≠ (30.0, 50.0]`
-  - 🔴 **15.8%** (3/19)
       - `dow = Tue`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b ≠ (25.0, inf]`
-      - `vol_z_b = (-0.5, 0.5]`
-  - 🔴 **0.0%** (0/10)
-      - `dow = Tue`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b = (25.0, inf]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
 
 ### 📊 XAUUSD/5m · shooting_star
-- Events: 473  ·  Baseline continuation: **45.0%**
+- Events: 472  ·  Baseline continuation: **43.6%**
 
-  - 🔴 **30.0%** (3/10)
-      - `dow ≠ Mon`
-      - `dow = Thu`
-      - `vol_z_b = (0.5, inf]`
-      - `rsi_b = (30.0, 50.0]`
-  - 🔴 **18.2%** (8/44)
-      - `dow ≠ Mon`
-      - `dow = Thu`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **17.6%** (3/17)
-      - `dow = Mon`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `vol_z_b = (0.5, inf]`
-  - 🔴 **15.0%** (3/20)
-      - `dow = Mon`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `vol_z_b ≠ (0.5, inf]`
+  - 🟢 **83.3%** (15/18)
+      - `dow ≠ Wed`
+      - `dow = Tue`
+      - `adx_b = (-inf, 18.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **0.0%** (0/12)
-      - `dow = Mon`
+  - 🟢 **82.4%** (14/17)
+      - `dow = Wed`
+      - `adx_b = (-inf, 18.0]`
+      - `rsi_b = (50.0, 70.0]`
+  - 🔴 **23.0%** (20/87)
+      - `dow ≠ Wed`
+      - `dow ≠ Tue`
+      - `dow ≠ Fri`
       - `atr_pct_b = (0.15, 0.4]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `vol_z_b = (-0.5, 0.5]`
 
 ---
 
 ## XAUUSD · 15m
-- Candles: **4557**  ·  Swing pivots: 538  ·  FVG: 875
-- CHoCH/BOS events: 377  ·  Order Blocks: 738
-- Trend Ladders detected: 253  ·  Candle patterns: 1242  ·  Breakouts: 484
+- Candles: **4709**  ·  Swing pivots: 558  ·  FVG: 902
+- CHoCH/BOS events: 389  ·  Order Blocks: 761
+- Trend Ladders detected: 262  ·  Candle patterns: 1293  ·  Breakouts: 502
 
 ### S/R Cluster Seviyeleri (top 8)
-- 4069.8137 (touches: **184**, strong)
+- 4066.4898 (touches: **204**, strong)
 - 4510.777 (touches: **157**, strong)
 - 4186.9977 (touches: **48**, strong)
 - 4320.9056 (touches: **45**, strong)
@@ -481,20 +489,22 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 - 3985.435 (touches: **10**, strong)
 - 3972.0963 (touches: **8**, strong)
 
-### 🪜 Trend Ladder Analizi (253 ladder)
-- Continued: 108  ·  Reversed: 107  ·  Baseline continuation: **42.7%**
+### 🪜 Trend Ladder Analizi (262 ladder)
+- Continued: 111  ·  Reversed: 112  ·  Baseline continuation: **42.4%**
+
+**🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
+- **86.7%** (13/15)
+   - `before_adx_avg_bucket ≠ (18.0, 25.0]`
+   - `before_volz_avg_bucket = (-inf, -0.5]`
+   - `before_adx_avg_bucket = (-inf, 18.0]`
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **16.7%** (2/12)
-   - `ladder_slope_atr_bucket = (0.5, 1.0]`
-   - `before_adx_avg_bucket ≠ (18.0, 25.0]`
-   - `before_rsi_avg_bucket ≠ (30.0, 50.0]`
 - **6.2%** (1/16)
-   - `ladder_slope_atr_bucket = (0.5, 1.0]`
    - `before_adx_avg_bucket = (18.0, 25.0]`
+   - `ladder_slope_atr_bucket = (0.5, 1.0]`
 
 ### 📊 XAUUSD/15m · ALL EVENTS
-- Events: 3215  ·  Baseline continuation: **48.1%**
+- Events: 3319  ·  Baseline continuation: **47.7%**
 
   - 🟢 **100.0%** (21/21)
       - `type = bearish_OB`
@@ -516,11 +526,16 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Wed`
       - `rsi_b = (30.0, 50.0]`
       - `adx_b = (18.0, 25.0]`
-  - 🟢 **79.7%** (63/79)
-      - `type ≠ bearish_OB`
-      - `type = bullish_OB`
+  - 🟢 **75.8%** (25/33)
+      - `type = bearish_OB`
       - `dow ≠ Wed`
       - `rsi_b = (50.0, 70.0]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🔴 **21.9%** (16/73)
+      - `type ≠ bearish_OB`
+      - `type ≠ bullish_OB`
+      - `type ≠ bearish`
+      - `type = BOS_bullish`
   - 🔴 **16.7%** (3/18)
       - `type ≠ bearish_OB`
       - `type = bullish_OB`
@@ -528,31 +543,32 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (-inf, 18.0]`
 
 ### 📊 XAUUSD/15m · BOS_bearish
-- Events: 96  ·  Baseline continuation: **26.0%**
+- Events: 99  ·  Baseline continuation: **25.3%**
 
   - 🔴 **25.0%** (4/16)
-      - `rsi_b ≠ (30.0, 50.0]`
+      - `rsi_b = (-inf, 30.0]`
       - `vol_z_b = (0.5, inf]`
-  - 🔴 **18.2%** (2/11)
-      - `rsi_b = (30.0, 50.0]`
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **16.7%** (2/12)
-      - `rsi_b = (30.0, 50.0]`
-      - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **20.0%** (2/10)
+      - `rsi_b ≠ (-inf, 30.0]`
+      - `adx_b = (25.0, inf]`
       - `dow = Wed`
-  - 🔴 **16.7%** (2/12)
-      - `rsi_b = (30.0, 50.0]`
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b = (0.5, inf]`
+  - 🔴 **10.0%** (1/10)
+      - `rsi_b ≠ (-inf, 30.0]`
+      - `adx_b ≠ (25.0, inf]`
+      - `dow ≠ Mon`
+      - `dow = Fri`
+  - 🔴 **10.0%** (1/10)
+      - `rsi_b ≠ (-inf, 30.0]`
+      - `adx_b ≠ (25.0, inf]`
+      - `dow = Mon`
   - 🔴 **0.0%** (0/11)
-      - `rsi_b ≠ (30.0, 50.0]`
+      - `rsi_b = (-inf, 30.0]`
       - `vol_z_b ≠ (0.5, inf]`
 
 ### 📊 XAUUSD/15m · BOS_bullish
-- Events: 71  ·  Baseline continuation: **22.5%**
+- Events: 73  ·  Baseline continuation: **21.9%**
 
-  - 🔴 **26.3%** (5/19)
+  - 🔴 **23.8%** (5/21)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow ≠ Tue`
       - `rsi_b = (50.0, 70.0]`
@@ -568,19 +584,19 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 XAUUSD/15m · CHoCH_bearish
-- Events: 105  ·  Baseline continuation: **49.5%**
+- Events: 108  ·  Baseline continuation: **49.1%**
 
   - 🟢 **80.0%** (12/15)
       - `vol_z_b = (-inf, -0.5]`
       - `rsi_b ≠ (50.0, 70.0]`
-  - 🔴 **21.7%** (5/23)
+  - 🔴 **23.1%** (6/26)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `rsi_b ≠ (50.0, 70.0]`
       - `dow ≠ Tue`
-      - `adx_b ≠ (25.0, inf]`
+      - `dow ≠ Mon`
 
 ### 📊 XAUUSD/15m · CHoCH_bullish
-- Events: 105  ·  Baseline continuation: **38.1%**
+- Events: 108  ·  Baseline continuation: **37.0%**
 
   - 🟢 **78.9%** (15/19)
       - `rsi_b = (30.0, 50.0]`
@@ -589,7 +605,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🔴 **30.0%** (3/10)
       - `rsi_b = (30.0, 50.0]`
       - `dow = Thu`
-  - 🔴 **28.6%** (6/21)
+  - 🔴 **27.3%** (6/22)
       - `rsi_b ≠ (30.0, 50.0]`
       - `dow ≠ Wed`
       - `vol_z_b = (-0.5, 0.5]`
@@ -598,28 +614,33 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Wed`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `adx_b = (18.0, 25.0]`
-  - 🔴 **9.1%** (1/11)
+  - 🔴 **7.7%** (1/13)
       - `rsi_b ≠ (30.0, 50.0]`
       - `dow ≠ Wed`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `adx_b ≠ (18.0, 25.0]`
 
 ### 📊 XAUUSD/15m · bearish
-- Events: 459  ·  Baseline continuation: **51.4%**
+- Events: 473  ·  Baseline continuation: **50.3%**
 
   - 🟢 **85.7%** (12/14)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow ≠ Fri`
       - `dow ≠ Mon`
       - `atr_pct_b = (0.05, 0.15]`
-  - 🟢 **80.0%** (8/10)
+  - 🟢 **72.7%** (8/11)
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b = (-inf, 18.0]`
-      - `dow = Mon`
+      - `atr_pct_b = (0.05, 0.15]`
   - 🟢 **72.2%** (13/18)
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b ≠ (-inf, 18.0]`
       - `dow = Wed`
+  - 🟢 **70.4%** (19/27)
+      - `vol_z_b = (-inf, -0.5]`
+      - `adx_b = (-inf, 18.0]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `dow ≠ Mon`
   - 🔴 **27.3%** (3/11)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow = Fri`
@@ -630,7 +651,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
       - `adx_b ≠ (25.0, inf]`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **11.8%** (2/17)
+  - 🔴 **11.1%** (2/18)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow ≠ Fri`
       - `dow = Mon`
@@ -642,7 +663,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (0.5, inf]`
 
 ### 📊 XAUUSD/15m · bearish_OB
-- Events: 393  ·  Baseline continuation: **75.6%**
+- Events: 402  ·  Baseline continuation: **74.4%**
 
   - 🟢 **100.0%** (21/21)
       - `dow = Wed`
@@ -669,9 +690,9 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Tue`
 
 ### 📊 XAUUSD/15m · breakdown
-- Events: 286  ·  Baseline continuation: **45.8%**
+- Events: 293  ·  Baseline continuation: **44.7%**
 
-  - 🟢 **100.0%** (13/13)
+  - 🟢 **92.9%** (13/14)
       - `adx_b = (-inf, 18.0]`
       - `vol_z_b = (-inf, -0.5]`
   - 🟢 **90.9%** (10/11)
@@ -687,38 +708,28 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b ≠ (-inf, 30.0]`
       - `adx_b = (25.0, inf]`
-      - `dow = Wed`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 XAUUSD/15m · breakout_up
-- Events: 195  ·  Baseline continuation: **36.4%**
+- Events: 205  ·  Baseline continuation: **37.6%**
 
-  - 🟢 **80.0%** (8/10)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `adx_b = (25.0, inf]`
-      - `rsi_b ≠ (70.0, inf]`
-      - `dow = Tue`
-  - 🔴 **27.6%** (8/29)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `adx_b = (25.0, inf]`
-      - `rsi_b ≠ (70.0, inf]`
-      - `dow ≠ Tue`
   - 🔴 **6.7%** (1/15)
       - `atr_pct_b = (0.05, 0.15]`
-  - 🔴 **5.0%** (1/20)
+  - 🔴 **6.2%** (1/16)
       - `atr_pct_b ≠ (0.05, 0.15]`
+      - `dow ≠ Tue`
       - `adx_b = (25.0, inf]`
-      - `rsi_b = (70.0, inf]`
-      - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b = (-0.5, 0.5]`
 
 ### 📊 XAUUSD/15m · bullish
-- Events: 413  ·  Baseline continuation: **35.1%**
+- Events: 426  ·  Baseline continuation: **35.4%**
 
   - 🔴 **26.7%** (8/30)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `dow = Wed`
       - `rsi_b ≠ (30.0, 50.0]`
-  - 🔴 **22.0%** (9/41)
+  - 🔴 **24.4%** (11/45)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `dow ≠ Wed`
@@ -736,23 +747,23 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b ≠ (-inf, 18.0]`
 
 ### 📊 XAUUSD/15m · bullish_OB
-- Events: 345  ·  Baseline continuation: **60.6%**
+- Events: 359  ·  Baseline continuation: **61.6%**
 
   - 🟢 **100.0%** (14/14)
       - `dow ≠ Wed`
       - `rsi_b = (50.0, 70.0]`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow = Fri`
-  - 🟢 **81.5%** (44/54)
+  - 🟢 **79.3%** (46/58)
       - `dow ≠ Wed`
       - `rsi_b = (50.0, 70.0]`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow ≠ Fri`
-  - 🟢 **72.1%** (31/43)
+  - 🟢 **74.4%** (32/43)
       - `dow ≠ Wed`
       - `rsi_b ≠ (50.0, 70.0]`
-      - `rsi_b = (30.0, 50.0]`
-      - `vol_z_b = (-inf, -0.5]`
+      - `rsi_b ≠ (-inf, 30.0]`
+      - `dow = Mon`
   - 🔴 **30.0%** (3/10)
       - `dow = Wed`
       - `adx_b ≠ (-inf, 18.0]`
@@ -762,29 +773,29 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (-inf, 18.0]`
 
 ### 📊 XAUUSD/15m · engulfing_bear
-- Events: 190  ·  Baseline continuation: **48.4%**
+- Events: 195  ·  Baseline continuation: **47.7%**
 
-  - 🟢 **70.0%** (7/10)
+  - 🟢 **81.8%** (9/11)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow = Tue`
-      - `vol_z_b = (0.5, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
   - 🔴 **30.0%** (6/20)
       - `adx_b = (-inf, 18.0]`
       - `vol_z_b = (-0.5, 0.5]`
-  - 🔴 **27.3%** (3/11)
+  - 🔴 **25.0%** (3/12)
       - `adx_b = (-inf, 18.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `dow = Mon`
 
 ### 📊 XAUUSD/15m · engulfing_bull
-- Events: 185  ·  Baseline continuation: **37.3%**
+- Events: 190  ·  Baseline continuation: **37.9%**
 
   - 🔴 **25.8%** (8/31)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow ≠ Mon`
       - `vol_z_b = (-0.5, 0.5]`
       - `adx_b = (25.0, inf]`
-  - 🔴 **12.5%** (2/16)
+  - 🔴 **17.6%** (3/17)
       - `atr_pct_b = (0.05, 0.15]`
   - 🔴 **7.7%** (1/13)
       - `atr_pct_b ≠ (0.05, 0.15]`
@@ -792,7 +803,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 XAUUSD/15m · hammer
-- Events: 177  ·  Baseline continuation: **35.0%**
+- Events: 179  ·  Baseline continuation: **35.8%**
 
   - 🟢 **70.6%** (12/17)
       - `dow = Thu`
@@ -807,34 +818,49 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `vol_z_b ≠ (0.5, inf]`
       - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **8.3%** (1/12)
+  - 🔴 **15.4%** (2/13)
       - `dow ≠ Thu`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `vol_z_b = (0.5, inf]`
       - `adx_b = (18.0, 25.0]`
 
 ### 📊 XAUUSD/15m · shooting_star
-- Events: 195  ·  Baseline continuation: **51.3%**
+- Events: 209  ·  Baseline continuation: **49.3%**
 
-  - 🟢 **83.3%** (10/12)
+  - 🟢 **80.0%** (20/25)
       - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `dow = Thu`
-  - 🔴 **28.6%** (4/14)
-      - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Mon`
+      - `adx_b ≠ (25.0, inf]`
+      - `rsi_b = (30.0, 50.0]`
+  - 🟢 **70.0%** (7/10)
+      - `vol_z_b = (0.5, inf]`
       - `rsi_b = (50.0, 70.0]`
+      - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **25.0%** (3/12)
+      - `vol_z_b = (0.5, inf]`
+      - `rsi_b = (50.0, 70.0]`
+      - `adx_b = (18.0, 25.0]`
+  - 🔴 **21.4%** (3/14)
+      - `vol_z_b ≠ (0.5, inf]`
       - `dow = Mon`
+      - `adx_b ≠ (25.0, inf]`
+      - `vol_z_b = (-0.5, 0.5]`
+  - 🔴 **14.3%** (2/14)
+      - `vol_z_b = (0.5, inf]`
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `dow ≠ Thu`
 
 ---
 
 ## XAUUSD · 30m
-- Candles: **4318**  ·  Swing pivots: 544  ·  FVG: 881
-- CHoCH/BOS events: 375  ·  Order Blocks: 696
-- Trend Ladders detected: 242  ·  Candle patterns: 1189  ·  Breakouts: 433
+- Candles: **4394**  ·  Swing pivots: 553  ·  FVG: 894
+- CHoCH/BOS events: 380  ·  Order Blocks: 710
+- Trend Ladders detected: 245  ·  Candle patterns: 1220  ·  Breakouts: 442
 
 ### S/R Cluster Seviyeleri (top 8)
 - 4623.7044 (touches: **298**, strong)
-- 4073.0504 (touches: **89**, strong)
+- 4068.7673 (touches: **98**, strong)
 - 4318.6962 (touches: **24**, strong)
 - 4178.2117 (touches: **23**, strong)
 - 3966.6418 (touches: **11**, strong)
@@ -842,48 +868,47 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 - 4837.786 (touches: **10**, strong)
 - 4226.625 (touches: **8**, strong)
 
-### 🪜 Trend Ladder Analizi (242 ladder)
-- Continued: 109  ·  Reversed: 102  ·  Baseline continuation: **45.0%**
+### 🪜 Trend Ladder Analizi (245 ladder)
+- Continued: 110  ·  Reversed: 104  ·  Baseline continuation: **44.9%**
 
 **🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
 - **75.0%** (9/12)
-   - `bb_squeeze_str = True`
+   - `bb_squeeze_str ≠ False`
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
 - **16.7%** (2/12)
-   - `bb_squeeze_str ≠ True`
+   - `bb_squeeze_str = False`
    - `ladder_slope_atr_bucket ≠ (-inf, 0.2]`
    - `start_dist_ema50_atr_bucket = (-1.0, 0.0]`
 
 ### 📊 XAUUSD/30m · ALL EVENTS
-- Events: 3113  ·  Baseline continuation: **49.4%**
+- Events: 3179  ·  Baseline continuation: **49.0%**
 
   - 🟢 **100.0%** (17/17)
       - `type = bearish_OB`
       - `adx_b ≠ (-inf, 18.0]`
       - `dow = Wed`
-      - `adx_b = (18.0, 25.0]`
+      - `adx_b ≠ (25.0, inf]`
   - 🟢 **85.4%** (35/41)
       - `type = bearish_OB`
       - `adx_b ≠ (-inf, 18.0]`
       - `dow = Wed`
-      - `adx_b ≠ (18.0, 25.0]`
-  - 🟢 **84.5%** (60/71)
+      - `adx_b = (25.0, inf]`
+  - 🟢 **83.3%** (60/72)
       - `type = bearish_OB`
       - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Wed`
       - `vol_z_b = (0.5, inf]`
-  - 🟢 **79.5%** (31/39)
+  - 🟢 **81.8%** (18/22)
       - `type = bearish_OB`
       - `adx_b = (-inf, 18.0]`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `dow ≠ Fri`
-  - 🟢 **75.7%** (112/148)
-      - `type = bearish_OB`
-      - `adx_b ≠ (-inf, 18.0]`
+      - `vol_z_b = (0.5, inf]`
+  - 🟢 **75.4%** (43/57)
+      - `type ≠ bearish_OB`
+      - `type = bullish_OB`
       - `dow ≠ Wed`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **28.8%** (72/250)
+      - `atr_pct_b = (0.4, inf]`
+  - 🔴 **28.1%** (73/260)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
       - `dow = Mon`
@@ -907,14 +932,14 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b = (0.15, 0.4]`
 
 ### 📊 XAUUSD/30m · BOS_bullish
-- Events: 72  ·  Baseline continuation: **25.0%**
+- Events: 76  ·  Baseline continuation: **23.7%**
 
-  - 🔴 **23.5%** (4/17)
+  - 🔴 **21.1%** (4/19)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `atr_pct_b = (0.15, 0.4]`
       - `rsi_b ≠ (70.0, inf]`
       - `adx_b ≠ (25.0, inf]`
-  - 🔴 **5.6%** (1/18)
+  - 🔴 **5.3%** (1/19)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `atr_pct_b = (0.15, 0.4]`
       - `rsi_b = (70.0, inf]`
@@ -922,20 +947,34 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 XAUUSD/30m · CHoCH_bearish
-- Events: 104  ·  Baseline continuation: **54.8%**
+- Events: 105  ·  Baseline continuation: **53.3%**
 
   - 🟢 **80.0%** (16/20)
       - `dow = Wed`
-  - 🔴 **30.0%** (3/10)
+  - 🟢 **76.5%** (13/17)
       - `dow ≠ Wed`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `dow ≠ Fri`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `dow ≠ Mon`
+      - `vol_z_b = (0.5, inf]`
+  - 🟢 **70.0%** (7/10)
+      - `dow ≠ Wed`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `dow = Mon`
+      - `rsi_b = (50.0, 70.0]`
+  - 🔴 **28.6%** (4/14)
+      - `dow ≠ Wed`
       - `adx_b = (-inf, 18.0]`
+      - `rsi_b = (30.0, 50.0]`
+  - 🔴 **18.2%** (2/11)
+      - `dow ≠ Wed`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `dow = Mon`
+      - `rsi_b ≠ (50.0, 70.0]`
 
 ### 📊 XAUUSD/30m · CHoCH_bullish
-- Events: 105  ·  Baseline continuation: **48.6%**
+- Events: 106  ·  Baseline continuation: **49.1%**
 
-  - 🟢 **85.7%** (12/14)
+  - 🟢 **86.7%** (13/15)
       - `rsi_b = (30.0, 50.0]`
       - `adx_b ≠ (25.0, inf]`
       - `vol_z_b ≠ (-0.5, 0.5]`
@@ -953,7 +992,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 XAUUSD/30m · bearish
-- Events: 460  ·  Baseline continuation: **51.5%**
+- Events: 466  ·  Baseline continuation: **50.9%**
 
   - 🟢 **75.0%** (15/20)
       - `dow ≠ Mon`
@@ -972,19 +1011,19 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🔴 **27.3%** (3/11)
       - `dow = Mon`
       - `atr_pct_b ≠ (0.15, 0.4]`
-      - `rsi_b ≠ (30.0, 50.0]`
-  - 🔴 **15.4%** (2/13)
+      - `rsi_b = (-inf, 30.0]`
+  - 🔴 **16.7%** (2/12)
       - `dow = Mon`
       - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `rsi_b ≠ (30.0, 50.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `adx_b = (-inf, 18.0]`
   - 🔴 **12.5%** (2/16)
       - `dow = Mon`
       - `atr_pct_b ≠ (0.15, 0.4]`
-      - `rsi_b = (30.0, 50.0]`
+      - `rsi_b ≠ (-inf, 30.0]`
 
 ### 📊 XAUUSD/30m · bearish_OB
-- Events: 371  ·  Baseline continuation: **78.2%**
+- Events: 375  ·  Baseline continuation: **77.1%**
 
   - 🟢 **100.0%** (17/17)
       - `adx_b ≠ (-inf, 18.0]`
@@ -994,17 +1033,17 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🟢 **100.0%** (17/17)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow = Wed`
-      - `adx_b ≠ (25.0, inf]`
+      - `adx_b = (18.0, 25.0]`
   - 🟢 **93.8%** (15/16)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow = Wed`
-      - `adx_b = (25.0, inf]`
+      - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b ≠ (30.0, 50.0]`
   - 🟢 **88.9%** (16/18)
       - `adx_b = (-inf, 18.0]`
-      - `atr_pct_b = (0.15, 0.4]`
+      - `atr_pct_b ≠ (0.4, inf]`
       - `vol_z_b = (0.5, inf]`
-  - 🟢 **84.6%** (33/39)
+  - 🟢 **82.9%** (34/41)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Wed`
       - `vol_z_b ≠ (0.5, inf]`
@@ -1037,70 +1076,74 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
 
 ### 📊 XAUUSD/30m · breakout_up
-- Events: 196  ·  Baseline continuation: **39.8%**
+- Events: 204  ·  Baseline continuation: **40.7%**
 
+  - 🟢 **70.4%** (19/27)
+      - `dow ≠ Mon`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `dow ≠ Tue`
+      - `atr_pct_b = (0.15, 0.4]`
   - 🔴 **30.0%** (3/10)
       - `dow = Mon`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-  - 🔴 **29.0%** (9/31)
+      - `atr_pct_b = (0.4, inf]`
+  - 🔴 **14.3%** (2/14)
       - `dow ≠ Mon`
-      - `dow ≠ Wed`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow = Tue`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Fri`
+      - `adx_b ≠ (25.0, inf]`
   - 🔴 **14.3%** (2/14)
       - `dow = Mon`
-      - `atr_pct_b = (0.15, 0.4]`
-  - 🔴 **0.0%** (0/18)
+      - `atr_pct_b ≠ (0.4, inf]`
+  - 🔴 **10.0%** (1/10)
       - `dow ≠ Mon`
-      - `dow ≠ Wed`
-      - `vol_z_b = (0.5, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
       - `dow = Fri`
+      - `adx_b = (25.0, inf]`
 
 ### 📊 XAUUSD/30m · bullish
-- Events: 417  ·  Baseline continuation: **38.4%**
+- Events: 426  ·  Baseline continuation: **38.3%**
 
-  - 🔴 **27.3%** (3/11)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `vol_z_b = (0.5, inf]`
-      - `dow = Fri`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **25.0%** (4/16)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `vol_z_b = (0.5, inf]`
-      - `dow ≠ Fri`
-      - `rsi_b = (30.0, 50.0]`
   - 🔴 **25.0%** (3/12)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `vol_z_b = (0.5, inf]`
-      - `dow = Fri`
+      - `vol_z_b = (-0.5, 0.5]`
       - `rsi_b ≠ (50.0, 70.0]`
-  - 🔴 **22.2%** (8/36)
-      - `vol_z_b = (-inf, -0.5]`
-      - `adx_b ≠ (25.0, inf]`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **10.0%** (1/10)
-      - `vol_z_b = (-inf, -0.5]`
-      - `adx_b = (25.0, inf]`
-      - `rsi_b ≠ (50.0, 70.0]`
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `dow = Tue`
+  - 🔴 **25.0%** (3/12)
+      - `vol_z_b = (-0.5, 0.5]`
+      - `rsi_b = (50.0, 70.0]`
+      - `dow = Mon`
+      - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **16.7%** (3/18)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `dow = Mon`
+  - 🔴 **7.1%** (1/14)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `atr_pct_b = (0.4, inf]`
       - `dow = Wed`
+  - 🔴 **5.9%** (1/17)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `adx_b = (-inf, 18.0]`
+      - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 XAUUSD/30m · bullish_OB
-- Events: 325  ·  Baseline continuation: **62.2%**
+- Events: 335  ·  Baseline continuation: **63.0%**
 
   - 🟢 **93.3%** (28/30)
       - `dow ≠ Wed`
-      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `atr_pct_b = (0.4, inf]`
       - `dow ≠ Fri`
       - `dow ≠ Thu`
-  - 🟢 **71.2%** (84/118)
+  - 🟢 **72.0%** (90/125)
       - `dow ≠ Wed`
-      - `atr_pct_b = (0.15, 0.4]`
+      - `atr_pct_b ≠ (0.4, inf]`
       - `adx_b ≠ (-inf, 18.0]`
       - `vol_z_b ≠ (0.5, inf]`
 
 ### 📊 XAUUSD/30m · engulfing_bear
-- Events: 168  ·  Baseline continuation: **45.2%**
+- Events: 176  ·  Baseline continuation: **43.8%**
 
   - 🟢 **82.4%** (14/17)
       - `dow ≠ Mon`
@@ -1115,14 +1158,18 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🔴 **25.0%** (4/16)
       - `dow ≠ Mon`
       - `rsi_b = (50.0, 70.0]`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **15.0%** (3/20)
+      - `dow = Tue`
+  - 🔴 **20.0%** (2/10)
       - `dow = Mon`
       - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🔴 **7.7%** (1/13)
+      - `dow = Mon`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b = (-0.5, 0.5]`
 
 ### 📊 XAUUSD/30m · engulfing_bull
-- Events: 186  ·  Baseline continuation: **34.9%**
+- Events: 191  ·  Baseline continuation: **35.6%**
 
   - 🟢 **83.3%** (10/12)
       - `atr_pct_b ≠ (0.15, 0.4]`
@@ -1131,6 +1178,16 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `dow ≠ Tue`
       - `rsi_b ≠ (30.0, 50.0]`
+  - 🔴 **30.0%** (3/10)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `adx_b ≠ (25.0, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Thu`
+  - 🔴 **30.0%** (3/10)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `adx_b ≠ (25.0, inf]`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `rsi_b ≠ (50.0, 70.0]`
   - 🔴 **26.7%** (4/15)
       - `atr_pct_b = (0.15, 0.4]`
       - `adx_b = (25.0, inf]`
@@ -1139,39 +1196,31 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🔴 **26.3%** (5/19)
       - `atr_pct_b = (0.15, 0.4]`
       - `adx_b ≠ (25.0, inf]`
-      - `dow = Thu`
-  - 🔴 **22.2%** (4/18)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow ≠ Thu`
       - `vol_z_b = (-0.5, 0.5]`
-  - 🔴 **12.5%** (2/16)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b = (25.0, inf]`
-      - `vol_z_b = (0.5, inf]`
+      - `rsi_b = (50.0, 70.0]`
 
 ### 📊 XAUUSD/30m · hammer
-- Events: 198  ·  Baseline continuation: **31.8%**
+- Events: 199  ·  Baseline continuation: **32.2%**
 
-  - 🔴 **27.7%** (18/65)
+  - 🔴 **26.7%** (4/15)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow ≠ Wed`
+      - `adx_b = (18.0, 25.0]`
+      - `vol_z_b = (-0.5, 0.5]`
+  - 🔴 **20.0%** (14/70)
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow ≠ Wed`
+      - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b ≠ (-inf, 30.0]`
-      - `dow ≠ Mon`
   - 🔴 **20.0%** (2/10)
       - `vol_z_b = (-inf, -0.5]`
       - `dow ≠ Thu`
-      - `atr_pct_b = (0.4, inf]`
-  - 🔴 **13.8%** (4/29)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Wed`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `dow = Mon`
+      - `atr_pct_b ≠ (0.15, 0.4]`
 
 ### 📊 XAUUSD/30m · shooting_star
-- Events: 183  ·  Baseline continuation: **49.7%**
+- Events: 192  ·  Baseline continuation: **47.9%**
 
-  - 🟢 **83.3%** (10/12)
+  - 🟢 **76.9%** (10/13)
       - `vol_z_b = (-inf, -0.5]`
       - `rsi_b = (30.0, 50.0]`
       - `adx_b ≠ (25.0, inf]`
@@ -1179,59 +1228,62 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
       - `rsi_b = (30.0, 50.0]`
       - `adx_b = (25.0, inf]`
+  - 🔴 **27.3%** (6/22)
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow = Tue`
 
 ---
 
 ## XAUUSD · 1h
-- Candles: **1941**  ·  Swing pivots: 236  ·  FVG: 387
-- CHoCH/BOS events: 169  ·  Order Blocks: 338
-- Trend Ladders detected: 100  ·  Candle patterns: 533  ·  Breakouts: 192
+- Candles: **1979**  ·  Swing pivots: 243  ·  FVG: 395
+- CHoCH/BOS events: 172  ·  Order Blocks: 344
+- Trend Ladders detected: 102  ·  Candle patterns: 545  ·  Breakouts: 195
 
 ### S/R Cluster Seviyeleri (top 8)
+- 4071.7573 (touches: **52**, strong)
 - 4507.8266 (touches: **47**, strong)
-- 4076.8513 (touches: **46**, strong)
 - 4698.035 (touches: **44**, strong)
 - 4592.7195 (touches: **20**, strong)
 - 4786.2462 (touches: **16**, strong)
+- 3971.6891 (touches: **11**, strong)
 - 4183.2682 (touches: **11**, strong)
-- 3970.596 (touches: **10**, strong)
 - 4356.3133 (touches: **9**, strong)
 
-### 🪜 Trend Ladder Analizi (100 ladder)
-- Continued: 48  ·  Reversed: 39  ·  Baseline continuation: **48.0%**
+### 🪜 Trend Ladder Analizi (102 ladder)
+- Continued: 48  ·  Reversed: 40  ·  Baseline continuation: **47.1%**
 
 **🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
-- **88.2%** (15/17)
+- **77.8%** (21/27)
+   - `ladder_total_atr_bucket ≠ (2.5, inf]`
    - `ladder_slope_atr_bucket = (-inf, 0.2]`
    - `before_adx_avg_bucket ≠ (25.0, inf]`
-   - `ladder_total_atr_bucket = (1.0, 2.5]`
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **25.0%** (3/12)
-   - `ladder_slope_atr_bucket = (-inf, 0.2]`
-   - `before_adx_avg_bucket = (25.0, inf]`
-   - `before_rsi_last_bucket ≠ (50.0, 70.0]`
-- **14.3%** (2/14)
+- **23.1%** (3/13)
+   - `ladder_total_atr_bucket ≠ (2.5, inf]`
    - `ladder_slope_atr_bucket ≠ (-inf, 0.2]`
-   - `before_bb_width_atr_avg_bucket = (2.0, 4.0]`
+   - `before_adx_avg_bucket ≠ (25.0, inf]`
+- **10.0%** (1/10)
+   - `ladder_total_atr_bucket = (2.5, inf]`
+   - `start_dist_ema50_atr_bucket = (-inf, -1.0]`
 
 ### 📊 XAUUSD/1h · ALL EVENTS
-- Events: 1408  ·  Baseline continuation: **49.1%**
+- Events: 1435  ·  Baseline continuation: **49.1%**
 
   - 🟢 **95.0%** (19/20)
       - `type = bearish_OB`
       - `adx_b = (18.0, 25.0]`
       - `vol_z_b = (-inf, -0.5]`
+  - 🟢 **90.0%** (27/30)
+      - `type ≠ bearish_OB`
+      - `type = bullish_OB`
+      - `dow ≠ Wed`
+      - `dow = Tue`
   - 🟢 **82.6%** (19/23)
       - `type = bearish_OB`
       - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b = (50.0, 70.0]`
       - `adx_b = (25.0, inf]`
-  - 🟢 **78.9%** (75/95)
-      - `type ≠ bearish_OB`
-      - `type = bullish_OB`
-      - `dow ≠ Wed`
-      - `atr_pct_b ≠ (0.15, 0.4]`
   - 🟢 **78.9%** (15/19)
       - `type = bearish_OB`
       - `adx_b = (18.0, 25.0]`
@@ -1242,7 +1294,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `type ≠ bullish_OB`
       - `dow = Tue`
       - `type = bearish`
-  - 🔴 **6.9%** (2/29)
+  - 🔴 **12.9%** (4/31)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
       - `dow ≠ Tue`
@@ -1259,10 +1311,14 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (25.0, inf]`
 
 ### 📊 XAUUSD/1h · BOS_bullish
-- Events: 34  ·  Baseline continuation: **11.8%**
+- Events: 37  ·  Baseline continuation: **16.2%**
 
-  - 🔴 **15.8%** (3/19)
+  - 🔴 **25.0%** (3/12)
       - `adx_b ≠ (25.0, inf]`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **20.0%** (2/10)
+      - `adx_b ≠ (25.0, inf]`
+      - `vol_z_b = (0.5, inf]`
   - 🔴 **6.7%** (1/15)
       - `adx_b = (25.0, inf]`
 
@@ -1284,15 +1340,15 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (0.5, inf]`
 
 ### 📊 XAUUSD/1h · bearish
-- Events: 201  ·  Baseline continuation: **48.8%**
+- Events: 203  ·  Baseline continuation: **48.3%**
 
   - 🟢 **93.8%** (15/16)
       - `dow = Tue`
       - `atr_pct_b = (0.15, 0.4]`
-  - 🟢 **87.5%** (14/16)
+  - 🟢 **82.4%** (14/17)
       - `dow ≠ Tue`
       - `adx_b = (-inf, 18.0]`
-      - `atr_pct_b = (0.15, 0.4]`
+      - `atr_pct_b ≠ (0.4, inf]`
   - 🔴 **20.0%** (4/20)
       - `dow ≠ Tue`
       - `adx_b ≠ (-inf, 18.0]`
@@ -1300,29 +1356,32 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Wed`
 
 ### 📊 XAUUSD/1h · bearish_OB
-- Events: 184  ·  Baseline continuation: **69.0%**
+- Events: 185  ·  Baseline continuation: **67.6%**
 
-  - 🟢 **95.0%** (19/20)
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **84.6%** (22/26)
+  - 🟢 **100.0%** (12/12)
       - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b = (50.0, 70.0]`
-      - `dow ≠ Tue`
+      - `adx_b ≠ (-inf, 18.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🟢 **100.0%** (15/15)
+      - `adx_b = (18.0, 25.0]`
+      - `dow ≠ Fri`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🟢 **90.0%** (9/10)
+      - `adx_b = (18.0, 25.0]`
+      - `dow ≠ Fri`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b ≠ (-inf, -0.5]`
   - 🟢 **80.0%** (8/10)
       - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b ≠ (50.0, 70.0]`
       - `dow = Tue`
-  - 🟢 **78.9%** (15/19)
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `rsi_b ≠ (50.0, 70.0]`
-  - 🟢 **75.0%** (15/20)
+  - 🟢 **77.8%** (14/18)
       - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b = (50.0, 70.0]`
-      - `dow ≠ Tue`
-      - `vol_z_b = (-0.5, 0.5]`
+      - `adx_b = (-inf, 18.0]`
+      - `atr_pct_b = (0.15, 0.4]`
 
 ### 📊 XAUUSD/1h · breakdown
 - Events: 108  ·  Baseline continuation: **50.9%**
@@ -1332,8 +1391,11 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
 
 ### 📊 XAUUSD/1h · breakout_up
-- Events: 81  ·  Baseline continuation: **40.7%**
+- Events: 84  ·  Baseline continuation: **40.5%**
 
+  - 🟢 **81.8%** (9/11)
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `adx_b ≠ (18.0, 25.0]`
   - 🔴 **4.8%** (1/21)
       - `atr_pct_b = (0.4, inf]`
       - `dow ≠ Thu`
@@ -1341,81 +1403,67 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (0.5, inf]`
 
 ### 📊 XAUUSD/1h · bullish
-- Events: 185  ·  Baseline continuation: **35.7%**
+- Events: 189  ·  Baseline continuation: **36.5%**
 
-  - 🟢 **72.7%** (8/11)
-      - `dow ≠ Mon`
-      - `adx_b = (25.0, inf]`
-      - `vol_z_b = (0.5, inf]`
-      - `dow = Wed`
   - 🔴 **21.4%** (3/14)
       - `dow ≠ Mon`
-      - `adx_b = (25.0, inf]`
+      - `adx_b ≠ (18.0, 25.0]`
       - `vol_z_b ≠ (0.5, inf]`
       - `dow = Wed`
-  - 🔴 **13.3%** (2/15)
-      - `dow ≠ Mon`
+  - 🔴 **20.0%** (2/10)
+      - `dow = Mon`
+      - `adx_b ≠ (18.0, 25.0]`
       - `adx_b ≠ (25.0, inf]`
+  - 🔴 **18.2%** (2/11)
+      - `dow ≠ Mon`
+      - `adx_b = (18.0, 25.0]`
       - `dow ≠ Thu`
       - `dow = Fri`
   - 🔴 **10.0%** (1/10)
-      - `dow = Mon`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `rsi_b ≠ (50.0, 70.0]`
-  - 🔴 **7.7%** (1/13)
       - `dow ≠ Mon`
-      - `adx_b ≠ (25.0, inf]`
+      - `adx_b = (18.0, 25.0]`
       - `dow = Thu`
-  - 🔴 **7.7%** (1/13)
+  - 🔴 **7.1%** (1/14)
       - `dow = Mon`
       - `adx_b ≠ (18.0, 25.0]`
-      - `rsi_b = (50.0, 70.0]`
+      - `adx_b = (25.0, inf]`
 
 ### 📊 XAUUSD/1h · bullish_OB
-- Events: 153  ·  Baseline continuation: **68.0%**
+- Events: 159  ·  Baseline continuation: **69.2%**
 
-  - 🟢 **89.5%** (34/38)
+  - 🟢 **100.0%** (18/18)
       - `dow ≠ Wed`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow ≠ Mon`
+      - `dow = Tue`
+      - `adx_b ≠ (25.0, inf]`
+  - 🟢 **82.1%** (46/56)
+      - `dow ≠ Wed`
+      - `dow ≠ Tue`
+      - `atr_pct_b = (0.4, inf]`
+      - `adx_b ≠ (18.0, 25.0]`
+  - 🟢 **75.0%** (9/12)
+      - `dow ≠ Wed`
+      - `dow = Tue`
       - `adx_b = (25.0, inf]`
-  - 🟢 **85.7%** (12/14)
-      - `dow ≠ Wed`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow = Mon`
-      - `adx_b ≠ (25.0, inf]`
-  - 🟢 **76.9%** (10/13)
-      - `dow ≠ Wed`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🟢 **72.7%** (24/33)
-      - `dow ≠ Wed`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow ≠ Mon`
-      - `adx_b ≠ (25.0, inf]`
 
 ### 📊 XAUUSD/1h · engulfing_bear
-- Events: 95  ·  Baseline continuation: **56.8%**
+- Events: 96  ·  Baseline continuation: **56.2%**
 
   - 🟢 **80.0%** (16/20)
       - `adx_b ≠ (25.0, inf]`
-      - `dow ≠ Mon`
       - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow ≠ Mon`
       - `rsi_b ≠ (50.0, 70.0]`
 
 ### 📊 XAUUSD/1h · engulfing_bull
-- Events: 71  ·  Baseline continuation: **39.4%**
+- Events: 75  ·  Baseline continuation: **41.3%**
 
-  - 🔴 **27.3%** (3/11)
-      - `adx_b = (-inf, 18.0]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **23.5%** (4/17)
+  - 🔴 **27.8%** (5/18)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Thu`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **20.0%** (2/10)
+      - `rsi_b ≠ (30.0, 50.0]`
+  - 🔴 **21.4%** (3/14)
       - `adx_b = (-inf, 18.0]`
-      - `rsi_b ≠ (50.0, 70.0]`
+      - `atr_pct_b = (0.15, 0.4]`
 
 ### 📊 XAUUSD/1h · hammer
 - Events: 73  ·  Baseline continuation: **35.6%**
@@ -1432,10 +1480,11 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 XAUUSD/1h · shooting_star
-- Events: 88  ·  Baseline continuation: **50.0%**
+- Events: 91  ·  Baseline continuation: **48.4%**
 
-  - 🟢 **72.2%** (13/18)
+  - 🟢 **72.7%** (8/11)
       - `adx_b = (-inf, 18.0]`
+      - `rsi_b = (50.0, 70.0]`
   - 🔴 **27.3%** (3/11)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow = Fri`
@@ -1443,451 +1492,425 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 ---
 
 ## NDX.INDX · 5m
-- Candles: **10000**  ·  Swing pivots: 1139  ·  FVG: 2420
-- CHoCH/BOS events: 796  ·  Order Blocks: 1797
-- Trend Ladders detected: 157  ·  Candle patterns: 2700  ·  Breakouts: 1388
+- Candles: **10000**  ·  Swing pivots: 1143  ·  FVG: 2408
+- CHoCH/BOS events: 801  ·  Order Blocks: 1778
+- Trend Ladders detected: 154  ·  Candle patterns: 2688  ·  Breakouts: 1390
 
 ### S/R Cluster Seviyeleri (top 8)
-- 29782.9829 (touches: **1075**, strong)
-- 28615.1573 (touches: **46**, strong)
-- 28745.4 (touches: **8**, strong)
+- 29692.1484 (touches: **1017**, strong)
+- 28641.2972 (touches: **76**, strong)
+- 30678.38 (touches: **40**, strong)
 - 28241.1908 (touches: **2**, weak)
 - 28348.95 (touches: **2**, weak)
 - 28421.35 (touches: **2**, weak)
 
-### 🪜 Trend Ladder Analizi (157 ladder)
-- Continued: 68  ·  Reversed: 64  ·  Baseline continuation: **43.3%**
-
-**🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
-- **70.4%** (19/27)
-   - `before_adx_avg_bucket ≠ (-inf, 18.0]`
-   - `start_dist_ema50_atr_bucket = (-inf, -1.0]`
-   - `ladder_slope_atr_bucket ≠ (0.2, 0.5]`
+### 🪜 Trend Ladder Analizi (154 ladder)
+- Continued: 68  ·  Reversed: 65  ·  Baseline continuation: **44.2%**
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **28.6%** (6/21)
-   - `before_adx_avg_bucket ≠ (-inf, 18.0]`
-   - `start_dist_ema50_atr_bucket ≠ (-inf, -1.0]`
-   - `before_volz_avg_bucket = (-inf, -0.5]`
-- **11.1%** (2/18)
-   - `before_adx_avg_bucket = (-inf, 18.0]`
-   - `before_rsi_last_bucket ≠ (50.0, 70.0]`
+- **27.3%** (3/11)
+   - `start_dist_ema50_atr_bucket ≠ (-1.0, 0.0]`
+   - `start_dist_ema50_atr_bucket = (1.0, inf]`
+   - `before_rsi_avg_bucket ≠ (50.0, 70.0]`
+- **10.0%** (1/10)
+   - `start_dist_ema50_atr_bucket = (-1.0, 0.0]`
+   - `ladder_slope_atr_bucket = (-inf, 0.2]`
 
 ### 📊 NDX.INDX/5m · ALL EVENTS
-- Events: 8146  ·  Baseline continuation: **47.0%**
+- Events: 8110  ·  Baseline continuation: **47.1%**
 
-  - 🟢 **79.7%** (126/158)
+  - 🟢 **96.6%** (28/29)
       - `type ≠ bearish_OB`
       - `type = bullish_OB`
       - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Mon`
-  - 🟢 **77.4%** (24/31)
-      - `type = bearish_OB`
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow = Fri`
-  - 🟢 **72.8%** (311/427)
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🟢 **77.7%** (87/112)
       - `type = bearish_OB`
       - `adx_b ≠ (18.0, 25.0]`
       - `atr_pct_b ≠ (-inf, 0.05]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-  - 🟢 **70.4%** (174/247)
+      - `dow = Wed`
+  - 🟢 **77.1%** (131/170)
       - `type ≠ bearish_OB`
       - `type = bullish_OB`
-      - `atr_pct_b = (0.05, 0.15]`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🔴 **27.4%** (49/179)
-      - `type ≠ bearish_OB`
-      - `type ≠ bullish_OB`
-      - `type ≠ BOS_bullish`
-      - `type = BOS_bearish`
-  - 🔴 **26.0%** (25/96)
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🟢 **75.9%** (22/29)
+      - `type = bearish_OB`
+      - `adx_b = (18.0, 25.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `dow = Fri`
+  - 🔴 **26.5%** (26/98)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
       - `type = BOS_bullish`
       - `adx_b ≠ (25.0, inf]`
-  - 🔴 **12.7%** (9/71)
+  - 🔴 **26.4%** (48/182)
+      - `type ≠ bearish_OB`
+      - `type ≠ bullish_OB`
+      - `type ≠ BOS_bullish`
+      - `type = BOS_bearish`
+  - 🔴 **9.9%** (7/71)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
       - `type = BOS_bullish`
       - `adx_b = (25.0, inf]`
 
 ### 📊 NDX.INDX/5m · BOS_bearish
-- Events: 179  ·  Baseline continuation: **27.4%**
+- Events: 182  ·  Baseline continuation: **26.4%**
 
-  - 🔴 **30.0%** (9/30)
-      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **30.0%** (6/20)
       - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Wed`
+      - `adx_b = (25.0, inf]`
       - `dow ≠ Mon`
-  - 🔴 **29.4%** (5/17)
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🔴 **26.7%** (8/30)
+      - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b ≠ (25.0, inf]`
+      - `dow ≠ Wed`
+      - `dow ≠ Thu`
+  - 🔴 **26.4%** (14/53)
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `adx_b = (25.0, inf]`
+      - `dow ≠ Mon`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🔴 **18.2%** (2/11)
       - `vol_z_b = (-inf, -0.5]`
+      - `dow ≠ Fri`
+      - `adx_b ≠ (25.0, inf]`
       - `adx_b = (-inf, 18.0]`
-  - 🔴 **25.0%** (4/16)
-      - `adx_b = (25.0, inf]`
-      - `dow ≠ Thu`
-      - `dow = Fri`
-      - `rsi_b ≠ (30.0, 50.0]`
-  - 🔴 **23.1%** (9/39)
-      - `adx_b = (25.0, inf]`
-      - `dow ≠ Thu`
+  - 🔴 **10.0%** (1/10)
+      - `vol_z_b = (-inf, -0.5]`
       - `dow ≠ Fri`
-      - `atr_pct_b = (0.05, 0.15]`
-  - 🔴 **16.7%** (2/12)
-      - `adx_b = (25.0, inf]`
-      - `dow ≠ Thu`
-      - `dow ≠ Fri`
-      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `adx_b ≠ (25.0, inf]`
+      - `adx_b ≠ (-inf, 18.0]`
 
 ### 📊 NDX.INDX/5m · BOS_bullish
-- Events: 167  ·  Baseline continuation: **20.4%**
+- Events: 169  ·  Baseline continuation: **19.5%**
 
-  - 🔴 **18.4%** (7/38)
-      - `dow ≠ Wed`
+  - 🔴 **21.7%** (5/23)
       - `adx_b = (25.0, inf]`
-      - `atr_pct_b = (0.05, 0.15]`
-      - `dow ≠ Tue`
-  - 🔴 **14.3%** (2/14)
-      - `dow ≠ Wed`
+      - `rsi_b ≠ (70.0, inf]`
+      - `dow ≠ Mon`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **8.3%** (1/12)
+      - `adx_b = (25.0, inf]`
+      - `rsi_b ≠ (70.0, inf]`
+      - `dow ≠ Mon`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **7.1%** (1/14)
       - `adx_b ≠ (25.0, inf]`
-      - `dow ≠ Fri`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-  - 🔴 **12.5%** (2/16)
       - `dow ≠ Wed`
-      - `adx_b ≠ (25.0, inf]`
       - `dow = Fri`
-  - 🔴 **9.1%** (1/11)
-      - `dow ≠ Wed`
+  - 🔴 **6.7%** (1/15)
       - `adx_b = (25.0, inf]`
-      - `atr_pct_b = (0.05, 0.15]`
-      - `dow = Tue`
-  - 🔴 **9.1%** (1/11)
+      - `rsi_b = (70.0, inf]`
+      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🔴 **5.6%** (1/18)
+      - `adx_b ≠ (25.0, inf]`
       - `dow = Wed`
-      - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 NDX.INDX/5m · CHoCH_bearish
-- Events: 224  ·  Baseline continuation: **44.6%**
+- Events: 224  ·  Baseline continuation: **43.8%**
 
-  - 🟢 **85.7%** (12/14)
+  - 🟢 **76.9%** (40/52)
       - `rsi_b = (50.0, 70.0]`
       - `atr_pct_b = (0.05, 0.15]`
       - `dow ≠ Mon`
-      - `vol_z_b = (-0.5, 0.5]`
-  - 🟢 **73.2%** (41/56)
-      - `rsi_b = (50.0, 70.0]`
-      - `atr_pct_b = (0.05, 0.15]`
-      - `dow ≠ Mon`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **30.0%** (3/10)
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `atr_pct_b = (0.05, 0.15]`
-      - `adx_b = (25.0, inf]`
-      - `rsi_b ≠ (30.0, 50.0]`
-  - 🔴 **22.9%** (8/35)
+      - `dow ≠ Tue`
+  - 🔴 **25.0%** (10/40)
       - `rsi_b ≠ (50.0, 70.0]`
       - `atr_pct_b = (0.05, 0.15]`
       - `adx_b ≠ (25.0, inf]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **13.6%** (3/22)
+  - 🔴 **10.0%** (2/20)
       - `rsi_b ≠ (50.0, 70.0]`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b = (25.0, inf]`
-  - 🔴 **0.0%** (0/18)
+  - 🔴 **0.0%** (0/17)
       - `rsi_b ≠ (50.0, 70.0]`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b ≠ (25.0, inf]`
 
 ### 📊 NDX.INDX/5m · CHoCH_bullish
-- Events: 223  ·  Baseline continuation: **43.0%**
+- Events: 222  ·  Baseline continuation: **43.2%**
 
-  - 🟢 **82.4%** (14/17)
+  - 🟢 **81.2%** (13/16)
       - `rsi_b = (30.0, 50.0]`
       - `dow = Thu`
-  - 🟢 **72.7%** (8/11)
+  - 🟢 **71.4%** (10/14)
       - `rsi_b = (30.0, 50.0]`
       - `dow ≠ Thu`
-      - `atr_pct_b = (0.15, 0.4]`
-  - 🔴 **26.7%** (4/15)
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `dow = Wed`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **0.0%** (0/13)
+      - `atr_pct_b ≠ (0.05, 0.15]`
+  - 🔴 **28.0%** (7/25)
       - `rsi_b ≠ (30.0, 50.0]`
       - `dow ≠ Wed`
-      - `vol_z_b = (0.5, inf]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-  - 🔴 **0.0%** (0/10)
+      - `dow ≠ Tue`
+      - `dow = Mon`
+  - 🔴 **23.1%** (3/13)
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `dow ≠ Wed`
+      - `dow = Tue`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **20.0%** (2/10)
       - `rsi_b ≠ (30.0, 50.0]`
       - `dow = Wed`
-      - `adx_b = (-inf, 18.0]`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🔴 **13.3%** (2/15)
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `dow = Wed`
+      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🔴 **9.1%** (1/11)
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `dow ≠ Wed`
+      - `dow = Tue`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 NDX.INDX/5m · bearish
-- Events: 1211  ·  Baseline continuation: **45.5%**
+- Events: 1197  ·  Baseline continuation: **45.0%**
 
-  - 🔴 **23.5%** (4/17)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-  - 🔴 **14.6%** (7/48)
+  - 🔴 **25.9%** (15/58)
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `dow ≠ Mon`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b = (18.0, 25.0]`
-      - `rsi_b = (30.0, 50.0]`
-      - `dow ≠ Mon`
+  - 🔴 **18.8%** (3/16)
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `dow = Mon`
+      - `rsi_b = (-inf, 30.0]`
+  - 🔴 **0.0%** (0/11)
+      - `atr_pct_b = (-inf, 0.05]`
 
 ### 📊 NDX.INDX/5m · bearish_OB
-- Events: 900  ·  Baseline continuation: **67.4%**
+- Events: 883  ·  Baseline continuation: **67.6%**
 
-  - 🟢 **90.0%** (9/10)
+  - 🟢 **83.3%** (45/54)
+      - `adx_b ≠ (18.0, 25.0]`
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `dow = Wed`
+      - `adx_b = (-inf, 18.0]`
+  - 🟢 **83.3%** (15/18)
       - `adx_b = (18.0, 25.0]`
-      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
       - `dow = Fri`
-      - `vol_z_b ≠ (-inf, -0.5]`
-  - 🟢 **74.3%** (252/339)
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🟢 **76.3%** (87/114)
       - `adx_b ≠ (18.0, 25.0]`
       - `atr_pct_b ≠ (-inf, 0.05]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Fri`
-  - 🟢 **71.6%** (58/81)
+      - `dow ≠ Wed`
+      - `vol_z_b = (-0.5, 0.5]`
+  - 🟢 **73.7%** (14/19)
+      - `adx_b = (18.0, 25.0]`
+      - `rsi_b = (30.0, 50.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow = Wed`
+  - 🟢 **72.4%** (42/58)
       - `adx_b ≠ (18.0, 25.0]`
       - `atr_pct_b ≠ (-inf, 0.05]`
-      - `vol_z_b = (-inf, -0.5]`
+      - `dow = Wed`
       - `adx_b ≠ (-inf, 18.0]`
-  - 🟢 **71.4%** (15/21)
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow = Fri`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **71.4%** (10/14)
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b = (0.5, inf]`
-      - `dow = Mon`
 
 ### 📊 NDX.INDX/5m · breakdown
-- Events: 686  ·  Baseline continuation: **46.9%**
+- Events: 672  ·  Baseline continuation: **46.0%**
 
   - 🟢 **86.7%** (13/15)
       - `dow = Fri`
       - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b = (-inf, 30.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
       - `atr_pct_b = (0.15, 0.4]`
-  - 🟢 **76.9%** (20/26)
+  - 🟢 **80.0%** (20/25)
       - `dow = Fri`
       - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b = (-inf, 30.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
       - `atr_pct_b ≠ (0.15, 0.4]`
-  - 🟢 **72.7%** (8/11)
-      - `dow = Fri`
-      - `vol_z_b = (0.5, inf]`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **25.8%** (16/62)
+  - 🔴 **27.1%** (16/59)
       - `dow ≠ Fri`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `dow ≠ Tue`
-      - `adx_b ≠ (18.0, 25.0]`
+      - `dow = Mon`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `rsi_b = (30.0, 50.0]`
 
 ### 📊 NDX.INDX/5m · breakout_up
-- Events: 689  ·  Baseline continuation: **37.6%**
+- Events: 702  ·  Baseline continuation: **38.7%**
 
-  - 🔴 **28.3%** (15/53)
+  - 🟢 **100.0%** (11/11)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b = NA`
+  - 🔴 **29.0%** (20/69)
       - `vol_z_b = (0.5, inf]`
       - `atr_pct_b = (0.05, 0.15]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `rsi_b = (50.0, 70.0]`
+  - 🔴 **24.2%** (8/33)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b ≠ NA`
+      - `dow = Mon`
       - `adx_b = (25.0, inf]`
-      - `dow ≠ Thu`
-  - 🔴 **25.0%** (4/16)
+  - 🔴 **23.3%** (10/43)
       - `vol_z_b = (0.5, inf]`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow ≠ Fri`
-      - `dow = Wed`
-  - 🔴 **25.0%** (5/20)
+      - `dow ≠ Tue`
+  - 🔴 **20.0%** (8/40)
       - `vol_z_b = (0.5, inf]`
       - `atr_pct_b = (0.05, 0.15]`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow = Wed`
-  - 🔴 **18.2%** (2/11)
-      - `vol_z_b = (0.5, inf]`
-      - `atr_pct_b = (0.05, 0.15]`
-      - `adx_b = (25.0, inf]`
-      - `dow = Thu`
-  - 🔴 **13.0%** (6/46)
+      - `adx_b ≠ (18.0, 25.0]`
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **13.3%** (2/15)
       - `vol_z_b = (0.5, inf]`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow ≠ Fri`
-      - `dow ≠ Wed`
+      - `dow = Tue`
 
 ### 📊 NDX.INDX/5m · bullish
-- Events: 1207  ·  Baseline continuation: **38.3%**
+- Events: 1204  ·  Baseline continuation: **39.1%**
 
-  - 🟢 **81.8%** (9/11)
+  - 🟢 **90.0%** (9/10)
+      - `vol_z_b = NA`
+  - 🟢 **76.2%** (16/21)
+      - `vol_z_b ≠ NA`
       - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow = Wed`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `rsi_b ≠ (50.0, 70.0]`
-  - 🟢 **81.8%** (9/11)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow = Wed`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **29.3%** (17/58)
-      - `atr_pct_b = (0.05, 0.15]`
-      - `dow = Wed`
-      - `rsi_b = (50.0, 70.0]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-  - 🔴 **27.5%** (11/40)
-      - `atr_pct_b = (0.05, 0.15]`
-      - `dow ≠ Wed`
-      - `adx_b = (-inf, 18.0]`
-      - `dow = Fri`
-  - 🔴 **27.0%** (33/122)
-      - `atr_pct_b = (0.05, 0.15]`
-      - `dow ≠ Wed`
+      - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b ≠ (-inf, 18.0]`
-      - `dow = Thu`
-  - 🔴 **25.0%** (6/24)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Wed`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow = Tue`
-  - 🔴 **12.5%** (8/64)
+  - 🔴 **21.2%** (25/118)
+      - `vol_z_b ≠ NA`
       - `atr_pct_b = (0.05, 0.15]`
       - `dow = Wed`
       - `rsi_b = (50.0, 70.0]`
-      - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 NDX.INDX/5m · bullish_OB
-- Events: 897  ·  Baseline continuation: **66.4%**
+- Events: 895  ·  Baseline continuation: **66.9%**
 
-  - 🟢 **100.0%** (15/15)
+  - 🟢 **100.0%** (19/19)
       - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Mon`
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b ≠ (25.0, inf]`
-  - 🟢 **89.7%** (26/29)
-      - `atr_pct_b = (0.05, 0.15]`
-      - `vol_z_b = (-inf, -0.5]`
-      - `dow = Mon`
-      - `rsi_b = (30.0, 50.0]`
-  - 🟢 **87.0%** (20/23)
+  - 🟢 **100.0%** (14/14)
       - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Mon`
       - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b = (-inf, 18.0]`
-  - 🟢 **81.2%** (13/16)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow = Mon`
+      - `dow = Thu`
       - `adx_b = (18.0, 25.0]`
-  - 🟢 **80.0%** (8/10)
+  - 🟢 **90.0%** (9/10)
       - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Mon`
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b = (25.0, inf]`
+  - 🟢 **83.3%** (35/42)
+      - `atr_pct_b = (0.05, 0.15]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow = Mon`
+      - `adx_b = (-inf, 18.0]`
+  - 🟢 **79.5%** (66/83)
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `dow ≠ Thu`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **22.2%** (6/27)
+      - `atr_pct_b = (0.05, 0.15]`
+      - `vol_z_b = (0.5, inf]`
+      - `dow = Wed`
+      - `rsi_b = (30.0, 50.0]`
 
 ### 📊 NDX.INDX/5m · engulfing_bear
-- Events: 461  ·  Baseline continuation: **42.7%**
+- Events: 466  ·  Baseline continuation: **42.3%**
 
-  - 🔴 **19.0%** (4/21)
+  - 🔴 **29.4%** (5/17)
       - `dow = Mon`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b = (0.5, inf]`
-  - 🔴 **18.6%** (8/43)
+      - `rsi_b ≠ (30.0, 50.0]`
+  - 🔴 **29.4%** (5/17)
+      - `dow = Mon`
+      - `vol_z_b = (-inf, -0.5]`
+      - `rsi_b = (50.0, 70.0]`
+  - 🔴 **23.8%** (5/21)
+      - `dow = Mon`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `rsi_b = (30.0, 50.0]`
+  - 🔴 **19.5%** (8/41)
       - `dow ≠ Mon`
       - `adx_b = (18.0, 25.0]`
       - `rsi_b = (30.0, 50.0]`
       - `vol_z_b ≠ (-inf, -0.5]`
-  - 🔴 **11.8%** (2/17)
+  - 🔴 **15.8%** (3/19)
       - `dow = Mon`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b = (-inf, 18.0]`
 
 ### 📊 NDX.INDX/5m · engulfing_bull
-- Events: 393  ·  Baseline continuation: **38.4%**
+- Events: 399  ·  Baseline continuation: **38.8%**
 
-  - 🟢 **70.0%** (7/10)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `dow = Thu`
-  - 🟢 **70.0%** (7/10)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `rsi_b = (50.0, 70.0]`
-      - `vol_z_b = (0.5, inf]`
-      - `dow = Mon`
-  - 🔴 **22.1%** (23/104)
-      - `atr_pct_b = (0.05, 0.15]`
+  - 🟢 **76.9%** (10/13)
       - `dow ≠ Tue`
+      - `atr_pct_b = (-inf, 0.05]`
+  - 🟢 **72.2%** (13/18)
+      - `dow = Tue`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🔴 **30.0%** (3/10)
+      - `dow = Tue`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `adx_b = (18.0, 25.0]`
+  - 🔴 **22.7%** (17/75)
+      - `dow ≠ Tue`
+      - `atr_pct_b ≠ (-inf, 0.05]`
       - `dow ≠ Mon`
-      - `rsi_b ≠ (30.0, 50.0]`
-  - 🔴 **20.0%** (6/30)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `dow ≠ Thu`
-      - `adx_b ≠ (18.0, 25.0]`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 NDX.INDX/5m · hammer
-- Events: 511  ·  Baseline continuation: **40.9%**
+- Events: 497  ·  Baseline continuation: **41.4%**
 
-  - 🔴 **25.0%** (12/48)
-      - `rsi_b ≠ (70.0, inf]`
+  - 🟢 **81.8%** (9/11)
+      - `atr_pct_b = (-inf, 0.05]`
+  - 🔴 **26.1%** (12/46)
       - `atr_pct_b ≠ (-inf, 0.05]`
+      - `rsi_b ≠ (70.0, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
       - `dow = Wed`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **13.6%** (3/22)
+  - 🔴 **25.0%** (4/16)
+      - `atr_pct_b ≠ (-inf, 0.05]`
       - `rsi_b = (70.0, inf]`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **10.0%** (1/10)
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `rsi_b = (70.0, inf]`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 NDX.INDX/5m · shooting_star
 - Events: 398  ·  Baseline continuation: **50.0%**
 
-  - 🟢 **90.9%** (10/11)
-      - `vol_z_b = (-inf, -0.5]`
-      - `adx_b = (-inf, 18.0]`
-      - `dow = Wed`
   - 🟢 **90.0%** (9/10)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `atr_pct_b = (0.05, 0.15]`
       - `dow = Wed`
+      - `atr_pct_b = (0.05, 0.15]`
+      - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b = (18.0, 25.0]`
-  - 🟢 **70.0%** (7/10)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow = Mon`
-  - 🟢 **70.0%** (14/20)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `atr_pct_b = (0.05, 0.15]`
-      - `dow = Wed`
-      - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **27.8%** (5/18)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Mon`
-      - `vol_z_b = (-0.5, 0.5]`
-  - 🔴 **20.0%** (3/15)
-      - `vol_z_b = (-inf, -0.5]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
+  - 🟢 **75.0%** (12/16)
+      - `dow ≠ Wed`
+      - `rsi_b = (-inf, 30.0]`
 
 ---
 
 ## NDX.INDX · 15m
-- Candles: **4557**  ·  Swing pivots: 526  ·  FVG: 1084
-- CHoCH/BOS events: 375  ·  Order Blocks: 856
-- Trend Ladders detected: 257  ·  Candle patterns: 1329  ·  Breakouts: 597
+- Candles: **4709**  ·  Swing pivots: 542  ·  FVG: 1115
+- CHoCH/BOS events: 385  ·  Order Blocks: 879
+- Trend Ladders detected: 268  ·  Candle patterns: 1373  ·  Breakouts: 620
 
 ### S/R Cluster Seviyeleri (top 8)
-- 29663.2855 (touches: **503**, strong)
-- 28624.3786 (touches: **14**, strong)
+- 29647.4224 (touches: **514**, strong)
+- 28627.6882 (touches: **17**, strong)
+- 28517.1 (touches: **4**, moderate)
 - 28207.0 (touches: **2**, weak)
-- 28514.9 (touches: **2**, weak)
 - 30771.25 (touches: **2**, weak)
 
-### 🪜 Trend Ladder Analizi (257 ladder)
-- Continued: 105  ·  Reversed: 111  ·  Baseline continuation: **40.9%**
+### 🪜 Trend Ladder Analizi (268 ladder)
+- Continued: 110  ·  Reversed: 115  ·  Baseline continuation: **41.0%**
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
 - **20.0%** (2/10)
    - `start_dist_ema50_atr_bucket = (1.0, inf]`
    - `ladder_total_atr_bucket = (-inf, 1.0]`
    - `before_adx_avg_bucket ≠ (18.0, 25.0]`
-- **18.8%** (3/16)
+- **17.6%** (3/17)
    - `start_dist_ema50_atr_bucket ≠ (1.0, inf]`
    - `ladder_total_atr_bucket = (2.5, inf]`
    - `start_dist_ema50_atr_bucket ≠ (-inf, -1.0]`
@@ -1901,19 +1924,19 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
    - `before_adx_avg_bucket = (18.0, 25.0]`
 
 ### 📊 NDX.INDX/15m · ALL EVENTS
-- Events: 3738  ·  Baseline continuation: **46.1%**
+- Events: 3851  ·  Baseline continuation: **46.2%**
 
   - 🟢 **87.9%** (51/58)
       - `type = bearish_OB`
       - `dow ≠ Thu`
       - `dow = Wed`
       - `rsi_b ≠ (30.0, 50.0]`
-  - 🟢 **80.8%** (42/52)
+  - 🟢 **79.2%** (42/53)
       - `type = bearish_OB`
       - `dow ≠ Thu`
       - `dow ≠ Wed`
       - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **74.0%** (148/200)
+  - 🟢 **74.0%** (154/208)
       - `type ≠ bearish_OB`
       - `type = bullish_OB`
       - `atr_pct_b ≠ (0.05, 0.15]`
@@ -1923,19 +1946,19 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Thu`
       - `adx_b = (25.0, inf]`
       - `vol_z_b = (0.5, inf]`
-  - 🔴 **30.0%** (9/30)
+  - 🔴 **27.5%** (14/51)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
       - `type = BOS_bullish`
-      - `vol_z_b = (-0.5, 0.5]`
-  - 🔴 **14.0%** (7/50)
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **12.1%** (4/33)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
       - `type = BOS_bullish`
-      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 NDX.INDX/15m · BOS_bearish
-- Events: 78  ·  Baseline continuation: **25.6%**
+- Events: 79  ·  Baseline continuation: **25.3%**
 
   - 🔴 **28.6%** (6/21)
       - `rsi_b ≠ (-inf, 30.0]`
@@ -1944,40 +1967,39 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (0.5, inf]`
   - 🔴 **8.7%** (2/23)
       - `rsi_b = (-inf, 30.0]`
-  - 🔴 **8.3%** (1/12)
+  - 🔴 **7.7%** (1/13)
       - `rsi_b ≠ (-inf, 30.0]`
       - `dow ≠ Wed`
       - `atr_pct_b = (0.15, 0.4]`
       - `vol_z_b ≠ (0.5, inf]`
 
 ### 📊 NDX.INDX/15m · BOS_bullish
-- Events: 80  ·  Baseline continuation: **20.0%**
+- Events: 84  ·  Baseline continuation: **21.4%**
 
-  - 🔴 **25.0%** (3/12)
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `dow ≠ Mon`
-      - `dow ≠ Thu`
-      - `adx_b ≠ (25.0, inf]`
-  - 🔴 **18.2%** (2/11)
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `dow ≠ Mon`
-      - `dow ≠ Thu`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **18.2%** (2/11)
+  - 🔴 **30.0%** (3/10)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b ≠ (70.0, inf]`
       - `vol_z_b = (-0.5, 0.5]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🔴 **27.3%** (3/11)
+      - `vol_z_b = (0.5, inf]`
       - `adx_b = (18.0, 25.0]`
+  - 🔴 **18.8%** (3/16)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b ≠ (70.0, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🔴 **18.2%** (2/11)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b = (70.0, inf]`
   - 🔴 **10.0%** (1/10)
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `dow ≠ Mon`
-      - `dow = Thu`
-  - 🔴 **5.9%** (1/17)
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `dow = Mon`
+      - `vol_z_b = (0.5, inf]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
 
 ### 📊 NDX.INDX/15m · CHoCH_bearish
-- Events: 108  ·  Baseline continuation: **43.5%**
+- Events: 111  ·  Baseline continuation: **43.2%**
 
-  - 🟢 **90.9%** (10/11)
+  - 🟢 **83.3%** (10/12)
       - `vol_z_b ≠ (0.5, inf]`
       - `dow ≠ Tue`
       - `rsi_b = (50.0, 70.0]`
@@ -1988,7 +2010,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b = (0.15, 0.4]`
 
 ### 📊 NDX.INDX/15m · CHoCH_bullish
-- Events: 108  ·  Baseline continuation: **39.8%**
+- Events: 111  ·  Baseline continuation: **40.5%**
 
   - 🔴 **25.0%** (3/12)
       - `rsi_b ≠ (30.0, 50.0]`
@@ -2000,7 +2022,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b ≠ (-0.5, 0.5]`
 
 ### 📊 NDX.INDX/15m · bearish
-- Events: 513  ·  Baseline continuation: **45.0%**
+- Events: 523  ·  Baseline continuation: **44.6%**
 
   - 🟢 **91.7%** (11/12)
       - `atr_pct_b = (0.05, 0.15]`
@@ -2027,41 +2049,34 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Wed`
 
 ### 📊 NDX.INDX/15m · bearish_OB
-- Events: 428  ·  Baseline continuation: **65.2%**
+- Events: 440  ·  Baseline continuation: **64.8%**
 
-  - 🟢 **91.7%** (11/12)
-      - `dow ≠ Thu`
-      - `dow = Wed`
-      - `rsi_b = (30.0, 50.0]`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-  - 🟢 **91.3%** (42/46)
-      - `dow ≠ Thu`
+  - 🟢 **95.7%** (22/23)
       - `dow = Wed`
       - `rsi_b ≠ (30.0, 50.0]`
       - `adx_b ≠ (-inf, 18.0]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🟢 **91.7%** (11/12)
+      - `dow = Wed`
+      - `rsi_b = (30.0, 50.0]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
   - 🟢 **90.0%** (18/20)
-      - `dow ≠ Thu`
       - `dow ≠ Wed`
+      - `dow ≠ Thu`
       - `vol_z_b = (-inf, -0.5]`
       - `dow = Fri`
-  - 🟢 **75.0%** (24/32)
-      - `dow ≠ Thu`
-      - `dow ≠ Wed`
-      - `vol_z_b = (-inf, -0.5]`
-      - `dow ≠ Fri`
+  - 🟢 **87.0%** (20/23)
+      - `dow = Wed`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `atr_pct_b = (0.15, 0.4]`
   - 🟢 **75.0%** (9/12)
-      - `dow ≠ Thu`
       - `dow = Wed`
       - `rsi_b ≠ (30.0, 50.0]`
       - `adx_b = (-inf, 18.0]`
-  - 🔴 **20.0%** (2/10)
-      - `dow = Thu`
-      - `adx_b ≠ (25.0, inf]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `atr_pct_b ≠ (0.15, 0.4]`
 
 ### 📊 NDX.INDX/15m · breakdown
-- Events: 271  ·  Baseline continuation: **44.6%**
+- Events: 277  ·  Baseline continuation: **44.0%**
 
   - 🟢 **81.8%** (9/11)
       - `vol_z_b ≠ (-0.5, 0.5]`
@@ -2070,37 +2085,36 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🟢 **75.0%** (9/12)
       - `vol_z_b = (-0.5, 0.5]`
       - `dow = Tue`
-      - `rsi_b = (30.0, 50.0]`
-  - 🔴 **11.4%** (4/35)
+      - `rsi_b ≠ (-inf, 30.0]`
+  - 🔴 **20.6%** (7/34)
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `dow ≠ Fri`
-      - `dow ≠ Tue`
-      - `rsi_b = (-inf, 30.0]`
+      - `vol_z_b = (0.5, inf]`
+      - `dow = Wed`
+  - 🔴 **12.5%** (2/16)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow ≠ Fri`
+      - `vol_z_b ≠ (0.5, inf]`
   - 🔴 **10.0%** (1/10)
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `dow = Fri`
       - `vol_z_b ≠ (-inf, -0.5]`
-      - `rsi_b ≠ (-inf, 30.0]`
+      - `rsi_b = (30.0, 50.0]`
 
 ### 📊 NDX.INDX/15m · breakout_up
-- Events: 316  ·  Baseline continuation: **38.0%**
+- Events: 332  ·  Baseline continuation: **39.2%**
 
-  - 🟢 **83.3%** (15/18)
+  - 🟢 **85.7%** (18/21)
       - `vol_z_b = (-inf, -0.5]`
       - `dow ≠ Thu`
       - `adx_b ≠ (18.0, 25.0]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-  - 🔴 **30.0%** (6/20)
-      - `vol_z_b = (-inf, -0.5]`
-      - `dow ≠ Thu`
-      - `adx_b = (18.0, 25.0]`
-      - `dow ≠ Fri`
-  - 🔴 **23.1%** (3/13)
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🔴 **28.6%** (4/14)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow ≠ Fri`
       - `adx_b = (-inf, 18.0]`
       - `dow = Tue`
-  - 🔴 **22.7%** (10/44)
+  - 🔴 **21.3%** (10/47)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow ≠ Fri`
       - `adx_b ≠ (-inf, 18.0]`
@@ -2112,19 +2126,23 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🔴 **12.5%** (2/16)
       - `vol_z_b = (-inf, -0.5]`
       - `dow = Thu`
+  - 🔴 **0.0%** (0/14)
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow = Fri`
+      - `adx_b = (18.0, 25.0]`
 
 ### 📊 NDX.INDX/15m · bullish
-- Events: 567  ·  Baseline continuation: **40.7%**
+- Events: 588  ·  Baseline continuation: **42.2%**
 
+  - 🟢 **75.0%** (15/20)
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `dow ≠ Fri`
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `vol_z_b = (-inf, -0.5]`
   - 🔴 **30.0%** (3/10)
       - `atr_pct_b = (0.05, 0.15]`
       - `rsi_b = (70.0, inf]`
       - `dow ≠ Wed`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **28.2%** (20/71)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Fri`
-      - `rsi_b = (50.0, 70.0]`
       - `adx_b = (25.0, inf]`
   - 🔴 **17.6%** (3/17)
       - `atr_pct_b = (0.05, 0.15]`
@@ -2141,49 +2159,53 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b ≠ (30.0, 50.0]`
+  - 🔴 **10.0%** (1/10)
+      - `atr_pct_b = (0.05, 0.15]`
+      - `rsi_b = (70.0, inf]`
+      - `dow ≠ Wed`
+      - `adx_b ≠ (25.0, inf]`
 
 ### 📊 NDX.INDX/15m · bullish_OB
-- Events: 427  ·  Baseline continuation: **61.6%**
+- Events: 439  ·  Baseline continuation: **62.0%**
 
-  - 🟢 **94.1%** (16/17)
+  - 🟢 **88.9%** (24/27)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b ≠ (18.0, 25.0]`
-      - `dow = Mon`
-      - `rsi_b ≠ (30.0, 50.0]`
-  - 🟢 **81.0%** (17/21)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `dow = Mon`
-      - `rsi_b = (30.0, 50.0]`
-  - 🟢 **77.6%** (52/67)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `dow ≠ Mon`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🟢 **71.1%** (27/38)
+      - `rsi_b = (50.0, 70.0]`
+  - 🟢 **76.9%** (50/65)
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🟢 **73.0%** (65/89)
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `vol_z_b = (0.5, inf]`
+      - `dow ≠ Wed`
+  - 🟢 **71.8%** (28/39)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b = (18.0, 25.0]`
       - `dow ≠ Mon`
       - `rsi_b = (30.0, 50.0]`
+  - 🔴 **29.4%** (5/17)
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `adx_b = (18.0, 25.0]`
+      - `dow = Mon`
   - 🔴 **23.1%** (3/13)
       - `atr_pct_b = (0.05, 0.15]`
       - `dow = Wed`
       - `vol_z_b ≠ (-0.5, 0.5]`
 
 ### 📊 NDX.INDX/15m · engulfing_bear
-- Events: 211  ·  Baseline continuation: **37.0%**
+- Events: 218  ·  Baseline continuation: **35.8%**
 
-  - 🟢 **72.2%** (13/18)
-      - `dow ≠ Mon`
-      - `adx_b = (18.0, 25.0]`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `dow ≠ Thu`
   - 🔴 **25.0%** (4/16)
       - `dow ≠ Mon`
       - `adx_b = (18.0, 25.0]`
       - `rsi_b = (30.0, 50.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **13.3%** (2/15)
+  - 🔴 **12.5%** (2/16)
       - `dow ≠ Mon`
       - `adx_b ≠ (18.0, 25.0]`
       - `dow = Tue`
@@ -2192,80 +2214,67 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Mon`
       - `vol_z_b ≠ (0.5, inf]`
       - `rsi_b = (30.0, 50.0]`
-  - 🔴 **0.0%** (0/14)
+  - 🔴 **0.0%** (0/16)
       - `dow = Mon`
       - `vol_z_b ≠ (0.5, inf]`
       - `rsi_b ≠ (30.0, 50.0]`
 
 ### 📊 NDX.INDX/15m · engulfing_bull
-- Events: 189  ·  Baseline continuation: **36.5%**
+- Events: 193  ·  Baseline continuation: **36.8%**
 
   - 🔴 **26.7%** (4/15)
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b = (30.0, 50.0]`
       - `dow ≠ Mon`
-      - `dow = Tue`
-  - 🔴 **20.0%** (3/15)
-      - `adx_b ≠ (-inf, 18.0]`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `dow = Tue`
+      - `vol_z_b = (0.5, inf]`
   - 🔴 **17.4%** (4/23)
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b = (30.0, 50.0]`
       - `dow ≠ Mon`
-      - `dow ≠ Tue`
+      - `vol_z_b ≠ (0.5, inf]`
 
 ### 📊 NDX.INDX/15m · hammer
-- Events: 246  ·  Baseline continuation: **46.7%**
+- Events: 252  ·  Baseline continuation: **46.8%**
 
-  - 🟢 **75.0%** (15/20)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `dow ≠ Fri`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🟢 **72.7%** (8/11)
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow = Fri`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **27.3%** (3/11)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `dow = Fri`
+  - 🟢 **85.7%** (12/14)
+      - `adx_b = (-inf, 18.0]`
+      - `dow = Tue`
+  - 🟢 **75.0%** (9/12)
+      - `adx_b = (-inf, 18.0]`
+      - `dow ≠ Tue`
       - `vol_z_b = (0.5, inf]`
-  - 🔴 **26.1%** (6/23)
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow ≠ Fri`
+  - 🔴 **27.3%** (3/11)
+      - `adx_b = (-inf, 18.0]`
+      - `dow ≠ Tue`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🔴 **20.0%** (5/25)
+      - `adx_b ≠ (-inf, 18.0]`
+      - `rsi_b = (50.0, 70.0]`
       - `dow ≠ Thu`
-      - `vol_z_b = (-0.5, 0.5]`
-  - 🔴 **15.4%** (2/13)
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow ≠ Fri`
-      - `dow = Thu`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 NDX.INDX/15m · shooting_star
-- Events: 196  ·  Baseline continuation: **45.9%**
+- Events: 204  ·  Baseline continuation: **45.6%**
 
-  - 🔴 **23.1%** (3/13)
+  - 🔴 **14.3%** (3/21)
       - `adx_b = (-inf, 18.0]`
-      - `dow ≠ Mon`
       - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **10.0%** (1/10)
+  - 🔴 **9.1%** (1/11)
       - `adx_b ≠ (-inf, 18.0]`
       - `atr_pct_b = (0.15, 0.4]`
       - `vol_z_b = (-inf, -0.5]`
       - `rsi_b ≠ (50.0, 70.0]`
-  - 🔴 **0.0%** (0/10)
-      - `adx_b = (-inf, 18.0]`
-      - `dow = Mon`
 
 ---
 
 ## NDX.INDX · 30m
-- Candles: **3911**  ·  Swing pivots: 481  ·  FVG: 931
-- CHoCH/BOS events: 332  ·  Order Blocks: 708
-- Trend Ladders detected: 223  ·  Candle patterns: 1107  ·  Breakouts: 523
+- Candles: **3987**  ·  Swing pivots: 488  ·  FVG: 950
+- CHoCH/BOS events: 338  ·  Order Blocks: 721
+- Trend Ladders detected: 228  ·  Candle patterns: 1131  ·  Breakouts: 534
 
 ### S/R Cluster Seviyeleri (top 8)
-- 29559.1543 (touches: **280**, strong)
+- 29540.6178 (touches: **287**, strong)
 - 24109.3792 (touches: **48**, strong)
 - 26685.4867 (touches: **15**, strong)
 - 27025.1909 (touches: **11**, strong)
@@ -2274,17 +2283,21 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 - 25067.6286 (touches: **7**, strong)
 - 24776.9333 (touches: **6**, strong)
 
-### 🪜 Trend Ladder Analizi (223 ladder)
-- Continued: 97  ·  Reversed: 81  ·  Baseline continuation: **43.5%**
+### 🪜 Trend Ladder Analizi (228 ladder)
+- Continued: 99  ·  Reversed: 83  ·  Baseline continuation: **43.4%**
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
+- **27.3%** (3/11)
+   - `before_rsi_last_bucket ≠ (70.0, inf]`
+   - `start_dist_ema50_atr_bucket = (-1.0, 0.0]`
+   - `before_volz_avg_bucket ≠ (-0.5, 0.5]`
 - **20.0%** (3/15)
    - `before_rsi_last_bucket = (70.0, inf]`
 
 ### 📊 NDX.INDX/30m · ALL EVENTS
-- Events: 3206  ·  Baseline continuation: **46.8%**
+- Events: 3265  ·  Baseline continuation: **46.8%**
 
-  - 🟢 **100.0%** (23/23)
+  - 🟢 **100.0%** (24/24)
       - `type = bullish_OB`
       - `dow = Tue`
       - `rsi_b ≠ (30.0, 50.0]`
@@ -2294,26 +2307,21 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Tue`
       - `adx_b ≠ (25.0, inf]`
       - `dow = Fri`
-  - 🟢 **75.6%** (127/168)
+  - 🟢 **75.0%** (129/172)
       - `type ≠ bullish_OB`
       - `type = bearish_OB`
       - `adx_b = (25.0, inf]`
       - `atr_pct_b ≠ (0.05, 0.15]`
-  - 🟢 **72.0%** (18/25)
+  - 🟢 **73.1%** (19/26)
       - `type = bullish_OB`
       - `dow = Tue`
       - `rsi_b ≠ (30.0, 50.0]`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🟢 **70.6%** (24/34)
-      - `type ≠ bullish_OB`
-      - `type = bearish_OB`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow = Mon`
-  - 🔴 **16.9%** (10/59)
+  - 🔴 **21.0%** (17/81)
       - `type ≠ bullish_OB`
       - `type ≠ bearish_OB`
+      - `dow ≠ Tue`
       - `type = BOS_bullish`
-      - `vol_z_b ≠ (-0.5, 0.5]`
 
 ### 📊 NDX.INDX/30m · BOS_bearish
 - Events: 57  ·  Baseline continuation: **24.6%**
@@ -2328,7 +2336,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (25.0, inf]`
 
 ### 📊 NDX.INDX/30m · BOS_bullish
-- Events: 89  ·  Baseline continuation: **22.5%**
+- Events: 90  ·  Baseline continuation: **22.2%**
 
   - 🔴 **27.3%** (3/11)
       - `vol_z_b = (-0.5, 0.5]`
@@ -2340,7 +2348,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `adx_b ≠ (18.0, 25.0]`
       - `vol_z_b = (-inf, -0.5]`
-  - 🔴 **14.3%** (2/14)
+  - 🔴 **13.3%** (2/15)
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `adx_b ≠ (18.0, 25.0]`
       - `vol_z_b ≠ (-inf, -0.5]`
@@ -2352,7 +2360,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `rsi_b ≠ (50.0, 70.0]`
 
 ### 📊 NDX.INDX/30m · CHoCH_bearish
-- Events: 92  ·  Baseline continuation: **38.0%**
+- Events: 94  ·  Baseline continuation: **36.2%**
 
   - 🔴 **22.2%** (4/18)
       - `rsi_b ≠ (50.0, 70.0]`
@@ -2364,22 +2372,24 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b ≠ (25.0, inf]`
 
 ### 📊 NDX.INDX/30m · CHoCH_bullish
-- Events: 92  ·  Baseline continuation: **42.4%**
+- Events: 94  ·  Baseline continuation: **43.6%**
 
-  - 🟢 **75.0%** (15/20)
+  - 🟢 **90.0%** (9/10)
       - `adx_b = (-inf, 18.0]`
-  - 🔴 **25.0%** (3/12)
+      - `rsi_b = (30.0, 50.0]`
+  - 🔴 **29.4%** (5/17)
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b ≠ (30.0, 50.0]`
+      - `dow ≠ Tue`
       - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **15.0%** (3/20)
+  - 🔴 **12.5%** (2/16)
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b ≠ (30.0, 50.0]`
+      - `dow ≠ Tue`
       - `vol_z_b = (0.5, inf]`
 
 ### 📊 NDX.INDX/30m · bearish
-- Events: 404  ·  Baseline continuation: **40.8%**
+- Events: 408  ·  Baseline continuation: **40.4%**
 
   - 🟢 **84.6%** (11/13)
       - `dow = Fri`
@@ -2405,7 +2415,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
       - `adx_b ≠ (25.0, inf]`
       - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b ≠ (18.0, 25.0]`
+      - `adx_b = (-inf, 18.0]`
   - 🔴 **16.7%** (2/12)
       - `dow ≠ Fri`
       - `rsi_b ≠ (-inf, 30.0]`
@@ -2419,17 +2429,12 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
       - `adx_b ≠ (25.0, inf]`
       - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b = (18.0, 25.0]`
+      - `adx_b ≠ (-inf, 18.0]`
 
 ### 📊 NDX.INDX/30m · bearish_OB
-- Events: 363  ·  Baseline continuation: **62.8%**
+- Events: 368  ·  Baseline continuation: **62.5%**
 
-  - 🟢 **90.0%** (9/10)
-      - `adx_b = (25.0, inf]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow = Tue`
-  - 🟢 **87.5%** (49/56)
+  - 🟢 **87.9%** (51/58)
       - `adx_b = (25.0, inf]`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `vol_z_b = (0.5, inf]`
@@ -2438,48 +2443,49 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b ≠ (25.0, inf]`
       - `dow ≠ Mon`
       - `dow = Wed`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🟢 **85.7%** (12/14)
+      - `adx_b = (18.0, 25.0]`
+  - 🟢 **80.0%** (12/15)
       - `adx_b ≠ (25.0, inf]`
       - `dow = Mon`
-      - `rsi_b = (50.0, 70.0]`
-      - `adx_b ≠ (-inf, 18.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `adx_b = (18.0, 25.0]`
+  - 🟢 **76.9%** (20/26)
+      - `adx_b = (25.0, inf]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b = (-inf, -0.5]`
   - 🟢 **70.0%** (7/10)
       - `adx_b ≠ (25.0, inf]`
       - `dow = Mon`
-      - `rsi_b = (50.0, 70.0]`
-      - `adx_b = (-inf, 18.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `adx_b ≠ (18.0, 25.0]`
 
 ### 📊 NDX.INDX/30m · breakdown
-- Events: 199  ·  Baseline continuation: **43.2%**
+- Events: 203  ·  Baseline continuation: **42.4%**
 
   - 🔴 **22.2%** (4/18)
       - `dow ≠ Mon`
       - `dow ≠ Wed`
       - `dow = Thu`
-      - `rsi_b = (-inf, 30.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
+  - 🔴 **20.0%** (2/10)
+      - `dow = Mon`
+      - `vol_z_b ≠ (0.5, inf]`
   - 🔴 **15.8%** (3/19)
       - `dow ≠ Mon`
       - `dow = Wed`
       - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **15.4%** (2/13)
+  - 🔴 **5.3%** (1/19)
       - `dow = Mon`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **7.7%** (1/13)
-      - `dow = Mon`
-      - `adx_b ≠ (18.0, 25.0]`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 NDX.INDX/30m · breakout_up
-- Events: 320  ·  Baseline continuation: **47.2%**
+- Events: 326  ·  Baseline continuation: **47.5%**
 
   - 🟢 **88.9%** (16/18)
       - `dow = Tue`
       - `adx_b = (25.0, inf]`
       - `vol_z_b = (0.5, inf]`
-  - 🟢 **75.0%** (9/12)
-      - `dow = Tue`
-      - `adx_b = (25.0, inf]`
-      - `vol_z_b ≠ (0.5, inf]`
   - 🟢 **72.4%** (21/29)
       - `dow ≠ Tue`
       - `adx_b = (-inf, 18.0]`
@@ -2492,58 +2498,58 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Thu`
 
 ### 📊 NDX.INDX/30m · bullish
-- Events: 524  ·  Baseline continuation: **45.6%**
+- Events: 539  ·  Baseline continuation: **46.0%**
 
-  - 🟢 **84.2%** (16/19)
-      - `atr_pct_b ≠ (0.4, inf]`
+  - 🟢 **100.0%** (11/11)
+      - `dow = Tue`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `vol_z_b = (0.5, inf]`
+  - 🟢 **80.0%** (16/20)
+      - `dow ≠ Tue`
       - `adx_b = (-inf, 18.0]`
       - `dow = Fri`
-  - 🟢 **81.2%** (13/16)
-      - `atr_pct_b = (0.4, inf]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `adx_b ≠ (25.0, inf]`
-  - 🟢 **73.3%** (11/15)
-      - `atr_pct_b = (0.4, inf]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **28.8%** (19/66)
-      - `atr_pct_b ≠ (0.4, inf]`
+  - 🟢 **75.0%** (12/16)
+      - `dow ≠ Tue`
       - `adx_b ≠ (-inf, 18.0]`
-      - `dow = Thu`
-      - `rsi_b ≠ (70.0, inf]`
-  - 🔴 **0.0%** (0/12)
-      - `atr_pct_b ≠ (0.4, inf]`
+      - `atr_pct_b = (0.4, inf]`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🟢 **70.0%** (7/10)
+      - `dow = Tue`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **24.4%** (19/78)
+      - `dow ≠ Tue`
       - `adx_b ≠ (-inf, 18.0]`
+      - `atr_pct_b ≠ (0.4, inf]`
       - `dow = Thu`
-      - `rsi_b = (70.0, inf]`
 
 ### 📊 NDX.INDX/30m · bullish_OB
-- Events: 345  ·  Baseline continuation: **67.0%**
+- Events: 353  ·  Baseline continuation: **66.9%**
 
-  - 🟢 **100.0%** (20/20)
-      - `atr_pct_b ≠ (0.4, inf]`
+  - 🟢 **100.0%** (24/24)
       - `dow = Tue`
       - `rsi_b ≠ (30.0, 50.0]`
       - `vol_z_b = (0.5, inf]`
-  - 🟢 **93.3%** (14/15)
+  - 🟢 **90.0%** (9/10)
+      - `dow ≠ Tue`
       - `atr_pct_b = (0.4, inf]`
-      - `adx_b ≠ (25.0, inf]`
-  - 🟢 **81.8%** (9/11)
-      - `atr_pct_b ≠ (0.4, inf]`
+      - `adx_b = (-inf, 18.0]`
+  - 🟢 **84.6%** (11/13)
+      - `dow ≠ Tue`
+      - `atr_pct_b = (0.4, inf]`
+      - `adx_b ≠ (-inf, 18.0]`
+  - 🟢 **83.3%** (10/12)
       - `dow = Tue`
       - `rsi_b = (30.0, 50.0]`
       - `vol_z_b ≠ (0.5, inf]`
   - 🟢 **79.3%** (23/29)
-      - `atr_pct_b ≠ (0.4, inf]`
       - `dow ≠ Tue`
+      - `atr_pct_b ≠ (0.4, inf]`
       - `adx_b ≠ (25.0, inf]`
       - `dow = Fri`
-  - 🟢 **75.0%** (9/12)
-      - `atr_pct_b = (0.4, inf]`
-      - `adx_b = (25.0, inf]`
 
 ### 📊 NDX.INDX/30m · engulfing_bear
-- Events: 193  ·  Baseline continuation: **40.4%**
+- Events: 199  ·  Baseline continuation: **40.2%**
 
   - 🟢 **80.0%** (8/10)
       - `dow = Fri`
@@ -2563,7 +2569,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `rsi_b = (30.0, 50.0]`
 
 ### 📊 NDX.INDX/30m · engulfing_bull
-- Events: 161  ·  Baseline continuation: **42.2%**
+- Events: 163  ·  Baseline continuation: **42.3%**
 
   - 🟢 **75.0%** (12/16)
       - `dow ≠ Fri`
@@ -2584,7 +2590,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (25.0, inf]`
 
 ### 📊 NDX.INDX/30m · hammer
-- Events: 212  ·  Baseline continuation: **40.6%**
+- Events: 214  ·  Baseline continuation: **40.7%**
 
   - 🟢 **71.4%** (10/14)
       - `rsi_b = (70.0, inf]`
@@ -2593,6 +2599,11 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (25.0, inf]`
       - `vol_z_b ≠ (0.5, inf]`
       - `atr_pct_b = (0.15, 0.4]`
+  - 🔴 **20.0%** (3/15)
+      - `rsi_b ≠ (70.0, inf]`
+      - `adx_b ≠ (25.0, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `dow = Mon`
   - 🔴 **16.7%** (2/12)
       - `rsi_b ≠ (70.0, inf]`
       - `adx_b = (25.0, inf]`
@@ -2600,7 +2611,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b ≠ (0.15, 0.4]`
 
 ### 📊 NDX.INDX/30m · shooting_star
-- Events: 155  ·  Baseline continuation: **39.4%**
+- Events: 157  ·  Baseline continuation: **39.5%**
 
   - 🔴 **25.0%** (3/12)
       - `adx_b = (25.0, inf]`
@@ -2618,22 +2629,22 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 ---
 
 ## NDX.INDX · 1h
-- Candles: **5219**  ·  Swing pivots: 604  ·  FVG: 1020
-- CHoCH/BOS events: 410  ·  Order Blocks: 967
-- Trend Ladders detected: 250  ·  Candle patterns: 1490  ·  Breakouts: 628
+- Candles: **5257**  ·  Swing pivots: 608  ·  FVG: 1030
+- CHoCH/BOS events: 411  ·  Order Blocks: 974
+- Trend Ladders detected: 252  ·  Candle patterns: 1500  ·  Breakouts: 632
 
 ### S/R Cluster Seviyeleri (top 8)
 - 25088.9092 (touches: **352**, strong)
-- 29694.382 (touches: **163**, strong)
+- 29589.8754 (touches: **181**, strong)
 - 26242.4234 (touches: **26**, strong)
-- 28638.4418 (touches: **11**, strong)
 - 26723.5571 (touches: **7**, strong)
 - 27008.6297 (touches: **6**, strong)
 - 27394.28 (touches: **5**, strong)
 - 23795.35 (touches: **4**, moderate)
+- 27199.2993 (touches: **4**, moderate)
 
-### 🪜 Trend Ladder Analizi (250 ladder)
-- Continued: 94  ·  Reversed: 111  ·  Baseline continuation: **37.6%**
+### 🪜 Trend Ladder Analizi (252 ladder)
+- Continued: 94  ·  Reversed: 110  ·  Baseline continuation: **37.3%**
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
 - **21.4%** (3/14)
@@ -2650,14 +2661,14 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
    - `start_dist_ema50_atr_bucket ≠ (-inf, -1.0]`
 
 ### 📊 NDX.INDX/1h · ALL EVENTS
-- Events: 3939  ·  Baseline continuation: **45.3%**
+- Events: 3967  ·  Baseline continuation: **45.2%**
 
   - 🟢 **94.1%** (16/17)
       - `type = bullish_OB`
       - `dow = Tue`
       - `vol_z_b = (-0.5, 0.5]`
       - `rsi_b = (50.0, 70.0]`
-  - 🟢 **90.9%** (40/44)
+  - 🟢 **91.3%** (42/46)
       - `type = bullish_OB`
       - `dow = Tue`
       - `vol_z_b ≠ (-0.5, 0.5]`
@@ -2667,16 +2678,16 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Tue`
       - `atr_pct_b = (0.4, inf]`
       - `adx_b = (-inf, 18.0]`
-  - 🟢 **78.5%** (84/107)
-      - `type ≠ bullish_OB`
-      - `type = bearish_OB`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b = (25.0, inf]`
   - 🟢 **77.8%** (14/18)
       - `type = bullish_OB`
       - `dow = Tue`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `adx_b = (-inf, 18.0]`
+  - 🟢 **77.6%** (83/107)
+      - `type ≠ bullish_OB`
+      - `type = bearish_OB`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `adx_b = (25.0, inf]`
   - 🔴 **25.6%** (21/82)
       - `type ≠ bullish_OB`
       - `type ≠ bearish_OB`
@@ -2756,7 +2767,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Tue`
 
 ### 📊 NDX.INDX/1h · CHoCH_bullish
-- Events: 109  ·  Baseline continuation: **37.6%**
+- Events: 110  ·  Baseline continuation: **37.3%**
 
   - 🟢 **84.6%** (11/13)
       - `vol_z_b = (-0.5, 0.5]`
@@ -2774,14 +2785,14 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🔴 **28.6%** (6/21)
       - `vol_z_b = (-0.5, 0.5]`
       - `atr_pct_b = (0.4, inf]`
-  - 🔴 **11.1%** (2/18)
+  - 🔴 **10.5%** (2/19)
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `rsi_b ≠ (30.0, 50.0]`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b ≠ (25.0, inf]`
 
 ### 📊 NDX.INDX/1h · bearish
-- Events: 445  ·  Baseline continuation: **43.6%**
+- Events: 448  ·  Baseline continuation: **43.1%**
 
   - 🟢 **77.8%** (14/18)
       - `dow ≠ Mon`
@@ -2793,6 +2804,10 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (18.0, 25.0]`
       - `dow = Fri`
       - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🔴 **28.6%** (4/14)
+      - `dow = Mon`
+      - `atr_pct_b = (0.4, inf]`
+      - `adx_b ≠ (25.0, inf]`
   - 🔴 **22.2%** (4/18)
       - `dow = Mon`
       - `atr_pct_b ≠ (0.4, inf]`
@@ -2803,13 +2818,13 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (18.0, 25.0]`
       - `dow ≠ Fri`
       - `dow ≠ Thu`
-  - 🔴 **0.0%** (0/17)
+  - 🔴 **0.0%** (0/18)
       - `dow = Mon`
       - `atr_pct_b = (0.4, inf]`
       - `adx_b = (25.0, inf]`
 
 ### 📊 NDX.INDX/1h · bearish_OB
-- Events: 527  ·  Baseline continuation: **63.2%**
+- Events: 529  ·  Baseline continuation: **62.6%**
 
   - 🟢 **92.9%** (13/14)
       - `vol_z_b = (-inf, -0.5]`
@@ -2829,14 +2844,14 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b ≠ (0.4, inf]`
       - `adx_b ≠ (18.0, 25.0]`
       - `dow = Fri`
-  - 🟢 **81.0%** (17/21)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `atr_pct_b = (0.4, inf]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow = Thu`
+  - 🟢 **74.0%** (37/50)
+      - `vol_z_b = (-inf, -0.5]`
+      - `dow ≠ Thu`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `atr_pct_b ≠ (0.4, inf]`
 
 ### 📊 NDX.INDX/1h · breakdown
-- Events: 246  ·  Baseline continuation: **34.1%**
+- Events: 247  ·  Baseline continuation: **34.0%**
 
   - 🟢 **82.4%** (14/17)
       - `adx_b = (-inf, 18.0]`
@@ -2850,7 +2865,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `rsi_b = (-inf, 30.0]`
       - `dow ≠ Thu`
       - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **14.3%** (2/14)
+  - 🔴 **13.3%** (2/15)
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b ≠ (-inf, 30.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
@@ -2867,11 +2882,16 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (25.0, inf]`
 
 ### 📊 NDX.INDX/1h · breakout_up
-- Events: 374  ·  Baseline continuation: **34.0%**
+- Events: 375  ·  Baseline continuation: **33.9%**
 
   - 🟢 **76.9%** (10/13)
       - `dow = Tue`
       - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **29.6%** (8/27)
+      - `dow ≠ Tue`
+      - `dow = Mon`
+      - `rsi_b = (50.0, 70.0]`
+      - `atr_pct_b = (0.15, 0.4]`
   - 🔴 **22.0%** (11/50)
       - `dow ≠ Tue`
       - `dow ≠ Mon`
@@ -2893,7 +2913,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (0.5, inf]`
 
 ### 📊 NDX.INDX/1h · bullish
-- Events: 569  ·  Baseline continuation: **40.9%**
+- Events: 576  ·  Baseline continuation: **41.5%**
 
   - 🟢 **90.9%** (10/11)
       - `atr_pct_b ≠ (0.4, inf]`
@@ -2920,9 +2940,9 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `rsi_b = (70.0, inf]`
 
 ### 📊 NDX.INDX/1h · bullish_OB
-- Events: 440  ·  Baseline continuation: **67.0%**
+- Events: 445  ·  Baseline continuation: **67.6%**
 
-  - 🟢 **100.0%** (12/12)
+  - 🟢 **100.0%** (13/13)
       - `dow = Tue`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `adx_b ≠ (-inf, 18.0]`
@@ -2936,24 +2956,24 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b = (0.4, inf]`
       - `adx_b = (-inf, 18.0]`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🟢 **87.5%** (28/32)
+  - 🟢 **87.9%** (29/33)
       - `dow = Tue`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `adx_b ≠ (-inf, 18.0]`
       - `vol_z_b = (0.5, inf]`
-  - 🟢 **83.3%** (15/18)
+  - 🟢 **85.7%** (18/21)
       - `dow ≠ Tue`
       - `atr_pct_b = (0.4, inf]`
       - `adx_b ≠ (-inf, 18.0]`
       - `dow = Mon`
 
 ### 📊 NDX.INDX/1h · engulfing_bear
-- Events: 225  ·  Baseline continuation: **42.2%**
+- Events: 227  ·  Baseline continuation: **41.9%**
 
   - 🟢 **80.0%** (12/15)
       - `dow = Thu`
       - `adx_b ≠ (-inf, 18.0]`
-      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `atr_pct_b = (0.4, inf]`
   - 🟢 **70.0%** (7/10)
       - `dow ≠ Thu`
       - `atr_pct_b = (0.4, inf]`
@@ -2979,17 +2999,17 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (-inf, 18.0]`
 
 ### 📊 NDX.INDX/1h · engulfing_bull
-- Events: 234  ·  Baseline continuation: **43.6%**
+- Events: 237  ·  Baseline continuation: **43.9%**
 
   - 🟢 **71.4%** (10/14)
       - `dow ≠ Fri`
       - `dow ≠ Thu`
       - `atr_pct_b = (0.4, inf]`
       - `dow = Wed`
-  - 🔴 **27.8%** (5/18)
+  - 🔴 **29.4%** (5/17)
       - `dow = Fri`
-      - `adx_b ≠ (-inf, 18.0]`
       - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b = (50.0, 70.0]`
   - 🔴 **25.0%** (5/20)
       - `dow ≠ Fri`
       - `dow = Thu`
@@ -2999,9 +3019,10 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Thu`
       - `atr_pct_b = (0.15, 0.4]`
       - `adx_b ≠ (25.0, inf]`
-  - 🔴 **9.1%** (1/11)
+  - 🔴 **10.0%** (1/10)
       - `dow = Fri`
-      - `adx_b = (-inf, 18.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b ≠ (50.0, 70.0]`
 
 ### 📊 NDX.INDX/1h · hammer
 - Events: 275  ·  Baseline continuation: **38.2%**
@@ -3023,31 +3044,37 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `rsi_b = (30.0, 50.0]`
 
 ### 📊 NDX.INDX/1h · shooting_star
-- Events: 197  ·  Baseline continuation: **41.1%**
+- Events: 200  ·  Baseline continuation: **40.5%**
 
   - 🔴 **29.0%** (9/31)
       - `adx_b ≠ (18.0, 25.0]`
       - `dow ≠ Wed`
       - `atr_pct_b = (0.4, inf]`
       - `rsi_b = (50.0, 70.0]`
+  - 🔴 **20.0%** (2/10)
+      - `adx_b = (18.0, 25.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow = Mon`
   - 🔴 **18.2%** (2/11)
       - `adx_b ≠ (18.0, 25.0]`
       - `dow = Wed`
       - `vol_z_b ≠ (-inf, -0.5]`
-  - 🔴 **13.6%** (3/22)
+  - 🔴 **7.7%** (1/13)
       - `adx_b = (18.0, 25.0]`
       - `rsi_b ≠ (30.0, 50.0]`
       - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow ≠ Mon`
 
 ---
 
 ## GDAXI.INDX · 5m
-- Candles: **10000**  ·  Swing pivots: 1302  ·  FVG: 2339
-- CHoCH/BOS events: 909  ·  Order Blocks: 1670
-- Trend Ladders detected: 132  ·  Candle patterns: 2193  ·  Breakouts: 1199
+- Candles: **10000**  ·  Swing pivots: 1301  ·  FVG: 2333
+- CHoCH/BOS events: 912  ·  Order Blocks: 1681
+- Trend Ladders detected: 133  ·  Candle patterns: 2165  ·  Breakouts: 1204
 
 ### S/R Cluster Seviyeleri (top 8)
-- 24931.0803 (touches: **1110**, strong)
+- 24918.5752 (touches: **1107**, strong)
 - 25814.7322 (touches: **58**, strong)
 - 24217.5924 (touches: **20**, strong)
 - 25719.3759 (touches: **17**, strong)
@@ -3056,447 +3083,461 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 - 24463.825 (touches: **8**, strong)
 - 24119.4 (touches: **7**, strong)
 
-### 🪜 Trend Ladder Analizi (132 ladder)
-- Continued: 43  ·  Reversed: 57  ·  Baseline continuation: **32.6%**
+### 🪜 Trend Ladder Analizi (133 ladder)
+- Continued: 42  ·  Reversed: 60  ·  Baseline continuation: **31.6%**
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **28.6%** (4/14)
+- **27.7%** (13/47)
+   - `ladder_slope_atr_bucket ≠ (0.5, 1.0]`
+   - `start_dist_ema50_atr_bucket ≠ (-inf, -1.0]`
+   - `ladder_slope_atr_bucket ≠ (0.2, 0.5]`
+- **23.1%** (3/13)
    - `ladder_slope_atr_bucket = (0.5, 1.0]`
-   - `before_rsi_avg_bucket = (30.0, 50.0]`
-- **24.0%** (6/25)
+   - `before_rsi_avg_bucket ≠ (50.0, 70.0]`
+- **20.0%** (3/15)
    - `ladder_slope_atr_bucket ≠ (0.5, 1.0]`
-   - `before_rsi_last_bucket ≠ (50.0, 70.0]`
-   - `before_adx_avg_bucket = (18.0, 25.0]`
-- **17.6%** (6/34)
+   - `start_dist_ema50_atr_bucket = (-inf, -1.0]`
+   - `before_volz_avg_bucket = (-inf, -0.5]`
+- **11.1%** (2/18)
    - `ladder_slope_atr_bucket ≠ (0.5, 1.0]`
-   - `before_rsi_last_bucket = (50.0, 70.0]`
-   - `before_volz_avg_bucket ≠ (-inf, -0.5]`
+   - `start_dist_ema50_atr_bucket ≠ (-inf, -1.0]`
+   - `ladder_slope_atr_bucket = (0.2, 0.5]`
 
 ### 📊 GDAXI.INDX/5m · ALL EVENTS
-- Events: 7320  ·  Baseline continuation: **44.6%**
+- Events: 7312  ·  Baseline continuation: **44.5%**
 
-  - 🟢 **75.7%** (265/350)
-      - `type = bearish_OB`
-      - `dow ≠ Fri`
-      - `dow ≠ Tue`
-      - `rsi_b ≠ (30.0, 50.0]`
-  - 🟢 **74.2%** (330/445)
-      - `type ≠ bearish_OB`
+  - 🟢 **78.4%** (203/259)
       - `type = bullish_OB`
       - `adx_b ≠ (18.0, 25.0]`
       - `dow ≠ Wed`
-  - 🔴 **30.0%** (12/40)
+      - `rsi_b = (30.0, 50.0]`
+  - 🟢 **74.0%** (370/500)
+      - `type ≠ bullish_OB`
       - `type = bearish_OB`
+      - `dow ≠ Tue`
       - `dow ≠ Fri`
-      - `dow = Tue`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-  - 🔴 **28.0%** (7/25)
-      - `type ≠ bearish_OB`
+  - 🟢 **71.0%** (44/62)
+      - `type = bullish_OB`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `dow = Wed`
+      - `rsi_b = (30.0, 50.0]`
+  - 🟢 **70.6%** (60/85)
       - `type = bullish_OB`
       - `adx_b = (18.0, 25.0]`
-      - `atr_pct_b = (-inf, 0.05]`
-  - 🔴 **27.9%** (12/43)
-      - `type ≠ bearish_OB`
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🟢 **70.0%** (145/207)
+      - `type = bullish_OB`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `dow ≠ Wed`
+      - `rsi_b ≠ (30.0, 50.0]`
+  - 🔴 **28.9%** (11/38)
       - `type ≠ bullish_OB`
+      - `type ≠ bearish_OB`
       - `type = BOS_bullish`
       - `dow = Thu`
-  - 🔴 **21.4%** (48/224)
-      - `type ≠ bearish_OB`
+  - 🔴 **28.6%** (12/42)
       - `type ≠ bullish_OB`
+      - `type = bearish_OB`
+      - `dow = Tue`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+  - 🔴 **21.9%** (49/224)
+      - `type ≠ bullish_OB`
+      - `type ≠ bearish_OB`
       - `type ≠ BOS_bullish`
       - `type = BOS_bearish`
-  - 🔴 **12.4%** (15/121)
-      - `type ≠ bearish_OB`
+  - 🔴 **12.4%** (16/129)
       - `type ≠ bullish_OB`
+      - `type ≠ bearish_OB`
       - `type = BOS_bullish`
       - `dow ≠ Thu`
 
 ### 📊 GDAXI.INDX/5m · BOS_bearish
-- Events: 224  ·  Baseline continuation: **21.4%**
+- Events: 224  ·  Baseline continuation: **21.9%**
 
-  - 🔴 **28.6%** (6/21)
+  - 🔴 **30.0%** (3/10)
       - `vol_z_b = (-0.5, 0.5]`
       - `adx_b ≠ (-inf, 18.0]`
-      - `adx_b = (25.0, inf]`
-      - `rsi_b = (30.0, 50.0]`
-  - 🔴 **27.3%** (6/22)
+      - `dow = Tue`
+  - 🔴 **25.0%** (19/76)
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `adx_b = (18.0, 25.0]`
+      - `dow ≠ Fri`
+      - `rsi_b ≠ (-inf, 30.0]`
       - `dow ≠ Wed`
-      - `vol_z_b = (0.5, inf]`
+  - 🔴 **20.0%** (3/15)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow ≠ Fri`
+      - `rsi_b = (-inf, 30.0]`
+      - `dow = Wed`
   - 🔴 **20.0%** (2/10)
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `adx_b ≠ (18.0, 25.0]`
       - `dow = Fri`
       - `rsi_b ≠ (30.0, 50.0]`
-  - 🔴 **18.4%** (14/76)
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `dow ≠ Fri`
-      - `atr_pct_b = (0.05, 0.15]`
   - 🔴 **15.4%** (2/13)
-      - `vol_z_b = (-0.5, 0.5]`
-      - `adx_b = (-inf, 18.0]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Fri`
+      - `rsi_b = (30.0, 50.0]`
+      - `vol_z_b ≠ (-inf, -0.5]`
 
 ### 📊 GDAXI.INDX/5m · BOS_bullish
-- Events: 164  ·  Baseline continuation: **16.5%**
+- Events: 167  ·  Baseline continuation: **16.2%**
 
-  - 🔴 **27.8%** (5/18)
+  - 🔴 **30.0%** (3/10)
       - `dow ≠ Wed`
       - `vol_z_b = (-0.5, 0.5]`
-      - `dow ≠ Thu`
-  - 🔴 **12.5%** (2/16)
+      - `adx_b = (25.0, inf]`
+  - 🔴 **15.9%** (10/63)
       - `dow ≠ Wed`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `rsi_b ≠ (50.0, 70.0]`
       - `dow ≠ Thu`
-  - 🔴 **12.5%** (7/56)
-      - `dow ≠ Wed`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `rsi_b = (50.0, 70.0]`
-      - `dow ≠ Thu`
+      - `adx_b ≠ (-inf, 18.0]`
   - 🔴 **9.1%** (1/11)
       - `dow = Wed`
       - `vol_z_b = (0.5, inf]`
+  - 🔴 **0.0%** (0/16)
+      - `dow ≠ Wed`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow ≠ Thu`
+      - `adx_b = (-inf, 18.0]`
   - 🔴 **0.0%** (0/10)
       - `dow ≠ Wed`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `rsi_b ≠ (50.0, 70.0]`
       - `dow = Thu`
+      - `adx_b = (18.0, 25.0]`
 
 ### 📊 GDAXI.INDX/5m · CHoCH_bearish
-- Events: 258  ·  Baseline continuation: **50.4%**
+- Events: 258  ·  Baseline continuation: **48.8%**
 
-  - 🟢 **88.2%** (15/17)
+  - 🟢 **85.7%** (18/21)
       - `rsi_b = (50.0, 70.0]`
-      - `adx_b = (25.0, inf]`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **78.1%** (25/32)
-      - `rsi_b = (50.0, 70.0]`
-      - `adx_b ≠ (25.0, inf]`
       - `dow ≠ Tue`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **75.0%** (9/12)
-      - `rsi_b = (50.0, 70.0]`
       - `adx_b = (25.0, inf]`
-      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🟢 **71.2%** (47/66)
+      - `rsi_b = (50.0, 70.0]`
+      - `dow ≠ Tue`
+      - `adx_b ≠ (25.0, inf]`
+      - `dow ≠ Wed`
   - 🔴 **28.6%** (4/14)
       - `rsi_b ≠ (50.0, 70.0]`
-      - `dow ≠ Tue`
-      - `vol_z_b = (0.5, inf]`
-      - `dow = Wed`
-  - 🔴 **16.7%** (2/12)
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `dow ≠ Tue`
       - `vol_z_b ≠ (0.5, inf]`
-      - `atr_pct_b = (-inf, 0.05]`
-  - 🔴 **11.8%** (4/34)
+      - `atr_pct_b ≠ (0.05, 0.15]`
+  - 🔴 **22.6%** (7/31)
       - `rsi_b ≠ (50.0, 70.0]`
-      - `dow ≠ Tue`
       - `vol_z_b = (0.5, inf]`
-      - `dow ≠ Wed`
+      - `dow ≠ Tue`
+      - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **0.0%** (0/15)
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `vol_z_b = (0.5, inf]`
+      - `dow ≠ Tue`
+      - `adx_b = (18.0, 25.0]`
 
 ### 📊 GDAXI.INDX/5m · CHoCH_bullish
-- Events: 259  ·  Baseline continuation: **35.9%**
+- Events: 258  ·  Baseline continuation: **37.2%**
 
-  - 🟢 **90.0%** (9/10)
+  - 🟢 **82.4%** (14/17)
       - `rsi_b = (30.0, 50.0]`
-      - `dow ≠ Mon`
-      - `vol_z_b = (-inf, -0.5]`
-      - `adx_b = (18.0, 25.0]`
-  - 🟢 **73.7%** (14/19)
-      - `rsi_b = (30.0, 50.0]`
-      - `dow ≠ Mon`
-      - `vol_z_b = (-inf, -0.5]`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `dow ≠ Wed`
       - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **29.6%** (8/27)
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `dow ≠ Tue`
-      - `rsi_b ≠ (70.0, inf]`
-      - `dow = Wed`
-  - 🔴 **20.0%** (2/10)
+  - 🔴 **27.3%** (3/11)
       - `rsi_b ≠ (30.0, 50.0]`
       - `dow = Tue`
       - `adx_b = (18.0, 25.0]`
-  - 🔴 **15.3%** (13/85)
+  - 🔴 **25.0%** (11/44)
       - `rsi_b ≠ (30.0, 50.0]`
       - `dow ≠ Tue`
       - `rsi_b ≠ (70.0, inf]`
-      - `dow ≠ Wed`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🔴 **16.9%** (11/65)
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `dow ≠ Tue`
+      - `rsi_b ≠ (70.0, inf]`
+      - `vol_z_b ≠ (-inf, -0.5]`
   - 🔴 **0.0%** (0/19)
       - `rsi_b ≠ (30.0, 50.0]`
       - `dow ≠ Tue`
       - `rsi_b = (70.0, inf]`
 
 ### 📊 GDAXI.INDX/5m · bearish
-- Events: 1169  ·  Baseline continuation: **41.3%**
+- Events: 1160  ·  Baseline continuation: **40.5%**
 
-  - 🟢 **87.5%** (14/16)
-      - `rsi_b = (50.0, 70.0]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `dow = Fri`
-      - `vol_z_b ≠ (-inf, -0.5]`
-  - 🔴 **15.4%** (2/13)
-      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **26.7%** (8/30)
       - `vol_z_b = (-0.5, 0.5]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow = Mon`
-  - 🔴 **13.3%** (2/15)
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `dow = Thu`
+      - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **21.4%** (3/14)
+      - `vol_z_b = (-0.5, 0.5]`
+      - `atr_pct_b = (-inf, 0.05]`
+      - `adx_b = (-inf, 18.0]`
+  - 🔴 **15.4%** (2/13)
+      - `vol_z_b ≠ (-0.5, 0.5]`
       - `rsi_b = (50.0, 70.0]`
       - `adx_b = (18.0, 25.0]`
       - `dow = Tue`
-  - 🔴 **7.1%** (3/42)
-      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **8.3%** (3/36)
       - `vol_z_b ≠ (-0.5, 0.5]`
+      - `rsi_b ≠ (50.0, 70.0]`
       - `dow = Thu`
       - `adx_b = (25.0, inf]`
 
 ### 📊 GDAXI.INDX/5m · bearish_OB
-- Events: 854  ·  Baseline continuation: **67.0%**
+- Events: 848  ·  Baseline continuation: **66.5%**
 
-  - 🟢 **83.7%** (113/135)
-      - `dow ≠ Fri`
+  - 🟢 **90.6%** (29/32)
       - `dow ≠ Tue`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **81.2%** (13/16)
       - `dow ≠ Fri`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `atr_pct_b = (-inf, 0.05]`
+  - 🟢 **83.3%** (10/12)
+      - `dow ≠ Tue`
+      - `dow = Fri`
+      - `rsi_b = (70.0, inf]`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🟢 **81.2%** (13/16)
       - `dow = Tue`
       - `atr_pct_b = (0.05, 0.15]`
       - `adx_b = (-inf, 18.0]`
-  - 🟢 **74.0%** (91/123)
-      - `dow ≠ Fri`
+  - 🟢 **80.0%** (8/10)
       - `dow ≠ Tue`
-      - `rsi_b = (30.0, 50.0]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-  - 🟢 **70.7%** (152/215)
-      - `dow ≠ Fri`
-      - `dow ≠ Tue`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-  - 🟢 **70.7%** (29/41)
       - `dow = Fri`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **30.0%** (3/10)
-      - `dow = Fri`
-      - `adx_b = (18.0, 25.0]`
-      - `rsi_b = (30.0, 50.0]`
+      - `rsi_b = (70.0, inf]`
       - `vol_z_b = (0.5, inf]`
-  - 🔴 **21.4%** (6/28)
+  - 🟢 **75.0%** (237/316)
+      - `dow ≠ Tue`
       - `dow ≠ Fri`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `atr_pct_b ≠ (-inf, 0.05]`
+  - 🔴 **25.0%** (3/12)
       - `dow = Tue`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b = (25.0, inf]`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🔴 **16.7%** (3/18)
+      - `dow = Tue`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `adx_b = (25.0, inf]`
+      - `vol_z_b ≠ (-inf, -0.5]`
 
 ### 📊 GDAXI.INDX/5m · breakdown
-- Events: 612  ·  Baseline continuation: **38.4%**
+- Events: 609  ·  Baseline continuation: **37.3%**
 
-  - 🟢 **78.9%** (15/19)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `atr_pct_b ≠ (-inf, 0.05]`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `dow = Tue`
-  - 🟢 **78.9%** (15/19)
+  - 🟢 **82.4%** (14/17)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `atr_pct_b = (-inf, 0.05]`
       - `rsi_b ≠ (-inf, 30.0]`
-      - `vol_z_b = (0.5, inf]`
-  - 🔴 **28.0%** (40/143)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `atr_pct_b ≠ (-inf, 0.05]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `rsi_b = (30.0, 50.0]`
-  - 🔴 **23.1%** (15/65)
+  - 🔴 **22.6%** (14/62)
       - `vol_z_b = (-inf, -0.5]`
       - `dow ≠ Mon`
       - `dow ≠ Tue`
       - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **21.4%** (6/28)
+  - 🔴 **21.9%** (7/32)
       - `vol_z_b = (-inf, -0.5]`
       - `dow ≠ Mon`
       - `dow = Tue`
-      - `adx_b = (25.0, inf]`
+      - `adx_b ≠ (18.0, 25.0]`
   - 🔴 **6.9%** (2/29)
       - `vol_z_b = (-inf, -0.5]`
       - `dow ≠ Mon`
       - `dow ≠ Tue`
       - `adx_b = (18.0, 25.0]`
+  - 🔴 **0.0%** (0/15)
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `dow = Thu`
+      - `adx_b = (25.0, inf]`
 
 ### 📊 GDAXI.INDX/5m · breakout_up
-- Events: 570  ·  Baseline continuation: **35.1%**
+- Events: 582  ·  Baseline continuation: **35.4%**
 
-  - 🔴 **29.6%** (8/27)
+  - 🔴 **28.6%** (12/42)
       - `dow ≠ Wed`
       - `dow = Fri`
       - `vol_z_b ≠ (-inf, -0.5]`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **25.0%** (5/20)
+      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **26.3%** (5/19)
       - `dow ≠ Wed`
       - `dow = Fri`
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b ≠ (25.0, inf]`
-  - 🔴 **21.0%** (17/81)
+  - 🔴 **21.4%** (6/28)
       - `dow ≠ Wed`
       - `dow ≠ Fri`
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `vol_z_b ≠ (0.5, inf]`
+      - `dow = Mon`
+      - `vol_z_b = (-0.5, 0.5]`
   - 🔴 **10.5%** (2/19)
       - `dow = Wed`
-      - `vol_z_b ≠ (-inf, -0.5]`
       - `vol_z_b = (0.5, inf]`
-  - 🔴 **9.1%** (1/11)
+  - 🔴 **10.0%** (1/10)
       - `dow ≠ Wed`
       - `dow = Fri`
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b = (25.0, inf]`
 
 ### 📊 GDAXI.INDX/5m · bullish
-- Events: 1154  ·  Baseline continuation: **36.8%**
+- Events: 1159  ·  Baseline continuation: **37.1%**
 
-  - 🟢 **70.6%** (12/17)
+  - 🟢 **73.3%** (11/15)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow = Thu`
       - `atr_pct_b = (0.15, 0.4]`
-  - 🔴 **30.0%** (21/70)
+  - 🔴 **20.9%** (24/115)
       - `vol_z_b = (-inf, -0.5]`
+      - `adx_b = (25.0, inf]`
+      - `dow ≠ Tue`
       - `rsi_b ≠ (70.0, inf]`
+  - 🔴 **16.7%** (2/12)
+      - `vol_z_b = (-inf, -0.5]`
+      - `adx_b ≠ (25.0, inf]`
+      - `dow ≠ Wed`
+      - `rsi_b = (70.0, inf]`
+  - 🔴 **16.1%** (5/31)
+      - `vol_z_b = (-inf, -0.5]`
       - `adx_b ≠ (25.0, inf]`
       - `dow = Wed`
-  - 🔴 **25.0%** (4/16)
+      - `adx_b = (-inf, 18.0]`
+  - 🔴 **6.9%** (2/29)
       - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b = (70.0, inf]`
-      - `dow ≠ Mon`
-      - `dow ≠ Thu`
-  - 🔴 **20.5%** (26/127)
-      - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b ≠ (70.0, inf]`
       - `adx_b = (25.0, inf]`
-      - `dow ≠ Thu`
-  - 🔴 **5.0%** (1/20)
-      - `vol_z_b = (-inf, -0.5]`
+      - `dow ≠ Tue`
       - `rsi_b = (70.0, inf]`
-      - `dow ≠ Mon`
-      - `dow = Thu`
-  - 🔴 **0.0%** (0/11)
-      - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b = (70.0, inf]`
-      - `dow = Mon`
 
 ### 📊 GDAXI.INDX/5m · bullish_OB
-- Events: 816  ·  Baseline continuation: **67.3%**
+- Events: 832  ·  Baseline continuation: **68.1%**
 
-  - 🟢 **100.0%** (14/14)
+  - 🟢 **94.4%** (17/18)
       - `adx_b ≠ (18.0, 25.0]`
-      - `dow ≠ Wed`
-      - `atr_pct_b = (0.15, 0.4]`
-  - 🟢 **75.7%** (255/337)
+      - `rsi_b = (30.0, 50.0]`
+      - `dow = Tue`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+  - 🟢 **82.4%** (42/51)
       - `adx_b ≠ (18.0, 25.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
       - `dow ≠ Wed`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow ≠ Mon`
-  - 🟢 **73.8%** (48/65)
+      - `adx_b = (-inf, 18.0]`
+  - 🟢 **81.8%** (45/55)
+      - `adx_b ≠ (18.0, 25.0]`
+      - `rsi_b = (30.0, 50.0]`
+      - `dow = Tue`
+      - `atr_pct_b = (0.05, 0.15]`
+  - 🟢 **80.3%** (49/61)
+      - `adx_b ≠ (18.0, 25.0]`
+      - `rsi_b = (30.0, 50.0]`
+      - `dow ≠ Tue`
+      - `dow = Thu`
+  - 🟢 **74.4%** (32/43)
       - `adx_b = (18.0, 25.0]`
       - `atr_pct_b ≠ (-inf, 0.05]`
       - `vol_z_b = (-inf, -0.5]`
-      - `dow ≠ Thu`
-  - 🟢 **72.2%** (26/36)
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **29.4%** (5/17)
       - `adx_b ≠ (18.0, 25.0]`
-      - `dow = Wed`
-      - `rsi_b = (30.0, 50.0]`
-      - `adx_b ≠ (25.0, inf]`
-  - 🔴 **26.3%** (5/19)
-      - `adx_b ≠ (18.0, 25.0]`
-      - `dow = Wed`
       - `rsi_b ≠ (30.0, 50.0]`
+      - `dow = Wed`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **20.0%** (2/10)
+  - 🔴 **27.3%** (3/11)
       - `adx_b = (18.0, 25.0]`
       - `atr_pct_b = (-inf, 0.05]`
-      - `vol_z_b = (-0.5, 0.5]`
+      - `vol_z_b ≠ (-inf, -0.5]`
 
 ### 📊 GDAXI.INDX/5m · engulfing_bear
-- Events: 262  ·  Baseline continuation: **41.2%**
+- Events: 256  ·  Baseline continuation: **40.2%**
 
   - 🟢 **80.0%** (8/10)
       - `rsi_b ≠ (50.0, 70.0]`
-      - `adx_b = (-inf, 18.0]`
       - `dow ≠ Thu`
-      - `dow = Wed`
-  - 🔴 **18.2%** (6/33)
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-  - 🔴 **18.2%** (2/11)
-      - `rsi_b ≠ (50.0, 70.0]`
       - `adx_b = (-inf, 18.0]`
+      - `dow = Wed`
+  - 🟢 **73.3%** (11/15)
+      - `rsi_b = (50.0, 70.0]`
+      - `dow = Thu`
+  - 🔴 **22.9%** (8/35)
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow ≠ Thu`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `dow = Tue`
+  - 🔴 **17.6%** (3/17)
+      - `rsi_b = (50.0, 70.0]`
+      - `dow ≠ Thu`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow = Mon`
+  - 🔴 **11.8%** (2/17)
+      - `rsi_b ≠ (50.0, 70.0]`
       - `dow = Thu`
 
 ### 📊 GDAXI.INDX/5m · engulfing_bull
-- Events: 218  ·  Baseline continuation: **37.2%**
+- Events: 216  ·  Baseline continuation: **37.5%**
 
-  - 🟢 **80.0%** (8/10)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow = Tue`
-  - 🔴 **28.6%** (4/14)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Tue`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **22.5%** (9/40)
-      - `atr_pct_b = (0.05, 0.15]`
+  - 🔴 **26.5%** (9/34)
+      - `atr_pct_b ≠ (-inf, 0.05]`
       - `adx_b ≠ (25.0, inf]`
-      - `dow ≠ Fri`
-      - `adx_b ≠ (18.0, 25.0]`
+      - `dow ≠ Wed`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **25.0%** (3/12)
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `adx_b ≠ (25.0, inf]`
+      - `dow = Wed`
+      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🔴 **23.1%** (3/13)
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `adx_b = (25.0, inf]`
+      - `vol_z_b = (0.5, inf]`
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **16.7%** (2/12)
+      - `atr_pct_b ≠ (-inf, 0.05]`
+      - `adx_b ≠ (25.0, inf]`
+      - `dow = Wed`
+      - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 GDAXI.INDX/5m · hammer
-- Events: 382  ·  Baseline continuation: **37.2%**
+- Events: 371  ·  Baseline continuation: **37.7%**
 
-  - 🟢 **77.8%** (14/18)
+  - 🟢 **75.0%** (12/16)
       - `dow = Thu`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `atr_pct_b = (0.05, 0.15]`
       - `adx_b = (-inf, 18.0]`
-  - 🔴 **29.4%** (5/17)
+  - 🔴 **23.8%** (29/122)
       - `dow ≠ Thu`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `dow = Tue`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **22.2%** (6/27)
-      - `dow ≠ Thu`
-      - `rsi_b = (30.0, 50.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **16.7%** (13/78)
-      - `dow ≠ Thu`
+      - `dow ≠ Sat`
       - `rsi_b ≠ (30.0, 50.0]`
       - `dow ≠ Tue`
-      - `dow ≠ Mon`
+  - 🔴 **0.0%** (0/10)
+      - `dow ≠ Thu`
+      - `dow = Sat`
 
 ### 📊 GDAXI.INDX/5m · shooting_star
-- Events: 378  ·  Baseline continuation: **45.0%**
+- Events: 372  ·  Baseline continuation: **44.4%**
 
-  - 🔴 **25.0%** (8/32)
-      - `rsi_b ≠ (70.0, inf]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `vol_z_b = (0.5, inf]`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **20.0%** (8/40)
-      - `rsi_b ≠ (70.0, inf]`
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b = (-inf, -0.5]`
-      - `dow ≠ Thu`
+  - 🟢 **75.0%** (9/12)
+      - `adx_b = (25.0, inf]`
+      - `dow = Fri`
+      - `rsi_b = (50.0, 70.0]`
+  - 🔴 **26.7%** (4/15)
+      - `adx_b = (25.0, inf]`
+      - `dow ≠ Fri`
+      - `rsi_b = (30.0, 50.0]`
+      - `dow = Tue`
+  - 🔴 **20.0%** (3/15)
+      - `adx_b ≠ (25.0, inf]`
+      - `dow ≠ Fri`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🔴 **7.1%** (1/14)
+      - `adx_b ≠ (25.0, inf]`
+      - `dow = Fri`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `rsi_b ≠ (50.0, 70.0]`
 
 ---
 
 ## GDAXI.INDX · 15m
-- Candles: **4544**  ·  Swing pivots: 532  ·  FVG: 1012
-- CHoCH/BOS events: 394  ·  Order Blocks: 797
-- Trend Ladders detected: 261  ·  Candle patterns: 1152  ·  Breakouts: 542
+- Candles: **4679**  ·  Swing pivots: 548  ·  FVG: 1039
+- CHoCH/BOS events: 405  ·  Order Blocks: 823
+- Trend Ladders detected: 268  ·  Candle patterns: 1177  ·  Breakouts: 557
 
 ### S/R Cluster Seviyeleri (top 8)
-- 24858.8039 (touches: **408**, strong)
+- 24859.446 (touches: **424**, strong)
 - 24224.9119 (touches: **42**, strong)
 - 25838.2308 (touches: **13**, strong)
 - 25719.65 (touches: **10**, strong)
@@ -3505,109 +3546,102 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 - 24003.1167 (touches: **6**, strong)
 - 25376.9667 (touches: **6**, strong)
 
-### 🪜 Trend Ladder Analizi (261 ladder)
-- Continued: 107  ·  Reversed: 103  ·  Baseline continuation: **41.0%**
+### 🪜 Trend Ladder Analizi (268 ladder)
+- Continued: 110  ·  Reversed: 105  ·  Baseline continuation: **41.0%**
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **18.2%** (2/11)
-   - `start_dist_ema50_atr_bucket ≠ (0.0, 1.0]`
+- **28.0%** (7/25)
+   - `before_rsi_last_bucket = (30.0, 50.0]`
    - `before_rsi_avg_bucket ≠ (30.0, 50.0]`
-   - `before_rsi_last_bucket = (70.0, inf]`
-- **18.2%** (2/11)
+   - `before_volz_avg_bucket ≠ (0.5, inf]`
+- **11.1%** (2/18)
+   - `before_rsi_last_bucket ≠ (30.0, 50.0]`
    - `start_dist_ema50_atr_bucket = (0.0, 1.0]`
-   - `before_adx_avg_bucket ≠ (18.0, 25.0]`
-   - `ladder_slope_atr_bucket ≠ (-inf, 0.2]`
-- **13.3%** (2/15)
-   - `start_dist_ema50_atr_bucket = (0.0, 1.0]`
-   - `before_adx_avg_bucket = (18.0, 25.0]`
+   - `before_bb_width_atr_avg_bucket ≠ (2.0, 4.0]`
 
 ### 📊 GDAXI.INDX/15m · ALL EVENTS
-- Events: 3423  ·  Baseline continuation: **46.5%**
+- Events: 3513  ·  Baseline continuation: **46.4%**
 
-  - 🟢 **90.0%** (18/20)
+  - 🟢 **95.0%** (19/20)
       - `type = bearish_OB`
-      - `adx_b = (-inf, 18.0]`
-      - `dow = Tue`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Wed`
+      - `adx_b = (25.0, inf]`
   - 🟢 **83.3%** (30/36)
       - `type ≠ bearish_OB`
       - `type = bullish_OB`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow = Thu`
-  - 🟢 **78.7%** (59/75)
+  - 🟢 **78.6%** (55/70)
       - `type = bearish_OB`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow ≠ Wed`
       - `adx_b = (-inf, 18.0]`
-      - `dow ≠ Tue`
-      - `rsi_b ≠ (30.0, 50.0]`
-  - 🟢 **72.1%** (31/43)
+  - 🟢 **78.1%** (25/32)
+      - `type = bearish_OB`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Wed`
+      - `adx_b ≠ (25.0, inf]`
+  - 🟢 **74.5%** (35/47)
       - `type ≠ bearish_OB`
       - `type = bullish_OB`
       - `atr_pct_b = (0.05, 0.15]`
       - `dow = Tue`
-  - 🟢 **71.9%** (120/167)
-      - `type = bearish_OB`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow ≠ Thu`
-      - `dow ≠ Mon`
-  - 🔴 **27.3%** (9/33)
+  - 🔴 **9.1%** (3/33)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
-      - `type = BOS_bullish`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **17.6%** (3/17)
-      - `type = bearish_OB`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow = Thu`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **6.7%** (2/30)
-      - `type ≠ bearish_OB`
-      - `type ≠ bullish_OB`
-      - `type = BOS_bullish`
       - `vol_z_b = (0.5, inf]`
+      - `type = BOS_bullish`
 
 ### 📊 GDAXI.INDX/15m · BOS_bearish
-- Events: 83  ·  Baseline continuation: **28.9%**
+- Events: 85  ·  Baseline continuation: **28.2%**
 
-  - 🔴 **12.5%** (2/16)
+  - 🔴 **19.0%** (4/21)
       - `rsi_b ≠ (-inf, 30.0]`
       - `dow ≠ Wed`
-      - `dow ≠ Mon`
-      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `vol_z_b ≠ (0.5, inf]`
   - 🔴 **12.5%** (3/24)
       - `rsi_b = (-inf, 30.0]`
 
 ### 📊 GDAXI.INDX/15m · BOS_bullish
-- Events: 63  ·  Baseline continuation: **17.5%**
+- Events: 66  ·  Baseline continuation: **18.2%**
 
   - 🔴 **20.0%** (4/20)
       - `vol_z_b ≠ (0.5, inf]`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🔴 **8.3%** (1/12)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🔴 **20.0%** (2/10)
       - `vol_z_b = (0.5, inf]`
-      - `rsi_b = (70.0, inf]`
-  - 🔴 **5.6%** (1/18)
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🔴 **10.0%** (1/10)
       - `vol_z_b = (0.5, inf]`
-      - `rsi_b ≠ (70.0, inf]`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **0.0%** (0/13)
+      - `vol_z_b = (0.5, inf]`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `rsi_b = (50.0, 70.0]`
 
 ### 📊 GDAXI.INDX/15m · CHoCH_bearish
-- Events: 123  ·  Baseline continuation: **48.0%**
+- Events: 126  ·  Baseline continuation: **46.8%**
 
-  - 🟢 **90.0%** (18/20)
+  - 🟢 **85.7%** (18/21)
       - `rsi_b = (50.0, 70.0]`
       - `dow ≠ Fri`
       - `dow ≠ Wed`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **23.8%** (5/21)
+  - 🔴 **22.7%** (5/22)
       - `rsi_b ≠ (50.0, 70.0]`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow ≠ Mon`
       - `adx_b ≠ (25.0, inf]`
-  - 🔴 **8.3%** (1/12)
+  - 🔴 **7.7%** (1/13)
       - `rsi_b ≠ (50.0, 70.0]`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow = Mon`
 
 ### 📊 GDAXI.INDX/15m · CHoCH_bullish
-- Events: 123  ·  Baseline continuation: **36.6%**
+- Events: 125  ·  Baseline continuation: **36.8%**
 
   - 🟢 **80.0%** (8/10)
       - `rsi_b = (30.0, 50.0]`
@@ -3631,96 +3665,99 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Mon`
       - `vol_z_b = (0.5, inf]`
       - `adx_b = (18.0, 25.0]`
-  - 🔴 **0.0%** (0/10)
+  - 🔴 **0.0%** (0/11)
       - `rsi_b ≠ (30.0, 50.0]`
       - `dow = Mon`
       - `vol_z_b ≠ (0.5, inf]`
 
 ### 📊 GDAXI.INDX/15m · bearish
-- Events: 521  ·  Baseline continuation: **42.4%**
+- Events: 531  ·  Baseline continuation: **42.0%**
 
-  - 🟢 **75.0%** (15/20)
-      - `dow = Tue`
-      - `adx_b = (-inf, 18.0]`
-  - 🟢 **71.4%** (10/14)
-      - `dow = Tue`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b = (0.5, inf]`
-      - `rsi_b = (-inf, 30.0]`
-  - 🔴 **22.2%** (10/45)
-      - `dow ≠ Tue`
+  - 🔴 **28.6%** (4/14)
+      - `adx_b = (18.0, 25.0]`
+      - `dow ≠ Wed`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `atr_pct_b = (0.05, 0.15]`
+  - 🔴 **23.1%** (6/26)
+      - `adx_b ≠ (18.0, 25.0]`
+      - `dow ≠ Mon`
+      - `dow = Thu`
+      - `vol_z_b = (-0.5, 0.5]`
+  - 🔴 **23.1%** (3/13)
+      - `adx_b = (18.0, 25.0]`
+      - `dow = Wed`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **17.6%** (3/17)
+      - `adx_b = (18.0, 25.0]`
+      - `dow ≠ Wed`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Thu`
+  - 🔴 **14.7%** (5/34)
       - `adx_b ≠ (18.0, 25.0]`
       - `dow = Mon`
       - `rsi_b ≠ (50.0, 70.0]`
-  - 🔴 **21.5%** (14/65)
-      - `dow ≠ Tue`
-      - `adx_b = (18.0, 25.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `dow ≠ Mon`
-  - 🔴 **16.7%** (2/12)
-      - `dow ≠ Tue`
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `atr_pct_b = (0.05, 0.15]`
 
 ### 📊 GDAXI.INDX/15m · bearish_OB
-- Events: 414  ·  Baseline continuation: **68.1%**
+- Events: 429  ·  Baseline continuation: **67.1%**
 
-  - 🟢 **95.5%** (21/22)
+  - 🟢 **100.0%** (10/10)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Wed`
+      - `adx_b = (25.0, inf]`
+      - `atr_pct_b = (0.05, 0.15]`
+  - 🟢 **90.0%** (9/10)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Wed`
+      - `adx_b = (25.0, inf]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+  - 🟢 **83.3%** (10/12)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow = Wed`
+      - `adx_b ≠ (25.0, inf]`
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🟢 **78.9%** (15/19)
+      - `vol_z_b = (-0.5, 0.5]`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `rsi_b = (50.0, 70.0]`
+  - 🟢 **78.6%** (55/70)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow ≠ Wed`
+      - `rsi_b ≠ (-inf, 30.0]`
       - `adx_b = (-inf, 18.0]`
-      - `dow ≠ Tue`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `vol_z_b = (0.5, inf]`
-  - 🟢 **91.7%** (11/12)
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b = NA`
-  - 🟢 **90.0%** (18/20)
-      - `adx_b = (-inf, 18.0]`
-      - `dow = Tue`
-  - 🟢 **80.0%** (8/10)
-      - `adx_b = (-inf, 18.0]`
-      - `dow ≠ Tue`
-      - `rsi_b = (30.0, 50.0]`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **71.9%** (120/167)
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b ≠ NA`
-      - `dow ≠ Thu`
-      - `dow ≠ Mon`
-  - 🔴 **17.6%** (3/17)
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b ≠ NA`
-      - `dow = Thu`
-      - `adx_b = (18.0, 25.0]`
+  - 🔴 **30.0%** (3/10)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow ≠ Wed`
+      - `rsi_b = (-inf, 30.0]`
 
 ### 📊 GDAXI.INDX/15m · breakdown
-- Events: 281  ·  Baseline continuation: **42.0%**
+- Events: 287  ·  Baseline continuation: **41.1%**
 
+  - 🔴 **30.0%** (9/30)
+      - `vol_z_b = (0.5, inf]`
+      - `dow ≠ Mon`
+      - `dow ≠ Thu`
+      - `dow = Fri`
   - 🔴 **15.0%** (3/20)
       - `vol_z_b = (0.5, inf]`
       - `dow ≠ Mon`
       - `dow = Thu`
-  - 🔴 **10.0%** (1/10)
+  - 🔴 **12.5%** (2/16)
       - `vol_z_b ≠ (0.5, inf]`
       - `dow = Mon`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `vol_z_b ≠ (-inf, -0.5]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
   - 🔴 **8.3%** (1/12)
       - `vol_z_b = (0.5, inf]`
       - `dow = Mon`
 
 ### 📊 GDAXI.INDX/15m · breakout_up
-- Events: 257  ·  Baseline continuation: **41.2%**
+- Events: 264  ·  Baseline continuation: **41.7%**
 
-  - 🟢 **90.9%** (10/11)
+  - 🟢 **92.3%** (12/13)
       - `dow = Tue`
       - `adx_b ≠ (25.0, inf]`
       - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **78.6%** (11/14)
-      - `dow ≠ Tue`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow = Mon`
-      - `rsi_b = (50.0, 70.0]`
   - 🔴 **25.7%** (18/70)
       - `dow ≠ Tue`
       - `atr_pct_b = (0.05, 0.15]`
@@ -3742,61 +3779,56 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
 
 ### 📊 GDAXI.INDX/15m · bullish
-- Events: 489  ·  Baseline continuation: **39.1%**
+- Events: 505  ·  Baseline continuation: **39.8%**
 
-  - 🟢 **78.6%** (11/14)
-      - `vol_z_b = (-0.5, 0.5]`
-      - `dow ≠ Mon`
+  - 🟢 **71.9%** (23/32)
+      - `dow = Tue`
+      - `rsi_b ≠ (70.0, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
       - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow = Fri`
   - 🔴 **25.0%** (3/12)
+      - `dow ≠ Tue`
+      - `adx_b = (18.0, 25.0]`
+      - `dow = Wed`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🔴 **21.3%** (10/47)
+      - `dow ≠ Tue`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `dow = Fri`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `dow = Fri`
-      - `atr_pct_b = (0.05, 0.15]`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **20.0%** (3/15)
-      - `vol_z_b = (-0.5, 0.5]`
-      - `dow = Mon`
-      - `atr_pct_b = (0.05, 0.15]`
-  - 🔴 **19.0%** (4/21)
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `dow = Fri`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **18.2%** (2/11)
-      - `vol_z_b = (-0.5, 0.5]`
-      - `dow ≠ Mon`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `dow = Fri`
-  - 🔴 **11.8%** (2/17)
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `dow = Fri`
-      - `atr_pct_b = (0.05, 0.15]`
-      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **7.7%** (1/13)
+      - `dow = Tue`
+      - `rsi_b = (70.0, inf]`
 
 ### 📊 GDAXI.INDX/15m · bullish_OB
-- Events: 382  ·  Baseline continuation: **63.6%**
+- Events: 394  ·  Baseline continuation: **64.2%**
 
-  - 🟢 **100.0%** (11/11)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow = Thu`
-      - `vol_z_b = (-0.5, 0.5]`
-  - 🟢 **95.0%** (19/20)
-      - `atr_pct_b = (0.05, 0.15]`
+  - 🟢 **100.0%** (13/13)
+      - `atr_pct_b ≠ (0.15, 0.4]`
       - `dow = Tue`
       - `rsi_b = (50.0, 70.0]`
+      - `adx_b = (25.0, inf]`
+  - 🟢 **100.0%** (11/11)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `dow = Thu`
+      - `vol_z_b = (-0.5, 0.5]`
   - 🟢 **91.7%** (11/12)
-      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `atr_pct_b = (0.15, 0.4]`
       - `dow = Thu`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `adx_b = (25.0, inf]`
-  - 🟢 **84.2%** (16/19)
-      - `atr_pct_b ≠ (0.05, 0.15]`
+  - 🟢 **90.9%** (10/11)
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `dow = Tue`
+      - `rsi_b = (50.0, 70.0]`
+      - `adx_b ≠ (25.0, inf]`
+  - 🟢 **85.0%** (17/20)
+      - `atr_pct_b = (0.15, 0.4]`
       - `dow ≠ Thu`
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 GDAXI.INDX/15m · engulfing_bear
-- Events: 155  ·  Baseline continuation: **47.1%**
+- Events: 157  ·  Baseline continuation: **47.1%**
 
   - 🟢 **100.0%** (11/11)
       - `vol_z_b ≠ (0.5, inf]`
@@ -3807,7 +3839,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b ≠ (18.0, 25.0]`
       - `dow = Wed`
-  - 🟢 **76.9%** (10/13)
+  - 🟢 **78.6%** (11/14)
       - `vol_z_b ≠ (0.5, inf]`
       - `atr_pct_b = (0.15, 0.4]`
       - `adx_b ≠ (18.0, 25.0]`
@@ -3848,16 +3880,11 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
 
 ### 📊 GDAXI.INDX/15m · hammer
-- Events: 216  ·  Baseline continuation: **40.7%**
+- Events: 222  ·  Baseline continuation: **41.0%**
 
   - 🟢 **84.2%** (16/19)
       - `dow = Thu`
       - `rsi_b = (30.0, 50.0]`
-  - 🔴 **25.0%** (6/24)
-      - `dow ≠ Thu`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow = Tue`
   - 🔴 **25.0%** (14/56)
       - `dow ≠ Thu`
       - `rsi_b ≠ (-inf, 30.0]`
@@ -3869,71 +3896,75 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b = (0.05, 0.15]`
 
 ### 📊 GDAXI.INDX/15m · shooting_star
-- Events: 193  ·  Baseline continuation: **44.6%**
+- Events: 199  ·  Baseline continuation: **43.7%**
 
-  - 🔴 **29.4%** (5/17)
-      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **27.3%** (3/11)
+      - `adx_b = (18.0, 25.0]`
+      - `vol_z_b = (0.5, inf]`
       - `rsi_b = (30.0, 50.0]`
-      - `dow ≠ Fri`
-      - `vol_z_b ≠ (-inf, -0.5]`
   - 🔴 **25.0%** (4/16)
-      - `adx_b ≠ (25.0, inf]`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **25.0%** (3/12)
-      - `adx_b = (25.0, inf]`
-      - `dow = Mon`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `vol_z_b = (0.5, inf]`
       - `atr_pct_b ≠ (0.15, 0.4]`
-  - 🔴 **21.4%** (3/14)
-      - `adx_b ≠ (25.0, inf]`
-      - `rsi_b = (30.0, 50.0]`
-      - `dow = Fri`
+  - 🔴 **25.0%** (4/16)
+      - `adx_b = (18.0, 25.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Fri`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🔴 **9.1%** (1/11)
+      - `adx_b = (18.0, 25.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Fri`
+      - `vol_z_b = (-0.5, 0.5]`
 
 ---
 
 ## GDAXI.INDX · 30m
-- Candles: **3691**  ·  Swing pivots: 470  ·  FVG: 845
-- CHoCH/BOS events: 334  ·  Order Blocks: 621
-- Trend Ladders detected: 219  ·  Candle patterns: 1059  ·  Breakouts: 415
+- Candles: **3759**  ·  Swing pivots: 479  ·  FVG: 862
+- CHoCH/BOS events: 341  ·  Order Blocks: 636
+- Trend Ladders detected: 226  ·  Candle patterns: 1071  ·  Breakouts: 420
 
 ### S/R Cluster Seviyeleri (top 8)
-- 24227.5147 (touches: **191**, strong)
-- 24980.2056 (touches: **177**, strong)
+- 24596.2194 (touches: **377**, strong)
 - 22861.0813 (touches: **16**, strong)
 - 22585.9692 (touches: **13**, strong)
 - 23387.3429 (touches: **7**, strong)
 - 25838.5714 (touches: **7**, strong)
 - 22380.8 (touches: **6**, strong)
 - 23003.55 (touches: **6**, strong)
+- 23086.3 (touches: **6**, strong)
 
-### 🪜 Trend Ladder Analizi (219 ladder)
-- Continued: 95  ·  Reversed: 97  ·  Baseline continuation: **43.4%**
+### 🪜 Trend Ladder Analizi (226 ladder)
+- Continued: 96  ·  Reversed: 101  ·  Baseline continuation: **42.5%**
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **20.0%** (3/15)
-   - `ladder_slope_atr_bucket ≠ (-inf, 0.2]`
-   - `before_bb_width_atr_avg_bucket ≠ (4.0, inf]`
+- **23.1%** (12/52)
+   - `before_rsi_avg_bucket = (50.0, 70.0]`
+   - `before_rsi_last_bucket ≠ (30.0, 50.0]`
+   - `ladder_slope_atr_bucket ≠ (0.2, 0.5]`
+- **20.0%** (2/10)
+   - `before_rsi_avg_bucket = (50.0, 70.0]`
+   - `before_rsi_last_bucket = (30.0, 50.0]`
    - `ladder_slope_atr_bucket = (0.5, 1.0]`
-- **14.3%** (3/21)
-   - `ladder_slope_atr_bucket = (-inf, 0.2]`
-   - `before_rsi_last_bucket = (50.0, 70.0]`
-   - `ladder_total_atr_bucket ≠ (1.0, 2.5]`
+- **17.6%** (3/17)
+   - `before_rsi_avg_bucket ≠ (50.0, 70.0]`
+   - `start_dist_ema50_atr_bucket ≠ (-inf, -1.0]`
+   - `before_rsi_last_bucket = (30.0, 50.0]`
 
 ### 📊 GDAXI.INDX/30m · ALL EVENTS
-- Events: 2869  ·  Baseline continuation: **47.6%**
+- Events: 2914  ·  Baseline continuation: **47.5%**
 
-  - 🟢 **90.6%** (48/53)
+  - 🟢 **90.9%** (50/55)
       - `type = bullish_OB`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow ≠ Fri`
       - `adx_b = (18.0, 25.0]`
-  - 🟢 **73.4%** (124/169)
+  - 🟢 **73.1%** (128/175)
       - `type = bullish_OB`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow ≠ Fri`
       - `adx_b ≠ (18.0, 25.0]`
-  - 🟢 **72.7%** (141/194)
+  - 🟢 **72.4%** (144/199)
       - `type ≠ bullish_OB`
       - `type = bearish_OB`
       - `atr_pct_b = (0.15, 0.4]`
@@ -3949,22 +3980,16 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b ≠ (-inf, 18.0]`
 
 ### 📊 GDAXI.INDX/30m · BOS_bearish
-- Events: 66  ·  Baseline continuation: **28.8%**
+- Events: 68  ·  Baseline continuation: **27.9%**
 
-  - 🟢 **70.0%** (7/10)
+  - 🔴 **20.0%** (2/10)
       - `dow ≠ Mon`
       - `rsi_b = (30.0, 50.0]`
-      - `vol_z_b = (0.5, inf]`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **30.0%** (3/10)
-      - `dow ≠ Mon`
-      - `rsi_b = (30.0, 50.0]`
-      - `vol_z_b = (0.5, inf]`
-      - `adx_b ≠ (25.0, inf]`
+      - `dow = Tue`
   - 🔴 **17.6%** (3/17)
       - `dow ≠ Mon`
       - `rsi_b ≠ (30.0, 50.0]`
-  - 🔴 **0.0%** (0/14)
+  - 🔴 **0.0%** (0/15)
       - `dow = Mon`
 
 ### 📊 GDAXI.INDX/30m · BOS_bullish
@@ -3988,7 +4013,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
 
 ### 📊 GDAXI.INDX/30m · CHoCH_bearish
-- Events: 93  ·  Baseline continuation: **48.4%**
+- Events: 95  ·  Baseline continuation: **48.4%**
 
   - 🟢 **90.0%** (9/10)
       - `rsi_b = (50.0, 70.0]`
@@ -4008,79 +4033,86 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-0.5, 0.5]`
 
 ### 📊 GDAXI.INDX/30m · CHoCH_bullish
-- Events: 95  ·  Baseline continuation: **41.1%**
+- Events: 97  ·  Baseline continuation: **40.2%**
 
   - 🟢 **72.7%** (8/11)
       - `dow ≠ Mon`
       - `dow ≠ Tue`
       - `rsi_b ≠ (50.0, 70.0]`
       - `adx_b = (18.0, 25.0]`
-  - 🔴 **23.8%** (5/21)
-      - `dow = Mon`
   - 🔴 **16.7%** (2/12)
       - `dow ≠ Mon`
       - `dow ≠ Tue`
       - `rsi_b = (50.0, 70.0]`
       - `adx_b = (18.0, 25.0]`
+  - 🔴 **0.0%** (0/10)
+      - `dow = Mon`
+      - `adx_b ≠ (25.0, inf]`
 
 ### 📊 GDAXI.INDX/30m · bearish
-- Events: 408  ·  Baseline continuation: **40.0%**
+- Events: 414  ·  Baseline continuation: **39.6%**
 
-  - 🔴 **30.0%** (3/10)
-      - `dow = Mon`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `rsi_b ≠ (30.0, 50.0]`
   - 🔴 **28.6%** (12/42)
       - `dow ≠ Mon`
       - `dow ≠ Thu`
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b = (25.0, inf]`
-  - 🔴 **27.8%** (5/18)
-      - `dow = Mon`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `rsi_b = (30.0, 50.0]`
   - 🔴 **25.0%** (5/20)
       - `dow ≠ Mon`
       - `dow = Thu`
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `rsi_b ≠ (30.0, 50.0]`
+  - 🔴 **24.3%** (9/37)
+      - `dow = Mon`
+      - `rsi_b ≠ (-inf, 30.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b = (30.0, 50.0]`
   - 🔴 **21.1%** (4/19)
       - `dow ≠ Mon`
       - `dow = Thu`
       - `vol_z_b = (-0.5, 0.5]`
       - `rsi_b = (30.0, 50.0]`
+  - 🔴 **0.0%** (0/13)
+      - `dow ≠ Mon`
+      - `dow = Thu`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `rsi_b ≠ (30.0, 50.0]`
 
 ### 📊 GDAXI.INDX/30m · bearish_OB
-- Events: 317  ·  Baseline continuation: **65.9%**
+- Events: 324  ·  Baseline continuation: **65.4%**
 
-  - 🟢 **89.5%** (17/19)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow = Wed`
-      - `adx_b = (25.0, inf]`
   - 🟢 **85.7%** (24/28)
       - `atr_pct_b = (0.15, 0.4]`
       - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Wed`
       - `adx_b = (-inf, 18.0]`
+      - `dow ≠ Thu`
+  - 🟢 **84.8%** (28/33)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `dow = Wed`
   - 🟢 **81.8%** (9/11)
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b ≠ (18.0, 25.0]`
       - `dow = Tue`
-  - 🟢 **73.7%** (14/19)
+  - 🟢 **79.2%** (19/24)
       - `atr_pct_b = (0.15, 0.4]`
       - `vol_z_b = (-inf, -0.5]`
-      - `adx_b = (-inf, 18.0]`
-  - 🟢 **72.7%** (16/22)
+      - `dow ≠ Mon`
+      - `rsi_b = (30.0, 50.0]`
+  - 🟢 **72.7%** (8/11)
       - `atr_pct_b = (0.15, 0.4]`
       - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow = Wed`
-      - `adx_b ≠ (25.0, inf]`
+      - `adx_b = (-inf, 18.0]`
+      - `dow = Thu`
+  - 🔴 **16.7%** (2/12)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `vol_z_b = (-inf, -0.5]`
+      - `dow = Mon`
+      - `rsi_b ≠ (50.0, 70.0]`
 
 ### 📊 GDAXI.INDX/30m · breakdown
-- Events: 201  ·  Baseline continuation: **41.8%**
+- Events: 203  ·  Baseline continuation: **41.4%**
 
   - 🟢 **72.7%** (8/11)
       - `dow ≠ Mon`
@@ -4094,12 +4126,12 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🔴 **21.1%** (4/19)
       - `dow = Mon`
       - `adx_b = (25.0, inf]`
-  - 🔴 **7.1%** (1/14)
+  - 🔴 **6.2%** (1/16)
       - `dow = Mon`
       - `adx_b ≠ (25.0, inf]`
 
 ### 📊 GDAXI.INDX/30m · breakout_up
-- Events: 213  ·  Baseline continuation: **48.4%**
+- Events: 214  ·  Baseline continuation: **48.1%**
 
   - 🟢 **70.0%** (14/20)
       - `dow ≠ Fri`
@@ -4112,12 +4144,12 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Mon`
 
 ### 📊 GDAXI.INDX/30m · bullish
-- Events: 436  ·  Baseline continuation: **46.1%**
+- Events: 445  ·  Baseline continuation: **46.5%**
 
-  - 🟢 **82.4%** (14/17)
+  - 🔴 **25.0%** (3/12)
       - `dow ≠ Fri`
-      - `dow = Mon`
-      - `rsi_b = (30.0, 50.0]`
+      - `adx_b = (18.0, 25.0]`
+      - `atr_pct_b = (0.05, 0.15]`
   - 🔴 **16.7%** (2/12)
       - `dow = Fri`
       - `vol_z_b ≠ (-inf, -0.5]`
@@ -4128,9 +4160,9 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (18.0, 25.0]`
 
 ### 📊 GDAXI.INDX/30m · bullish_OB
-- Events: 304  ·  Baseline continuation: **70.4%**
+- Events: 312  ·  Baseline continuation: **70.5%**
 
-  - 🟢 **100.0%** (20/20)
+  - 🟢 **100.0%** (21/21)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow ≠ Fri`
       - `adx_b = (18.0, 25.0]`
@@ -4140,7 +4172,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Fri`
       - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b = (-inf, 30.0]`
-  - 🟢 **84.8%** (28/33)
+  - 🟢 **85.3%** (29/34)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow ≠ Fri`
       - `adx_b = (18.0, 25.0]`
@@ -4149,7 +4181,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow = Fri`
       - `rsi_b = (50.0, 70.0]`
-  - 🟢 **70.6%** (101/143)
+  - 🟢 **70.5%** (105/149)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow ≠ Fri`
       - `adx_b ≠ (18.0, 25.0]`
@@ -4159,7 +4191,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Wed`
 
 ### 📊 GDAXI.INDX/30m · engulfing_bear
-- Events: 163  ·  Baseline continuation: **46.0%**
+- Events: 164  ·  Baseline continuation: **45.7%**
 
   - 🟢 **75.0%** (27/36)
       - `vol_z_b ≠ (-inf, -0.5]`
@@ -4195,14 +4227,14 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `rsi_b ≠ (50.0, 70.0]`
 
 ### 📊 GDAXI.INDX/30m · hammer
-- Events: 186  ·  Baseline continuation: **37.1%**
+- Events: 187  ·  Baseline continuation: **37.4%**
 
   - 🟢 **75.0%** (21/28)
       - `dow ≠ Wed`
       - `adx_b = (25.0, inf]`
       - `dow ≠ Fri`
       - `rsi_b ≠ (50.0, 70.0]`
-  - 🔴 **23.8%** (5/21)
+  - 🔴 **27.3%** (6/22)
       - `dow ≠ Wed`
       - `adx_b ≠ (25.0, inf]`
       - `dow ≠ Mon`
@@ -4220,7 +4252,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b ≠ (18.0, 25.0]`
 
 ### 📊 GDAXI.INDX/30m · shooting_star
-- Events: 154  ·  Baseline continuation: **44.2%**
+- Events: 158  ·  Baseline continuation: **43.0%**
 
   - 🟢 **83.3%** (15/18)
       - `vol_z_b ≠ (-inf, -0.5]`
@@ -4228,17 +4260,13 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
   - 🔴 **30.0%** (3/10)
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b ≠ (25.0, inf]`
-      - `rsi_b = (50.0, 70.0]`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **30.0%** (3/10)
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `adx_b = (18.0, 25.0]`
+  - 🔴 **25.0%** (3/12)
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b ≠ (25.0, inf]`
-      - `rsi_b = (50.0, 70.0]`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **27.8%** (5/18)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Fri`
-      - `adx_b = (-inf, 18.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `adx_b ≠ (18.0, 25.0]`
   - 🔴 **23.5%** (4/17)
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b = (25.0, inf]`
@@ -4247,16 +4275,21 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b = (25.0, inf]`
       - `rsi_b = (50.0, 70.0]`
+  - 🔴 **0.0%** (0/10)
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow ≠ Fri`
+      - `adx_b = (-inf, 18.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
 
 ---
 
 ## GDAXI.INDX · 1h
-- Candles: **4617**  ·  Swing pivots: 571  ·  FVG: 1071
-- CHoCH/BOS events: 403  ·  Order Blocks: 858
-- Trend Ladders detected: 239  ·  Candle patterns: 1370  ·  Breakouts: 538
+- Candles: **4651**  ·  Swing pivots: 576  ·  FVG: 1076
+- CHoCH/BOS events: 409  ·  Order Blocks: 864
+- Trend Ladders detected: 244  ·  Candle patterns: 1379  ·  Breakouts: 542
 
 ### S/R Cluster Seviyeleri (top 8)
-- 24499.8381 (touches: **487**, strong)
+- 24504.5373 (touches: **492**, strong)
 - 23363.2571 (touches: **28**, strong)
 - 23089.3222 (touches: **18**, strong)
 - 22801.16 (touches: **5**, strong)
@@ -4265,52 +4298,47 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 - 22620.8 (touches: **3**, moderate)
 - 21922.55 (touches: **2**, weak)
 
-### 🪜 Trend Ladder Analizi (239 ladder)
-- Continued: 105  ·  Reversed: 89  ·  Baseline continuation: **43.9%**
+### 🪜 Trend Ladder Analizi (244 ladder)
+- Continued: 107  ·  Reversed: 90  ·  Baseline continuation: **43.9%**
 
 **🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
 - **78.6%** (11/14)
    - `before_rsi_avg_bucket = (50.0, 70.0]`
    - `ladder_total_atr_bucket = (2.5, inf]`
    - `before_rsi_last_bucket = (30.0, 50.0]`
-- **76.9%** (10/13)
+- **73.3%** (11/15)
    - `before_rsi_avg_bucket ≠ (50.0, 70.0]`
    - `ladder_total_atr_bucket = (-inf, 1.0]`
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **24.5%** (12/49)
+- **25.0%** (13/52)
    - `before_rsi_avg_bucket ≠ (50.0, 70.0]`
    - `ladder_total_atr_bucket ≠ (-inf, 1.0]`
    - `before_adx_avg_bucket ≠ (25.0, inf]`
 
 ### 📊 GDAXI.INDX/1h · ALL EVENTS
-- Events: 3724  ·  Baseline continuation: **46.4%**
+- Events: 3747  ·  Baseline continuation: **46.3%**
 
-  - 🟢 **89.5%** (17/19)
+  - 🟢 **81.2%** (13/16)
       - `type = bearish_OB`
       - `vol_z_b ≠ (0.5, inf]`
+      - `dow = Thu`
       - `adx_b = (-inf, 18.0]`
-      - `dow = Fri`
-  - 🟢 **82.7%** (67/81)
+  - 🟢 **81.2%** (65/80)
       - `type = bearish_OB`
       - `vol_z_b = (0.5, inf]`
       - `dow ≠ Wed`
       - `atr_pct_b ≠ (0.4, inf]`
-  - 🟢 **70.9%** (151/213)
+  - 🟢 **71.6%** (154/215)
       - `type ≠ bearish_OB`
       - `type = bullish_OB`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow ≠ Thu`
-  - 🟢 **70.9%** (39/55)
+  - 🟢 **70.4%** (38/54)
       - `type ≠ bearish_OB`
       - `type = bullish_OB`
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b = (25.0, inf]`
-  - 🔴 **28.6%** (32/112)
-      - `type ≠ bearish_OB`
-      - `type ≠ bullish_OB`
-      - `type ≠ BOS_bearish`
-      - `type = BOS_bullish`
   - 🔴 **15.9%** (7/44)
       - `type ≠ bearish_OB`
       - `type ≠ bullish_OB`
@@ -4318,42 +4346,49 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (25.0, inf]`
 
 ### 📊 GDAXI.INDX/1h · BOS_bearish
-- Events: 80  ·  Baseline continuation: **25.0%**
+- Events: 81  ·  Baseline continuation: **24.7%**
 
-  - 🔴 **29.2%** (7/24)
-      - `adx_b = (25.0, inf]`
+  - 🔴 **29.4%** (5/17)
       - `rsi_b ≠ (-inf, 30.0]`
-  - 🔴 **16.7%** (2/12)
-      - `adx_b ≠ (25.0, inf]`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-  - 🔴 **0.0%** (0/20)
-      - `adx_b = (25.0, inf]`
+      - `dow ≠ Tue`
+      - `dow ≠ Mon`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **20.0%** (2/10)
       - `rsi_b = (-inf, 30.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **15.4%** (2/13)
+      - `rsi_b ≠ (-inf, 30.0]`
+      - `dow ≠ Tue`
+      - `dow ≠ Mon`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **6.2%** (1/16)
+      - `rsi_b = (-inf, 30.0]`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 GDAXI.INDX/1h · BOS_bullish
-- Events: 112  ·  Baseline continuation: **28.6%**
+- Events: 113  ·  Baseline continuation: **28.3%**
 
-  - 🔴 **28.6%** (8/28)
+  - 🔴 **27.6%** (8/29)
       - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b ≠ (70.0, inf]`
-      - `adx_b = (25.0, inf]`
+      - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Tue`
-  - 🔴 **20.0%** (2/10)
+  - 🔴 **18.2%** (2/11)
       - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b ≠ (70.0, inf]`
-      - `adx_b ≠ (25.0, inf]`
+      - `adx_b = (-inf, 18.0]`
       - `vol_z_b ≠ (0.5, inf]`
   - 🔴 **9.1%** (1/11)
       - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b ≠ (70.0, inf]`
-      - `adx_b ≠ (25.0, inf]`
+      - `adx_b = (-inf, 18.0]`
       - `vol_z_b = (0.5, inf]`
   - 🔴 **5.6%** (1/18)
       - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b = (70.0, inf]`
 
 ### 📊 GDAXI.INDX/1h · CHoCH_bearish
-- Events: 105  ·  Baseline continuation: **49.5%**
+- Events: 107  ·  Baseline continuation: **48.6%**
 
   - 🟢 **73.7%** (14/19)
       - `rsi_b ≠ (30.0, 50.0]`
@@ -4372,89 +4407,95 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b ≠ (0.5, inf]`
 
 ### 📊 GDAXI.INDX/1h · CHoCH_bullish
-- Events: 105  ·  Baseline continuation: **41.9%**
+- Events: 108  ·  Baseline continuation: **41.7%**
 
-  - 🟢 **76.5%** (13/17)
+  - 🟢 **77.8%** (14/18)
       - `rsi_b = (30.0, 50.0]`
       - `dow ≠ Thu`
       - `dow ≠ Mon`
       - `dow ≠ Wed`
-  - 🔴 **28.6%** (4/14)
+  - 🔴 **27.3%** (3/11)
       - `rsi_b ≠ (30.0, 50.0]`
-      - `atr_pct_b ≠ (0.4, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `adx_b ≠ (25.0, inf]`
+      - `adx_b ≠ (-inf, 18.0]`
+  - 🔴 **25.0%** (3/12)
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `adx_b ≠ (25.0, inf]`
       - `adx_b = (-inf, 18.0]`
-  - 🔴 **23.1%** (3/13)
+  - 🔴 **21.4%** (3/14)
       - `rsi_b ≠ (30.0, 50.0]`
-      - `atr_pct_b = (0.4, inf]`
+      - `vol_z_b = (-0.5, 0.5]`
 
 ### 📊 GDAXI.INDX/1h · bearish
-- Events: 506  ·  Baseline continuation: **38.9%**
+- Events: 509  ·  Baseline continuation: **38.5%**
 
-  - 🔴 **29.2%** (7/24)
+  - 🔴 **30.0%** (3/10)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `adx_b = (-inf, 18.0]`
+      - `dow = Mon`
+      - `vol_z_b = (-0.5, 0.5]`
+  - 🔴 **28.0%** (7/25)
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `dow ≠ Wed`
       - `dow ≠ Thu`
-      - `dow = Fri`
-  - 🔴 **25.8%** (8/31)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b = (25.0, inf]`
-      - `dow ≠ Wed`
       - `dow = Fri`
   - 🔴 **25.0%** (4/16)
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `dow ≠ Wed`
       - `dow = Thu`
       - `vol_z_b ≠ (-inf, -0.5]`
-  - 🔴 **20.0%** (3/15)
+  - 🔴 **13.5%** (5/37)
       - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b = (25.0, inf]`
+      - `adx_b ≠ (-inf, 18.0]`
       - `dow = Wed`
-      - `vol_z_b = (0.5, inf]`
-  - 🔴 **10.0%** (2/20)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow = Mon`
-      - `vol_z_b = (-inf, -0.5]`
+      - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **6.5%** (3/46)
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `dow ≠ Wed`
+      - `dow ≠ Thu`
+      - `dow ≠ Fri`
 
 ### 📊 GDAXI.INDX/1h · bearish_OB
-- Events: 462  ·  Baseline continuation: **65.8%**
+- Events: 468  ·  Baseline continuation: **65.4%**
 
-  - 🟢 **100.0%** (12/12)
+  - 🟢 **91.7%** (11/12)
       - `vol_z_b = (0.5, inf]`
       - `dow ≠ Wed`
       - `rsi_b = (30.0, 50.0]`
       - `dow = Fri`
-  - 🟢 **89.5%** (17/19)
+  - 🟢 **85.7%** (12/14)
       - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b = (-inf, 18.0]`
-      - `dow = Fri`
+      - `dow = Thu`
+      - `atr_pct_b = (0.4, inf]`
   - 🟢 **84.6%** (22/26)
       - `vol_z_b = (0.5, inf]`
       - `dow ≠ Wed`
       - `rsi_b = (30.0, 50.0]`
       - `dow ≠ Fri`
-  - 🟢 **81.2%** (13/16)
-      - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b = (-inf, 18.0]`
-      - `dow ≠ Fri`
-      - `dow = Thu`
-  - 🟢 **78.6%** (44/56)
+  - 🟢 **78.2%** (43/55)
       - `vol_z_b = (0.5, inf]`
       - `dow ≠ Wed`
       - `rsi_b ≠ (30.0, 50.0]`
       - `atr_pct_b ≠ (0.4, inf]`
+  - 🟢 **74.2%** (23/31)
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow = Thu`
+      - `atr_pct_b ≠ (0.4, inf]`
+      - `adx_b ≠ (25.0, inf]`
 
 ### 📊 GDAXI.INDX/1h · breakdown
-- Events: 246  ·  Baseline continuation: **42.7%**
+- Events: 247  ·  Baseline continuation: **42.5%**
 
   - 🟢 **80.0%** (16/20)
       - `atr_pct_b = (0.15, 0.4]`
       - `dow = Thu`
-      - `rsi_b ≠ (-inf, 30.0]`
+      - `rsi_b = (30.0, 50.0]`
   - 🟢 **72.7%** (8/11)
       - `atr_pct_b = (0.15, 0.4]`
       - `dow = Thu`
-      - `rsi_b = (-inf, 30.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
   - 🔴 **17.6%** (6/34)
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `dow ≠ Wed`
@@ -4467,13 +4508,13 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-0.5, 0.5]`
 
 ### 📊 GDAXI.INDX/1h · breakout_up
-- Events: 290  ·  Baseline continuation: **42.4%**
+- Events: 291  ·  Baseline continuation: **42.3%**
 
   - 🔴 **29.4%** (5/17)
       - `dow = Thu`
       - `adx_b ≠ (-inf, 18.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `vol_z_b = (0.5, inf]`
+      - `vol_z_b ≠ (-inf, -0.5]`
   - 🔴 **28.6%** (4/14)
       - `dow ≠ Thu`
       - `vol_z_b ≠ (-inf, -0.5]`
@@ -4488,67 +4529,40 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Thu`
       - `vol_z_b = (-inf, -0.5]`
       - `dow = Mon`
-      - `rsi_b = (70.0, inf]`
+      - `rsi_b ≠ (50.0, 70.0]`
   - 🔴 **21.4%** (3/14)
       - `dow = Thu`
       - `adx_b ≠ (-inf, 18.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `vol_z_b ≠ (0.5, inf]`
+      - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 GDAXI.INDX/1h · bullish
 - Events: 562  ·  Baseline continuation: **43.2%**
 
-  - 🔴 **29.2%** (7/24)
-      - `dow ≠ Thu`
-      - `dow ≠ Wed`
-      - `adx_b ≠ (25.0, inf]`
-      - `rsi_b = (30.0, 50.0]`
-  - 🔴 **28.6%** (12/42)
-      - `dow = Thu`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b = (50.0, 70.0]`
   - 🔴 **25.0%** (5/20)
+      - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow = Thu`
       - `adx_b = (-inf, 18.0]`
-  - 🔴 **22.0%** (9/41)
-      - `dow ≠ Thu`
-      - `dow = Wed`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **20.0%** (2/10)
-      - `dow = Thu`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b = (0.5, inf]`
-      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **16.7%** (2/12)
+      - `atr_pct_b = (0.05, 0.15]`
 
 ### 📊 GDAXI.INDX/1h · bullish_OB
-- Events: 396  ·  Baseline continuation: **64.1%**
+- Events: 396  ·  Baseline continuation: **64.6%**
 
   - 🟢 **88.9%** (16/18)
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b = (25.0, inf]`
       - `atr_pct_b ≠ (0.15, 0.4]`
-  - 🟢 **85.7%** (24/28)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Thu`
-      - `rsi_b = (50.0, 70.0]`
-      - `vol_z_b = (0.5, inf]`
   - 🟢 **81.8%** (9/11)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow = Thu`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `rsi_b ≠ (30.0, 50.0]`
-  - 🟢 **72.7%** (80/110)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Thu`
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🟢 **71.1%** (27/38)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Thu`
-      - `rsi_b = (50.0, 70.0]`
       - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
+  - 🟢 **76.3%** (116/152)
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow ≠ Thu`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `adx_b ≠ (-inf, 18.0]`
   - 🔴 **18.2%** (2/11)
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b ≠ (25.0, inf]`
@@ -4587,13 +4601,18 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Thu`
 
 ### 📊 GDAXI.INDX/1h · engulfing_bull
-- Events: 211  ·  Baseline continuation: **46.4%**
+- Events: 212  ·  Baseline continuation: **46.2%**
 
+  - 🟢 **76.5%** (13/17)
+      - `dow ≠ Fri`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `adx_b = (-inf, 18.0]`
+      - `vol_z_b ≠ (-inf, -0.5]`
   - 🔴 **25.0%** (3/12)
       - `dow = Fri`
       - `adx_b = (25.0, inf]`
       - `rsi_b ≠ (30.0, 50.0]`
-  - 🔴 **18.2%** (2/11)
+  - 🔴 **16.7%** (2/12)
       - `dow ≠ Fri`
       - `vol_z_b = (0.5, inf]`
       - `dow = Thu`
@@ -4603,473 +4622,447 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `rsi_b = (30.0, 50.0]`
 
 ### 📊 GDAXI.INDX/1h · hammer
-- Events: 218  ·  Baseline continuation: **38.1%**
+- Events: 220  ·  Baseline continuation: **38.2%**
 
-  - 🔴 **30.0%** (3/10)
+  - 🟢 **72.7%** (8/11)
       - `vol_z_b = (-0.5, 0.5]`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **25.0%** (4/16)
-      - `vol_z_b = (-0.5, 0.5]`
+      - `dow ≠ Fri`
       - `rsi_b = (30.0, 50.0]`
-      - `adx_b ≠ (25.0, inf]`
-  - 🔴 **21.1%** (4/19)
+      - `adx_b = (25.0, inf]`
+  - 🔴 **30.0%** (3/10)
       - `vol_z_b ≠ (-0.5, 0.5]`
       - `dow ≠ Tue`
       - `atr_pct_b = (0.4, inf]`
-  - 🔴 **18.2%** (2/11)
+      - `adx_b = (25.0, inf]`
+  - 🔴 **30.0%** (6/20)
       - `vol_z_b = (-0.5, 0.5]`
+      - `dow ≠ Fri`
       - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **12.5%** (2/16)
+      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **25.0%** (3/12)
       - `vol_z_b = (-0.5, 0.5]`
+      - `dow ≠ Fri`
+      - `rsi_b = (30.0, 50.0]`
+      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **15.4%** (2/13)
+      - `vol_z_b = (-0.5, 0.5]`
+      - `dow ≠ Fri`
       - `rsi_b ≠ (30.0, 50.0]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `adx_b ≠ (-inf, 18.0]`
+      - `adx_b = (25.0, inf]`
+  - 🔴 **10.0%** (1/10)
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `dow ≠ Tue`
+      - `atr_pct_b = (0.4, inf]`
+      - `adx_b ≠ (25.0, inf]`
 
 ### 📊 GDAXI.INDX/1h · shooting_star
-- Events: 187  ·  Baseline continuation: **36.9%**
+- Events: 189  ·  Baseline continuation: **36.5%**
 
   - 🟢 **75.0%** (9/12)
       - `rsi_b ≠ (70.0, inf]`
       - `dow = Wed`
       - `vol_z_b = (-inf, -0.5]`
-  - 🔴 **29.3%** (24/82)
-      - `rsi_b ≠ (70.0, inf]`
-      - `dow ≠ Wed`
-      - `dow ≠ Thu`
-      - `adx_b ≠ (18.0, 25.0]`
   - 🔴 **27.3%** (3/11)
       - `rsi_b ≠ (70.0, inf]`
       - `dow = Wed`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b = (18.0, 25.0]`
-  - 🔴 **18.2%** (2/11)
-      - `rsi_b ≠ (70.0, inf]`
-      - `dow ≠ Wed`
-      - `dow = Thu`
-      - `adx_b = (18.0, 25.0]`
   - 🔴 **16.7%** (2/12)
       - `rsi_b = (70.0, inf]`
+  - 🔴 **9.1%** (1/11)
+      - `rsi_b ≠ (70.0, inf]`
+      - `dow ≠ Wed`
+      - `dow = Tue`
+      - `adx_b = (-inf, 18.0]`
 
 ---
 
 ## USOIL.FOREX · 5m
-- Candles: **10000**  ·  Swing pivots: 1391  ·  FVG: 2310
-- CHoCH/BOS events: 978  ·  Order Blocks: 1721
-- Trend Ladders detected: 98  ·  Candle patterns: 2030  ·  Breakouts: 1084
+- Candles: **10000**  ·  Swing pivots: 1385  ·  FVG: 2329
+- CHoCH/BOS events: 976  ·  Order Blocks: 1706
+- Trend Ladders detected: 100  ·  Candle patterns: 2030  ·  Breakouts: 1097
 
 ### S/R Cluster Seviyeleri (top 8)
-- 71.5578 (touches: **656**, strong)
-- 79.8776 (touches: **177**, strong)
+- 71.5824 (touches: **648**, strong)
+- 80.4794 (touches: **251**, strong)
 - 76.963 (touches: **112**, strong)
-- 92.9108 (touches: **60**, strong)
-- 95.1304 (touches: **48**, strong)
-- 93.9885 (touches: **41**, strong)
-- 81.721 (touches: **29**, strong)
-- 97.1878 (touches: **28**, strong)
+- 92.8582 (touches: **52**, strong)
+- 95.1489 (touches: **37**, strong)
+- 90.2421 (touches: **21**, strong)
+- 97.9952 (touches: **20**, strong)
+- 91.2568 (touches: **19**, strong)
 
-### 🪜 Trend Ladder Analizi (98 ladder)
-- Continued: 44  ·  Reversed: 39  ·  Baseline continuation: **44.9%**
+### 🪜 Trend Ladder Analizi (100 ladder)
+- Continued: 43  ·  Reversed: 44  ·  Baseline continuation: **43.0%**
 
 **🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
-- **81.8%** (9/11)
+- **72.7%** (8/11)
    - `before_bb_width_atr_avg_bucket = (2.0, 4.0]`
-   - `before_adx_avg_bucket ≠ (-inf, 18.0]`
-   - `before_rsi_avg_bucket ≠ (30.0, 50.0]`
+   - `ladder_slope_atr_bucket = (-inf, 0.2]`
+   - `before_rsi_last_bucket ≠ (30.0, 50.0]`
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **14.3%** (2/14)
+- **16.7%** (2/12)
    - `before_bb_width_atr_avg_bucket ≠ (2.0, 4.0]`
-   - `ladder_slope_atr_bucket ≠ (0.5, 1.0]`
-   - `before_rsi_last_bucket = (50.0, 70.0]`
+   - `start_dist_ema50_atr_bucket = (0.0, 1.0]`
 
 ### 📊 USOIL.FOREX/5m · ALL EVENTS
-- Events: 7163  ·  Baseline continuation: **46.7%**
+- Events: 7210  ·  Baseline continuation: **46.7%**
 
-  - 🟢 **88.2%** (30/34)
-      - `type = bearish_OB`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b = (70.0, inf]`
-  - 🟢 **82.9%** (68/82)
-      - `type ≠ bearish_OB`
-      - `type = bullish_OB`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `rsi_b = (-inf, 30.0]`
-  - 🟢 **78.3%** (130/166)
+  - 🟢 **79.8%** (134/168)
       - `type = bearish_OB`
       - `rsi_b ≠ (-inf, 30.0]`
       - `vol_z_b = (0.5, inf]`
       - `adx_b ≠ (25.0, inf]`
-  - 🔴 **27.3%** (9/33)
+  - 🟢 **72.6%** (304/419)
+      - `type ≠ bearish_OB`
+      - `type = bullish_OB`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🟢 **70.9%** (317/447)
+      - `type = bearish_OB`
+      - `rsi_b ≠ (-inf, 30.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Fri`
+  - 🔴 **25.7%** (94/366)
+      - `type ≠ bearish_OB`
+      - `type ≠ bullish_OB`
+      - `rsi_b = (70.0, inf]`
+      - `type ≠ shooting_star`
+  - 🔴 **25.0%** (60/240)
+      - `type ≠ bearish_OB`
+      - `type ≠ bullish_OB`
+      - `rsi_b ≠ (70.0, inf]`
+      - `type = BOS_bearish`
+  - 🔴 **20.0%** (6/30)
       - `type ≠ bearish_OB`
       - `type = bullish_OB`
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `dow = Wed`
-  - 🔴 **26.9%** (54/201)
-      - `type ≠ bearish_OB`
-      - `type ≠ bullish_OB`
-      - `type = BOS_bearish`
-      - `dow ≠ Fri`
-  - 🔴 **22.4%** (35/156)
-      - `type ≠ bearish_OB`
-      - `type ≠ bullish_OB`
-      - `type ≠ BOS_bearish`
-      - `type = BOS_bullish`
-  - 🔴 **13.3%** (6/45)
-      - `type ≠ bearish_OB`
-      - `type ≠ bullish_OB`
-      - `type = BOS_bearish`
-      - `dow = Fri`
 
 ### 📊 USOIL.FOREX/5m · BOS_bearish
-- Events: 246  ·  Baseline continuation: **24.4%**
+- Events: 240  ·  Baseline continuation: **25.0%**
 
-  - 🔴 **26.7%** (4/15)
-      - `dow = Fri`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `rsi_b ≠ (-inf, 30.0]`
-  - 🔴 **25.0%** (5/20)
-      - `dow ≠ Fri`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `adx_b = (-inf, 18.0]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **22.4%** (19/85)
+  - 🔴 **22.6%** (19/84)
       - `dow ≠ Fri`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Tue`
-  - 🔴 **10.0%** (1/10)
+  - 🔴 **20.0%** (2/10)
       - `dow = Fri`
+      - `vol_z_b ≠ (0.5, inf]`
       - `atr_pct_b = (0.15, 0.4]`
-      - `rsi_b = (-inf, 30.0]`
-  - 🔴 **5.0%** (1/20)
+  - 🔴 **19.0%** (4/21)
+      - `dow ≠ Fri`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `adx_b = (-inf, 18.0]`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **17.6%** (3/17)
       - `dow = Fri`
+      - `vol_z_b = (0.5, inf]`
+      - `adx_b = (25.0, inf]`
+  - 🔴 **16.7%** (2/12)
+      - `dow = Fri`
+      - `vol_z_b ≠ (0.5, inf]`
       - `atr_pct_b ≠ (0.15, 0.4]`
 
 ### 📊 USOIL.FOREX/5m · BOS_bullish
-- Events: 156  ·  Baseline continuation: **22.4%**
+- Events: 154  ·  Baseline continuation: **23.4%**
 
-  - 🔴 **30.0%** (18/60)
-      - `rsi_b ≠ (70.0, inf]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Tue`
-  - 🔴 **23.1%** (3/13)
+  - 🔴 **26.3%** (5/19)
       - `rsi_b ≠ (70.0, inf]`
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b ≠ (25.0, inf]`
-  - 🔴 **15.0%** (3/20)
+  - 🔴 **18.2%** (4/22)
+      - `rsi_b = (70.0, inf]`
+      - `atr_pct_b = (0.15, 0.4]`
+  - 🔴 **10.0%** (2/20)
       - `rsi_b ≠ (70.0, inf]`
       - `vol_z_b = (-inf, -0.5]`
       - `adx_b = (25.0, inf]`
-  - 🔴 **12.5%** (3/24)
-      - `rsi_b = (70.0, inf]`
-      - `vol_z_b = (0.5, inf]`
   - 🔴 **7.7%** (1/13)
       - `rsi_b ≠ (70.0, inf]`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `dow = Tue`
+  - 🔴 **0.0%** (0/10)
+      - `rsi_b = (70.0, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
 
 ### 📊 USOIL.FOREX/5m · CHoCH_bearish
-- Events: 286  ·  Baseline continuation: **43.7%**
+- Events: 290  ·  Baseline continuation: **46.2%**
 
-  - 🟢 **86.7%** (13/15)
-      - `rsi_b = (50.0, 70.0]`
+  - 🟢 **83.3%** (15/18)
+      - `rsi_b ≠ (-inf, 30.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
       - `dow = Thu`
       - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **27.3%** (3/11)
-      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **29.2%** (19/65)
       - `rsi_b ≠ (-inf, 30.0]`
-      - `dow = Mon`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **22.2%** (4/18)
-      - `rsi_b = (50.0, 70.0]`
-      - `dow ≠ Thu`
-      - `adx_b ≠ (25.0, inf]`
-      - `dow = Fri`
-  - 🔴 **16.7%** (2/12)
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `dow = Mon`
+      - `rsi_b = (30.0, 50.0]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **5.0%** (1/20)
-      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **4.5%** (1/22)
       - `rsi_b = (-inf, 30.0]`
 
 ### 📊 USOIL.FOREX/5m · CHoCH_bullish
-- Events: 288  ·  Baseline continuation: **41.7%**
+- Events: 291  ·  Baseline continuation: **40.2%**
 
-  - 🟢 **100.0%** (11/11)
+  - 🟢 **100.0%** (10/10)
       - `rsi_b ≠ (30.0, 50.0]`
       - `rsi_b = (-inf, 30.0]`
-  - 🟢 **86.7%** (13/15)
+  - 🟢 **87.5%** (14/16)
       - `rsi_b = (30.0, 50.0]`
       - `dow ≠ Thu`
-      - `atr_pct_b = (0.15, 0.4]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
       - `adx_b = (18.0, 25.0]`
-  - 🟢 **70.8%** (34/48)
-      - `rsi_b = (30.0, 50.0]`
-      - `dow ≠ Thu`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b ≠ (18.0, 25.0]`
   - 🔴 **19.2%** (5/26)
       - `rsi_b ≠ (30.0, 50.0]`
       - `rsi_b ≠ (-inf, 30.0]`
       - `vol_z_b ≠ (0.5, inf]`
       - `dow = Wed`
-  - 🔴 **18.5%** (12/65)
+  - 🔴 **15.0%** (9/60)
       - `rsi_b ≠ (30.0, 50.0]`
       - `rsi_b ≠ (-inf, 30.0]`
       - `vol_z_b = (0.5, inf]`
       - `rsi_b = (50.0, 70.0]`
-  - 🔴 **0.0%** (0/16)
+  - 🔴 **0.0%** (0/17)
       - `rsi_b ≠ (30.0, 50.0]`
       - `rsi_b ≠ (-inf, 30.0]`
       - `vol_z_b = (0.5, inf]`
       - `rsi_b ≠ (50.0, 70.0]`
 
 ### 📊 USOIL.FOREX/5m · bearish
-- Events: 1206  ·  Baseline continuation: **43.8%**
+- Events: 1202  ·  Baseline continuation: **44.1%**
 
-  - 🟢 **76.6%** (36/47)
+  - 🟢 **81.2%** (26/32)
       - `rsi_b ≠ (-inf, 30.0]`
       - `vol_z_b = (-inf, -0.5]`
       - `dow = Thu`
-      - `adx_b ≠ (-inf, 18.0]`
+      - `adx_b = (25.0, inf]`
   - 🟢 **72.7%** (8/11)
       - `rsi_b = (-inf, 30.0]`
       - `atr_pct_b = (0.05, 0.15]`
+      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **30.0%** (3/10)
+      - `rsi_b = (-inf, 30.0]`
+      - `atr_pct_b ≠ (0.05, 0.15]`
+      - `dow = Wed`
       - `adx_b = (18.0, 25.0]`
-  - 🔴 **25.8%** (33/128)
+  - 🔴 **29.0%** (36/124)
       - `rsi_b = (-inf, 30.0]`
       - `atr_pct_b ≠ (0.05, 0.15]`
+      - `dow ≠ Wed`
       - `dow ≠ Thu`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🔴 **9.7%** (3/31)
+  - 🔴 **10.7%** (3/28)
       - `rsi_b = (-inf, 30.0]`
       - `atr_pct_b ≠ (0.05, 0.15]`
-      - `dow ≠ Thu`
-      - `vol_z_b = (-0.5, 0.5]`
+      - `dow = Wed`
+      - `adx_b ≠ (18.0, 25.0]`
 
 ### 📊 USOIL.FOREX/5m · bearish_OB
-- Events: 890  ·  Baseline continuation: **68.8%**
+- Events: 885  ·  Baseline continuation: **70.5%**
 
-  - 🟢 **90.9%** (10/11)
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b = (70.0, inf]`
-      - `dow = Thu`
-  - 🟢 **90.7%** (49/54)
-      - `rsi_b ≠ (-inf, 30.0]`
+  - 🟢 **94.1%** (16/17)
       - `vol_z_b = (0.5, inf]`
-      - `adx_b = (-inf, 18.0]`
-      - `dow ≠ Thu`
-  - 🟢 **87.0%** (20/23)
-      - `rsi_b ≠ (-inf, 30.0]`
+      - `adx_b ≠ (25.0, inf]`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `dow = Fri`
+  - 🟢 **90.0%** (9/10)
       - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Fri`
       - `rsi_b = (70.0, inf]`
-      - `dow ≠ Thu`
-  - 🟢 **74.3%** (156/210)
-      - `rsi_b ≠ (-inf, 30.0]`
+      - `vol_z_b = (-0.5, 0.5]`
+  - 🟢 **90.0%** (9/10)
       - `vol_z_b = (0.5, inf]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow ≠ Wed`
-  - 🔴 **27.3%** (3/11)
-      - `rsi_b = (-inf, 30.0]`
+      - `adx_b = (25.0, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `rsi_b = (70.0, inf]`
+  - 🟢 **82.4%** (14/17)
       - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Fri`
+      - `rsi_b = (70.0, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🟢 **82.4%** (14/17)
+      - `vol_z_b = (0.5, inf]`
+      - `adx_b ≠ (25.0, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `rsi_b = (30.0, 50.0]`
 
 ### 📊 USOIL.FOREX/5m · breakdown
-- Events: 575  ·  Baseline continuation: **42.3%**
+- Events: 583  ·  Baseline continuation: **43.9%**
 
-  - 🟢 **90.9%** (10/11)
+  - 🟢 **80.0%** (8/10)
+      - `atr_pct_b = (0.05, 0.15]`
+      - `dow ≠ Wed`
+      - `adx_b = (-inf, 18.0]`
+      - `dow = Tue`
+  - 🟢 **75.0%** (24/32)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `vol_z_b = (-inf, -0.5]`
       - `dow ≠ Mon`
-      - `dow = Thu`
-  - 🟢 **78.6%** (11/14)
-      - `atr_pct_b = (0.05, 0.15]`
-      - `dow ≠ Thu`
-      - `vol_z_b = (0.5, inf]`
-      - `rsi_b = (-inf, 30.0]`
-  - 🟢 **75.0%** (9/12)
-      - `atr_pct_b = (0.05, 0.15]`
-      - `dow = Thu`
-  - 🔴 **29.9%** (44/147)
-      - `atr_pct_b ≠ (0.05, 0.15]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `rsi_b = (-inf, 30.0]`
-      - `dow ≠ Thu`
+      - `dow ≠ Fri`
   - 🔴 **23.1%** (3/13)
       - `atr_pct_b ≠ (0.05, 0.15]`
       - `vol_z_b = (-inf, -0.5]`
       - `dow = Mon`
 
 ### 📊 USOIL.FOREX/5m · breakout_up
-- Events: 503  ·  Baseline continuation: **38.2%**
+- Events: 508  ·  Baseline continuation: **35.6%**
 
-  - 🔴 **23.3%** (7/30)
-      - `rsi_b = (50.0, 70.0]`
+  - 🔴 **26.3%** (10/38)
+      - `rsi_b ≠ (70.0, inf]`
       - `dow = Wed`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **21.4%** (3/14)
-      - `rsi_b ≠ (50.0, 70.0]`
+      - `adx_b ≠ (25.0, inf]`
       - `vol_z_b ≠ (-inf, -0.5]`
-      - `atr_pct_b = (0.4, inf]`
-  - 🔴 **15.4%** (6/39)
-      - `rsi_b = (50.0, 70.0]`
+  - 🔴 **17.6%** (3/17)
+      - `rsi_b ≠ (70.0, inf]`
+      - `dow = Wed`
+      - `adx_b = (25.0, inf]`
+  - 🔴 **15.8%** (6/38)
+      - `rsi_b ≠ (70.0, inf]`
       - `dow ≠ Wed`
       - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b ≠ (-inf, 18.0]`
   - 🔴 **9.5%** (2/21)
-      - `rsi_b ≠ (50.0, 70.0]`
+      - `rsi_b = (70.0, inf]`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `dow ≠ Mon`
+  - 🔴 **9.1%** (2/22)
+      - `rsi_b = (70.0, inf]`
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 USOIL.FOREX/5m · bullish
-- Events: 1093  ·  Baseline continuation: **40.5%**
+- Events: 1116  ·  Baseline continuation: **40.5%**
 
-  - 🟢 **73.0%** (27/37)
+  - 🔴 **25.0%** (13/52)
       - `rsi_b ≠ (70.0, inf]`
-      - `dow = Fri`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **21.1%** (4/19)
-      - `rsi_b ≠ (70.0, inf]`
-      - `dow = Fri`
-      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `adx_b = (-inf, 18.0]`
+      - `dow ≠ Fri`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **20.0%** (2/10)
+      - `rsi_b = (70.0, inf]`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **17.6%** (3/17)
+      - `rsi_b = (70.0, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `atr_pct_b ≠ (0.4, inf]`
       - `vol_z_b = (-inf, -0.5]`
-  - 🔴 **20.0%** (3/15)
-      - `rsi_b = (70.0, inf]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow ≠ Thu`
-      - `vol_z_b ≠ (-inf, -0.5]`
-  - 🔴 **18.2%** (2/11)
-      - `rsi_b = (70.0, inf]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow = Thu`
   - 🔴 **12.5%** (2/16)
       - `rsi_b = (70.0, inf]`
-      - `vol_z_b = (0.5, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
       - `atr_pct_b = (0.4, inf]`
-  - 🔴 **0.0%** (0/11)
+  - 🔴 **12.5%** (2/16)
       - `rsi_b = (70.0, inf]`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow ≠ Thu`
-      - `vol_z_b = (-inf, -0.5]`
+      - `vol_z_b = (-0.5, 0.5]`
+      - `adx_b = (25.0, inf]`
 
 ### 📊 USOIL.FOREX/5m · bullish_OB
-- Events: 828  ·  Baseline continuation: **64.9%**
+- Events: 821  ·  Baseline continuation: **63.5%**
 
-  - 🟢 **100.0%** (15/15)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `rsi_b = (-inf, 30.0]`
-      - `dow = Wed`
-  - 🟢 **90.9%** (20/22)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `rsi_b = (-inf, 30.0]`
-      - `dow ≠ Wed`
+  - 🟢 **81.2%** (13/16)
+      - `atr_pct_b ≠ (0.15, 0.4]`
       - `dow = Tue`
-  - 🟢 **82.7%** (62/75)
+      - `adx_b = (25.0, inf]`
+  - 🟢 **78.3%** (206/263)
       - `atr_pct_b = (0.15, 0.4]`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `rsi_b = (30.0, 50.0]`
-      - `dow = Mon`
-  - 🟢 **73.3%** (33/45)
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow ≠ Fri`
+      - `dow ≠ Thu`
+  - 🟢 **77.8%** (28/36)
       - `atr_pct_b = (0.15, 0.4]`
-      - `rsi_b = (-inf, 30.0]`
-      - `dow ≠ Wed`
+      - `rsi_b = (50.0, 70.0]`
+      - `dow = Tue`
+      - `vol_z_b ≠ (-inf, -0.5]`
+  - 🟢 **71.4%** (25/35)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow = Fri`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **10.3%** (3/29)
+      - `atr_pct_b ≠ (0.15, 0.4]`
       - `dow ≠ Tue`
-  - 🟢 **71.7%** (33/46)
-      - `atr_pct_b = (0.15, 0.4]`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `dow = Tue`
-  - 🔴 **11.8%** (2/17)
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow = Wed`
-      - `vol_z_b = (0.5, inf]`
-  - 🔴 **9.1%** (1/11)
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow ≠ Wed`
-      - `dow = Thu`
+      - `dow ≠ Fri`
       - `rsi_b = (50.0, 70.0]`
 
 ### 📊 USOIL.FOREX/5m · engulfing_bear
-- Events: 129  ·  Baseline continuation: **38.8%**
+- Events: 132  ·  Baseline continuation: **40.2%**
 
-  - 🔴 **18.2%** (2/11)
+  - 🔴 **25.0%** (3/12)
       - `dow ≠ Mon`
       - `dow = Tue`
       - `adx_b = (25.0, inf]`
-  - 🔴 **10.0%** (1/10)
-      - `dow ≠ Mon`
-      - `dow ≠ Tue`
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **7.1%** (1/14)
+  - 🔴 **12.5%** (2/16)
       - `dow = Mon`
       - `adx_b ≠ (25.0, inf]`
 
 ### 📊 USOIL.FOREX/5m · engulfing_bull
-- Events: 109  ·  Baseline continuation: **45.9%**
+- Events: 110  ·  Baseline continuation: **46.4%**
 
-  - 🟢 **90.9%** (10/11)
-      - `dow ≠ Tue`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `adx_b = (18.0, 25.0]`
-      - `vol_z_b = (0.5, inf]`
-  - 🟢 **70.0%** (7/10)
-      - `dow ≠ Tue`
-      - `adx_b ≠ (-inf, 18.0]`
+  - 🟢 **75.0%** (12/16)
       - `adx_b ≠ (18.0, 25.0]`
-      - `dow = Thu`
-  - 🔴 **27.3%** (3/11)
+      - `dow ≠ Wed`
       - `dow ≠ Tue`
-      - `adx_b = (-inf, 18.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **10.0%** (1/10)
+      - `vol_z_b = (-inf, -0.5]`
+  - 🔴 **21.4%** (3/14)
+      - `adx_b ≠ (18.0, 25.0]`
+      - `dow ≠ Wed`
       - `dow = Tue`
-      - `adx_b = (25.0, inf]`
+  - 🔴 **20.0%** (3/15)
+      - `adx_b ≠ (18.0, 25.0]`
+      - `dow = Wed`
 
 ### 📊 USOIL.FOREX/5m · hammer
-- Events: 402  ·  Baseline continuation: **39.1%**
+- Events: 412  ·  Baseline continuation: **38.6%**
 
-  - 🔴 **27.3%** (3/11)
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `dow = Mon`
+  - 🔴 **29.4%** (35/119)
       - `adx_b = (25.0, inf]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **13.6%** (3/22)
+      - `rsi_b ≠ (70.0, inf]`
       - `rsi_b ≠ (-inf, 30.0]`
-      - `dow ≠ Mon`
+      - `dow ≠ Tue`
+  - 🔴 **24.1%** (7/29)
+      - `adx_b ≠ (25.0, inf]`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `atr_pct_b = (0.05, 0.15]`
+      - `dow ≠ Fri`
+  - 🔴 **10.0%** (1/10)
+      - `adx_b = (25.0, inf]`
+      - `rsi_b = (70.0, inf]`
+  - 🔴 **7.7%** (1/13)
+      - `adx_b ≠ (25.0, inf]`
       - `vol_z_b = (0.5, inf]`
       - `dow = Wed`
 
 ### 📊 USOIL.FOREX/5m · shooting_star
-- Events: 452  ·  Baseline continuation: **42.7%**
+- Events: 466  ·  Baseline continuation: **41.8%**
 
-  - 🟢 **73.3%** (11/15)
-      - `rsi_b ≠ (-inf, 30.0]`
+  - 🟢 **75.0%** (12/16)
+      - `adx_b = (-inf, 18.0]`
+      - `dow ≠ Mon`
+      - `dow ≠ Fri`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **29.4%** (5/17)
+      - `adx_b = (-inf, 18.0]`
+      - `dow = Mon`
+      - `rsi_b = (30.0, 50.0]`
+  - 🔴 **24.5%** (24/98)
       - `adx_b ≠ (-inf, 18.0]`
-      - `rsi_b = (70.0, inf]`
-  - 🔴 **0.0%** (0/13)
-      - `rsi_b = (-inf, 30.0]`
-      - `vol_z_b ≠ (0.5, inf]`
+      - `rsi_b ≠ (70.0, inf]`
+      - `dow ≠ Thu`
+      - `vol_z_b = (-inf, -0.5]`
 
 ---
 
 ## USOIL.FOREX · 15m
-- Candles: **4557**  ·  Swing pivots: 604  ·  FVG: 938
-- CHoCH/BOS events: 430  ·  Order Blocks: 800
-- Trend Ladders detected: 232  ·  Candle patterns: 955  ·  Breakouts: 462
+- Candles: **4709**  ·  Swing pivots: 627  ·  FVG: 967
+- CHoCH/BOS events: 449  ·  Order Blocks: 826
+- Trend Ladders detected: 241  ·  Candle patterns: 989  ·  Breakouts: 482
 
 ### S/R Cluster Seviyeleri (top 8)
 - 73.7911 (touches: **129**, strong)
-- 80.2896 (touches: **78**, strong)
+- 80.3632 (touches: **83**, strong)
 - 94.8264 (touches: **73**, strong)
 - 69.3874 (touches: **72**, strong)
 - 101.9259 (touches: **50**, strong)
@@ -5077,43 +5070,49 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
 - 91.5272 (touches: **26**, strong)
 - 92.7893 (touches: **21**, strong)
 
-### 🪜 Trend Ladder Analizi (232 ladder)
-- Continued: 104  ·  Reversed: 85  ·  Baseline continuation: **44.8%**
+### 🪜 Trend Ladder Analizi (241 ladder)
+- Continued: 107  ·  Reversed: 89  ·  Baseline continuation: **44.4%**
 
 **🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
-- **76.0%** (19/25)
+- **74.1%** (20/27)
    - `ladder_total_atr_bucket = (1.0, 2.5]`
    - `start_dist_ema50_atr_bucket = (1.0, inf]`
-   - `before_bb_width_atr_avg_bucket = (4.0, inf]`
+   - `before_bb_width_atr_avg_bucket ≠ (2.0, 4.0]`
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **30.0%** (6/20)
-   - `ladder_total_atr_bucket ≠ (1.0, 2.5]`
-   - `before_adx_avg_bucket = (25.0, inf]`
-   - `before_rsi_last_bucket = (50.0, 70.0]`
-- **15.8%** (3/19)
+- **15.0%** (3/20)
    - `ladder_total_atr_bucket ≠ (1.0, 2.5]`
    - `before_adx_avg_bucket ≠ (25.0, inf]`
    - `before_rsi_last_bucket ≠ (50.0, 70.0]`
 
 ### 📊 USOIL.FOREX/15m · ALL EVENTS
-- Events: 3120  ·  Baseline continuation: **46.9%**
+- Events: 3232  ·  Baseline continuation: **46.9%**
 
-  - 🟢 **91.9%** (34/37)
+  - 🟢 **87.5%** (28/32)
       - `type = bullish_OB`
-      - `vol_z_b = (-inf, -0.5]`
-      - `dow ≠ Fri`
-      - `rsi_b ≠ (30.0, 50.0]`
-  - 🟢 **80.7%** (46/57)
+      - `dow = Tue`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `atr_pct_b ≠ (0.4, inf]`
+  - 🟢 **79.5%** (31/39)
       - `type ≠ bullish_OB`
       - `type = bearish_OB`
+      - `adx_b ≠ (25.0, inf]`
       - `dow = Wed`
-      - `atr_pct_b = (0.15, 0.4]`
-  - 🟢 **80.6%** (29/36)
+  - 🟢 **78.2%** (43/55)
       - `type = bullish_OB`
-      - `vol_z_b ≠ (-inf, -0.5]`
+      - `dow ≠ Tue`
+      - `vol_z_b = (-inf, -0.5]`
+      - `dow ≠ Fri`
+  - 🟢 **77.4%** (24/31)
+      - `type = bullish_OB`
       - `dow = Tue`
-      - `vol_z_b = (0.5, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `atr_pct_b = (0.4, inf]`
+  - 🟢 **72.2%** (122/169)
+      - `type ≠ bullish_OB`
+      - `type = bearish_OB`
+      - `adx_b = (25.0, inf]`
+      - `dow ≠ Tue`
   - 🔴 **17.2%** (5/29)
       - `type ≠ bullish_OB`
       - `type ≠ bearish_OB`
@@ -5121,17 +5120,17 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `rsi_b = (70.0, inf]`
 
 ### 📊 USOIL.FOREX/15m · BOS_bearish
-- Events: 94  ·  Baseline continuation: **23.4%**
+- Events: 97  ·  Baseline continuation: **23.7%**
 
-  - 🔴 **30.0%** (3/10)
+  - 🔴 **27.3%** (3/11)
       - `dow ≠ Thu`
       - `dow ≠ Fri`
       - `atr_pct_b ≠ (0.4, inf]`
       - `vol_z_b = (0.5, inf]`
   - 🔴 **20.0%** (2/10)
       - `dow = Thu`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **15.4%** (2/13)
+      - `atr_pct_b = (0.4, inf]`
+  - 🔴 **14.3%** (2/14)
       - `dow ≠ Thu`
       - `dow ≠ Fri`
       - `atr_pct_b = (0.4, inf]`
@@ -5141,21 +5140,21 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
   - 🔴 **7.7%** (1/13)
       - `dow = Thu`
-      - `vol_z_b = (0.5, inf]`
+      - `atr_pct_b ≠ (0.4, inf]`
 
 ### 📊 USOIL.FOREX/15m · BOS_bullish
-- Events: 90  ·  Baseline continuation: **27.8%**
+- Events: 93  ·  Baseline continuation: **28.0%**
 
   - 🔴 **30.0%** (3/10)
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b ≠ (50.0, 70.0]`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **29.4%** (5/17)
+  - 🔴 **27.8%** (5/18)
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b = (50.0, 70.0]`
       - `vol_z_b = (0.5, inf]`
       - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **15.8%** (3/19)
+  - 🔴 **15.0%** (3/20)
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b = (50.0, 70.0]`
       - `vol_z_b ≠ (0.5, inf]`
@@ -5165,36 +5164,32 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (0.5, inf]`
 
 ### 📊 USOIL.FOREX/15m · CHoCH_bearish
-- Events: 123  ·  Baseline continuation: **41.5%**
+- Events: 129  ·  Baseline continuation: **40.3%**
 
   - 🟢 **75.0%** (9/12)
       - `dow = Wed`
       - `adx_b ≠ (25.0, inf]`
-  - 🔴 **28.6%** (4/14)
+  - 🔴 **29.2%** (7/24)
       - `dow ≠ Wed`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow = Tue`
-  - 🔴 **0.0%** (0/16)
+      - `vol_z_b = (0.5, inf]`
+      - `adx_b = (18.0, 25.0]`
+  - 🔴 **0.0%** (0/18)
       - `dow ≠ Wed`
       - `vol_z_b = (0.5, inf]`
       - `adx_b ≠ (18.0, 25.0]`
 
 ### 📊 USOIL.FOREX/15m · CHoCH_bullish
-- Events: 122  ·  Baseline continuation: **41.8%**
+- Events: 129  ·  Baseline continuation: **41.9%**
 
   - 🟢 **90.0%** (9/10)
       - `vol_z_b = (-inf, -0.5]`
       - `dow = Tue`
-  - 🟢 **80.0%** (8/10)
+  - 🟢 **75.0%** (9/12)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `rsi_b ≠ (50.0, 70.0]`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **29.4%** (5/17)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `adx_b ≠ (-inf, 18.0]`
+      - `adx_b ≠ (25.0, inf]`
       - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **21.1%** (4/19)
+  - 🔴 **19.0%** (4/21)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `rsi_b = (50.0, 70.0]`
       - `vol_z_b ≠ (-0.5, 0.5]`
@@ -5206,7 +5201,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `atr_pct_b ≠ (0.4, inf]`
 
 ### 📊 USOIL.FOREX/15m · bearish
-- Events: 466  ·  Baseline continuation: **42.9%**
+- Events: 479  ·  Baseline continuation: **43.2%**
 
   - 🔴 **30.0%** (6/20)
       - `dow = Fri`
@@ -5223,95 +5218,119 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `rsi_b ≠ (50.0, 70.0]`
       - `atr_pct_b = (0.4, inf]`
       - `adx_b = (25.0, inf]`
-  - 🔴 **0.0%** (0/11)
+  - 🔴 **13.3%** (2/15)
       - `dow ≠ Fri`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `adx_b ≠ (25.0, inf]`
+      - `atr_pct_b ≠ (0.4, inf]`
+  - 🔴 **0.0%** (0/10)
+      - `dow ≠ Fri`
+      - `rsi_b = (30.0, 50.0]`
       - `dow = Mon`
       - `adx_b = (-inf, 18.0]`
 
 ### 📊 USOIL.FOREX/15m · bearish_OB
-- Events: 411  ·  Baseline continuation: **65.5%**
+- Events: 427  ·  Baseline continuation: **64.4%**
 
   - 🟢 **100.0%** (15/15)
+      - `adx_b ≠ (25.0, inf]`
       - `dow = Wed`
       - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b ≠ (25.0, inf]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🟢 **91.3%** (21/23)
-      - `dow ≠ Wed`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🟢 **81.8%** (18/22)
-      - `dow ≠ Wed`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `dow = Fri`
+  - 🟢 **83.0%** (39/47)
       - `adx_b = (25.0, inf]`
-  - 🟢 **81.8%** (18/22)
-      - `dow = Wed`
-      - `atr_pct_b = (0.15, 0.4]`
+      - `dow ≠ Tue`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `rsi_b = (30.0, 50.0]`
+  - 🟢 **81.8%** (9/11)
       - `adx_b = (25.0, inf]`
-      - `rsi_b ≠ (50.0, 70.0]`
-  - 🟢 **80.0%** (8/10)
-      - `dow = Wed`
-      - `atr_pct_b = (0.15, 0.4]`
-      - `adx_b ≠ (25.0, inf]`
+      - `dow ≠ Tue`
       - `vol_z_b = (-0.5, 0.5]`
+      - `dow = Mon`
+  - 🟢 **80.0%** (8/10)
+      - `adx_b ≠ (25.0, inf]`
+      - `dow = Wed`
+      - `atr_pct_b = (0.15, 0.4]`
+      - `vol_z_b = (-0.5, 0.5]`
+  - 🟢 **75.0%** (18/24)
+      - `adx_b = (25.0, inf]`
+      - `dow = Tue`
+      - `rsi_b = (30.0, 50.0]`
+  - 🔴 **9.1%** (1/11)
+      - `adx_b = (25.0, inf]`
+      - `dow = Tue`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `atr_pct_b ≠ (0.4, inf]`
 
 ### 📊 USOIL.FOREX/15m · breakdown
-- Events: 252  ·  Baseline continuation: **44.8%**
+- Events: 260  ·  Baseline continuation: **45.4%**
 
-  - 🟢 **71.4%** (10/14)
-      - `atr_pct_b = (0.4, inf]`
+  - 🟢 **90.9%** (10/11)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `dow = Wed`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `adx_b ≠ (25.0, inf]`
+  - 🟢 **81.8%** (9/11)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `dow ≠ Wed`
+      - `vol_z_b = (-0.5, 0.5]`
       - `adx_b = (18.0, 25.0]`
-      - `rsi_b ≠ (-inf, 30.0]`
+  - 🟢 **71.4%** (10/14)
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `adx_b = (18.0, 25.0]`
+      - `rsi_b = (30.0, 50.0]`
       - `dow = Thu`
-  - 🟢 **71.1%** (27/38)
-      - `atr_pct_b ≠ (0.4, inf]`
-      - `dow ≠ Thu`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **30.0%** (6/20)
-      - `atr_pct_b ≠ (0.4, inf]`
-      - `dow = Thu`
+  - 🟢 **71.4%** (10/14)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `dow = Wed`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `adx_b = (25.0, inf]`
+  - 🔴 **27.8%** (10/36)
+      - `atr_pct_b = (0.15, 0.4]`
+      - `dow ≠ Wed`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `adx_b ≠ (25.0, inf]`
   - 🔴 **21.1%** (4/19)
-      - `atr_pct_b = (0.4, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b ≠ (18.0, 25.0]`
       - `dow ≠ Fri`
       - `dow = Thu`
   - 🔴 **14.3%** (2/14)
-      - `atr_pct_b = (0.4, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b ≠ (18.0, 25.0]`
       - `dow = Fri`
 
 ### 📊 USOIL.FOREX/15m · breakout_up
-- Events: 209  ·  Baseline continuation: **39.7%**
+- Events: 220  ·  Baseline continuation: **40.0%**
 
-  - 🟢 **73.7%** (14/19)
-      - `adx_b ≠ (25.0, inf]`
+  - 🟢 **91.7%** (11/12)
       - `dow = Tue`
-  - 🟢 **72.7%** (8/11)
-      - `adx_b = (25.0, inf]`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `atr_pct_b = (0.15, 0.4]`
-  - 🔴 **25.8%** (8/31)
-      - `adx_b = (25.0, inf]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `atr_pct_b ≠ (0.15, 0.4]`
-      - `dow ≠ Mon`
-  - 🔴 **18.2%** (2/11)
       - `adx_b ≠ (25.0, inf]`
+      - `atr_pct_b = (0.4, inf]`
+  - 🔴 **30.0%** (12/40)
       - `dow ≠ Tue`
-      - `dow = Mon`
-      - `adx_b ≠ (18.0, 25.0]`
-  - 🔴 **5.9%** (1/17)
-      - `adx_b = (25.0, inf]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `atr_pct_b = (0.15, 0.4]`
+      - `rsi_b = (50.0, 70.0]`
+      - `dow ≠ Wed`
+      - `atr_pct_b = (0.4, inf]`
+  - 🔴 **29.0%** (9/31)
+      - `dow ≠ Tue`
       - `rsi_b ≠ (50.0, 70.0]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `atr_pct_b = (0.4, inf]`
+  - 🔴 **5.0%** (1/20)
+      - `dow ≠ Tue`
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `atr_pct_b ≠ (0.4, inf]`
 
 ### 📊 USOIL.FOREX/15m · bullish
-- Events: 466  ·  Baseline continuation: **39.9%**
+- Events: 482  ·  Baseline continuation: **40.2%**
 
+  - 🔴 **30.0%** (3/10)
+      - `dow ≠ Thu`
+      - `dow = Mon`
+      - `vol_z_b = (0.5, inf]`
+      - `atr_pct_b = (0.15, 0.4]`
   - 🔴 **27.3%** (3/11)
       - `dow = Thu`
       - `adx_b ≠ (-inf, 18.0]`
@@ -5321,201 +5340,195 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Thu`
       - `adx_b ≠ (-inf, 18.0]`
       - `vol_z_b = (-0.5, 0.5]`
-      - `adx_b ≠ (25.0, inf]`
-  - 🔴 **26.5%** (18/68)
+      - `adx_b = (18.0, 25.0]`
+  - 🔴 **22.2%** (12/54)
       - `dow ≠ Thu`
       - `dow = Mon`
       - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b ≠ (70.0, inf]`
+      - `rsi_b = (50.0, 70.0]`
   - 🔴 **20.5%** (8/39)
       - `dow ≠ Thu`
       - `dow ≠ Mon`
       - `rsi_b ≠ (50.0, 70.0]`
-      - `atr_pct_b ≠ (0.4, inf]`
-  - 🔴 **16.7%** (2/12)
-      - `dow = Thu`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `adx_b = (25.0, inf]`
+      - `atr_pct_b = (0.15, 0.4]`
 
 ### 📊 USOIL.FOREX/15m · bullish_OB
-- Events: 389  ·  Baseline continuation: **66.3%**
+- Events: 399  ·  Baseline continuation: **66.9%**
 
-  - 🟢 **96.3%** (26/27)
-      - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b ≠ (30.0, 50.0]`
-      - `dow ≠ Fri`
-      - `dow ≠ Mon`
   - 🟢 **92.3%** (12/13)
-      - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b = (30.0, 50.0]`
-      - `dow = Mon`
-  - 🟢 **90.0%** (18/20)
-      - `vol_z_b ≠ (-inf, -0.5]`
       - `dow = Tue`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `rsi_b ≠ (50.0, 70.0]`
-  - 🟢 **80.0%** (8/10)
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow = Tue`
-      - `vol_z_b = (-0.5, 0.5]`
       - `adx_b = (-inf, 18.0]`
-  - 🟢 **80.0%** (8/10)
+  - 🟢 **87.0%** (20/23)
+      - `dow = Tue`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `atr_pct_b ≠ (0.4, inf]`
+  - 🟢 **83.8%** (31/37)
+      - `dow ≠ Tue`
       - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b ≠ (30.0, 50.0]`
       - `dow ≠ Fri`
-      - `dow = Mon`
+      - `dow ≠ Wed`
+  - 🟢 **81.8%** (9/11)
+      - `dow ≠ Tue`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `rsi_b = (-inf, 30.0]`
+      - `dow = Thu`
+  - 🟢 **81.8%** (9/11)
+      - `dow ≠ Tue`
+      - `vol_z_b = (-inf, -0.5]`
+      - `dow = Fri`
+      - `adx_b = (-inf, 18.0]`
 
 ### 📊 USOIL.FOREX/15m · engulfing_bear
-- Events: 48  ·  Baseline continuation: **35.4%**
+- Events: 52  ·  Baseline continuation: **32.7%**
 
-  - 🔴 **20.0%** (2/10)
+  - 🔴 **18.2%** (2/11)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `vol_z_b = (0.5, inf]`
-      - `rsi_b ≠ (50.0, 70.0]`
-  - 🔴 **8.3%** (1/12)
+      - `adx_b ≠ (25.0, inf]`
+  - 🔴 **7.7%** (1/13)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `vol_z_b ≠ (0.5, inf]`
 
 ### 📊 USOIL.FOREX/15m · engulfing_bull
-- Events: 62  ·  Baseline continuation: **45.2%**
+- Events: 64  ·  Baseline continuation: **43.8%**
 
   - 🟢 **71.4%** (10/14)
       - `adx_b = (-inf, 18.0]`
-  - 🔴 **26.3%** (5/19)
+  - 🔴 **14.3%** (2/14)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Wed`
+      - `dow ≠ Fri`
       - `rsi_b = (50.0, 70.0]`
 
 ### 📊 USOIL.FOREX/15m · hammer
-- Events: 213  ·  Baseline continuation: **36.2%**
+- Events: 220  ·  Baseline continuation: **35.5%**
 
-  - 🔴 **30.0%** (3/10)
+  - 🔴 **22.6%** (7/31)
       - `adx_b = (25.0, inf]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `atr_pct_b ≠ (0.4, inf]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **22.9%** (8/35)
-      - `adx_b = (25.0, inf]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-      - `atr_pct_b = (0.4, inf]`
       - `dow ≠ Tue`
+      - `vol_z_b ≠ (0.5, inf]`
   - 🔴 **14.3%** (3/21)
       - `adx_b ≠ (25.0, inf]`
       - `rsi_b = (30.0, 50.0]`
-      - `adx_b ≠ (-inf, 18.0]`
+      - `adx_b = (18.0, 25.0]`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **5.3%** (1/19)
+  - 🔴 **13.3%** (4/30)
       - `adx_b = (25.0, inf]`
       - `vol_z_b ≠ (-0.5, 0.5]`
-      - `atr_pct_b ≠ (0.4, inf]`
-      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow ≠ Tue`
+      - `vol_z_b = (0.5, inf]`
 
 ### 📊 USOIL.FOREX/15m · shooting_star
-- Events: 175  ·  Baseline continuation: **47.4%**
+- Events: 181  ·  Baseline continuation: **48.6%**
 
-  - 🟢 **90.9%** (10/11)
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `dow = Wed`
-      - `adx_b = (25.0, inf]`
-  - 🟢 **73.7%** (14/19)
-      - `rsi_b = (50.0, 70.0]`
+  - 🟢 **80.0%** (20/25)
       - `dow ≠ Tue`
       - `adx_b = (25.0, inf]`
-  - 🟢 **72.7%** (8/11)
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `dow = Wed`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
+  - 🟢 **74.2%** (23/31)
+      - `dow ≠ Tue`
       - `adx_b ≠ (25.0, inf]`
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `vol_z_b ≠ (0.5, inf]`
+  - 🔴 **30.0%** (3/10)
+      - `dow ≠ Tue`
+      - `adx_b ≠ (25.0, inf]`
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **30.0%** (3/10)
+      - `dow ≠ Tue`
+      - `adx_b = (25.0, inf]`
+      - `vol_z_b = (-inf, -0.5]`
+      - `atr_pct_b = (0.4, inf]`
   - 🔴 **28.6%** (4/14)
-      - `rsi_b = (50.0, 70.0]`
       - `dow = Tue`
-      - `adx_b ≠ (25.0, inf]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `atr_pct_b ≠ (0.4, inf]`
   - 🔴 **16.7%** (4/24)
-      - `rsi_b = (50.0, 70.0]`
       - `dow ≠ Tue`
       - `adx_b ≠ (25.0, inf]`
-      - `atr_pct_b ≠ (0.4, inf]`
-  - 🔴 **7.1%** (1/14)
       - `rsi_b = (50.0, 70.0]`
+      - `atr_pct_b ≠ (0.4, inf]`
+  - 🔴 **11.8%** (2/17)
       - `dow = Tue`
-      - `adx_b = (25.0, inf]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `atr_pct_b = (0.4, inf]`
 
 ---
 
 ## USOIL.FOREX · 30m
-- Candles: **3883**  ·  Swing pivots: 486  ·  FVG: 800
-- CHoCH/BOS events: 346  ·  Order Blocks: 669
-- Trend Ladders detected: 200  ·  Candle patterns: 918  ·  Breakouts: 406
+- Candles: **3959**  ·  Swing pivots: 495  ·  FVG: 811
+- CHoCH/BOS events: 353  ·  Order Blocks: 685
+- Trend Ladders detected: 204  ·  Candle patterns: 942  ·  Breakouts: 416
 
 ### S/R Cluster Seviyeleri (top 8)
 - 95.5139 (touches: **233**, strong)
 - 70.8373 (touches: **80**, strong)
 - 103.8493 (touches: **46**, strong)
-- 79.7623 (touches: **41**, strong)
+- 79.8274 (touches: **43**, strong)
 - 75.6184 (touches: **23**, strong)
 - 108.9148 (touches: **15**, strong)
 - 107.0262 (touches: **13**, strong)
-- 86.982 (touches: **5**, strong)
+- 85.3322 (touches: **6**, strong)
 
-### 🪜 Trend Ladder Analizi (200 ladder)
-- Continued: 83  ·  Reversed: 83  ·  Baseline continuation: **41.5%**
+### 🪜 Trend Ladder Analizi (204 ladder)
+- Continued: 85  ·  Reversed: 83  ·  Baseline continuation: **41.7%**
+
+**🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
+- **70.6%** (12/17)
+   - `before_rsi_last_bucket = (70.0, inf]`
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **21.1%** (4/19)
+- **25.6%** (10/39)
    - `before_rsi_last_bucket ≠ (70.0, inf]`
    - `before_rsi_last_bucket ≠ (30.0, 50.0]`
-   - `ladder_slope_atr_bucket = (0.5, 1.0]`
+   - `before_rsi_avg_bucket ≠ (50.0, 70.0]`
 
 ### 📊 USOIL.FOREX/30m · ALL EVENTS
-- Events: 2730  ·  Baseline continuation: **48.5%**
+- Events: 2787  ·  Baseline continuation: **48.5%**
 
-  - 🟢 **93.3%** (14/15)
+  - 🟢 **93.8%** (15/16)
       - `type = bullish_OB`
-      - `atr_pct_b ≠ (0.4, inf]`
-  - 🟢 **93.3%** (14/15)
-      - `type = bullish_OB`
-      - `atr_pct_b = (0.4, inf]`
       - `adx_b = (-inf, 18.0]`
       - `dow = Mon`
-  - 🟢 **84.2%** (16/19)
+  - 🟢 **88.5%** (23/26)
       - `type = bullish_OB`
-      - `atr_pct_b = (0.4, inf]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `rsi_b = (70.0, inf]`
-  - 🟢 **83.3%** (40/48)
-      - `type ≠ bullish_OB`
-      - `type = bearish_OB`
-      - `dow = Tue`
-      - `adx_b ≠ (18.0, 25.0]`
-  - 🟢 **74.6%** (47/63)
-      - `type = bullish_OB`
-      - `atr_pct_b = (0.4, inf]`
       - `adx_b = (-inf, 18.0]`
       - `dow ≠ Mon`
-  - 🔴 **25.7%** (27/105)
+      - `rsi_b = (50.0, 70.0]`
+  - 🟢 **78.2%** (61/78)
+      - `type = bullish_OB`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `vol_z_b = (0.5, inf]`
+      - `dow ≠ Tue`
+  - 🟢 **76.0%** (76/100)
+      - `type ≠ bullish_OB`
+      - `type = bearish_OB`
+      - `dow ≠ Fri`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **25.7%** (28/109)
       - `type ≠ bullish_OB`
       - `type ≠ bearish_OB`
       - `dow = Mon`
       - `type = bullish`
-  - 🔴 **23.6%** (13/55)
-      - `type ≠ bullish_OB`
-      - `type ≠ bearish_OB`
-      - `dow ≠ Mon`
-      - `type = BOS_bearish`
 
 ### 📊 USOIL.FOREX/30m · BOS_bearish
-- Events: 73  ·  Baseline continuation: **24.7%**
+- Events: 74  ·  Baseline continuation: **24.3%**
 
-  - 🔴 **20.0%** (2/10)
+  - 🔴 **18.2%** (2/11)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Thu`
       - `vol_z_b = (0.5, inf]`
-      - `rsi_b ≠ (30.0, 50.0]`
+      - `rsi_b = (-inf, 30.0]`
   - 🔴 **15.4%** (2/13)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Thu`
       - `vol_z_b = (0.5, inf]`
-      - `rsi_b = (30.0, 50.0]`
+      - `rsi_b ≠ (-inf, 30.0]`
   - 🔴 **7.1%** (1/14)
       - `adx_b ≠ (-inf, 18.0]`
       - `dow = Thu`
@@ -5538,49 +5551,51 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Mon`
 
 ### 📊 USOIL.FOREX/30m · CHoCH_bearish
-- Events: 101  ·  Baseline continuation: **43.6%**
+- Events: 104  ·  Baseline continuation: **43.3%**
 
-  - 🟢 **76.9%** (10/13)
+  - 🟢 **78.6%** (11/14)
       - `rsi_b = (50.0, 70.0]`
       - `adx_b = (25.0, inf]`
-  - 🔴 **25.0%** (8/32)
+  - 🔴 **26.1%** (6/23)
       - `rsi_b ≠ (50.0, 70.0]`
+      - `dow ≠ Thu`
       - `dow ≠ Tue`
       - `dow ≠ Mon`
-      - `rsi_b ≠ (-inf, 30.0]`
-  - 🔴 **10.0%** (1/10)
+  - 🔴 **15.8%** (3/19)
       - `rsi_b ≠ (50.0, 70.0]`
-      - `dow ≠ Tue`
-      - `dow ≠ Mon`
-      - `rsi_b = (-inf, 30.0]`
+      - `dow = Thu`
 
 ### 📊 USOIL.FOREX/30m · CHoCH_bullish
-- Events: 101  ·  Baseline continuation: **44.6%**
+- Events: 104  ·  Baseline continuation: **44.2%**
 
-  - 🔴 **30.0%** (9/30)
+  - 🔴 **29.0%** (9/31)
       - `rsi_b ≠ (70.0, inf]`
       - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Wed`
       - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **10.0%** (1/10)
+  - 🔴 **9.1%** (1/11)
       - `rsi_b = (70.0, inf]`
 
 ### 📊 USOIL.FOREX/30m · bearish
-- Events: 385  ·  Baseline continuation: **43.6%**
+- Events: 390  ·  Baseline continuation: **43.6%**
 
-  - 🟢 **85.7%** (12/14)
+  - 🟢 **90.9%** (10/11)
       - `vol_z_b = (-inf, -0.5]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow = Fri`
-  - 🟢 **73.3%** (11/15)
+      - `adx_b ≠ (25.0, inf]`
+      - `dow = Wed`
+  - 🟢 **90.5%** (19/21)
       - `vol_z_b = (-inf, -0.5]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow ≠ Fri`
-      - `dow = Thu`
+      - `adx_b = (25.0, inf]`
+      - `dow ≠ Wed`
+      - `dow ≠ Mon`
   - 🟢 **70.6%** (12/17)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow = Tue`
       - `rsi_b = (-inf, 30.0]`
+  - 🔴 **27.3%** (3/11)
+      - `vol_z_b = (-inf, -0.5]`
+      - `adx_b = (25.0, inf]`
+      - `dow = Wed`
   - 🔴 **20.8%** (5/24)
       - `vol_z_b ≠ (-inf, -0.5]`
       - `dow ≠ Tue`
@@ -5588,31 +5603,30 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Fri`
 
 ### 📊 USOIL.FOREX/30m · bearish_OB
-- Events: 324  ·  Baseline continuation: **64.2%**
+- Events: 333  ·  Baseline continuation: **63.7%**
 
-  - 🟢 **92.3%** (12/13)
+  - 🟢 **94.1%** (16/17)
       - `dow = Tue`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `rsi_b = (50.0, 70.0]`
-      - `adx_b ≠ (25.0, inf]`
-  - 🟢 **91.7%** (11/12)
-      - `dow = Tue`
-      - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b ≠ (50.0, 70.0]`
-      - `vol_z_b = (-0.5, 0.5]`
-  - 🟢 **82.6%** (19/23)
+      - `adx_b = (25.0, inf]`
+  - 🟢 **86.4%** (19/22)
+      - `dow = Tue`
+      - `rsi_b = (50.0, 70.0]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
+  - 🟢 **84.1%** (37/44)
       - `dow ≠ Tue`
       - `dow ≠ Fri`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `rsi_b = (70.0, inf]`
-  - 🟢 **81.8%** (9/11)
+      - `vol_z_b = (0.5, inf]`
+      - `adx_b = (25.0, inf]`
+  - 🟢 **73.3%** (11/15)
       - `dow = Tue`
-      - `adx_b ≠ (18.0, 25.0]`
       - `rsi_b ≠ (50.0, 70.0]`
-      - `vol_z_b ≠ (-0.5, 0.5]`
-  - 🟢 **73.7%** (14/19)
-      - `dow = Tue`
-      - `adx_b = (18.0, 25.0]`
+      - `adx_b ≠ (25.0, inf]`
+  - 🟢 **72.7%** (8/11)
+      - `dow ≠ Tue`
+      - `dow = Fri`
+      - `adx_b = (25.0, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
   - 🔴 **26.3%** (5/19)
       - `dow ≠ Tue`
       - `dow = Fri`
@@ -5620,7 +5634,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-0.5, 0.5]`
 
 ### 📊 USOIL.FOREX/30m · breakdown
-- Events: 181  ·  Baseline continuation: **45.9%**
+- Events: 183  ·  Baseline continuation: **45.9%**
 
   - 🟢 **76.9%** (10/13)
       - `adx_b ≠ (25.0, inf]`
@@ -5634,53 +5648,44 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow = Thu`
 
 ### 📊 USOIL.FOREX/30m · breakout_up
-- Events: 223  ·  Baseline continuation: **49.8%**
+- Events: 231  ·  Baseline continuation: **49.8%**
 
   - 🟢 **92.3%** (12/13)
+      - `dow ≠ Mon`
       - `dow = Wed`
       - `adx_b ≠ (25.0, inf]`
   - 🟢 **73.3%** (11/15)
+      - `dow ≠ Mon`
       - `dow = Wed`
       - `adx_b = (25.0, inf]`
-      - `rsi_b = (70.0, inf]`
-  - 🟢 **71.4%** (15/21)
-      - `dow ≠ Wed`
-      - `dow ≠ Mon`
-      - `dow = Fri`
       - `rsi_b ≠ (50.0, 70.0]`
-  - 🔴 **26.7%** (4/15)
-      - `dow ≠ Wed`
+  - 🔴 **10.0%** (1/10)
       - `dow = Mon`
       - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **20.0%** (2/10)
-      - `dow ≠ Wed`
-      - `dow = Mon`
-      - `vol_z_b ≠ (0.5, inf]`
-      - `rsi_b ≠ (50.0, 70.0]`
+      - `adx_b = (25.0, inf]`
 
 ### 📊 USOIL.FOREX/30m · bullish
-- Events: 412  ·  Baseline continuation: **41.5%**
+- Events: 418  ·  Baseline continuation: **41.4%**
 
   - 🔴 **30.0%** (3/10)
       - `dow = Mon`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b = (-inf, 18.0]`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **28.9%** (11/38)
+      - `vol_z_b = (-0.5, 0.5]`
+  - 🔴 **28.6%** (12/42)
       - `dow = Mon`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b ≠ (-inf, 18.0]`
-      - `adx_b ≠ (18.0, 25.0]`
+      - `adx_b = (25.0, inf]`
   - 🔴 **20.0%** (3/15)
       - `dow = Mon`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b ≠ (-inf, 18.0]`
-      - `adx_b = (18.0, 25.0]`
+      - `adx_b ≠ (25.0, inf]`
   - 🔴 **18.8%** (3/16)
       - `dow = Mon`
       - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b = (50.0, 70.0]`
+      - `adx_b ≠ (25.0, inf]`
   - 🔴 **13.6%** (3/22)
       - `dow ≠ Mon`
       - `rsi_b = (30.0, 50.0]`
@@ -5688,38 +5693,42 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 USOIL.FOREX/30m · bullish_OB
-- Events: 345  ·  Baseline continuation: **69.6%**
+- Events: 352  ·  Baseline continuation: **69.9%**
 
   - 🟢 **100.0%** (10/10)
-      - `atr_pct_b = (0.4, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b = (-inf, 18.0]`
       - `dow = Thu`
   - 🟢 **93.3%** (14/15)
-      - `atr_pct_b ≠ (0.4, inf]`
-  - 🟢 **93.3%** (14/15)
-      - `atr_pct_b = (0.4, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b = (-inf, 18.0]`
       - `dow ≠ Thu`
       - `dow = Mon`
+  - 🟢 **93.3%** (14/15)
+      - `atr_pct_b = (0.15, 0.4]`
   - 🟢 **84.2%** (16/19)
-      - `atr_pct_b = (0.4, inf]`
+      - `atr_pct_b ≠ (0.15, 0.4]`
       - `adx_b ≠ (-inf, 18.0]`
       - `rsi_b = (70.0, inf]`
-  - 🟢 **71.1%** (64/90)
-      - `atr_pct_b = (0.4, inf]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `rsi_b ≠ (70.0, inf]`
-      - `vol_z_b = (0.5, inf]`
+  - 🟢 **71.9%** (41/57)
+      - `atr_pct_b ≠ (0.15, 0.4]`
+      - `adx_b = (-inf, 18.0]`
+      - `dow ≠ Thu`
+      - `dow ≠ Mon`
 
 ### 📊 USOIL.FOREX/30m · engulfing_bear
-- Events: 77  ·  Baseline continuation: **40.3%**
+- Events: 80  ·  Baseline continuation: **38.8%**
 
-  - 🔴 **17.6%** (3/17)
+  - 🟢 **70.0%** (7/10)
+      - `adx_b = (25.0, inf]`
+      - `rsi_b ≠ (30.0, 50.0]`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **16.7%** (3/18)
       - `adx_b ≠ (25.0, inf]`
       - `vol_z_b = (0.5, inf]`
 
 ### 📊 USOIL.FOREX/30m · engulfing_bull
-- Events: 87  ·  Baseline continuation: **48.3%**
+- Events: 90  ·  Baseline continuation: **48.9%**
 
   - 🟢 **84.6%** (11/13)
       - `rsi_b = (70.0, inf]`
@@ -5729,7 +5738,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-0.5, 0.5]`
 
 ### 📊 USOIL.FOREX/30m · hammer
-- Events: 185  ·  Baseline continuation: **44.3%**
+- Events: 191  ·  Baseline continuation: **44.5%**
 
   - 🔴 **26.1%** (6/23)
       - `dow ≠ Fri`
@@ -5741,94 +5750,113 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b = (-inf, -0.5]`
 
 ### 📊 USOIL.FOREX/30m · shooting_star
-- Events: 166  ·  Baseline continuation: **38.6%**
+- Events: 167  ·  Baseline continuation: **38.3%**
 
-  - 🔴 **29.4%** (5/17)
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow ≠ Fri`
-      - `vol_z_b = (-inf, -0.5]`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **27.8%** (5/18)
-      - `vol_z_b ≠ (0.5, inf]`
-      - `dow ≠ Fri`
+  - 🟢 **72.7%** (8/11)
+      - `dow = Fri`
       - `vol_z_b ≠ (-inf, -0.5]`
+      - `rsi_b = (50.0, 70.0]`
+  - 🟢 **70.0%** (7/10)
+      - `dow ≠ Fri`
+      - `dow = Wed`
+      - `vol_z_b ≠ (-0.5, 0.5]`
       - `rsi_b = (30.0, 50.0]`
-  - 🔴 **25.0%** (3/12)
+  - 🔴 **30.0%** (3/10)
+      - `dow ≠ Fri`
+      - `dow = Wed`
+      - `vol_z_b = (-0.5, 0.5]`
+  - 🔴 **29.5%** (13/44)
+      - `dow ≠ Fri`
+      - `dow ≠ Wed`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow ≠ Thu`
+  - 🔴 **28.6%** (4/14)
+      - `dow = Fri`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **22.2%** (4/18)
+      - `dow ≠ Fri`
+      - `dow ≠ Wed`
       - `vol_z_b = (0.5, inf]`
       - `adx_b ≠ (-inf, 18.0]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **8.3%** (1/12)
+  - 🔴 **9.1%** (1/11)
+      - `dow ≠ Fri`
+      - `dow ≠ Wed`
       - `vol_z_b = (0.5, inf]`
       - `adx_b = (-inf, 18.0]`
 
 ---
 
 ## USOIL.FOREX · 1h
-- Candles: **2794**  ·  Swing pivots: 383  ·  FVG: 628
-- CHoCH/BOS events: 259  ·  Order Blocks: 543
-- Trend Ladders detected: 126  ·  Candle patterns: 816  ·  Breakouts: 286
+- Candles: **2833**  ·  Swing pivots: 389  ·  FVG: 630
+- CHoCH/BOS events: 265  ·  Order Blocks: 552
+- Trend Ladders detected: 126  ·  Candle patterns: 825  ·  Breakouts: 290
 
 ### S/R Cluster Seviyeleri (top 8)
-- 96.5701 (touches: **187**, strong)
+- 96.628 (touches: **187**, strong)
 - 66.8214 (touches: **86**, strong)
 - 77.0561 (touches: **32**, strong)
 - 72.8882 (touches: **16**, strong)
 - 86.9386 (touches: **14**, strong)
+- 81.3304 (touches: **12**, strong)
 - 74.6887 (touches: **11**, strong)
-- 80.85 (touches: **7**, strong)
-- 79.434 (touches: **5**, strong)
+- 84.53 (touches: **8**, strong)
 
 ### 🪜 Trend Ladder Analizi (126 ladder)
-- Continued: 58  ·  Reversed: 52  ·  Baseline continuation: **46.0%**
+- Continued: 58  ·  Reversed: 51  ·  Baseline continuation: **46.0%**
 
 **🟢 Ladder devam etme ihtimali yüksek olan koşullar:**
-- **82.4%** (14/17)
+- **81.2%** (13/16)
    - `direction ≠ down`
    - `before_adx_avg_bucket ≠ (25.0, inf]`
    - `start_dist_ema50_atr_bucket = (1.0, inf]`
 
 **🔴 Ladder devam etme ihtimali düşük olan koşullar (reverse adayı):**
-- **29.4%** (5/17)
-   - `direction = down`
-   - `start_dist_ema50_atr_bucket ≠ (1.0, inf]`
-   - `before_adx_avg_bucket ≠ (18.0, 25.0]`
-- **27.3%** (3/11)
+- **30.0%** (3/10)
+   - `direction ≠ down`
+   - `before_adx_avg_bucket = (25.0, inf]`
+   - `before_rsi_last_bucket = (50.0, 70.0]`
+- **30.0%** (3/10)
    - `direction = down`
    - `start_dist_ema50_atr_bucket = (1.0, inf]`
    - `before_bb_width_atr_avg_bucket = (2.0, 4.0]`
-- **18.2%** (2/11)
+- **27.3%** (3/11)
+   - `direction = down`
+   - `start_dist_ema50_atr_bucket ≠ (1.0, inf]`
+   - `start_dist_ema50_atr_bucket = (-1.0, 0.0]`
+- **16.7%** (2/12)
    - `direction = down`
    - `start_dist_ema50_atr_bucket = (1.0, inf]`
    - `before_bb_width_atr_avg_bucket ≠ (2.0, 4.0]`
 
 ### 📊 USOIL.FOREX/1h · ALL EVENTS
-- Events: 2170  ·  Baseline continuation: **44.9%**
+- Events: 2200  ·  Baseline continuation: **44.8%**
 
-  - 🟢 **94.4%** (17/18)
+  - 🟢 **85.7%** (36/42)
       - `type = bullish_OB`
-      - `dow = Fri`
+      - `dow ≠ Tue`
+      - `dow = Mon`
       - `vol_z_b ≠ (-inf, -0.5]`
-      - `adx_b ≠ (18.0, 25.0]`
   - 🟢 **77.8%** (49/63)
       - `type ≠ bullish_OB`
       - `type = bearish_OB`
       - `dow ≠ Fri`
       - `vol_z_b = (0.5, inf]`
-  - 🟢 **75.0%** (12/16)
+  - 🟢 **75.4%** (43/57)
       - `type = bullish_OB`
+      - `dow ≠ Tue`
+      - `dow ≠ Mon`
       - `dow = Fri`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `adx_b = (18.0, 25.0]`
-  - 🔴 **16.7%** (8/48)
-      - `type ≠ bullish_OB`
-      - `type ≠ bearish_OB`
-      - `type ≠ BOS_bearish`
-      - `type = BOS_bullish`
-  - 🔴 **16.7%** (6/36)
+  - 🔴 **17.1%** (6/35)
       - `type ≠ bullish_OB`
       - `type ≠ bearish_OB`
       - `type = BOS_bearish`
       - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **16.3%** (8/49)
+      - `type ≠ bullish_OB`
+      - `type ≠ bearish_OB`
+      - `type ≠ BOS_bearish`
+      - `type = BOS_bullish`
   - 🔴 **11.1%** (2/18)
       - `type ≠ bullish_OB`
       - `type ≠ bearish_OB`
@@ -5836,22 +5864,22 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b = (18.0, 25.0]`
 
 ### 📊 USOIL.FOREX/1h · BOS_bearish
-- Events: 54  ·  Baseline continuation: **14.8%**
+- Events: 53  ·  Baseline continuation: **15.1%**
 
+  - 🔴 **20.0%** (2/10)
+      - `dow ≠ Tue`
+      - `rsi_b ≠ (30.0, 50.0]`
   - 🔴 **15.4%** (2/13)
       - `dow ≠ Tue`
-      - `dow = Thu`
-  - 🔴 **8.3%** (1/12)
-      - `dow ≠ Tue`
-      - `dow ≠ Thu`
+      - `rsi_b = (30.0, 50.0]`
       - `adx_b = (18.0, 25.0]`
-  - 🔴 **0.0%** (0/18)
+  - 🔴 **0.0%** (0/20)
       - `dow ≠ Tue`
-      - `dow ≠ Thu`
+      - `rsi_b = (30.0, 50.0]`
       - `adx_b ≠ (18.0, 25.0]`
 
 ### 📊 USOIL.FOREX/1h · BOS_bullish
-- Events: 48  ·  Baseline continuation: **16.7%**
+- Events: 49  ·  Baseline continuation: **16.3%**
 
   - 🔴 **30.0%** (3/10)
       - `dow ≠ Tue`
@@ -5861,13 +5889,13 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Tue`
       - `dow ≠ Thu`
       - `dow ≠ Mon`
-  - 🔴 **0.0%** (0/11)
+  - 🔴 **0.0%** (0/12)
       - `dow = Tue`
 
 ### 📊 USOIL.FOREX/1h · CHoCH_bearish
-- Events: 78  ·  Baseline continuation: **50.0%**
+- Events: 81  ·  Baseline continuation: **49.4%**
 
-  - 🟢 **86.7%** (13/15)
+  - 🟢 **80.0%** (12/15)
       - `vol_z_b = (-inf, -0.5]`
   - 🔴 **25.0%** (6/24)
       - `vol_z_b ≠ (-inf, -0.5]`
@@ -5875,50 +5903,50 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b ≠ (25.0, inf]`
 
 ### 📊 USOIL.FOREX/1h · CHoCH_bullish
-- Events: 78  ·  Baseline continuation: **37.2%**
+- Events: 82  ·  Baseline continuation: **37.8%**
 
-  - 🔴 **30.0%** (3/10)
-      - `rsi_b ≠ (50.0, 70.0]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `vol_z_b = (0.5, inf]`
-  - 🔴 **27.3%** (3/11)
-      - `rsi_b = (50.0, 70.0]`
+  - 🟢 **76.9%** (10/13)
       - `adx_b ≠ (18.0, 25.0]`
-      - `adx_b = (-inf, 18.0]`
-  - 🔴 **15.4%** (2/13)
-      - `rsi_b = (50.0, 70.0]`
+      - `dow ≠ Tue`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **30.0%** (3/10)
       - `adx_b = (18.0, 25.0]`
+      - `rsi_b ≠ (50.0, 70.0]`
+  - 🔴 **23.1%** (3/13)
+      - `adx_b ≠ (18.0, 25.0]`
+      - `dow = Tue`
+  - 🔴 **18.2%** (2/11)
+      - `adx_b ≠ (18.0, 25.0]`
+      - `dow ≠ Tue`
+      - `vol_z_b ≠ (0.5, inf]`
+      - `dow = Fri`
+  - 🔴 **15.4%** (2/13)
+      - `adx_b = (18.0, 25.0]`
+      - `rsi_b = (50.0, 70.0]`
 
 ### 📊 USOIL.FOREX/1h · bearish
-- Events: 286  ·  Baseline continuation: **39.2%**
+- Events: 288  ·  Baseline continuation: **38.5%**
 
-  - 🟢 **80.0%** (12/15)
+  - 🟢 **78.6%** (11/14)
       - `dow = Tue`
       - `adx_b = (18.0, 25.0]`
-  - 🟢 **70.0%** (7/10)
-      - `dow = Tue`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `vol_z_b = (-0.5, 0.5]`
-  - 🔴 **29.5%** (18/61)
+  - 🔴 **29.9%** (26/87)
       - `dow ≠ Tue`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `dow ≠ Sun`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **20.0%** (2/10)
+      - `adx_b ≠ (-inf, 18.0]`
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow ≠ Wed`
+  - 🔴 **27.8%** (5/18)
       - `dow ≠ Tue`
-      - `rsi_b = (-inf, 30.0]`
-      - `adx_b ≠ (25.0, inf]`
-  - 🔴 **8.3%** (1/12)
+      - `adx_b = (-inf, 18.0]`
+      - `dow = Thu`
+  - 🔴 **12.5%** (5/40)
       - `dow ≠ Tue`
-      - `rsi_b ≠ (-inf, 30.0]`
-      - `dow = Sun`
-  - 🔴 **8.3%** (1/12)
-      - `dow ≠ Tue`
-      - `rsi_b = (-inf, 30.0]`
-      - `adx_b = (25.0, inf]`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow = Wed`
 
 ### 📊 USOIL.FOREX/1h · bearish_OB
-- Events: 275  ·  Baseline continuation: **62.5%**
+- Events: 279  ·  Baseline continuation: **62.7%**
 
   - 🟢 **88.9%** (16/18)
       - `dow ≠ Fri`
@@ -5934,7 +5962,7 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `dow ≠ Fri`
       - `vol_z_b ≠ (0.5, inf]`
       - `dow = Tue`
-      - `vol_z_b ≠ (-0.5, 0.5]`
+      - `vol_z_b = (-inf, -0.5]`
   - 🟢 **78.6%** (11/14)
       - `dow ≠ Fri`
       - `vol_z_b = (0.5, inf]`
@@ -5950,130 +5978,132 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `adx_b ≠ (18.0, 25.0]`
 
 ### 📊 USOIL.FOREX/1h · breakdown
-- Events: 110  ·  Baseline continuation: **30.0%**
+- Events: 111  ·  Baseline continuation: **29.7%**
 
-  - 🔴 **27.3%** (3/11)
-      - `dow ≠ Tue`
-      - `dow = Wed`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **15.4%** (4/26)
-      - `dow ≠ Tue`
-      - `dow ≠ Wed`
-      - `dow ≠ Mon`
+  - 🔴 **21.4%** (3/14)
+      - `dow = Thu`
       - `vol_z_b = (0.5, inf]`
-  - 🔴 **6.7%** (1/15)
+  - 🔴 **21.2%** (7/33)
+      - `dow ≠ Thu`
+      - `dow ≠ Fri`
+      - `adx_b ≠ (-inf, 18.0]`
       - `dow ≠ Tue`
-      - `dow ≠ Wed`
-      - `dow ≠ Mon`
+  - 🔴 **7.1%** (1/14)
+      - `dow ≠ Thu`
+      - `dow = Fri`
+  - 🔴 **0.0%** (0/10)
+      - `dow = Thu`
       - `vol_z_b ≠ (0.5, inf]`
 
 ### 📊 USOIL.FOREX/1h · breakout_up
-- Events: 172  ·  Baseline continuation: **40.7%**
+- Events: 174  ·  Baseline continuation: **39.7%**
 
   - 🟢 **100.0%** (15/15)
       - `dow = Fri`
       - `vol_z_b ≠ (-inf, -0.5]`
-      - `rsi_b ≠ (50.0, 70.0]`
-  - 🟢 **70.0%** (7/10)
-      - `dow = Fri`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `rsi_b = (50.0, 70.0]`
-  - 🔴 **29.4%** (5/17)
+      - `rsi_b = (70.0, inf]`
+  - 🔴 **22.2%** (8/36)
       - `dow ≠ Fri`
-      - `dow ≠ Wed`
-      - `dow = Thu`
+      - `dow ≠ Mon`
       - `adx_b = (25.0, inf]`
-  - 🔴 **28.6%** (4/14)
-      - `dow ≠ Fri`
-      - `dow = Wed`
-      - `vol_z_b ≠ (0.5, inf]`
-  - 🔴 **28.1%** (9/32)
-      - `dow ≠ Fri`
       - `dow ≠ Wed`
-      - `dow ≠ Thu`
-      - `dow = Tue`
-  - 🔴 **18.2%** (6/33)
+  - 🔴 **20.0%** (2/10)
+      - `dow = Fri`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🔴 **0.0%** (0/13)
       - `dow ≠ Fri`
-      - `dow ≠ Wed`
-      - `dow ≠ Thu`
-      - `dow ≠ Tue`
+      - `dow = Mon`
+      - `rsi_b = (50.0, 70.0]`
 
 ### 📊 USOIL.FOREX/1h · bullish
-- Events: 337  ·  Baseline continuation: **42.7%**
+- Events: 339  ·  Baseline continuation: **41.6%**
 
-  - 🟢 **84.6%** (11/13)
-      - `vol_z_b = (0.5, inf]`
+  - 🟢 **92.9%** (13/14)
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow ≠ Tue`
+      - `vol_z_b ≠ (-inf, -0.5]`
       - `dow = Fri`
-  - 🟢 **70.0%** (14/20)
-      - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow = Wed`
+  - 🔴 **29.4%** (5/17)
+      - `rsi_b = (50.0, 70.0]`
+      - `adx_b = (25.0, inf]`
       - `vol_z_b = (-0.5, 0.5]`
-  - 🟢 **70.0%** (7/10)
+  - 🔴 **25.0%** (4/16)
+      - `rsi_b = (50.0, 70.0]`
+      - `adx_b = (25.0, inf]`
+      - `vol_z_b ≠ (-0.5, 0.5]`
       - `vol_z_b = (0.5, inf]`
-      - `dow ≠ Fri`
+  - 🔴 **23.7%** (9/38)
+      - `rsi_b = (50.0, 70.0]`
       - `adx_b ≠ (25.0, inf]`
-      - `dow = Thu`
-  - 🔴 **25.4%** (30/118)
-      - `vol_z_b ≠ (0.5, inf]`
-      - `adx_b ≠ (-inf, 18.0]`
-      - `dow ≠ Wed`
-      - `rsi_b ≠ (70.0, inf]`
+      - `adx_b = (18.0, 25.0]`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🔴 **20.0%** (2/10)
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow = Tue`
+      - `vol_z_b = (-inf, -0.5]`
+  - 🔴 **16.7%** (2/12)
+      - `rsi_b ≠ (50.0, 70.0]`
+      - `dow ≠ Tue`
+      - `vol_z_b = (-inf, -0.5]`
+      - `adx_b = (18.0, 25.0]`
 
 ### 📊 USOIL.FOREX/1h · bullish_OB
-- Events: 268  ·  Baseline continuation: **65.7%**
+- Events: 273  ·  Baseline continuation: **66.7%**
 
-  - 🟢 **94.4%** (17/18)
+  - 🟢 **94.7%** (18/19)
+      - `dow ≠ Mon`
       - `dow = Fri`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b ≠ (18.0, 25.0]`
-  - 🟢 **85.7%** (12/14)
+  - 🟢 **93.3%** (14/15)
+      - `dow = Mon`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `rsi_b ≠ (30.0, 50.0]`
+  - 🟢 **81.8%** (9/11)
+      - `dow ≠ Mon`
       - `dow ≠ Fri`
       - `rsi_b = (-inf, 30.0]`
-  - 🟢 **75.0%** (12/16)
-      - `dow = Fri`
+  - 🟢 **81.8%** (9/11)
+      - `dow = Mon`
+      - `vol_z_b ≠ (-inf, -0.5]`
+      - `adx_b ≠ (18.0, 25.0]`
+      - `rsi_b = (30.0, 50.0]`
+  - 🟢 **81.2%** (13/16)
+      - `dow = Mon`
       - `vol_z_b ≠ (-inf, -0.5]`
       - `adx_b = (18.0, 25.0]`
-  - 🟢 **72.7%** (8/11)
-      - `dow = Fri`
-      - `vol_z_b = (-inf, -0.5]`
-      - `rsi_b = (30.0, 50.0]`
 
 ### 📊 USOIL.FOREX/1h · engulfing_bear
-- Events: 89  ·  Baseline continuation: **37.1%**
+- Events: 88  ·  Baseline continuation: **35.2%**
 
-  - 🟢 **72.7%** (8/11)
+  - 🔴 **22.7%** (5/22)
+      - `vol_z_b = (-inf, -0.5]`
       - `dow ≠ Fri`
+  - 🔴 **22.2%** (4/18)
       - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow ≠ Wed`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **28.6%** (4/14)
-      - `dow ≠ Fri`
-      - `vol_z_b ≠ (-inf, -0.5]`
-      - `dow = Wed`
-  - 🔴 **12.5%** (2/16)
+      - `dow ≠ Tue`
+      - `vol_z_b = (0.5, inf]`
+  - 🔴 **9.1%** (1/11)
+      - `vol_z_b = (-inf, -0.5]`
       - `dow = Fri`
 
 ### 📊 USOIL.FOREX/1h · engulfing_bull
-- Events: 101  ·  Baseline continuation: **39.6%**
+- Events: 104  ·  Baseline continuation: **39.4%**
 
-  - 🟢 **72.2%** (13/18)
-      - `adx_b ≠ (-inf, 18.0]`
+  - 🟢 **73.7%** (14/19)
       - `dow ≠ Tue`
-      - `rsi_b = (30.0, 50.0]`
-      - `adx_b = (25.0, inf]`
-  - 🔴 **25.0%** (3/12)
-      - `adx_b = (-inf, 18.0]`
-      - `vol_z_b ≠ (-inf, -0.5]`
-  - 🔴 **25.0%** (3/12)
-      - `adx_b = (-inf, 18.0]`
-      - `vol_z_b = (-inf, -0.5]`
-  - 🔴 **14.3%** (2/14)
       - `adx_b ≠ (-inf, 18.0]`
+      - `rsi_b = (30.0, 50.0]`
+      - `adx_b ≠ (18.0, 25.0]`
+  - 🔴 **22.7%** (5/22)
       - `dow = Tue`
+  - 🔴 **17.6%** (3/17)
+      - `dow ≠ Tue`
+      - `adx_b = (-inf, 18.0]`
 
 ### 📊 USOIL.FOREX/1h · hammer
-- Events: 142  ·  Baseline continuation: **43.0%**
+- Events: 145  ·  Baseline continuation: **44.8%**
 
   - 🟢 **72.2%** (13/18)
       - `dow ≠ Wed`
@@ -6081,36 +6111,35 @@ Bu rapor **HİÇBİR MODELE BAKMADAN** üretilmiştir — yalnızca ham OHLCV.
       - `vol_z_b ≠ (-inf, -0.5]`
   - 🟢 **70.0%** (14/20)
       - `dow = Wed`
-  - 🔴 **25.0%** (3/12)
+  - 🔴 **27.3%** (3/11)
       - `dow ≠ Wed`
       - `dow ≠ Fri`
       - `dow = Tue`
       - `rsi_b ≠ (50.0, 70.0]`
-  - 🔴 **22.2%** (8/36)
+  - 🔴 **23.1%** (9/39)
       - `dow ≠ Wed`
       - `dow ≠ Fri`
       - `dow ≠ Tue`
-      - `dow ≠ Thu`
+      - `adx_b ≠ (25.0, inf]`
 
 ### 📊 USOIL.FOREX/1h · shooting_star
-- Events: 132  ·  Baseline continuation: **37.9%**
+- Events: 134  ·  Baseline continuation: **38.1%**
 
   - 🔴 **27.3%** (3/11)
-      - `dow ≠ Mon`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `adx_b ≠ (18.0, 25.0]`
-      - `adx_b ≠ (-inf, 18.0]`
-  - 🔴 **23.1%** (3/13)
-      - `dow = Mon`
-      - `vol_z_b = (0.5, inf]`
-  - 🔴 **18.2%** (2/11)
-      - `dow ≠ Mon`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `adx_b ≠ (18.0, 25.0]`
+      - `dow ≠ Fri`
       - `adx_b = (-inf, 18.0]`
-  - 🔴 **8.3%** (1/12)
-      - `dow ≠ Mon`
-      - `vol_z_b = (-0.5, 0.5]`
-      - `adx_b = (18.0, 25.0]`
+      - `dow = Tue`
+  - 🔴 **23.1%** (3/13)
+      - `dow ≠ Fri`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `dow ≠ Thu`
+      - `dow = Wed`
+  - 🔴 **21.4%** (3/14)
+      - `dow ≠ Fri`
+      - `adx_b ≠ (-inf, 18.0]`
+      - `dow = Thu`
+  - 🔴 **13.3%** (2/15)
+      - `dow = Fri`
+      - `rsi_b = (30.0, 50.0]`
 
 ---

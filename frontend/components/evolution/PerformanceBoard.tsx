@@ -170,6 +170,113 @@ function DurabilityHeatmap({
   );
 }
 
+/**
+ * KARAR ÖMRÜ (2026-08-02) — "karar kaça kadar doğru kalıyor?"
+ *
+ * Ufuk merdiveni (yukarıdaki ısı haritası) kararın kaç DAKİKA sonra
+ * bozulduğunu söyler; bu blok iki şeyi ekler: (a) kararların kaçının daha ilk
+ * 10 dakikada yönünü kaybettiği, (b) sembolün KENDİ seans saatinde isabetin
+ * nasıl seyrettiği — 08:00'de verilen kararın +240dk'sı ile 09:45'te
+ * verilenin +240dk'sı aynı saate düşmediği için saat sorusu ancak böyle
+ * sorulabilir.
+ */
+function DecisionLifespan({ bias }: { bias: BiasReport }) {
+  const d = bias.decision_durability;
+  if (!d || !d.n) return null;
+  const clock = Object.entries(d.by_session_clock ?? {});
+  const buckets = Object.entries(d.alive_buckets ?? {}).sort(
+    (a, b) => BUCKET_ORDER.indexOf(a[0]) - BUCKET_ORDER.indexOf(b[0])
+  );
+
+  return (
+    <div className="mt-4 rounded-xl border border-white/5 bg-black/20 p-3">
+      <h4 className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+        Karar ömrü — yön ne kadar süre lehte kalıyor?
+      </h4>
+
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-slate-400">
+        <span>
+          medyan yaşam <b className="text-slate-200">{d.median_alive_min ?? "—"} dk</b>
+        </span>
+        {d.dead_within_10min_pct !== null && (
+          <span>
+            ilk 10 dk&apos;da bozulan{" "}
+            <b className={d.dead_within_10min_pct > 50 ? "text-rose-300" : "text-slate-200"}>
+              %{d.dead_within_10min_pct}
+            </b>
+          </span>
+        )}
+        {d.median_minutes_to_target !== null && (
+          <span>
+            kendi hedefine ulaşan {d.reached_own_target_n}/{d.n} · medyan{" "}
+            <b className="text-slate-200">{d.median_minutes_to_target} dk</b>
+          </span>
+        )}
+        {d.levels_prebreached_pct !== null && d.levels_prebreached_pct > 0 && (
+          <span title="Seviye karar anında zaten fiyatın yanlış tarafındaydı — bayat fiyat izi">
+            geçersiz seviye <b className="text-amber-300">%{d.levels_prebreached_pct}</b>
+          </span>
+        )}
+      </div>
+
+      {buckets.length > 0 && (
+        <div className="mt-2 flex h-5 w-full overflow-hidden rounded-md">
+          {buckets.map(([label, n]) => (
+            <div
+              key={label}
+              title={`${label}: ${n} karar`}
+              style={{ width: `${(n / d.n) * 100}%` }}
+              className={cx(
+                "flex items-center justify-center text-[8px] font-semibold text-black/70",
+                BUCKET_TONE[label] ?? "bg-slate-600"
+              )}
+            >
+              {n / d.n > 0.12 ? n : ""}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {clock.length > 0 && (
+        <>
+          <p className="mt-3 text-[9px] font-medium uppercase tracking-wider text-slate-500">
+            Seans saatine göre isabet (sembolün kendi saati)
+          </p>
+          <div className="mt-1 flex items-end gap-[3px]">
+            {clock.map(([hh, c]) => (
+              <div key={hh} className="flex flex-1 flex-col items-center gap-0.5">
+                <div
+                  title={`${hh} · n=${c.n} · %${c.accuracy_pct} · ort ${c.avg_signed_ret_pct}%${
+                    c.early_observation ? " · erken gözlem" : ""
+                  }`}
+                  style={{ height: `${Math.max(3, c.accuracy_pct * 0.44)}px`, opacity: c.early_observation ? 0.45 : 1 }}
+                  className={cx(
+                    "w-full rounded-t",
+                    c.accuracy_pct >= 55 ? "bg-emerald-500" : c.accuracy_pct >= 45 ? "bg-amber-500" : "bg-rose-500"
+                  )}
+                />
+                <span className="text-[7px] tabular-nums text-slate-600">{hh.slice(0, 2)}</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-1 text-[9px] text-slate-600">
+            %50 çizgisinin altı = yön çağrısı yazı-turadan kötü. Soluk çubuk = n&lt;30.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
+const BUCKET_ORDER = ["hiç tutmadı", "≤30dk", "≤120dk", "≤240dk", "6 saat+"];
+const BUCKET_TONE: Record<string, string> = {
+  "hiç tutmadı": "bg-rose-600",
+  "≤30dk": "bg-orange-500",
+  "≤120dk": "bg-amber-400",
+  "≤240dk": "bg-lime-400",
+  "6 saat+": "bg-emerald-400",
+};
+
 /** Isı şeridi — kronolojik kararlar (eski→yeni): yeşil isabet, kırmızı ıska, gri çekimser. */
 function HeatStrip({ timeline, tall = false }: { timeline: BiasTimelineCell[] | undefined; tall?: boolean }) {
   const cells = timeline ?? [];
@@ -538,6 +645,7 @@ export default function PerformanceBoard({ overview }: { overview: Overview | un
                   Karar dayanıklılığı — karardan sonra isabet nasıl seyrediyor?
                 </h4>
                 <DurabilityHeatmap bias={bias} onSymbolClick={setOpenBiasSymbol} />
+                <DecisionLifespan bias={bias} />
               </div>
               <p className="mt-3 text-center text-[10px] text-slate-600">
                 hücre = o ufuktaki yönlü isabet %&apos;si · <span className="text-emerald-400">yeşil</span> tutuyor ·{" "}

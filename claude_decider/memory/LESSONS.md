@@ -45,6 +45,6 @@
 
 <!-- PANEL-LESSONS START -->
 ## 📟 Panel dersleri (Evrim Paneli'nden — analiz çıktısı, İHTİYATLA uygula)
-- **Günlük Analist (2026-07-21)** (2026-07-21): NDX 5m mean-rev kapısı iki yönde de canlıda tutuyor (140 açılış %67.9); gate_setup OOS eşiği üstündeki kurulumlarda güveni koru, eşik altında çekimser kal.
-- **Günlük Analist (2026-07-21)** (2026-07-21): NDX'te canlı bot güçlü momentum SELL'de iken zıt yön BUY açma: son çatışmalarda (n=20) bot 13/5 haklı çıktı, decider'ın karşı-momentum BUY'ları tekrar tekrar LOSS oldu.
+- **Günlük Analist (2026-07-23)** (2026-07-23): Decider'ın WAIT dediği anlarda bot 47 işlem açtı; bunların 16'i (%34) kayıptı — ama 31 kazancı da kaçırırdı; WAIT'i körü körüne fren yapma.
+- **Günlük Analist (2026-07-23)** (2026-07-23): Zıt yönde açtıkları 20 çatışmada bot 13, decider 5 kez haklı çıktı — bot'un momentum kuralları bu dönemde daha isabetli, decider zıt sinyalde temkin artırmalı.
 <!-- PANEL-LESSONS END -->

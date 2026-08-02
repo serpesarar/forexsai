@@ -468,7 +468,9 @@ npx tsc --noEmit
 
 ## Additional Documentation
 
-- `PROJECT_CONTEXT_AI.md` - Detailed module registry with 40+ modules
+- `PROJECT_CONTEXT_AI.md` - ⚠️ HISTORICAL module registry (last real update 2026-02-13:
+  describes the removed EODHD data pump + only 2 symbols; carries a staleness banner). Do NOT
+  source model names / data flow / symbol list from it — CLAUDE.md is the current source of truth.
 - `docs/SELF_LEARNING_SYSTEM_GUIDE.md` - Learning system details (Turkish)
 - `docs/dashboard_extensions.md` - Charting & news feed guide
 - `docs/order_blocks.md` - SMC order block integration

@@ -1,0 +1,20 @@
+Error processing line 7 of C:\Users\Mael\AppData\Local\Programs\Python\Python313\Lib\site-packages\pywin32.pth:
+
+  Traceback (most recent call last):
+    File "<frozen site>", line 207, in addpackage
+    File "<string>", line 1, in <module>
+  ModuleNotFoundError: No module named 'pywin32_bootstrap'
+
+Remainder of file ignored
+[opus] ölçülebilir (cf-grade'li, bu modelce sorulmamış) kayıt: 70
+Tek toplu çağrı → opus (70 durum, ~20119 token)...
+
+============================================================
+TOPLU DEĞERLENDİRME [opus] — 70 durum, maliyet $1.00
+============================================================
+  OPEN: 24 (grade'li 24, yön-eşleşmedi 0) | WAIT: 46
+  opus WR: 62% (15/24) | EV: +0.021R/işlem
+  Opus (canlı, aynı kayıtlar): WR 61% (11/18), 18 OPEN
+  Naive-gate (hepsini aç): WR 60% (42/70)
+  💰 Tasarruf: canlı shadow olsaydı ~$38; toplu çağrı $1.00 (~39× ucuz)
+  → journal'a batch_eval[opus] işlendi (bu model için tekrar sorulmaz).

@@ -55,7 +55,8 @@
       "mcp__64cc647f-fb57-4ccd-98a5-ef20d5d1060f__apply_migration",
       "mcp__supabase__list_tables",
       "mcp__64cc647f-fb57-4ccd-98a5-ef20d5d1060f__execute_sql",
-      "mcp__supabase__apply_migration"
+      "mcp__supabase__apply_migration",
+      "Bash(sed -n '/bot-fixed-tpsl-ev-2026-06.md/,/indicator-discrimination-2026-06.md/p' /Users/melihcanodacioglu/.claude/projects/-Users-melihcanodacioglu-Desktop-panel/91ede61b-4b99-4b6a-ac33-2cdf82e31495/tool-results/b0b03sc2i.txt | head -60)"
     ]
   }
 }

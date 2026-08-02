@@ -1,0 +1,32 @@
+# ForexSAI Trading Portal — Kimi Code Configuration
+
+[project]
+name = "forexsai"
+description = "AI-powered trading dashboard: ML predictions, SMC/pattern intelligence, and multi-model signal generation for NASDAQ, DAX, Gold, and WTI"
+
+[models]
+default = "kimi-k3"
+fallback = "kimi-k2.7-code"
+
+[models.kimi-k3]
+provider = "moonshot"
+max_context_size = 1048576  # 1M tokens — useful given master-config.md alone is large
+thinking = true
+
+[loop_control]
+max_steps_per_turn = 500
+max_retries_per_step = 3
+reserved_context_size = 50000
+compaction_trigger_ratio = 0.85
+
+[background]
+max_running_tasks = 4
+agent_task_timeout_s = 900
+
+[hooks]
+# Auto-format after file writes (adjust globs to taste; no-op if prettier/black aren't installed)
+[[hooks]]
+event = "PostToolUse"
+matcher = "WriteFile"
+command = "npx prettier --write ${KIMI_FILE_PATH} 2>/dev/null || true"
+timeout = 10

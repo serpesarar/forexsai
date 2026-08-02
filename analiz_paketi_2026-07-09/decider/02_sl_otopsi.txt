@@ -1,0 +1,199 @@
+Error processing line 7 of C:\Users\Mael\AppData\Local\Programs\Python\Python313\Lib\site-packages\pywin32.pth:
+
+  Traceback (most recent call last):
+    File "<frozen site>", line 207, in addpackage
+    File "<string>", line 1, in <module>
+  ModuleNotFoundError: No module named 'pywin32_bootstrap'
+
+Remainder of file ignored
+======================================================================
+SL OTOPSİSİ — TÜM SEMBOLLER (WIN'i LOSS'tan ayıran koşul) (forensik'li grade'li kayıt: 663)
+======================================================================
+
+özellik                    n(W/L)  WIN ort LOSS ort       p  yorum
+----------------------------------------------------------------------------
+1m_rev_chan               414/249     0.09    -0.27   0.002  ✅✅ GÜÇLÜ
+1m_rev_vwap               414/249    -0.07     0.83   0.002  ✅✅ GÜÇLÜ
+1m_adx                    414/249    31.90    15.71   0.002  ✅✅ GÜÇLÜ
+1m_vol_ratio              414/249     1.01     1.39   0.002  ✅✅ GÜÇLÜ
+1m_trend_aligned          355/232     0.53     0.06   0.002  ✅✅ GÜÇLÜ
+1m_opp_last_bounce        340/223     0.94     0.35   0.002  ✅✅ GÜÇLÜ
+5m_rev_chan               414/249    -0.06     1.65   0.002  ✅✅ GÜÇLÜ
+5m_rev_vwap               414/249    -0.20     0.86   0.002  ✅✅ GÜÇLÜ
+5m_adx                    414/249    32.58    24.36   0.002  ✅✅ GÜÇLÜ
+5m_vol_ratio              414/249     1.06     1.91   0.002  ✅✅ GÜÇLÜ
+5m_trend_aligned          202/211     0.31     0.09   0.002  ✅✅ GÜÇLÜ
+5m_opp_sr_touches         409/246    12.65    15.20   0.002  ✅✅ GÜÇLÜ
+30m_rev_chan              414/249     0.52     0.01   0.002  ✅✅ GÜÇLÜ
+30m_rev_vwap              414/249    -0.01     1.08   0.002  ✅✅ GÜÇLÜ
+30m_adx                   414/249    20.06    28.55   0.002  ✅✅ GÜÇLÜ
+30m_vol_ratio             414/249     0.98     0.63   0.002  ✅✅ GÜÇLÜ
+  … (+41 özellik daha, p yüksek — gizlendi)
+
+  ⚠ 57 özellik test edildi; aday etiketi FDR-düzeltmeli (BH %5) — naif p<0.05 değil.
+    Yine de tek koşuya güvenme: ✅✅ + distill/tekrar-koşu teyidi kalıcılık şartı.
+======================================================================
+SEMBOL: GDAXI.INDX (forensik'li grade'li kayıt: 211)
+======================================================================
+
+özellik                    n(W/L)  WIN ort LOSS ort       p  yorum
+----------------------------------------------------------------------------
+vix                        49/162    17.54    17.22   0.002  ✅✅ GÜÇLÜ
+dxy                        49/162   100.95   100.86   0.002  ✅✅ GÜÇLÜ
+1m_rev_chan                49/162     0.52    -0.55   0.002  ✅✅ GÜÇLÜ
+1m_rev_vwap                49/162     1.55     0.88   0.002  ✅✅ GÜÇLÜ
+1m_adx                     49/162    33.36     6.95   0.002  ✅✅ GÜÇLÜ
+1m_vol_ratio               49/162     0.98     1.56   0.002  ✅✅ GÜÇLÜ
+1m_opp_sr_dist             49/162     2.53     1.41   0.002  ✅✅ GÜÇLÜ
+1m_opp_sr_touches          49/162    10.59     6.80   0.002  ✅✅ GÜÇLÜ
+1m_opp_last_bounce         40/160     0.93     0.14   0.002  ✅✅ GÜÇLÜ
+5m_rev_chan                49/162     1.37     2.05   0.002  ✅✅ GÜÇLÜ
+5m_rev_vwap                49/162     1.47     0.97   0.002  ✅✅ GÜÇLÜ
+5m_adx                     49/162    29.50    21.99   0.002  ✅✅ GÜÇLÜ
+5m_vol_ratio               49/162     1.03     2.36   0.002  ✅✅ GÜÇLÜ
+30m_rev_chan               49/162     0.58    -0.09   0.002  ✅✅ GÜÇLÜ
+30m_rev_vwap               49/162     0.27     1.51   0.002  ✅✅ GÜÇLÜ
+30m_vol_ratio              49/162     1.16     0.39   0.002  ✅✅ GÜÇLÜ
+  … (+41 özellik daha, p yüksek — gizlendi)
+
+  ⚠ 57 özellik test edildi; aday etiketi FDR-düzeltmeli (BH %5) — naif p<0.05 değil.
+    Yine de tek koşuya güvenme: ✅✅ + distill/tekrar-koşu teyidi kalıcılık şartı.
+======================================================================
+SEMBOL: NDX.INDX (forensik'li grade'li kayıt: 85)
+======================================================================
+
+özellik                    n(W/L)  WIN ort LOSS ort       p  yorum
+----------------------------------------------------------------------------
+1m_opp_sr_dist              57/28     2.55     1.81   0.010  ⏳ izle
+30m_beh_last_bounce         36/26     0.72     0.92   0.060  ⏳ izle
+5m_adx                      57/28    32.67    27.28   0.087  ⏳ izle
+5m_vol_ratio                57/28     1.12     1.03   0.117  ⏳ izle
+30m_opp_sr_dist             56/28     1.73     1.26   0.127  ⏳ izle
+4h_rev_vwap                 57/28     0.15    -0.15   0.142  ⏳ izle
+5m_beh_sr_dist              38/24     0.86     0.59   0.152  
+4h_opp_sr_touches           56/27    13.05    12.11   0.165  
+30m_beh_sr_dist             51/28     1.12     1.43   0.197  
+1h_opp_sr_dist              57/28     1.29     0.97   0.197  
+5m_beh_last_bounce          24/13     0.88     0.69   0.202  
+30m_rev_chan                57/28     0.73     0.39   0.219  
+1h_opp_sr_touches           57/28    10.54     9.46   0.222  
+1h_beh_sr_dist              54/28     0.91     1.22   0.239  
+1m_adx                      57/28    28.84    33.01   0.277  
+4h_opp_sr_dist              56/27     0.86     0.69   0.297  
+  … (+41 özellik daha, p yüksek — gizlendi)
+
+  ⚠ 57 özellik test edildi; aday etiketi FDR-düzeltmeli (BH %5) — naif p<0.05 değil.
+    Yine de tek koşuya güvenme: ✅✅ + distill/tekrar-koşu teyidi kalıcılık şartı.
+======================================================================
+SEMBOL: USOIL.FOREX (forensik'li grade'li kayıt: 38)
+======================================================================
+
+özellik                    n(W/L)  WIN ort LOSS ort       p  yorum
+----------------------------------------------------------------------------
+1h_opp_sr_touches           27/11     9.96     4.64   0.027  ⏳ izle
+30m_opp_sr_touches          27/11    11.78     5.55   0.050  ⏳ izle
+30m_rev_chan                27/11     0.44    -0.30   0.062  ⏳ izle
+4h_adx                      27/11    40.55    53.72   0.137  ⏳ izle
+30m_beh_sr_dist              20/8     1.01     1.48   0.147  ⏳ izle
+4h_vol_ratio                27/11     1.65     2.20   0.162  
+4h_rev_vwap                 27/11     1.08     1.90   0.182  
+1m_rev_chan                 27/11     0.02     0.62   0.217  
+30m_vol_ratio               27/11     1.40     1.00   0.234  
+5m_rev_chan                 27/11     1.55     1.90   0.254  
+4h_beh_sr_dist              27/11     1.69     2.19   0.254  
+1h_vol_ratio                27/11     1.39     1.08   0.319  
+4h_rev_chan                 27/11     1.78     2.11   0.374  
+4h_trend_aligned             18/8     0.33     0.12   0.377  
+1h_beh_sr_dist               19/8     0.90     1.11   0.384  
+1m_opp_sr_dist              27/11     2.27     2.90   0.387  
+  … (+36 özellik daha, p yüksek — gizlendi)
+
+  ⚠ 52 özellik test edildi; aday etiketi FDR-düzeltmeli (BH %5) — naif p<0.05 değil.
+    Yine de tek koşuya güvenme: ✅✅ + distill/tekrar-koşu teyidi kalıcılık şartı.
+======================================================================
+SEMBOL: XAUUSD (forensik'li grade'li kayıt: 329)
+======================================================================
+
+özellik                    n(W/L)  WIN ort LOSS ort       p  yorum
+----------------------------------------------------------------------------
+dxy                        281/48   100.90   100.95   0.002  ✅✅ GÜÇLÜ
+1m_rev_vwap                281/48    -0.79     0.18   0.002  ✅✅ GÜÇLÜ
+1m_vol_ratio               281/48     1.01     1.11   0.002  ✅✅ GÜÇLÜ
+1m_opp_sr_touches          274/44     7.81    15.16   0.002  ✅✅ GÜÇLÜ
+5m_rev_chan                281/48    -0.80     0.38   0.002  ✅✅ GÜÇLÜ
+5m_rev_vwap                281/48    -0.98     0.11   0.002  ✅✅ GÜÇLÜ
+30m_vol_ratio              281/48     0.89     1.07   0.002  ✅✅ GÜÇLÜ
+30m_opp_sr_touches         281/48     7.75    10.77   0.002  ✅✅ GÜÇLÜ
+1h_vol_ratio               281/48     0.85     1.08   0.002  ✅✅ GÜÇLÜ
+1h_opp_sr_touches          281/48     9.14    11.33   0.002  ✅✅ GÜÇLÜ
+n_tf_trend_aligned         281/47     2.77     1.74   0.002  ✅✅ GÜÇLÜ
+1m_trend_aligned           240/40     0.79     0.38   0.002  ✅✅ GÜÇLÜ
+5m_beh_sr_dist             270/46     0.73     1.25   0.005  ✅✅ GÜÇLÜ
+1h_opp_sr_dist             281/48     0.95     1.24   0.005  ✅✅ GÜÇLÜ
+1m_beh_sr_dist             272/42     1.11     1.52   0.007  ✅✅ GÜÇLÜ
+30m_rev_vwap               281/48    -0.28     0.20   0.007  ✅✅ GÜÇLÜ
+  … (+41 özellik daha, p yüksek — gizlendi)
+
+  ⚠ 57 özellik test edildi; aday etiketi FDR-düzeltmeli (BH %5) — naif p<0.05 değil.
+    Yine de tek koşuya güvenme: ✅✅ + distill/tekrar-koşu teyidi kalıcılık şartı.
+
+======================================================================
+SL/TP YOL ANALİZİ — kayıp: 254, kazanç: 414 (yol-metrikli)
+======================================================================
+
+[KAYIPLAR NASIL KAYBETTİ] (n=254)
+  anlık-kayıp (mfe<0.25R):    208 (%82) → GİRİŞ sorunu (aşağıdaki entry-saflığına bak)
+  dönüş-kaybı (mfe≥0.6R):       7 (%3) → giriş DOĞRUYDU, ÇIKIŞ sorunu
+      ↳ kurtarıcı çıkış: 'fixed_1.0/1.5' bu işlemlerde ort -1.50 ATR verirdi (exit_compare teyidi ara)
+  TP'ye %85+ yaklaşıp döndü:   10 (%4) → 'TP birazcık uzaktı' (TP kalibrasyonu)
+  SL-AVI — SL sonrası entry'ye döndü: 20 (%8); orijinal TP'ye ULAŞTI: 3 (%1) → yön doğru, STOP dar
+  SL'e ortalama süre: 4 bar
+
+[KAZANÇLAR NASIL KAZANDI] (n=414)
+  şanslı/kırılgan (mae≥0.8R): 25 (%6) → bunları giriş-pattern teyidi SAYMA
+  TP'ye ortalama süre: 4 bar
+
+======================================================================
+ENTRY SAFLIĞI — anlık-kayıp vs temiz-kazanç (en saf giriş sinyali) (forensik'li grade'li kayıt: 520)
+======================================================================
+
+özellik                    n(W/L)  WIN ort LOSS ort       p  yorum
+----------------------------------------------------------------------------
+1m_rev_chan               313/207     0.04    -0.37   0.002  ✅✅ GÜÇLÜ
+1m_rev_vwap               313/207    -0.34     0.78   0.002  ✅✅ GÜÇLÜ
+1m_adx                    313/207    33.32    12.20   0.002  ✅✅ GÜÇLÜ
+1m_vol_ratio              313/207     1.03     1.46   0.002  ✅✅ GÜÇLÜ
+1m_trend_aligned          276/197     0.64     0.06   0.002  ✅✅ GÜÇLÜ
+1m_opp_last_bounce        263/191     0.95     0.27   0.002  ✅✅ GÜÇLÜ
+5m_rev_chan               313/207    -0.34     1.75   0.002  ✅✅ GÜÇLÜ
+5m_rev_vwap               313/207    -0.52     0.86   0.002  ✅✅ GÜÇLÜ
+5m_adx                    313/207    33.61    23.43   0.002  ✅✅ GÜÇLÜ
+5m_vol_ratio              313/207     1.07     2.09   0.002  ✅✅ GÜÇLÜ
+5m_trend_aligned          124/183     0.32     0.07   0.002  ✅✅ GÜÇLÜ
+5m_opp_sr_touches         311/205    12.77    15.72   0.002  ✅✅ GÜÇLÜ
+5m_beh_sr_dist            289/197     0.67     0.94   0.002  ✅✅ GÜÇLÜ
+30m_rev_chan              313/207     0.56    -0.04   0.002  ✅✅ GÜÇLÜ
+30m_rev_vwap              313/207    -0.18     1.28   0.002  ✅✅ GÜÇLÜ
+30m_adx                   313/207    18.20    29.53   0.002  ✅✅ GÜÇLÜ
+  … (+41 özellik daha, p yüksek — gizlendi)
+
+  ⚠ 57 özellik test edildi; aday etiketi FDR-düzeltmeli (BH %5) — naif p<0.05 değil.
+    Yine de tek koşuya güvenme: ✅✅ + distill/tekrar-koşu teyidi kalıcılık şartı.
+
+[ADAY FİLTRELER] (FDR-geçti; LESSONS'a yazmak için --write)
+  • 1m_rev_chan: kayıplarda düşük (W ort 0.09 vs L -0.27, p=0.002)
+  • 1m_rev_vwap: kayıplarda yüksek (W ort -0.07 vs L 0.83, p=0.002)
+  • 1m_adx: kayıplarda düşük (W ort 31.90 vs L 15.71, p=0.002)
+  • 1m_vol_ratio: kayıplarda yüksek (W ort 1.01 vs L 1.39, p=0.002)
+  • 1m_trend_aligned: kayıplarda düşük (W ort 0.53 vs L 0.06, p=0.002)
+  • 1m_opp_last_bounce: kayıplarda düşük (W ort 0.94 vs L 0.35, p=0.002)
+  • 5m_rev_chan: kayıplarda yüksek (W ort -0.06 vs L 1.65, p=0.002)
+  • 5m_rev_vwap: kayıplarda yüksek (W ort -0.20 vs L 0.86, p=0.002)
+  • 5m_adx: kayıplarda düşük (W ort 32.58 vs L 24.36, p=0.002)
+  • 5m_vol_ratio: kayıplarda yüksek (W ort 1.06 vs L 1.91, p=0.002)
+  • 5m_trend_aligned: kayıplarda düşük (W ort 0.31 vs L 0.09, p=0.002)
+  • 5m_opp_sr_touches: kayıplarda yüksek (W ort 12.65 vs L 15.20, p=0.002)
+  • 30m_rev_chan: kayıplarda düşük (W ort 0.52 vs L 0.01, p=0.002)
+  • 30m_rev_vwap: kayıplarda yüksek (W ort -0.01 vs L 1.08, p=0.002)
+  • 30m_adx: kayıplarda yüksek (W ort 20.06 vs L 28.55, p=0.002)
+  • 30m_vol_ratio: kayıplarda düşük (W ort 0.98 vs L 0.63, p=0.002)

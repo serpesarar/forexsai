@@ -662,6 +662,74 @@ def add_lesson(
     return lesson
 
 
+def upsert_auto_lesson(
+    key: str,
+    title: str,
+    summary: str,
+    targets: List[str],
+    symbol: Optional[str] = None,
+    evidence: Optional[dict] = None,
+) -> dict:
+    """OTOMATİK ders yaz/güncelle — ``source.auto_key`` ile tekilleştirilir.
+
+    ``add_lesson`` her çağrıda yeni satır üretir; otomatik damıtıcı günde bir
+    koştuğu için o davranış lessons.json'u aynı dersin 30 kopyasıyla doldurur
+    (2026-07-21'de tam olarak bu oldu: 6 ders, hepsi aynı gün, aynı başlık).
+    Burada aynı ``key`` varsa İÇERİK güncellenir, kayıt tekil kalır.
+
+    Dersin geri alınabilir olması şart: kanıt zayıflarsa
+    :func:`retire_auto_lessons` onu arşivler — öğrenme tek yönlü olmamalı.
+    """
+    lessons = _read_json(LESSONS_FILE, [])
+    now = _now_iso()
+    payload = {
+        "title": _one_line(title, 200),
+        "summary": summary.strip(),
+        "symbol": _one_line(symbol, 24) or None,
+        "targets": targets or ["panel"],
+        "status": "active",
+        "updated_at": now,
+        "source": {"auto_key": key, "evidence": evidence or {}},
+    }
+    for l in lessons:
+        if (l.get("source") or {}).get("auto_key") == key:
+            l.update(payload)
+            _write_json(LESSONS_FILE, lessons)
+            _invalidate_lesson_cache()
+            if "claude_decider" in (targets or []):
+                _sync_decider_lessons()
+            return l
+    lesson = {"id": _new_id("les"), "created_at": now, **payload}
+    lessons.append(lesson)
+    _write_json(LESSONS_FILE, lessons)
+    _invalidate_lesson_cache()
+    if "claude_decider" in (targets or []):
+        _sync_decider_lessons()
+    return lesson
+
+
+def retire_auto_lessons(prefix: str, keep_keys: set) -> int:
+    """Kanıtı düşen otomatik dersleri arşivle (öğrenmenin geri alma yolu).
+
+    ``prefix`` ile başlayan ``auto_key``'lerden ``keep_keys`` içinde olmayan
+    her aktif ders arşivlenir. Bu olmadan sistem yalnız ders BİRİKTİRİR ve eski
+    bir dönemin bulgusunu sonsuza dek CIO promptuna enjekte etmeye devam eder.
+    """
+    lessons = _read_json(LESSONS_FILE, [])
+    n = 0
+    for l in lessons:
+        k = (l.get("source") or {}).get("auto_key") or ""
+        if k.startswith(prefix) and k not in keep_keys and l.get("status") == "active":
+            l["status"] = "archived"
+            l["updated_at"] = _now_iso()
+            n += 1
+    if n:
+        _write_json(LESSONS_FILE, lessons)
+        _invalidate_lesson_cache()
+        _sync_decider_lessons()
+    return n
+
+
 def update_lesson_status(lesson_id: str, status: str) -> Optional[dict]:
     """Dersi arşivle / yeniden etkinleştir."""
     lessons = _read_json(LESSONS_FILE, [])

@@ -177,7 +177,7 @@ def recent_track_record(limit: int = 25, symbol: Optional[str] = None) -> str:
         # yalnız sembol alanı iner (PostgREST JSON path select).
         raw_rows = (client.table("bias_test_log")
                     .select("predicted_bias,was_correct,ny_date,run_label,"
-                            "ret_60m,ret_240m,sym:raw_payload->>symbol")
+                            "ret_60m,ret_240m,durability,sym:raw_payload->>symbol")
                     .order("ny_date", desc=True).limit(limit * 6).execute()
                     ).get("data") or []
         rows = [r for r in raw_rows if r.get("was_correct") is not None
@@ -271,10 +271,48 @@ def recent_track_record(limit: int = 25, symbol: Optional[str] = None) -> str:
                   f"CORRECT and is NOT counted against you — but when the evidence is "
                   f"strong and confluent, COMMIT to a direction cleanly.")
 
-        head = (f"SELF-CALIBRATION (your LAST {tot_n} DIRECTIONAL predictions, day-close "
-                f"legacy metric): {tot_w}/{tot_n}; breakdown → " + " | ".join(parts) + "."
-                ) if tot_n else "SELF-CALIBRATION: no directional calls graded yet."
-        return head + warn + bal + hz + ab
+        # DAYANIKLILIK (2026-08-02): kararın kaç dakika lehte kaldığı. Ölçüm,
+        # kararın nasıl ÇERÇEVELENECEĞİNİ belirler — gün-boyu bias iddiası ancak
+        # o ufukta ölçülmüş dayanağı varsa meşrudur.
+        dur = ""
+        alive = [(r.get("durability") or {}).get("alive_until_min") for r in directional]
+        alive = [a for a in alive if a is not None]
+        if len(alive) >= 8:
+            fast = sum(1 for a in alive if a <= 10)
+            srt = sorted(alive)
+            med = srt[len(srt) // 2] if len(srt) % 2 else (srt[len(srt) // 2 - 1]
+                                                           + srt[len(srt) // 2]) / 2
+            dur = (f" DECISION DURABILITY: of your last {len(alive)} directional calls, "
+                   f"{fast} ({fast/len(alive)*100:.0f}%) had already lost their direction "
+                   f"within 10 minutes; median time-in-favour {med:.0f} min. Frame the "
+                   f"call at the horizon the evidence actually supports — either a "
+                   f"concrete level-based move for the next 30-60 min, or a TRIGGER "
+                   f"condition, not a day-long bias.")
+
+        # BAŞLIK metriği (2026-08-02 onarımı): birincil ufuktaki YÖNLÜ isabet.
+        # Eskiden gün-kapanışı `was_correct` başlıktaydı; 2026-07-18 analizi o
+        # metriğin yanıltıcı olduğunu gösterdiği hâlde öz-kalibrasyonun ilk
+        # cümlesi olarak kalmıştı — model kendini yanlış metrikle tartıyordu.
+        pw = pn = 0
+        for r in directional:
+            sv = signed_ret(r, PRIMARY_HORIZON_MIN.get(
+                symbol_for_row({"raw_payload": {"symbol": r.get("sym")},
+                                "run_label": r.get("run_label")}), 60))
+            if sv is not None:
+                pn += 1
+                pw += 1 if sv > 0 else 0
+        if pn:
+            head = (f"SELF-CALIBRATION (PRIMARY metric — your last {pn} directional "
+                    f"calls scored at each symbol's primary intraday horizon): "
+                    f"{pw}/{pn} = {pw/pn*100:.0f}%. Day-close legacy metric: "
+                    f"{tot_w}/{tot_n}; by side → " + " | ".join(parts) + ".")
+        elif tot_n:
+            head = (f"SELF-CALIBRATION (your LAST {tot_n} DIRECTIONAL predictions, "
+                    f"day-close legacy metric): {tot_w}/{tot_n}; breakdown → "
+                    + " | ".join(parts) + ".")
+        else:
+            head = "SELF-CALIBRATION: no directional calls graded yet."
+        return head + warn + bal + hz + dur + ab
     except Exception as e:
         logger.debug("[bias-test] track record skipped: %s", e)
         return ""
@@ -343,22 +381,65 @@ def _decision_price(row: dict) -> Optional[float]:
     return None
 
 
-def _horizon_stats(client, symbol: str, run_ts: datetime,
-                   p0: Optional[float], predicted: str) -> Optional[dict]:
-    """5m mumlardan +10/30/60/240dk getirileri + ilk-60dk MFE/MAE hesapla.
+def _clock_checkpoints(symbol: str, run_ts: datetime) -> list[tuple[str, datetime]]:
+    """Kararın sonrasındaki TAM SAAT kontrol noktaları, sembolün kendi seansında.
 
-    ``p0`` yoksa karar anındaki 5m kapanışı çapa alınır. 240dk penceresi henüz
-    kapanmadıysa None döner (kısmi yazım yok — catch-up sonra tamamlar).
+    "Karar kaça kadar doğru kalıyor?" sorusu ufuk-dakikasıyla değil DUVAR
+    SAATİYLE sorulur — 08:00'de verilen karar için +240dk ile 09:45'te verilen
+    karar için +240dk aynı saate denk gelmez. Izgara sembolün seans kapanışında
+    biter (NDX 16:00 NY · DAX 17:30 Berlin · XAU 17:00 NY · USOIL 14:30 NY).
+    """
+    from zoneinfo import ZoneInfo
+    win = _SESSION_WINDOWS.get(symbol)
+    if not win:
+        return []
+    tz_name, _start_min, end_min = win
+    tz = ZoneInfo(tz_name)
+    local = run_ts.astimezone(tz)
+    end_local = local.replace(hour=end_min // 60, minute=end_min % 60,
+                              second=0, microsecond=0)
+    if end_local <= local:      # karar seans kapanışından sonraysa ertesi güne taşma
+        end_local += timedelta(days=1)
+    out: list[tuple[str, datetime]] = []
+    cur = (local + timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+    while cur <= end_local and len(out) < 14:
+        out.append((cur.strftime("%H:%M"), cur.astimezone(timezone.utc)))
+        cur += timedelta(hours=1)
+    # Seans kapanışı tam saat değilse (DAX 17:30, USOIL 14:30) onu da ekle.
+    if end_local > local and (not out or out[-1][1] < end_local.astimezone(timezone.utc)):
+        out.append((end_local.strftime("%H:%M"), end_local.astimezone(timezone.utc)))
+    return out
+
+
+def _horizon_stats(client, symbol: str, run_ts: datetime,
+                   p0: Optional[float], predicted: str,
+                   support: Optional[float] = None,
+                   resistance: Optional[float] = None) -> Optional[dict]:
+    """5m mumlardan ufuk merdivenini + karar dayanıklılığını hesapla.
+
+    ÇAPA (2026-08-02 onarımı): karar anındaki son KAPALI 5m barın kapanışı.
+    Önceden ``raw_payload.price_at_decision`` çapa alınıyordu; NDX 08:00 ET
+    koşusunda o değer bir önceki seans kapanışıydı (~16 saat bayat, %1.45'e
+    kadar sapma) ve +10dk hücresi bütün gece boşluğunu içine alıyordu. p0 artık
+    yalnız ``p0_stale_pct`` teşhisi olarak saklanır — notlamaya girmez.
+
+    ``support``/``resistance`` verilirse CIO'nun KENDİ seviyelerine ilk temas
+    süresi ölçülür (hedefe kaç dakikada ulaştı, ne zaman geçersizleşti).
+
+    6 saatlik pencere henüz kapanmadıysa None döner (kısmi yazım yok —
+    catch-up sonra tamamlar).
     """
     if datetime.now(timezone.utc) < run_ts + timedelta(minutes=HORIZONS_MIN[-1] + 6):
         return None
+    checkpoints = _clock_checkpoints(symbol, run_ts)
+    far = max([run_ts + timedelta(minutes=HORIZONS_MIN[-1] + 5)]
+              + [t for _lbl, t in checkpoints])
     start = (run_ts - timedelta(minutes=5 * _HORIZON_LOOKBACK_BARS)).isoformat()
-    end = (run_ts + timedelta(minutes=HORIZONS_MIN[-1] + 5)).isoformat()
     try:
         rows = (client.table("candle_cache").select("candle_time,high,low,close")
                 .eq("symbol", symbol).eq("timeframe", "5m")
-                .gte("candle_time", start).lte("candle_time", end)
-                .order("candle_time").limit(120).execute()).get("data") or []
+                .gte("candle_time", start).lte("candle_time", far.isoformat())
+                .order("candle_time").limit(300).execute()).get("data") or []
     except Exception as e:
         logger.warning("[bias-test] horizon 5m read error (%s): %s", symbol, e)
         return None
@@ -379,24 +460,120 @@ def _horizon_stats(client, symbol: str, run_ts: datetime,
                 best = c
         return best
 
-    anchor = p0 or close_at(run_ts)
+    anchor = close_at(run_ts)
+    anchor_source = "bar_close_5m"
+    if anchor is None:            # mum boşluğu — son çare payload fiyatı
+        anchor, anchor_source = p0, "payload_p0_fallback"
     if not anchor:
         return None
-    out: dict[str, Optional[float]] = {}
+
+    out: dict[str, Any] = {"anchor_price": round(anchor, 5),
+                           "anchor_source": anchor_source}
+    if p0:
+        out["p0_stale_pct"] = round((p0 - anchor) / anchor * 100.0, 4)
     for m in HORIZONS_MIN:
         px = close_at(run_ts + timedelta(minutes=m))
         out[f"ret_{m}m"] = round((px - anchor) / anchor * 100.0, 4) if px else None
+    if all(out.get(f"ret_{m}m") is None for m in HORIZONS_MIN):
+        return None
+
+    side = (predicted or "").lower()
+    sign = 1.0 if side == "bullish" else (-1.0 if side == "bearish" else 0.0)
+
     win = [b for b in bars if run_ts < b[0] <= run_ts + timedelta(minutes=60)]
     if win:
         up = (max(h for _t, h, _l, _c in win) - anchor) / anchor * 100.0
         dn = (anchor - min(l for _t, _h, l, _c in win)) / anchor * 100.0
-        if (predicted or "").lower() == "bearish":
+        if side == "bearish":
             out["mfe_60m"], out["mae_60m"] = round(dn, 4), round(up, 4)
         else:   # bullish + nötr/choppy: lehte = yukarı (belgeli kabul)
             out["mfe_60m"], out["mae_60m"] = round(up, 4), round(dn, 4)
-    if all(out.get(f"ret_{m}m") is None for m in HORIZONS_MIN):
-        return None
-    out["horizon_filled_at"] = datetime.now(timezone.utc).isoformat()
+
+    out["durability"] = _durability(bars, run_ts, anchor, sign, out,
+                                    checkpoints, support, resistance)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    out["horizon_filled_at"] = now_iso
+    out["regraded_at"] = now_iso
+    return out
+
+
+def _durability(bars: list, run_ts: datetime, anchor: float, sign: float,
+                rets: dict, checkpoints: list, support: Optional[float],
+                resistance: Optional[float]) -> dict:
+    """"Karar kaça kadar doğru kalıyor?" bloğu — şema migration dosyasında.
+
+    ``sign`` 0 ise (nötr/choppy) yönlü alanlar None kalır; duvar-saati ızgarası
+    ham % değişim olarak yine doldurulur (çekimser kararın haklılığı ayrı
+    ölçülür, bkz. ABSTAIN_QUIET_PCT).
+    """
+    def close_at(target: datetime) -> Optional[float]:
+        best = None
+        for t, _h, _l, c in bars:
+            if t <= target and (target - t) <= timedelta(minutes=5 * _HORIZON_LOOKBACK_BARS):
+                best = c
+        return best
+
+    clock: dict[str, Optional[float]] = {}
+    for label, ts in checkpoints:
+        px = close_at(ts)
+        if px is None:
+            continue
+        raw = (px - anchor) / anchor * 100.0
+        clock[label] = round(raw * sign if sign else raw, 4)
+
+    out: dict[str, Any] = {"clock": clock, "clock_signed": bool(sign)}
+
+    # Zirve / dip: 5m bar kapanışları üzerinde, karar sonrası 6 saat içinde.
+    path = [((t - run_ts).total_seconds() / 60.0, (c - anchor) / anchor * 100.0)
+            for t, _h, _l, c in bars
+            if run_ts < t <= run_ts + timedelta(minutes=HORIZONS_MIN[-1])]
+    if path and sign:
+        signed_path = [(m, v * sign) for m, v in path]
+        pk = max(signed_path, key=lambda x: x[1])
+        tr = min(signed_path, key=lambda x: x[1])
+        out["peak"] = {"min": int(round(pk[0])), "pct": round(pk[1], 4)}
+        out["trough"] = {"min": int(round(tr[0])), "pct": round(tr[1], 4)}
+
+    # Merdiven üzerinde yaşam süresi: yön KESİNTİSİZ lehteyken geçilen son ufuk.
+    # 10dk'da bile lehte değilse 0 → karar hiç tutmadı.
+    if sign:
+        alive, flip = 0, None
+        for m in HORIZONS_MIN:
+            v = rets.get(f"ret_{m}m")
+            if v is None:
+                break
+            if v * sign > 0:
+                alive = m
+            else:
+                flip = m
+                break
+        out["alive_until_min"] = alive
+        out["flip_at_min"] = flip
+
+    # CIO'nun kendi seviyelerine ilk temas (hedef / geçersizleşme).
+    # Seviye karar anında ZATEN yanlış taraftaysa "4 dakikada ulaşıldı" demek
+    # yanıltıcı olur — bu, seviyenin bayat fiyattan türetildiğinin işaretidir
+    # (2026-08-02: NDX 08:00 koşusu fiyatı ~400 puan eski olduğu için direnç
+    # canlı fiyatın ALTINDA kalıyordu). Ayrı bayrakla raporlanır.
+    tgt = resistance if sign > 0 else (support if sign < 0 else None)
+    inv = support if sign > 0 else (resistance if sign < 0 else None)
+    for key, level, upward in (("first_target_min", tgt, sign > 0),
+                               ("first_invalid_min", inv, sign < 0)):
+        out[key] = None
+        out[key.replace("first_", "").replace("_min", "_prebreached")] = None
+        if not level or not sign:
+            continue
+        already = (anchor >= level) if upward else (anchor <= level)
+        out[key.replace("first_", "").replace("_min", "_prebreached")] = already
+        if already:
+            continue
+        for t, h, l, _c in bars:
+            if t <= run_ts:
+                continue
+            hit = (h >= level) if upward else (l <= level)
+            if hit:
+                out[key] = int(round((t - run_ts).total_seconds() / 60.0))
+                break
     return out
 
 
@@ -500,37 +677,53 @@ async def fill_pending(max_days: int = 10) -> dict:
     return results
 
 
-def backfill_horizons(max_rows: int = 500) -> dict:
-    """Ufuk merdiveni genişleyince ESKİ satırların yeni kolonlarını doldur.
+def backfill_horizons(max_rows: int = 500, force: bool = False) -> dict:
+    """Ufuk merdivenini ve dayanıklılık bloğunu (yeniden) hesapla.
 
-    horizon_filled_at dolu olsa bile yeniden hesaplar (yeni ret_90m..360m
-    kolonları null kaldığı için) — _horizon_stats idempotent, 5m mumlardan
-    aynı çapayla üretir. Tek seferlik bakım aracı; panelden çağrılmaz.
+    ``force=False`` — yalnız hiç notlanmamış satırlar (ret_360m null).
+    ``force=True``  — TÜM satırlar yeniden notlanır. Bu bayrak 2026-08-02
+    onarımı için eklendi: mumlar 07-28'de broker-saati kaymasından düzeltildi
+    ama ret_* kolonları onarımdan ÖNCE hesaplanıp dondu (47 yönlü satırın
+    40'ında değer yanlıştı; imza: kayıtlı ret_240m = gerçek ret_60m). Eski
+    filtre `.is_("ret_360m","null")` olduğu ve tüm satırlarda o kolon dolu
+    olduğu için fonksiyon fiilen no-op'a düşmüştü — kendi kendini onaramıyordu.
+
+    Değişiklikleri raporlar: ``changed`` = birincil ufku maddi olarak (>0.05pp)
+    kayan satır sayısı.
     """
     client = _client()
     if client is None:
         raise BiasTestError("db unavailable")
-    rows = (client.table("bias_test_log")
-            .select("id,run_timestamp_utc,raw_payload,predicted_bias,run_label,ny_date")
-            .is_("ret_360m", "null")
-            .order("ny_time").limit(max_rows).execute()).get("data") or []
-    done, skipped = 0, 0
+    q = (client.table("bias_test_log")
+         .select("id,run_timestamp_utc,raw_payload,predicted_bias,run_label,"
+                 "ny_date,ret_60m,ret_240m,main_support,main_resistance"))
+    if not force:
+        q = q.is_("ret_360m", "null")
+    rows = q.order("ny_time").limit(max_rows).execute().get("data") or []
+    done, skipped, changed = 0, 0, 0
     for r in rows:
+        sym = symbol_for_row(r)
         try:
             run_ts = datetime.fromisoformat(
                 str(r["run_timestamp_utc"]).replace("Z", "+00:00"))
-            sym = symbol_for_row(r)
-            h = _horizon_stats(client, sym, run_ts,
-                               _decision_price(r), r.get("predicted_bias") or "")
+            h = _horizon_stats(client, sym, run_ts, _decision_price(r),
+                               r.get("predicted_bias") or "",
+                               support=r.get("main_support"),
+                               resistance=r.get("main_resistance"))
         except Exception as e:
             logger.warning("[bias-test] backfill error id=%s: %s", r.get("id"), e)
             h = None
-        if h:
-            client.table("bias_test_log").eq("id", r["id"]).update(h)
-            done += 1
-        else:
+        if not h:
             skipped += 1
-    return {"candidates": len(rows), "filled": done, "skipped": skipped}
+            continue
+        prim = PRIMARY_HORIZON_MIN.get(sym, 60)
+        before, after = r.get(f"ret_{prim}m"), h.get(f"ret_{prim}m")
+        if before is not None and after is not None and abs(before - after) > 0.05:
+            changed += 1
+        client.table("bias_test_log").eq("id", r["id"]).update(h)
+        done += 1
+    return {"candidates": len(rows), "filled": done, "skipped": skipped,
+            "primary_horizon_changed": changed, "forced": force}
 
 
 async def fill_outcomes(ny_date: Optional[str] = None) -> dict:
@@ -560,8 +753,10 @@ async def fill_outcomes(ny_date: Optional[str] = None) -> dict:
             try:
                 run_ts = datetime.fromisoformat(
                     str(r["run_timestamp_utc"]).replace("Z", "+00:00"))
-                h = _horizon_stats(client, sym, run_ts,
-                                   _decision_price(r), r.get("predicted_bias") or "")
+                h = _horizon_stats(client, sym, run_ts, _decision_price(r),
+                                   r.get("predicted_bias") or "",
+                                   support=r.get("main_support"),
+                                   resistance=r.get("main_resistance"))
             except Exception as e:
                 logger.warning("[bias-test] horizon fill error id=%s: %s", r.get("id"), e)
                 h = None
@@ -851,9 +1046,69 @@ def accuracy_report() -> dict:
             out[sym] = entry
         return out
 
+    def durability_block() -> dict:
+        """KARAR ÖMRÜ (2026-08-02): "karar kaça kadar doğru kalıyor?"
+
+        İki eksende ölçülür: (a) merdiven üzerinde kesintisiz lehte kalınan
+        süre, (b) sembolün kendi seansındaki DUVAR SAATİ — 08:00'de verilen
+        kararın +240dk'sı ile 09:45'te verilenin +240dk'sı aynı saate düşmez,
+        dolayısıyla "hangi saatten sonra bozuluyor" ancak duvar saatiyle
+        sorulabilir.
+        """
+        dir_rows = [r for r in rows
+                    if (r.get("predicted_bias") or "").lower() in ("bullish", "bearish")
+                    and isinstance(r.get("durability"), dict)]
+        alive = [r["durability"].get("alive_until_min") for r in dir_rows]
+        alive = [a for a in alive if a is not None]
+        buckets: dict[str, int] = {}
+        for a in alive:
+            key = ("hiç tutmadı" if a == 0 else "≤30dk" if a <= 30
+                   else "≤120dk" if a <= 120 else "≤240dk" if a <= 240 else "6 saat+")
+            buckets[key] = buckets.get(key, 0) + 1
+        srt = sorted(alive)
+        med = (srt[len(srt) // 2] if len(srt) % 2
+               else (srt[len(srt) // 2 - 1] + srt[len(srt) // 2]) / 2) if srt else None
+
+        # Duvar saati ızgarası: her kontrol noktasında yönlü isabet.
+        clock: dict[str, dict] = {}
+        for r in dir_rows:
+            if not r["durability"].get("clock_signed"):
+                continue
+            for hh, v in (r["durability"].get("clock") or {}).items():
+                c = clock.setdefault(hh, {"n": 0, "correct": 0, "sum": 0.0})
+                c["n"] += 1
+                c["correct"] += 1 if v > 0 else 0
+                c["sum"] += v
+        clock_out = {
+            hh: {"n": c["n"], "accuracy_pct": round(c["correct"] / c["n"] * 100, 1),
+                 "avg_signed_ret_pct": round(c["sum"] / c["n"], 3),
+                 "early_observation": c["n"] < EARLY_OBS_MIN_N}
+            for hh, c in sorted(clock.items()) if c["n"] >= 5}
+
+        tgt = [r["durability"].get("first_target_min") for r in dir_rows]
+        tgt = [t for t in tgt if t is not None]
+        pre = [r["durability"].get("invalid_prebreached") for r in dir_rows]
+        pre = [p for p in pre if p is not None]
+        return {
+            "n": len(alive),
+            "median_alive_min": med,
+            "alive_buckets": buckets,
+            "dead_within_10min_pct": (round(sum(1 for a in alive if a <= 10)
+                                            / len(alive) * 100, 1) if alive else None),
+            "by_session_clock": clock_out,
+            "reached_own_target_n": len(tgt),
+            "median_minutes_to_target": (sorted(tgt)[len(tgt) // 2] if tgt else None),
+            "levels_prebreached_pct": (round(sum(1 for p in pre if p) / len(pre) * 100, 1)
+                                       if pre else None),
+            "note": ("alive_until_min = kararın merdiven üzerinde KESİNTİSİZ lehte "
+                     "kaldığı son ufuk; 0 = ilk 10 dakikada bile tutmadı. "
+                     "by_session_clock sembolün kendi seans saatinde ölçülür."),
+        }
+
     return {
         "total_graded": len(graded),
         "primary_intraday": primary_block(),
+        "decision_durability": durability_block(),
         "direction_balance": direction_balance(),
         "overall": _rate(graded),
         "by_horizon": horizon_rates(rows),
