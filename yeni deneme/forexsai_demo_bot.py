@@ -33,7 +33,7 @@ except ImportError:
 import config
 import reflex_exec
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
-from channel_filter import is_channel_rejection, is_mean_reversion
+from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -1439,6 +1439,25 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
     if not ok:
         log.info("%s — mean-reversion YOK (z=%.2f) → açılmadı", scope_key, z)
         return
+    # ── ADX rejim kapısı (2026-08-05 GDAXI olayı): mean-reversion 'range'
+    #    varsayar; ADX yüksekken (trend rejimi) z-ekstremi gürültü değil,
+    #    kırılımın kendisi olabilir. Kanal eğimi (aşağıdaki 'gated' kontrolü)
+    #    25 saatlik pencerede yavaş tepki verir — ADX aynı barda tepki verir.
+    if getattr(config, "CHREV_ADX_GATE_ENABLED", True):
+        adx = adx_from_bars(bars)
+        adx_max = float(getattr(config, "CHREV_ADX_MAX", 25.0))
+        if adx is not None and adx >= adx_max:
+            log.info("%s — ADX KAPISI: ADX(30m)=%.1f ≥ %.1f (trend rejimi, "
+                     "mean-reversion güvenilmez, z=%.2f) → %s",
+                     scope_key, adx, adx_max, z,
+                     "açılmadı" if getattr(config, "CHREV_ADX_GATE_BLOCK", True) else "GÖLGE, devam")
+            if getattr(config, "CHREV_ADX_GATE_BLOCK", True):
+                tick = mt5.symbol_info_tick(mt5_symbol)
+                if tick:
+                    log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
+                                  tick.ask if direction == "BUY" else tick.bid,
+                                  "chrev_adx_gate", extra={"adx": round(adx, 1), "z": round(z, 2)})
+                return
     # ── TQ kapısı: CHREV çukur pencerede (15-17 UTC %38 −1.820$) ve Cuma
     #    yalnız Claude Decider onayıyla açılır — tek-model scope'ta başka
     #    "çok emin" ölçütü yok; decider'ın 5m mean-rev kanıt kapısı aynı

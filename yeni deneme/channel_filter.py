@@ -90,6 +90,45 @@ def vwap_zscore(bars, n: int = CHAN_N) -> float | None:
     return (tp[-1] - vwap) / sd
 
 
+def adx_from_bars(bars, p: int = 14) -> float | None:
+    """Wilder ADX(p) — bars: dict listesi high/low/close (eski→yeni).
+
+    2026-08-05 GDAXI CHREV olayı: kanal z=-2.89 (BUY tetik) VE kanal eğimi
+    hâlâ pozitif (+0.165 ATR/bar, 50-bar/25 saatlik regresyon önceki 1.5 günlük
+    ralliyi taşıyordu) iken açılan BUY, güçlü bir gün-içi trend kırılımında SL
+    yedi (−687$). ADX o anda 30.1 idi (kırılımdan ÖNCE de 33-37 — piyasa zaten
+    trend rejimindeydi, 'range' değil). ADX_MAX=25.0 sabiti tanımlıydı ama hiçbir
+    yerde KULLANILMIYORDU — bu fonksiyon onu gerçek bir hesaplamaya bağlar."""
+    if not bars or len(bars) < p + 2:
+        return None
+    h = np.asarray([b["high"] for b in bars], dtype=float)
+    l = np.asarray([b["low"] for b in bars], dtype=float)
+    c = np.asarray([b["close"] for b in bars], dtype=float)
+
+    def _rma(x: np.ndarray, period: int) -> np.ndarray:
+        r = np.empty_like(x, dtype=float)
+        r[0] = x[0]
+        a = 1.0 / period
+        for i in range(1, len(x)):
+            r[i] = x[i] * a + r[i - 1] * (1 - a)
+        return r
+
+    up = h[1:] - h[:-1]
+    dn = l[:-1] - l[1:]
+    plus_dm = np.where((up > dn) & (up > 0), up, 0.0)
+    minus_dm = np.where((dn > up) & (dn > 0), dn, 0.0)
+    pc = np.roll(c, 1); pc[0] = c[0]
+    tr = np.maximum(h - l, np.maximum(np.abs(h - pc), np.abs(l - pc)))[1:]
+    atr = _rma(tr, p)
+    atr_safe = np.where(atr == 0, np.nan, atr)
+    plus_di = 100 * _rma(plus_dm, p) / atr_safe
+    minus_di = 100 * _rma(minus_dm, p) / atr_safe
+    denom = np.where((plus_di + minus_di) == 0, np.nan, plus_di + minus_di)
+    dx = np.nan_to_num(100 * np.abs(plus_di - minus_di) / denom)
+    adx = _rma(dx, p)
+    return float(adx[-1])
+
+
 def is_mean_reversion(bars, direction: str, n: int = CHAN_N,
                       chan_z: float = Z_THRESH, vwap_z: float = VWAP_Z_THRESH):
     """KANAL z≥2.5 VEYA VWAP z≥2.0 ekstremi → mean-reversion fırsatı.
