@@ -1640,6 +1640,80 @@ def check_daycombo() -> None:
                ["daycombo"], magic=DAYCOMBO_MAGIC)
 
 
+# ── USOIL BREAKOUT-DEVAM scope (2026-08-06 arastirmasi, AYRI magic+5) ────────
+# Kanit: 150 gun / 29.415 adet 5m bar, 1260 Donchian-kanal kirilim olayi,
+# kronolojik train(%70)/test(%30) + placebo. Donchian N (48-288 bar) ve
+# tek/coklu-bar teyidi denendi — N ve teyit sayisindan BAGIMSIZ olarak BUY
+# devam orani ~%58-60 OOS'ta sabit kaldi (N=48 confirm=1: train %60.0/test
+# %58.8). Tek/coklu-esik gosterge filtreleri (ADX/DI/RSI/MACD/vol/ATR/range,
+# hem tek-tek hem LightGBM ile) placebo'yu gecse bile OOS'ta iyilesme
+# VERMEDI (bazan baseline'in altina dustu) — capraz-dogrulanmis DEGIL, koda
+# ALINMADI. TEK saglam, OOS-kararli ayrim: 5m EMA200 trend hizasi.
+#   BUY, fiyat EMA200 UZERINDEYKEN (trend-hizali): TEST %62.7 (n=185)
+#   BUY, fiyat EMA200 ALTINDAYKEN (trend-tersi):   TEST %21.1 (n=19) — COKUYOR
+# SELL yonunde HICBIR konfigurasyonda placebo'yu asan/OOS-kararli bir ayrim
+# bulunamadi (en iyi TRAIN bulgu bile TEST'te dagildi) — SELL kapsam DISI.
+# TP=SL=1.0xATR14(5m) (RR 1:1); %62.7 WR ile beklenti +0.25R/islem, n=185
+# uzerinden test doneminde toplam +47R. Detay: macro_ndx_test/ (arastirma
+# scriptleri panel repo'sunda, backend/research'e tasinmasi backlog'da).
+_usoil_bo_state: dict = {"last_bar": None}
+
+
+def check_usoil_breakout() -> None:
+    if not getattr(config, "USOIL_BREAKOUT_ENABLED", True):
+        return
+    forexsai_sym = "USOIL.FOREX"
+    mt5_symbol = resolve_symbol(forexsai_sym)
+    if not mt5_symbol:
+        return
+    magic = int(getattr(config, "USOIL_BREAKOUT_MAGIC", config.MAGIC_NUMBER + 5))
+    scope_key = f"{forexsai_sym}:BUY:BREAKOUT"
+    if open_count(mt5_symbol, "BUY", magic) + pending_count(mt5_symbol, "BUY", magic) >= 1:
+        return
+
+    n_don = int(getattr(config, "USOIL_BREAKOUT_DONCHIAN_N", 48))
+    n_ema = int(getattr(config, "USOIL_BREAKOUT_EMA_TREND", 200))
+    need = max(n_don, n_ema) + 5
+    rates = mt5.copy_rates_from_pos(mt5_symbol, mt5.TIMEFRAME_M5, 1, need)  # pos=1: olusan barı atla
+    if rates is None or len(rates) < need:
+        return
+    bar_time = int(rates[-1]["time"])
+    if _usoil_bo_state["last_bar"] == bar_time:
+        return                                            # bu 5m bar zaten islendi
+    _usoil_bo_state["last_bar"] = bar_time
+
+    closes = np.array([float(r["close"]) for r in rates])
+    highs = np.array([float(r["high"]) for r in rates])
+
+    # EMA200 (trend hizasi)
+    k = 2.0 / (n_ema + 1)
+    ema_t = closes[0]
+    for x in closes[1:]:
+        ema_t = x * k + ema_t * (1 - k)
+
+    # Donchian: SON kapali bardan ONCEKI n_don barin en yuksegi (bakma-onyargisi yok)
+    donch_high_now = highs[-1 - n_don:-1].max()
+    donch_high_prev = highs[-2 - n_don:-2].max()
+
+    fresh_break = closes[-1] > donch_high_now and closes[-2] <= donch_high_prev
+    trend_aligned = closes[-1] > ema_t
+    if not (fresh_break and trend_aligned):
+        return
+
+    atr = atr_5m(mt5_symbol)
+    if not atr or atr <= 0:
+        log.warning("%s — ATR alınamadı, atlandı", scope_key)
+        return
+    tp = round(float(getattr(config, "USOIL_BREAKOUT_TP_ATR", 1.0)) * atr, 5)
+    sl = round(float(getattr(config, "USOIL_BREAKOUT_SL_ATR", 1.0)) * atr, 5)
+    log.info("%s — Donchian(%d) kırılımı (seviye=%.3f) + EMA200 trend-hizalı "
+             "(fiyat=%.3f > ema200=%.3f) → market BUY (TP/SL=%.3f/ATR×1.0)",
+             scope_key, n_don, donch_high_now, closes[-1], ema_t, atr)
+    cfg = {"tp": tp, "sl": sl, "is_pct": False}
+    open_trade(scope_key, forexsai_sym, mt5_symbol, "BUY", cfg,
+               ["breakout_donchian_ema200"], magic=magic)
+
+
 def check_vix_regime() -> None:
     """VIX-rejim NDX yön scope'u: VIX<eşik→SELL favored, ≥eşik→BUY favored; model
     favored yönde sinyal verirse market giriş. Momentum/channel'dan AYRI magic."""
@@ -1767,6 +1841,9 @@ def main():
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
                    ("DAYCOMBO_SL", 110.0),
+                   ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
+                   ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
+                   ("USOIL_BREAKOUT_SL_ATR", 1.0),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
@@ -1846,6 +1923,15 @@ def main():
                     check_daycombo()
                 except Exception as e:
                     log.exception("daycombo hata: %s", e)
+
+            # ── USOIL BREAKOUT-DEVAM: Donchian(48×5m) kırılımı + EMA200 trend
+            #    hizası (AYRI magic+5; 2026-08-06 araştırması, TEST %62.7 n=185) ──
+            if getattr(config, "USOIL_BREAKOUT_ENABLED", True) and \
+                    total_open_positions() < config.MAX_TOTAL_POSITIONS:
+                try:
+                    check_usoil_breakout()
+                except Exception as e:
+                    log.exception("usoil-breakout hata: %s", e)
 
             # ── REFLEX ENGINE (NDX momentum-continuation + 15dk time-stop, AYRI magic+3) ──
             #    Backend /api/reflex/live sinyallerini uygular. SHADOW varsayılan
