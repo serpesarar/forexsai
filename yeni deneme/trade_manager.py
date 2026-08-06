@@ -57,9 +57,24 @@ def _managed_magics() -> set:
     return m
 
 
+def _usoil_breakout_magics() -> set:
+    if not getattr(config, "MGMT_INCLUDE_USOIL_BREAKOUT", True):
+        return set()
+    return {getattr(config, "USOIL_BREAKOUT_MAGIC", -1)}
+
+
 _RULES = {
-    "NDX.INDX":   {"be": True,  "magics": _managed_magics},
-    "GDAXI.INDX": {"be": False, "magics": _managed_magics},
+    "NDX.INDX":    {"be": True,  "magics": _managed_magics},
+    "GDAXI.INDX":  {"be": False, "magics": _managed_magics},
+    # 2026-08-06: USOIL BREAKOUT scope — kazananı-koştur (BE YOK, NDX'e özel
+    # 30dk kuralı burada anlamsız). Kanıt: research/usoil_breakout_2026-08-06/
+    # RAPOR.md — sabit TP=1xATR kronolojik TEST'te -0.026R/işlem (breakeven
+    # altı), AYNI giriş kuralıyla BE(1R-kâr)+trail(1.0xATR) TEST'te +0.084R/
+    # işlem (n=188). Bu scope'un geometrisi (TP=SL=1.0xATR, oran 1.0) zaten
+    # RUNNER_MIN_TP_SL_RATIO eşiğinin (0.4) üstünde — orig_tp'ye ulaşınca
+    # mevcut "kazananı koştur" mekanizması otomatik devreye girer.
+    "USOIL.FOREX": {"be": False, "magics": _usoil_breakout_magics,
+                    "trail_r": getattr(config, "MGMT_USOIL_TRAIL_R", 1.0)},
 }
 
 _state: dict | None = None
@@ -135,19 +150,20 @@ def manage_positions(mt5, log, resolve_symbol) -> None:
             sl_dist = s["sl_dist"]
             if sl_dist <= 0:
                 continue
+            trail_r = rule.get("trail_r", TRAIL_R)
 
             # ── KAZANANI KOŞTUR: fiyat orijinal TP'ye vardı → TP kaldır, trail
             #    (yalnız kanıt-benzeri geometri: tp_dist/sl_dist ≥ eşik)
             tp_sl_ratio = abs(s["orig_tp"] - s["entry"]) / sl_dist
             if (s["phase"] == "normal" and bid >= s["orig_tp"]
                     and tp_sl_ratio >= RUNNER_MIN_TP_SL_RATIO):
-                trail_sl = max(pos.sl or 0, s["orig_tp"] - TRAIL_R * sl_dist)
+                trail_sl = max(pos.sl or 0, s["orig_tp"] - trail_r * sl_dist)
                 if _modify(mt5, log, pos, trail_sl, 0.0, "runner: TP kaldırıldı, trail başladı"):
                     s["phase"] = "run"
                     _save_state()
                 continue
             if s["phase"] == "run":
-                new_sl = bid - TRAIL_R * sl_dist
+                new_sl = bid - trail_r * sl_dist
                 info = mt5.symbol_info(mt5_symbol)
                 step = (info.point * 10) if info else 0.5
                 if new_sl > (pos.sl or 0) + step:      # yalnız lehte, spam'siz

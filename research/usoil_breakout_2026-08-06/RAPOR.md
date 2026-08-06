@@ -63,3 +63,33 @@ belirgin üzerinde (+0.25R/işlem beklenti). Daha agresif filtreler denendi,
 hepsi ya aşırı uydu ya da sinyal vermedi — bu, dürüstçe ulaşılabilen tavan.
 Canlıda ilk 2-3 hafta ölçülüp gerekirse (n küçükse) TQ tarzı bir "çok-emin"
 kapısına terfi ettirilebilir.
+
+## Ek 2026-08-06: canlı gözlem → sabit TP çıkışı değiştirildi (BE+trailing)
+Scope canlıya alındıktan birkaç saat sonra (2026-08-06) USOIL %5.6'lık tek
+yönlü bir rally yaptı (04:30 UTC dip 74.61 → 20:00 UTC zirve 78.82) ve scope
+bunu 10 kez doğru yönde (BUY) yakaladı — ama sabit TP=1xATR (~0.2-0.3$) her
+seferinde günün geri kalanını masada bıraktı. Aynı gün, halen SELL yönünde
+açık olan 5 eski S/R-pullback işlemi (2026-08-05, restart öncesi) bu
+rallinin BAŞINA denk geldiği için 4/5 zararla kapandı — kullanıcının
+"yön yukarı kilitliyor ama giriş yönü yanlış" gözlemiyle birebir örtüşüyor.
+
+Aynı Donchian+EMA200 giriş kuralı, kronolojik train/test ile İKİ çıkış
+stratejisi karşılaştırıldı (aynı split, aynı entry, yalnız çıkış farklı):
+
+| Çıkış stratejisi | TRAIN ort.R | TEST ort.R (n=188-191) |
+|---|---|---|
+| Sabit TP=1.0xATR (öncekiydi) | +0.017R | **-0.026R** (breakeven altı) |
+| BE(1R kâr sonrası)+trail(1.0xATR) | +0.158R | **+0.084R** |
+| BE(0.5R)+trail(1.0xATR) | +0.152R | +0.101R |
+| BE(1R)+trail(1.5xATR) | +0.109R | +0.056R |
+
+Sabit büyük TP denemeleri (2x-5xATR, aynı veri) GÜRÜLTÜLÜ çıktı (TP=2x'te
+beklenti negatife düştü) — güvenilir değil, reddedildi. BE+trailing ise
+train→test geçişinde işaret değiştirmeden, tutarlı biçimde üstün kaldı.
+
+**Uygulama:** `trade_manager.py` — mevcut NDX/GDAXI "kazananı koştur"
+mekanizması `USOIL.FOREX` (yalnız `USOIL_BREAKOUT_MAGIC`) için de açıldı;
+TRAIL_R artık kural-bazlı (`rule.get("trail_r", TRAIL_R)`), USOIL için
+`MGMT_USOIL_TRAIL_R=1.0` (NDX/GDAXI'nin 0.6'sından kasıtlı farklı — ayrı
+doğrulandı). Scope'un TP=SL=1.0 oranı zaten `RUNNER_MIN_TP_SL_RATIO`
+eşiğinin üstünde olduğundan yeni bir tetikleyiciye gerek kalmadı.

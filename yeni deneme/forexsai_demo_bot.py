@@ -1844,6 +1844,7 @@ def main():
                    ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
                    ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
                    ("USOIL_BREAKOUT_SL_ATR", 1.0),
+                   ("MGMT_INCLUDE_USOIL_BREAKOUT", True), ("MGMT_USOIL_TRAIL_R", 1.0),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
