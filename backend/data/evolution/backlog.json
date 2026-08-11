@@ -1538,5 +1538,104 @@
     "source": "session",
     "created_at": "2026-08-02T22:31:48.071276+00:00",
     "updated_at": "2026-08-02T22:31:48.071281+00:00"
+  },
+  {
+    "id": "bl_67995af7d8",
+    "title": "Kutu: mt5:bar:1h stream'i 31 Tem'de neden durdu (NDX/DAX/XAU) araştır",
+    "detail": "USOIL akıyordu, indeksler+altın 1h stream'i durdu; kod fix'i dayanıklı kıldı ama kaynak durma nedeni bilinmiyor — remote.py ask ile kutuda bridge/EA 1h publish'ini kontrol et",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T22:46:16.860085+00:00",
+    "updated_at": "2026-08-02T22:46:16.860236+00:00"
+  },
+  {
+    "id": "bl_3712364131",
+    "title": "Tartışma-ters gölge stratejisi",
+    "detail": "Ajan yönünün tersine sanal işlem: shadow_trade_tracker kalıbı, gerçek TP/SL geometrisi (stop >=%0.8 gerekiyor, %0.3 WR'ı %42.6'ya düşürüyor), sembol başına n>=30. Kritik kontrol: ayı yanlılığı dersi tuttukça kenar buharlaşıyor mu — ikisi birlikte izlenmeli",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T22:53:08.436066+00:00",
+    "updated_at": "2026-08-02T22:53:08.436223+00:00"
+  },
+  {
+    "id": "bl_56405e3a1e",
+    "title": "ml_cross kill-switch deploy ortamında bypass ediliyor",
+    "detail": "Kod doğru (prediction_logger.py:964) ama yazan süreçte CROSS_MODEL_EXPERIMENT_ENABLED=1 → Railway/deploy env'inde 0 yapılmalı. Kanıt: 2026-08-02 22:40'ta time_quality etiketli (=yeni kod) ml_cross satırı yazıldı; XAU'da 7 günde 166 çözülen %26.5 WR",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T23:01:17.364250+00:00",
+    "updated_at": "2026-08-02T23:01:17.364431+00:00"
+  },
+  {
+    "id": "bl_390db90fa5",
+    "title": "pattern_bonus_gate yön varsayımı ters dönmüş olabilir",
+    "detail": "07-26 kanıtı: formasyon SELL %22.6 kaybediyor -> gate SELL bonusunu kısıyor. Son 7 gün XAU formasyon SELL %46.3 +18.7R, BUY %14.8 -37.7R (tam tersi). Gate'i sabit yön yerine kayan pencereyle yeniden ölç",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T23:01:17.366823+00:00",
+    "updated_at": "2026-08-02T23:01:17.366831+00:00"
+  },
+  {
+    "id": "bl_5fcdb3b16a",
+    "title": "cortex_confluence + reflex gölge akışları durmuş",
+    "detail": "cortex_confluence_signals son 7 günde 0 kayıt, reflex_signals 2026-07-31'den beri yazmıyor. Servisler koşuyor mu, flag mi kapandı — teşhis et",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-02T23:01:17.367970+00:00",
+    "updated_at": "2026-08-02T23:01:17.367973+00:00"
+  },
+  {
+    "id": "bl_80f3f17266",
+    "title": "USOIL SELL S/R-pullback scope'u derinden -EV (%21.3 WR, -0.46R/islem, 47 islem/5 hafta) — canli veriyle dogrulandi, gozden gecirilip muhtemelen durdurulmali",
+    "detail": "backend/routers/bot_router.py MOMENTUM_FILTER['USOIL.FOREX:SELL'] arastirmada validasyonlu ama S/R-pullback giris geometrisinde edge hayata gecmiyor; ya giris mekanizmasi degistirilmeli ya scope kapatilmali",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-06T04:55:01.708353+00:00",
+    "updated_at": "2026-08-06T04:55:01.708527+00:00"
+  },
+  {
+    "id": "bl_adbf204b30",
+    "title": "CHREV giriş skoru kapısı: gölge→blok kararı",
+    "detail": "CHREV 45 günde −3.562$; gölge kapı (ENTRY_SCORE_GATE_CHREV) verisi 2-3 hafta birikince skor<7 kümesinin gerçekten zararlı olduğu doğrulanırsa bloka al. Erken sinyal: skor<7 n=37 −4.393$ / skor≥7 n=15 +832$.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-11T04:59:09.991940+00:00",
+    "updated_at": "2026-08-11T04:59:09.992076+00:00"
+  },
+  {
+    "id": "bl_e4921f561e",
+    "title": "USOIL BREAKOUT gölge karnesi",
+    "detail": "3-4 hafta gölge sinyal biriktikten sonra gate_skip.jsonl'deki breakout_shadow kayıtları 1m replay ile çözülüp scope tamamen kaldırılsın mı yoksa aşım freniyle mi geri açılsın kararı verilecek.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-11T04:59:09.993295+00:00",
+    "updated_at": "2026-08-11T04:59:09.993298+00:00"
+  },
+  {
+    "id": "bl_580ff50743",
+    "title": "Giriş skoru eşiği 6 vs 7",
+    "detail": "45 günlük canlı doğrulamada eşik≥6 (+4.515$) eşik≥7'den (+2.943$) iyi çıktı; tek pencereye uydurmamak için 7'de bırakıldı. 2-3 ay veriyle yeniden ölç.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-11T04:59:09.994296+00:00",
+    "updated_at": "2026-08-11T04:59:09.994298+00:00"
   }
 ]
