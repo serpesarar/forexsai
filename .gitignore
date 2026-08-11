@@ -62,3 +62,4 @@ remote_agent/restart_bot.bat
 
 # USOIL breakout lab bar onbellegi (buyuk .npy)
 backend/research/_usoil_cache/
+research/usoil_breakout_gate_2026-08-11/data/
