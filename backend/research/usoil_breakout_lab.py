@@ -40,6 +40,9 @@ def fetch(tf_name: str, days: int) -> np.ndarray:
     if f.exists():
         return np.load(f, allow_pickle=False)
     import MetaTrader5 as mt5
+    if not mt5.initialize():
+        raise SystemExit(f"mt5.initialize() basarisiz: {mt5.last_error()}")
+    mt5.symbol_select(SYMBOL, True)
     tf = {"M5": mt5.TIMEFRAME_M5, "M1": mt5.TIMEFRAME_M1}[tf_name]
     end = datetime.now() + timedelta(days=1)
     chunks = []
@@ -64,6 +67,7 @@ def fetch(tf_name: str, days: int) -> np.ndarray:
 
 def get_spread() -> float:
     import MetaTrader5 as mt5
+    mt5.initialize()
     i = mt5.symbol_info(SYMBOL)
     return round(i.spread * i.point, 5) if i else 0.028
 
