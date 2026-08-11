@@ -577,6 +577,14 @@ CROSS_MODEL_EXPERIMENT_ENABLED=0  # ml_cross_xau_nasdaq KAPALI (SELL %6.9 WR kan
 # ─── 2026-07-10 MT5 otopsi kapıları (analiz_paketi_2026-07-09/RAPOR_MT5_ISLEM_OTOPSISI.md) ───
 ENTRY_SCORE_GATE_ENABLED=1        # 8 koşullu giriş skoru kapısı (NDX+USOIL, pulse+smc; fail-open)
 ENTRY_SCORE_MIN=7                 # min skor (0-8); kanıt: NDX ≥7 WR 60→65, USOIL ≥7 WR 49→72
+# ⚠️ 2026-08-11: BOT tarafı bu tarihe kadar HİÇ bağlı değildi — `yeni deneme/
+# entry_gate.py` yazılmış ama commit edilmemişti (git stash e7dedf8), kutuya
+# hiç gitmedi. Artık takipli ve `_entry_score_blocks()` ile _route_open (MOM/SR)
+# + check_vix_regime (VIXREG) yollarına bağlı; CHREV'de GÖLGE
+# (ENTRY_SCORE_GATE_CHREV=True ile bloklar). Canlı doğrulama (45 gün, botun
+# kendi işlemleri, MOM/SR+VIXREG ∩ NDX+USOIL): kapısız n=319 WR %55.8 +1.444$
+# → kapılı n=110 WR %60.0 +4.386$; elenen küme −2.943$. Eşiklerin (5,6,7,8)
+# dördü de pozitif. DAX bilinçli kapsam DIŞI (orada elenen küme +917$).
 
 # ─── 2026-07-16 sahte kırılım (fakeout) kapısı — services/fakeout_service.py ───
 FAKEOUT_GATE_ENABLED=1            # sahte kırılım radarı (değerlendir + logla; fail-open)
@@ -650,6 +658,17 @@ TQ_SESSION_EXCEPTION=1            # NDX 18 UTC hard-bloğuna altın-istisna:
 # BE30/koştur yönetimine dahil (kanıt seti CHREV işlemlerini içeriyordu; SELL kapsam dışı).
 # ml_cross: log_prediction'a kill-switch güvenlik ağı eklendi — bayrak 0 iken
 # ml_cross* satırı hiçbir yazardan DB'ye giremez (eski deploy dahil, o pull edince).
+
+# ─── 2026-08-11 USOIL BREAKOUT scope GÖLGEYE alındı (bot config, getattr) ───
+# USOIL_BREAKOUT_LIVE=False (varsayılan)  → sinyal üretilir+kaydedilir, emir YOK.
+# USOIL_BREAKOUT_MAX_OVERSHOOT=0.5        → kırılım seviyesinin >0.5×ATR üstünde
+#                                            alım yapma ("tepeden alma" freni).
+# Kanıt: backend/data/evolution/analyst_reports/usoil_breakout_denetimi_2026-08-11.md
+# 368 olay, gerçek MT5 M1 + spread(0.028): WR %42.7, ort −0.147R, %95
+# [−0.250,−0.043], P(EV>0)=%0.3. 30 TP/SL geometrisinin 30'u negatif; geri-
+# çekilme limiti / gecikmeli giriş / seans / 1h-trend / dar-kanal kapılarının
+# hiçbiri artıya çıkarmıyor. Canlı: 19 işlem WR %26.3, −895$ (simülasyon aynı
+# pencerede %24.1 — simülatör canlıyı doğru yakalıyor).
 
 # ─── 2026-07-19 shadow trade tracker (services/shadow_trade_tracker.py) ───
 SHADOW_TRACKER_ENABLED=1          # %60+ formasyon + fakeout dedektör çağrıları için sızıntısız paper-trade doğrulaması

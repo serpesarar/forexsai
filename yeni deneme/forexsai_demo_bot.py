@@ -1223,6 +1223,74 @@ def _trend_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
     return True
 
 
+def _entry_score_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
+                        direction: str, shadow: bool = False) -> bool:
+    """8 koşullu GİRİŞ SKORU kapısı — True → giriş bloklanmalı.
+
+    2026-07-10 MT5 otopsisi (analiz_paketi_2026-07-09/RAPOR_MT5_ISLEM_OTOPSISI.md
+    §5/§6/§9, 14 gün gerçek işlem): skor≥7 → NDX WR %60→%65, USOIL %49→%72;
+    bloklanacak işlemlerin net PnL'i iki sembolde de negatif.
+
+    ⚠️ 2026-08-11: bu kapı entry_gate.py'de YAZILMIŞ ama bota HİÇ BAĞLANMAMIŞTI —
+    modül commit'lenmediği için kutuya da hiç gitmemişti (git stash e7dedf8'de
+    kalmış). Kullanıcının "kapıları ayarlamıştım ama uygulanmıyor" gözlemi
+    doğruydu; kapı bu commit'le gerçekten devreye giriyor.
+
+    Kapsam (otopsi kararı): MOM/SR momentum + VIXREG. CHREV mean-reversion
+    doğası gereği DIŞARIDA. Fail-open: veri/modül hatası girişi engellemez.
+    """
+    if not getattr(config, "ENTRY_SCORE_GATE_ENABLED", True):
+        return False
+    try:
+        from entry_gate import entry_score_ok
+        ok, reason, score = entry_score_ok(
+            forexsai_sym, direction,
+            candles_1m(mt5_symbol, 240),
+            candles_tf(mt5_symbol, mt5.TIMEFRAME_M5, 60),
+            candles_tf(mt5_symbol, mt5.TIMEFRAME_M30, 60),
+            hour_utc=datetime.now(timezone.utc).hour,
+            min_score=int(getattr(config, "ENTRY_SCORE_MIN", 7)),
+            score_symbols=getattr(config, "ENTRY_SCORE_SYMBOLS", None),
+            session_block_hours=getattr(config, "SESSION_BLOCK_HOURS_UTC", None),
+        )
+    except Exception as exc:                                   # fail-open
+        log.debug("giriş skoru kapısı fail-open: %s", exc)
+        return False
+    if ok:
+        return False
+    log.info("%s — GİRİŞ SKORU KAPISI%s: %s → %s%s", scope_key,
+             " [GÖLGE]" if shadow else "", reason, direction,
+             " yine de açıldı (ölçüm)" if shadow else " açılmadı")
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    if tick:
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
+                      tick.ask if direction == "BUY" else tick.bid,
+                      "entry_score_gate_shadow" if shadow else "entry_score_gate",
+                      extra={"score": score, "why": reason})
+    return not shadow
+
+
+def _vix_micro_blocks(scope_key: str, mt5_symbol: str, direction: str) -> bool:
+    """VIXREG'e özel mikro-yapı kapısı (otopsi §9.2). True → bloklanmalı."""
+    if not getattr(config, "VIX_REGIME_MICRO_GATE", True):
+        return False
+    try:
+        from entry_gate import vix_regime_micro_ok
+        ok, reason = vix_regime_micro_ok(direction, candles_1m(mt5_symbol, 240))
+    except Exception as exc:
+        log.debug("vixreg mikro kapı fail-open: %s", exc)
+        return False
+    if ok:
+        return False
+    log.info("%s — %s", scope_key, reason)
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    if tick:
+        log_gate_skip(scope_key, mt5_symbol, scope_key.split(":")[0], direction,
+                      tick.ask if direction == "BUY" else tick.bid,
+                      "vixreg_micro_gate", extra={"why": reason})
+    return True
+
+
 def _market_open(scope_key, forexsai_sym, mt5_symbol, direction, cfg, voters, bot_signal):
     """Eski market girişi (momentum-continuation)."""
     if bot_signal:
@@ -1240,6 +1308,10 @@ def _route_open(scope_key: str, forexsai_sym: str, mt5_symbol: str,
       - Aksi (normal momentum)         → S/R pullback (pending limit).
     """
     _ENTRY_CTX.clear()                                       # parmak izi bağlamı (taze)
+
+    # Giriş skoru kapısı — momentum/SR scope'u otopsinin kanıt kapsamında.
+    if _entry_score_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
+        return
 
     if not config.USE_SR_ENTRY:
         _market_open(scope_key, forexsai_sym, mt5_symbol, direction, cfg, voters, bot_signal)
@@ -1511,6 +1583,14 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
     if backend_veto_advice(scope_key, forexsai_sym, mt5_symbol, direction,
                            [model], "CHREV_BACKEND_VETO"):
         return
+    # Giriş skoru kapısı CHREV'de varsayılan GÖLGE: 2026-07-10 otopsisi bu scope'u
+    # "mean-reversion doğası karşı-trend" diye kapsam dışı bıraktı, ama 45 günlük
+    # canlı doğrulama tersini fısıldıyor (skor<7: n=37, −4.393$ / skor≥7: n=15,
+    # +832$). n küçük → önce ölç, sonra karar ver. ENTRY_SCORE_GATE_CHREV=True
+    # ile gerçekten bloklar.
+    if _entry_score_blocks(scope_key, forexsai_sym, mt5_symbol, direction,
+                           shadow=not getattr(config, "ENTRY_SCORE_GATE_CHREV", False)):
+        return
     log.info("%s — MEAN-REVERSION [%s] z=%.2f ✓ → market giriş", scope_key, source, z)
     open_trade(scope_key, forexsai_sym, mt5_symbol, direction, cfg, [model], magic=cr_magic)
 
@@ -1706,10 +1786,50 @@ def check_usoil_breakout() -> None:
         return
     tp = round(float(getattr(config, "USOIL_BREAKOUT_TP_ATR", 1.0)) * atr, 5)
     sl = round(float(getattr(config, "USOIL_BREAKOUT_SL_ATR", 1.0)) * atr, 5)
+    overshoot = (closes[-1] - donch_high_now) / atr          # "tepeden alma" ölçüsü
     log.info("%s — Donchian(%d) kırılımı (seviye=%.3f) + EMA200 trend-hizalı "
-             "(fiyat=%.3f > ema200=%.3f) → market BUY (TP/SL=%.3f/ATR×1.0)",
-             scope_key, n_don, donch_high_now, closes[-1], ema_t, atr)
+             "(fiyat=%.3f > ema200=%.3f, aşım=%.2f×ATR) TP/SL=%.3f/ATR×1.0",
+             scope_key, n_don, donch_high_now, closes[-1], ema_t, overshoot, atr)
     cfg = {"tp": tp, "sl": sl, "is_pct": False}
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    px = tick.ask if tick else float(closes[-1])
+
+    # ── AŞIM (tepeden alma) FRENİ ───────────────────────────────────────────
+    # Kanıt (backend/research/usoil_breakout_lab*.py, 368 olay, gerçek M1 + spread):
+    # aşım ≤0.50×ATR → WR %42.7→%47.9, ort.R −0.147→−0.041 (kaybın ~%72'si bu
+    # "kırılım barının tepesini kovalama" alt kümesinden geliyor).
+    max_over = float(getattr(config, "USOIL_BREAKOUT_MAX_OVERSHOOT", 0.5))
+    if overshoot > max_over:
+        log.info("%s — AŞIM FRENİ: kırılım seviyesinin %.2f×ATR üstünde (eşik %.2f) "
+                 "→ tepeden alım yapılmadı", scope_key, overshoot, max_over)
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, "BUY", px,
+                      "breakout_overshoot", tp_dist=tp, sl_dist=sl,
+                      extra={"overshoot_atr": round(overshoot, 3),
+                             "level": round(float(donch_high_now), 3)})
+        return
+
+    # ── GÖLGE MODU (varsayılan) ─────────────────────────────────────────────
+    # 2026-08-11 dürüst yeniden ölçüm: bu scope'un giriş kuralı GERÇEK icra
+    # koşullarında kenar taşımıyor. 368 olay (3,5 ay, MT5 M1 çözümleme, spread
+    # 0.028 dahil): WR %42.7, ort.R −0.147, %95 [−0.250,−0.043], P(EV>0)=%0.3.
+    # 30 TP/SL geometrisinin 30'u da negatif; geri-çekilme limiti, gecikmeli
+    # giriş, seans/1h-trend/dar-kanal kapılarının hiçbiri artıya çıkarmıyor.
+    # Canlı doğrulama: 19 işlem, WR %26.3, −895$ (simülasyon aynı pencerede
+    # %24.1). Ayrıntı: backend/data/evolution/analyst_reports/
+    # usoil_breakout_denetimi_2026-08-11.md. Sinyal ÜRETİLMEYE DEVAM EDER
+    # (kanıt birikimi), emir GÖNDERİLMEZ. USOIL_BREAKOUT_LIVE=True ile açılır.
+    if not getattr(config, "USOIL_BREAKOUT_LIVE", False):
+        log.info("[GÖLGE] %s — kenar doğrulanmadı (368 olay: ort.R −0.147, "
+                 "P(EV>0)=%%0.3) → emir gönderilmedi, sinyal kaydedildi", scope_key)
+        _log_trade("SHADOW_BREAKOUT", scope_key, mt5_symbol, "BUY", px,
+                   px + tp, px - sl, ["breakout_donchian_ema200"],
+                   f"overshoot={overshoot:.2f}xATR level={donch_high_now:.3f}")
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, "BUY", px,
+                      "breakout_shadow", tp_dist=tp, sl_dist=sl,
+                      extra={"overshoot_atr": round(overshoot, 3),
+                             "level": round(float(donch_high_now), 3)})
+        return
+
     open_trade(scope_key, forexsai_sym, mt5_symbol, "BUY", cfg,
                ["breakout_donchian_ema200"], magic=magic)
 
@@ -1778,6 +1898,11 @@ def check_vix_regime() -> None:
         log.info("%s — VIX=%.1f favored=%s ama model sinyali yok → açılmadı",
                  scope_key, vix, favored)
         return
+    # Giriş skoru + mikro-yapı kapıları (otopsi §6/§9.2 — VIXREG kanıt kapsamında)
+    if _entry_score_blocks(scope_key, forexsai_sym, mt5_symbol, favored):
+        return
+    if _vix_micro_blocks(scope_key, mt5_symbol, favored):
+        return
     log.info("%s — VIX=%.1f favored=%s, %d model onaylıyor → market giriş",
              scope_key, vix, favored, len(voters))
     # TP sabit (80p — araştırmada ATR'ye bağlamak ek fayda vermedi, aylık
@@ -1844,7 +1969,10 @@ def main():
                    ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
                    ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
                    ("USOIL_BREAKOUT_SL_ATR", 1.0),
+                   ("USOIL_BREAKOUT_LIVE", False), ("USOIL_BREAKOUT_MAX_OVERSHOOT", 0.5),
                    ("MGMT_INCLUDE_USOIL_BREAKOUT", True), ("MGMT_USOIL_TRAIL_R", 1.0),
+                   ("ENTRY_SCORE_GATE_ENABLED", True), ("ENTRY_SCORE_MIN", 7),
+                   ("VIX_REGIME_MICRO_GATE", True),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)

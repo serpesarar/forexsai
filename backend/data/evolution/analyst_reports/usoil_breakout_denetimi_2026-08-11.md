@@ -1,0 +1,125 @@
+# USOIL BREAKOUT scope denetimi + kayıp giriş kapılarının bağlanması
+
+**Tarih:** 2026-08-11
+**Tetikleyici:** Kullanıcı ekran görüntüsü — dün SpotCrude'da art arda açılan 5 BUY
+pozisyonu, "hep fiyat yüksekken alım yapıldı, oysa kapı ayarlarını yapmıştım".
+**Veri:** Kutunun gerçek MT5 işlem geçmişi + MT5 M5/M1 barları (spread dahil).
+
+---
+
+## 1. Dün ne oldu — işlem işlem
+
+Ekrandaki 5 pozisyonun tamamı **magic 52890974 = `USOIL_BREAKOUT_MAGIC`** (2026-08-06'da
+canlıya alınan Donchian48 kırılım scope'u). MOM/SR ya da CHREV değil.
+
+| # | UTC | seviye | kırılım barı kapanışı | aşım (×ATR) | dolum | sonuç |
+|---|-----|--------|----------------------|-------------|-------|-------|
+| 1 | 08-09 22:05 | 78.648 | 79.364 | **2.50** | 79.541 | SL −143.0$ |
+| 2 | 08-10 17:05 | 81.794 | 81.819 | 0.12 | 81.847 | SL −100.5$ |
+| 3 | 08-10 17:35 | 81.871 | 81.951 | 0.40 | 81.983 | TP +94.5$ |
+| 4 | 08-10 18:21 | 82.176 | 82.411 | **1.38** | 82.405 | SL −85.0$ |
+| 5 | 08-11 01:45 | 82.589 | 82.592 | 0.02 | 82.635 | SL −79.5$ |
+
+Kullanıcının gözlemi doğru: giriş **tanımı gereği** 4 saatlik kanalın tepesinden yapılıyor
+(Donchian kırılımı = yeni zirve). İki işlemde (1 ve 4) fiyat kırılım seviyesinin
+1.4–2.5 ATR üstüne çıkmışken alım yapılmış — yani zirvenin de tepesi kovalanmış.
+
+**Scope'un canlı toplamı (2026-08-06 → 08-11, 19 işlem): WR %26.3, net −895$.**
+Scope'u devreye alan araştırma TEST'te %58.8 vaat ediyordu.
+
+## 2. Kapılar neden uygulanmadı — kök neden
+
+İki ayrı kusur:
+
+1. **`entry_gate.py` hiç commit edilmemişti.** 2026-07-10 MT5 otopsisinden çıkan
+   8 koşullu giriş skoru + seans saat bloğu modülü yazılmış, yerelde `.pyc`'si bile
+   üretilmiş, ama `git stash` (e7dedf8) içinde kalmış. Kutuya kod `git pull` ile
+   gittiği için **modül kutuya hiç ulaşmadı** ve botta onu çağıran tek satır yoktu.
+   `config.py`'deki `ENTRY_SCORE_GATE_ENABLED = True` / `SESSION_BLOCK_HOURS_UTC`
+   ayarları bu yüzden hiçbir şey yapmıyordu. (Backend tarafındaki
+   `services/signal_gates.py` karşılığı çalışıyordu — ama o yalnız panel sinyallerini
+   süzer, botun kendi girişlerine dokunmaz.)
+2. **BREAKOUT scope'u zaten hiçbir kapının arkasında değildi.** `check_usoil_breakout`
+   doğrudan `open_trade`'e gidiyor; trend/konum/TQ/seans kapılarının hiçbiri bu yola
+   bağlı değil. USOIL için tanımlı 00–11 UTC seans bloğu da bu yüzden 5. işlemi
+   (01:45 UTC) durduramadı.
+
+## 3. Kırılım kuralının dürüst yeniden ölçümü
+
+`backend/research/usoil_breakout_lab*.py` — botun `check_usoil_breakout` kuralı birebir
+yeniden üretildi (canlı log'daki 19 olayın 17'si seviye/kapanış/ATR düzeyinde **birebir**
+eşleşti; kalan 2'si bar-hizalama farkı). Giriş = kırılım barı kapanışından sonraki ilk
+M1 açılışı **+ spread (0.028)**; çözümleme M1 bid barlarıyla; aynı barda TP+SL →
+konservatif kayıp.
+
+**368 olay (3,5 ay, gerçek broker verisi):**
+
+| ölçüm | sonuç |
+|---|---|
+| TABAN (canlı kural, TP=SL=1×ATR) | WR **%42.7**, ort **−0.147R**, %95 [−0.250, −0.043], **P(EV>0)=%0.3** |
+| spread=0 varsayımı | WR %49.2 — *rapor bu dünyada ölçmüştü* |
+| BE+kazananı-koştur yönetimi | ort −0.042R (hâlâ negatif) |
+| 2026-08-06→ dilim (canlı pencere) | WR %24.1 — **canlı %26.3 ile tutarlı** |
+
+**Hiçbir varyant kurtarmıyor:**
+- 30 TP/SL geometrisi (0.75–3.0 TP × 0.75–1.5 SL, ±koştur) → **30'u da negatif**.
+- Geri-çekilme limiti (seviyeye dönüşte al, k=−0.25…+0.10, 3/6/12 bar geçerli, 72 varyant)
+  → en iyisi ≈0.00R, kronolojik yarılarda işaret değiştiriyor.
+- Gecikmeli giriş (+1/+2/+3 bar) → daha kötü.
+- Ön-tanımlı kapılar: seans 12–23 UTC (−0.189R), 1h EMA50 hizası (−0.203R),
+  1h EMA200 (−0.183R), dar kanal (−0.065R), ADX 18–35 (−0.095R), gün-içi tepe
+  değil (−0.083R), birleşik (−0.134R) — **hepsi negatif**.
+- Tek anlamlı iyileşme **aşım freni**: aşım ≤0.50×ATR → WR %47.9, ort −0.041R
+  (kaybın ~%72'si "kırılım barının tepesini kovalama" alt kümesinden geliyor).
+  Ama bu da artıya çıkarmıyor: P(EV>0)=%27.
+
+**Karar:** Bu giriş kuralının gerçek icra koşullarında kenarı yok. Scope **GÖLGEYE**
+alındı (`USOIL_BREAKOUT_LIVE=False`, varsayılan): sinyal üretilmeye ve kaydedilmeye
+devam eder, emir gönderilmez. Ayrıca aşım freni (`USOIL_BREAKOUT_MAX_OVERSHOOT=0.5`)
+eklendi — scope canlıya dönerse tepeden alım baştan elenir.
+
+## 4. Giriş skoru kapısı — canlıya bağlamadan önce doğrulama
+
+Kapı, botun **kendi gerçek 45 günlük işlemleri** üzerinde geriye dönük ölçüldü
+(`backend/research/entry_gate_live_validation.py`; skor her işlemin AÇILIŞ ANINA kadarki
+barlarla hesaplandı, sonraki barlar görülmedi).
+
+**Bağlanan kapsam — MOM/SR + VIXREG, sembol NDX+USOIL:**
+
+| | n | WR | net PnL |
+|---|---|---|---|
+| kapı YOKken (bugünkü canlı) | 319 | %55.8 | +1.444$ |
+| **kapı VARken (skor≥7 açılır)** | 110 | **%60.0** | **+4.386$** |
+| kapının engelleyeceği küme | 209 | %53.6 | −2.943$ |
+
+**→ Kapının 45 günlük etkisi: +2.943$.** Eşik duyarlılığı: ≥5/≥6/≥7/≥8 eşiklerinin
+**dördü de** pozitif (≥6 bu pencerede +4.515$ ile daha iyi — eşik değişikliği ayrı
+karar, şimdilik yapılandırılmış değer olan 7 korundu).
+
+Scope kırılımı: MOM/SR elenen küme −1.292$, VIXREG elenen küme −734$.
+DAX kapsam dışı bırakıldı (`ENTRY_SCORE_SYMBOLS={NDX,USOIL}`) — orada kapı zarar
+verirdi (elenen küme +917$).
+
+## 5. Uygulanan değişiklikler
+
+| dosya | değişiklik |
+|---|---|
+| `yeni deneme/entry_gate.py` | **repoya geri alındı** (artık takipli → kutuya gidiyor) |
+| `forexsai_demo_bot.py` | `_entry_score_blocks()` + `_vix_micro_blocks()` yardımcıları |
+| `forexsai_demo_bot.py` | `_route_open` (MOM/SR) ve `check_vix_regime` (VIXREG) kapıya bağlandı |
+| `forexsai_demo_bot.py` | CHREV'e kapı **gölge** modda bağlandı (ölçüm; `ENTRY_SCORE_GATE_CHREV=True` ile bloklar) |
+| `forexsai_demo_bot.py` | BREAKOUT: aşım freni + gölge modu (`USOIL_BREAKOUT_LIVE`) |
+
+Tüm kapılar **fail-open** (veri/modül hatası girişi engellemez) ve config bayrağıyla
+kapatılabilir. Elenen her giriş `gate_skip.jsonl`'e yazılır → "filtre haklı mıydı?"
+sorusu sonradan 1m replay ile ölçülebilir.
+
+## 6. Açık kalanlar (backlog)
+
+- **CHREV kanaması:** 45 günde n=52, net **−3.562$**. Gölge kapı verisi 2–3 hafta
+  birikince `ENTRY_SCORE_GATE_CHREV` kararı verilecek (erken sinyal: skor<7 kümesi −4.393$).
+- **Eşik 6 vs 7:** bu pencerede 6 daha iyi; tek pencereye uydurmamak için ertelendi.
+- **BREAKOUT gölge karnesi:** 3–4 hafta sonra gölge sinyaller replay edilip scope
+  tamamen kaldırılacak mı, aşım freniyle geri mi açılacak kararı verilecek.
+- **Kayıp modül dersi:** `yeni deneme/` altındaki yeni modüller commit edilmezse
+  kutuya ulaşmaz ve ayar sessizce ölü kalır — `config.py` dışındaki her dosya takipli olmalı.
