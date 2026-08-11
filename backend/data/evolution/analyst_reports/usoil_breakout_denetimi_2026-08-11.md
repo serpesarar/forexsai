@@ -197,6 +197,26 @@ ama bloklanması gerekenlerin yaklaşık yarısı hâlâ DB'ye giriyor (muhtemel
 backend DataHub mumları ile MT5 farkı, fail-open veri hataları, `log_prediction`
 güvenlik-ağı yolundan giren yazarlar).
 
+Sızma kırılımı (kapı sonrası, skor<7 çıkan satırlar):
+
+| model | n | skor<7 | pay |
+|---|---|---|---|
+| pulse1 | 630 | 169 | %26.8 |
+| pulse2 | 428 | 145 | %33.9 |
+| pulse3 | 617 | 162 | %26.3 |
+| **smc** | 97 | 83 | **%85.6** |
+| NDX | 652 | 165 | %25.3 |
+| USOIL | 1.120 | 394 | %35.2 |
+
+`bypass_quality_filters` bunu açıklamıyor — o bayrak yalnız gölge-ters modellerde
+(`*_inv`) kullanılıyor ve onlar bu kümede yok; `log_prediction` güvenlik ağı
+`apply_signal_gates`'i tam olarak çağırıyor. Geriye iki olası neden kalıyor:
+(1) kapı skoru **DataHub** mumlarından hesaplıyor, ben MT5'ten — sızanların en sık
+ihlalleri de mum farkına en duyarlı göstergeler (`adx_dusuk` 289, `1h_karsi_momentum`
+284, `5m_trend` 262); (2) veri hatasında kapı fail-open geçiyor
+(`entry_score_gate fail-open` WARNING'leri Railway logunda sayılmalı).
+smc'deki %85.6 ayrıca incelenmeli.
+
 **Öneri:** backend kapısını da **gölgeye** al (`ENTRY_SCORE_GATE_ENABLED=0`, ya da
 bot tarafındaki gibi ayrı bir BLOCK bayrağı) — kanıt yokken sinyallerin %63'ünü
 elemek panel istatistiklerini ve bota giden oy akışını gereksiz daraltıyor.
