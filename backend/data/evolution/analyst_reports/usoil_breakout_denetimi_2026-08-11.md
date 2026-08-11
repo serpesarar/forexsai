@@ -146,3 +146,59 @@ sorusu sonradan 1m replay ile ölçülebilir.
   tamamen kaldırılacak mı, aşım freniyle geri mi açılacak kararı verilecek.
 - **Kayıp modül dersi:** `yeni deneme/` altındaki yeni modüller commit edilmezse
   kutuya ulaşmaz ve ayar sessizce ölü kalır — `config.py` dışındaki her dosya takipli olmalı.
+
+---
+
+## 7. BACKEND giriş skoru kapısı — sızıntısız ölçüm (2026-08-11, ek tur)
+
+`backend/research/backend_entry_gate_validation.py`. Kapı `services/signal_gates.py`
+içinde pulse1/2/3 + smc sinyallerini (NDX+USOIL) **gerçekten bloklıyor** ve
+2026-07-15'te (commit f080e5d) canlıya girdi → o tarihten sonra bloklanan sinyaller
+DB'ye hiç yazılmadı. **Tarafsız pencere: 2026-05-01 → 07-14.**
+
+Yöntem: backend'in KENDİ `compute_entry_score`'u, karar anında KAPANMIŞ MT5 M5/M30
+barlarıyla; sonuç `prediction_logs.status` ile DEĞİL, M1 yarışıyla (aynı barda TP+SL
+→ konservatif kayıp). İki geometri: (A) **nötr** TP=SL=1×ATR(5m) → saf yön kalitesi,
+(B) **dönem geometrisi** (satırın TP1'i + `stop_loss_pips`).
+
+**n = 20.732 sinyal (sansürsüz pencere):**
+
+| küme | n | WR (nötr) | ort.R (nötr) | toplam R |
+|---|---|---|---|---|
+| tümü (kapı yokken) | 20.732 | %53.8 | +0.076 | **+1.580R** |
+| kapıdan geçecek (skor≥7) | 7.648 | %54.1 | +0.082 | +626R |
+| kapının eleyeceği (skor<7) | 13.084 | %53.6 | **+0.073** | +954R |
+
+**Sonuç: kapının ayırt etme gücü YOK.** Elenen küme geçenlerden pratikte farksız
+(+0.073 vs +0.082); gün-bloklu bootstrap'ta P(elenen > geçen) = **%44** — yani fark
+şansla ayırt edilemiyor. Kapı sinyallerin **%63'ünü** eliyor ve toplam R'yi
++1.580R'den +626R'ye düşürüyor. Eşiklerin hiçbiri (5/6/7/8) toplam R'yi kapısız
+hâlin üstüne çıkarmıyor; yalnız ≥8'de işlem-başına R yükseliyor (+0.162) ama hacmin
+%86'sı gidiyor.
+
+Sembol×model: NDX pulse3'te kapı işe yarıyor (elenen +0.066 vs tümü +0.160), ama
+USOIL pulse1'de **ters** (elenen +0.112 vs tümü +0.079). Tutarlı bir yön yok.
+
+**Kanıt tabanı doğrulanamadı:** raporun dayandığı "NDX skor≥7 WR %60→%65, USOIL
+%49→%72" iddiası 20.7k sızıntısız panel sinyalinde yeniden üretilemiyor.
+
+### 7b. Asıl sorun kapı değil, GEOMETRİ
+
+Aynı sinyaller nötr 1:1 geometride **+1.580R** kazandırırken, dönemin kendi
+geometrisiyle (TP1 dar, SL geniş) **−1.574R** veriyor. Yani panel sinyallerinin
+girişinde küçük ama gerçek bir kenar var; onu yiyen şey TP/SL oranı.
+Bu, 2026-07-28 ATR-merdiveni bulgusunun bağımsız bir teyidi.
+
+### 7c. Kapı zaten yarı-etkili
+
+Öz-denetim: skor<7 satırlarının oranı kapı öncesi %63.1 → kapı sonrası %31.5.
+Düşüş kapının çalıştığını (ve skor yeniden üretiminin doğru olduğunu) gösteriyor,
+ama bloklanması gerekenlerin yaklaşık yarısı hâlâ DB'ye giriyor (muhtemel nedenler:
+backend DataHub mumları ile MT5 farkı, fail-open veri hataları, `log_prediction`
+güvenlik-ağı yolundan giren yazarlar).
+
+**Öneri:** backend kapısını da **gölgeye** al (`ENTRY_SCORE_GATE_ENABLED=0`, ya da
+bot tarafındaki gibi ayrı bir BLOCK bayrağı) — kanıt yokken sinyallerin %63'ünü
+elemek panel istatistiklerini ve bota giden oy akışını gereksiz daraltıyor.
+⚠️ Bu değişiklik canlı sinyal hacmini ARTIRIR (bot daha çok oy görür) → kullanıcı
+onayı ile yapılmalı.

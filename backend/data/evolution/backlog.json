@@ -1659,5 +1659,27 @@
     "source": "session",
     "created_at": "2026-08-11T06:23:52.126881+00:00",
     "updated_at": "2026-08-11T06:23:52.126886+00:00"
+  },
+  {
+    "id": "bl_8b57016426",
+    "title": "Backend ENTRY_SCORE kapısını gölgeye alma kararı",
+    "detail": "Sızıntısız ölçüm kapının ayırt etme gücü olmadığını gösterdi (P=%44, toplam R +1.580→+626). Kapı sinyallerin %63'ünü eliyor ve bota giden oy akışını daraltıyor. ENTRY_SCORE_GATE_ENABLED=0 (veya ayrı BLOCK bayrağı) kararı KULLANICI ONAYI bekliyor — canlı sinyal hacmini artırır.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-11T06:40:55.318737+00:00",
+    "updated_at": "2026-08-11T06:40:55.318884+00:00"
+  },
+  {
+    "id": "bl_55c071aa8a",
+    "title": "Panel sinyal geometrisi: nötr 1:1 +1.580R vs dönem geometrisi −1.574R",
+    "detail": "20.7k sinyalde giriş kalitesinde küçük ama gerçek kenar var; TP1'in SL'e oranı onu yiyor. ATR merdiveni (2026-07-28) doğru yöndeydi — kapsamı ve çarpanları bu ölçümle yeniden gözden geçirilmeli.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-11T06:40:55.321088+00:00",
+    "updated_at": "2026-08-11T06:40:55.321094+00:00"
   }
 ]
