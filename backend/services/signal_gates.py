@@ -24,7 +24,8 @@ Env bayrakları:
   CALENDAR_GATE_ENABLED=1    → yüksek etkili takvim olayı ±30dk kapısı (default açık)
   GDAXI_PULSE1_ENABLED=0     → GDAXI'de pulse1 (default KAPALI/askıda)
   CALENDAR_GATE_MINUTES=30   → takvim penceresi (dakika)
-  ENTRY_SCORE_GATE_ENABLED=1 → 8 koşullu giriş skoru kapısı (default açık)
+  ENTRY_SCORE_GATE_ENABLED=1 → 8 koşullu giriş skoru kapısı (default açık — ölç+logla)
+  ENTRY_SCORE_GATE_BLOCK=0   → 1 ise GERÇEKTEN bloklar (2026-08-11'den beri GÖLGE)
   ENTRY_SCORE_MIN=7          → minimum skor eşiği (0-8)
   FAKEOUT_GATE_ENABLED=1     → sahte kırılım radarı (default açık — değerlendir+logla)
   FAKEOUT_GATE_BLOCK=0       → 1 ise GERÇEKTEN bloklar (default GÖLGE: sadece log)
@@ -462,11 +463,24 @@ async def entry_score_gate(
     direction: str,
     now: Optional[datetime] = None,
 ) -> Tuple[bool, Optional[str]]:
-    """8 koşullu giriş skoru kapısı — skor < ENTRY_SCORE_MIN ise blok.
+    """8 koşullu giriş skoru — skor < ENTRY_SCORE_MIN ise blok (default GÖLGE).
 
-    Kanıt: analiz_paketi_2026-07-09/RAPOR_MT5_ISLEM_OTOPSISI.md §6
-    (NDX skor≥7: WR %60→%65; USOIL skor≥7: WR %49→%72; bloklanan işlemlerin
-    toplam PnL'i her iki sembolde negatif). Veri alınamazsa fail-open.
+    ⚠️ 2026-08-11 — VARSAYILAN GÖLGEYE ALINDI (ENTRY_SCORE_GATE_BLOCK=0).
+    Kapıyı gerekçelendiren 2026-07-09 otopsisi (NDX skor≥7 WR %60→%65, USOIL
+    %49→%72) SIZINTISIZ ölçümde yeniden üretilemedi. Ölçüm:
+    backend/research/backend_entry_gate_validation.py — 20.732 panel sinyali
+    (2026-05-01→07-14, kapı canlıya girmeden önceki sansürsüz pencere), skor
+    karar anında KAPANMIŞ MT5 M5/M30 barlarından, sonuç M1 yarışıyla
+    (status kullanılmadı), nötr geometri TP=SL=1×ATR(5m):
+        tümü    n=20.732  WR %53.8  ort.R +0.076   (toplam +1.580R)
+        geçen   n= 7.648  WR %54.1  ort.R +0.082
+        elenen  n=13.084  WR %53.6  ort.R +0.073   ← pratikte AYNI
+    Gün-bloklu bootstrap: P(elenen > geçen) = %44 → fark şanstan ayırt edilemiyor.
+    Kapı sinyallerin %63'ünü eliyor ve toplam R'yi +1.580R'den +626R'ye düşürüyor;
+    eşiklerin hiçbiri (5/6/7/8) kapısız hâli geçemiyor. Aynı mantık bot tarafında
+    da (45 gün gerçek işlem) aleyhte çıktı → orada da gölgede.
+    Kapı ÖLÇMEYE devam eder (log satırları karne için); bloklamak isteyen
+    ENTRY_SCORE_GATE_BLOCK=1 yapar. Veri alınamazsa fail-open.
     """
     if not _flag("ENTRY_SCORE_GATE_ENABLED"):
         return True, None
@@ -484,6 +498,12 @@ async def entry_score_gate(
         candles_30m = await get_ohlcv_data(symbol, timeframe="30m", limit=_SCORE_30M_LIMIT)
         score, fails = compute_entry_score(symbol, direction, candles_5m, candles_30m, now=now)
         if score < min_score:
+            if not _flag("ENTRY_SCORE_GATE_BLOCK", "0"):
+                logger.info(
+                    f"entry_score_gate SHADOW {symbol} {direction}: {score}/8 < {min_score} "
+                    f"(ihlal: {', '.join(fails)}) — ölçülüyor, BLOKLANMIYOR"
+                )
+                return True, None
             logger.info(
                 f"entry_score_gate BLOCK {symbol} {direction}: {score}/8 < {min_score} "
                 f"(ihlal: {', '.join(fails)})"
