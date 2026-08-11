@@ -1,1032 +1,1060 @@
 [
-  {
-    "id": "ml_prediction_service",
-    "name": "ML Prediction (LightGBM 150-feature)",
-    "file": "backend/services/ml_prediction_service.py",
-    "category": "signal_engine",
-    "purpose": "Loads the trained LightGBM models (nasdaq/xauusd families) and generates direction+pip-target predictions with preset strategies (ultra_safe/balanced/full_power/aggressive), parallel async feature calls and flip-flop stability control.",
-    "key_functions": [
-      "get_ml_prediction(symbol, strategy)",
-      "resolve_ml_model_symbol",
-      "get_ml_model_filename"
-    ],
-    "status_hint": "GET /api/prediction/{symbol}?strategy=balanced; rows in prediction_logs with model_type ml:*"
-  },
-  {
-    "id": "xauusd_v2_service",
-    "name": "XAUUSD v2/v3 ML (two-headed calibrated ensemble)",
-    "file": "backend/services/xauusd_v2_service.py",
-    "category": "signal_engine",
-    "purpose": "Replaces the legacy 150-feature pipeline for XAUUSD with separate BUY/SELL probability heads + isotonic calibrators (v3, 133 features incl. DXY/VIX/US10Y), targeting the 'BUY at resistance / SELL at support' failure mode.",
-    "key_functions": [
-      "predict_xauusd_v2(strategy)"
-    ],
-    "status_hint": "GET /api/prediction/XAUUSD routes here; prediction_logs XAUUSD ml rows"
-  },
-  {
-    "id": "emel_pulse_models",
-    "name": "EMEL + PULSE 1/2/3 panel modelleri",
-    "file": "backend/routers/emel_pulse.py",
-    "category": "signal_engine",
-    "purpose": "Ana panel router'ı: EMEL (10-kontrol stratejik skor, enstrümana özel ağırlıklar), PULSE 1 (6-bileşen algo scalp), PULSE 2 (ML+TA hibrit), PULSE 3 (5m+1H+4H MTF). Regime filtresi + signal_gates burada uygulanır, sinyaller prediction_logger'a akar.",
-    "key_functions": [
-      "GET /api/panel/emel/{symbol}",
-      "GET /api/panel/pulse/{symbol}",
-      "GET /api/panel/pulse-ml/{symbol}",
-      "GET /api/panel/pulse-v3/{symbol}"
-    ],
-    "status_hint": "Panel endpoint'leri 200 dönüyor mu; prediction_logs model_type pulse1/2/3/emel taze satır"
-  },
-  {
-    "id": "smc_order_block_engine",
-    "name": "SMC / Order Block Engine (ICT)",
-    "file": "backend/services/order_block_service.py",
-    "category": "signal_engine",
-    "purpose": "Kanonik SMC motoru (v2 MarketStructureAnalyzer üstünde): OB/FVG/CHoCH/BOS tespiti, sembole özel SMC profilleri (2026-07-08), SMC S/R ve sinyal üretimi; debate ajanı ve entry optimizer da bunu okur.",
-    "key_functions": [
-      "OrderBlockService.detect(symbol, log_signals=...)"
-    ],
-    "status_hint": "GET /api/panel/smc/{symbol}; prediction_logs model_type=smc"
-  },
-  {
-    "id": "meta_analysis_engine",
-    "name": "Meta-Intelligence Engine (6-model fusion)",
-    "file": "backend/services/meta_analysis_engine.py",
-    "category": "signal_engine",
-    "purpose": "6 modelin (ml, pulse1-3, emel, smc) canlı çıktısını 5 katmanda birleştirir: signal collection → combination mining (meta_combination_stats) → 8-koşul teknik validasyon → confidence fusion → ATR-bazlı risk hesabı. Min 2 model aynı yönde değilse HOLD.",
-    "key_functions": [
-      "MetaAnalysisEngine.analyze",
-      "TechnicalSnapshot.get_conditions"
-    ],
-    "status_hint": "GET /api/meta/analyze/{symbol}; meta rows in prediction_logs via meta_signal_logger"
-  },
-  {
-    "id": "reflex_engine",
-    "name": "NDX Reflex Engine (momentum-continuation)",
-    "file": "backend/services/reflex_engine_service.py",
-    "category": "signal_engine",
-    "purpose": "Tek doğrulanmış sızıntısız NDX edge'i: momentum-continuation olaylarını kapalı 1m/15m barlardan tespit eder, 15-dakika time-stop + 1.5×ATR katastrofik SL ile çıkar. Yön tahmin etmez, kısa vadeli momentum sürüklenmesini hasat eder.",
-    "key_functions": [
-      "detect_event(df)",
-      "tick()",
-      "_resolve_due"
-    ],
-    "status_hint": "GET /api/reflex/live + /api/reflex/performance; bot reflex_exec bunu poll eder"
-  },
-  {
-    "id": "cortex_confluence_signal",
-    "name": "CORTEX Confluence Shadow Signals",
-    "file": "backend/services/cortex_confluence_signal.py",
-    "category": "signal_engine",
-    "purpose": "İki en sağlam leak-verified confluence edge'ini (NDX_L_spx 14:00 UTC, NDX_S_es 15:00 UTC) canlı forward-validation için değerlendirir ve LOG-ONLY kaydeder; asla trade etmez. CORTEX_SIGNAL_ENABLED ile opt-in.",
-    "key_functions": [
-      "evaluate_and_record()",
-      "resolve_outcomes()",
-      "tick()"
-    ],
-    "status_hint": "cortex_signal kayıtları (Supabase) + CORTEX_SIGNAL_ENABLED bayrağı"
-  },
-  {
-    "id": "trend_analyzer",
-    "name": "Trend Analysis Engine v3.0",
-    "file": "backend/services/trend_analyzer.py",
-    "category": "signal_engine",
-    "purpose": "Regresyon kanalı + fraktal pivot + OBV + RSI divergence tabanlı çok-TF trend analizi; /api/run/{nasdaq|dax|xauusd|usoil} sinyallerini ve debate trend_channel ajanını besler.",
-    "key_functions": [
-      "run_trend_analysis()"
-    ],
-    "status_hint": "POST /api/run/nasdaq (SignalResponse döner)"
-  },
-  {
-    "id": "cross_model_experiment",
-    "name": "Cross-Model Experiment (NASDAQ ML on XAU)",
-    "file": "backend/services/cross_model_experiment_service.py",
-    "category": "signal_engine",
-    "purpose": "NASDAQ LightGBM modelini XAUUSD verisine uygulayan izole deney (model_type ml_cross_xau_nasdaq). SELL %6.9 WR kanıtı sonrası CROSS_MODEL_EXPERIMENT_ENABLED=0 ile KAPALI.",
-    "key_functions": [
-      "experiment cron in main.py",
-      "GET /api/experiments/cross-model/stats"
-    ],
-    "status_hint": "env CROSS_MODEL_EXPERIMENT_ENABLED (default 0); /api/experiments/cross-model/info"
-  },
-  {
-    "id": "harmonic_pattern_service",
-    "name": "Harmonic + Klasik Formasyon Dedektörü",
-    "file": "backend/services/harmonic_pattern_service.py",
-    "category": "signal_engine",
-    "purpose": "Gartley/Butterfly/Bat/Crab/Shark/Cypher vb. harmonic oranları + klasik chart pattern'leri (4h) gerçek mumlardan tespit eder; debate chart_patterns ajanının veri kaynağı.",
-    "key_functions": [
-      "detect_chart_patterns(symbol, timeframe)",
-      "get_pattern_adjustment"
-    ],
-    "status_hint": "debate context'inde pattern satırı; backend/data/chart_pattern_rules.json"
-  },
-  {
-    "id": "bias_debate_engine",
-    "name": "Bias Debate Engine (çok-ajanlı günlük bias)",
-    "file": "backend/services/bias_debate_engine.py",
-    "category": "agent",
-    "purpose": "Sembol-parametrik (NDX/XAUUSD/GDAXI/USOIL) native çok-ajanlı debate: bağlam ajanları paralel çalışır, boğa/ayı çok turlu (DEBATE_ROUNDS=3) karşılıklı çürütme yapar, CIO tam transkriptten JSON verdict üretir. Gerçek yapı ajanları sistemin KENDİ motorlarını okur; halüsinasyon clamp'i CIO seviyelerini en yakın gerçek seviyeye snap eder.",
-    "key_functions": [
-      "run_debate(symbol)",
-      "_build_agents(symbol)",
-      "_build_cio_system(symbol)",
-      "_gather_context"
-    ],
-    "status_hint": "POST /api/bias-test/run-debate?symbol=; bias_test_log satırları; GET /api/bias-test/routing-status",
-    "agents": [
-      {
-        "id": "technical_structure",
-        "role": "Trend + S/R + yapı analizi (DeepSeek)"
-      },
-      {
-        "id": "volatility",
-        "role": "Gün-içi volatilite / chop riski (DeepSeek)"
-      },
-      {
-        "id": "macro",
-        "role": "DXY/VIX/US10Y canlı gauge okuma (DeepSeek)"
-      },
-      {
-        "id": "smc_structure",
-        "role": "order_block_service.detect gerçek OB/FVG/CHoCH/BOS okur"
-      },
-      {
-        "id": "trend_channel",
-        "role": "trend_analyzer gerçek regresyon kanalı + dokunuş-sayılı pivot S/R okur"
-      },
-      {
-        "id": "chart_patterns",
-        "role": "harmonic_pattern_service gerçek formasyon çıktısı — pattern icat etmesi yasak"
-      },
-      {
-        "id": "price_targets",
-        "role": "price_projection_service: fib/measured-move/ADR/squeeze/stretch/POC-VAH-VAL hedefleri"
-      },
-      {
-        "id": "bull_case",
-        "role": "En güçlü kanıt-temelli boğa argümanı (Kimi)"
-      },
-      {
-        "id": "bear_case",
-        "role": "En güçlü kanıt-temelli ayı argümanı (Kimi)"
-      },
-      {
-        "id": "cio",
-        "role": "Nihai JSON verdict — bias/confidence/trade_mode/S-R/invalid_if (Kimi)"
-      }
-    ]
-  },
-  {
-    "id": "llm_router",
-    "name": "LLM Router (Kimi / DeepSeek yönlendirici)",
-    "file": "backend/services/llm_router.py",
-    "category": "agent",
-    "purpose": "Debate ajan çağrılarını öneme göre yönlendirir: important (CIO/bull/bear) → Kimi (Moonshot), normal (veri/bağlam ajanları) → DeepSeek Reasoner. Key yoksa diğerine fallback, ikisi de yoksa LLMUnavailable (fail-open).",
-    "key_functions": [
-      "chat(importance, system, user)",
-      "routing_status()",
-      "extract_json"
-    ],
-    "status_hint": "GET /api/bias-test/routing-status"
-  },
-  {
-    "id": "bias_auto_runner",
-    "name": "Bias Auto-Runner (zamanlanmış debate)",
-    "file": "backend/services/bias_auto_runner.py",
-    "category": "agent",
-    "purpose": "main.py 60s döngüsünden tick'lenir; trading günlerinde sembol-bazlı pencerelerde (NDX 08:00+09:45 ET, XAU/DAX 08:00 UTC, USOIL 13:05 UTC) debate'i çalıştırıp loglar, kapanış sonrası outcome'ları doldurur. Opt-in BIAS_AUTO_RUN_ENABLED=1, idempotent.",
-    "key_functions": [
-      "tick()",
-      "status()"
-    ],
-    "status_hint": "status() çıktısı; bias_test_log'da otomatik run_label'lı taze satırlar"
-  },
-  {
-    "id": "bias_test_service",
-    "name": "Bias Accuracy Test Harness (core)",
-    "file": "backend/services/bias_test_service.py",
-    "category": "learning",
-    "purpose": "Bias run'larını seans bağlamıyla bias_test_log'a kaydeder, gün kapanınca sembol-bazlı seans penceresine göre was_correct notlar, run_label/confidence kırılımlı isabet raporu üretir. Canlı daily_bias/veto'dan tamamen izole.",
-    "key_functions": [
-      "record_run(payload, run_label)",
-      "fill_outcomes",
-      "accuracy_report",
-      "symbol_for_row"
-    ],
-    "status_hint": "GET /api/bias-test/accuracy-report; GET /api/bias-test/lab (UI)"
-  },
-  {
-    "id": "cortex_memory",
-    "name": "CORTEX Faz 1 — Epizodik Hafıza + Analog Retrieval",
-    "file": "backend/services/cortex_memory.py",
-    "category": "learning",
-    "purpose": "Her NASDAQ karar-günü situation vektörünü (vix_regime en ağır) cortex_episodes'a kaydeder; debate öncesi ağırlıklı kNN ile en benzer K günü çekip shrinkage-ayarlı base-rate üretir (0 LLM maliyeti). Backfill doğrulaması yön edge'i bulamadı → analog enjeksiyonu varsayılan KAPALI (CORTEX_ANALOG_INJECT=0), kayıt açık.",
-    "key_functions": [
-      "build_situation",
-      "record_episode",
-      "fill_outcomes",
-      "find_analogs"
-    ],
-    "status_hint": "cortex_episodes tablosunda taze ny_date satırları; env CORTEX_ENABLED"
-  },
-  {
-    "id": "ai_panel_analysis",
-    "name": "AI Panel (DeepSeek saatlik analiz)",
-    "file": "backend/services/ai_panel_analysis_service.py",
-    "category": "agent",
-    "purpose": "NY seansı açıkken saatte 1 DeepSeek tabanlı panel analizi üretir; ai_panel_signal_logger BUY/SELL + entry/stop/target tam olanları prediction_logs'a, gerisini ai_panel_signal_snapshots'a yazar. XAUUSD için meta_signals köprüsüyle bota akar (AI_PANEL_BRIDGE_SYMBOLS).",
-    "key_functions": [
-      "hourly scheduler in main.py",
-      "GET /api/ai-analysis/{symbol}",
-      "GET /api/ai-analysis/status"
-    ],
-    "status_hint": "GET /api/ai-analysis/status; prediction_logs model_type=ai_panel (60dk median)"
-  },
-  {
-    "id": "deepseek_analysis_service",
-    "name": "DeepSeek-R1 Master Analysis",
-    "file": "backend/services/deepseek_analysis_service.py",
-    "category": "agent",
-    "purpose": "DeepSeek-R1 ile kurumsal-tarz master analiz + SMC/risk/seasonality görünümleri (SMC/risk/seasonality kısımları kural-tabanlı, AI'sız). 2 saat TTL cache.",
-    "key_functions": [
-      "GET /api/deepseek/master/{symbol}",
-      "GET /api/deepseek/smart-setup/{symbol}"
-    ],
-    "status_hint": "/api/deepseek/master/{symbol} yanıtı"
-  },
-  {
-    "id": "claude_signal_analyzer",
-    "name": "Claude Signal Analyzer",
-    "file": "backend/services/claude_signal_analyzer.py",
-    "category": "agent",
-    "purpose": "ML tahminlerini tam teknik bağlamla Claude'a inceleterek bağımsız AI değerlendirmesi üretir (5dk TTL cache).",
-    "key_functions": [
-      "analyze via /api/ai-analysis"
-    ],
-    "status_hint": "GET /api/ai-analysis/{symbol}"
-  },
-  {
-    "id": "claude_decider_core",
-    "name": "Claude Decider — karar çekirdeği (decide.py)",
-    "file": "claude_decider/decide.py",
-    "category": "agent",
-    "purpose": "Opus'un KANIT-TEMELLİ özerk karar katmanı (Pro headless, API maliyetsiz): sabit aday yargılamaz, canlı durum + evidence.py'nin 21.5k deduped sinyalden koşullu WR tablolarından kendi görüşünü kurar (aç/bekle, yön, boyut, yönetim). Sert yasaklar (XAU SELL, USOIL BUY) _enforce_guardrails ile KODDA zorlanır; kararlar kilitli journal.jsonl'e yazılır. Ayrıca XAU 'serbest zekâ' modu.",
-    "key_functions": [
-      "decide_situation",
-      "call_claude",
-      "_enforce_guardrails",
-      "append_journal"
-    ],
-    "status_hint": "claude_decider/memory/journal.jsonl taze satırlar"
-  },
-  {
-    "id": "claude_decider_loop",
-    "name": "Claude Decider — canlı döngü (run_decider.py)",
-    "file": "claude_decider/run_decider.py",
-    "category": "agent",
-    "purpose": "Faz-1 SHADOW döngüsü (20dk cadence): MT5'ten 5m bar + VIX çeker (data_contract sıfır-güven doğrulamasıyla), her yasak-olmayan yön için situation + kanıt paketi kurar, durum 'ilginç' değilse (rev<1.6) Opus'u ÇAĞIRMAZ; ilginçse decide_situation → journal. execute() hâlâ stub — MT5'e emir göndermez. build_situation'a price_projection (fib/vol-state) da eklenir.",
-    "key_functions": [
-      "main()",
-      "run_pass",
-      "build_situation",
-      "fetch_bars_mt5"
-    ],
-    "status_hint": "python claude_decider/run_decider.py --once; journal.jsonl büyüyor mu"
-  },
-  {
-    "id": "claude_decider_evidence",
-    "name": "Claude Decider — kanıt hafızası (evidence.py + gates.py)",
-    "file": "claude_decider/evidence.py",
-    "category": "agent",
-    "purpose": "'Veteran hafızası': 97k/21.5k deduped sinyalden (sembol×yön×feature-kovası) koşullu WR tabloları (evidence_tables.json, offline üretim) + canlı durumda ilgili hücreleri Opus'a kanıt paketi olarak sunar. gates.py entry tetiğini yalnız DOĞRULANMIŞ 5m mean-reversion kapısından verir; Opus entry icat etmez, yalnız bağlam/veto/boyut.",
-    "key_functions": [
-      "evidence pack builder",
-      "gates.ALLOW / vix_regime",
-      "channel_filter.channel_zscore"
-    ],
-    "status_hint": "claude_decider/evidence_tables.json güncelliği; refresh_evidence.py"
-  },
-  {
-    "id": "claude_decider_learning",
-    "name": "Claude Decider — öğrenme/muhasebe katmanı",
-    "file": "claude_decider/outcomes.py",
-    "category": "learning",
-    "purpose": "SHADOW kararlarını ölçüp öğrenir: outcomes.py journal kayıtlarını 5m barlarla WIN/LOSS/EXPIRE'a çözer (aynı-bar → konservatif LOSS), exits.py her işlemi 6 çıkış politikasıyla paralel notlar, calibration.py evidence base-rate'lerinin gerçekle kalibrasyonunu ölçer, forensics.py+post_mortem.py SL otopsisi, allocator.py meta-allocator.",
-    "key_functions": [
-      "outcomes.resolve",
-      "exits policy grading",
-      "calibration report",
-      "allocator"
-    ],
-    "status_hint": "batch_eval.py / model_compare.py raporları; journal kayıtlarında outcome alanları"
-  },
-  {
-    "id": "precision_veto_engine",
-    "name": "Precision Veto Engine (4 aşamalı)",
-    "file": "backend/services/precision_veto_service.py",
-    "category": "gate",
-    "purpose": "Her sinyal prediction_logs'a yazılmadan ÖNCE 4 aşama: (1) yapısal hard veto — likidite bölgesi + MTF teyit + Day Structure 1c + MiroShark makro bias yumuşak katmanı (NDX-only), (2) mum yapısı/fitil reddi, (3) Bollinger+z-score soft penaltı, (4) LightGBM meta sentezleyici. Vetolar signal_vetoes'a loglanır.",
-    "key_functions": [
-      "check_signal(signal)",
-      "log_veto",
-      "reload_meta_model"
-    ],
-    "status_hint": "GET /api/precision-veto/config + /summary; signal_vetoes tablosu"
-  },
-  {
-    "id": "signal_gates",
-    "name": "Merkezi Sinyal Kapıları",
-    "file": "backend/services/signal_gates.py",
-    "category": "gate",
-    "purpose": "Kanıt-temelli merkezi kapılar (hepsi fail-open, env bayraklı): XAU trend-SELL kapısı, GDAXI pulse1 askısı, seans-saat blokları, takvim ±30dk kapısı, 8-koşullu entry_score kapısı (NDX/USOIL, min 7). Panel endpoint'lerinde + prediction_logger güvenlik ağında uygulanır.",
-    "key_functions": [
-      "apply_signal_gates()",
-      "entry_score_gate",
-      "session_gate",
-      "xau_trend_sell_gate"
-    ],
-    "status_hint": "env bayrakları (ENTRY_SCORE_GATE_ENABLED vb.); bloklanan sinyal logları"
-  },
-  {
-    "id": "signal_lifecycle",
-    "name": "Signal Lifecycle Manager",
-    "file": "backend/services/signal_lifecycle.py",
-    "category": "gate",
-    "purpose": "Aktif sinyalleri 2dk aralıkla izler: wick yakalar, TP/SL vuruşu tespit eder, expire/cleanup yönetir, stop'ta failure otopsisi yazar, günlük bias invalidation'ı kontrol eder. Per-check snapshot signal_trajectory_snapshots'a gider.",
-    "key_functions": [
-      "lifecycle check loop (main.py)",
-      "POST /api/signals/check-now"
-    ],
-    "status_hint": "GET /api/signals/active + /api/signals/dashboard; prediction_logs status geçişleri"
-  },
-  {
-    "id": "market_regime_service",
-    "name": "Market Regime Detection",
-    "file": "backend/services/market_regime_service.py",
-    "category": "gate",
-    "purpose": "ADX + ATR + swing yapısından rejim tespiti (STRONG_TREND_UP/DOWN, RANGING, TRANSITION); rejim-bazlı model ağırlıkları, RSI override'ları, ATH breakout protokolü ve fake-signal timeout'u sağlar. Tüm 6 modele akar.",
-    "key_functions": [
-      "detect_regime(symbol)",
-      "filter_signal_by_regime",
-      "check_fake_signal_timeout"
-    ],
-    "status_hint": "GET /api/panel/regime/{symbol}; 15dk cache"
-  },
-  {
-    "id": "entry_optimizer",
-    "name": "Entry Optimizer + Shadow Executor",
-    "file": "backend/services/entry_optimizer.py",
-    "category": "gate",
-    "purpose": "Sinyal geldiğinde fiyat 'uçmuş mu' sorusunu OB/FVG dağılımıyla cevaplar: EXECUTE_NOW / LIMIT_ORDER / REJECT kararı üretir. shadow_executor.py off/shadow/enforce modlarıyla pipeline'a bağlar; regime_logger her kararı Supabase'e A/B loglar.",
-    "key_functions": [
-      "optimize_entry",
-      "decide_from_payload",
-      "shadow_executor.apply_entry_optimizer"
-    ],
-    "status_hint": "POST /api/entry-optimizer/optimize; env ENTRY_OPTIMIZER_MODE"
-  },
-  {
-    "id": "stage4_sizing",
-    "name": "Stage 4 — Percentile ML Sizing",
-    "file": "backend/services/stage4_sizing.py",
-    "category": "gate",
-    "purpose": "Per-symbol LightGBM'in predicted_r'ını son 500 tahminin rolling percentile'ına göre boyut çarpanına çevirir (<%10 hard veto 0.0x, <%30 0.25x...). model_loader.py per-symbol model kayıtları, inference_stage4.py z-score normalize inference.",
-    "key_functions": [
-      "get_sizing(symbol, predicted_r)",
-      "record_prediction",
-      "inference_stage4.predict_r"
-    ],
-    "status_hint": "GET /api/precision-veto/stage4-sizing/state"
-  },
-  {
-    "id": "entry_quality_service",
-    "name": "Entry-Quality Classifier",
-    "file": "backend/services/entry_quality_service.py",
-    "category": "gate",
-    "purpose": "Per-symbol entry-quality sınıflandırıcısını yükleyip aday sinyalin giriş feature'larından p_sl (SL'ye gitme olasılığı) skorlar ve should_block önerir.",
-    "key_functions": [
-      "score_entry(symbol, direction, ml_confidence, factors)"
-    ],
-    "status_hint": "model dosyaları backend/models altında; sinyal factors'ta p_sl alanı"
-  },
-  {
-    "id": "daily_bias_bridge",
-    "name": "MiroShark Daily Bias Bridge",
-    "file": "backend/services/daily_bias_service.py",
-    "category": "gate",
-    "purpose": "MiroShark CIO payload'ını normalize edip daily_bias'a UPSERT eder, günün bias'ını 60s cache ile okur, intraday yapı kırılımında is_invalidated flip'ler, compute_alignment ile veto bonus/penaltı/soft-veto kuralları. NASDAQ-only scope guard.",
-    "key_functions": [
-      "normalize_cio_payload",
-      "upsert_bias",
-      "get_current_bias",
-      "compute_alignment"
-    ],
-    "status_hint": "GET /api/miroshark/current-bias?symbol=NDX.INDX; daily_bias tablosu"
-  },
-  {
-    "id": "data_hub",
-    "name": "DataHub (merkezi piyasa verisi)",
-    "file": "backend/services/data_hub.py",
-    "category": "data",
-    "purpose": "Tüm piyasa verisinin tek kaynağı: startup'ta Supabase candle_cache'ten yükler, canlıda MT5→Redis ingest'i alır, 5m/30m/1h'ten üst TF'leri bucket-hizalı türetir (XAU gerçek-1h koruması), 15dk'da bir persist eder, candle-close event'leri ateşler. QQQ.US REFERENCE (tradable değil).",
-    "key_functions": [
-      "ingest_live_price",
-      "ingest_candles",
-      "get_price",
-      "register_candle_close_callback"
-    ],
-    "status_hint": "GET /api/data/cached/{symbol}; source etiketi (mt5_redis/derived_*)"
-  },
-  {
-    "id": "mt5_redis_client",
-    "name": "MT5 Redis Listener",
-    "file": "backend/services/mt5_redis_client.py",
-    "category": "data",
-    "purpose": "Railway Redis'ten MT5 bridge tick pub/sub (mt5:tick) + bar stream'lerini (mt5:bar:5m/1h/1d) dinler, broker saat dilimini otomatik tespit edip epoch'ları gerçek UTC'ye normalize eder, DataHub'a ingest eder; reconnect logic'li.",
-    "key_functions": [
-      "start_mt5_redis_listener",
-      "get_mt5_redis_diagnostics",
-      "stop_mt5_redis_listener"
-    ],
-    "status_hint": "get_mt5_redis_diagnostics(); DataHub fiyat tazeliği"
-  },
-  {
-    "id": "data_fetcher",
-    "name": "Data Fetcher (DataHub proxy)",
-    "file": "backend/services/data_fetcher.py",
-    "category": "data",
-    "purpose": "20+ servisin tek okuma yüzü: tüm fiyat/mum okumaları in-memory DataHub'dan, 0 harici vendor çağrısı.",
-    "key_functions": [
-      "fetch_latest_price",
-      "fetch_ohlcv"
-    ],
-    "status_hint": "GET /api/data/ohlcv/{symbol}"
-  },
-  {
-    "id": "candle_cache_store",
-    "name": "Candle Cache Store (Supabase persistence)",
-    "file": "backend/services/candle_cache_store.py",
-    "category": "data",
-    "purpose": "DataHub (in-memory) ↔ Supabase candle_cache köprüsü: startup'ta geçmişi yükler, yeni mumları persist eder, bucket-hizasız satırları reddeder; restart maliyetini sıfırlar.",
-    "key_functions": [
-      "load on startup",
-      "persist_new_candles"
-    ],
-    "status_hint": "candle_cache tablosunda taze timestamp'ler"
-  },
-  {
-    "id": "macro_data_service",
-    "name": "Macro Data Service (yfinance)",
-    "file": "backend/services/macro_data_service.py",
-    "category": "data",
-    "purpose": "DXY/VIX/US10Y/EURUSD/USDTRY'yi Yahoo Finance'ten saatlik çekip in-memory cache'ler; XAU v2 modeli, EMEL macro kontrolü, debate macro ajanı ve market-event motoru tüketir.",
-    "key_functions": [
-      "ensure_started",
-      "get_snapshot",
-      "get_macro_dict",
-      "get_history"
-    ],
-    "status_hint": "GET /api/macro-gauges; snapshot timestamp tazeliği"
-  },
-  {
-    "id": "market_data_service",
-    "name": "Market Data Service (panel OHLCV yüzü)",
-    "file": "backend/services/market_data_service.py",
-    "category": "data",
-    "purpose": "EMEL/PULSE panel analizleri için data_fetcher'ı tutarlı TF arayüzüyle saran birleşik OHLCV erişim katmanı.",
-    "key_functions": [
-      "get_ohlcv wrappers (M5/H1/H4...)"
-    ],
-    "status_hint": "panel endpoint'leri veri dönüyorsa çalışıyor"
-  },
-  {
-    "id": "background_scheduler",
-    "name": "Background Scheduler",
-    "file": "backend/services/background_scheduler.py",
-    "category": "infra",
-    "purpose": "Sürekli arka plan döngüsü: sembol verisi günceller, cache'e yazar, outcome kontrolü ve hata analizi tetikler, SMC üretim cadence'ini (min_score/displacement eşikleriyle) yürütür.",
-    "key_functions": [
-      "run_update_cycle",
-      "update_symbol_data",
-      "check_outcomes_if_needed"
-    ],
-    "status_hint": "GET /api/data/scheduler/status"
-  },
-  {
-    "id": "prediction_logger",
-    "name": "Prediction Logger",
-    "file": "backend/services/prediction_logger.py",
-    "category": "infra",
-    "purpose": "Tüm model sinyallerini prediction_logs'a yazan tek kapı: session filtresi, cooldown, dedup, signal_gates güvenlik ağı ve feature snapshot eklemesi burada; SMC için ayrı log yolu.",
-    "key_functions": [
-      "log_prediction",
-      "log_smc_prediction",
-      "get_recent_predictions"
-    ],
-    "status_hint": "prediction_logs'a taze insert'ler; model bazlı log aralığı tablosu"
-  },
-  {
-    "id": "signal_feature_snapshot",
-    "name": "Signal Feature Snapshot (~60 feature)",
-    "file": "backend/services/signal_feature_snapshot.py",
-    "category": "infra",
-    "purpose": "Her sinyal anında momentum/trend/volatilite/S-R/exhaustion/makro/seans + anti-chase uyarılarını içeren ~60 feature'lık düz snapshot'ı prediction_logs.factors'a koyar — AI-ops kümeleme bunun üstüne çalışır.",
-    "key_functions": [
-      "build_signal_feature_snapshot(symbol)"
-    ],
-    "status_hint": "prediction_logs.factors doluluğu"
-  },
-  {
-    "id": "outcome_tracker",
-    "name": "Outcome Tracker",
-    "file": "backend/services/outcome_tracker.py",
-    "category": "learning",
-    "purpose": "Çözülen tahminleri belirli aralıklarla kontrol edip doğru/yanlış sonuçlandırır ve outcome_results'a yazar (flat eşiği %0.1).",
-    "key_functions": [
-      "check outcomes (via /api/learning/check-outcomes)"
-    ],
-    "status_hint": "outcome_results tablosu; POST /api/learning/check-outcomes"
-  },
-  {
-    "id": "signal_trajectory_service",
-    "name": "Post-Entry Trajectory Learner (PETL)",
-    "file": "backend/services/signal_trajectory_service.py",
-    "category": "learning",
-    "purpose": "Aktif sinyalin feature'larını her lifecycle check'te yeniden snapshot'layıp giriş anına kıyasla 'deterioration' skoru hesaplar; eşik aşılırsa ABORT önerir. signal_checks'in yerini alan signal_trajectory_snapshots'ı üretir.",
-    "key_functions": [
-      "capture_snapshot",
-      "compute_deterioration_score",
-      "log_abort"
-    ],
-    "status_hint": "signal_trajectory_snapshots tablosunda taze satırlar"
-  },
-  {
-    "id": "learning_analyzer",
-    "name": "Learning Analyzer",
-    "file": "backend/services/learning_analyzer.py",
-    "category": "learning",
-    "purpose": "Tahmin sonuçlarından faktör-korelasyon analizi yapar, öğrenme içgörüleri üretip DB'ye kaydeder ve prompt bağlamı olarak sunar.",
-    "key_functions": [
-      "analyze_factor_correlations",
-      "generate_learning_insights",
-      "get_learning_context_for_prompt"
-    ],
-    "status_hint": "GET /api/learning/dashboard"
-  },
-  {
-    "id": "error_analysis_service",
-    "name": "Error Analysis Service (AI otopsi)",
-    "file": "backend/services/error_analysis_service.py",
-    "category": "learning",
-    "purpose": "Başarısız tahminleri AI ile analiz eder: candle snapshot kaydeder, fake-move tespit eder, hata analizi + learning feedback üretir.",
-    "key_functions": [
-      "check_and_analyze_failed_predictions",
-      "analyze_error_with_claude",
-      "detect_fake_move"
-    ],
-    "status_hint": "error analysis tabloları; scheduler analyze_errors_if_needed logu"
-  },
-  {
-    "id": "ai_ops_loop",
-    "name": "AI-Ops Loop (orchestrator + tagger + simulator + triage)",
-    "file": "backend/services/ai_ops_orchestrator.py",
-    "category": "learning",
-    "purpose": "Günlük başarısızlık analizi hattı: failure_tagger (kural-tabanlı kök-neden etiketi) → failure_clusters → DeepSeek iyileştirme önerileri (improvement_proposals) → proposal_simulator counterfactual backtest → auto_triage (AUTO_APPLY/HUMAN_REVIEW/AUTO_REJECT) → post_deploy_monitor 7 gün canlı takip + rollback önerisi.",
-    "key_functions": [
-      "orchestrate_ai_ops",
-      "failure_tagger.parse_factors",
-      "proposal_simulator",
-      "auto_triage"
-    ],
-    "status_hint": "GET /api/ai-ops/stats + /proposals; failure_analyses / improvement_proposals tabloları"
-  },
-  {
-    "id": "combinatorial_auditor",
-    "name": "Combinatorial Signal Auditor",
-    "file": "backend/services/combinatorial_auditor.py",
-    "category": "learning",
-    "purpose": "prediction_logs'u madenleyip rejim×sembol×seans bazında en iyi model kombinasyonlarını bulur; meta_combination_stats'ı güncelleyerek Meta-Engine'i dinamik yönlendirir.",
-    "key_functions": [
-      "mine combinations → meta_combination_stats"
-    ],
-    "status_hint": "GET /api/meta/combinations/{symbol}; meta_combination_stats tablosu"
-  },
-  {
-    "id": "pattern_mining",
-    "name": "Pattern Mining + Runtime Matcher",
-    "file": "backend/services/pattern_mining_service.py",
-    "category": "learning",
-    "purpose": "Haftalık cron pattern_miner'ı çalıştırıp kuralları dosya + Supabase'e (pattern_mining_runs) persist eder; pattern_matcher.py canlı sinyalin bilinen HIGH-WIN (≥75%) veya TOXIC (≤35%) kalıba uyup uymadığını runtime'da değerlendirir.",
-    "key_functions": [
-      "run_weekly_mining",
-      "restore_from_supabase",
-      "pattern_matcher.match"
-    ],
-    "status_hint": "pattern_rules.json güncelliği; pattern_mining_runs tablosu"
-  },
-  {
-    "id": "tp_sl_optimization_suite",
-    "name": "TP/SL Optimizasyon Takımı",
-    "file": "backend/services/tp_sl_walkforward.py",
-    "category": "learning",
-    "purpose": "Veri-güdümlü TP/SL tasarımı: tp_sl_optimizer.py MFE/MAE grid-search, tp_sl_walkforward.py dağılım-bazlı walk-forward tasarım, tp_sl_candle_replay.py dürüst mum-replay MFE/MAE, adaptive_tp_sl.py başarısızlık noktalarından öğrenme. Çıktılar target_config DirectionOverride'larını besler.",
-    "key_functions": [
-      "walkforward design",
-      "tp_sl_optimizer grid search",
-      "candle replay"
-    ],
-    "status_hint": "target_config.py TP_SL_DERIVED_OVERRIDES; GET /api/replay/walkforward"
-  },
-  {
-    "id": "signal_replay_1m",
-    "name": "1m Signal Replay Engine",
-    "file": "backend/services/signal_replay_1m.py",
-    "category": "learning",
-    "purpose": "Tarihsel her sinyali candle_cache 1m barlarında üretim kurallarıyla yeniden yürütüp dürüst TP/SL sonucunu (SL-first konservatif) çıkarır — WR enflasyonunu düzelten ground-truth motoru.",
-    "key_functions": [
-      "replay batch (POST /api/replay/run)"
-    ],
-    "status_hint": "GET /api/replay/report; corrected_status kolonları"
-  },
-  {
-    "id": "mt5_reconciliation",
-    "name": "MT5 Reconciliation",
-    "file": "backend/services/mt5_reconciliation_service.py",
-    "category": "learning",
-    "purpose": "MT5 deal export'larını (JSON/CSV/HTML) mt5_trades'e ground-truth olarak alır ve prediction_logs ile eşleştirip lifecycle raporu ile broker gerçeği arasındaki farkı gösterir.",
-    "key_functions": [
-      "ingest_deals",
-      "reconcile_window",
-      "reconciliation_report"
-    ],
-    "status_hint": "GET /api/mt5/reconciliation/report; mt5_trades tablosu"
-  },
-  {
-    "id": "market_event_engine",
-    "name": "Market Event Engine (mum bazlı 'Ne oldu?')",
-    "file": "backend/services/market_event_service.py",
-    "category": "data",
-    "purpose": "Bir mumun zaman aralığındaki tüm açıklayıcı bağlamı toplar: teknik anomali, makro hareketler, seans bağlamı, ekonomik takvim, (varsa) haber. Haber akışı olmadan da çalışır, tamamen fail-open.",
-    "key_functions": [
-      "get_candle_context",
-      "get_event_markers"
-    ],
-    "status_hint": "GET /api/market-events/candle-context + /markers/{symbol}"
-  },
-  {
-    "id": "price_projection_service",
-    "name": "Price Projection ('nereye kadar?') Motoru",
-    "file": "backend/services/price_projection_service.py",
-    "category": "data",
-    "purpose": "8 klasik hedef tekniğini GERÇEK veriden hesaplar: fib retr/ext, measured move, ADR-20 + tükenme, volatilite squeeze/expansion, mean-rev stretch, ORB (context-only), Market Profile POC/VAH/VAL. Debate price_targets ajanı, Claude Decider ve paneli besler; signal_gates'e bilinçli BAĞLANMADI (doğrulanmış edge yok).",
-    "key_functions": [
-      "compute_fib",
-      "compute_adr",
-      "compute_vol_state",
-      "compute_market_profile"
-    ],
-    "status_hint": "debate context'inde projection satırları; 5dk TTL"
-  },
-  {
-    "id": "day_structure_service",
-    "name": "Day Structure Analyzer",
-    "file": "backend/services/day_structure_service.py",
-    "category": "data",
-    "purpose": "Günün yapısal seviyelerini hesaplar: PDH/PDL/PDC, PWH/PWL, pivot noktaları, çok-ölçekli swing'ler, dokunma-sayılı memory zone'lar (rejection/break + freshness), ATR volatilite oranı. Precision Veto Stage 1c'nin veri kaynağı.",
-    "key_functions": [
-      "compute day structure (Stage 1c consumer)"
-    ],
-    "status_hint": "signal_vetoes'ta stage-1c veto kayıtları"
-  },
-  {
-    "id": "session_context_service",
-    "name": "Session Context Service (DST-doğru)",
-    "file": "backend/services/session_context_service.py",
-    "category": "data",
-    "purpose": "Herhangi bir UTC an için seans bağlamını (canlı seans, US open'a dakika, tatil/yarım gün, önceki seans yönü) piyasanın KENDİ zoneinfo dilimiyle DST-doğru hesaplar; bias harness ve market-event motoru kullanır.",
-    "key_functions": [
-      "get_session_context(ts)"
-    ],
-    "status_hint": "bias_test_log satırlarındaki session alanları"
-  },
-  {
-    "id": "cot_whale",
-    "name": "COT + Whale Tracker",
-    "file": "backend/services/whale_tracker_service.py",
-    "category": "data",
-    "purpose": "CFTC haftalık COT raporunu (cot_report_service, canlı parse, persist edilmez) Open Interest + pozisyon momentumu ile birleştirip -1..+1 whale_pressure skoru üretir; ML'e feature sağlar.",
-    "key_functions": [
-      "get_whale_snapshot",
-      "get_whale_dashboard",
-      "fetch_cot_data",
-      "get_cot_adjustment"
-    ],
-    "status_hint": "GET /api/whale/dashboard + /api/cot/history/{symbol}"
-  },
-  {
-    "id": "economic_calendar",
-    "name": "Economic Calendar + Earnings",
-    "file": "backend/services/economic_calendar_service.py",
-    "category": "data",
-    "purpose": "Yüksek-etkili ekonomik olayları ve earnings takvimini takip eder; takvim kapısı (CALENDAR_GATE) ve grafik olay işaretleri bunu kullanır. earnings_service.py NASDAQ earnings senaryo analizi ekler.",
-    "key_functions": [
-      "GET /api/calendar/economic",
-      "GET /api/calendar/today"
-    ],
-    "status_hint": "/api/calendar/today yanıtı"
-  },
-  {
-    "id": "rss_aggregator",
-    "name": "RSS News Aggregator",
-    "file": "backend/services/rss_aggregator.py",
-    "category": "data",
-    "purpose": "Çoklu RSS kaynağından finansal haber toplar (akıllı filtre + Redis cache, 7dk aralık). Şu an RSS_AGGREGATION_ENABLED=False — Telegram haber dedektörü beklemede.",
-    "key_functions": [
-      "GET /api/rss/news",
-      "GET /api/rss/latest-breaking"
-    ],
-    "status_hint": "RSS_AGGREGATION_ENABLED bayrağı (şu an kapalı)"
-  },
-  {
-    "id": "ws_broadcast",
-    "name": "WebSocket Broadcast (ws_manager + router)",
-    "file": "backend/services/ws_manager.py",
-    "category": "infra",
-    "purpose": "WebSocket bağlantılarını yönetir: /ws/{symbol} abonelikleri, scheduler hesapladıkça broadcast, yeni bağlantıya son cache'lenmiş veriyi anında verme. candle_event_handlers.py mum kapanışında modelleri event-driven yeniler.",
-    "key_functions": [
-      "broadcast()",
-      "/ws/{symbol}",
-      "candle close → model refresh"
-    ],
-    "status_hint": "GET /api/ws/stats"
-  },
-  {
-    "id": "strategy_optimizer",
-    "name": "Strategy Auto-Optimization Loop",
-    "file": "backend/services/strategy_optimizer_service.py",
-    "category": "learning",
-    "purpose": "Sembol başına 6-bileşenli risk skoru (VIX, ADX trend netliği, ATR sağlığı, choppiness, seans kalitesi, haber yakınlığı) hesaplayıp canlı koşullar + geçmiş performansa göre en iyi ML stratejisini otomatik seçer.",
-    "key_functions": [
-      "GET /api/optimizer/run"
-    ],
-    "status_hint": "/api/optimizer/run yanıtı"
-  },
-  {
-    "id": "learning_api",
-    "name": "Learning & Performance API",
-    "file": "backend/routers/learning.py",
-    "category": "learning",
-    "purpose": "Performans panellerinin veri kaynağı: accuracy-by-model, strategy-performance, smc-performance, dashboard; reliability = resolved/5 formülü ve scope-lider seçimi burada.",
-    "key_functions": [
-      "GET /api/learning/dashboard",
-      "GET /api/learning/accuracy-by-model",
-      "GET /api/learning/strategy-performance"
-    ],
-    "status_hint": "GET /api/learning/health"
-  },
-  {
-    "id": "bot_router",
-    "name": "Bot Trade-Signal API",
-    "file": "backend/routers/bot_router.py",
-    "category": "gate",
-    "purpose": "MT5 botu için TEK endpoint: Stage 4 percentile sizing + Entry Optimizer + Precision Veto kararlarını tek pakette birleştirir (POST /api/bot/trade-signal); bot_diagnostic_router backend-WR vs bot-config uçurumunu raporlar.",
-    "key_functions": [
-      "POST /api/bot/trade-signal",
-      "GET /api/bot/status",
-      "GET /api/bot-diagnostic/report"
-    ],
-    "status_hint": "GET /api/bot/status"
-  },
-  {
-    "id": "forexsai_demo_bot",
-    "name": "MT5 Canlı Bot (forexsai_demo_bot)",
-    "file": "yeni deneme/forexsai_demo_bot.py",
-    "category": "bot",
-    "purpose": "IC Markets demo hesabında canlı işlem açan ana bot: backend PULSE yönünü çeker, 4 doğrulanmış momentum scope'u (NDX BUY, GDAXI BUY, USOIL SELL/BUY) + channel-reversion (CHREV) + VIX-regime (VIXREG) scope'larını yürütür; hibrit giriş, günlük zarar limiti, SL forensiği için giriş parmak izi loglar. LIVE_TRADING her zaman True (demo).",
-    "key_functions": [
-      "main()",
-      "check_scope",
-      "check_channel_reversion",
-      "check_vix_regime"
-    ],
-    "status_hint": "demo_bot.log; demo_trades.csv; MT5 açık pozisyonlar (magic bazlı)"
-  },
-  {
-    "id": "bot_reflex_exec",
-    "name": "Bot Reflex Executor",
-    "file": "yeni deneme/reflex_exec.py",
-    "category": "bot",
-    "purpose": "Backend'in doğrulanmış NDX momentum-continuation reflex sinyallerini (GET /api/reflex/live) poll edip 15-dakika time-stop + katastrofik SL ile yürütür; kendi magic slot'u, REFLEX_LIVE açılmadıkça shadow.",
-    "key_functions": [
-      "poll_reflex(log)"
-    ],
-    "status_hint": "demo_bot.log reflex satırları; REFLEX_LIVE bayrağı"
-  },
-  {
-    "id": "bot_entry_gate",
-    "name": "Bot Entry Gate (8-koşullu skor)",
-    "file": "yeni deneme/entry_gate.py",
-    "category": "bot",
-    "purpose": "14 günlük gerçek MT5 otopsisinden türetilen 8-koşullu giriş skoru + seans kapılarını bot tarafında GERÇEK 1m ATR tabanıyla uygular (NDX skor≥7 WR 60→65, USOIL 49→72); VIXREG'e ek EMA200(1m)-üstü SELL yasağı. Fail-open. CHREV muaf.",
-    "key_functions": [
-      "entry_gate_check (bot içinde)",
-      "score computation"
-    ],
-    "status_hint": "demo_bot.log'da gate blok mesajları; test_entry_gate.py"
-  },
-  {
-    "id": "bot_data_recorder",
-    "name": "Data Recorder (MT5→Supabase)",
-    "file": "yeni deneme/data_recorder.py",
-    "category": "bot",
-    "purpose": "MT5 kutusunda botla paralel koşan sürekli kaydedici: 1m dahil OHLC'yi doğrudan MT5'ten çekip candle_cache'e + her kapalı mum için 28 indikatörlü indicator_snapshots'a yazar — veri donması ve 1m eksikliğinin kalıcı çözümü.",
-    "key_functions": [
-      "main loop (python data_recorder.py)"
-    ],
-    "status_hint": "data_recorder.log; candle_cache/indicator_snapshots taze 1m satırları"
-  },
-  {
-    "id": "bot_sr_channel_filters",
-    "name": "Bot S/R + Channel filtreleri",
-    "file": "yeni deneme/sr_zones.py",
-    "category": "bot",
-    "purpose": "Bot-yerel giriş zekâsı: sr_zones.py 1m destek/direnç bölgeleri + pending-limit giriş planı + momentum stretch; channel_filter.py doğrulanmış linreg kanal-rejection (CHREV mean-reversion edge, WR 44→72-84) tespiti; sl_forensics.py giriş parmak izlerinden SL otopsisi.",
-    "key_functions": [
-      "detect_zones",
-      "plan_sr_entry",
-      "is_channel_rejection",
-      "momentum_stretch"
-    ],
-    "status_hint": "entry_fingerprints.jsonl; CHREV işlem yorumları MT5'te"
-  },
-  {
-    "id": "model_storage",
-    "name": "Model Storage (Supabase)",
-    "file": "backend/services/model_storage.py",
-    "category": "infra",
-    "purpose": "Tüm ML modellerini Supabase Storage'a (forexsai-models bucket, manifest.json) yükleyip startup'ta indirir — Railway redeploy'da 25dk retrain yerine 5-10sn restore.",
-    "key_functions": [
-      "upload/download via manifest"
-    ],
-    "status_hint": "manifest.json versiyonu; startup logunda model restore"
-  },
-  {
-    "id": "trading_engine_modules",
-    "name": "Trading Engine karar modülleri",
-    "file": "backend/services/trading_engine/",
-    "category": "infra",
-    "purpose": "Modüler karar katmanı paketi: confluence_engine, decision_layers, layer_conflict_resolver, mtf_validator/analyzer, regime_blocker/detector, pattern_prioritizer, portfolio_risk_manager, signal_state_machine, adaptive_threshold.",
-    "key_functions": [
-      "GET /api/test/trading-engine/all-modules"
-    ],
-    "status_hint": "/api/test/trading-engine/all-modules"
-  },
-  {
-    "id": "permutation_analysis",
-    "name": "Permutation Analysis (izole)",
-    "file": "backend/services/permutation_analysis_service.py",
-    "category": "learning",
-    "purpose": "Model kombinasyonları ve teknik indikatör permütasyonlarının tarihi performansını izole batch'lerde tarar (fast varyantı 1-2 günde biter); konsensüs raporu üretir.",
-    "key_functions": [
-      "analyze_model_permutations",
-      "analyze_technical_permutations"
-    ],
-    "status_hint": "GET /api/permutation/consensus/{symbol}"
-  },
-  {
-    "id": "oil_intelligence",
-    "name": "Oil Analysis + Baltic/Maritime Intelligence",
-    "file": "backend/services/oil_analysis_service.py",
-    "category": "data",
-    "purpose": "WTI için 4-katmanlı 'Black Gold Pulse' analizi (DXY makro, fundamental akış, mikroyapı, temporal) + Baltic endeksleri ve AIS gemi-trafiği chokepoint istihbaratı.",
-    "key_functions": [
-      "oil analysis layers",
-      "GET /api/panel/oil-baltic-intelligence"
-    ],
-    "status_hint": "/api/panel/oil-baltic-intelligence yanıtı"
-  },
-  {
-    "id": "pandemic_sensitivity",
-    "name": "Pandemic Sensitivity Index (PSI)",
-    "file": "backend/services/pandemic_sensitivity_service.py",
-    "category": "data",
-    "purpose": "Sağlık-krizi erken uyarısı: geçmiş salgınlarda piyasayı 4-8 hafta önden yansıtan hisse sepetlerinden 0-100 PSI skoru üretir; makro overlay olarak rejime akar.",
-    "key_functions": [
-      "GET /api/pandemic-sensitivity",
-      "/history",
-      "/features"
-    ],
-    "status_hint": "/api/pandemic-sensitivity yanıtı"
-  },
-  {
-    "id": "macro_context_service",
-    "name": "Macro Context Overlay",
-    "file": "backend/services/macro_context_service.py",
-    "category": "data",
-    "purpose": "4 makro gauge (DXY, VIX, yield curve, risk-on) + PSI'yi sembol-bazlı tek bağlamda birleştirir: ±15 puanla sınırlı confidence ayarı + Türkçe decision_notes; asla sinyal yönünü flip etmez.",
-    "key_functions": [
-      "per-symbol context builder"
-    ],
-    "status_hint": "GET /api/macro-gauges; sinyal decision_notes'ta makro satırları"
-  },
-  {
-    "id": "auth_email",
-    "name": "Auth + Email Service",
-    "file": "backend/services/auth_service.py",
-    "category": "infra",
-    "purpose": "Kullanıcı yönetimi: email/şifre kayıt + doğrulama, JWT-benzeri session, IP bazlı rate limit, referral, tier erişimi; email_service.py Resend ile doğrulama/reset mailleri.",
-    "key_functions": [
-      "POST /api/auth/signup",
-      "POST /api/auth/login",
-      "GET /api/auth/me"
-    ],
-    "status_hint": "/api/auth/me yanıtı"
-  },
-  {
-    "id": "mtf_analysis",
-    "name": "MTF Analysis + Confirmation",
-    "file": "backend/services/mtf_analysis_service.py",
-    "category": "data",
-    "purpose": "M1→D1 çok-TF teknik analiz (ATR dinamik eşikler, Bollinger, hacim) + confluence skoru; mtf_confirmation.py sinyalleri TF'ler arası doğrular (Precision Veto MTF teyidinin temeli).",
-    "key_functions": [
-      "GET /api/mtf/analysis",
-      "GET /api/mtf/confluence/{symbol}"
-    ],
-    "status_hint": "/api/mtf/confluence/{symbol} yanıtı"
-  },
-  {
-    "id": "target_config",
-    "name": "Target Config (kanonik TP/SL)",
-    "file": "backend/services/target_config.py",
-    "category": "infra",
-    "purpose": "Sembol-bazlı kanonik pip/percent TP1-4 + SL tanımları ve walk-forward DirectionOverride'lar (örn. USOIL SELL); lifecycle, replay ve tüm outcome hesapları bu tek kaynağı kullanır.",
-    "key_functions": [
-      "get_symbol_config",
-      "get_effective_config(symbol, direction)",
-      "calculate_target_prices"
-    ],
-    "status_hint": "env TP_SL_DERIVED_OVERRIDES"
-  },
-  {
-    "id": "cortex_backfill",
-    "name": "CORTEX Backfill + Doğrulama",
-    "file": "backend/services/cortex_backfill.py",
-    "category": "learning",
-    "purpose": "3567 sızıntısız epizodla (2019-24 NQ futures, intraday karar → +6h/+24h ileri yön) analog-kNN'i walk-forward doğruladı; SONUÇ: bu hedef için yön öngörmüyor → analog enjeksiyonu varsayılan kapalı. Hafıza kaydı Faz 2/3 için açık.",
-    "key_functions": [
-      "backfill + walk-forward validation"
-    ],
-    "status_hint": "research/cortex_backfill/FINDINGS.md; cortex_episodes satır sayısı"
-  },
-  {
-    "id": "signal_history_repair",
-    "name": "Signal History Repair + ML Backfill",
-    "file": "backend/services/signal_history_repair_service.py",
-    "category": "learning",
-    "purpose": "Tarihi prediction_logs satırlarını kanonik TP/SL ve normalize model_type'a göre onarır; ml_history_backfill_service + xauusd_backfill_service geçmiş ML kayıtlarını 30m veriyle yeniden değerlendirir.",
-    "key_functions": [
-      "repair batch",
-      "plan_ml_backfill_update"
-    ],
-    "status_hint": "POST /api/signals/backfill"
-  },
-  {
-    "id": "miroshark_router",
-    "name": "MiroShark Webhook Router",
-    "file": "backend/routers/miroshark_router.py",
-    "category": "agent",
-    "purpose": "MiroShark CIO'nun günlük NASDAQ bias push'unu HMAC-SHA256 imzayla alır (webhook) veya imzasız manuel fallback ile kabul eder; her ikisi daily_bias_service UPSERT'inden geçer.",
-    "key_functions": [
-      "POST /api/miroshark/webhook",
-      "POST /api/miroshark/manual-bias",
-      "GET /api/miroshark/current-bias"
-    ],
-    "status_hint": "daily_bias tablosunda bugünün satırı"
-  },
-  {
-    "id": "smc_calculator_facade",
-    "name": "SMC Calculator (legacy facade)",
-    "file": "backend/services/smc_calculator_service.py",
-    "category": "infra",
-    "purpose": "Kanonik v2 SMC motorunun çıktısını legacy response şekline adapte eden facade (2026-07-08 konsolidasyonu); likidite havuzları/breaker block/daily-gap analizi kendi içinde. deepseek_analysis ve meta engine tüketir.",
-    "key_functions": [
-      "legacy-shaped SMC snapshot"
-    ],
-    "status_hint": "GET /api/deepseek/smc/{symbol}"
-  },
-  {
-    "id": "fakeout_service",
-    "name": "Breakout Verdict Engine (fakeout v2 — skor + fade + teyit)",
-    "file": "backend/services/fakeout_service.py",
-    "category": "signal_engine",
-    "purpose": "S/R + kanal seviyelerinde TAZE kırılımı tespit eder; OOS-kalibre birleşik skor + kural eşleşmesiyle 4-sınıf öneri üretir: fade_candidate (skor≤−2, OOS %87.5 sahte — ters yön kanıtı) / avoid_breakout_direction / neutral_no_trade / breakout_leaning_genuine (OOS %55.6 — edge değil). Canlı teyit durumu (sonraki-bar, retest) ekler. Tüketiciler: signal_gates.fakeout_gate (GÖLGE), /api/fakeout/assess, claude_decider situation.fakeout, Neural panel kartı. Kanıt: kırılım-yönlü tüm giriş varyantları −EV — edge fade tarafında."
-  },
-  {
-    "id": "fakeout_miner",
-    "name": "Fakeout Miner (kırılım etiketleme + kural madenciliği)",
-    "file": "backend/research/fakeout_miner.py",
-    "category": "research",
-    "purpose": "Geçmiş 5m+1m mumlardan causal S/R/kanal kırılımları çıkarır, ±1×ATR iki-hedef yarışıyla etiketler; ~22 özellik üzerinde kronolojik %70/30 OOS kural madenciliği + birleşik skor kalibrasyonu + teyit protokolü backtest'i (sonraki-bar teyidi / retest-tut, 1:1 ve 1.5:1 geometri) → fakeout_rules.json v2 + fakeout_report.md."
-  }
+ {
+  "id": "ml_prediction_service",
+  "name": "ML Prediction (LightGBM 150-feature)",
+  "file": "backend/services/ml_prediction_service.py",
+  "category": "signal_engine",
+  "purpose": "Loads the trained LightGBM models (nasdaq/xauusd families) and generates direction+pip-target predictions with preset strategies (ultra_safe/balanced/full_power/aggressive), parallel async feature calls and flip-flop stability control.",
+  "key_functions": [
+   "get_ml_prediction(symbol, strategy)",
+   "resolve_ml_model_symbol",
+   "get_ml_model_filename"
+  ],
+  "status_hint": "GET /api/prediction/{symbol}?strategy=balanced; rows in prediction_logs with model_type ml:*"
+ },
+ {
+  "id": "xauusd_v2_service",
+  "name": "XAUUSD v2/v3 ML (two-headed calibrated ensemble)",
+  "file": "backend/services/xauusd_v2_service.py",
+  "category": "signal_engine",
+  "purpose": "Replaces the legacy 150-feature pipeline for XAUUSD with separate BUY/SELL probability heads + isotonic calibrators (v3, 133 features incl. DXY/VIX/US10Y), targeting the 'BUY at resistance / SELL at support' failure mode.",
+  "key_functions": [
+   "predict_xauusd_v2(strategy)"
+  ],
+  "status_hint": "GET /api/prediction/XAUUSD routes here; prediction_logs XAUUSD ml rows"
+ },
+ {
+  "id": "emel_pulse_models",
+  "name": "EMEL + PULSE 1/2/3 panel modelleri",
+  "file": "backend/routers/emel_pulse.py",
+  "category": "signal_engine",
+  "purpose": "Ana panel router'ı: EMEL (10-kontrol stratejik skor, enstrümana özel ağırlıklar), PULSE 1 (6-bileşen algo scalp), PULSE 2 (ML+TA hibrit), PULSE 3 (5m+1H+4H MTF). Regime filtresi + signal_gates burada uygulanır, sinyaller prediction_logger'a akar.",
+  "key_functions": [
+   "GET /api/panel/emel/{symbol}",
+   "GET /api/panel/pulse/{symbol}",
+   "GET /api/panel/pulse-ml/{symbol}",
+   "GET /api/panel/pulse-v3/{symbol}"
+  ],
+  "status_hint": "Panel endpoint'leri 200 dönüyor mu; prediction_logs model_type pulse1/2/3/emel taze satır"
+ },
+ {
+  "id": "smc_order_block_engine",
+  "name": "SMC / Order Block Engine (ICT)",
+  "file": "backend/services/order_block_service.py",
+  "category": "signal_engine",
+  "purpose": "Kanonik SMC motoru (v2 MarketStructureAnalyzer üstünde): OB/FVG/CHoCH/BOS tespiti, sembole özel SMC profilleri (2026-07-08), SMC S/R ve sinyal üretimi; debate ajanı ve entry optimizer da bunu okur.",
+  "key_functions": [
+   "OrderBlockService.detect(symbol, log_signals=...)"
+  ],
+  "status_hint": "GET /api/panel/smc/{symbol}; prediction_logs model_type=smc"
+ },
+ {
+  "id": "meta_analysis_engine",
+  "name": "Meta-Intelligence Engine (6-model fusion)",
+  "file": "backend/services/meta_analysis_engine.py",
+  "category": "signal_engine",
+  "purpose": "6 modelin (ml, pulse1-3, emel, smc) canlı çıktısını 5 katmanda birleştirir: signal collection → combination mining (meta_combination_stats) → 8-koşul teknik validasyon → confidence fusion → ATR-bazlı risk hesabı. Min 2 model aynı yönde değilse HOLD.",
+  "key_functions": [
+   "MetaAnalysisEngine.analyze",
+   "TechnicalSnapshot.get_conditions"
+  ],
+  "status_hint": "GET /api/meta/analyze/{symbol}; meta rows in prediction_logs via meta_signal_logger"
+ },
+ {
+  "id": "reflex_engine",
+  "name": "NDX Reflex Engine (momentum-continuation)",
+  "file": "backend/services/reflex_engine_service.py",
+  "category": "signal_engine",
+  "purpose": "Tek doğrulanmış sızıntısız NDX edge'i: momentum-continuation olaylarını kapalı 1m/15m barlardan tespit eder, 15-dakika time-stop + 1.5×ATR katastrofik SL ile çıkar. Yön tahmin etmez, kısa vadeli momentum sürüklenmesini hasat eder.",
+  "key_functions": [
+   "detect_event(df)",
+   "tick()",
+   "_resolve_due"
+  ],
+  "status_hint": "GET /api/reflex/live + /api/reflex/performance; bot reflex_exec bunu poll eder"
+ },
+ {
+  "id": "cortex_confluence_signal",
+  "name": "CORTEX Confluence Shadow Signals",
+  "file": "backend/services/cortex_confluence_signal.py",
+  "category": "signal_engine",
+  "purpose": "İki en sağlam leak-verified confluence edge'ini (NDX_L_spx 14:00 UTC, NDX_S_es 15:00 UTC) canlı forward-validation için değerlendirir ve LOG-ONLY kaydeder; asla trade etmez. CORTEX_SIGNAL_ENABLED ile opt-in.",
+  "key_functions": [
+   "evaluate_and_record()",
+   "resolve_outcomes()",
+   "tick()"
+  ],
+  "status_hint": "cortex_signal kayıtları (Supabase) + CORTEX_SIGNAL_ENABLED bayrağı"
+ },
+ {
+  "id": "trend_analyzer",
+  "name": "Trend Analysis Engine v3.0",
+  "file": "backend/services/trend_analyzer.py",
+  "category": "signal_engine",
+  "purpose": "Regresyon kanalı + fraktal pivot + OBV + RSI divergence tabanlı çok-TF trend analizi; /api/run/{nasdaq|dax|xauusd|usoil} sinyallerini ve debate trend_channel ajanını besler.",
+  "key_functions": [
+   "run_trend_analysis()"
+  ],
+  "status_hint": "POST /api/run/nasdaq (SignalResponse döner)"
+ },
+ {
+  "id": "cross_model_experiment",
+  "name": "Cross-Model Experiment (NASDAQ ML on XAU)",
+  "file": "backend/services/cross_model_experiment_service.py",
+  "category": "signal_engine",
+  "purpose": "NASDAQ LightGBM modelini XAUUSD verisine uygulayan izole deney (model_type ml_cross_xau_nasdaq). SELL %6.9 WR kanıtı sonrası CROSS_MODEL_EXPERIMENT_ENABLED=0 ile KAPALI.",
+  "key_functions": [
+   "experiment cron in main.py",
+   "GET /api/experiments/cross-model/stats"
+  ],
+  "status_hint": "env CROSS_MODEL_EXPERIMENT_ENABLED (default 0); /api/experiments/cross-model/info"
+ },
+ {
+  "id": "harmonic_pattern_service",
+  "name": "Harmonic + Klasik Formasyon Dedektörü",
+  "file": "backend/services/harmonic_pattern_service.py",
+  "category": "signal_engine",
+  "purpose": "Gartley/Butterfly/Bat/Crab/Shark/Cypher vb. harmonic oranları + klasik chart pattern'leri (4h) gerçek mumlardan tespit eder; debate chart_patterns ajanının veri kaynağı.",
+  "key_functions": [
+   "detect_chart_patterns(symbol, timeframe)",
+   "get_pattern_adjustment"
+  ],
+  "status_hint": "debate context'inde pattern satırı; backend/data/chart_pattern_rules.json"
+ },
+ {
+  "id": "bias_debate_engine",
+  "name": "Bias Debate Engine (çok-ajanlı günlük bias)",
+  "file": "backend/services/bias_debate_engine.py",
+  "category": "agent",
+  "purpose": "Sembol-parametrik (NDX/XAUUSD/GDAXI/USOIL) native çok-ajanlı debate: bağlam ajanları paralel çalışır, boğa/ayı çok turlu (DEBATE_ROUNDS=3) karşılıklı çürütme yapar, CIO tam transkriptten JSON verdict üretir. Gerçek yapı ajanları sistemin KENDİ motorlarını okur; halüsinasyon clamp'i CIO seviyelerini en yakın gerçek seviyeye snap eder.",
+  "key_functions": [
+   "run_debate(symbol)",
+   "_build_agents(symbol)",
+   "_build_cio_system(symbol)",
+   "_gather_context"
+  ],
+  "status_hint": "POST /api/bias-test/run-debate?symbol=; bias_test_log satırları; GET /api/bias-test/routing-status",
+  "agents": [
+   {
+    "id": "technical_structure",
+    "role": "Trend + S/R + yapı analizi (DeepSeek)"
+   },
+   {
+    "id": "volatility",
+    "role": "Gün-içi volatilite / chop riski (DeepSeek)"
+   },
+   {
+    "id": "macro",
+    "role": "DXY/VIX/US10Y canlı gauge okuma (DeepSeek)"
+   },
+   {
+    "id": "smc_structure",
+    "role": "order_block_service.detect gerçek OB/FVG/CHoCH/BOS okur"
+   },
+   {
+    "id": "trend_channel",
+    "role": "trend_analyzer gerçek regresyon kanalı + dokunuş-sayılı pivot S/R okur"
+   },
+   {
+    "id": "chart_patterns",
+    "role": "harmonic_pattern_service gerçek formasyon çıktısı — pattern icat etmesi yasak"
+   },
+   {
+    "id": "price_targets",
+    "role": "price_projection_service: fib/measured-move/ADR/squeeze/stretch/POC-VAH-VAL hedefleri"
+   },
+   {
+    "id": "bull_case",
+    "role": "En güçlü kanıt-temelli boğa argümanı (Kimi)"
+   },
+   {
+    "id": "bear_case",
+    "role": "En güçlü kanıt-temelli ayı argümanı (Kimi)"
+   },
+   {
+    "id": "cio",
+    "role": "Nihai JSON verdict — bias/confidence/trade_mode/S-R/invalid_if (Kimi)"
+   }
+  ]
+ },
+ {
+  "id": "llm_router",
+  "name": "LLM Router (Kimi / DeepSeek yönlendirici)",
+  "file": "backend/services/llm_router.py",
+  "category": "agent",
+  "purpose": "Debate ajan çağrılarını öneme göre yönlendirir: important (CIO/bull/bear) → Kimi (Moonshot), normal (veri/bağlam ajanları) → DeepSeek Reasoner. Key yoksa diğerine fallback, ikisi de yoksa LLMUnavailable (fail-open).",
+  "key_functions": [
+   "chat(importance, system, user)",
+   "routing_status()",
+   "extract_json"
+  ],
+  "status_hint": "GET /api/bias-test/routing-status"
+ },
+ {
+  "id": "bias_auto_runner",
+  "name": "Bias Auto-Runner (zamanlanmış debate)",
+  "file": "backend/services/bias_auto_runner.py",
+  "category": "agent",
+  "purpose": "main.py 60s döngüsünden tick'lenir; trading günlerinde sembol-bazlı pencerelerde (NDX 08:00+09:45 ET, XAU/DAX 08:00 UTC, USOIL 13:05 UTC) debate'i çalıştırıp loglar, kapanış sonrası outcome'ları doldurur. Opt-in BIAS_AUTO_RUN_ENABLED=1, idempotent.",
+  "key_functions": [
+   "tick()",
+   "status()"
+  ],
+  "status_hint": "status() çıktısı; bias_test_log'da otomatik run_label'lı taze satırlar"
+ },
+ {
+  "id": "bias_test_service",
+  "name": "Bias Accuracy Test Harness (core)",
+  "file": "backend/services/bias_test_service.py",
+  "category": "learning",
+  "purpose": "Bias run'larını seans bağlamıyla bias_test_log'a kaydeder, gün kapanınca sembol-bazlı seans penceresine göre was_correct notlar, run_label/confidence kırılımlı isabet raporu üretir. Canlı daily_bias/veto'dan tamamen izole.",
+  "key_functions": [
+   "record_run(payload, run_label)",
+   "fill_outcomes",
+   "accuracy_report",
+   "symbol_for_row"
+  ],
+  "status_hint": "GET /api/bias-test/accuracy-report; GET /api/bias-test/lab (UI)"
+ },
+ {
+  "id": "cortex_memory",
+  "name": "CORTEX Faz 1 — Epizodik Hafıza + Analog Retrieval",
+  "file": "backend/services/cortex_memory.py",
+  "category": "learning",
+  "purpose": "Her NASDAQ karar-günü situation vektörünü (vix_regime en ağır) cortex_episodes'a kaydeder; debate öncesi ağırlıklı kNN ile en benzer K günü çekip shrinkage-ayarlı base-rate üretir (0 LLM maliyeti). Backfill doğrulaması yön edge'i bulamadı → analog enjeksiyonu varsayılan KAPALI (CORTEX_ANALOG_INJECT=0), kayıt açık.",
+  "key_functions": [
+   "build_situation",
+   "record_episode",
+   "fill_outcomes",
+   "find_analogs"
+  ],
+  "status_hint": "cortex_episodes tablosunda taze ny_date satırları; env CORTEX_ENABLED"
+ },
+ {
+  "id": "ai_panel_analysis",
+  "name": "AI Panel (DeepSeek saatlik analiz)",
+  "file": "backend/services/ai_panel_analysis_service.py",
+  "category": "agent",
+  "purpose": "NY seansı açıkken saatte 1 DeepSeek tabanlı panel analizi üretir; ai_panel_signal_logger BUY/SELL + entry/stop/target tam olanları prediction_logs'a, gerisini ai_panel_signal_snapshots'a yazar. XAUUSD için meta_signals köprüsüyle bota akar (AI_PANEL_BRIDGE_SYMBOLS).",
+  "key_functions": [
+   "hourly scheduler in main.py",
+   "GET /api/ai-analysis/{symbol}",
+   "GET /api/ai-analysis/status"
+  ],
+  "status_hint": "GET /api/ai-analysis/status; prediction_logs model_type=ai_panel (60dk median)"
+ },
+ {
+  "id": "deepseek_analysis_service",
+  "name": "DeepSeek-R1 Master Analysis",
+  "file": "backend/services/deepseek_analysis_service.py",
+  "category": "agent",
+  "purpose": "DeepSeek-R1 ile kurumsal-tarz master analiz + SMC/risk/seasonality görünümleri (SMC/risk/seasonality kısımları kural-tabanlı, AI'sız). 2 saat TTL cache.",
+  "key_functions": [
+   "GET /api/deepseek/master/{symbol}",
+   "GET /api/deepseek/smart-setup/{symbol}"
+  ],
+  "status_hint": "/api/deepseek/master/{symbol} yanıtı"
+ },
+ {
+  "id": "claude_signal_analyzer",
+  "name": "Claude Signal Analyzer",
+  "file": "backend/services/claude_signal_analyzer.py",
+  "category": "agent",
+  "purpose": "ML tahminlerini tam teknik bağlamla Claude'a inceleterek bağımsız AI değerlendirmesi üretir (5dk TTL cache).",
+  "key_functions": [
+   "analyze via /api/ai-analysis"
+  ],
+  "status_hint": "GET /api/ai-analysis/{symbol}"
+ },
+ {
+  "id": "claude_decider_core",
+  "name": "Claude Decider — karar çekirdeği (decide.py)",
+  "file": "claude_decider/decide.py",
+  "category": "agent",
+  "purpose": "Opus'un KANIT-TEMELLİ özerk karar katmanı (Pro headless, API maliyetsiz): sabit aday yargılamaz, canlı durum + evidence.py'nin 21.5k deduped sinyalden koşullu WR tablolarından kendi görüşünü kurar (aç/bekle, yön, boyut, yönetim). Sert yasaklar (XAU SELL, USOIL BUY) _enforce_guardrails ile KODDA zorlanır; kararlar kilitli journal.jsonl'e yazılır. Ayrıca XAU 'serbest zekâ' modu.",
+  "key_functions": [
+   "decide_situation",
+   "call_claude",
+   "_enforce_guardrails",
+   "append_journal"
+  ],
+  "status_hint": "claude_decider/memory/journal.jsonl taze satırlar"
+ },
+ {
+  "id": "claude_decider_loop",
+  "name": "Claude Decider — canlı döngü (run_decider.py)",
+  "file": "claude_decider/run_decider.py",
+  "category": "agent",
+  "purpose": "Faz-1 SHADOW döngüsü (20dk cadence): MT5'ten 5m bar + VIX çeker (data_contract sıfır-güven doğrulamasıyla), her yasak-olmayan yön için situation + kanıt paketi kurar, durum 'ilginç' değilse (rev<1.6) Opus'u ÇAĞIRMAZ; ilginçse decide_situation → journal. execute() hâlâ stub — MT5'e emir göndermez. build_situation'a price_projection (fib/vol-state) da eklenir.",
+  "key_functions": [
+   "main()",
+   "run_pass",
+   "build_situation",
+   "fetch_bars_mt5"
+  ],
+  "status_hint": "python claude_decider/run_decider.py --once; journal.jsonl büyüyor mu"
+ },
+ {
+  "id": "claude_decider_evidence",
+  "name": "Claude Decider — kanıt hafızası (evidence.py + gates.py)",
+  "file": "claude_decider/evidence.py",
+  "category": "agent",
+  "purpose": "'Veteran hafızası': 97k/21.5k deduped sinyalden (sembol×yön×feature-kovası) koşullu WR tabloları (evidence_tables.json, offline üretim) + canlı durumda ilgili hücreleri Opus'a kanıt paketi olarak sunar. gates.py entry tetiğini yalnız DOĞRULANMIŞ 5m mean-reversion kapısından verir; Opus entry icat etmez, yalnız bağlam/veto/boyut.",
+  "key_functions": [
+   "evidence pack builder",
+   "gates.ALLOW / vix_regime",
+   "channel_filter.channel_zscore"
+  ],
+  "status_hint": "claude_decider/evidence_tables.json güncelliği; refresh_evidence.py"
+ },
+ {
+  "id": "claude_decider_learning",
+  "name": "Claude Decider — öğrenme/muhasebe katmanı",
+  "file": "claude_decider/outcomes.py",
+  "category": "learning",
+  "purpose": "SHADOW kararlarını ölçüp öğrenir: outcomes.py journal kayıtlarını 5m barlarla WIN/LOSS/EXPIRE'a çözer (aynı-bar → konservatif LOSS), exits.py her işlemi 6 çıkış politikasıyla paralel notlar, calibration.py evidence base-rate'lerinin gerçekle kalibrasyonunu ölçer, forensics.py+post_mortem.py SL otopsisi, allocator.py meta-allocator.",
+  "key_functions": [
+   "outcomes.resolve",
+   "exits policy grading",
+   "calibration report",
+   "allocator"
+  ],
+  "status_hint": "batch_eval.py / model_compare.py raporları; journal kayıtlarında outcome alanları"
+ },
+ {
+  "id": "precision_veto_engine",
+  "name": "Precision Veto Engine (4 aşamalı)",
+  "file": "backend/services/precision_veto_service.py",
+  "category": "gate",
+  "purpose": "Her sinyal prediction_logs'a yazılmadan ÖNCE 4 aşama: (1) yapısal hard veto — likidite bölgesi + MTF teyit + Day Structure 1c + MiroShark makro bias yumuşak katmanı (NDX-only), (2) mum yapısı/fitil reddi, (3) Bollinger+z-score soft penaltı, (4) LightGBM meta sentezleyici. Vetolar signal_vetoes'a loglanır.",
+  "key_functions": [
+   "check_signal(signal)",
+   "log_veto",
+   "reload_meta_model"
+  ],
+  "status_hint": "GET /api/precision-veto/config + /summary; signal_vetoes tablosu"
+ },
+ {
+  "id": "signal_gates",
+  "name": "Merkezi Sinyal Kapıları",
+  "file": "backend/services/signal_gates.py",
+  "category": "gate",
+  "purpose": "Kanıt-temelli merkezi kapılar (hepsi fail-open, env bayraklı): XAU trend-SELL kapısı, GDAXI pulse1 askısı, seans-saat blokları, takvim ±30dk kapısı, 8-koşullu entry_score kapısı (NDX/USOIL, min 7). Panel endpoint'lerinde + prediction_logger güvenlik ağında uygulanır.",
+  "key_functions": [
+   "apply_signal_gates()",
+   "entry_score_gate",
+   "session_gate",
+   "xau_trend_sell_gate"
+  ],
+  "status_hint": "env bayrakları (ENTRY_SCORE_GATE_ENABLED vb.); bloklanan sinyal logları"
+ },
+ {
+  "id": "signal_lifecycle",
+  "name": "Signal Lifecycle Manager",
+  "file": "backend/services/signal_lifecycle.py",
+  "category": "gate",
+  "purpose": "Aktif sinyalleri 2dk aralıkla izler: wick yakalar, TP/SL vuruşu tespit eder, expire/cleanup yönetir, stop'ta failure otopsisi yazar, günlük bias invalidation'ı kontrol eder. Per-check snapshot signal_trajectory_snapshots'a gider.",
+  "key_functions": [
+   "lifecycle check loop (main.py)",
+   "POST /api/signals/check-now"
+  ],
+  "status_hint": "GET /api/signals/active + /api/signals/dashboard; prediction_logs status geçişleri"
+ },
+ {
+  "id": "market_regime_service",
+  "name": "Market Regime Detection",
+  "file": "backend/services/market_regime_service.py",
+  "category": "gate",
+  "purpose": "ADX + ATR + swing yapısından rejim tespiti (STRONG_TREND_UP/DOWN, RANGING, TRANSITION); rejim-bazlı model ağırlıkları, RSI override'ları, ATH breakout protokolü ve fake-signal timeout'u sağlar. Tüm 6 modele akar.",
+  "key_functions": [
+   "detect_regime(symbol)",
+   "filter_signal_by_regime",
+   "check_fake_signal_timeout"
+  ],
+  "status_hint": "GET /api/panel/regime/{symbol}; 15dk cache"
+ },
+ {
+  "id": "entry_optimizer",
+  "name": "Entry Optimizer + Shadow Executor",
+  "file": "backend/services/entry_optimizer.py",
+  "category": "gate",
+  "purpose": "Sinyal geldiğinde fiyat 'uçmuş mu' sorusunu OB/FVG dağılımıyla cevaplar: EXECUTE_NOW / LIMIT_ORDER / REJECT kararı üretir. shadow_executor.py off/shadow/enforce modlarıyla pipeline'a bağlar; regime_logger her kararı Supabase'e A/B loglar.",
+  "key_functions": [
+   "optimize_entry",
+   "decide_from_payload",
+   "shadow_executor.apply_entry_optimizer"
+  ],
+  "status_hint": "POST /api/entry-optimizer/optimize; env ENTRY_OPTIMIZER_MODE"
+ },
+ {
+  "id": "stage4_sizing",
+  "name": "Stage 4 — Percentile ML Sizing",
+  "file": "backend/services/stage4_sizing.py",
+  "category": "gate",
+  "purpose": "Per-symbol LightGBM'in predicted_r'ını son 500 tahminin rolling percentile'ına göre boyut çarpanına çevirir (<%10 hard veto 0.0x, <%30 0.25x...). model_loader.py per-symbol model kayıtları, inference_stage4.py z-score normalize inference.",
+  "key_functions": [
+   "get_sizing(symbol, predicted_r)",
+   "record_prediction",
+   "inference_stage4.predict_r"
+  ],
+  "status_hint": "GET /api/precision-veto/stage4-sizing/state"
+ },
+ {
+  "id": "entry_quality_service",
+  "name": "Entry-Quality Classifier",
+  "file": "backend/services/entry_quality_service.py",
+  "category": "gate",
+  "purpose": "Per-symbol entry-quality sınıflandırıcısını yükleyip aday sinyalin giriş feature'larından p_sl (SL'ye gitme olasılığı) skorlar ve should_block önerir.",
+  "key_functions": [
+   "score_entry(symbol, direction, ml_confidence, factors)"
+  ],
+  "status_hint": "model dosyaları backend/models altında; sinyal factors'ta p_sl alanı"
+ },
+ {
+  "id": "daily_bias_bridge",
+  "name": "MiroShark Daily Bias Bridge",
+  "file": "backend/services/daily_bias_service.py",
+  "category": "gate",
+  "purpose": "MiroShark CIO payload'ını normalize edip daily_bias'a UPSERT eder, günün bias'ını 60s cache ile okur, intraday yapı kırılımında is_invalidated flip'ler, compute_alignment ile veto bonus/penaltı/soft-veto kuralları. NASDAQ-only scope guard.",
+  "key_functions": [
+   "normalize_cio_payload",
+   "upsert_bias",
+   "get_current_bias",
+   "compute_alignment"
+  ],
+  "status_hint": "GET /api/miroshark/current-bias?symbol=NDX.INDX; daily_bias tablosu"
+ },
+ {
+  "id": "data_hub",
+  "name": "DataHub (merkezi piyasa verisi)",
+  "file": "backend/services/data_hub.py",
+  "category": "data",
+  "purpose": "Tüm piyasa verisinin tek kaynağı: startup'ta Supabase candle_cache'ten yükler, canlıda MT5→Redis ingest'i alır, 5m/30m/1h'ten üst TF'leri bucket-hizalı türetir (XAU gerçek-1h koruması), 15dk'da bir persist eder, candle-close event'leri ateşler. QQQ.US REFERENCE (tradable değil).",
+  "key_functions": [
+   "ingest_live_price",
+   "ingest_candles",
+   "get_price",
+   "register_candle_close_callback"
+  ],
+  "status_hint": "GET /api/data/cached/{symbol}; source etiketi (mt5_redis/derived_*)"
+ },
+ {
+  "id": "mt5_redis_client",
+  "name": "MT5 Redis Listener",
+  "file": "backend/services/mt5_redis_client.py",
+  "category": "data",
+  "purpose": "Railway Redis'ten MT5 bridge tick pub/sub (mt5:tick) + bar stream'lerini (mt5:bar:5m/1h/1d) dinler, broker saat dilimini otomatik tespit edip epoch'ları gerçek UTC'ye normalize eder, DataHub'a ingest eder; reconnect logic'li.",
+  "key_functions": [
+   "start_mt5_redis_listener",
+   "get_mt5_redis_diagnostics",
+   "stop_mt5_redis_listener"
+  ],
+  "status_hint": "get_mt5_redis_diagnostics(); DataHub fiyat tazeliği"
+ },
+ {
+  "id": "data_fetcher",
+  "name": "Data Fetcher (DataHub proxy)",
+  "file": "backend/services/data_fetcher.py",
+  "category": "data",
+  "purpose": "20+ servisin tek okuma yüzü: tüm fiyat/mum okumaları in-memory DataHub'dan, 0 harici vendor çağrısı.",
+  "key_functions": [
+   "fetch_latest_price",
+   "fetch_ohlcv"
+  ],
+  "status_hint": "GET /api/data/ohlcv/{symbol}"
+ },
+ {
+  "id": "candle_cache_store",
+  "name": "Candle Cache Store (Supabase persistence)",
+  "file": "backend/services/candle_cache_store.py",
+  "category": "data",
+  "purpose": "DataHub (in-memory) ↔ Supabase candle_cache köprüsü: startup'ta geçmişi yükler, yeni mumları persist eder, bucket-hizasız satırları reddeder; restart maliyetini sıfırlar.",
+  "key_functions": [
+   "load on startup",
+   "persist_new_candles"
+  ],
+  "status_hint": "candle_cache tablosunda taze timestamp'ler"
+ },
+ {
+  "id": "macro_data_service",
+  "name": "Macro Data Service (yfinance)",
+  "file": "backend/services/macro_data_service.py",
+  "category": "data",
+  "purpose": "DXY/VIX/US10Y/EURUSD/USDTRY'yi Yahoo Finance'ten saatlik çekip in-memory cache'ler; XAU v2 modeli, EMEL macro kontrolü, debate macro ajanı ve market-event motoru tüketir.",
+  "key_functions": [
+   "ensure_started",
+   "get_snapshot",
+   "get_macro_dict",
+   "get_history"
+  ],
+  "status_hint": "GET /api/macro-gauges; snapshot timestamp tazeliği"
+ },
+ {
+  "id": "market_data_service",
+  "name": "Market Data Service (panel OHLCV yüzü)",
+  "file": "backend/services/market_data_service.py",
+  "category": "data",
+  "purpose": "EMEL/PULSE panel analizleri için data_fetcher'ı tutarlı TF arayüzüyle saran birleşik OHLCV erişim katmanı.",
+  "key_functions": [
+   "get_ohlcv wrappers (M5/H1/H4...)"
+  ],
+  "status_hint": "panel endpoint'leri veri dönüyorsa çalışıyor"
+ },
+ {
+  "id": "background_scheduler",
+  "name": "Background Scheduler",
+  "file": "backend/services/background_scheduler.py",
+  "category": "infra",
+  "purpose": "Sürekli arka plan döngüsü: sembol verisi günceller, cache'e yazar, outcome kontrolü ve hata analizi tetikler, SMC üretim cadence'ini (min_score/displacement eşikleriyle) yürütür.",
+  "key_functions": [
+   "run_update_cycle",
+   "update_symbol_data",
+   "check_outcomes_if_needed"
+  ],
+  "status_hint": "GET /api/data/scheduler/status"
+ },
+ {
+  "id": "prediction_logger",
+  "name": "Prediction Logger",
+  "file": "backend/services/prediction_logger.py",
+  "category": "infra",
+  "purpose": "Tüm model sinyallerini prediction_logs'a yazan tek kapı: session filtresi, cooldown, dedup, signal_gates güvenlik ağı ve feature snapshot eklemesi burada; SMC için ayrı log yolu.",
+  "key_functions": [
+   "log_prediction",
+   "log_smc_prediction",
+   "get_recent_predictions"
+  ],
+  "status_hint": "prediction_logs'a taze insert'ler; model bazlı log aralığı tablosu"
+ },
+ {
+  "id": "signal_feature_snapshot",
+  "name": "Signal Feature Snapshot (~60 feature)",
+  "file": "backend/services/signal_feature_snapshot.py",
+  "category": "infra",
+  "purpose": "Her sinyal anında momentum/trend/volatilite/S-R/exhaustion/makro/seans + anti-chase uyarılarını içeren ~60 feature'lık düz snapshot'ı prediction_logs.factors'a koyar — AI-ops kümeleme bunun üstüne çalışır.",
+  "key_functions": [
+   "build_signal_feature_snapshot(symbol)"
+  ],
+  "status_hint": "prediction_logs.factors doluluğu"
+ },
+ {
+  "id": "outcome_tracker",
+  "name": "Outcome Tracker",
+  "file": "backend/services/outcome_tracker.py",
+  "category": "learning",
+  "purpose": "Çözülen tahminleri belirli aralıklarla kontrol edip doğru/yanlış sonuçlandırır ve outcome_results'a yazar (flat eşiği %0.1).",
+  "key_functions": [
+   "check outcomes (via /api/learning/check-outcomes)"
+  ],
+  "status_hint": "outcome_results tablosu; POST /api/learning/check-outcomes"
+ },
+ {
+  "id": "signal_trajectory_service",
+  "name": "Post-Entry Trajectory Learner (PETL)",
+  "file": "backend/services/signal_trajectory_service.py",
+  "category": "learning",
+  "purpose": "Aktif sinyalin feature'larını her lifecycle check'te yeniden snapshot'layıp giriş anına kıyasla 'deterioration' skoru hesaplar; eşik aşılırsa ABORT önerir. signal_checks'in yerini alan signal_trajectory_snapshots'ı üretir.",
+  "key_functions": [
+   "capture_snapshot",
+   "compute_deterioration_score",
+   "log_abort"
+  ],
+  "status_hint": "signal_trajectory_snapshots tablosunda taze satırlar"
+ },
+ {
+  "id": "learning_analyzer",
+  "name": "Learning Analyzer",
+  "file": "backend/services/learning_analyzer.py",
+  "category": "learning",
+  "purpose": "Tahmin sonuçlarından faktör-korelasyon analizi yapar, öğrenme içgörüleri üretip DB'ye kaydeder ve prompt bağlamı olarak sunar.",
+  "key_functions": [
+   "analyze_factor_correlations",
+   "generate_learning_insights",
+   "get_learning_context_for_prompt"
+  ],
+  "status_hint": "GET /api/learning/dashboard"
+ },
+ {
+  "id": "error_analysis_service",
+  "name": "Error Analysis Service (AI otopsi)",
+  "file": "backend/services/error_analysis_service.py",
+  "category": "learning",
+  "purpose": "Başarısız tahminleri AI ile analiz eder: candle snapshot kaydeder, fake-move tespit eder, hata analizi + learning feedback üretir.",
+  "key_functions": [
+   "check_and_analyze_failed_predictions",
+   "analyze_error_with_claude",
+   "detect_fake_move"
+  ],
+  "status_hint": "error analysis tabloları; scheduler analyze_errors_if_needed logu"
+ },
+ {
+  "id": "ai_ops_loop",
+  "name": "AI-Ops Loop (orchestrator + tagger + simulator + triage)",
+  "file": "backend/services/ai_ops_orchestrator.py",
+  "category": "learning",
+  "purpose": "Günlük başarısızlık analizi hattı: failure_tagger (kural-tabanlı kök-neden etiketi) → failure_clusters → DeepSeek iyileştirme önerileri (improvement_proposals) → proposal_simulator counterfactual backtest → auto_triage (AUTO_APPLY/HUMAN_REVIEW/AUTO_REJECT) → post_deploy_monitor 7 gün canlı takip + rollback önerisi.",
+  "key_functions": [
+   "orchestrate_ai_ops",
+   "failure_tagger.parse_factors",
+   "proposal_simulator",
+   "auto_triage"
+  ],
+  "status_hint": "GET /api/ai-ops/stats + /proposals; failure_analyses / improvement_proposals tabloları"
+ },
+ {
+  "id": "combinatorial_auditor",
+  "name": "Combinatorial Signal Auditor",
+  "file": "backend/services/combinatorial_auditor.py",
+  "category": "learning",
+  "purpose": "prediction_logs'u madenleyip rejim×sembol×seans bazında en iyi model kombinasyonlarını bulur; meta_combination_stats'ı güncelleyerek Meta-Engine'i dinamik yönlendirir.",
+  "key_functions": [
+   "mine combinations → meta_combination_stats"
+  ],
+  "status_hint": "GET /api/meta/combinations/{symbol}; meta_combination_stats tablosu"
+ },
+ {
+  "id": "pattern_mining",
+  "name": "Pattern Mining + Runtime Matcher",
+  "file": "backend/services/pattern_mining_service.py",
+  "category": "learning",
+  "purpose": "Haftalık cron pattern_miner'ı çalıştırıp kuralları dosya + Supabase'e (pattern_mining_runs) persist eder; pattern_matcher.py canlı sinyalin bilinen HIGH-WIN (≥75%) veya TOXIC (≤35%) kalıba uyup uymadığını runtime'da değerlendirir.",
+  "key_functions": [
+   "run_weekly_mining",
+   "restore_from_supabase",
+   "pattern_matcher.match"
+  ],
+  "status_hint": "pattern_rules.json güncelliği; pattern_mining_runs tablosu"
+ },
+ {
+  "id": "tp_sl_optimization_suite",
+  "name": "TP/SL Optimizasyon Takımı",
+  "file": "backend/services/tp_sl_walkforward.py",
+  "category": "learning",
+  "purpose": "Veri-güdümlü TP/SL tasarımı: tp_sl_optimizer.py MFE/MAE grid-search, tp_sl_walkforward.py dağılım-bazlı walk-forward tasarım, tp_sl_candle_replay.py dürüst mum-replay MFE/MAE, adaptive_tp_sl.py başarısızlık noktalarından öğrenme. Çıktılar target_config DirectionOverride'larını besler.",
+  "key_functions": [
+   "walkforward design",
+   "tp_sl_optimizer grid search",
+   "candle replay"
+  ],
+  "status_hint": "target_config.py TP_SL_DERIVED_OVERRIDES; GET /api/replay/walkforward"
+ },
+ {
+  "id": "signal_replay_1m",
+  "name": "1m Signal Replay Engine",
+  "file": "backend/services/signal_replay_1m.py",
+  "category": "learning",
+  "purpose": "Tarihsel her sinyali candle_cache 1m barlarında üretim kurallarıyla yeniden yürütüp dürüst TP/SL sonucunu (SL-first konservatif) çıkarır — WR enflasyonunu düzelten ground-truth motoru.",
+  "key_functions": [
+   "replay batch (POST /api/replay/run)"
+  ],
+  "status_hint": "GET /api/replay/report; corrected_status kolonları"
+ },
+ {
+  "id": "mt5_reconciliation",
+  "name": "MT5 Reconciliation",
+  "file": "backend/services/mt5_reconciliation_service.py",
+  "category": "learning",
+  "purpose": "MT5 deal export'larını (JSON/CSV/HTML) mt5_trades'e ground-truth olarak alır ve prediction_logs ile eşleştirip lifecycle raporu ile broker gerçeği arasındaki farkı gösterir.",
+  "key_functions": [
+   "ingest_deals",
+   "reconcile_window",
+   "reconciliation_report"
+  ],
+  "status_hint": "GET /api/mt5/reconciliation/report; mt5_trades tablosu"
+ },
+ {
+  "id": "market_event_engine",
+  "name": "Market Event Engine (mum bazlı 'Ne oldu?')",
+  "file": "backend/services/market_event_service.py",
+  "category": "data",
+  "purpose": "Bir mumun zaman aralığındaki tüm açıklayıcı bağlamı toplar: teknik anomali, makro hareketler, seans bağlamı, ekonomik takvim, (varsa) haber. Haber akışı olmadan da çalışır, tamamen fail-open.",
+  "key_functions": [
+   "get_candle_context",
+   "get_event_markers"
+  ],
+  "status_hint": "GET /api/market-events/candle-context + /markers/{symbol}"
+ },
+ {
+  "id": "price_projection_service",
+  "name": "Price Projection ('nereye kadar?') Motoru",
+  "file": "backend/services/price_projection_service.py",
+  "category": "data",
+  "purpose": "8 klasik hedef tekniğini GERÇEK veriden hesaplar: fib retr/ext, measured move, ADR-20 + tükenme, volatilite squeeze/expansion, mean-rev stretch, ORB (context-only), Market Profile POC/VAH/VAL. Debate price_targets ajanı, Claude Decider ve paneli besler; signal_gates'e bilinçli BAĞLANMADI (doğrulanmış edge yok).",
+  "key_functions": [
+   "compute_fib",
+   "compute_adr",
+   "compute_vol_state",
+   "compute_market_profile"
+  ],
+  "status_hint": "debate context'inde projection satırları; 5dk TTL"
+ },
+ {
+  "id": "day_structure_service",
+  "name": "Day Structure Analyzer",
+  "file": "backend/services/day_structure_service.py",
+  "category": "data",
+  "purpose": "Günün yapısal seviyelerini hesaplar: PDH/PDL/PDC, PWH/PWL, pivot noktaları, çok-ölçekli swing'ler, dokunma-sayılı memory zone'lar (rejection/break + freshness), ATR volatilite oranı. Precision Veto Stage 1c'nin veri kaynağı.",
+  "key_functions": [
+   "compute day structure (Stage 1c consumer)"
+  ],
+  "status_hint": "signal_vetoes'ta stage-1c veto kayıtları"
+ },
+ {
+  "id": "session_context_service",
+  "name": "Session Context Service (DST-doğru)",
+  "file": "backend/services/session_context_service.py",
+  "category": "data",
+  "purpose": "Herhangi bir UTC an için seans bağlamını (canlı seans, US open'a dakika, tatil/yarım gün, önceki seans yönü) piyasanın KENDİ zoneinfo dilimiyle DST-doğru hesaplar; bias harness ve market-event motoru kullanır.",
+  "key_functions": [
+   "get_session_context(ts)"
+  ],
+  "status_hint": "bias_test_log satırlarındaki session alanları"
+ },
+ {
+  "id": "cot_whale",
+  "name": "COT + Whale Tracker",
+  "file": "backend/services/whale_tracker_service.py",
+  "category": "data",
+  "purpose": "CFTC haftalık COT raporunu (cot_report_service, canlı parse, persist edilmez) Open Interest + pozisyon momentumu ile birleştirip -1..+1 whale_pressure skoru üretir; ML'e feature sağlar.",
+  "key_functions": [
+   "get_whale_snapshot",
+   "get_whale_dashboard",
+   "fetch_cot_data",
+   "get_cot_adjustment"
+  ],
+  "status_hint": "GET /api/whale/dashboard + /api/cot/history/{symbol}"
+ },
+ {
+  "id": "economic_calendar",
+  "name": "Economic Calendar + Earnings",
+  "file": "backend/services/economic_calendar_service.py",
+  "category": "data",
+  "purpose": "Yüksek-etkili ekonomik olayları ve earnings takvimini takip eder; takvim kapısı (CALENDAR_GATE) ve grafik olay işaretleri bunu kullanır. earnings_service.py NASDAQ earnings senaryo analizi ekler.",
+  "key_functions": [
+   "GET /api/calendar/economic",
+   "GET /api/calendar/today"
+  ],
+  "status_hint": "/api/calendar/today yanıtı"
+ },
+ {
+  "id": "rss_aggregator",
+  "name": "RSS News Aggregator",
+  "file": "backend/services/rss_aggregator.py",
+  "category": "data",
+  "purpose": "Çoklu RSS kaynağından finansal haber toplar (akıllı filtre + Redis cache, 7dk aralık). Şu an RSS_AGGREGATION_ENABLED=False — Telegram haber dedektörü beklemede.",
+  "key_functions": [
+   "GET /api/rss/news",
+   "GET /api/rss/latest-breaking"
+  ],
+  "status_hint": "RSS_AGGREGATION_ENABLED bayrağı (şu an kapalı)"
+ },
+ {
+  "id": "ws_broadcast",
+  "name": "WebSocket Broadcast (ws_manager + router)",
+  "file": "backend/services/ws_manager.py",
+  "category": "infra",
+  "purpose": "WebSocket bağlantılarını yönetir: /ws/{symbol} abonelikleri, scheduler hesapladıkça broadcast, yeni bağlantıya son cache'lenmiş veriyi anında verme. candle_event_handlers.py mum kapanışında modelleri event-driven yeniler.",
+  "key_functions": [
+   "broadcast()",
+   "/ws/{symbol}",
+   "candle close → model refresh"
+  ],
+  "status_hint": "GET /api/ws/stats"
+ },
+ {
+  "id": "strategy_optimizer",
+  "name": "Strategy Auto-Optimization Loop",
+  "file": "backend/services/strategy_optimizer_service.py",
+  "category": "learning",
+  "purpose": "Sembol başına 6-bileşenli risk skoru (VIX, ADX trend netliği, ATR sağlığı, choppiness, seans kalitesi, haber yakınlığı) hesaplayıp canlı koşullar + geçmiş performansa göre en iyi ML stratejisini otomatik seçer.",
+  "key_functions": [
+   "GET /api/optimizer/run"
+  ],
+  "status_hint": "/api/optimizer/run yanıtı"
+ },
+ {
+  "id": "learning_api",
+  "name": "Learning & Performance API",
+  "file": "backend/routers/learning.py",
+  "category": "learning",
+  "purpose": "Performans panellerinin veri kaynağı: accuracy-by-model, strategy-performance, smc-performance, dashboard; reliability = resolved/5 formülü ve scope-lider seçimi burada.",
+  "key_functions": [
+   "GET /api/learning/dashboard",
+   "GET /api/learning/accuracy-by-model",
+   "GET /api/learning/strategy-performance"
+  ],
+  "status_hint": "GET /api/learning/health"
+ },
+ {
+  "id": "bot_router",
+  "name": "Bot Trade-Signal API",
+  "file": "backend/routers/bot_router.py",
+  "category": "gate",
+  "purpose": "MT5 botu için TEK endpoint: Stage 4 percentile sizing + Entry Optimizer + Precision Veto kararlarını tek pakette birleştirir (POST /api/bot/trade-signal); bot_diagnostic_router backend-WR vs bot-config uçurumunu raporlar.",
+  "key_functions": [
+   "POST /api/bot/trade-signal",
+   "GET /api/bot/status",
+   "GET /api/bot-diagnostic/report"
+  ],
+  "status_hint": "GET /api/bot/status"
+ },
+ {
+  "id": "forexsai_demo_bot",
+  "name": "MT5 Canlı Bot (forexsai_demo_bot)",
+  "file": "yeni deneme/forexsai_demo_bot.py",
+  "category": "bot",
+  "purpose": "IC Markets demo hesabında canlı işlem açan ana bot: backend PULSE yönünü çeker, 4 doğrulanmış momentum scope'u (NDX BUY, GDAXI BUY, USOIL SELL/BUY) + channel-reversion (CHREV) + VIX-regime (VIXREG) scope'larını yürütür; hibrit giriş, günlük zarar limiti, SL forensiği için giriş parmak izi loglar. LIVE_TRADING her zaman True (demo).",
+  "key_functions": [
+   "main()",
+   "check_scope",
+   "check_channel_reversion",
+   "check_vix_regime"
+  ],
+  "status_hint": "demo_bot.log; demo_trades.csv; MT5 açık pozisyonlar (magic bazlı)"
+ },
+ {
+  "id": "bot_reflex_exec",
+  "name": "Bot Reflex Executor",
+  "file": "yeni deneme/reflex_exec.py",
+  "category": "bot",
+  "purpose": "Backend'in doğrulanmış NDX momentum-continuation reflex sinyallerini (GET /api/reflex/live) poll edip 15-dakika time-stop + katastrofik SL ile yürütür; kendi magic slot'u, REFLEX_LIVE açılmadıkça shadow.",
+  "key_functions": [
+   "poll_reflex(log)"
+  ],
+  "status_hint": "demo_bot.log reflex satırları; REFLEX_LIVE bayrağı"
+ },
+ {
+  "id": "bot_entry_gate",
+  "name": "Bot Entry Gate (8-koşullu skor)",
+  "file": "yeni deneme/entry_gate.py",
+  "category": "bot",
+  "purpose": "14 günlük gerçek MT5 otopsisinden türetilen 8-koşullu giriş skoru + seans kapılarını bot tarafında GERÇEK 1m ATR tabanıyla uygular (NDX skor≥7 WR 60→65, USOIL 49→72); VIXREG'e ek EMA200(1m)-üstü SELL yasağı. Fail-open. CHREV muaf.",
+  "key_functions": [
+   "entry_gate_check (bot içinde)",
+   "score computation"
+  ],
+  "status_hint": "demo_bot.log'da gate blok mesajları; test_entry_gate.py"
+ },
+ {
+  "id": "bot_data_recorder",
+  "name": "Data Recorder (MT5→Supabase)",
+  "file": "yeni deneme/data_recorder.py",
+  "category": "bot",
+  "purpose": "MT5 kutusunda botla paralel koşan sürekli kaydedici: 1m dahil OHLC'yi doğrudan MT5'ten çekip candle_cache'e + her kapalı mum için 28 indikatörlü indicator_snapshots'a yazar — veri donması ve 1m eksikliğinin kalıcı çözümü.",
+  "key_functions": [
+   "main loop (python data_recorder.py)"
+  ],
+  "status_hint": "data_recorder.log; candle_cache/indicator_snapshots taze 1m satırları"
+ },
+ {
+  "id": "bot_sr_channel_filters",
+  "name": "Bot S/R + Channel filtreleri",
+  "file": "yeni deneme/sr_zones.py",
+  "category": "bot",
+  "purpose": "Bot-yerel giriş zekâsı: sr_zones.py 1m destek/direnç bölgeleri + pending-limit giriş planı + momentum stretch; channel_filter.py doğrulanmış linreg kanal-rejection (CHREV mean-reversion edge, WR 44→72-84) tespiti; sl_forensics.py giriş parmak izlerinden SL otopsisi.",
+  "key_functions": [
+   "detect_zones",
+   "plan_sr_entry",
+   "is_channel_rejection",
+   "momentum_stretch"
+  ],
+  "status_hint": "entry_fingerprints.jsonl; CHREV işlem yorumları MT5'te"
+ },
+ {
+  "id": "model_storage",
+  "name": "Model Storage (Supabase)",
+  "file": "backend/services/model_storage.py",
+  "category": "infra",
+  "purpose": "Tüm ML modellerini Supabase Storage'a (forexsai-models bucket, manifest.json) yükleyip startup'ta indirir — Railway redeploy'da 25dk retrain yerine 5-10sn restore.",
+  "key_functions": [
+   "upload/download via manifest"
+  ],
+  "status_hint": "manifest.json versiyonu; startup logunda model restore"
+ },
+ {
+  "id": "trading_engine_modules",
+  "name": "Trading Engine karar modülleri",
+  "file": "backend/services/trading_engine/",
+  "category": "infra",
+  "purpose": "Modüler karar katmanı paketi: confluence_engine, decision_layers, layer_conflict_resolver, mtf_validator/analyzer, regime_blocker/detector, pattern_prioritizer, portfolio_risk_manager, signal_state_machine, adaptive_threshold.",
+  "key_functions": [
+   "GET /api/test/trading-engine/all-modules"
+  ],
+  "status_hint": "/api/test/trading-engine/all-modules"
+ },
+ {
+  "id": "permutation_analysis",
+  "name": "Permutation Analysis (izole)",
+  "file": "backend/services/permutation_analysis_service.py",
+  "category": "learning",
+  "purpose": "Model kombinasyonları ve teknik indikatör permütasyonlarının tarihi performansını izole batch'lerde tarar (fast varyantı 1-2 günde biter); konsensüs raporu üretir.",
+  "key_functions": [
+   "analyze_model_permutations",
+   "analyze_technical_permutations"
+  ],
+  "status_hint": "GET /api/permutation/consensus/{symbol}"
+ },
+ {
+  "id": "oil_intelligence",
+  "name": "Oil Analysis + Baltic/Maritime Intelligence",
+  "file": "backend/services/oil_analysis_service.py",
+  "category": "data",
+  "purpose": "WTI için 4-katmanlı 'Black Gold Pulse' analizi (DXY makro, fundamental akış, mikroyapı, temporal) + Baltic endeksleri ve AIS gemi-trafiği chokepoint istihbaratı.",
+  "key_functions": [
+   "oil analysis layers",
+   "GET /api/panel/oil-baltic-intelligence"
+  ],
+  "status_hint": "/api/panel/oil-baltic-intelligence yanıtı"
+ },
+ {
+  "id": "pandemic_sensitivity",
+  "name": "Pandemic Sensitivity Index (PSI)",
+  "file": "backend/services/pandemic_sensitivity_service.py",
+  "category": "data",
+  "purpose": "Sağlık-krizi erken uyarısı: geçmiş salgınlarda piyasayı 4-8 hafta önden yansıtan hisse sepetlerinden 0-100 PSI skoru üretir; makro overlay olarak rejime akar.",
+  "key_functions": [
+   "GET /api/pandemic-sensitivity",
+   "/history",
+   "/features"
+  ],
+  "status_hint": "/api/pandemic-sensitivity yanıtı"
+ },
+ {
+  "id": "macro_context_service",
+  "name": "Macro Context Overlay",
+  "file": "backend/services/macro_context_service.py",
+  "category": "data",
+  "purpose": "4 makro gauge (DXY, VIX, yield curve, risk-on) + PSI'yi sembol-bazlı tek bağlamda birleştirir: ±15 puanla sınırlı confidence ayarı + Türkçe decision_notes; asla sinyal yönünü flip etmez.",
+  "key_functions": [
+   "per-symbol context builder"
+  ],
+  "status_hint": "GET /api/macro-gauges; sinyal decision_notes'ta makro satırları"
+ },
+ {
+  "id": "auth_email",
+  "name": "Auth + Email Service",
+  "file": "backend/services/auth_service.py",
+  "category": "infra",
+  "purpose": "Kullanıcı yönetimi: email/şifre kayıt + doğrulama, JWT-benzeri session, IP bazlı rate limit, referral, tier erişimi; email_service.py Resend ile doğrulama/reset mailleri.",
+  "key_functions": [
+   "POST /api/auth/signup",
+   "POST /api/auth/login",
+   "GET /api/auth/me"
+  ],
+  "status_hint": "/api/auth/me yanıtı"
+ },
+ {
+  "id": "mtf_analysis",
+  "name": "MTF Analysis + Confirmation",
+  "file": "backend/services/mtf_analysis_service.py",
+  "category": "data",
+  "purpose": "M1→D1 çok-TF teknik analiz (ATR dinamik eşikler, Bollinger, hacim) + confluence skoru; mtf_confirmation.py sinyalleri TF'ler arası doğrular (Precision Veto MTF teyidinin temeli).",
+  "key_functions": [
+   "GET /api/mtf/analysis",
+   "GET /api/mtf/confluence/{symbol}"
+  ],
+  "status_hint": "/api/mtf/confluence/{symbol} yanıtı"
+ },
+ {
+  "id": "target_config",
+  "name": "Target Config (kanonik TP/SL)",
+  "file": "backend/services/target_config.py",
+  "category": "infra",
+  "purpose": "Sembol-bazlı kanonik pip/percent TP1-4 + SL tanımları ve walk-forward DirectionOverride'lar (örn. USOIL SELL); lifecycle, replay ve tüm outcome hesapları bu tek kaynağı kullanır.",
+  "key_functions": [
+   "get_symbol_config",
+   "get_effective_config(symbol, direction)",
+   "calculate_target_prices"
+  ],
+  "status_hint": "env TP_SL_DERIVED_OVERRIDES"
+ },
+ {
+  "id": "cortex_backfill",
+  "name": "CORTEX Backfill + Doğrulama",
+  "file": "backend/services/cortex_backfill.py",
+  "category": "learning",
+  "purpose": "3567 sızıntısız epizodla (2019-24 NQ futures, intraday karar → +6h/+24h ileri yön) analog-kNN'i walk-forward doğruladı; SONUÇ: bu hedef için yön öngörmüyor → analog enjeksiyonu varsayılan kapalı. Hafıza kaydı Faz 2/3 için açık.",
+  "key_functions": [
+   "backfill + walk-forward validation"
+  ],
+  "status_hint": "research/cortex_backfill/FINDINGS.md; cortex_episodes satır sayısı"
+ },
+ {
+  "id": "signal_history_repair",
+  "name": "Signal History Repair + ML Backfill",
+  "file": "backend/services/signal_history_repair_service.py",
+  "category": "learning",
+  "purpose": "Tarihi prediction_logs satırlarını kanonik TP/SL ve normalize model_type'a göre onarır; ml_history_backfill_service + xauusd_backfill_service geçmiş ML kayıtlarını 30m veriyle yeniden değerlendirir.",
+  "key_functions": [
+   "repair batch",
+   "plan_ml_backfill_update"
+  ],
+  "status_hint": "POST /api/signals/backfill"
+ },
+ {
+  "id": "miroshark_router",
+  "name": "MiroShark Webhook Router",
+  "file": "backend/routers/miroshark_router.py",
+  "category": "agent",
+  "purpose": "MiroShark CIO'nun günlük NASDAQ bias push'unu HMAC-SHA256 imzayla alır (webhook) veya imzasız manuel fallback ile kabul eder; her ikisi daily_bias_service UPSERT'inden geçer.",
+  "key_functions": [
+   "POST /api/miroshark/webhook",
+   "POST /api/miroshark/manual-bias",
+   "GET /api/miroshark/current-bias"
+  ],
+  "status_hint": "daily_bias tablosunda bugünün satırı"
+ },
+ {
+  "id": "smc_calculator_facade",
+  "name": "SMC Calculator (legacy facade)",
+  "file": "backend/services/smc_calculator_service.py",
+  "category": "infra",
+  "purpose": "Kanonik v2 SMC motorunun çıktısını legacy response şekline adapte eden facade (2026-07-08 konsolidasyonu); likidite havuzları/breaker block/daily-gap analizi kendi içinde. deepseek_analysis ve meta engine tüketir.",
+  "key_functions": [
+   "legacy-shaped SMC snapshot"
+  ],
+  "status_hint": "GET /api/deepseek/smc/{symbol}"
+ },
+ {
+  "id": "fakeout_service",
+  "name": "Breakout Verdict Engine (fakeout v2 — skor + fade + teyit)",
+  "file": "backend/services/fakeout_service.py",
+  "category": "signal_engine",
+  "purpose": "S/R + kanal seviyelerinde TAZE kırılımı tespit eder; OOS-kalibre birleşik skor + kural eşleşmesiyle 4-sınıf öneri üretir: fade_candidate (skor≤−2, OOS %87.5 sahte — ters yön kanıtı) / avoid_breakout_direction / neutral_no_trade / breakout_leaning_genuine (OOS %55.6 — edge değil). Canlı teyit durumu (sonraki-bar, retest) ekler. Tüketiciler: signal_gates.fakeout_gate (GÖLGE), /api/fakeout/assess, claude_decider situation.fakeout, Neural panel kartı. Kanıt: kırılım-yönlü tüm giriş varyantları −EV — edge fade tarafında."
+ },
+ {
+  "id": "fakeout_miner",
+  "name": "Fakeout Miner (kırılım etiketleme + kural madenciliği)",
+  "file": "backend/research/fakeout_miner.py",
+  "category": "research",
+  "purpose": "Geçmiş 5m+1m mumlardan causal S/R/kanal kırılımları çıkarır, ±1×ATR iki-hedef yarışıyla etiketler; ~22 özellik üzerinde kronolojik %70/30 OOS kural madenciliği + birleşik skor kalibrasyonu + teyit protokolü backtest'i (sonraki-bar teyidi / retest-tut, 1:1 ve 1.5:1 geometri) → fakeout_rules.json v2 + fakeout_report.md."
+ },
+ {
+  "id": "go_live_gate",
+  "name": "Canlıya Alma Kartı (yeni scope zorunlu kapısı)",
+  "file": "backend/research/go_live_gate.py",
+  "category": "research",
+  "purpose": "Bir scope canlıya çıkmadan önce 6 zorunlu ölçütü ölçer: hacim ≥150 olay, ort.R>0 & bootstrap P(EV>0)≥%90, kronolojik iki yarının ikisi de ≥0, spread×1.5 stresinde pozitif, icra kırılganlığı (bar-kapanışı girişi ile gerçek dolum farkı), sıra-bağımlı tek-pozisyon simülasyonu. Verdikt LIVE/SHADOW/RED ve kart backend/data/evolution/go_live_cards/<scope>.json'a yazılır. 2026-08-11 USOIL BREAKOUT dersinden doğdu (rapor spread'siz + bar-kapanışı girişiyle %58.8 diyordu, gerçekte %42.7)."
+ },
+ {
+  "id": "usoil_breakout_lab",
+  "name": "USOIL Breakout dürüst otopsi laboratuvarı",
+  "file": "backend/research/usoil_breakout_lab.py",
+  "category": "research",
+  "purpose": "check_usoil_breakout kuralını birebir yeniden üretir; giriş = kırılım barı sonrası ilk M1 açılışı + gerçek spread, çözümleme M1 bid barlarıyla (aynı barda TP+SL → konservatif kayıp). lab2 geometri/geri-çekilme/gecikmeli giriş varyantlarını, lab3 ön-tanımlı kapıları + bootstrap + canlı mutabakatı tarar."
+ },
+ {
+  "id": "entry_gate_live_validation",
+  "name": "Giriş skoru kapısı — canlı işlem doğrulaması",
+  "file": "backend/research/entry_gate_live_validation.py",
+  "category": "research",
+  "purpose": "entry_gate.py skorunu botun GERÇEK MT5 işlemlerinde açılış anına kadarki kapalı barlarla (_bars_upto) yeniden hesaplar; kapının eleyeceği kümenin net PnL'ini ölçer. Kapı ancak elediği küme net zararlıysa haklıdır."
+ },
+ {
+  "id": "bars_upto",
+  "name": "_bars_upto — sızıntısız geçmiş bar çekimi",
+  "file": "backend/research/_bars_upto.py",
+  "category": "research",
+  "purpose": "mt5.copy_rates_from verilen tarihten İLERİYE bar döndürür; geçmiş bir karar anını yeniden kuran her analiz bunu kullanırsa geleceğe bakar. rates_upto/candles_upto copy_rates_range penceresi çekip karar anından sonraki ve koşan barları keser."
+ }
 ]

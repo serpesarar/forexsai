@@ -1,0 +1,55 @@
+{
+ "scope": "usoil_breakout",
+ "aciklama": "USOIL Donchian48 kırılım-devam (BUY)",
+ "tarih": "2026-08-11T02:06:34",
+ "sembol": "SpotCrude",
+ "spread": 0.024,
+ "geometri": {
+  "tp_atr": 1.0,
+  "sl_atr": 1.0,
+  "be_trail": false
+ },
+ "olay": 1865,
+ "cozulen": 368,
+ "wr": 43.8,
+ "ort_R": -0.125,
+ "bootstrap_%95": [
+  -0.2228,
+  -0.0217
+ ],
+ "p_ev_pozitif": 0.007,
+ "checks": {
+  "1_hacim": {
+   "deger": 368,
+   "esik": "≥150",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "ortR=-0.125 P(EV>0)=%0.7",
+   "esik": "ortR>0 ve P≥%90",
+   "gecti": false
+  },
+  "3_kararlilik": {
+   "deger": "ilk=-0.076 son=-0.174",
+   "esik": "ikisi de ≥0",
+   "gecti": false
+  },
+  "4_surtunme": {
+   "deger": "spread×1.5: ortR=-0.185",
+   "esik": ">0",
+   "gecti": false
+  },
+  "5_icra": {
+   "deger": "kapanış-girişi ortR=-0.005 vs gerçek -0.125",
+   "esik": "fark, gerçek |ortR|'nin 0.5 katından küçük",
+   "gecti": false
+  },
+  "6_sira_bagimli": {
+   "deger": "n=338 ortR=-0.130",
+   "esik": ">0",
+   "gecti": false
+  }
+ },
+ "verdikt": "SHADOW",
+ "not": "Kutuda üretildi (backend/research/go_live_gate.py usoil_breakout). Scope 2026-08-11'de gölgeye alındı."
+}

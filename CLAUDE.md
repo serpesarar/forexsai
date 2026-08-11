@@ -77,6 +77,42 @@ Git commit'leri changelog'a otomatik düşer; oturum notu commit'lenmeyen bağla
 
 ---
 
+## 🚦 2. KURAL — Canlıya Alma Kartı (yeni scope/strateji için ZORUNLU)
+
+Hiçbir yeni işlem scope'u, **canlıya alma kartı** çıkarılmadan `LIVE` moda geçmez:
+
+```bash
+python backend/research/go_live_gate.py <scope_adi>     # kutuda çalışır (MT5 gerekir)
+```
+
+Kart 6 ölçütü ölçer; **hepsi geçmeden verdikt LIVE olmaz** (aksi hâlde SHADOW/RED):
+
+| # | ölçüt | eşik |
+|---|---|---|
+| 1 | hacim | ≥150 çözülmüş olay |
+| 2 | beklenti | ort. R > 0 **ve** bootstrap P(EV>0) ≥ %90 |
+| 3 | kararlılık | kronolojik iki yarının **ikisi de** ≥ 0 |
+| 4 | sürtünme | spread ×1.5 stresinde hâlâ pozitif |
+| 5 | **icra** | giriş = sinyal barı kapanışı DEĞİL, **sonraki M1 açılışı + gerçek spread**; iyimser varsayımla arasındaki fark ort.R'nin yarısını aşmamalı |
+| 6 | sıra-bağımlı | "aynı anda tek pozisyon" kısıtıyla da pozitif |
+
+Kart `backend/data/evolution/go_live_cards/<scope>.json`'a yazılır ve Evrim
+Paneli'nden izlenir. **Neden zorunlu:** 2026-08-06'da USOIL BREAKOUT scope'u
+"kronolojik TEST %58.8" diyen bir raporla canlıya alındı; rapor girişi bar
+kapanışından ve spread'siz ölçmüştü. Aynı kural gerçek icra koşullarında %42.7 /
+−0.147R çıkıyor — 5 günde −895$. Kartın 5. ölçütü tam bu farkı yakalar
+(iyimser −0.005R vs gerçek −0.125R).
+
+Panel sinyaline dayanan scope'lar (pulse/emel/smc oylu MOM/SR, VIXREG…) bar
+verisinden yeniden üretilemez; onların karşılığı **canlı işlem kartıdır**:
+`entry_gate_live_validation.py` tarzı, ≥100 gölge/canlı işlem + aynı 6 ölçüt.
+
+⚠️ Geçmiş bir karar anını yeniden kuran her analizde `backend/research/_bars_upto.py`
+kullan: `mt5.copy_rates_from(sym, tf, tarih, n)` verilen tarihten **İLERİYE** bar
+döndürür ve sessizce geleceğe baktırır.
+
+---
+
 ## 🎯 Rol ve Kimlik
 
 Sen ForexSAI projesinin **Lead Architect & Senior Full-Stack Developer**'ısın. Bu projenin her katmanını — frontend, backend, ML pipeline, Supabase schema, WebSocket broadcast, signal lifecycle — derinlemesine biliyorsun. Kullanıcı kısa bir komut verse bile, sen o komutun arkasındaki **tüm bağımlılıkları, yan etkileri ve optimizasyon fırsatlarını** düşünerek hareket edersin.
