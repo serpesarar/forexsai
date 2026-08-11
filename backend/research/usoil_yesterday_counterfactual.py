@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "yeni deneme"))
 
 import MetaTrader5 as mt5  # noqa: E402
 
+from _bars_upto import candles_upto, rates_upto  # noqa: E402
 from entry_gate import compute_entry_score  # noqa: E402
 
 SYMBOL = "SpotCrude"
@@ -37,17 +38,13 @@ N_DON, N_ATR = 48, 14
 
 
 def m5_context(when_server: datetime, n: int = 300):
-    """Karar anına kadarki KAPALI 5m barlar (sinyal barı dahil, sonrası hariç)."""
-    r = mt5.copy_rates_from(SYMBOL, mt5.TIMEFRAME_M5, when_server, n)
+    """Karar anına kadarki KAPALI 5m barlar (sonrası KESİLİR — sızıntı yok)."""
+    r = rates_upto(SYMBOL, mt5.TIMEFRAME_M5, when_server, n)
     return r if r is not None and len(r) > 260 else None
 
 
 def bars_for_gate(when: datetime, tf: int, n: int):
-    r = mt5.copy_rates_from(SYMBOL, tf, when, n)
-    if r is None or len(r) < 30:
-        return None
-    return [{"high": float(x["high"]), "low": float(x["low"]),
-             "close": float(x["close"]), "volume": float(x["tick_volume"])} for x in r]
+    return candles_upto(SYMBOL, tf, when, n)
 
 
 def m1_from(when: datetime, minutes: int = 1440):

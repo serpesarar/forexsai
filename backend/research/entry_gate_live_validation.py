@@ -4,8 +4,11 @@ Soru: entry_gate.py (8 koşullu skor + seans saat bloğu) canlıda uygulansaydı
 botun gerçekten açtığı işlemlerin hangileri elenirdi ve elenen küme kârlı mı,
 zararlı mıydı? (Kapı ancak elediği küme NET ZARARLI ise haklıdır.)
 
-Sızıntı yok: skor, işlemin AÇILIŞ ANINA kadarki barlarla hesaplanır
-(copy_rates_from(..., açılış_zamanı, n) — sonraki barlar görülmez).
+Sızıntı yok: skor, işlemin AÇILIŞ ANINDA KAPANMIŞ barlarla hesaplanır
+(_bars_upto.candles_upto — copy_rates_range penceresi + karar anından sonraki
+barların kesilmesi). ⚠️ İlk tur mt5.copy_rates_from ile yazılmıştı; o fonksiyon
+verilen tarihten İLERİYE bar döndürdüğü için sonuç geçersizdi (2026-08-11'de
+düzeltildi).
 
 Çalıştırma (kutuda): python backend/research/entry_gate_live_validation.py [gün]
 """
@@ -20,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "yeni deneme"))
 
 import MetaTrader5 as mt5  # noqa: E402
 
+from _bars_upto import candles_upto  # noqa: E402
 from entry_gate import compute_entry_score  # noqa: E402
 
 MAGIC_BASE = 52890969
@@ -34,11 +38,9 @@ MIN_SCORE = 7
 
 
 def bars(symbol: str, tf: int, when: datetime, n: int):
-    r = mt5.copy_rates_from(symbol, tf, when, n)
-    if r is None or len(r) < 30:
-        return None
-    return [{"high": float(x["high"]), "low": float(x["low"]),
-             "close": float(x["close"]), "volume": float(x["tick_volume"])} for x in r]
+    """⚠️ copy_rates_from İLERİYE bakar — karar anına kadarki barlar için
+    _bars_upto.candles_upto kullanılır (sızıntı kesimi orada)."""
+    return candles_upto(symbol, tf, when, n)
 
 
 def main():
