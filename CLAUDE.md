@@ -613,14 +613,20 @@ CROSS_MODEL_EXPERIMENT_ENABLED=0  # ml_cross_xau_nasdaq KAPALI (SELL %6.9 WR kan
 # ─── 2026-07-10 MT5 otopsi kapıları (analiz_paketi_2026-07-09/RAPOR_MT5_ISLEM_OTOPSISI.md) ───
 ENTRY_SCORE_GATE_ENABLED=1        # 8 koşullu giriş skoru kapısı (NDX+USOIL, pulse+smc; fail-open)
 ENTRY_SCORE_MIN=7                 # min skor (0-8); kanıt: NDX ≥7 WR 60→65, USOIL ≥7 WR 49→72
-# ⚠️ 2026-08-11: BOT tarafı bu tarihe kadar HİÇ bağlı değildi — `yeni deneme/
+# ⚠️ 2026-08-11 (1): BOT tarafı bu tarihe kadar HİÇ bağlı değildi — `yeni deneme/
 # entry_gate.py` yazılmış ama commit edilmemişti (git stash e7dedf8), kutuya
 # hiç gitmedi. Artık takipli ve `_entry_score_blocks()` ile _route_open (MOM/SR)
-# + check_vix_regime (VIXREG) yollarına bağlı; CHREV'de GÖLGE
-# (ENTRY_SCORE_GATE_CHREV=True ile bloklar). Canlı doğrulama (45 gün, botun
-# kendi işlemleri, MOM/SR+VIXREG ∩ NDX+USOIL): kapısız n=319 WR %55.8 +1.444$
-# → kapılı n=110 WR %60.0 +4.386$; elenen küme −2.943$. Eşiklerin (5,6,7,8)
-# dördü de pozitif. DAX bilinçli kapsam DIŞI (orada elenen küme +917$).
+# + check_vix_regime (VIXREG) yollarına bağlı.
+# ⚠️ 2026-08-11 (2) — BOT TARAFI VARSAYILAN GÖLGE (ENTRY_SCORE_GATE_BLOCK=0):
+# sızıntısız canlı doğrulama kapının ALEYHİNE çıktı. 45 gün, botun kendi
+# işlemleri, MOM/SR+VIXREG ∩ NDX+USOIL: kapısız n=319 WR %55.8 +1.444$;
+# kapı skor<7'yi eleseydi kalan n=154 WR %54.5 −3.864$ — eleyeceği küme
+# (n=165, WR %57.0) +5.308$ KAZANDIRMIŞ. Eşiklerin dördü de (5,6,7,8) negatif.
+# İlk turdaki +2.943$ SIZINTILIYDI: mt5.copy_rates_from tarihten İLERİYE bar
+# döndürüyor → skor gelecekteki barlarla hesaplanmıştı (bkz. research/_bars_upto.py).
+# VIXREG mikro kapısı da aynı otopsiden geldiği için gölgede (VIX_REGIME_MICRO_BLOCK=0).
+# ⚠️ Bu backend kapısının (aşağıdaki satır) kendisi de aynı otopsiye dayanıyor ve
+# panel sinyallerini GERÇEKTEN bloklıyor — sızıntısız yeniden ölçümü backlog'da.
 
 # ─── 2026-07-16 sahte kırılım (fakeout) kapısı — services/fakeout_service.py ───
 FAKEOUT_GATE_ENABLED=1            # sahte kırılım radarı (değerlendir + logla; fail-open)

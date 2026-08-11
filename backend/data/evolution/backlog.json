@@ -1637,5 +1637,27 @@
     "source": "session",
     "created_at": "2026-08-11T04:59:09.994296+00:00",
     "updated_at": "2026-08-11T04:59:09.994298+00:00"
+  },
+  {
+    "id": "bl_4679bce11e",
+    "title": "Backend ENTRY_SCORE kapısını sızıntısız yeniden ölç",
+    "detail": "services/signal_gates.py panel sinyallerini 2026-07-10 otopsisine dayanarak bloklıyor; bot tarafındaki aynı kural sızıntısız ölçümde ZARARLI çıktı (eleyeceği küme +5.308$). Otopsinin kendisi copy_rates_from tipi sızıntı taşıyor olabilir — _bars_upto ile yeniden ölç, gerekirse backend kapısını da gölgeye al.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-11T06:23:52.124638+00:00",
+    "updated_at": "2026-08-11T06:23:52.124775+00:00"
+  },
+  {
+    "id": "bl_2b2d3d47ba",
+    "title": "Gölge kapı karnesi (gate_skip.jsonl 1m replay)",
+    "detail": "Giriş skoru + VIXREG mikro + breakout gölge kayıtları 2-3 hafta sonra 1m replay ile çözülüp kapıların gerçek etkisi ölçülecek.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-11T06:23:52.126881+00:00",
+    "updated_at": "2026-08-11T06:23:52.126886+00:00"
   }
 ]

@@ -78,27 +78,46 @@ alındı (`USOIL_BREAKOUT_LIVE=False`, varsayılan): sinyal üretilmeye ve kayde
 devam eder, emir gönderilmez. Ayrıca aşım freni (`USOIL_BREAKOUT_MAX_OVERSHOOT=0.5`)
 eklendi — scope canlıya dönerse tepeden alım baştan elenir.
 
-## 4. Giriş skoru kapısı — canlıya bağlamadan önce doğrulama
+## 4. Giriş skoru kapısı — doğrulama ve DÜZELTME
 
 Kapı, botun **kendi gerçek 45 günlük işlemleri** üzerinde geriye dönük ölçüldü
-(`backend/research/entry_gate_live_validation.py`; skor her işlemin AÇILIŞ ANINA kadarki
-barlarla hesaplandı, sonraki barlar görülmedi).
+(`backend/research/entry_gate_live_validation.py`).
+
+### 4a. İlk tur GEÇERSİZDİ — sızıntı
+
+İlk ölçüm `mt5.copy_rates_from(sym, tf, açılış_zamanı, n)` kullanıyordu. Bu fonksiyon
+verilen tarihten **İLERİYE** bar döndürür (geriye değil) → skor, işlemden SONRAKİ
+barlarla hesaplandı ve doğal olarak "kazananları tanıdı". O turun sonucu
+(+2.943$, WR %60.0) **çöp**. Düzeltme: `backend/research/_bars_upto.py` —
+`copy_rates_range` penceresi + karar anından sonraki (ve koşan) barların kesilmesi.
+Doğrulama: düzeltilmiş çekimle dünkü 5 işlemin Donchian seviyeleri canlı logla
+**birebir** eşleşti (78.648 / 81.794 / 81.871 / 82.176 / 82.589) ve son-bar yaşı
+M1'de 1–2 dk çıktı (ne sızıntı ne bayatlık).
+
+### 4b. Sızıntısız sonuç — kapı ZARARLI
 
 **Bağlanan kapsam — MOM/SR + VIXREG, sembol NDX+USOIL:**
 
 | | n | WR | net PnL |
 |---|---|---|---|
 | kapı YOKken (bugünkü canlı) | 319 | %55.8 | +1.444$ |
-| **kapı VARken (skor≥7 açılır)** | 110 | **%60.0** | **+4.386$** |
-| kapının engelleyeceği küme | 209 | %53.6 | −2.943$ |
+| kapı VARken (skor≥7 açılır) | 154 | %54.5 | **−3.864$** |
+| **kapının engelleyeceği küme** | 165 | **%57.0** | **+5.308$** |
 
-**→ Kapının 45 günlük etkisi: +2.943$.** Eşik duyarlılığı: ≥5/≥6/≥7/≥8 eşiklerinin
-**dördü de** pozitif (≥6 bu pencerede +4.515$ ile daha iyi — eşik değişikliği ayrı
-karar, şimdilik yapılandırılmış değer olan 7 korundu).
+**→ Kapının 45 günlük etkisi: −5.308$.** Yani kapı **kârlı işlemleri eliyor**.
+Eşiklerin **dördü de** (5/6/7/8) negatif. En sık ihlal edilen koşullar trend-hizası
+tipinde (`ema200_tarafi` 118, `bicak_yakalama` 117, `1h_karsi_momentum` 112,
+`5m_trend` 112) — bu bot için giriş anındaki trend hizası ayırt edici değil, ters.
 
-Scope kırılımı: MOM/SR elenen küme −1.292$, VIXREG elenen küme −734$.
-DAX kapsam dışı bırakıldı (`ENTRY_SCORE_SYMBOLS={NDX,USOIL}`) — orada kapı zarar
-verirdi (elenen küme +917$).
+**Karar:** kapı **ölçer ama bloklamaz** (`ENTRY_SCORE_GATE_BLOCK=False`, varsayılan).
+Aynı otopsiden gelen VIXREG mikro-yapı kapısı da aynı nedenle gölgeye alındı
+(`VIX_REGIME_MICRO_BLOCK=False`). Elenecek girişler `gate_skip.jsonl`'e yazılmaya
+devam eder → kanıt birikir.
+
+⚠️ **Yayılan şüphe:** Backend'deki `services/signal_gates.py` ENTRY_SCORE kapısı
+(panel sinyallerini gerçekten bloklayan, `ENTRY_SCORE_GATE_ENABLED=1`) **aynı
+2026-07-10 otopsisine** dayanıyor. O otopsinin de aynı sızıntıyı taşıyıp taşımadığı
+denetlenmeli — backlog'a alındı.
 
 ## 5. Uygulanan değişiklikler
 
@@ -106,7 +125,7 @@ verirdi (elenen küme +917$).
 |---|---|
 | `yeni deneme/entry_gate.py` | **repoya geri alındı** (artık takipli → kutuya gidiyor) |
 | `forexsai_demo_bot.py` | `_entry_score_blocks()` + `_vix_micro_blocks()` yardımcıları |
-| `forexsai_demo_bot.py` | `_route_open` (MOM/SR) ve `check_vix_regime` (VIXREG) kapıya bağlandı |
+| `forexsai_demo_bot.py` | `_route_open` (MOM/SR) ve `check_vix_regime` (VIXREG) kapıya bağlandı — **GÖLGE** (blok yok) |
 | `forexsai_demo_bot.py` | CHREV'e kapı **gölge** modda bağlandı (ölçüm; `ENTRY_SCORE_GATE_CHREV=True` ile bloklar) |
 | `forexsai_demo_bot.py` | BREAKOUT: aşım freni + gölge modu (`USOIL_BREAKOUT_LIVE`) |
 
@@ -116,9 +135,13 @@ sorusu sonradan 1m replay ile ölçülebilir.
 
 ## 6. Açık kalanlar (backlog)
 
-- **CHREV kanaması:** 45 günde n=52, net **−3.562$**. Gölge kapı verisi 2–3 hafta
-  birikince `ENTRY_SCORE_GATE_CHREV` kararı verilecek (erken sinyal: skor<7 kümesi −4.393$).
-- **Eşik 6 vs 7:** bu pencerede 6 daha iyi; tek pencereye uydurmamak için ertelendi.
+- **CHREV kanaması:** 45 günde n=52, net **−3.562$**. Sızıntısız ölçümde skor kapısı
+  burada da işe yaramıyor (skor≥7 kümesi n=1) — CHREV'in kaybı ayrı bir kök neden
+  analizini hak ediyor (kapıyla çözülmüyor).
+- **Backend ENTRY_SCORE kapısı denetimi:** `services/signal_gates.py` panel
+  sinyallerini aynı (şüpheli) otopsiye dayanarak bloklıyor — sızıntısız yeniden ölçüm şart.
+- **Kapı karnesi:** `gate_skip.jsonl`'deki gölge kayıtlar 2–3 hafta sonra 1m replay ile
+  çözülüp "bu kapı gerçekten ne eliyordu" ölçülecek.
 - **BREAKOUT gölge karnesi:** 3–4 hafta sonra gölge sinyaller replay edilip scope
   tamamen kaldırılacak mı, aşım freniyle geri mi açılacak kararı verilecek.
 - **Kayıp modül dersi:** `yeni deneme/` altındaki yeni modüller commit edilmezse
