@@ -1231,16 +1231,30 @@ def _entry_score_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     §5/§6/§9, 14 gün gerçek işlem): skor≥7 → NDX WR %60→%65, USOIL %49→%72;
     bloklanacak işlemlerin net PnL'i iki sembolde de negatif.
 
-    ⚠️ 2026-08-11: bu kapı entry_gate.py'de YAZILMIŞ ama bota HİÇ BAĞLANMAMIŞTI —
+    ⚠️ 2026-08-11 (1): bu kapı entry_gate.py'de YAZILMIŞ ama bota HİÇ BAĞLANMAMIŞTI —
     modül commit'lenmediği için kutuya da hiç gitmemişti (git stash e7dedf8'de
-    kalmış). Kullanıcının "kapıları ayarlamıştım ama uygulanmıyor" gözlemi
-    doğruydu; kapı bu commit'le gerçekten devreye giriyor.
+    kalmış). Kullanıcının "kapıları ayarlamıştım ama uygulanmıyor" gözlemi doğruydu.
+
+    ⚠️ 2026-08-11 (2) — VARSAYILAN GÖLGE: kapıyı bağladıktan sonra botun kendi
+    45 günlük GERÇEK işlemlerinde SIZINTISIZ doğrulaması yapıldı
+    (backend/research/entry_gate_live_validation.py + _bars_upto). Sonuç kapının
+    ALEYHİNE: kapsam içinde (MOM/SR+VIXREG ∩ NDX+USOIL) kapı yokken n=319 WR %55.8
+    +1.444$; kapı skor<7'yi eleseydi kalan n=154 WR %54.5 −3.864$ — yani eleyeceği
+    küme (n=165, WR %57.0) +5.308$ KAZANDIRMIŞ. Eşiklerin dördü de (5,6,7,8)
+    negatif. En sık ihlal edilen koşullar trend-hizası tipinde (ema200_tarafi,
+    5m_trend, 1h_karsi_momentum) → bu bot için trend-hizası girişte AYIRT EDİCİ
+    DEĞİL, hatta ters.
+    NOT: ilk turda +2.943$ çıkmıştı; o ölçüm mt5.copy_rates_from'un tarihten
+    İLERİYE bar döndürmesi yüzünden geleceğe bakıyordu (bkz. _bars_upto.py).
+    Bu yüzden kapı ÖLÇER ama BLOKLAMAZ; ENTRY_SCORE_GATE_BLOCK=True ile bloklar.
 
     Kapsam (otopsi kararı): MOM/SR momentum + VIXREG. CHREV mean-reversion
     doğası gereği DIŞARIDA. Fail-open: veri/modül hatası girişi engellemez.
     """
     if not getattr(config, "ENTRY_SCORE_GATE_ENABLED", True):
         return False
+    if not getattr(config, "ENTRY_SCORE_GATE_BLOCK", False):
+        shadow = True                       # ölç ama bloklama (sızıntısız kanıt aleyhte)
     try:
         from entry_gate import entry_score_ok
         ok, reason, score = entry_score_ok(
@@ -1282,13 +1296,17 @@ def _vix_micro_blocks(scope_key: str, mt5_symbol: str, direction: str) -> bool:
         return False
     if ok:
         return False
-    log.info("%s — %s", scope_key, reason)
+    # 2026-08-11: bu kapı da giriş skoruyla AYNI (sızıntılı) 2026-07-10 otopsisinden
+    # geliyor; sızıntısız doğrulaması yapılana kadar VARSAYILAN GÖLGE.
+    block = getattr(config, "VIX_REGIME_MICRO_BLOCK", False)
+    log.info("%s — %s%s", scope_key, reason, "" if block else " [GÖLGE — açılmaya devam]")
     tick = mt5.symbol_info_tick(mt5_symbol)
     if tick:
         log_gate_skip(scope_key, mt5_symbol, scope_key.split(":")[0], direction,
                       tick.ask if direction == "BUY" else tick.bid,
-                      "vixreg_micro_gate", extra={"why": reason})
-    return True
+                      "vixreg_micro_gate" if block else "vixreg_micro_gate_shadow",
+                      extra={"why": reason})
+    return block
 
 
 def _market_open(scope_key, forexsai_sym, mt5_symbol, direction, cfg, voters, bot_signal):
@@ -1972,7 +1990,8 @@ def main():
                    ("USOIL_BREAKOUT_LIVE", False), ("USOIL_BREAKOUT_MAX_OVERSHOOT", 0.5),
                    ("MGMT_INCLUDE_USOIL_BREAKOUT", True), ("MGMT_USOIL_TRAIL_R", 1.0),
                    ("ENTRY_SCORE_GATE_ENABLED", True), ("ENTRY_SCORE_MIN", 7),
-                   ("VIX_REGIME_MICRO_GATE", True),
+                   ("ENTRY_SCORE_GATE_BLOCK", False), ("ENTRY_SCORE_GATE_CHREV", False),
+                   ("VIX_REGIME_MICRO_GATE", True), ("VIX_REGIME_MICRO_BLOCK", False),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
