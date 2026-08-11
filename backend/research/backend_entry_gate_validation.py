@@ -325,6 +325,25 @@ def main():
         onc_pay = 100 * len(blk) / len(onc) if onc else 0
         print(f"\n  skor<{MIN_SCORE} oranı: kapı öncesi %{onc_pay:.1f} → kapı sonrası %{pay:.1f}")
         print("  (belirgin düşüş = kapı gerçekten çalışıyor VE skor yeniden üretimim doğru)")
+        print("\n  sızma kırılımı (kapı sonrası skor<7 satırları — kapı neden yakalamadı?):")
+        for m in MODELS:
+            sel = [r for r in son if r["model"] == m]
+            if not sel:
+                continue
+            s7 = [r for r in sel if r["score"] < MIN_SCORE]
+            print(f"    {m:<8} n={len(sel):>5}  skor<7: {len(s7):>4} (%{100*len(s7)/len(sel):.1f})")
+        for sym in SYMBOLS:
+            sel = [r for r in son if r["sym"] == sym]
+            if not sel:
+                continue
+            s7 = [r for r in sel if r["score"] < MIN_SCORE]
+            print(f"    {sym:<12} n={len(sel):>5}  skor<7: {len(s7):>4} (%{100*len(s7)/len(sel):.1f})")
+        cnt2 = defaultdict(int)
+        for r in son:
+            if r["score"] < MIN_SCORE:
+                for f in r["fails"]:
+                    cnt2[f] += 1
+        print("    sızanların ihlalleri:", dict(sorted(cnt2.items(), key=lambda x: -x[1])))
     print("\nBITTI")
 
 
