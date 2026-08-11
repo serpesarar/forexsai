@@ -112,6 +112,14 @@ def main():
         print(f"    eşik≥{thr}: kalan n={len(keep):>3} PnL={kp:>9.1f}$ | elenen n={len(drop):>3} "
               f"PnL={dp:>9.1f}$  → kapının kazandırdığı: {-dp:>+9.1f}$")
 
+    print("\n[TAM OLARAK BAĞLANAN HALİ — scope∈{MOM/SR,VIXREG} ∧ sembol∈{NDX,USOIL}]")
+    wired = [r for r in gsel if r["sym"] in ("NDX.INDX", "USOIL.FOREX")]
+    rep("kapı YOKken (bugünkü canlı)", wired)
+    rep(f"kapı VARken (skor≥{MIN_SCORE} açılır)", [r for r in wired if r["score"] >= MIN_SCORE])
+    rep("kapının engelleyeceği küme", [r for r in wired if r["score"] < MIN_SCORE])
+    blocked_pnl = sum(r["pnl"] for r in wired if r["score"] < MIN_SCORE)
+    print(f"  → KAPI ETKİSİ: {-blocked_pnl:+.1f}$ ({days} günde)")
+
     print("\n  sembol kırılımı (kapsam içi, eşik≥7):")
     for sym in sorted({r["sym"] for r in gsel}):
         s = [r for r in gsel if r["sym"] == sym]
