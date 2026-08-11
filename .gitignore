@@ -59,3 +59,6 @@ remote_agent/agent_config.py
 remote_agent/agent_state.json
 remote_agent/evolution_agent.log
 remote_agent/restart_bot.bat
+
+# USOIL breakout lab bar onbellegi (buyuk .npy)
+backend/research/_usoil_cache/
