@@ -57,23 +57,27 @@ def _creds() -> tuple[str, str]:
 def fetch_signals(since: datetime) -> list[dict]:
     url, key = _creds()
     h = {"apikey": key, "Authorization": f"Bearer {key}"}
-    rows, page = [], 0
+    # KEYSET sayfalama: derin offset (>10k) Supabase'de 500 veriyor.
+    rows, cursor, seen = [], since.isoformat(), set()
     while True:
         r = requests.get(
             f"{url}/rest/v1/prediction_logs", headers=h, timeout=120,
             params={"symbol": f"in.({','.join(SYMBOLS)})",
                     "model_type": f"in.({','.join(MODELS)})",
-                    "created_at": f"gte.{since.isoformat()}",
+                    "created_at": f"gte.{cursor}",
                     "select": "id,symbol,model_type,ml_direction,ml_entry_price,"
                               "ml_stop_price,targets,stop_loss_pips,status,created_at",
-                    "order": "created_at.asc", "offset": page * 1000, "limit": 1000})
+                    "order": "created_at.asc", "limit": 1000})
         r.raise_for_status()
-        b = r.json()
-        rows += b
-        print(f"  sinyal indirildi: {len(rows)}", end="\r", flush=True)
-        if len(b) < 1000:
+        b = [x for x in r.json() if x["id"] not in seen]
+        if not b:
             break
-        page += 1
+        seen.update(x["id"] for x in b)
+        rows += b
+        cursor = b[-1]["created_at"]
+        print(f"  sinyal indirildi: {len(rows)}", end="\r", flush=True)
+        if len(r.json()) < 1000:
+            break
     print(f"  sinyal indirildi: {len(rows)}      ")
     return rows
 
