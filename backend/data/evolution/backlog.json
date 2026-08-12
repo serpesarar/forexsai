@@ -1703,5 +1703,38 @@
     "source": "session",
     "created_at": "2026-08-12T07:20:17.498876+00:00",
     "updated_at": "2026-08-12T07:20:17.498880+00:00"
+  },
+  {
+    "id": "bl_b7294dca40",
+    "title": "GDAXI/XAU/USOIL dedektörleri: gevşetilmiş eşik mi, emeklilik mi",
+    "detail": "Doğru etiketlerle üçü de %70/%70 çıtasını geçemiyor (%66-75). Ya sembol bazında eşik gevşetilip 'zayıf kanıt' olarak kullanılacak ya da dedektör bu sembollerde emekliye ayrılacak. Şu an verified_70_70=false ile yazılı, kapı gölgede.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-12T20:23:22.658549+00:00",
+    "updated_at": "2026-08-12T20:23:22.658816+00:00"
+  },
+  {
+    "id": "bl_9f2210be8e",
+    "title": "Teyit ufku taramasını onarılmış veriyle tekrarla",
+    "detail": "K=1..20 taraması onarım ÖNCESİ veriyle koşmuştu. Sonucun (tavan K=2-3) değişmesi beklenmiyor ama doğrulanmalı.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-12T20:23:22.660760+00:00",
+    "updated_at": "2026-08-12T20:23:22.660764+00:00"
+  },
+  {
+    "id": "bl_15d02fcd2a",
+    "title": "Kutudaki XAU M1 geçmişini derinleştir",
+    "detail": "XAU gölge replay'i yalnız ~7,7 günlük M1 ile çözülebildi (1.095 sinyalden as-traded 48-132 karar). MT5 terminalinde XAU M1 geçmişi indirilmeli.",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-12T20:23:22.662300+00:00",
+    "updated_at": "2026-08-12T20:23:22.662306+00:00"
   }
 ]

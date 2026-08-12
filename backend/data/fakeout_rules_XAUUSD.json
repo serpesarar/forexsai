@@ -363,68 +363,69 @@
       "c1_move_atr"
     ],
     "thresholds": {
-      "fake": 0.4764,
-      "genuine": 0.1397
+      "fake": 0.3017,
+      "genuine": 0.6569
     },
     "threshold_mode": "val_precision_target",
     "oos": {
       "fake_call": {
-        "test_n": 258,
-        "coverage": 54.2,
-        "precision": 71.7
+        "test_n": 291,
+        "coverage": 55.1,
+        "precision": 66.3
       },
       "genuine_call": {
-        "test_n": 87,
-        "coverage": 18.3,
-        "precision": 93.1
+        "test_n": 385,
+        "coverage": 72.9,
+        "precision": 71.4
       },
-      "test_n": 476,
-      "base_fake_test": 49.2
+      "test_n": 528,
+      "base_fake_test": 43.2
     },
     "top_features": [
       [
         "c1_move_atr",
-        143
+        173
       ],
       [
         "c1_body_ratio",
-        68
-      ],
-      [
-        "approach_speed_atr",
-        55
-      ],
-      [
-        "c1_vol_ratio",
-        55
-      ],
-      [
-        "ema50_slope_atr",
-        45
-      ],
-      [
-        "adx14",
-        40
-      ],
-      [
-        "pen_atr",
-        37
+        62
       ],
       [
         "vol_buildup",
-        37
+        54
       ],
       [
         "prebreak_range_atr",
-        36
+        49
+      ],
+      [
+        "wick_against_atr",
+        42
+      ],
+      [
+        "bb_width_rank",
+        41
+      ],
+      [
+        "vwap_dist_atr",
+        34
       ],
       [
         "c1_beyond_atr",
-        28
+        31
+      ],
+      [
+        "rsi14",
+        25
+      ],
+      [
+        "atr_pct",
+        25
       ]
     ],
-    "trained_events": 881,
-    "generated_at": "2026-07-16T23:17:50.897645+00:00",
+    "verified_70_70": false,
+    "trained_events": 969,
+    "generated_at": "2026-08-12T20:21:21.930011+00:00",
     "note": "Karar kırılımdan 1 bar SONRA (teyit barı kapanınca) verilir. p>=fake eşiği → SAHTE çağrısı (OOS %70); p<=genuine eşiği → GERÇEK çağrısı (OOS %83); arası → kararsız."
   }
 }

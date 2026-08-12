@@ -50,6 +50,8 @@ from datetime import datetime, timezone
 from itertools import combinations
 from pathlib import Path
 
+import time
+
 import httpx
 import numpy as np
 import pandas as pd
@@ -96,21 +98,42 @@ def _log(msg: str) -> None:
 # ─── Veri çekme ──────────────────────────────────────────────────────────────
 
 def fetch_candles(symbol: str, timeframe: str, limit: int = 200_000) -> pd.DataFrame:
+    """candle_cache'ten bar çek — KEYSET sayfalama + geçici hata tekrarı.
+
+    2026-08-12 düzeltmesi: eski sürüm `offset` ile sayfalıyordu; ~130k satırdan
+    sonra Supabase 500 veriyor (derin offset taraması) ve NDX 1m çekimi
+    ortasında düşüyordu. Keyset (candle_time imleci) hem sabit maliyetli hem
+    de sağlam. Ayrıca ağ kopmaları (SSL EOF) 3 kez tekrarlanır — uzun
+    laboratuvar koşuları tek bir titremede çöpe gitmesin.
+    """
     rows: list[dict] = []
+    cursor: str | None = None
     with httpx.Client(timeout=60) as c:
-        offset = 0
         while True:
-            r = c.get(f"{URL}/rest/v1/candle_cache", headers=HEADERS,
-                      params={"symbol": f"eq.{symbol}", "timeframe": f"eq.{timeframe}",
-                              "select": "candle_time,open,high,low,close,volume",
-                              "order": "candle_time.desc",
-                              "limit": "1000", "offset": str(offset)})
-            r.raise_for_status()
-            batch = r.json()
+            params = {"symbol": f"eq.{symbol}", "timeframe": f"eq.{timeframe}",
+                      "select": "candle_time,open,high,low,close,volume",
+                      "order": "candle_time.desc", "limit": "1000"}
+            if cursor:
+                params["candle_time"] = f"lt.{cursor}"
+            batch = None
+            for attempt in range(3):
+                try:
+                    r = c.get(f"{URL}/rest/v1/candle_cache", headers=HEADERS, params=params)
+                    r.raise_for_status()
+                    batch = r.json()
+                    break
+                except Exception as exc:                      # ağ/5xx → tekrar dene
+                    if attempt == 2:
+                        raise
+                    _log(f"  [fetch] {symbol}/{timeframe} hata ({type(exc).__name__}), "
+                         f"tekrar {attempt + 1}/2...")
+                    time.sleep(2 * (attempt + 1))
+            if not batch:
+                break
             rows.extend(batch)
+            cursor = batch[-1]["candle_time"]
             if len(batch) < 1000 or len(rows) >= limit:
                 break
-            offset += 1000
     if not rows:
         return pd.DataFrame()
     df = pd.DataFrame(rows)

@@ -350,16 +350,26 @@ Notlar: dalga aşaması yalnız NDX'te %70/%70 geçti (diğerlerine EKLENMEDİ �
 
 - Madenci: `backend/research/fakeout_miner.py` — causal S/R (fraktal pivot kümeleme, ≥2 dokunuş) + linreg kanal kırılımları; ±1×ATR iki-hedef yarışıyla GERÇEK/SAHTE etiketi (1m çözünürlük); ~22 özellik, kronolojik %70/30 OOS doğrulamalı koşul madenciliği + **birleşik kırılım skoru** (GERÇEK-pozitif, 8 bileşen, kova kalibrasyonu) + **teyit protokolü backtest'i** (sonraki-bar teyidi, retest-tut; 1:1 ve 1.5:1).
 - **Bulgular (v2, NDX 5m, 1005 olay):** taban ~%66 SAHTE. Skor ≤ −2 (klimaks: derin penetrasyon, hacim patlaması, hızlı yaklaşım, VWAP'tan ≥2.4 ATR uzaklık, dik EMA50) → **OOS %87.5 sahte** (n=88) = FADE kanıtı. Skor ≥ +2 (sakin imza) → OOS yalnız %55.6 gerçek (n=45) — **gerçek-kırılım tarafında bağımsız edge YOK**; kırılım-yönlü TÜM giriş varyantları −EV (breakout bar −0.29R, sonraki-bar teyidi −0.07R, retest-tut −0.10R). Teyit ELEME filtresi olarak güçlü: teyit gelmezse gerçeklik %13'e düşer. **Sonuç: NDX 5m'de edge kırılımı almakta değil, klimaks kırılımı söndürmekte (fade) + kırılım-yönlü sinyali frenlemekte.**
-- ⚠️ **2026-08-12 UYARISI — dedektörün eğitim etiketleri kısmen bozuk:** yarış
-  etiketi 1m ile üretiliyor ama `candle_cache` 1m serisi 2026-05-07 ÖNCESİNDE
-  broker saatinde (UTC+3) etiketli (5m gerçek UTC). Onarılmış veride 158 günün
-  yalnız 67'si temiz → Temmuz lab'ının veri tabanının ~yarısı kaymış eksenle
-  etiketlenmiş. Canlı gölge karnesi bunu destekliyor (NDX SAHTE çağrısı %40,
-  n=20; tüm semboller %57 — lab %70/%83 diyordu). Model+eşikler onarılmış
-  veriyle yeniden üretilmeli. Ayrıca TEYİT UFKU taraması (K=1..20,
-  `research/fakeout_confirm_horizon.py`): K=20'de olayların yalnız %3,8'inde
-  yarış hâlâ açık → 20-bar teyidi yapısal olarak imkânsız; tavan K=2-3.
-  Rapor: `backend/data/evolution/analyst_reports/fakeout_teyit_ufku_2026-08-12.md`.
+- ⚠️⚠️ **2026-08-12 — DEDEKTÖRLER YENİDEN ÜRETİLDİ, YUKARIDAKİ TEMMUZ SAYILARI
+  GEÇERSİZ.** Yarış etiketi 1m ile üretiliyor; `candle_cache` 1m'in 2026-02→05
+  partisi broker saatinde (UTC+3) yazılmıştı → Temmuz lab'ının etiketlerinin
+  ~yarısı kaymış eksendeydi. Zaman ekseni DB'de onarıldı (315.730 satır) +
+  fiyat-tabanı hizalandı; `fakeout_finalize.py` 4 sembol için yeniden koşuldu:
+
+  | Sembol | olay | SAHTE | GERÇEK | eski iddia | %70/%70 |
+  |---|---|---|---|---|---|
+  | NDX | 1.933 | %75,4 (k %48,5) | %74,2 (k %55,8) | %70,0/%83,1 | ✅ |
+  | GDAXI | 1.559 | %69,1 (k %68,1) | %74,0 (k %45,2) | %74,6/%88,9 | ❌ |
+  | XAUUSD | 1.762 | %66,3 (k %55,1) | %71,4 (k %72,9) | %71,7/%93,1 | ❌ |
+  | USOIL | 1.483 | %75,0 (k %46,0) | %68,4 (k %70,0) | %86,0/%81,0 | ❌ |
+
+  Doğru etiketlerle **yalnız NDX çıtayı geçiyor**. Diğer üçü `force` ile yazıldı
+  ama `detector.verified_70_70=false` damgalı → **zayıf kanıt** olarak okunmalı
+  (kapı zaten GÖLGE: FAKEOUT_GATE_BLOCK=0). Canlı gölge karnesi (%57) artık
+  lab ile tutarlı. TEYİT UFKU taraması (K=1..20): K=20'de olayların yalnız
+  %3,8'inde yarış hâlâ açık → 20-bar teyidi yapısal olarak imkânsız; tavan K=2-3.
+  Raporlar: `analyst_reports/candle_zaman_ekseni_onarimi_2026-08-12.md` +
+  `fakeout_teyit_ufku_2026-08-12.md`.
 - **v3 DEDEKTÖR (2026-07-16, %70/%70 hedefi VURULDU):** `research/fakeout_lab.py` 32 konfig taradı (4 TF × 4 geometri × instant/+1bar × LGBM; kronolojik train/val/test, eşik VAL'de, purge'lü). Kazanan: **5m, tp1.0/sl1.0 (hedef küçültülmedi), LightGBM, karar = kırılımdan +1 bar sonra** → OOS test n=428: **SAHTE çağrısı %70.0 isabet (kapsam %50.7), GERÇEK çağrısı %83.1 isabet (kapsam %34.6)**. En önemli özellikler teyit barı davranışı (`c1_move_atr`, `c1_body_ratio`, `c1_beyond_atr`). Instant mod hiçbir konfigde %70/%70 veremedi — kesin karar teyit barı İSTER. Model: `backend/models/model_fakeout_ndx_5m.joblib` + eşikler `fakeout_rules.json.detector` (üretici: `research/fakeout_finalize.py`; deploy edilen artefakt test edilenin TA KENDİSİ). Yeniden üretim: lab → finalize.
 - **AŞAMA-2 DALGA-VERDİKTİ (kullanıcı dalga hipotezi, doğrulandı):** `research/fakeout_wave_lab.py` — kırılımdan K bar sonra, ±1ATR yarışı HÂLÂ AÇIK olaylarda (taban ~%52, en belirsiz küme) dalga-yapısı özellikleri (pullback/impuls oranı, yönlü-vs-ters bar hacim ORANI, seviye-ötesi kapanış oranı, retest, RSI delta). K=2 kazandı: **OOS SAHTE %71.4 / GERÇEK %73.5**; aynı kümede +1-bar özellikleri kör (%54/—). K=3,4,6 geçemedi. Model: `model_fakeout_ndx_5m_wave.joblib` + `fakeout_rules.json.detector_wave` (`research/fakeout_finalize_wave.py`). Runtime akışı: `pending` → `confirm_bar` (+1 bar, %70/%83) → `wave_k2` (+2 bar, yarış açıksa, %71/%74) → `resolved_observed` (yarış bittiyse gözlemlenen gerçek). `detector.stage` alanı hangi aşamada olduğunu söyler; FRESH_BARS 3→5.
 - Runtime: `services/fakeout_service.py` (saf çekirdek `assess_bars`; **detector.call**: `fake|genuine|abstain|pending_next_bar` — olasılıkların birincil kaynağı; + skor + 4-sınıf öneri + canlı teyit durumu + **levels** (en yakın S/R+kanal, mesafe puan/ATR/%) + **pre_forecast** ("şimdi kırılsa" iki yön ≈tahmini); veri `data_fetcher.fetch_ohlc_data`'dan — market_data_service timestamp düşürür, kullanma). claude_decider `fakeout_bridge.py` → `situation.fakeout` (prompt: detector.call en güçlü kanıt; avoid→açma; fade→mean-rev hizalıysa konviksiyon). Kapı: `signal_gates.fakeout_gate` (NDX pulse+smc, **default GÖLGE**; dedektör SAHTE çağrısı da kanıt sayılır). Panel: Neural "Kırılım Radarı — Destek/Direnç" (`BreakoutRadarPanel.tsx`): SVG seviye merdiveni + ikiz 1-100 göstergeler (GERÇEK/SAHTE) + mesafe satırları + AI dedektör rozeti + teyit çipleri.
@@ -567,6 +577,13 @@ Sen düşün:
 6. **CFTC COT:** Haftalık, Cuma yayınlanır
 7. **Signal Lifecycle:** 2dk interval (main.py asyncio.sleep(120)) — daha sık kontrol CPU yükü artırır
 8. **Model Files:** joblib format, Python sürüm uyumu kritik
+9. **MT5 zaman ekseni (2026-08-12 yapısal koruma):** `copy_rates(...)["time"]`
+   UTC DEĞİL, broker sunucu saatidir (UTC+2/+3). Yazan her yol offset'i ÖLÇÜP
+   çıkarmalı. Yapısal kilit: `candle_cache_store.persist_candles` "şimdi"nin
+   ilerisindeki hiçbir barı yazmaz (kaymış bar hep ileridedir) ve WARNING loglar.
+   Denetim: `python backend/research/candle_time_audit.py`. Geçmiş vaka:
+   2026-05 toplu 1m doldurması 315.730 barı 3 saat kaydırmış, fakeout
+   dedektörlerinin eğitim etiketlerini bozmuştu.
 
 ---
 

@@ -332,6 +332,8 @@
   "detector": {
     "model_file": "model_fakeout_gdaxi_5m.joblib",
     "mode": "delayed_1bar",
+    "tp_atr": 1.0,
+    "sl_atr": 1.0,
     "features": [
       "vol_ratio",
       "rsi14",
@@ -361,67 +363,69 @@
       "c1_move_atr"
     ],
     "thresholds": {
-      "fake": 0.3649,
-      "genuine": 0.1847
+      "fake": 0.3804,
+      "genuine": 0.4998
     },
+    "threshold_mode": "val_precision_target",
     "oos": {
       "fake_call": {
-        "test_n": 272,
-        "coverage": 61.1,
-        "precision": 74.6
+        "test_n": 307,
+        "coverage": 68.1,
+        "precision": 69.1
       },
       "genuine_call": {
-        "test_n": 90,
-        "coverage": 20.2,
-        "precision": 88.9
+        "test_n": 204,
+        "coverage": 45.2,
+        "precision": 74.0
       },
-      "test_n": 445,
-      "base_fake_test": 54.6
+      "test_n": 451,
+      "base_fake_test": 52.5
     },
     "top_features": [
       [
         "c1_move_atr",
-        137
-      ],
-      [
-        "approach_speed_atr",
-        54
-      ],
-      [
-        "c1_body_ratio",
-        53
-      ],
-      [
-        "body_ratio",
-        45
-      ],
-      [
-        "c1_vol_ratio",
-        39
-      ],
-      [
-        "c1_beyond_atr",
-        38
-      ],
-      [
-        "wick_against_atr",
-        37
-      ],
-      [
-        "prebreak_range_atr",
-        36
-      ],
-      [
-        "pen_atr",
-        31
+        160
       ],
       [
         "dist_ema200_atr",
+        52
+      ],
+      [
+        "prebreak_range_atr",
+        51
+      ],
+      [
+        "vwap_dist_atr",
+        48
+      ],
+      [
+        "ema50_slope_atr",
+        39
+      ],
+      [
+        "c1_vol_ratio",
+        38
+      ],
+      [
+        "vol_buildup",
+        37
+      ],
+      [
+        "c1_beyond_atr",
+        34
+      ],
+      [
+        "c1_body_ratio",
+        34
+      ],
+      [
+        "atr_pct",
         30
       ]
     ],
-    "trained_events": 825,
-    "generated_at": "2026-07-16T23:13:13.235570+00:00",
+    "verified_70_70": false,
+    "trained_events": 857,
+    "generated_at": "2026-08-12T20:20:07.461563+00:00",
     "note": "Karar kırılımdan 1 bar SONRA (teyit barı kapanınca) verilir. p>=fake eşiği → SAHTE çağrısı (OOS %70); p<=genuine eşiği → GERÇEK çağrısı (OOS %83); arası → kararsız."
   }
 }

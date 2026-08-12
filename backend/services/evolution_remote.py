@@ -272,6 +272,227 @@ def get_decider_breakdown(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str,
     return {"days": days, "by_symbol": by_symbol, "recent": recent}
 
 
+# ── Sembol derinlemesine geçmiş (gün × yön) ───────────────────────────────
+
+# Seans etiketleri iki motorda farklı yazılıyor (klasik decider Türkçe,
+# gold_brain İngilizce) — panelde tek dil görünsün diye normalize edilir.
+_SESSION_TR = {
+    "ASIA": "Asya", "ASYA": "Asya",
+    "LONDON": "Londra", "LONDRA": "Londra",
+    "NY": "NY", "NEWYORK": "NY", "NEW_YORK": "NY",
+    "CLOSE": "kapanış", "KAPANIŞ": "kapanış", "KAPANIS": "kapanış",
+}
+
+
+def _session_label(raw_session: Optional[str], ts: Optional[datetime]) -> str:
+    """Seans etiketi; kayıtta yoksa UTC saatinden türetilir (eski satırlar)."""
+    if raw_session:
+        return _SESSION_TR.get(str(raw_session).strip().upper(), str(raw_session))
+    if not ts:
+        return "?"
+    h = ts.astimezone(timezone.utc).hour
+    if h < 7:
+        return "Asya"
+    if h < 13:
+        return "Londra"
+    if h < 21:
+        return "NY"
+    return "kapanış"
+
+
+def _fnum(v: Any) -> Optional[float]:
+    """jsonb->>text alanları string döner; sayıya çevir, çöpse None."""
+    if v is None or v == "":
+        return None
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def _new_bucket() -> Dict[str, Any]:
+    return {"opens": 0, "wins": 0, "losses": 0, "pending": 0, "net_r": 0.0}
+
+
+def _close_bucket(b: Dict[str, Any]) -> Dict[str, Any]:
+    resolved = b["wins"] + b["losses"]
+    b["resolved"] = resolved
+    b["win_rate"] = round(100 * b["wins"] / resolved, 1) if resolved else None
+    b["net_r"] = round(b["net_r"], 2)
+    b["avg_r"] = round(b["net_r"] / resolved, 3) if resolved else None
+    return b
+
+
+def get_decider_symbol_history(symbol: str, days: int = 30,
+                               host: str = DEFAULT_HOST) -> Dict[str, Any]:
+    """Bir sembolün decider geçmişi — GÜN bazlı ve YÖN bazlı kırılım.
+
+    Neden ayrı bir uç: karne kartındaki tek WR sayısı yanıltıcı. Kararların
+    RR'ı ~0.67 olduğundan başabaş WR ≈ %60 — yani %57 WR bile NET KAYIP'tır.
+    Bu yüzden her kırılımda WR'ın yanına **net R** ve başabaş çıtası konur.
+
+    Ek olarak WAIT kararlarının karşı-olgusu (cf_pnl_r) "kaçırılan/elenen"
+    olarak yön bazında toplanır: aşırı temkin de ölçülebilir bir maliyettir.
+    """
+    client = _client()
+    since = (_now() - timedelta(days=days)).isoformat()
+    sel = ("ts,outcome,"
+           "pnl_r:raw->>pnl_r,cf_pnl_r:raw->>cf_pnl_r,cf_outcome:raw->>cf_outcome,"
+           "action:raw->decision->>action,direction:raw->decision->>direction,"
+           "reason:raw->decision->>reason,size_factor:raw->decision->>size_factor,"
+           "cf_dir:raw->counterfactual->>dir,"
+           "session:raw->context->>session,gb_session:raw->gb_context->>session,"
+           "entry:raw->trade->>entry_price,sl:raw->trade->>sl,tp:raw->trade->>tp,"
+           "rr:raw->trade->>rr,cf_rr:raw->counterfactual->>rr,mode:raw->>mode")
+    # PostgREST tek istekte en fazla 1000 satır döner (limit=4000 yazsak da) —
+    # XAU 30 günde 1000'i aşıyor ve sayfalama olmadan eski günler sessizce
+    # düşüyordu. Sayfa sayfa çekilir, 4000 satırda durulur.
+    rows: List[dict] = []
+    page = 1000
+    for start in range(0, 4000, page):
+        res = (client.table("decider_journal").select(sel)
+               .eq("host", host).eq("symbol", symbol).gte("ts", since)
+               .order("ts", desc=True).range(start, start + page - 1).execute())
+        chunk = res.get("data") or []
+        rows.extend(chunk)
+        if len(chunk) < page:
+            break
+
+    summary = _new_bucket()
+    summary.update({"waits": 0, "foregone_r": 0.0, "missed_wins": 0})
+    by_day: Dict[str, Dict[str, Any]] = {}
+    by_dir: Dict[str, Dict[str, Any]] = {}
+    decisions: List[dict] = []
+    rr_seen: List[float] = []
+
+    for r in rows:
+        ts = _parse_ts(r.get("ts"))
+        action = str(r.get("action") or "").upper()
+        direction = (str(r.get("direction")).upper() if r.get("direction") else None)
+        outcome = (str(r.get("outcome")).upper() if isinstance(r.get("outcome"), str) else None)
+        pnl_r = _fnum(r.get("pnl_r"))
+        cf_r = _fnum(r.get("cf_pnl_r"))
+        cf_dir = (str(r.get("cf_dir")).upper() if r.get("cf_dir") else None)
+        rr = _fnum(r.get("rr")) or _fnum(r.get("cf_rr"))
+        if rr:
+            rr_seen.append(rr)
+        day = ts.astimezone(timezone.utc).strftime("%Y-%m-%d") if ts else "?"
+        session = _session_label(r.get("session") or r.get("gb_session"), ts)
+
+        d = by_day.setdefault(day, {"day": day, "waits": 0, "foregone_r": 0.0,
+                                    **_new_bucket(),
+                                    "BUY": _new_bucket(), "SELL": _new_bucket()})
+
+        if action == "OPEN" and direction in ("BUY", "SELL"):
+            dd = by_dir.setdefault(direction, {
+                **_new_bucket(), "missed": {"n": 0, "wins": 0, "r": 0.0},
+                "by_session": {}, "by_hour": {}, "size_sum": 0.0, "size_n": 0,
+            })
+            sess = dd["by_session"].setdefault(session, _new_bucket())
+            hour = ts.astimezone(timezone.utc).hour if ts else -1
+            hr = dd["by_hour"].setdefault(hour, _new_bucket())
+            size = _fnum(r.get("size_factor"))
+            if size is not None:
+                dd["size_sum"] += size
+                dd["size_n"] += 1
+            for b in (summary, d, d[direction], dd, sess, hr):
+                b["opens"] += 1
+                if outcome == "WIN":
+                    b["wins"] += 1
+                elif outcome == "LOSS":
+                    b["losses"] += 1
+                else:
+                    b["pending"] += 1
+                if pnl_r is not None and outcome in ("WIN", "LOSS"):
+                    b["net_r"] += pnl_r
+        elif action == "WAIT":
+            summary["waits"] += 1
+            d["waits"] += 1
+            if cf_r is not None and str(r.get("cf_outcome") or "").upper() in ("WIN", "LOSS"):
+                summary["foregone_r"] += cf_r
+                d["foregone_r"] += cf_r
+                if cf_r > 0:
+                    summary["missed_wins"] += 1
+                if cf_dir in ("BUY", "SELL"):
+                    dd = by_dir.setdefault(cf_dir, {
+                        **_new_bucket(), "missed": {"n": 0, "wins": 0, "r": 0.0},
+                        "by_session": {}, "by_hour": {}, "size_sum": 0.0, "size_n": 0,
+                    })
+                    dd["missed"]["n"] += 1
+                    dd["missed"]["r"] += cf_r
+                    if cf_r > 0:
+                        dd["missed"]["wins"] += 1
+
+        # Liste kotası tür bazında: XAU gibi çok bekleyen sembollerde tek havuz
+        # kullanılsaydı son 200 satırın hepsi WAIT olur, "işlemler" sekmesi boş
+        # kalırdı. OPEN'lara ayrı kota verilir.
+        quota = 120 if action == "OPEN" else 80
+        if sum(1 for x in decisions if (x["action"] == "OPEN") == (action == "OPEN")) < quota:
+            decisions.append({
+                "ts": r.get("ts"), "day": day, "session": session,
+                "action": action or "?", "direction": direction,
+                "outcome": outcome if outcome in ("WIN", "LOSS") else None,
+                "r": round(pnl_r, 3) if pnl_r is not None and outcome in ("WIN", "LOSS") else None,
+                "cf_direction": cf_dir,
+                "cf_outcome": str(r.get("cf_outcome")).upper() if r.get("cf_outcome") else None,
+                "cf_r": round(cf_r, 3) if cf_r is not None else None,
+                "size_factor": _fnum(r.get("size_factor")),
+                "entry": _fnum(r.get("entry")), "sl": _fnum(r.get("sl")), "tp": _fnum(r.get("tp")),
+                "rr": rr, "mode": r.get("mode"),
+                "reason": str(r.get("reason") or "")[:600],
+            })
+
+    # Başabaş WR = 1/(1+RR) — kararların tipik RR'ından. WR bunun altındaysa
+    # "yüksek isabet" bile net kayıptır; panelin en kritik çizgisi budur.
+    rr_typ = round(sorted(rr_seen)[len(rr_seen) // 2], 3) if rr_seen else None
+    breakeven_wr = round(100 / (1 + rr_typ), 1) if rr_typ else None
+
+    for dd in by_dir.values():
+        dd["avg_size"] = round(dd["size_sum"] / dd["size_n"], 2) if dd["size_n"] else None
+        dd.pop("size_sum", None)
+        dd.pop("size_n", None)
+        dd["missed"]["r"] = round(dd["missed"]["r"], 2)
+        dd["by_session"] = {k: _close_bucket(v) for k, v in
+                            sorted(dd["by_session"].items(), key=lambda kv: -kv[1]["opens"])}
+        dd["by_hour"] = [{"hour": h, **_close_bucket(v)}
+                         for h, v in sorted(dd["by_hour"].items()) if h >= 0]
+        _close_bucket(dd)
+
+    days_list = []
+    for day in sorted(by_day, reverse=True):
+        d = by_day[day]
+        d["foregone_r"] = round(d["foregone_r"], 2)
+        d["BUY"] = _close_bucket(d["BUY"])
+        d["SELL"] = _close_bucket(d["SELL"])
+        days_list.append(_close_bucket(d))
+
+    graded = [d for d in days_list if d["resolved"] > 0]
+    best = max(graded, key=lambda d: d["net_r"], default=None)
+    worst = min(graded, key=lambda d: d["net_r"], default=None)
+    summary["foregone_r"] = round(summary["foregone_r"], 2)
+    _close_bucket(summary)
+    summary.update({
+        "rr_typical": rr_typ,
+        "breakeven_wr": breakeven_wr,
+        # WR başabaşın üstünde mi? Panelin "kâr ediyor mu" cevabı.
+        "above_breakeven": (summary["win_rate"] is not None and breakeven_wr is not None
+                            and summary["win_rate"] >= breakeven_wr),
+        "active_days": len(graded),
+        "best_day": {"day": best["day"], "net_r": best["net_r"]} if best else None,
+        "worst_day": {"day": worst["day"], "net_r": worst["net_r"]} if worst else None,
+        "first_ts": rows[-1].get("ts") if rows else None,
+        "last_ts": rows[0].get("ts") if rows else None,
+    })
+
+    return {
+        "symbol": symbol, "days": days, "total_rows": len(rows),
+        "summary": summary,
+        "by_day": days_list,
+        "by_direction": by_dir,
+        "decisions": decisions,
+    }
+
+
 # Bot (broker sembolü) ↔ Decider (panel sembolü) eşlemesi.
 _BOT_SYMBOL_MAP = {
     "NAS100": "NDX.INDX",

@@ -710,68 +710,69 @@
       "c1_move_atr"
     ],
     "thresholds": {
-      "fake": 0.7281,
-      "genuine": 0.2681
+      "fake": 0.4979,
+      "genuine": 0.6624
     },
-    "threshold_mode": "val_quantile_fallback",
+    "threshold_mode": "val_precision_target",
     "oos": {
       "fake_call": {
-        "test_n": 114,
-        "coverage": 27.3,
-        "precision": 86.0
+        "test_n": 204,
+        "coverage": 46.0,
+        "precision": 75.0
       },
       "genuine_call": {
-        "test_n": 63,
-        "coverage": 15.1,
-        "precision": 81.0
+        "test_n": 310,
+        "coverage": 70.0,
+        "precision": 68.4
       },
-      "test_n": 417,
-      "base_fake_test": 54.4
+      "test_n": 443,
+      "base_fake_test": 47.4
     },
     "top_features": [
       [
         "c1_move_atr",
-        122
+        170
+      ],
+      [
+        "atr_pct",
+        53
+      ],
+      [
+        "c1_body_ratio",
+        53
       ],
       [
         "c1_vol_ratio",
-        43
+        52
       ],
       [
-        "vol_ratio",
-        42
+        "adx14",
+        47
       ],
       [
         "body_ratio",
-        40
-      ],
-      [
-        "dist_ema200_atr",
-        40
-      ],
-      [
-        "prebreak_range_atr",
-        40
+        46
       ],
       [
         "vwap_dist_atr",
-        39
+        41
       ],
       [
-        "level_age_bars",
-        38
+        "ema50_slope_atr",
+        40
       ],
       [
-        "vol_buildup",
-        38
+        "c1_beyond_atr",
+        37
       ],
       [
-        "bb_width_rank",
-        33
+        "rsi14",
+        32
       ]
     ],
-    "trained_events": 764,
-    "generated_at": "2026-07-16T23:20:05.260572+00:00",
+    "verified_70_70": false,
+    "trained_events": 815,
+    "generated_at": "2026-08-12T20:22:33.650493+00:00",
     "note": "Karar kırılımdan 1 bar SONRA (teyit barı kapanınca) verilir. p>=fake eşiği → SAHTE çağrısı (OOS %70); p<=genuine eşiği → GERÇEK çağrısı (OOS %83); arası → kararsız."
   }
 }

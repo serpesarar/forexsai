@@ -936,8 +936,10 @@
     }
   },
   "detector": {
-    "model_file": "models/model_fakeout_ndx_5m.joblib",
+    "model_file": "model_fakeout_ndx_5m.joblib",
     "mode": "delayed_1bar",
+    "tp_atr": 1.0,
+    "sl_atr": 1.0,
     "features": [
       "vol_ratio",
       "rsi14",
@@ -967,67 +969,68 @@
       "c1_move_atr"
     ],
     "thresholds": {
-      "fake": 0.5239,
-      "genuine": 0.3852
+      "fake": 0.5235,
+      "genuine": 0.5751
     },
+    "threshold_mode": "val_precision_target",
     "oos": {
       "fake_call": {
-        "test_n": 217,
-        "coverage": 50.7,
-        "precision": 70.0
+        "test_n": 280,
+        "coverage": 48.5,
+        "precision": 75.4
       },
       "genuine_call": {
-        "test_n": 148,
-        "coverage": 34.6,
-        "precision": 83.1
+        "test_n": 322,
+        "coverage": 55.8,
+        "precision": 74.2
       },
-      "test_n": 428,
-      "base_fake_test": 48.6
+      "test_n": 577,
+      "base_fake_test": 48.5
     },
     "top_features": [
       [
         "c1_move_atr",
-        136
+        185
       ],
       [
         "c1_body_ratio",
-        61
-      ],
-      [
-        "c1_beyond_atr",
-        56
+        54
       ],
       [
         "ema50_slope_atr",
-        43
-      ],
-      [
-        "adx14",
-        42
-      ],
-      [
-        "c1_vol_ratio",
-        39
+        47
       ],
       [
         "body_ratio",
+        43
+      ],
+      [
+        "c1_beyond_atr",
+        37
+      ],
+      [
+        "vwap_dist_atr",
+        36
+      ],
+      [
+        "rsi14",
+        33
+      ],
+      [
+        "pen_atr",
+        33
+      ],
+      [
+        "atr_pct",
         32
       ],
       [
-        "approach_speed_atr",
-        31
-      ],
-      [
-        "bb_width_rank",
-        31
-      ],
-      [
-        "prebreak_range_atr",
-        29
+        "c1_vol_ratio",
+        27
       ]
     ],
-    "trained_events": 784,
-    "generated_at": "2026-07-16T21:12:05.743559+00:00",
+    "trained_events": 1063,
+    "generated_at": "2026-08-12T20:13:47.859022+00:00",
     "note": "Karar kırılımdan 1 bar SONRA (teyit barı kapanınca) verilir. p>=fake eşiği → SAHTE çağrısı (OOS %70); p<=genuine eşiği → GERÇEK çağrısı (OOS %83); arası → kararsız."
   },
   "detector_wave": {

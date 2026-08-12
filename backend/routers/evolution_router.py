@@ -230,6 +230,18 @@ async def remote_decider_breakdown(days: int = Query(30, ge=1, le=365)):
         raise HTTPException(status_code=503, detail=str(e))
 
 
+@router.get("/remote/decider-symbol-history")
+async def remote_decider_symbol_history(
+    symbol: str = Query(..., min_length=2, max_length=32),
+    days: int = Query(30, ge=1, le=365),
+):
+    """Tek sembolün decider geçmişi — gün bazlı + yön bazlı kırılım (karta tıkla)."""
+    try:
+        return await asyncio.to_thread(remote.get_decider_symbol_history, symbol, days)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
 @router.get("/remote/bot-vs-decider")
 async def remote_bot_vs_decider(days: int = Query(30, ge=1, le=365)):
     """Bot ↔ Decider yakın-zaman karşılaştırması + karşılıklı dersler."""
