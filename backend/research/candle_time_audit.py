@@ -32,7 +32,7 @@ SYMBOLS = ["NDX.INDX", "GDAXI.INDX", "XAUUSD", "USOIL.FOREX"]
 TFS = ["1m", "15m", "30m", "1h"]          # 5m referans
 LAGS_MIN = [0, -60, -120, -180, -240, 60, 120, 180]
 CLEAN_TOL = 0.6                            # gün bazında ort |fark| eşiği (fiyat birimi)
-MIN_OVERLAP = 60                           # gün başına min ortak bar
+MIN_OVERLAP_FRAC = 0.35                    # gün başına beklenen barın en az bu oranı
 
 
 def tf_minutes(tf: str) -> int:
@@ -44,6 +44,8 @@ def daily_offsets(ref5: pd.Series, other: pd.Series, tf: str) -> pd.DataFrame:
     step = max(tf_minutes(tf), 5)
     a = ref5.resample(f"{step}min").last()
     b = other.resample(f"{step}min").last()
+    # eşik TF'e göre: 1h'te günde ~24 bar var, sabit 60 eşiği hepsini elerdi
+    min_overlap = max(8, int(24 * 60 / step * MIN_OVERLAP_FRAC))
     rows = []
     for gun, sub in a.groupby(a.index.date):
         best = (None, np.inf)
@@ -52,7 +54,7 @@ def daily_offsets(ref5: pd.Series, other: pd.Series, tf: str) -> pd.DataFrame:
             if shifted is None:
                 continue
             j = pd.DataFrame({"a": sub, "b": shifted}).dropna()
-            if len(j) < MIN_OVERLAP:
+            if len(j) < min_overlap:
                 continue
             err = float((j.a - j.b).abs().mean())
             if err < best[1]:

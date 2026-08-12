@@ -14,11 +14,12 @@ birlikte raporlar:
      train/val/test (eşik VAL'de) SAHTE/GERÇEK kesinliği; karşılaştırma olarak
      aynı kümede +1-bar özellik seti.
 
-⚠️ VERİ ONARIMI: candle_cache 1m serisi 2026-05-07 ÖNCESİNDE broker saatinde
-(UTC+3) etiketlenmiş; 5m serisi gerçek UTC. Yarış çözümü 1m ile yapıldığı için
-onarılmadan çalıştırılırsa ETİKETLER BOZUK olur (bkz. memory
-candle-cache-broker-time-offset). Burada 1m −3 saat kaydırılır ve gün bazında
-5m ile tutarlılık kontrolünden geçmeyen günler ATILIR.
+VERİ NOTU: bu betiğin ilk koşusunda (2026-08-12) 1m serisinin 2026-05-07
+öncesi broker saatinde (UTC+3) etiketli olduğu bulundu ve okuma anında
+kaydırılıyordu. Kayma o gün VERİTABANINDA kalıcı onarıldı (migration
+repair_1m_shift_step1/2, 315.730 satır) → betikteki kaydırma KALDIRILDI.
+Kalan fiyat-tabanı farkı (eski broker beslemesi) fakeout_lab.align_1m_basis
+ile assemble içinde düzeltilir; burada yalnız gün-kalite kapısı vardır.
 
 Çalıştırma: python backend/research/fakeout_confirm_horizon.py [SEMBOL]
 """
@@ -39,16 +40,20 @@ import fakeout_wave_lab as wave  # noqa: E402
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 TP, SL, HORIZON, BAR_MIN = 1.0, 1.0, 72, 5
 K_GRID = [1, 2, 3, 4, 6, 8, 12, 20]
-SHIFT_UNTIL = pd.Timestamp("2026-05-07", tz="UTC")   # bu tarihten önce 1m = UTC+3
-MAX_DAY_ERR = 0.6                                     # gün bazında |5m−1m| eşiği
+MAX_DAY_ERR_FRAC = 0.0015          # gün bazında |5m−1m| / fiyat (mutlak eşik semboller
+                                   # arası anlamsızdı: NDX 30.000 vs USOIL 78)
 
 
 def repair_1m(df1: pd.DataFrame, df5: pd.DataFrame) -> pd.DataFrame:
-    """1m serisini 5m ile hizala: eski dönemi −3 saat kaydır, kirli günleri at."""
+    """Gün bazında 5m ile tutarsız 1m günlerini ele.
+
+    ⚠️ 2026-08-12: ZAMAN KAYMASI ARTIK VERİTABANINDA ONARILDI (migration
+    repair_1m_shift_step1/2 — 315.730 satır −3 saat). Bu yüzden buradaki
+    −3 saat kaydırma KALDIRILDI; tekrar uygulanırsa veriyi BOZARDI.
+    Fiyat-tabanı farkı (eski broker) `fakeout_lab.align_1m_basis` ile
+    assemble içinde düzeltiliyor. Burada yalnız kalite kapısı kalır.
+    """
     d = df1.copy()
-    mask = d["ts"] < SHIFT_UNTIL
-    d.loc[mask, "ts"] = d.loc[mask, "ts"] - pd.Timedelta(hours=3)
-    d = d.drop_duplicates(subset="ts").sort_values("ts").reset_index(drop=True)
 
     r1 = d.set_index("ts").close.resample("5min").last()
     a5 = df5.set_index("ts").close
@@ -57,10 +62,11 @@ def repair_1m(df1: pd.DataFrame, df5: pd.DataFrame) -> pd.DataFrame:
         return d
     j["gun"] = j.index.date
     err = j.groupby("gun").apply(lambda x: (x.a - x.b).abs().mean(), include_groups=False)
+    lvl = j.groupby("gun").apply(lambda x: x.a.abs().mean(), include_groups=False)
     cov = j.groupby("gun").size()
-    good = set(err[(err <= MAX_DAY_ERR) & (cov >= 100)].index)
-    print(f"  1m onarımı: {len(good)}/{len(err)} gün temiz "
-          f"(eşik |fark| ≤ {MAX_DAY_ERR}), atılan gün {len(err) - len(good)}")
+    good = set(err[(err / lvl <= MAX_DAY_ERR_FRAC) & (cov >= 100)].index)
+    print(f"  1m kalite kapısı: {len(good)}/{len(err)} gün temiz "
+          f"(|fark|/fiyat ≤ {MAX_DAY_ERR_FRAC}), atılan gün {len(err) - len(good)}")
     d = d[[t.date() in good for t in d["ts"]]].reset_index(drop=True)
     return d
 

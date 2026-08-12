@@ -69,6 +69,41 @@ def resample_ohlcv(df: pd.DataFrame, minutes: int) -> pd.DataFrame:
     return out
 
 
+def align_1m_basis(df1: "pd.DataFrame", df5: "pd.DataFrame") -> "pd.DataFrame":
+    """1m serisini 5m'in FİYAT TABANINA hizala (gün gün medyan fark).
+
+    NEDEN (2026-08-12): 1m'in 2026-02→05 partisi ESKİ broker'dan (USTEC/IC
+    Markets), 5m ise güncel broker'dan (NAS100/Pepperstone) geliyor. Zaman
+    ekseni onarıldıktan sonra bile aralarında sistematik 3-12 puanlık taban
+    farkı kalıyor — NDX'te bu ATR(5m)'in %10-40'ı kadar. Yarış etiketi 1m ile,
+    giriş/ATR 5m ile hesaplandığı için bu fark TP/SL yarışını yanlı yapar.
+
+    Çözüm: her gün için medyan(5m_close − eşleşen_1m_close) kadar 1m'in TÜM
+    fiyat kolonlarını kaydır. Bu bir SEVİYE düzeltmesidir; bar içi hareketi
+    (yani yarışın kendisini) değiştirmez. Aynı-besleme günlerinde fark 0'dır
+    ve işlem no-op olur.
+    """
+    if df1.empty or df5.empty:
+        return df1
+    r1 = df1.set_index("ts")["close"].resample("5min").last()
+    a5 = df5.set_index("ts")["close"]
+    j = pd.DataFrame({"a": a5, "b": r1}).dropna()
+    if j.empty:
+        return df1
+    j["gun"] = j.index.date
+    off = (j["a"] - j["b"]).groupby(j["gun"]).median()
+    d = df1.copy()
+    shift = pd.Series(d["ts"].dt.date.map(off).values, index=d.index).fillna(0.0)
+    for col in ("open", "high", "low", "close"):
+        if col in d.columns:
+            d[col] = d[col] + shift
+    n_adj = int((off.abs() > 0.05).sum())
+    if n_adj:
+        _log(f"  1m taban hizalama: {n_adj}/{len(off)} gün düzeltildi "
+             f"(medyan |fark| {off.abs().median():.2f})")
+    return d
+
+
 def assemble(symbol: str = "NDX.INDX") -> dict:
     _log(f"[lab] veri çekiliyor ({symbol}: 1m + 5m + 1h)...")
     df1 = fm.fetch_candles(symbol, "1m")
@@ -90,6 +125,7 @@ def assemble(symbol: str = "NDX.INDX") -> dict:
     }
     for k, v in frames.items():
         _log(f"  {k}: {len(v)} bar ({v['ts'].iloc[0]:%Y-%m-%d} → {v['ts'].iloc[-1]:%Y-%m-%d})")
+    df1 = align_1m_basis(df1, df5e)
     _log(f"  1m (yarış çözümü): {len(df1)} bar")
     return {"frames": frames, "df1": df1}
 
