@@ -61,7 +61,10 @@ def pull(symbols, since, until, chunk_days):
                 if rates is not None and len(rates) > 0:
                     for r in rates:
                         bars.append({
-                            "t": int(r["time"]),                 # unix sec, MT5 API = UTC
+                            # ⚠️ MT5 `time` BROKER SUNUCU saatidir (UTC değil!).
+                            # Ölçülen offset burada çıkarılır — 2026-05'teki
+                            # 3 saatlik kaymanın kök nedeni bu satırdı.
+                            "t": int(r["time"]) - _server_offset_sec(),
                             "o": float(r["open"]), "h": float(r["high"]),
                             "l": float(r["low"]),  "c": float(r["close"]),
                             "v": float(r["tick_volume"]) if "tick_volume" in r.dtype.names else 0.0,
@@ -83,6 +86,46 @@ def pull(symbols, since, until, chunk_days):
         }
     finally:
         mt5.shutdown()
+
+
+# ── BROKER SUNUCU SAATİ → UTC (2026-08-12 düzeltmesi) ───────────────────────
+# MT5'in copy_rates/tick `time` alanı broker sunucu saatindedir (IC Markets /
+# Pepperstone: kış UTC+2, ABD-yaz UTC+3). "MT5 API zaten UTC verir" varsayımı
+# YANLIŞTI ve 2026-05'teki toplu 1m doldurmasını 3 saat kaydırdı.
+# Offset çalışma anında ölçülür: canlı tick zamanı − gerçek UTC (data_recorder
+# ile aynı yöntem), 15 dk'ya yuvarlanır. DST geçişleri kendiliğinden çözülür.
+_OFFSET_CACHE: dict = {}
+
+
+def _server_offset_sec() -> int:
+    """Ölçülen broker offset'i (saniye). Ölçülemezse 0 döner + uyarır."""
+    if "v" in _OFFSET_CACHE:
+        return _OFFSET_CACHE["v"]
+    import MetaTrader5 as mt5
+    now = datetime.now(timezone.utc).timestamp()
+    deltas = []
+    for sym in ("XAUUSD", "EURUSD", "USTEC", "NAS100", "SpotCrude", "XTIUSD"):
+        try:
+            tick = mt5.symbol_info_tick(sym)
+        except Exception:
+            continue
+        if not tick or not getattr(tick, "time", 0):
+            continue
+        if abs(tick.time - now) > 6 * 3600:      # bayat tick → güvenme
+            continue
+        deltas.append(tick.time - now)
+    if not deltas:
+        print("  ⚠️ broker offset ÖLÇÜLEMEDİ (taze tick yok) → 0 varsayıldı; "
+              "piyasa açıkken tekrar çalıştır!")
+        _OFFSET_CACHE["v"] = 0
+        return 0
+    deltas.sort()
+    med = deltas[len(deltas) // 2]
+    off = int(round(med / 900.0) * 900)          # 15 dk'ya yuvarla
+    print(f"  broker offset ölçüldü: {off/3600:+.2f} saat "
+          f"({len(deltas)} sembol tick'i, medyan {med/60:.1f} dk)")
+    _OFFSET_CACHE["v"] = off
+    return off
 
 
 def upload(payload, purge):

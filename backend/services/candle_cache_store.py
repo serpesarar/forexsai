@@ -40,6 +40,21 @@ def _is_aligned_epoch(epoch_s: float, timeframe: str) -> bool:
     return int(epoch_s) % interval == 0
 
 
+#: Saat kayması koruması (2026-08-12). Bir barın damgası onun AÇILIŞ zamanıdır;
+#: dolayısıyla geçerli hiçbir bar "şimdi"nin ilerisinde olamaz (koşan bar dahil).
+#: MT5'in `copy_rates` `time` alanı BROKER SUNUCU saatindedir (UTC+2/+3); UTC
+#: sanılıp yazıldığında barlar 2-3 saat İLERİ damgalanır — yani bu kapıdan
+#: geçemez. Kayma sınıfındaki hataların TAMAMI burada durur, kaynağı ne olursa
+#: olsun (endpoint, toplu doldurma, DataHub köprüsü).
+#: Geçmiş vaka: 2026-05 toplu 1m doldurması (bar aralığı 02-11 → 05-07) 3 saat
+#: kaymış yazıldı; fakeout dedektörünün eğitim etiketlerinin ~yarısı bozuldu.
+_FUTURE_TOLERANCE_S = 90        # saat senkron payı
+
+
+def _is_future_epoch(epoch_s: float, now_s: float) -> bool:
+    return epoch_s > now_s + _FUTURE_TOLERANCE_S
+
+
 def _get_db():
     """Get Supabase client, returns None if unavailable."""
     try:
@@ -64,6 +79,8 @@ def persist_candles(symbol: str, timeframe: str, candles: List[Dict]) -> int:
 
     rows = []
     skipped_misaligned = 0
+    skipped_future = 0
+    now_s = datetime.now(timezone.utc).timestamp()
     for c in candles:
         # Determine candle time from either timestamp (ms) or date string
         candle_time = None
@@ -72,6 +89,9 @@ def persist_candles(symbol: str, timeframe: str, candles: List[Dict]) -> int:
             if not _is_aligned_epoch(epoch_s, timeframe):
                 skipped_misaligned += 1
                 continue  # tick artifact — never persist
+            if _is_future_epoch(epoch_s, now_s):
+                skipped_future += 1
+                continue  # saat kayması — asla yazma (bkz. _is_future_epoch)
             candle_time = datetime.fromtimestamp(
                 epoch_s, tz=timezone.utc
             ).isoformat()
@@ -115,6 +135,16 @@ def persist_candles(symbol: str, timeframe: str, candles: List[Dict]) -> int:
     # Update metadata
     if persisted > 0:
         _update_meta(db, symbol, timeframe, rows)
+
+    if skipped_future:
+        # WARNING seviyesi bilinçli: bu sessizce yutulursa kayma tekrar eder.
+        logger.warning(
+            "persist_candles: %s/%s — %d bar GELECEK damgalı, yazılmadı. "
+            "Muhtemel sebep: MT5 sunucu saati (UTC+2/+3) UTC sanılıyor; "
+            "yazan tarafta broker offset'i ölçülüp çıkarılmalı "
+            "(bkz. backend/research/candle_time_audit.py).",
+            symbol, timeframe, skipped_future,
+        )
 
     if skipped_misaligned:
         logger.debug(

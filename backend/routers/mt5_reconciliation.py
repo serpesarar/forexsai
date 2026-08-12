@@ -75,11 +75,14 @@ async def upload_1m_bars(
     broker_utc_offset_hours: float = Query(
         None,
         description=(
-            "Hours to subtract from each bar's `t`. The MetaTrader5 Python API "
-            "already returns `time` in UTC (only the terminal DISPLAY shows "
-            "broker-local), so this should normally be 0. Set it only if a "
-            "specific broker's API is observed to return server-local time. "
-            "If omitted, falls back to env MT5_BROKER_UTC_OFFSET_HOURS (default 0)."
+            "Hours to subtract from each bar's `t`. ⚠️ 2026-08-12 DÜZELTMESİ: "
+            "MetaTrader5 Python API'sinin `time` alanı UTC DEĞİL, BROKER SUNUCU "
+            "saatidir (IC Markets/Pepperstone: kış UTC+2, ABD-yaz UTC+3). Eski "
+            "dokümantasyon 'zaten UTC' diyordu ve varsayılan 0'dı; 2026-05'teki "
+            "toplu 1m doldurması bu yüzden 3 saat kaymış yazıldı ve fakeout "
+            "dedektörünün eğitim etiketlerinin ~yarısını bozdu. Verilmezse "
+            "payload'dan OTOMATİK ÖLÇÜLÜR (en yeni bar 'şimdi'nin ilerisindeyse "
+            "fark saate yuvarlanır) ve yanıtta raporlanır."
         ),
     ),
     purge_existing: bool = Query(
@@ -127,11 +130,34 @@ async def upload_1m_bars(
 
         # Broker timezone shift — the MT5 Python API returns UTC already, so
         # the default is 0. Kept configurable for brokers that misbehave.
+        offset_autodetected = None
         if broker_utc_offset_hours is None:
-            try:
-                broker_utc_offset_hours = float(os.getenv("MT5_BROKER_UTC_OFFSET_HOURS", "0"))
-            except ValueError:
-                broker_utc_offset_hours = 0.0
+            env_val = os.getenv("MT5_BROKER_UTC_OFFSET_HOURS")
+            if env_val is not None:
+                try:
+                    broker_utc_offset_hours = float(env_val)
+                except ValueError:
+                    broker_utc_offset_hours = None
+        if broker_utc_offset_hours is None:
+            # OTOMATİK ÖLÇÜM: geçerli bir barın damgası hiçbir zaman "şimdi"nin
+            # ilerisinde olamaz. En yeni bar ileride ise aradaki fark broker
+            # sunucu offset'idir (saate yuvarlanır; 0 ise kayma yok demektir).
+            newest = 0
+            for _blob in symbols_block.values():
+                for _b in (_blob.get("bars") or []):
+                    _t = int(_b.get("t") or 0)
+                    if _t > newest:
+                        newest = _t
+            drift_h = (newest - datetime.now(timezone.utc).timestamp()) / 3600.0
+            broker_utc_offset_hours = float(round(drift_h)) if drift_h > 0.5 else 0.0
+            offset_autodetected = round(drift_h, 2)
+            if broker_utc_offset_hours:
+                logger.warning(
+                    "upload-1m-bars: broker offset OTOMATİK ölçüldü = +%.0f saat "
+                    "(en yeni bar şimdiden %.2f saat ileride). Payload MT5 sunucu "
+                    "saatinde geliyor — UTC'ye çevriliyor.",
+                    broker_utc_offset_hours, drift_h,
+                )
         offset_seconds = int(broker_utc_offset_hours * 3600)
 
         from services.candle_cache_store import persist_candles
