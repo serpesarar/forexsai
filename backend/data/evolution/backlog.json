@@ -1681,5 +1681,27 @@
     "source": "session",
     "created_at": "2026-08-11T06:40:55.321088+00:00",
     "updated_at": "2026-08-11T06:40:55.321094+00:00"
+  },
+  {
+    "id": "bl_aabe39e2b3",
+    "title": "Fakeout dedektörünü onarılmış veriyle yeniden eğit",
+    "detail": "candle_cache 1m 2026-05-07 öncesi UTC+3 etiketli; yarış etiketi 1m'den üretildiği için 4 sembolün dedektör modeli+eşikleri kaymış eksende eğitilmiş olabilir. fakeout_confirm_horizon.repair_1m mantığıyla lab→finalize zinciri yeniden koşulmalı; canlı gölge karnesi (NDX SAHTE %40) bu şüpheyi destekliyor.",
+    "category": "retrain",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-12T07:20:17.497384+00:00",
+    "updated_at": "2026-08-12T07:20:17.497512+00:00"
+  },
+  {
+    "id": "bl_cdd36f688a",
+    "title": "candle_cache 1m zaman ekseni kalıcı onarımı",
+    "detail": "1m serisinin 2026-02-11→05-06 aralığı broker saatinde yazılmış. Tek seferlik migration ile düzeltilirse bu tarihten sonraki tüm 1m-replay çalışmaları (gate karneleri, shadow replay, fakeout lab) otomatik doğru veriyle koşar.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-12T07:20:17.498876+00:00",
+    "updated_at": "2026-08-12T07:20:17.498880+00:00"
   }
 ]
