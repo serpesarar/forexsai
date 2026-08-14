@@ -32,6 +32,8 @@ except ImportError:
 
 import config
 import reflex_exec
+import phase_rules as pr
+import shadow_log
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -526,7 +528,75 @@ def _fixed_distances(price: float, cfg: dict, bot_signal: dict | None,
         d = abs(price - float(bot_signal["sl_price"]))
         if d > 0:
             sl_d = d
+
+    # ── FAZ 0.3 (2026-08-14): TP = 2.5 × ATR70(1m), SL'e DOKUNULMAZ ─────────
+    # Kanıt (133 NASDAQ işlemi, bar-bar karşı-olgusal): kaybedenlerin %31'i
+    # SL'den önce ≥+48pt lehe gitmiş — sabit 80pt hedef düşük volatilitede
+    # ulaşılamıyor. Tek başına WR %56.4 → %71.4 (p<0.001).
+    # DAYCOMBO muaf (kendi geometrisiyle WR %72-79). Örneklem-içi optimizasyon
+    # olduğu için canlıda aynı sıçrama BEKLENMEZ — bayrakla ölçülüyor.
+    if scope_key and mt5_symbol:
+        fxs = scope_key.split(":")[0]
+        new_tp, src = pr.tp_distance(scope_key, fxs, candles_1m(mt5_symbol, 200),
+                                     tp_d, config)
+        if src == "atr70" and abs(new_tp - tp_d) > 1e-9:
+            log.info("[TP-ATR] %s: TP %.1f → %.1f (2.5×ATR70(1m)), SL %.1f "
+                     "(RR %.2f)", scope_key, tp_d, new_tp, sl_d,
+                     new_tp / sl_d if sl_d else 0)
+            tp_d = new_tp
     return tp_d, sl_d
+
+
+# ── FAZ 1 (2026-08-14): NDX giriş zaman pencereleri + oy sıkılığı ───────────
+
+def _entry_window_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
+                         direction: str) -> bool:
+    """True → bu an NDX'te yeni giriş yasak (ASIA seansı / Cuma / hafta sonu).
+
+    Varsayılan KAPALI; `scripts/bot_flags.py phase1 on` ile açılır.
+    Kanıt: ASIA n=36 WR %50 −2.139$ · Cuma n=21 WR %38.1 −1.518$.
+    """
+    blocked, reason = pr.entry_window_block(datetime.now(timezone.utc),
+                                            forexsai_sym, config)
+    if not blocked:
+        return False
+    log.info("%s — ZAMAN PENCERESİ KAPISI: %s → %s açılmadı",
+             scope_key, reason, direction)
+    tick = mt5.symbol_info_tick(mt5_symbol) if mt5_symbol else None
+    if tick:
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
+                      tick.ask if direction == "BUY" else tick.bid,
+                      "entry_window_gate", extra={"why": reason})
+    return True
+
+
+def _confirm_required() -> bool:
+    """CONFIRM zorunlu mu? Faz-1.4 açıksa config'i EZER (repo varsayılanı)."""
+    forced = pr.only_confirm_required(config)
+    return bool(config.ONLY_CONFIRM_SIGNALS) if forced is None else forced
+
+
+def _shadow_probation(scope_key: str, forexsai_sym: str, mt5_symbol: str,
+                      direction: str, price: float, tp_dist: float,
+                      sl_dist: float) -> None:
+    """FAZ 3 (MOD-E) gölge kaydı — canlı icrayı DEĞİŞTİRMEZ.
+
+    Sinyal anını, 1m ATR14'ünü ve geometriyi yazar; shadow_log 5 bar sonra
+    gürültü bandı verdiktini ve hipotetik TP/SL sonucunu ölçer."""
+    if not pr.flag(config, "PROBATION_SHADOW_ENABLED"):
+        return
+    if forexsai_sym != "NDX.INDX":
+        return
+    try:
+        bars = candles_1m(mt5_symbol, 60)
+        atr1 = pr.atr_simple(bars or [], 14)
+        if not atr1:
+            return
+        shadow_log.record_probation(scope_key, forexsai_sym, mt5_symbol,
+                                    direction, price, atr1, tp_dist, sl_dist,
+                                    config)
+    except Exception as exc:
+        log.debug("probasyon gölge kaydı atlandı: %s", exc)
 
 
 def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
@@ -565,8 +635,10 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         return
 
     width = config.ZONE_WIDTH.get(forexsai_sym, fixed_sl)
+    # FAZ 1.4: zayıf S/R bölgesi musluğu (kutuda 2'ye çekilmişti → repo 4)
     zones = detect_zones(candles, width=width,
-                         min_touch_candles=config.ZONE_MIN_TOUCH_CANDLES,
+                         min_touch_candles=pr.zone_min_touch(
+                             config, config.ZONE_MIN_TOUCH_CANDLES),
                          lookback=config.ZONE_LOOKBACK)
     plan = plan_sr_entry(
         zones, direction, price,
@@ -698,6 +770,10 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     tp, sl, price = round(tp, digits), round(sl, digits), round(price, digits)
     volume = scope_lot(scope_key)
 
+    # FAZ 3 gölge: "5 bar bekleseydik ne olurdu" (MOD-E adayı; icra değişmez)
+    _shadow_probation(scope_key, forexsai_sym, mt5_symbol, direction, price,
+                      tp_dist, sl_dist)
+
     line = (f"{scope_key} | {mt5_symbol} {direction} @ {price} "
             f"TP={tp} SL={sl} lot={volume} (oy: {','.join(voters)})")
 
@@ -780,11 +856,24 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         tp = round(price + sign * f_tp, digits)
         sl = round(price - sign * f_sl, digits)
 
+    # FAZ 0.3: backend'in TP'si de ATR70 hedefine çekilir (SL'e dokunulmaz) —
+    # aksi hâlde aynı scope iki farklı hedef geometrisiyle çalışır ve ölçüm bozulur.
+    tp_now = sign * (tp - price)
+    new_tp, src = pr.tp_distance(scope_key, forexsai_sym,
+                                 candles_1m(mt5_symbol, 200), tp_now, config)
+    if src == "atr70" and abs(new_tp - tp_now) > 1e-9:
+        tp = round(price + sign * new_tp, digits)
+        log.info("[TP-ATR] %s (v2): TP mesafesi %.1f → %.1f", scope_key,
+                 tp_now, new_tp)
+
     lot_mult = float(bot_signal.get("effective_lot_multiplier") or 1.0)
     volume = round(scope_lot(scope_key) * lot_mult, 2)
     if volume < 0.01:
         log.info("%s — lot çok düşük (×%.2f), atlanıyor", scope_key, lot_mult)
         return
+
+    _shadow_probation(scope_key, forexsai_sym, mt5_symbol, direction, price,
+                      abs(tp - price), abs(price - sl))
 
     action = bot_signal.get("action") or "FALLBACK_MARKET"
     line = (f"{scope_key} | {mt5_symbol} {direction} @ {price} "
@@ -1005,7 +1094,37 @@ def _position_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,
     buy_max = float(getattr(config, "POS_BUY_MAX", POS_BUY_MAX))
     bad = (direction == "SELL" and pos < sell_min) or \
           (direction == "BUY" and pos > buy_max)
+
+    # ── FAZ 2.1/2.2 (2026-08-14): SIKI eşikler + "güce sat" RSI — GÖLGE ─────
+    # Sıkı eşik (SELL ≥0.60 / BUY ≤0.40) karşı-olgusalda SELL'de n=76 WR %65.8
+    # +4.331$ verdi. 2 hafta gölgede ölçülür, sonra POS_TIGHT_BLOCK=True.
+    tight_bad = False
+    if pr.flag(config, "POS_TIGHT_ENABLED") and not bad:
+        tight_bad = pr.position_gate_blocks(
+            direction, pos, float(pr.flag(config, "POS_TIGHT_SELL_MIN")),
+            float(pr.flag(config, "POS_TIGHT_BUY_MAX")))
+        if tight_bad:
+            extra = {"pos": round(pos, 3), "sell_min": pr.flag(config, "POS_TIGHT_SELL_MIN"),
+                     "buy_max": pr.flag(config, "POS_TIGHT_BUY_MAX")}
+            if direction == "SELL" and pr.flag(config, "SELL_RSI_SHADOW_ENABLED"):
+                c5 = candles_tf(mt5_symbol, mt5.TIMEFRAME_M5, 60) or []
+                r = pr.rsi([b["close"] for b in c5], 14)
+                extra["rsi5m"] = None if r is None else round(r, 1)
+                extra["rsi_gate_pass"] = None if r is None else bool(
+                    r > float(pr.flag(config, "SELL_RSI_MIN")))
+            tick = mt5.symbol_info_tick(mt5_symbol)
+            px = (tick.ask if direction == "BUY" else tick.bid) if tick else 0.0
+            shadow_log.record_shadow(scope_key, scope_key.split(":")[0], mt5_symbol,
+                                     direction, "pos_tight", "would_block", px,
+                                     extra=extra)
+            log.info("%s — [GÖLGE] sıkı konum kapısı bloklardı (konum %.2f) — "
+                     "işlem devam etti", scope_key, pos)
+
     if not bad:
+        if tight_bad and pr.flag(config, "POS_TIGHT_BLOCK"):
+            log.info("%s — SIKI KONUM KAPISI (konum %.2f) → %s açılmadı",
+                     scope_key, pos, direction)
+            return True
         return False
     nerede = "DİBİNDE" if direction == "SELL" else "TEPESİNDE"
     log.info("%s — KONUM KAPISI: fiyat 4s dalganın %s (konum %.2f, dalga "
@@ -1348,6 +1467,20 @@ def _route_open(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                      "→ MARKET continuation", scope_key, mom, thr, sess)
             _market_open(scope_key, forexsai_sym, mt5_symbol, direction, cfg, voters, bot_signal)
             return
+        # ── FAZ 1.3: NDX'te S/R-limit kolu kapalıysa işlem AÇILMAZ ──────────
+        # Kanıt: fxs-sr girişleri n=13, WR %38.5, medyan TP 31pt (RR 0.34 →
+        # başabaş %74.6). ⚠️ Bu kol DÜZELTİLMEZ, kapatılır: min-TP tabanı
+        # (66pt) denemesi karşı-olgusalda −5.909$ üretti (yasak listesi).
+        if not pr.sr_entry_allowed(forexsai_sym, config):
+            log.info("%s — normal momentum (stretch=%.2f ≤ %.2f) ve S/R kolu "
+                     "KAPALI (Faz 1.3) → giriş yok", scope_key, mom, thr)
+            tick = mt5.symbol_info_tick(mt5_symbol)
+            if tick:
+                log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
+                              tick.ask if direction == "BUY" else tick.bid,
+                              "sr_entry_disabled",
+                              extra={"mom": round(mom, 2), "thr": round(thr, 2)})
+            return
         log.info("%s — normal momentum (M15 stretch=%.2f ≤ eşik=%.2f, seans=%s) "
                  "→ S/R pullback", scope_key, mom, thr, sess)
 
@@ -1372,12 +1505,16 @@ def check_scope(scope_key: str, cfg: dict) -> None:
                  scope_key, held, pend)
         return
 
+    # FAZ 1.1/1.2 — ASIA seansı / Cuma yasağı (NDX; varsayılan kapalı)
+    if _entry_window_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
+        return
+
     voters = []
     for model in cfg["models"]:
         payload = fetch_pulse(model, forexsai_sym)
         d, stype = signal_direction(model, payload)
         if d == direction:
-            if config.ONLY_CONFIRM_SIGNALS and stype != "CONFIRM":
+            if _confirm_required() and stype != "CONFIRM":
                 log.info("  %s %s = %s ama SCOUT (CONFIRM bekleniyor) — sayılmadı",
                          model, forexsai_sym, d)
                 continue
@@ -1509,7 +1646,11 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
         return
     if (forexsai_sym, direction) in getattr(config, "BLOCKED_SYMBOL_DIRECTIONS", set()):
         return                                          # kalıcı yasak (ör. XAUUSD SELL)
-    if config.ONLY_CONFIRM_SIGNALS and stype != "CONFIRM":
+    if _confirm_required() and stype != "CONFIRM":
+        return
+    # FAZ 1.1/1.2 — ASIA seansı / Cuma yasağı (NDX; varsayılan kapalı)
+    if _entry_window_blocks(f"{forexsai_sym}:{direction}:CHREV", forexsai_sym,
+                            mt5_symbol, direction):
         return
     cr_magic = config.CHANNEL_REVERSION_MAGIC                    # AYRI magic → momentum'u bloklamaz
     if open_count(mt5_symbol, direction, cr_magic) + pending_count(mt5_symbol, direction, cr_magic) >= config.MAX_OPEN_PER_SCOPE:
@@ -1675,6 +1816,10 @@ def check_daycombo() -> None:
         return
     scope_key = f"{forexsai_sym}:BUY:DAYCOMBO"
     if open_count(mt5_symbol, "BUY", DAYCOMBO_MAGIC) >= 1:
+        return
+    # FAZ 1.1/1.2 — zaman penceresi yasağı (DAYCOMBO penceresi 14:00-19:30 UTC
+    # zaten ASIA ile çakışmaz; Cuma yasağı burada da geçerli olsun diye çağrılır)
+    if _entry_window_blocks(scope_key, forexsai_sym, mt5_symbol, "BUY"):
         return
     off = _daycombo_offset(mt5_symbol)
     now_utc = datetime.now(timezone.utc)
@@ -1868,12 +2013,15 @@ def check_vix_regime() -> None:
     magic = config.VIX_REGIME_MAGIC
     if open_count(mt5_symbol, favored, magic) + pending_count(mt5_symbol, favored, magic) >= config.MAX_OPEN_PER_SCOPE:
         return
+    scope_key = f"{forexsai_sym}:{favored}:VIXREG"
+    # FAZ 1.1/1.2 — ASIA seansı / Cuma yasağı (NDX; varsayılan kapalı)
+    if _entry_window_blocks(scope_key, forexsai_sym, mt5_symbol, favored):
+        return
     voters = []
     for model in config.VIX_REGIME_MODELS:
         d, stype = signal_direction(model, fetch_pulse(model, forexsai_sym))
-        if d == favored and (not config.ONLY_CONFIRM_SIGNALS or stype == "CONFIRM"):
+        if d == favored and (not _confirm_required() or stype == "CONFIRM"):
             voters.append(model)
-    scope_key = f"{forexsai_sym}:{favored}:VIXREG"
     # ── TQ kapısı: 15-17 UTC çukuru (−5.483$) + Cuma → yalnız çok-emin
     #    (≥TQ_COOL_MIN_VOTERS model oyu). 12-14 ve 18-20 pencereleri AKTİF.
     if voters:
@@ -1995,6 +2143,17 @@ def main():
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
+    # 2026-08-14 faz bayrakları (phase_rules.DEFAULTS varsayılanı; config ezer)
+    log.info("  ── 2026-08-14 faz bayrakları ──")
+    for _n in ("MGMT_BE_MODE", "MGMT_BE_MFE_R", "MGMT_TIME_STOP_MIN",
+               "TP_MODE", "TP_ATR_MULT", "TP_ATR_PERIOD",
+               "NDX_SESSION_BLOCK_ENABLED", "NDX_FRIDAY_BLOCK",
+               "NDX_WEEKEND_HOLD_BLOCK", "NDX_SR_ENTRY_ENABLED",
+               "PHASE1_CONFIG_RESTORE", "POS_TIGHT_ENABLED", "POS_TIGHT_BLOCK",
+               "SELL_RSI_SHADOW_ENABLED", "PROBATION_SHADOW_ENABLED",
+               "PROBATION_LIVE", "SCOPE_LOSS_COOLDOWN_ENABLED"):
+        _from = "config" if hasattr(config, _n) else "varsayılan(faz)"
+        log.info("  ayar %-30s = %-8s (%s)", _n, pr.flag(config, _n), _from)
     log.info("=" * 64)
 
     if not connect_mt5():
@@ -2099,6 +2258,13 @@ def main():
                     check_shadow_scopes()
                 except Exception as e:
                     log.warning("gölge scope döngü hatası: %s", e)
+
+            # ── FAZ 2/3 gölge kayıtlarının sonucunu ölç (canlıya dokunmaz) ──
+            try:
+                shadow_log.resolve_pending(
+                    lambda sym, n: candles_1m(sym, n), log)
+            except Exception as e:
+                log.debug("gölge çözümleme hatası: %s", e)
 
             if getattr(config, "TRADE_MGMT_ENABLED", True):
                 try:

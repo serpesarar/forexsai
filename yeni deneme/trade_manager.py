@@ -27,6 +27,7 @@ import time
 from pathlib import Path
 
 import config
+import phase_rules as pr
 
 STATE_FILE = Path(__file__).resolve().parent / "mgmt_state.json"
 
@@ -170,12 +171,34 @@ def manage_positions(mt5, log, resolve_symbol) -> None:
                     _modify(mt5, log, pos, new_sl, 0.0, "runner trail")
                 continue
 
-            # ── BE@30dk (yalnız NDX; DAX'ta kanıt nötr) ──
-            if rule["be"] and (now - s["first_seen"]) >= BE_MINUTES * 60:
-                if bid > s["entry"] and (pos.sl or 0) < s["entry"]:
-                    if _modify(mt5, log, pos, s["entry"], pos.tp, "BE@30dk"):
-                        s["phase"] = "be"
-                        _save_state()
+            # ── BAŞABAŞ STOP ──────────────────────────────────────────────
+            # FAZ 0.1 (2026-08-14): koşulsuz BE@30dk KALDIRILDI.
+            # Kanıt (aynı 133 işlemin bar-bar karşı-olgusalı): BE'siz WR %72.7
+            # / +3.078$ · koşulsuz BE ile %39.4 / +1.282$ — stop, pozisyon daha
+            # lehe gitmeden başabaşa çekiliyor ve normal salınım onu vuruyordu.
+            # Yeni kural: BE yalnız MFE ≥ 0.5×SL mesafesi görüldükten SONRA.
+            # Eski davranış: config.MGMT_BE_MODE = "time30".
+            if rule["be"]:
+                mfe = max(float(s.get("mfe") or 0.0), bid - s["entry"])
+                if mfe != s.get("mfe"):
+                    s["mfe"] = mfe
+                    _save_state()
+                mode = str(pr.flag(config, "MGMT_BE_MODE"))
+                if pr.be_should_arm(mode, mfe, sl_dist, now - s["first_seen"],
+                                    BE_MINUTES,
+                                    float(pr.flag(config, "MGMT_BE_MFE_R"))):
+                    if bid > s["entry"] and (pos.sl or 0) < s["entry"]:
+                        why = ("BE (MFE≥%.1fR)" % float(pr.flag(config, "MGMT_BE_MFE_R"))
+                               if mode == "conditional_mfe" else "BE@30dk")
+                        if _modify(mt5, log, pos, s["entry"], pos.tp, why):
+                            s["phase"] = "be"
+                            _save_state()
+
+    # ── FAZ 0.2: ZAMAN STOPU — 120 dk'da ne TP ne SL vurulmadıysa kapat ────
+    try:
+        _time_stop_pass(mt5, log, resolve_symbol, st, now, live_tickets)
+    except Exception as exc:                                    # fail-open
+        log.warning("[MGMT] zaman stopu hatası: %s", exc)
 
     # kapanan pozisyonların durumunu temizle
     stale = [k for k, v in st.items() if k not in live_tickets
@@ -184,6 +207,79 @@ def manage_positions(mt5, log, resolve_symbol) -> None:
         for k in stale:
             st.pop(k, None)
         _save_state()
+
+
+# ─── FAZ 0.2 — zaman stopu (2026-08-14) ─────────────────────────────────────
+# Kanıt: 133 işlemin medyan süresi 47 dk; 10+ saat açık kalan 2 "zombi" işlem
+# 550$'er kaybetti. 120 dk'da karara varmamış pozisyon piyasadan kapatılır.
+# Kapsam: MGMT_TIME_STOP_SYMBOLS (varsayılan NDX) · her iki yön · bot magic'leri.
+# Yaş ölçümü first_seen bazlı → restart'ta gecikir (konservatif, kasten).
+
+def _all_bot_magics() -> set:
+    m = _managed_magics() | _usoil_breakout_magics()
+    for name in ("MAGIC_NUMBER", "CHANNEL_REVERSION_MAGIC", "VIX_REGIME_MAGIC"):
+        v = getattr(config, name, None)
+        if v:
+            m.add(v)
+    m.add(getattr(config, "MAGIC_NUMBER", 0) + 4)      # DAYCOMBO
+    return {x for x in m if x and x > 0}
+
+
+def _close_at_market(mt5, log, pos, why: str) -> bool:
+    tick = mt5.symbol_info_tick(pos.symbol)
+    if tick is None:
+        return False
+    is_buy = pos.type == mt5.ORDER_TYPE_BUY
+    req = {"action": mt5.TRADE_ACTION_DEAL, "symbol": pos.symbol,
+           "volume": float(pos.volume), "position": pos.ticket,
+           "type": mt5.ORDER_TYPE_SELL if is_buy else mt5.ORDER_TYPE_BUY,
+           "price": tick.bid if is_buy else tick.ask,
+           "deviation": getattr(config, "DEVIATION_POINTS", 30),
+           "magic": pos.magic, "comment": "fxs timestop",
+           "type_time": mt5.ORDER_TIME_GTC,
+           "type_filling": mt5.ORDER_FILLING_IOC}
+    res = mt5.order_send(req)
+    ok = bool(res and res.retcode == mt5.TRADE_RETCODE_DONE)
+    if ok:
+        log.info("[MGMT] ⏱ %s ticket=%s kapatıldı (%s, kâr=%.2f)",
+                 pos.symbol, pos.ticket, why, float(pos.profit))
+    else:
+        log.warning("[MGMT] ❌ zaman stopu kapatma reddedildi ticket=%s rc=%s",
+                    pos.ticket, getattr(res, "retcode", "?"))
+    return ok
+
+
+def _time_stop_pass(mt5, log, resolve_symbol, st: dict, now: float,
+                    live_tickets: set) -> None:
+    minutes = float(pr.flag(config, "MGMT_TIME_STOP_MIN") or 0)
+    if minutes <= 0:
+        return
+    magics = _all_bot_magics()
+    for fxs_sym in pr.flag(config, "MGMT_TIME_STOP_SYMBOLS"):
+        mt5_symbol = resolve_symbol(fxs_sym)
+        if not mt5_symbol:
+            continue
+        for pos in (mt5.positions_get(symbol=mt5_symbol) or []):
+            if pos.magic not in magics:
+                continue
+            key = str(pos.ticket)
+            live_tickets.add(key)
+            if key not in st:
+                st[key] = {"first_seen": now, "entry": pos.price_open,
+                           "orig_sl": pos.sl, "orig_tp": pos.tp,
+                           "sl_dist": abs(pos.price_open - (pos.sl or pos.price_open)),
+                           "phase": "normal", "symbol": fxs_sym}
+                _save_state()
+                continue                     # yaşı bu taramadan itibaren say
+            s = st[key]
+            if s.get("phase") == "run":
+                continue                     # koşan kazanan — zaman stopu vurmaz
+            age = now - float(s.get("first_seen") or now)
+            if pr.time_stop_due(age, minutes):
+                if _close_at_market(mt5, log, pos,
+                                    f"zaman stopu {minutes:.0f}dk"):
+                    s["phase"] = "time_stopped"
+                    _save_state()
 
 
 # ─── SELL sabır kapısı (vixreg NDX) ──────────────────────────────────────────

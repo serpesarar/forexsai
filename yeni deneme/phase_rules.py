@@ -1,0 +1,311 @@
+"""phase_rules.py — 2026-08-14 karşı-olgusal denetiminin kural motoru (SAF).
+
+Bu modül MT5'e, config'e veya ağa BAĞLI DEĞİLDİR: yalnız sayı alır, karar
+döndürür. Böylece Mac'te (MetaTrader5 paketi olmadan) pytest ile test edilir ve
+kutuda bot tarafından çağrılır. Bot tarafı yalnız "veriyi topla → bu fonksiyonu
+çağır → logla/uygula" yapar.
+
+Kaynak analiz: 1MDATA/mt5_islem_analizi/ (133 NASDAQ işlemi, 33.353 adet 1m bar,
+bar-bar karşı-olgusal simülasyon; iki bağımsız model + iki tur çapraz hakemlik).
+
+BAYRAK FELSEFESİ: her kural ayrı bayrak, VARSAYILAN = ESKİ DAVRANIŞ.
+Yalnız Faz-0 bayrakları açık teslim edilir (kullanıcı kararı). Bayraklar kutudaki
+`config.py`'den okunur; `scripts/bot_flags.py` ile tek komutla açılıp kapanır.
+
+⚠️ KANIT SINIRI: tüm eşikler TEK AYLIK (13 Tem – 13 Ağu 2026) veriden çıkarıldı
+ve aynı veri üzerinde optimize edildi. Karşı-olgusal WR'lar (%81.7 / %88.9) örneklem
+İÇİ değerlerdir; canlıda bu kadar yüksek çıkmasını BEKLEME. Bayrakların amacı
+canlı ölçümü mümkün kılmak — kanıtı ilan etmek değil.
+"""
+from __future__ import annotations
+
+import math
+from datetime import datetime, time as dtime, timezone
+from typing import Iterable, Optional, Sequence
+
+# ── Varsayılanlar (bot config'i bunları ezer) ───────────────────────────────
+DEFAULTS: dict[str, object] = {
+    # FAZ 0 — açık teslim (çıkış tarafı; girişe dokunmaz)
+    "MGMT_BE_MODE": "conditional_mfe",   # "time30" = eski davranış
+    "MGMT_BE_MFE_R": 0.5,                # MFE ≥ 0.5×SL mesafesi → BE
+    # ⚠️ SAPMA (ölçümle): plan 120 dk diyordu; aynı 133 işlemin karşı-olgusalında
+    # 120 dk ZARARLI çıktı — 8 işlemi erken kesiyor, WR %73.7→%70.7, net −842$.
+    # 240 dk aynı "zombi" korumasını verirken maliyeti −77$ (1 işlem). Bu yüzden
+    # varsayılan 240; `python3 scripts/bot_flags.py set MGMT_TIME_STOP_MIN 120`
+    # ile plandaki değere dönülür. Kanıt: 1MDATA/mt5_islem_analizi/04_phase_replay.py
+    "MGMT_TIME_STOP_MIN": 240,           # 0 = kapalı
+    "MGMT_TIME_STOP_SYMBOLS": ("NDX.INDX",),
+    "TP_MODE": "atr",                    # "fixed" = eski davranış
+    "TP_ATR_MULT": 2.5,
+    "TP_ATR_PERIOD": 70,                 # 1m bar
+    "TP_ATR_SYMBOLS": ("NDX.INDX",),
+    "TP_ATR_EXCLUDE_SCOPES": ("DAYCOMBO",),   # scope_key son eki
+    # FAZ 1 — varsayılan KAPALI (Faz-0 go/no-go sonrası açılır)
+    "NDX_SESSION_BLOCK_ENABLED": False,
+    "NDX_SESSION_BLOCK": (("22:00", "07:00"),),
+    "NDX_FRIDAY_BLOCK": False,
+    "NDX_WEEKEND_HOLD_BLOCK": False,     # Cuma 20:45 UTC sonrası yeni giriş yok
+    "NDX_WEEKEND_HOLD_FROM": "20:45",
+    "NDX_SR_ENTRY_ENABLED": True,        # False → 1m S/R limit kolu kapalı
+    "PHASE1_CONFIG_RESTORE": False,      # ONLY_CONFIRM=True + ZONE_MIN_TOUCH=4
+    # FAZ 2 — gölge (ölç, bloklama)
+    "POS_TIGHT_ENABLED": True,
+    "POS_TIGHT_BLOCK": False,
+    "POS_TIGHT_SELL_MIN": 0.60,
+    "POS_TIGHT_BUY_MAX": 0.40,
+    "SELL_RSI_SHADOW_ENABLED": True,
+    "SELL_RSI_MIN": 55.0,
+    # FAZ 3 — MOD-E probasyon (yalnız gölge; canlı icrayı DEĞİŞTİRMEZ)
+    "PROBATION_SHADOW_ENABLED": True,
+    "PROBATION_LIVE": False,             # True → gerçekten 5 bar bekler (Faz-3 kararı)
+    "PROBATION_BARS": 5,
+    "PROBATION_Z": 1.28,
+    # Opsiyonel (etkisi nötr ölçüldü)
+    "SCOPE_LOSS_COOLDOWN_ENABLED": False,
+    "SCOPE_LOSS_COOLDOWN_MIN": 120,
+    "SCOPE_LOSS_COOLDOWN_STREAK": 2,
+}
+
+
+def flag(config, name: str):
+    """config.<name> varsa onu, yoksa DEFAULTS[name] döndür."""
+    if config is not None and hasattr(config, name):
+        return getattr(config, name)
+    return DEFAULTS[name]
+
+
+# ── Yardımcı: sembol/scope eşleme ───────────────────────────────────────────
+
+def _in(value: str, items: Iterable[str]) -> bool:
+    return any(value == x for x in items)
+
+
+def scope_suffix(scope_key: str) -> str:
+    """'NDX.INDX:BUY:DAYCOMBO' → 'DAYCOMBO'; 'NDX.INDX:BUY' → ''."""
+    parts = scope_key.split(":")
+    return parts[2] if len(parts) > 2 else ""
+
+
+# ═══ FAZ 0.3 — TP geometrisi (ATR70 1m) ════════════════════════════════════
+
+def true_ranges(bars: Sequence[dict]) -> list[float]:
+    """TR listesi (ilk bar hariç). bars: [{"high","low","close"}, ...] eski→yeni."""
+    out: list[float] = []
+    for i in range(1, len(bars)):
+        h, l = float(bars[i]["high"]), float(bars[i]["low"])
+        pc = float(bars[i - 1]["close"])
+        out.append(max(h - l, abs(h - pc), abs(l - pc)))
+    return out
+
+
+def atr_simple(bars: Sequence[dict], period: int) -> Optional[float]:
+    """Son `period` barın ortalama true range'i (basit ortalama).
+
+    Analizde "ATR70(1m) = ~70 barlık ortalama true range" olarak tanımlandı;
+    Wilder yumuşatması DEĞİL, düz ortalama kullanılır (tanımla birebir)."""
+    if not bars or len(bars) < period + 1:
+        return None
+    trs = true_ranges(bars)[-period:]
+    if not trs:
+        return None
+    atr = sum(trs) / len(trs)
+    return atr if atr > 0 else None
+
+
+def tp_distance(scope_key: str, forexsai_sym: str, bars_1m: Optional[Sequence[dict]],
+                fixed_tp_dist: float, config=None) -> tuple[float, str]:
+    """(tp_mesafesi, kaynak). Kapsam dışı / veri yoksa sabit değere düşer (fail-open).
+
+    Kapsam: TP_MODE='atr' + sembol TP_ATR_SYMBOLS içinde + scope son eki
+    TP_ATR_EXCLUDE_SCOPES'ta DEĞİL (DAYCOMBO muaf — kendi geometrisi sağlıklı).
+    """
+    if str(flag(config, "TP_MODE")).lower() != "atr":
+        return fixed_tp_dist, "fixed"
+    if not _in(forexsai_sym, flag(config, "TP_ATR_SYMBOLS")):
+        return fixed_tp_dist, "fixed_scope_out"
+    if _in(scope_suffix(scope_key), flag(config, "TP_ATR_EXCLUDE_SCOPES")):
+        return fixed_tp_dist, "fixed_scope_excluded"
+    atr = atr_simple(bars_1m or [], int(flag(config, "TP_ATR_PERIOD")))
+    if atr is None:
+        return fixed_tp_dist, "fixed_no_atr"
+    dist = float(flag(config, "TP_ATR_MULT")) * atr
+    if dist <= 0:
+        return fixed_tp_dist, "fixed_bad_atr"
+    return dist, "atr70"
+
+
+# ═══ FAZ 0.1 / 0.2 — pozisyon yönetimi kararları ════════════════════════════
+
+def be_should_arm(mode: str, mfe: float, sl_dist: float, age_sec: float,
+                  be_minutes: float, mfe_r: float = 0.5) -> bool:
+    """Başabaş-stop devreye girmeli mi?
+
+    mode='conditional_mfe' → pozisyon en az mfe_r×SL kadar lehe gitmişse (MFE)
+    mode='time30'          → eski davranış: yaş ≥ be_minutes
+    Diğer/kapalı           → asla.
+    """
+    if sl_dist <= 0:
+        return False
+    if mode == "conditional_mfe":
+        return mfe >= mfe_r * sl_dist
+    if mode == "time30":
+        return age_sec >= be_minutes * 60
+    return False
+
+
+def time_stop_due(age_sec: float, minutes: float) -> bool:
+    """120 dk dolduysa ve pozisyon hâlâ açıksa piyasadan kapat."""
+    return bool(minutes) and minutes > 0 and age_sec >= minutes * 60
+
+
+# ═══ FAZ 1.1 / 1.2 — giriş zaman pencereleri ═══════════════════════════════
+
+def _parse_hhmm(s: str) -> dtime:
+    h, m = str(s).split(":")
+    return dtime(int(h), int(m))
+
+
+def _in_window(now: dtime, start: dtime, end: dtime) -> bool:
+    """Gece yarısını aşan pencereleri de doğru değerlendirir (22:00→07:00)."""
+    if start <= end:
+        return start <= now < end
+    return now >= start or now < end
+
+
+def entry_window_block(now_utc: datetime, forexsai_sym: str,
+                       config=None) -> tuple[bool, str]:
+    """(bloklandı_mı, sebep) — NDX'e özel seans/gün yasakları. Diğer semboller serbest.
+
+    Kanıt (bu ayın 133 NASDAQ işlemi):
+      ASIA 22-07 UTC : n=36  WR %50.0  −2.139$
+      Cuma           : n=21  WR %38.1  −1.518$
+    """
+    if forexsai_sym != "NDX.INDX":
+        return False, ""
+    t = now_utc.timetz().replace(tzinfo=None)
+
+    if flag(config, "NDX_SESSION_BLOCK_ENABLED"):
+        for start_s, end_s in flag(config, "NDX_SESSION_BLOCK"):
+            if _in_window(t, _parse_hhmm(start_s), _parse_hhmm(end_s)):
+                return True, f"ASIA/seans yasağı {start_s}-{end_s} UTC (n=36, WR %50, −2.139$)"
+
+    if flag(config, "NDX_FRIDAY_BLOCK") and now_utc.isoweekday() == 5:
+        return True, "Cuma yasağı (n=21, WR %38.1, −1.518$)"
+
+    if flag(config, "NDX_WEEKEND_HOLD_BLOCK") and now_utc.isoweekday() == 5:
+        if t >= _parse_hhmm(flag(config, "NDX_WEEKEND_HOLD_FROM")):
+            return True, "hafta sonu taşıma yasağı (Cuma kapanışa yakın giriş yok)"
+    return False, ""
+
+
+def only_confirm_required(config=None) -> Optional[bool]:
+    """Faz-1.4: SCOUT sinyaller oy sayılmasın (repo varsayılanına dönüş).
+
+    None → dokunma (config ne diyorsa o). True → CONFIRM zorunlu."""
+    return True if flag(config, "PHASE1_CONFIG_RESTORE") else None
+
+
+def zone_min_touch(config=None, current: int = 2) -> int:
+    """Faz-1.4: zayıf S/R bölgesi musluğunu kıs (2 → 4)."""
+    return 4 if flag(config, "PHASE1_CONFIG_RESTORE") else current
+
+
+def sr_entry_allowed(forexsai_sym: str, config=None) -> bool:
+    """Faz-1.3: NDX'te 1m S/R pullback (limit) kolu.
+
+    ⚠️ Bu kol KAPATILIR, DÜZELTİLMEZ: analizde min-TP tabanı koymak
+    (66pt) −5.909$ üretti — yasak listesinde."""
+    if forexsai_sym != "NDX.INDX":
+        return True
+    return bool(flag(config, "NDX_SR_ENTRY_ENABLED"))
+
+
+# ═══ FAZ 2 — dalga konumu + RSI (gölge) ════════════════════════════════════
+
+def wave_position(bars_5m: Sequence[dict], price: float) -> Optional[float]:
+    """wavePos = (fiyat − min) / (max − min), son 48×5m bar. 0=dip, 1=tepe."""
+    if not bars_5m or len(bars_5m) < 20:
+        return None
+    hi = max(float(b["high"]) for b in bars_5m)
+    lo = min(float(b["low"]) for b in bars_5m)
+    if hi <= lo:
+        return None
+    return (float(price) - lo) / (hi - lo)
+
+
+def position_gate_blocks(direction: str, pos: Optional[float],
+                         sell_min: float, buy_max: float) -> bool:
+    """SELL dalganın dibinde / BUY tepesinde → blok. pos=None → fail-open."""
+    if pos is None:
+        return False
+    if direction == "SELL":
+        return pos < sell_min
+    if direction == "BUY":
+        return pos > buy_max
+    return False
+
+
+def rsi(closes: Sequence[float], period: int = 14) -> Optional[float]:
+    """Wilder RSI. Yetersiz veri → None (fail-open)."""
+    if closes is None or len(closes) < period + 1:
+        return None
+    gains = losses = 0.0
+    for i in range(1, period + 1):
+        d = float(closes[i]) - float(closes[i - 1])
+        gains += max(d, 0.0)
+        losses += max(-d, 0.0)
+    ag, al = gains / period, losses / period
+    for i in range(period + 1, len(closes)):
+        d = float(closes[i]) - float(closes[i - 1])
+        ag = (ag * (period - 1) + max(d, 0.0)) / period
+        al = (al * (period - 1) + max(-d, 0.0)) / period
+    if al == 0:
+        return 100.0
+    return 100.0 - 100.0 / (1.0 + ag / al)
+
+
+# ═══ FAZ 3 — MOD-E probasyon ═══════════════════════════════════════════════
+
+def probation_band(atr_1m: float, bars: int = 5, z: float = 1.28) -> float:
+    """Brownian %90 gürültü bandı: z × ATR14(1m) × √bars."""
+    return float(z) * float(atr_1m) * math.sqrt(float(bars))
+
+
+def probation_verdict(direction: str, signal_price: float, atr_1m: float,
+                      bars_after: Sequence[dict], bars: int = 5,
+                      z: float = 1.28) -> tuple[bool, float, float]:
+    """(iptal_mi, aleyhe_max_hareket, band).
+
+    Sinyalden sonraki `bars` adet 1m barda aleyhe en fazla ne kadar gidildi?
+    Band aşıldıysa sinyal ölmüş sayılır → giriş İPTAL.
+    BUY için aleyhe = signal_price − min(low); SELL için = max(high) − signal_price.
+    """
+    band = probation_band(atr_1m, bars, z)
+    if not bars_after:
+        return False, 0.0, band
+    seg = list(bars_after)[:bars]
+    if direction == "BUY":
+        adverse = float(signal_price) - min(float(b["low"]) for b in seg)
+    else:
+        adverse = max(float(b["high"]) for b in seg) - float(signal_price)
+    adverse = max(adverse, 0.0)
+    return adverse > band, adverse, band
+
+
+# ═══ Opsiyonel — ardışık SL soğuması ═══════════════════════════════════════
+# ⚠️ DURUM: kural motoru hazır ama BOTA BAĞLANMADI (etkisi karşı-olgusalda nötr
+# ölçüldü: −106$ kaybı kesiyor). Bağlamak scope başına kayıp-serisi takibi
+# gerektiriyor (MT5 geçmişi) — backlog'da. Bayrak açılsa bile şu an bir yerde
+# çağrılmıyor; yanıltmasın diye burada açıkça yazılıdır.
+
+def loss_streak_cooldown_active(last_loss_ts: Optional[float], streak: int,
+                                now_ts: float, config=None) -> tuple[bool, float]:
+    """(aktif_mi, kalan_dk). streak ≥ eşik ve son kayıptan bu yana < süre ise blok."""
+    if not flag(config, "SCOPE_LOSS_COOLDOWN_ENABLED") or not last_loss_ts:
+        return False, 0.0
+    need = int(flag(config, "SCOPE_LOSS_COOLDOWN_STREAK"))
+    if streak < need:
+        return False, 0.0
+    minutes = float(flag(config, "SCOPE_LOSS_COOLDOWN_MIN"))
+    elapsed = (now_ts - last_loss_ts) / 60.0
+    return (elapsed < minutes), max(0.0, minutes - elapsed)
