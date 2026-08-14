@@ -118,12 +118,22 @@ def test_probation_plus_small_tp_is_worse(rep, data):
     assert combo < mod_e
 
 
-def test_time_stop_120_costs_money_240_is_cheap(rep, data):
+def test_time_stop_120_costs_money_240_does_not(rep, data):
     """Varsayılanın neden 240 olduğunun kilidi (plan 120 diyordu)."""
     base = {**OFF, "TP_MODE": "atr", "TP_ATR_MULT": 2.5, "TP_ATR_PERIOD": 70}
     _, _, no_stop = _run(rep, data, {**base, "MGMT_TIME_STOP_MIN": 0})
     _, _, s120 = _run(rep, data, {**base, "MGMT_TIME_STOP_MIN": 120})
     _, _, s240 = _run(rep, data, {**base, "MGMT_TIME_STOP_MIN": 240})
-    assert s120 < no_stop - 500          # 120 dk belirgin zararlı
-    assert s240 > s120                   # 240 dk daha iyi
-    assert abs(no_stop - s240) < 200     # 240 dk neredeyse nötr
+    assert s120 < no_stop - 1000         # 120 dk belirgin zararlı
+    assert s240 >= no_stop               # 240 dk zarar vermiyor (hatta iyi)
+
+
+def test_atr_tp_floor_protects_dead_hours(rep, data):
+    """TP tabanı (0.3×SL) tabansız hâlden İYİ olmalı — canlı RR 0.11 koruması."""
+    base = {**OFF, "TP_MODE": "atr", "TP_ATR_MULT": 2.5, "TP_ATR_PERIOD": 70,
+            "MGMT_TIME_STOP_MIN": 0}
+    _, _, no_floor = _run(rep, data, {**base, "TP_ATR_MIN_R": 0.0})
+    _, _, floor03 = _run(rep, data, {**base, "TP_ATR_MIN_R": 0.3})
+    _, _, floor06 = _run(rep, data, {**base, "TP_ATR_MIN_R": 0.6})
+    assert floor03 > no_floor            # taban kâr getiriyor
+    assert floor06 < 0                   # yasak listesindeki 66pt tabanı (0.6×110)

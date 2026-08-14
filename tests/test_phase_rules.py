@@ -79,6 +79,32 @@ def test_other_symbols_untouched():
         assert src == "fixed_scope_out" and d == 67.0
 
 
+def test_tp_floor_kicks_in_when_atr_collapses():
+    """Ölü saat koruması: ATR70=2 → TP 5pt ama SL 110 → taban 0.3×110=33pt."""
+    b = bars([(10, 8, 9)] * 80)
+    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, None, sl_dist=110.0)
+    assert src == "atr70_floored" and d == pytest.approx(33.0)
+
+
+def test_tp_floor_not_applied_without_sl_dist():
+    b = bars([(10, 8, 9)] * 80)
+    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, None)
+    assert src == "atr70" and d == pytest.approx(5.0)
+
+
+def test_tp_floor_can_be_disabled():
+    b = bars([(10, 8, 9)] * 80)
+    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0,
+                            Cfg(TP_ATR_MIN_R=0.0), sl_dist=110.0)
+    assert src == "atr70" and d == pytest.approx(5.0)
+
+
+def test_tp_floor_does_not_shrink_a_large_atr_target():
+    b = bars([(60, 8, 30)] * 80)          # ATR büyük → TP taban üstünde
+    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, None, sl_dist=110.0)
+    assert src == "atr70" and d > 33.0
+
+
 def test_tp_falls_back_when_no_bars():
     d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", None, 80.0, None)
     assert src == "fixed_no_atr" and d == 80.0

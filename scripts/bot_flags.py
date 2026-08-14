@@ -30,9 +30,9 @@ REMOTE = ROOT / "scripts" / "remote.py"
 PRESETS: dict[str, dict[str, dict[str, str]]] = {
     "phase0": {
         "on": {"MGMT_BE_MODE": "'conditional_mfe'", "TP_MODE": "'atr'",
-               "MGMT_TIME_STOP_MIN": "240"},
+               "MGMT_TIME_STOP_MIN": "240", "TP_ATR_MIN_R": "0.3"},
         "off": {"MGMT_BE_MODE": "'time30'", "TP_MODE": "'fixed'",
-                "MGMT_TIME_STOP_MIN": "0"},
+                "MGMT_TIME_STOP_MIN": "0", "TP_ATR_MIN_R": "0.0"},
     },
     "phase1": {
         "on": {"NDX_SESSION_BLOCK_ENABLED": "True", "NDX_FRIDAY_BLOCK": "True",

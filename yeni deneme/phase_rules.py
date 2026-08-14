@@ -40,6 +40,15 @@ DEFAULTS: dict[str, object] = {
     "TP_ATR_PERIOD": 70,                 # 1m bar
     "TP_ATR_SYMBOLS": ("NDX.INDX",),
     "TP_ATR_EXCLUDE_SCOPES": ("DAYCOMBO",),   # scope_key son eki
+    # ⚠️ EKLEME (planda yoktu — canlı duman testi zorunlu kıldı): ATR70 ölü
+    # saatlerde çöküyor. 2026-08-14 22:02 UTC'de ATR70=4.8pt → TP 12pt / SL 110
+    # = RR 0.11 (başabaş WR %90 + spread hedefin ~%15'ini yer). Örneklemde de
+    # 133 işlemin 35'i RR<0.30 idi. Taban = TP en az bu kadar × SL mesafesi.
+    # Taban taraması (aynı 133 işlem): 0.0→+2.678$ · 0.2→+3.827$ · 0.3→+4.110$ ·
+    # 0.4→+3.793$ · 0.5→+500$ · 0.6→−6.219$. Yasak listesindeki "min TP 66pt"
+    # tam olarak 0.6 tabanına denk geliyor ve gerçekten felaket — 0.3 ondan
+    # çok uzakta ve her spread varsayımında (0/1.5/3pt) tabansızdan İYİ.
+    "TP_ATR_MIN_R": 0.3,                      # 0 = taban yok (plandaki hâli)
     # FAZ 1 — varsayılan KAPALI (Faz-0 go/no-go sonrası açılır)
     "NDX_SESSION_BLOCK_ENABLED": False,
     "NDX_SESSION_BLOCK": (("22:00", "07:00"),),
@@ -113,11 +122,14 @@ def atr_simple(bars: Sequence[dict], period: int) -> Optional[float]:
 
 
 def tp_distance(scope_key: str, forexsai_sym: str, bars_1m: Optional[Sequence[dict]],
-                fixed_tp_dist: float, config=None) -> tuple[float, str]:
+                fixed_tp_dist: float, config=None,
+                sl_dist: float | None = None) -> tuple[float, str]:
     """(tp_mesafesi, kaynak). Kapsam dışı / veri yoksa sabit değere düşer (fail-open).
 
     Kapsam: TP_MODE='atr' + sembol TP_ATR_SYMBOLS içinde + scope son eki
     TP_ATR_EXCLUDE_SCOPES'ta DEĞİL (DAYCOMBO muaf — kendi geometrisi sağlıklı).
+
+    sl_dist verilirse TP_ATR_MIN_R tabanı uygulanır (ölü saatte RR 0.11 koruması).
     """
     if str(flag(config, "TP_MODE")).lower() != "atr":
         return fixed_tp_dist, "fixed"
@@ -131,6 +143,9 @@ def tp_distance(scope_key: str, forexsai_sym: str, bars_1m: Optional[Sequence[di
     dist = float(flag(config, "TP_ATR_MULT")) * atr
     if dist <= 0:
         return fixed_tp_dist, "fixed_bad_atr"
+    min_r = float(flag(config, "TP_ATR_MIN_R") or 0)
+    if sl_dist and min_r > 0 and dist < min_r * sl_dist:
+        return min_r * float(sl_dist), "atr70_floored"
     return dist, "atr70"
 
 

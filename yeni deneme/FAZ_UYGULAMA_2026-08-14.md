@@ -19,6 +19,7 @@ denetim (iki bağımsız model + iki tur çapraz hakemlik). Uygulama kuralları
 | 0.1 | Koşullu başabaş (MFE ≥ 0.5R) | `trade_manager.manage_positions` | `MGMT_BE_MODE='conditional_mfe'` **açık** |
 | 0.2 | Zaman stopu | `trade_manager._time_stop_pass` + `_close_at_market` | `MGMT_TIME_STOP_MIN=240` **açık** |
 | 0.3 | TP = 2.5×ATR70(1m) | `forexsai_demo_bot._fixed_distances` + `open_trade_v2`; hesap `phase_rules.tp_distance` | `TP_MODE='atr'` **açık** |
+| 0.3b | TP tabanı = 0.3×SL (**plan dışı ekleme**) | `phase_rules.tp_distance` | `TP_ATR_MIN_R=0.3` **açık** |
 | 1.1 | ASIA 22–07 UTC yasağı | `_entry_window_blocks` → `check_scope` / `check_vix_regime` / `check_channel_reversion` / `check_daycombo` | `NDX_SESSION_BLOCK_ENABLED=False` |
 | 1.2 | Cuma yasağı + Cuma 20:45 sonrası | aynı fonksiyon | `NDX_FRIDAY_BLOCK=False`, `NDX_WEEKEND_HOLD_BLOCK=False` |
 | 1.3 | S/R-limit kolunu kapat | `_route_open` | `NDX_SR_ENTRY_ENABLED=True` |
@@ -61,19 +62,42 @@ Regresyon testi: `tests/test_phase_replay_equivalence.py` (veri yoksa atlanır) 
 `tests/test_phase_rules.py` (32 birim testi).
 
 ### Plandan tek sapma — zaman stopu 120 → 240 dk
-Aynı replay'de 120 dk **zararlı** çıktı: 8 işlemi erken kesiyor, WR %73.7→%70.7,
-net −842$. 240 dk aynı "zombi" korumasını veriyor (10+ saatlik işlemler) ama
-maliyeti −77$ (1 işlem). Varsayılan 240 yapıldı. Plandaki değere dönmek için:
+Aynı replay'de 120 dk **zararlı** çıktı: işlemleri erken kesiyor (TP tabanı
+devredeyken WR %72,2→%67,7, net +4.110$ → +1.816$). 240 dk ise aynı "zombi"
+korumasını verirken net'i +4.716$'a **yükseltiyor**. Varsayılan 240 yapıldı. Plandaki değere dönmek için:
 ```
 python3 scripts/bot_flags.py set MGMT_TIME_STOP_MIN 120 --restart
 ```
 
-### TP=ATR70'in tek başına etkisi (bu ayın verisinde)
+### Plan dışı EKLEME — ATR TP'ye alt taban (`TP_ATR_MIN_R=0.3`)
+Kutuda canlı veriyle koşulan duman testi (`box_phase_smoke.py`, Cuma 22:02 UTC,
+piyasa ölü) şunu gösterdi: **ATR70(1m)=4,8pt → TP 12pt / SL 110 = RR 0,11**.
+Başabaş kazanma oranı %90; üstüne spread hedefin ~%15'ini yer. Örneklemde de
+133 işlemin 35'i RR<0,30 ile açılmış (min RR 0,07).
+
+Taban taraması (aynı 133 işlem, TP = max(2,5×ATR70, taban×SL)):
+
+| taban | WR | net | 1,5pt spread ile | 3pt spread ile |
+|---|---|---|---|---|
+| yok (plandaki hâli) | %73,7 | +2.678$ | +1.788$ | +899$ |
+| 0,2×SL | %73,7 | +3.827$ | — | — |
+| **0,3×SL (seçilen)** | **%72,2** | **+4.110$** | **+3.220$** | — |
+| 0,4×SL | %69,2 | +3.793$ | +2.904$ | +2.014$ |
+| 0,5×SL | %66,2 | +500$ | — | — |
+| 0,6×SL (= yasak listesindeki 66pt) | %60,2 | **−6.219$** | — | — |
+
+Yani yasak listesindeki "min TP 66pt" maddesi **doğru** — ama sebebi tabanın
+kendisi değil, tabanın yüksekliği. 0,3 tabanı her spread varsayımında tabansız
+hâlden iyi. Kapatmak için: `python3 scripts/bot_flags.py set TP_ATR_MIN_R 0.0`.
+
+### TP=ATR70'in tek başına etkisi (taban dahil, bu ayın verisinde)
 | Kural | n | WR | net |
 |---|---|---|---|
 | eski (TP 80 sabit, BE'siz sim) | 133 | %60.2 | +1.643$ |
-| **TP = 2.5×ATR70(1m)** | 133 | **%73.7** | **+2.678$** |
-ATR70 hedefi medyan **46pt** üretiyor (min 17 / maks 108) — sabit 80pt yerine.
+| **TP = 2.5×ATR70 + 0,3 taban** | 133 | **%72.2** | **+4.110$** |
+| yukarısı + zaman stopu 240 | 133 | %72.2 | **+4.716$** |
+ATR70 hedefi medyan **46pt** üretiyor (min 17 / maks 108) — sabit 80pt yerine;
+taban devredeyken 33pt'nin altına inmiyor.
 
 ## 4. Gölge log şeması
 
@@ -105,8 +129,8 @@ Kill-switch (plan): haftalık net < −1.500$ → `revert-all`.
 | Aşama | Beklenen (örneklem içi sim) | Canlı ölçüm | Karar |
 |---|---|---|---|
 | Mevcut (referans) | n=133 · %56.4 · −907$ | — | — |
-| Faz 0 | %70.7 · +1.836$ (stop 240 ile %73.7 · +2.601$) | … | 2 hafta sonra go/no-go: WR farkı ≤5 puan → Faz-1 |
-| Faz 0+1 | n=71 · %80.3 · +4.764$ | … | … |
+| Faz 0 (taban + stop 240) | %72.2 · +4.716$ | … | 2 hafta sonra go/no-go: WR farkı ≤5 puan → Faz-1 |
+| Faz 0+1 | n=71 · %80.3 · +4.970$ | … | … |
 | Faz 0+1+2 (MOD-W) | n=36 · %88.9 | … | 2 hafta gölge → BLOK |
 | MOD-E (Faz 3) | n=65 · %75.4 · +8.537$ | … | 4. hafta: işlem başına net MOD-E ≳ MOD-W ise ana motor |
 

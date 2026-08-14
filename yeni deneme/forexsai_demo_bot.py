@@ -538,11 +538,12 @@ def _fixed_distances(price: float, cfg: dict, bot_signal: dict | None,
     if scope_key and mt5_symbol:
         fxs = scope_key.split(":")[0]
         new_tp, src = pr.tp_distance(scope_key, fxs, candles_1m(mt5_symbol, 200),
-                                     tp_d, config)
-        if src == "atr70" and abs(new_tp - tp_d) > 1e-9:
-            log.info("[TP-ATR] %s: TP %.1f → %.1f (2.5×ATR70(1m)), SL %.1f "
-                     "(RR %.2f)", scope_key, tp_d, new_tp, sl_d,
-                     new_tp / sl_d if sl_d else 0)
+                                     tp_d, config, sl_dist=sl_d)
+        if src.startswith("atr70") and abs(new_tp - tp_d) > 1e-9:
+            log.info("[TP-ATR] %s: TP %.1f → %.1f (%s), SL %.1f (RR %.2f)",
+                     scope_key, tp_d, new_tp,
+                     "2.5×ATR70(1m)" if src == "atr70" else "ATR70 + RR tabanı",
+                     sl_d, new_tp / sl_d if sl_d else 0)
             tp_d = new_tp
     return tp_d, sl_d
 
@@ -860,8 +861,9 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     # aksi hâlde aynı scope iki farklı hedef geometrisiyle çalışır ve ölçüm bozulur.
     tp_now = sign * (tp - price)
     new_tp, src = pr.tp_distance(scope_key, forexsai_sym,
-                                 candles_1m(mt5_symbol, 200), tp_now, config)
-    if src == "atr70" and abs(new_tp - tp_now) > 1e-9:
+                                 candles_1m(mt5_symbol, 200), tp_now, config,
+                                 sl_dist=abs(price - sl))
+    if src.startswith("atr70") and abs(new_tp - tp_now) > 1e-9:
         tp = round(price + sign * new_tp, digits)
         log.info("[TP-ATR] %s (v2): TP mesafesi %.1f → %.1f", scope_key,
                  tp_now, new_tp)
