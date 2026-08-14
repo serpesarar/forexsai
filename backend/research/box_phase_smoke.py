@@ -74,13 +74,15 @@ def main() -> None:
 
     print("\n── FAZ 0.3: TP geometrisi ───────────────────────────────────")
     atr70 = pr.atr_simple(b1, 70)
+    sl_ref = 110.0                      # botun NDX sabit SL mesafesi
     for scope in ("NDX.INDX:BUY", "NDX.INDX:SELL:VIXREG", "NDX.INDX:BUY:DAYCOMBO"):
-        d, src = pr.tp_distance(scope, "NDX.INDX", b1, 80.0, config)
-        print(f"  {scope:<28} TP={d:6.1f}pt  kaynak={src}"
-              f"   (sabit 80pt yerine)" if src == "atr70" else
-              f"  {scope:<28} TP={d:6.1f}pt  kaynak={src}")
-    print(f"  ATR70(1m)={atr70:.1f}pt → RR(SL=110) = {2.5*atr70/110:.2f}"
-          if atr70 else "  ATR70 hesaplanamadı")
+        d, src = pr.tp_distance(scope, "NDX.INDX", b1, 80.0, config, sl_dist=sl_ref)
+        print(f"  {scope:<28} TP={d:6.1f}pt  RR={d/sl_ref:4.2f}  kaynak={src}")
+    if atr70:
+        ham = 2.5 * atr70
+        print(f"  ATR70(1m)={atr70:.1f}pt → ham TP {ham:.1f}pt (RR {ham/sl_ref:.2f}); "
+              f"taban {pr.flag(config, 'TP_ATR_MIN_R')}×SL devrede mi: "
+              f"{'EVET' if ham < float(pr.flag(config, 'TP_ATR_MIN_R'))*sl_ref else 'hayır'}")
 
     print("\n── FAZ 0.1/0.2: yönetim kararları (örnek değerlerle) ────────")
     sl_d = 110.0
