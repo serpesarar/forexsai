@@ -243,17 +243,21 @@ def main() -> None:
                   f"{server_to_utc(b[-1]['t'], a.offset_min):%Y-%m-%d}")
 
     # ── zaman ekseni öz-denetimi: giriş fiyatı kendi barının içinde mi? ──
-    ok = tot = 0
-    for p in pos:
-        b, t = bars_by.get(p["sym"], ([], []))
-        if not b:
-            continue
-        i = bisect_left(t, p["t_srv"])
-        if i >= len(b):
-            continue
-        tot += 1
-        ok += int(b[i]["low"] - 3 <= p["entry"] <= b[i]["high"] + 3)
-    print(f"\nzaman ekseni denetimi: giriş fiyatı kendi 1m barında {ok}/{tot}")
+    print("\nzaman ekseni denetimi (giriş fiyatı kendi 1m barında):")
+    for sym in sorted(bars_by):
+        b, t = bars_by[sym]
+        tol = 3.0 if sym in ("NAS100", "GER40") else 0.15
+        ok = tot = 0
+        for p in pos:
+            if p["sym"] != sym or not b:
+                continue
+            i = bisect_left(t, p["t_srv"])
+            if i >= len(b) or p["t_srv"] < t[0]:
+                continue
+            tot += 1
+            ok += int(b[i]["low"] - tol <= p["entry"] <= b[i]["high"] + tol)
+        if tot:
+            print(f"  {sym:<10} {ok}/{tot}  (%{100*ok/tot:.0f})")
 
     def run(cfg_kw, filt_kw=None, prob=False, sel=None) -> list[dict]:
         cfg = Cfg(**cfg_kw)
@@ -292,9 +296,24 @@ def main() -> None:
         print(f"  {'GERÇEKLEŞEN (canlı)':<34} n={len(ndx):<4} "
               f"WR=%{100*gerc_w/len(ndx):5.1f}  net={sum(p['profit'] for p in ndx):>9.0f}$")
         line("mevcut kural (BE'siz sim)", run(BASE, sel=ndx))
+        print("  ── bileşenler tek tek (TP sabit tabanı) ──")
+        line("A) yalnız zaman stopu 240", run({**BASE, "MGMT_TIME_STOP_MIN": 240}, sel=ndx))
+        line("B) yalnız ATR TP (stop yok)",
+             run({**OFF, "TP_MODE": "atr", "TP_ATR_MULT": 2.5, "TP_ATR_PERIOD": 70,
+                  "TP_ATR_MIN_R": 0.3, "MGMT_TIME_STOP_MIN": 0}, sel=ndx))
+        line("B2) ATR TP çarpan 4.0",
+             run({**OFF, "TP_MODE": "atr", "TP_ATR_MULT": 4.0, "TP_ATR_PERIOD": 70,
+                  "TP_ATR_MIN_R": 0.3, "MGMT_TIME_STOP_MIN": 0}, sel=ndx))
+        line("C) yalnız Faz-1 filtreleri (TP sabit)",
+             run({**PHASE1, "TP_MODE": "fixed", "MGMT_TIME_STOP_MIN": 0},
+                 filt_kw=PHASE1, sel=ndx))
+        print("  ── paketler ──")
         line("FAZ 0 (ATR TP+taban+stop240)", run(P0, sel=ndx))
         line("FAZ 0+1 (giriş filtreleri)", run(P01, filt_kw=PHASE1, sel=ndx))
-        line("MOD-E (probasyon, TP sabit)", run(MODE, filt_kw=PHASE1, prob=True, sel=ndx))
+        line("MOD-E (probasyon+TP sabit+Faz1)", run(MODE, filt_kw=PHASE1, prob=True, sel=ndx))
+        line("MOD-E filtresiz", run({**OFF, "TP_MODE": "fixed", "MGMT_TIME_STOP_MIN": 0,
+                                     "PROBATION_BARS": 5, "PROBATION_Z": 1.28},
+                                    prob=True, sel=ndx))
 
     print("\n═══ KAPSAM DIŞI KONTROL (kural NASDAQ için yazıldı) ═══")
     for fx in ("GDAXI.INDX", "USOIL.FOREX"):
