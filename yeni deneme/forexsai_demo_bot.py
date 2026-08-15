@@ -2148,7 +2148,7 @@ def main():
     # 2026-08-14 faz bayrakları (phase_rules.DEFAULTS varsayılanı; config ezer)
     log.info("  ── 2026-08-14 faz bayrakları ──")
     for _n in ("MGMT_BE_MODE", "MGMT_BE_MFE_R", "MGMT_TIME_STOP_MIN",
-               "TP_MODE", "TP_ATR_MULT", "TP_ATR_PERIOD",
+               "TP_MODE", "TP_ATR_MULT", "TP_ATR_PERIOD", "TP_ATR_MIN_R",
                "NDX_SESSION_BLOCK_ENABLED", "NDX_FRIDAY_BLOCK",
                "NDX_WEEKEND_HOLD_BLOCK", "NDX_SR_ENTRY_ENABLED",
                "PHASE1_CONFIG_RESTORE", "POS_TIGHT_ENABLED", "POS_TIGHT_BLOCK",
