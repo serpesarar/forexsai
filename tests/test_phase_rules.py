@@ -27,19 +27,27 @@ def bars(seq):
     return [{"high": h, "low": l, "close": c} for h, l, c in seq]
 
 
+# ATR-TP deneyi 2026-08-15 dış-örneklem sonrası varsayılan KAPALI; davranışını
+# test etmek için açıkça açıyoruz.
+ATR_ON = Cfg(TP_MODE="atr")
+
+
 # ── bayrak çözümlemesi ──────────────────────────────────────────────────────
 
 def test_flag_config_overrides_default():
-    assert pr.flag(None, "TP_MODE") == "atr"
-    assert pr.flag(Cfg(TP_MODE="fixed"), "TP_MODE") == "fixed"
+    assert pr.flag(None, "TP_MODE") == "fixed"
+    assert pr.flag(Cfg(TP_MODE="atr"), "TP_MODE") == "atr"
 
 
-def test_defaults_phase1_off_phase0_on():
-    """Teslim sözleşmesi: Faz-0 açık, Faz-1 kapalı, Faz-2/3 gölge."""
+def test_defaults_after_oos_validation():
+    """2026-08-15 dış-örneklem sonrası varsayılanlar.
+
+    Dış-örneklemde ELENEN iki kural (ATR TP + zaman stopu) varsayılan KAPALI;
+    hayatta kalan koşullu BE açık. Faz-1 bayrakları kutuda açıldı ama kod
+    varsayılanı 'eski davranış' kalır (geri alma güvencesi)."""
     assert pr.flag(None, "MGMT_BE_MODE") == "conditional_mfe"
-    # 240: plandaki 120 karşı-olgusalda −842$ çıktı (bkz. phase_rules yorumu)
-    assert pr.flag(None, "MGMT_TIME_STOP_MIN") == 240
-    assert pr.flag(None, "TP_MODE") == "atr"
+    assert pr.flag(None, "MGMT_TIME_STOP_MIN") == 0      # OOS: −1.900$
+    assert pr.flag(None, "TP_MODE") == "fixed"           # OOS: WR ↑ ama para ↓
     assert pr.flag(None, "NDX_SESSION_BLOCK_ENABLED") is False
     assert pr.flag(None, "NDX_FRIDAY_BLOCK") is False
     assert pr.flag(None, "NDX_SR_ENTRY_ENABLED") is True
@@ -61,13 +69,13 @@ def test_atr_needs_enough_bars():
 
 def test_tp_distance_uses_atr_for_ndx():
     b = bars([(10, 8, 9)] * 80)          # ATR70 = 2 → TP = 5.0
-    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, None)
+    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, ATR_ON)
     assert src == "atr70" and d == pytest.approx(5.0)
 
 
 def test_daycombo_is_exempt():
     b = bars([(10, 8, 9)] * 80)
-    d, src = pr.tp_distance("NDX.INDX:BUY:DAYCOMBO", "NDX.INDX", b, 80.0, None)
+    d, src = pr.tp_distance("NDX.INDX:BUY:DAYCOMBO", "NDX.INDX", b, 80.0, ATR_ON)
     assert src == "fixed_scope_excluded" and d == 80.0
 
 
@@ -75,38 +83,38 @@ def test_other_symbols_untouched():
     b = bars([(10, 8, 9)] * 80)
     for sym, scope in (("USOIL.FOREX", "USOIL.FOREX:BUY"),
                        ("GDAXI.INDX", "GDAXI.INDX:BUY")):
-        d, src = pr.tp_distance(scope, sym, b, 67.0, None)
+        d, src = pr.tp_distance(scope, sym, b, 67.0, ATR_ON)
         assert src == "fixed_scope_out" and d == 67.0
 
 
 def test_tp_floor_kicks_in_when_atr_collapses():
     """Ölü saat koruması: ATR70=2 → TP 5pt ama SL 110 → taban 0.3×110=33pt."""
     b = bars([(10, 8, 9)] * 80)
-    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, None, sl_dist=110.0)
+    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, ATR_ON, sl_dist=110.0)
     assert src == "atr70_floored" and d == pytest.approx(33.0)
 
 
 def test_tp_floor_not_applied_without_sl_dist():
     b = bars([(10, 8, 9)] * 80)
-    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, None)
+    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, ATR_ON)
     assert src == "atr70" and d == pytest.approx(5.0)
 
 
 def test_tp_floor_can_be_disabled():
     b = bars([(10, 8, 9)] * 80)
     d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0,
-                            Cfg(TP_ATR_MIN_R=0.0), sl_dist=110.0)
+                            Cfg(TP_MODE="atr", TP_ATR_MIN_R=0.0), sl_dist=110.0)
     assert src == "atr70" and d == pytest.approx(5.0)
 
 
 def test_tp_floor_does_not_shrink_a_large_atr_target():
     b = bars([(60, 8, 30)] * 80)          # ATR büyük → TP taban üstünde
-    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, None, sl_dist=110.0)
+    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", b, 80.0, ATR_ON, sl_dist=110.0)
     assert src == "atr70" and d > 33.0
 
 
 def test_tp_falls_back_when_no_bars():
-    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", None, 80.0, None)
+    d, src = pr.tp_distance("NDX.INDX:BUY", "NDX.INDX", None, 80.0, ATR_ON)
     assert src == "fixed_no_atr" and d == 80.0
 
 
@@ -118,7 +126,7 @@ def test_tp_mode_fixed_is_old_behaviour():
 
 def test_vixreg_scope_also_covered():
     b = bars([(10, 8, 9)] * 80)
-    d, src = pr.tp_distance("NDX.INDX:SELL:VIXREG", "NDX.INDX", b, 80.0, None)
+    d, src = pr.tp_distance("NDX.INDX:SELL:VIXREG", "NDX.INDX", b, 80.0, ATR_ON)
     assert src == "atr70" and d == pytest.approx(5.0)
 
 

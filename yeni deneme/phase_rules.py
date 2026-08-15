@@ -25,17 +25,23 @@ from typing import Iterable, Optional, Sequence
 
 # ── Varsayılanlar (bot config'i bunları ezer) ───────────────────────────────
 DEFAULTS: dict[str, object] = {
-    # FAZ 0 — açık teslim (çıkış tarafı; girişe dokunmaz)
+    # FAZ 0 — çıkış tarafı; girişe dokunmaz
     "MGMT_BE_MODE": "conditional_mfe",   # "time30" = eski davranış
     "MGMT_BE_MFE_R": 0.5,                # MFE ≥ 0.5×SL mesafesi → BE
-    # ⚠️ SAPMA (ölçümle): plan 120 dk diyordu; aynı 133 işlemin karşı-olgusalında
-    # 120 dk ZARARLI çıktı — 8 işlemi erken kesiyor, WR %73.7→%70.7, net −842$.
-    # 240 dk aynı "zombi" korumasını verirken maliyeti −77$ (1 işlem). Bu yüzden
-    # varsayılan 240; `python3 scripts/bot_flags.py set MGMT_TIME_STOP_MIN 120`
-    # ile plandaki değere dönülür. Kanıt: 1MDATA/mt5_islem_analizi/04_phase_replay.py
-    "MGMT_TIME_STOP_MIN": 240,           # 0 = kapalı
+    # ⚠️ 2026-08-15 DIŞ-ÖRNEKLEM'DE ELENDİ → varsayılan KAPALI (0).
+    # Plan 120 dk diyordu; iç-örneklemde 120 zararlı, 240 iyiydi. Kuraldan ÖNCEKİ
+    # dönemde (2026-06-29→07-12, n=123 NASDAQ) ise 240 dk tek başına net'i
+    # +1.607$ → −293$ yaptı (−1.900$). İç-örneklemde +760$. İki dönemin toplamı
+    # negatif ve işaret kararsız → açılmıyor. Kanıt: backend/research/box_phase_oos.py
+    "MGMT_TIME_STOP_MIN": 0,             # 240 = zombi koruması (kanıtı zayıf)
     "MGMT_TIME_STOP_SYMBOLS": ("NDX.INDX",),
-    "TP_MODE": "atr",                    # "fixed" = eski davranış
+    # ⚠️ 2026-08-15 DIŞ-ÖRNEKLEM'DE ELENDİ → varsayılan "fixed".
+    # ATR70 hedefi kazanma oranını İKİ dönemde de yükseltiyor (OOS %58.5→%67.5,
+    # iç %61.0→%72.8) ama PARAYI yalnız iç-örneklemde artırıyor: OOS +1.607$ →
+    # +1.396$ (−211$), iç +2.842$ → +4.780$ (+1.938$). Çarpanı 4.0'a çıkarmak da
+    # kurtarmıyor (OOS −216$). DAX/petrolde de aynı desen: WR ↑, para ↓.
+    # Yani küçük hedef "yüksek WR" kozmetiği üretiyor, kenar üretmiyor.
+    "TP_MODE": "fixed",                  # "atr" = 2.5×ATR70(1m) deneyi
     "TP_ATR_MULT": 2.5,
     "TP_ATR_PERIOD": 70,                 # 1m bar
     "TP_ATR_SYMBOLS": ("NDX.INDX",),

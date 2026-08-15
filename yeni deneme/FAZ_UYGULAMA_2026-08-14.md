@@ -61,6 +61,52 @@ kullanarak aynı 133 işlemi yeniden çözer. Referans rakamlar birebir tutuyor:
 Regresyon testi: `tests/test_phase_replay_equivalence.py` (veri yoksa atlanır) +
 `tests/test_phase_rules.py` (32 birim testi).
 
+---
+
+## 3b. DIŞ-ÖRNEKLEM DOĞRULAMASI (2026-08-15) — kuralların yarısı elendi
+
+Kurallar 13 Tem – 13 Ağu verisinden çıkmıştı. MT5 geçmişinde **daha eski işlemler**
+bulundu (toplam 441 pozisyon) → kuraldan ÖNCEKİ dönem gerçek bir dış-örneklem:
+**2026-06-29 → 07-12, n=123 NASDAQ işlemi.** Replay `backend/research/box_phase_oos.py`
+ile kutuda, botun kendi `phase_rules` modülüyle koşuldu.
+Zaman ekseni öz-denetimi: giriş fiyatı kendi 1m barının içinde **441/441 (%100)**.
+
+| Bileşen (NASDAQ) | DIŞ n=123 | İÇ n=136 | Karar |
+|---|---|---|---|
+| mevcut kural (referans) | %58,5 · **+1.607$** | %61,0 · **+2.842$** | — |
+| A) zaman stopu 240 dk | %56,1 · −293$ (**−1.900**) | %61,0 · +3.602$ (+760) | ❌ **KAPATILDI** |
+| B) TP = 2,5×ATR70 + taban | %67,5 · +1.396$ (**−211**) | %72,8 · +4.780$ (+1.938) | ❌ **KAPATILDI** |
+| B2) ATR TP çarpan 4,0 | %56,9 · −216$ | %69,1 · +9.857$ | ❌ kurtarmıyor |
+| **C) Faz-1 giriş filtreleri** | %63,2 · **+3.831$** (+2.224) | %67,6 · **+4.720$** (+1.878) | ✅ **AÇILDI** |
+| MOD-E probasyon (filtresiz) | %61,6 · +3.691$ (+2.084) | %65,1 · +7.582$ (+4.740) | ⏳ gölge (umut verici) |
+
+**Ana ders:** ATR-TP kazanma oranını iki dönemde de yükseltiyor (+9 / +11,8 puan)
+ama **parayı yalnız iç-örneklemde** artırıyor. Küçük hedef, yüksek WR *kozmetiği*
+üretiyor; kenar üretmiyor — kazançlar küçülürken kayıplar 110 puanlık stopu tam
+ödemeye devam ediyor. Kapsam dışı kontrol de aynı deseni gösterdi: DAX
+(%54,7→%58,5 ama −2.319$→−2.503$) ve petrol (%51,9→%57,4 ama −458$→−547$).
+
+Zaman stopu da dış-örneklemde para kaybettiriyor (erken kesilen işlemlerin çoğu
+sonradan TP'ye gidiyor). İkisi de **varsayılan KAPALI** yapıldı — hem kutu
+config'inde hem `phase_rules.DEFAULTS`'ta (bayrak silinirse geri gelmesin diye).
+
+Koşullu BE bu yöntemle test EDİLEMEZ (replay BE'siz koşuyor); canlı kanıt eski
+zaman-tabanlı BE'nin aleyhine olduğu için koşullu hâli açık bırakıldı — stop
+yalnız +0,5R görüldükten sonra başabaşa çekiliyor, yani eskisinden kesin daha az
+müdahaleci.
+
+### Şu an canlıda ne var (2026-08-15 01:41 UTC itibarıyla)
+| Kural | Durum |
+|---|---|
+| Faz-1: ASIA 22–07 UTC yasağı · Cuma yasağı · Cuma 20:45 sonrası · S/R limit kolu kapalı · CONFIRM zorunlu + zone çıtası 4 | ✅ **AÇIK** |
+| Koşullu BE (MFE ≥ 0,5R) | ✅ AÇIK |
+| TP = 2,5×ATR70 | ❌ kapalı (dış-örneklemde elendi) |
+| Zaman stopu | ❌ kapalı (dış-örneklemde elendi) |
+| Faz-2 sıkı konum kapısı · SELL RSI · MOD-E probasyon | 👁 gölge (ölçüyor, bloklamıyor) |
+
+Geri açmak: `python3 scripts/bot_flags.py atrtp on` / `timestop on`.
+Faz-1'i kapatmak: `python3 scripts/bot_flags.py phase1 off --restart`.
+
 ### Plandan tek sapma — zaman stopu 120 → 240 dk
 Aynı replay'de 120 dk **zararlı** çıktı: işlemleri erken kesiyor (TP tabanı
 devredeyken WR %72,2→%67,7, net +4.110$ → +1.816$). 240 dk ise aynı "zombi"

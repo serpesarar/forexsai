@@ -28,11 +28,22 @@ ROOT = Path(__file__).resolve().parent.parent
 REMOTE = ROOT / "scripts" / "remote.py"
 
 PRESETS: dict[str, dict[str, dict[str, str]]] = {
+    # phase0 = dış-örneklemde AYAKTA KALAN hâli (yalnız koşullu BE).
     "phase0": {
-        "on": {"MGMT_BE_MODE": "'conditional_mfe'", "TP_MODE": "'atr'",
-               "MGMT_TIME_STOP_MIN": "240", "TP_ATR_MIN_R": "0.3"},
+        "on": {"MGMT_BE_MODE": "'conditional_mfe'", "TP_MODE": "'fixed'",
+               "MGMT_TIME_STOP_MIN": "0"},
         "off": {"MGMT_BE_MODE": "'time30'", "TP_MODE": "'fixed'",
-                "MGMT_TIME_STOP_MIN": "0", "TP_ATR_MIN_R": "0.0"},
+                "MGMT_TIME_STOP_MIN": "0"},
+    },
+    # atrtp = dış-örneklemde ELENEN TP deneyi (WR ↑, para ↓). Yeniden denemek
+    # istenirse tek komutla açılır; kanıt birikmeden canlıda tutma.
+    "atrtp": {
+        "on": {"TP_MODE": "'atr'", "TP_ATR_MULT": "2.5", "TP_ATR_MIN_R": "0.3"},
+        "off": {"TP_MODE": "'fixed'"},
+    },
+    "timestop": {
+        "on": {"MGMT_TIME_STOP_MIN": "240"},
+        "off": {"MGMT_TIME_STOP_MIN": "0"},
     },
     "phase1": {
         "on": {"NDX_SESSION_BLOCK_ENABLED": "True", "NDX_FRIDAY_BLOCK": "True",
