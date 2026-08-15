@@ -802,7 +802,8 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                 log, scope_key, forexsai_sym, mt5_symbol, direction, price,
                 int(getattr(tick, "time", 0) or time.time()),
                 lambda: open_trade(scope_key, forexsai_sym, mt5_symbol, direction,
-                                   cfg, voters, magic=magic, skip_probation=True)):
+                                   cfg, voters, magic=magic, skip_probation=True),
+                magic=magic):
             _log_trade("PROBATION_QUEUED", scope_key, mt5_symbol, direction,
                        price, tp, sl, voters, "5 bar bekleniyor")
         return
@@ -918,7 +919,8 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                 int(getattr(tick, "time", 0) or time.time()),
                 lambda: open_trade_v2(scope_key, forexsai_sym, mt5_symbol,
                                       direction, cfg, voters, bot_signal,
-                                      skip_probation=True)):
+                                      skip_probation=True),
+                magic=config.MAGIC_NUMBER):
             _log_trade("PROBATION_QUEUED", scope_key, mt5_symbol, direction,
                        price, tp, sl, voters, "5 bar bekleniyor (v2)")
         return
@@ -1463,6 +1465,23 @@ def _vix_micro_blocks(scope_key: str, mt5_symbol: str, direction: str) -> bool:
                       "vixreg_micro_gate" if block else "vixreg_micro_gate_shadow",
                       extra={"why": reason})
     return block
+
+
+def _probation_guard(p: dict) -> tuple[bool, str]:
+    """5 dk bekledikten SONRA emir hâlâ uygun mu? (risk tavanları yeniden)."""
+    try:
+        if total_open_positions() >= config.MAX_TOTAL_POSITIONS:
+            return False, f"global tavan dolu ({config.MAX_TOTAL_POSITIONS})"
+        magic = p.get("magic")
+        held = open_count(p["mt5_symbol"], p["direction"], magic)
+        pend = pending_count(p["mt5_symbol"], p["direction"], magic)
+        if held + pend >= config.MAX_OPEN_PER_SCOPE:
+            return False, f"scope slotu dolu ({held}+{pend})"
+        if config.DAILY_MAX_LOSS and today_realized_pnl() <= -config.DAILY_MAX_LOSS:
+            return False, "günlük zarar limiti"
+    except Exception as exc:                     # ölçemiyorsak emri gönderme
+        return False, f"tavan kontrolü hata: {exc}"
+    return True, ""
 
 
 def _market_open(scope_key, forexsai_sym, mt5_symbol, direction, cfg, voters, bot_signal):
@@ -2299,7 +2318,8 @@ def main():
 
             # ── MOD-E probasyon kuyruğu: süresi dolanları değerlendir ──
             try:
-                probation_exec.process(mt5, log, log_gate_skip)
+                probation_exec.process(mt5, log, log_gate_skip,
+                                       guard=_probation_guard)
             except Exception as e:
                 log.exception("probasyon kuyruğu hatası: %s", e)
 

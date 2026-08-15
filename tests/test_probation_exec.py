@@ -107,3 +107,73 @@ def test_queue_dedupes_same_scope():
     assert ok1 and not ok2 and len(px._pending) == 1
     assert px.pending_scopes() == {"NDX.INDX:BUY"}
     px._pending.clear()
+
+
+def _fake_mt5(hi=100.5, lo=99.8, post_lo=None):
+    """Sinyal ÖNCESİ ve SONRASI barları olan sahte MT5 (ATR hesaplanabilsin).
+
+    post_lo verilirse yalnız sinyal SONRASI barlar o düşüğü görür — ATR sakin
+    kalır, aleyhe hareket bandı aşar (gerçek 'sinyal öldü' senaryosu)."""
+    class FakeTick:
+        bid = ask = 100.0
+        time = 60
+
+    class FakeMT5:
+        TIMEFRAME_M1 = 1
+
+        @staticmethod
+        def copy_rates_from_pos(sym, tf, start, n):
+            return [{"time": i * 60, "high": hi,
+                     "low": (post_lo if (post_lo is not None and i > 30) else lo),
+                     "close": 100.0}
+                    for i in range(60)]
+
+        @staticmethod
+        def symbol_info_tick(sym):
+            return FakeTick()
+
+    return FakeMT5
+
+
+def _queued(log, opener):
+    px._pending.clear()
+    px.queue(log, "NDX.INDX:BUY", "NDX.INDX", "NAS100", "BUY", 100.0,
+             30 * 60, opener)                 # sinyal 30. barda
+    px._pending[0]["t0"] -= 10 * 60           # bekleme bitmiş say
+
+
+def test_guard_blocks_entry_after_wait():
+    """Bekleme bitti ama tavan doldu → emir GÖNDERİLMEZ (icra anı kontrolü)."""
+    fired = []
+    log = types.SimpleNamespace(info=lambda *a, **k: None, warning=lambda *a, **k: None)
+    _queued(log, lambda: fired.append(1))
+    px.process(_fake_mt5(), log, guard=lambda p: (False, "global tavan dolu"))
+    assert fired == [] and px._pending == []
+
+
+def test_guard_allows_entry_when_room_exists():
+    """Bant aşılmadı + tavan uygun → emir gönderilir."""
+    fired = []
+    log = types.SimpleNamespace(info=lambda *a, **k: None, warning=lambda *a, **k: None)
+    _queued(log, lambda: fired.append(1))
+    px.process(_fake_mt5(), log, guard=lambda p: (True, ""))
+    assert fired == [1] and px._pending == []
+
+
+def test_no_guard_still_enters():
+    fired = []
+    log = types.SimpleNamespace(info=lambda *a, **k: None, warning=lambda *a, **k: None)
+    _queued(log, lambda: fired.append(1))
+    px.process(_fake_mt5(), log)
+    assert fired == [1]
+
+
+def test_band_breach_cancels_before_guard():
+    """Bant aşıldıysa guard'a hiç gidilmez — emir zaten iptal."""
+    fired, guard_calls = [], []
+    log = types.SimpleNamespace(info=lambda *a, **k: None, warning=lambda *a, **k: None)
+    _queued(log, lambda: fired.append(1))
+    # 60 puanlık aleyhe hareket: band ~2pt → kesin iptal
+    px.process(_fake_mt5(post_lo=95.0), log,
+               guard=lambda p: (guard_calls.append(1), (True, ""))[1])
+    assert fired == [] and guard_calls == [] and px._pending == []

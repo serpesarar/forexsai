@@ -16,7 +16,7 @@ Faz haritası (2026-08-14 karşı-olgusal denetimi):
   phase0 : TP=2.5×ATR70 + koşullu BE + zaman stopu     (varsayılan AÇIK)
   phase1 : ASIA/Cuma yasağı + S/R kolu kapalı + oy sıkılığı (varsayılan KAPALI)
   phase2 : sıkı dalga-konumu kapısı                     (varsayılan GÖLGE)
-  phase3 : MOD-E probasyon                              (varsayılan GÖLGE)
+  phase3 : MOD-E probasyon — live | shadow | off        (varsayılan GÖLGE)
 """
 from __future__ import annotations
 
@@ -58,7 +58,9 @@ PRESETS: dict[str, dict[str, dict[str, str]]] = {
         "block": {"POS_TIGHT_ENABLED": "True", "POS_TIGHT_BLOCK": "True"},
         "off": {"POS_TIGHT_ENABLED": "False", "POS_TIGHT_BLOCK": "False"},
     },
+    # phase3 = MOD-E probasyonu. 'live' → emir 5 bar geciktirilir (probation_exec).
     "phase3": {
+        "live": {"PROBATION_LIVE": "True", "PROBATION_SHADOW_ENABLED": "True"},
         "shadow": {"PROBATION_SHADOW_ENABLED": "True", "PROBATION_LIVE": "False"},
         "off": {"PROBATION_SHADOW_ENABLED": "False", "PROBATION_LIVE": "False"},
     },

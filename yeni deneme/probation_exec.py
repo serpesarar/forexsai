@@ -81,7 +81,7 @@ def pending_scopes() -> set:
 
 def queue(log, scope_key: str, forexsai_sym: str, mt5_symbol: str,
           direction: str, signal_px: float, signal_srv_time: int,
-          opener: Callable[[], None]) -> bool:
+          opener: Callable[[], None], magic: int | None = None) -> bool:
     """Sinyali probasyona al. Aynı scope zaten kuyruktaysa False döner."""
     if any(p["scope_key"] == scope_key for p in _pending):
         log.info("%s — probasyon kuyruğunda zaten var, atlandı", scope_key)
@@ -90,6 +90,7 @@ def queue(log, scope_key: str, forexsai_sym: str, mt5_symbol: str,
         "scope_key": scope_key, "fx": forexsai_sym, "mt5_symbol": mt5_symbol,
         "direction": direction, "signal_px": float(signal_px),
         "srv_t": int(signal_srv_time), "t0": time.time(), "opener": opener,
+        "magic": magic,
     })
     log.info("[PROBASYON] %s %s @%.2f kuyruğa alındı — %d bar (%d dk) sonra "
              "gürültü bandı kontrolüyle karar verilecek", scope_key, direction,
@@ -98,8 +99,13 @@ def queue(log, scope_key: str, forexsai_sym: str, mt5_symbol: str,
     return True
 
 
-def process(mt5, log, log_gate_skip: Callable | None = None) -> None:
-    """Her taramada çağrılır. Fail-safe: karar verilemezse giriş İPTAL."""
+def process(mt5, log, log_gate_skip: Callable | None = None,
+            guard: Callable[[dict], tuple[bool, str]] | None = None) -> None:
+    """Her taramada çağrılır. Fail-safe: karar verilemezse giriş İPTAL.
+
+    guard: emri göndermeden HEMEN ÖNCE çağrılır — 5 dakika içinde pozisyon
+    tavanı dolmuş, günlük zarar limiti aşılmış veya aynı scope'ta pozisyon
+    açılmış olabilir. (False, sebep) dönerse emir gönderilmez."""
     if not _pending:
         return
     now = time.time()
@@ -134,6 +140,16 @@ def process(mt5, log, log_gate_skip: Callable | None = None) -> None:
                                   p["direction"], p["signal_px"],
                                   "probation_cancel", extra=info)
                 continue
+            if guard is not None:
+                ok, why = guard(p)
+                if not ok:
+                    log.info("[PROBASYON] %s bekleme bitti ama artık uygun değil "
+                             "(%s) → açılmadı", p["scope_key"], why)
+                    if log_gate_skip:
+                        log_gate_skip(p["scope_key"], p["mt5_symbol"], p["fx"],
+                                      p["direction"], p["signal_px"],
+                                      "probation_guard", extra={"why": why})
+                    continue
             tick = mt5.symbol_info_tick(p["mt5_symbol"])
             px = (tick.ask if p["direction"] == "BUY" else tick.bid) if tick else 0.0
             drift = (px - p["signal_px"]) * (1 if p["direction"] == "BUY" else -1)
