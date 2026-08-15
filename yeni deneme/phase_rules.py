@@ -70,11 +70,17 @@ DEFAULTS: dict[str, object] = {
     "POS_TIGHT_BUY_MAX": 0.40,
     "SELL_RSI_SHADOW_ENABLED": True,
     "SELL_RSI_MIN": 55.0,
-    # FAZ 3 — MOD-E probasyon (yalnız gölge; canlı icrayı DEĞİŞTİRMEZ)
-    "PROBATION_SHADOW_ENABLED": True,
-    "PROBATION_LIVE": False,             # True → gerçekten 5 bar bekler (Faz-3 kararı)
+    # FAZ 3 — MOD-E probasyon: sinyalden 5 bar sonra, gürültü bandı geçilmediyse gir.
+    # Dış-örneklem doğrulaması (2026-08-15) bunu Faz-0'ın elenen kurallarının
+    # AKSİNE iki dönemde de pozitif buldu (dış +3.691$ / iç +7.582$, n=112/126).
+    # Canlı icra: probation_exec.py. Varsayılan KAPALI kalır (geri alma güvencesi);
+    # kutuda `scripts/bot_flags.py phase3 live` ile açılır.
+    "PROBATION_SHADOW_ENABLED": True,    # canlıyken otomatik susar
+    "PROBATION_LIVE": False,             # True → emir 5 bar geciktirilir
+    "PROBATION_SYMBOLS": ("NDX.INDX",),  # kanıt yalnız NASDAQ'ta
     "PROBATION_BARS": 5,
     "PROBATION_Z": 1.28,
+    "PROBATION_MAX_WAIT_MIN": 15,        # bu kadar sürede karara varılamazsa iptal
     # Opsiyonel (etkisi nötr ölçüldü)
     "SCOPE_LOSS_COOLDOWN_ENABLED": False,
     "SCOPE_LOSS_COOLDOWN_MIN": 120,

@@ -220,6 +220,8 @@ def main() -> None:
     ap.add_argument("--since", default="2026-05-01")
     ap.add_argument("--split", default="2026-07-13",
                     help="bu tarihten ÖNCESİ dış-örneklem (kural bu veriden çıkmadı)")
+    ap.add_argument("--slip", type=float, default=0.0,
+                    help="probasyon girişine eklenen kayma maliyeti (puan/işlem)")
     ap.add_argument("--offset-min", type=int, default=None,
                     help="sunucu−UTC farkı (dk). Verilmezse EET/EEST varsayılır.")
     a = ap.parse_args()
@@ -273,6 +275,8 @@ def main() -> None:
                 continue
             r = simulate(p, b, t, cfg, probation=prob)
             if r:
+                if prob and a.slip and r.get("win") is not None:
+                    r["pnl"] -= a.slip * p["usd_pt"]     # gecikmeli giriş maliyeti
                 out.append(r)
         return out
 
@@ -312,7 +316,8 @@ def main() -> None:
         print("  ── paketler ──")
         line("FAZ 0 (ATR TP+taban+stop240)", run(P0, sel=ndx))
         line("FAZ 0+1 (giriş filtreleri)", run(P01, filt_kw=PHASE1, sel=ndx))
-        line("MOD-E (probasyon+TP sabit+Faz1)", run(MODE, filt_kw=PHASE1, prob=True, sel=ndx))
+        line(f"MOD-E (+Faz1){' kayma ' + str(a.slip) + 'pt' if a.slip else ''}",
+             run(MODE, filt_kw=PHASE1, prob=True, sel=ndx))
         line("MOD-E filtresiz", run({**OFF, "TP_MODE": "fixed", "MGMT_TIME_STOP_MIN": 0,
                                      "PROBATION_BARS": 5, "PROBATION_Z": 1.28},
                                     prob=True, sel=ndx))

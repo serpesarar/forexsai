@@ -33,6 +33,7 @@ except ImportError:
 import config
 import reflex_exec
 import phase_rules as pr
+import probation_exec
 import shadow_log
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
@@ -537,6 +538,13 @@ def _fixed_distances(price: float, cfg: dict, bot_signal: dict | None,
     # olduğu için canlıda aynı sıçrama BEKLENMEZ — bayrakla ölçülüyor.
     if scope_key and mt5_symbol:
         fxs = scope_key.split(":")[0]
+        # Yasak kombinasyon koruması: MOD-E'nin değeri giriş FİYATINDAN gelir;
+        # hedefi de küçültmek ölçümde net'i yarıya indirdi. Probasyon canlıysa
+        # ATR-TP devre dışı bırakılır (yapısal kilit, bayrak hatasına karşı).
+        if probation_exec.is_live(fxs) and str(pr.flag(config, "TP_MODE")).lower() == "atr":
+            log.warning("[TP-ATR] %s — MOD-E probasyonu canlı: ATR hedefi "
+                        "UYGULANMADI (yasak kombinasyon), sabit geometri", scope_key)
+            return tp_d, sl_d
         new_tp, src = pr.tp_distance(scope_key, fxs, candles_1m(mt5_symbol, 200),
                                      tp_d, config, sl_dist=sl_d)
         if src.startswith("atr70") and abs(new_tp - tp_d) > 1e-9:
@@ -586,6 +594,8 @@ def _shadow_probation(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     gürültü bandı verdiktini ve hipotetik TP/SL sonucunu ölçer."""
     if not pr.flag(config, "PROBATION_SHADOW_ENABLED"):
         return
+    if probation_exec.is_live(forexsai_sym):
+        return                      # canlı probasyon var — gölge kaydı gereksiz
     if forexsai_sym != "NDX.INDX":
         return
     try:
@@ -735,8 +745,11 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
 
 def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                direction: str, cfg: dict, voters: list[str],
-               magic: int | None = None) -> None:
-    """Türetilmiş TP/SL ile market emri aç."""
+               magic: int | None = None, skip_probation: bool = False) -> None:
+    """Türetilmiş TP/SL ile market emri aç.
+
+    skip_probation=True yalnız probasyon kuyruğunun kendi çağrısında kullanılır
+    (5 bar beklendi, artık gerçekten aç)."""
     magic = config.MAGIC_NUMBER if magic is None else magic
     tick = mt5.symbol_info_tick(mt5_symbol)
     info = mt5.symbol_info(mt5_symbol)
@@ -783,6 +796,17 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         _log_trade("OBSERVE", scope_key, mt5_symbol, direction, price, tp, sl, voters, "")
         return
 
+    # ── MOD-E PROBASYONU: emri 5 bar geciktir (dış-örneklemde doğrulandı) ──
+    if not skip_probation and probation_exec.is_live(forexsai_sym):
+        if probation_exec.queue(
+                log, scope_key, forexsai_sym, mt5_symbol, direction, price,
+                int(getattr(tick, "time", 0) or time.time()),
+                lambda: open_trade(scope_key, forexsai_sym, mt5_symbol, direction,
+                                   cfg, voters, magic=magic, skip_probation=True)):
+            _log_trade("PROBATION_QUEUED", scope_key, mt5_symbol, direction,
+                       price, tp, sl, voters, "5 bar bekleniyor")
+        return
+
     # AutoTrading kapalıysa emri hiç gönderme — kriptik 10027 yerine net mesaj.
     if not check_autotrading(verbose=False):
         log.error("[CANLI] ⏸ AutoTrading KAPALI — emir gönderilmedi. %s", line)
@@ -814,7 +838,7 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
 
 def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                    direction: str, cfg: dict, voters: list[str],
-                   bot_signal: dict) -> None:
+                   bot_signal: dict, skip_probation: bool = False) -> None:
     """Backend'in optimized SL/TP + lot multiplier ile market emri aç.
     Stage 4 sizing + Entry Optimizer kararları uygulanır."""
     info = mt5.symbol_info(mt5_symbol)
@@ -886,6 +910,17 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         log.info("[GÖZLEM] %s", line)
         _log_trade("OBSERVE", scope_key, mt5_symbol, direction, price, tp, sl,
                    voters, f"action={action} lot_mult={lot_mult}")
+        return
+
+    if not skip_probation and probation_exec.is_live(forexsai_sym):
+        if probation_exec.queue(
+                log, scope_key, forexsai_sym, mt5_symbol, direction, price,
+                int(getattr(tick, "time", 0) or time.time()),
+                lambda: open_trade_v2(scope_key, forexsai_sym, mt5_symbol,
+                                      direction, cfg, voters, bot_signal,
+                                      skip_probation=True)):
+            _log_trade("PROBATION_QUEUED", scope_key, mt5_symbol, direction,
+                       price, tp, sl, voters, "5 bar bekleniyor (v2)")
         return
 
     if not check_autotrading(verbose=False):
@@ -2153,7 +2188,8 @@ def main():
                "NDX_WEEKEND_HOLD_BLOCK", "NDX_SR_ENTRY_ENABLED",
                "PHASE1_CONFIG_RESTORE", "POS_TIGHT_ENABLED", "POS_TIGHT_BLOCK",
                "SELL_RSI_SHADOW_ENABLED", "PROBATION_SHADOW_ENABLED",
-               "PROBATION_LIVE", "SCOPE_LOSS_COOLDOWN_ENABLED"):
+               "PROBATION_LIVE", "PROBATION_SYMBOLS", "PROBATION_BARS",
+               "PROBATION_MAX_WAIT_MIN", "SCOPE_LOSS_COOLDOWN_ENABLED"):
         _from = "config" if hasattr(config, _n) else "varsayılan(faz)"
         log.info("  ayar %-30s = %-8s (%s)", _n, pr.flag(config, _n), _from)
     log.info("=" * 64)
@@ -2260,6 +2296,12 @@ def main():
                     check_shadow_scopes()
                 except Exception as e:
                     log.warning("gölge scope döngü hatası: %s", e)
+
+            # ── MOD-E probasyon kuyruğu: süresi dolanları değerlendir ──
+            try:
+                probation_exec.process(mt5, log, log_gate_skip)
+            except Exception as e:
+                log.exception("probasyon kuyruğu hatası: %s", e)
 
             # ── FAZ 2/3 gölge kayıtlarının sonucunu ölç (canlıya dokunmaz) ──
             try:
