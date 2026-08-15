@@ -254,8 +254,10 @@ def main() -> None:
             i = bisect_left(t, p["t_srv"])
             if i >= len(b) or p["t_srv"] < t[0]:
                 continue
+            # işlemin İÇİNDE olduğu bar: times[i] > t_srv ise bir öncekidir
+            j = i if (i < len(t) and t[i] == p["t_srv"]) else max(0, i - 1)
             tot += 1
-            ok += int(b[i]["low"] - tol <= p["entry"] <= b[i]["high"] + tol)
+            ok += int(b[j]["low"] - tol <= p["entry"] <= b[j]["high"] + tol)
         if tot:
             print(f"  {sym:<10} {ok}/{tot}  (%{100*ok/tot:.0f})")
 
