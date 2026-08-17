@@ -526,7 +526,18 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             mtf = {}                      # donuk feed → free karar da üretme
         ctx = fx.build_free_context(mtf, vix=vix, dxy=dxy)
         if ctx:
-            cz = ((ctx.get("multi_tf") or {}).get("5m") or {}).get("channel_z")
+            tf5 = (ctx.get("multi_tf") or {}).get("5m") or {}
+            cz, vz = tf5.get("channel_z"), tf5.get("vwap_z")
+            # 2026-08-17 denetimi: eskiden burada yalnız "bar+bucket değişti mi" bakılıyordu
+            # (aşırılık şartı YOK) → fiilen her cadence turunda tetikleniyordu (tüm decider
+            # Opus çağrılarının %44.5'i, 48 günde 1.678 çağrı/$369.62). Diğer sembollerle
+            # (build_situation/CONSULT_REV) TUTARLI hâle getirildi: kanal/VWAP'tan aşırılık
+            # CONSULT_REV'i geçmeden Opus'a sorulmaz.
+            extremity = max(abs(cz) if isinstance(cz, (int, float)) else 0.0,
+                            abs(vz) if isinstance(vz, (int, float)) else 0.0)
+            if extremity < CONSULT_REV:
+                ctx = None
+        if ctx:
             free_sig = (ctx.get("bar_time_5m"),
                         round(cz * 2) / 2 if isinstance(cz, (int, float)) else None)
             if not _state_changed(FREE_SYMBOL, free_sig):     # olay-tetikli (free)

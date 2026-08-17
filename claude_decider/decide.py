@@ -347,7 +347,12 @@ def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180) -> d
     except subprocess.TimeoutExpired:
         return {"action": "WAIT", "reason": "claude timeout", "_error": True}
     if r.returncode != 0:
-        return {"action": "WAIT", "reason": f"claude exit {r.returncode}: {r.stderr[:200]}", "_error": True}
+        # 2026-08-17 tanısı: CLI kota/rate-limit hatalarını stderr'e DEĞİL stdout'a JSON
+        # olarak yazıyor — eskiden yalnız (boş) stderr loglanıyordu, gerçek sebep (kota mı,
+        # auth mı) hiç görünmüyordu (467/3766 kayıtta "claude exit 1: " boş gövde).
+        return {"action": "WAIT",
+                "reason": f"claude exit {r.returncode} | stderr: {r.stderr[:200]} | stdout: {r.stdout[:200]}",
+                "_error": True}
     try:
         meta = json.loads(r.stdout)
     except json.JSONDecodeError:
