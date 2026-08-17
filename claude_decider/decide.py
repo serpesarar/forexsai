@@ -343,9 +343,16 @@ def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180) -> d
     cmd = [_claude_bin(), "--dangerously-skip-permissions", "-p",
            "--model", model, "--output-format", "json"]
     try:
-        r = subprocess.run(cmd, input=prompt, capture_output=True, text=True, timeout=timeout)
+        # encoding ZORUNLU: text=True varsayılanı locale'dir (TR Windows'ta cp1252) →
+        # Türkçe karakterli prompt UnicodeEncodeError atıp TÜM pass'i öldürüyordu
+        # (2026-08-12: 'charmap' codec can't encode character 'ş' ... — saatlerce
+        #  hiç karar üretilmedi). stdout/stderr de aynı sebeple utf-8 okunur.
+        r = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=timeout)
     except subprocess.TimeoutExpired:
         return {"action": "WAIT", "reason": "claude timeout", "_error": True}
+    except OSError as e:      # WinError 2: CLI yolu bulunamadı/erişilemedi → pass ölmesin
+        return {"action": "WAIT", "reason": f"claude spawn hatası: {e}", "_error": True}
     if r.returncode != 0:
         # 2026-08-17 tanısı: CLI kota/rate-limit hatalarını stderr'e DEĞİL stdout'a JSON
         # olarak yazıyor — eskiden yalnız (boş) stderr loglanıyordu, gerçek sebep (kota mı,
