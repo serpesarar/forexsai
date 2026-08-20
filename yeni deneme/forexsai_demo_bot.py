@@ -531,6 +531,20 @@ def _fixed_distances(price: float, cfg: dict, bot_signal: dict | None,
         if d > 0:
             sl_d = d
 
+    # ── USOIL BUY hedef mesafesi (2026-08-20 derin sınama) — varsayılan KAPALI
+    # v3 raporu "TP=0,6R" dedi; 2.025 sızıntısız hipotetik girişte tam TERSİ
+    # çıktı (RR 0,6 → +9,3$/işlem, RR 1,0 → +34,0$/işlem). Ayrıntı ve tüm
+    # kesitler: phase_rules.DEFAULTS["USOIL_BUY_TP_RR"].
+    if scope_key:
+        parts = scope_key.split(":")
+        rr_tp = pr.usoil_buy_tp_distance(scope_key, parts[0],
+                                         parts[1] if len(parts) > 1 else "",
+                                         sl_d, config)
+        if rr_tp and abs(rr_tp - tp_d) > 1e-9:
+            log.info("[USOIL-TP] %s: TP %.3f → %.3f (RR %.2f × SL %.3f)",
+                     scope_key, tp_d, rr_tp, rr_tp / sl_d, sl_d)
+            tp_d = rr_tp
+
     # ── FAZ 0.3 (2026-08-14): TP = 2.5 × ATR70(1m), SL'e DOKUNULMAZ ─────────
     # Kanıt (133 NASDAQ işlemi, bar-bar karşı-olgusal): kaybedenlerin %31'i
     # SL'den önce ≥+48pt lehe gitmiş — sabit 80pt hedef düşük volatilitede

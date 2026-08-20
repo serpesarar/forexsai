@@ -92,6 +92,24 @@ DEFAULTS: dict[str, object] = {
     "REENTRY_DELAY_TP_MIN": 5,
     "REENTRY_DELAY_SL_MIN": 1,
     "REENTRY_MAX_WAIT_MIN": 20,          # bu süreyi aşan niyet iptal
+    # ── USOIL BUY hedef mesafesi (2026-08-20 derin sınama) ──────────────────
+    # v3 raporu "TP=0,6R" önerdi; 17 aylık dış-örneklem TERSİNİ söylüyor.
+    # Botun USOIL:BUY momentum koşullarıyla üretilen 2.025 sızıntısız hipotetik
+    # giriş (5m, spread 0,03, giriş = sinyal barı KAPANIŞI, çözüm SONRAKİ
+    # barlardan), işlem başı net:
+    #   RR 0,40 −2,3$ · 0,60 +9,3$ · 0,70 (BUGÜNKÜ) +11,2$ · 0,80 +20,2$
+    #   RR 1,00 +34,0$ · 1,25 +30,4$ · 1,50 +32,2$ · 2,00 +29,1$
+    # RR 1,00 mevcut ayarı HER kesitte geçiyor: kronolojik 1. yarı (−7,6$ vs
+    # −17,0$), 2. yarı (+75,7$ vs +39,4$), 18 ayın 12'si, sürtünme ×1,5
+    # (+24,7$ vs +4,2$), "aynı anda tek pozisyon" kısıtı (+21,9$ vs +5,8$) ve
+    # canlı konum kapısı altında (pos≤0,60: +71,5$ vs +43,4$, n=153).
+    # Bootstrap P(EV>0)=%99,6. Plato 0,80–2,00 geniş; uçurum 0,70'in ALTINDA.
+    # ⚠️ Scope'un KENDİSİ 1. yarıda negatif (hangi RR olursa olsun) — bu yüzden
+    # varsayılan KAPALI: kanıt "RR 1,0 > RR 0,7" için güçlü, "scope her rejimde
+    # kârlı" için değil. Açmak: config'e USOIL_BUY_TP_RR = 1.0.
+    # Kanıt: backend/research/box_usoil_tp_stability.py + box_usoil_pos_tp.py
+    "USOIL_BUY_TP_RR": 0.0,              # 0 = kapalı (%1,04 sabit hedef sürer)
+    "USOIL_BUY_TP_SYMBOLS": ("USOIL.FOREX",),
     # Opsiyonel (etkisi nötr ölçüldü)
     "SCOPE_LOSS_COOLDOWN_ENABLED": False,
     "SCOPE_LOSS_COOLDOWN_MIN": 120,
@@ -170,6 +188,32 @@ def tp_distance(scope_key: str, forexsai_sym: str, bars_1m: Optional[Sequence[di
     if sl_dist and min_r > 0 and dist < min_r * sl_dist:
         return min_r * float(sl_dist), "atr70_floored"
     return dist, "atr70"
+
+
+def usoil_buy_tp_distance(scope_key: str, forexsai_sym: str, direction: str,
+                          sl_dist: float, config=None) -> Optional[float]:
+    """USOIL BUY için RR-tabanlı hedef mesafesi. Kapsam dışıysa None (dokunma).
+
+    Kapsam: USOIL_BUY_TP_RR > 0 + sembol USOIL_BUY_TP_SYMBOLS içinde +
+    yön BUY. SL mesafesi geçerli değilse None (fail-open).
+
+    Gerekçe ve ölçüm: DEFAULTS["USOIL_BUY_TP_RR"] başlığındaki blok.
+    """
+    try:
+        rr = float(flag(config, "USOIL_BUY_TP_RR") or 0)
+    except (TypeError, ValueError):
+        return None
+    if rr <= 0:
+        return None
+    if direction.upper() != "BUY":
+        return None
+    if not _in(forexsai_sym, flag(config, "USOIL_BUY_TP_SYMBOLS")):
+        return None
+    if _in(scope_suffix(scope_key), flag(config, "TP_ATR_EXCLUDE_SCOPES")):
+        return None
+    if not sl_dist or sl_dist <= 0:
+        return None
+    return rr * float(sl_dist)
 
 
 # ═══ FAZ 0.1 / 0.2 — pozisyon yönetimi kararları ════════════════════════════
