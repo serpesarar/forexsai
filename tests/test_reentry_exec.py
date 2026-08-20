@@ -155,3 +155,102 @@ def test_bekleyen_niyet_kuyrukta_kalir():
     assert acilan == [] and len(re_._pending) == 1
     re_._pending.clear()
     del fake.REENTRY_MODE
+
+
+# ── tara(): kapanan pozisyon yakalama (2026-08-20 hata düzeltmesi) ─────────
+# ⚠️ Eski sürüm history_deals_get(from,to) kullanıyordu; datetime.now() kutunun
+# YEREL saati (UTC−4), MT5 ise BROKER saati (UTC+3) bekliyor → 7 saatlik kayma
+# yüzünden kapanan işlem penceresi hiç yakalanmıyordu. Aşağıdaki testler yeni
+# (pozisyon-takibi + history_deals_get(position=)) yolunu kilitler.
+
+class _Poz:
+    def __init__(self, ticket, magic, typ):
+        self.ticket = ticket; self.magic = magic; self.type = typ
+
+
+class _Deal:
+    def __init__(self, entry, profit, price):
+        self.entry = entry; self.profit = profit; self.price = price
+
+
+def _mt5_pozlu(pozlar, deals_by_pos=None):
+    class M:
+        ORDER_TYPE_BUY = 0
+        DEAL_ENTRY_OUT = 1
+        DEAL_ENTRY_OUT_BY = 2
+
+        @staticmethod
+        def positions_get(symbol=None):
+            return pozlar["cur"]
+
+        @staticmethod
+        def history_deals_get(position=None):
+            return (deals_by_pos or {}).get(position, [])
+    return M
+
+
+def test_tara_kapanan_pozisyonu_yakalar():
+    """Pozisyon listeden düşünce re-entry kuyruğa girmeli — ZAMAN PENCERESİ YOK."""
+    re_._pending.clear(); re_._izlenen.clear(); re_._uretilen.clear()
+    fake.REENTRY_MODE = "shadow"
+    pozlar = {"cur": [_Poz(777, 52890969, 0)]}
+    deals = {777: [_Deal(1, 400.0, 30050.0)]}          # OUT, kârlı
+    m = _mt5_pozlu(pozlar, deals)
+    re_.tara(m, _log(), lambda fx: "NAS100")           # 1. tarama: pozisyon açık
+    assert re_._pending == [] and 777 in re_._izlenen
+    pozlar["cur"] = []                                  # pozisyon kapandı
+    re_.tara(m, _log(), lambda fx: "NAS100")
+    assert len(re_._pending) == 1
+    p = re_._pending[0]
+    assert p["ana_ticket"] == 777 and p["kazandi"] is True and p["dir"] == "BUY"
+    re_._pending.clear(); re_._izlenen.clear(); re_._uretilen.clear()
+    del fake.REENTRY_MODE
+
+
+def test_tara_zararli_kapanisi_sl_sayar():
+    re_._pending.clear(); re_._izlenen.clear(); re_._uretilen.clear()
+    fake.REENTRY_MODE = "shadow"
+    pozlar = {"cur": [_Poz(888, 52890969, 1)]}          # SELL
+    deals = {888: [_Deal(1, -550.0, 29900.0)]}
+    m = _mt5_pozlu(pozlar, deals)
+    re_.tara(m, _log(), lambda fx: "NAS100")
+    pozlar["cur"] = []
+    re_.tara(m, _log(), lambda fx: "NAS100")
+    assert len(re_._pending) == 1
+    assert re_._pending[0]["kazandi"] is False and re_._pending[0]["dir"] == "SELL"
+    re_._pending.clear(); re_._izlenen.clear(); re_._uretilen.clear()
+    del fake.REENTRY_MODE
+
+
+def test_tara_reentry_magicinden_yeni_reentry_dogurmaz():
+    """Zincir engeli: magic +6 kapandığında kuyruğa GİRMEMELİ."""
+    re_._pending.clear(); re_._izlenen.clear(); re_._uretilen.clear()
+    fake.REENTRY_MODE = "shadow"
+    pozlar = {"cur": [_Poz(999, 52890969 + 6, 0)]}      # re-entry pozisyonu
+    deals = {999: [_Deal(1, 400.0, 30050.0)]}
+    m = _mt5_pozlu(pozlar, deals)
+    re_.tara(m, _log(), lambda fx: "NAS100")
+    pozlar["cur"] = []
+    re_.tara(m, _log(), lambda fx: "NAS100")
+    assert re_._pending == []                           # zincir yok
+    re_._izlenen.clear(); re_._uretilen.clear()
+    del fake.REENTRY_MODE
+
+
+def test_tara_ayni_ticketten_iki_kez_uretmez():
+    re_._pending.clear(); re_._izlenen.clear(); re_._uretilen.clear()
+    fake.REENTRY_MODE = "shadow"
+    pozlar = {"cur": [_Poz(555, 52890969, 0)]}
+    deals = {555: [_Deal(1, 400.0, 30050.0)]}
+    m = _mt5_pozlu(pozlar, deals)
+    re_.tara(m, _log(), lambda fx: "NAS100")
+    pozlar["cur"] = []
+    re_.tara(m, _log(), lambda fx: "NAS100")
+    re_._pending.clear()
+    pozlar["cur"] = [_Poz(555, 52890969, 0)]            # aynı ticket geri gelse bile
+    re_.tara(m, _log(), lambda fx: "NAS100")
+    pozlar["cur"] = []
+    re_.tara(m, _log(), lambda fx: "NAS100")
+    assert re_._pending == []                           # _uretilen engelliyor
+    re_._izlenen.clear(); re_._uretilen.clear()
+    del fake.REENTRY_MODE

@@ -40,7 +40,7 @@ import phase_rules as pr
 GEC_TP, GEC_SL = 5, 1
 
 _pending: list[dict] = []          # bekleyen re-entry niyetleri
-_gorulen: set[int] = set()         # işlenmiş ana pozisyon ticket'ları
+_izlenen: dict[int, dict] = {}     # AÇIK pozisyon takibi: ticket → {sym,fx,dir,magic}
 _uretilen: set[int] = set()        # re-entry doğurmuş ana ticket'lar (zincir engeli)
 
 
@@ -99,34 +99,49 @@ def tara(mt5, log, resolve_symbol) -> None:
         sym = resolve_symbol(fxs)
         if not sym:
             continue
-        acik = {p.ticket for p in (mt5.positions_get(symbol=sym) or [])}
+        # ── AÇIK pozisyonları izle; kaybolan = kapanmış ────────────────────
+        # ⚠️ history_deals_get(from, to) BROKER saati bekler; datetime.now()
+        # kutunun YEREL saatini verir (UTC−4 vs UTC+3 = 7 saat kayma) →
+        # kapanan işlemler pencerenin dışında kalır ve re-entry HİÇ tetiklenmez.
+        # Bu yüzden zaman penceresi hiç kullanılmıyor: pozisyon takibi +
+        # history_deals_get(position=ticket) — bu form pencere istemez.
+        # (Aynı desen trade_manager._chrev_update_cooldown'da da kullanılıyor.)
         try:
-            frm = __import__("datetime").datetime.now() - __import__("datetime").timedelta(hours=6)
-            deals = mt5.history_deals_get(frm, __import__("datetime").datetime.now()) or []
+            live = {int(p.ticket): p for p in (mt5.positions_get(symbol=sym) or [])}
         except Exception:
             continue
-        for d in deals:
-            if d.symbol != sym or d.entry not in (mt5.DEAL_ENTRY_OUT, mt5.DEAL_ENTRY_OUT_BY):
+        for tck, p in live.items():
+            if tck not in _izlenen:
+                _izlenen[tck] = {
+                    "fx": fxs, "sym": sym, "magic": int(p.magic),
+                    "dir": "BUY" if p.type == mt5.ORDER_TYPE_BUY else "SELL",
+                }
+        kapanan = [t for t, m in list(_izlenen.items())
+                   if m["sym"] == sym and t not in live]
+        for tck in kapanan:
+            meta = _izlenen.pop(tck)
+            if tck in _uretilen or meta["magic"] not in magics:
                 continue
-            pid = int(d.position_id)
-            if pid in _gorulen or pid in acik:
+            if zincir_engeli(meta["magic"]):
+                continue                       # re-entry'den re-entry doğmaz
+            try:
+                deals = mt5.history_deals_get(position=tck) or []
+            except Exception:
                 continue
-            _gorulen.add(pid)
-            if int(d.magic) not in magics or zincir_engeli(int(d.magic)):
+            cikis = [d for d in deals
+                     if d.entry in (mt5.DEAL_ENTRY_OUT, mt5.DEAL_ENTRY_OUT_BY)]
+            if not cikis:
                 continue
-            if pid in _uretilen:
-                continue
-            kazandi = float(d.profit) > 0
-            yon = "SELL" if d.type == mt5.DEAL_TYPE_BUY else "BUY"   # çıkış tersidir
+            kazandi = sum(float(d.profit) for d in cikis) > 0
+            son_px = float(cikis[-1].price)
             _pending.append({
-                "ana_ticket": pid, "fx": fxs, "sym": sym, "dir": yon,
-                "kapanis_px": float(d.price), "kazandi": kazandi,
-                "t0": time.time(),
+                "ana_ticket": tck, "fx": fxs, "sym": sym, "dir": meta["dir"],
+                "kapanis_px": son_px, "kazandi": kazandi, "t0": time.time(),
             })
-            _uretilen.add(pid)
-            log.info("[RE-ENTRY] ana #%s %s ile kapandı (%s) → %d dk sonra %s "
-                     "değerlendirilecek [%s]", pid, "TP" if kazandi else "SL",
-                     yon, gecikme_dk(kazandi, config), yon, mode().upper())
+            _uretilen.add(tck)
+            log.info("[RE-ENTRY] ana #%s %s ile kapandı (%s @%.2f) → %d dk sonra "
+                     "değerlendirilecek [%s]", tck, "TP" if kazandi else "SL",
+                     meta["dir"], son_px, gecikme_dk(kazandi, config), mode().upper())
 
 
 # ── kuyruğu işle ───────────────────────────────────────────────────────────
@@ -189,5 +204,5 @@ def isle(mt5, log, opener: Callable, log_gate_skip: Optional[Callable] = None,
     for p in biten:
         if p in _pending:
             _pending.remove(p)
-    if len(_gorulen) > 5000:
-        _gorulen.clear(); _uretilen.clear()
+    if len(_uretilen) > 5000:
+        _uretilen.clear()
