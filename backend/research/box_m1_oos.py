@@ -99,7 +99,12 @@ def stats(rows):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", default="2026-07-13")
+    ap.add_argument("--mode", default="m1", choices=["m1", "m2"],
+                    help="m1: wave>=esik + EMA4H ustu -> BUY | "
+                         "m2: wave<=esik + EMA4H alti -> SELL")
     a = ap.parse_args()
+    M2 = a.mode == "m2"
+    YON = "SELL" if M2 else "BUY"
     if not connect():
         sys.exit(f"mt5.initialize basarisiz: {mt5.last_error()}")
     split = datetime.fromisoformat(a.split).replace(tzinfo=timezone.utc)
@@ -134,42 +139,47 @@ def main():
             continue
         ctx[i] = ((x["c"] - lo) / (hi - lo), x["c"] > e)
 
-    def tara(esik, ustu=True, cooldown=60):
+    def tara(esik, ustu=None, cooldown=60):
+        if ustu is None:
+            ustu = not M2
         out = []; son = None
         for i in sorted(ctx):
             wave, above = ctx[i]
             u = s2u(b5[i]["t"])
             if u.isoweekday() == 5 or not (7 <= u.hour < 20):
                 continue
-            if above != ustu or wave < esik:
+            if above != ustu:
+                continue
+            if (wave > esik) if M2 else (wave < esik):
                 continue
             if son and (b5[i]["t"] - son) < cooldown * 60:
                 continue
-            r = resolve(b5, i, b5[i]["c"], "BUY")
+            r = resolve(b5, i, b5[i]["c"], YON)
             if r:
                 r["utc"] = u; out.append(r); son = b5[i]["t"]
         return out
 
-    tum = tara(0.85)
+    ANA_ESIK = 0.15 if M2 else 0.85
+    tum = tara(ANA_ESIK)
     dis = [r for r in tum if r["utc"] < split]
     ic = [r for r in tum if r["utc"] >= split]
-    print("1) M1 (wave≥0.85 + EMA4H üstü → BUY)")
+    print(f"1) {'M2 (wave≤0.15 + EMA4H altı → SELL)' if M2 else 'M1 (wave≥0.85 + EMA4H üstü → BUY)'}")
     for ad, rows in (("TÜM DÖNEM", tum), ("DIŞ-ÖRNEKLEM", dis), ("İÇ-ÖRNEKLEM", ic)):
         n, wr, p = stats(rows)
         print(f"   {ad:<16} n={n:<5} WR=%{wr:5.1f} {p:>+9.0f}$")
 
     print("\n2) EŞİK PLATOSU (tüm dönem)")
-    for th in (0.75, 0.80, 0.85, 0.90, 0.95):
+    for th in ((0.10, 0.15, 0.20, 0.25, 0.30) if M2 else (0.75, 0.80, 0.85, 0.90, 0.95)):
         n, wr, p = stats(tara(th))
-        print(f"   wave≥{th:.2f}  n={n:<5} WR=%{wr:5.1f} {p:>+9.0f}$")
+        print(f"   wave{'≤' if M2 else '≥'}{th:.2f}  n={n:<5} WR=%{wr:5.1f} {p:>+9.0f}$")
 
-    print("\n3) KOŞULSUZ KONTROL — 'EMA4H üstünde BUY' (wave şartı YOK)")
-    ks = tara(0.0)
+    print(f"\n3) KOŞULSUZ KONTROL — 'EMA4H {'altında SELL' if M2 else 'üstünde BUY'}' (wave şartı YOK)")
+    ks = tara(1.0 if M2 else 0.0)
     n, wr, p = stats(ks)
     print(f"   n={n:<5} WR=%{wr:5.1f} {p:>+9.0f}$  ← M1 bunu geçmeli")
 
-    print("\n4) KOŞULLU PLASEBO — EMA4H üstünde RASTGELE anlarda BUY")
-    havuz = [i for i in ctx if ctx[i][1]
+    print(f"\n4) KOŞULLU PLASEBO — EMA4H {'altında' if M2 else 'üstünde'} RASTGELE anlarda {YON}")
+    havuz = [i for i in ctx if ctx[i][1] != M2
              and s2u(b5[i]["t"]).isoweekday() != 5
              and 7 <= s2u(b5[i]["t"]).hour < 20]
     print(f"   havuz: {len(havuz)} bar")
@@ -182,7 +192,7 @@ def main():
             tot = 0.0
             for _ in range(n_o):
                 i = random.choice(havuz)
-                r = resolve(b5, i, b5[i]["c"], "BUY")
+                r = resolve(b5, i, b5[i]["c"], YON)
                 if r:
                     tot += r["pnl"]
             sim.append(tot)
