@@ -465,5 +465,53 @@
     "path": "/api/fakeout/mine?symbol=NDX.INDX",
     "category": "pattern_mining",
     "what_it_does": "candle_cache 5m+1m verisinden S/R/kanal kırılımlarını tespit edip GERÇEK/SAHTE etiketler ve ortak koşulları (hacim, RSI, penetrasyon, gövde, yaklaşma hızı...) OOS doğrulamayla madenler. Çıktı: fakeout_rules.json (runtime fakeout_gate + panel + decider okur) ve fakeout_report.md."
+  },
+  {
+    "id": "box_usoil_v3_oos",
+    "name": "USOIL v3 filtre denetimi — islem + bar bazli dis-orneklem",
+    "kind": "script",
+    "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_v3_oos.py --spread 0.03\"",
+    "category": "validation",
+    "what_it_does": "Botun gercek USOIL:BUY momentum kosullarini bar-bar uygulayip binlerce sizintisiz hipotetik giris uretir; F1 (ATR14/ATR60) ve F2 (4s dalga konumu) filtrelerini islem-bazli ve bar-bazli olarak ic/dis orneklemde olcer. 2026-08-20: F1 gurultu, F2 gercek ama zaten canli kapi.",
+    "output": "stdout tablo",
+    "needs_backend": false,
+    "est_runtime": "minutes",
+    "learn_targets": []
+  },
+  {
+    "id": "box_usoil_pos_tp",
+    "name": "USOIL konum kapisi esigi + TP izgarasi",
+    "kind": "script",
+    "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_pos_tp.py\"",
+    "category": "validation",
+    "what_it_does": "4s dalga konumu esigini bant bant (kumulatif + marjinal) ve TP/RR izgarasini derin orneklemde olcer. Konum ucurumu 0.85'te; TP uc urunu RR 1.0.",
+    "output": "stdout tablo",
+    "needs_backend": false,
+    "est_runtime": "minutes",
+    "learn_targets": []
+  },
+  {
+    "id": "box_usoil_tp_stability",
+    "name": "USOIL TP mesafesi — go_live_gate kararlilik sinamasi",
+    "kind": "script",
+    "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_tp_stability.py\"",
+    "category": "validation",
+    "what_it_does": "Her RR icin kronolojik iki yari, bootstrap P(EV>0), surtunme x1.5 ve 'ayni anda tek pozisyon' kisiti. USOIL_BUY_TP_RR karari bu ciktiya dayanir.",
+    "output": "stdout tablo",
+    "needs_backend": false,
+    "est_runtime": "minutes",
+    "learn_targets": []
+  },
+  {
+    "id": "box_usoil_posgate_hole",
+    "name": "Konum kapisi canli delik denetimi",
+    "kind": "script",
+    "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_posgate_hole.py\"",
+    "category": "validation",
+    "what_it_does": "POS_BUY_MAX=0.60 kapisinin canlida gercekten uygulanip uygulanmadigini olcer: kapi tarihinden sonraki her USOIL MOM/SR BUY islemin giris konumunu yeniden hesaplar. 2026-08-20: delik yok.",
+    "output": "stdout liste",
+    "needs_backend": false,
+    "est_runtime": "seconds",
+    "learn_targets": []
   }
 ]
