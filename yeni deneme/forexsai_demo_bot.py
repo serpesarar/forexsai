@@ -34,6 +34,7 @@ import config
 import reflex_exec
 import phase_rules as pr
 import probation_exec
+import reentry_exec
 import shadow_log
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
@@ -1484,6 +1485,39 @@ def _probation_guard(p: dict) -> tuple[bool, str]:
     return True, ""
 
 
+def _reentry_guard(p: dict) -> tuple[bool, str]:
+    """Re-entry emri gönderilmeden HEMEN ÖNCE: pencere + tavan kontrolleri.
+
+    Çakışma çözümü: re-entry AYRI magic kullanır (scope slot kilidini
+    tetiklemez) ama global pozisyon tavanına ve Faz-1 zaman pencerelerine
+    TABİDİR — risk tavanı ve seans kararları re-entry için de geçerli."""
+    blocked, why = pr.entry_window_block(datetime.now(timezone.utc), p["fx"], config)
+    if blocked:
+        return False, f"zaman penceresi: {why}"
+    if total_open_positions() >= config.MAX_TOTAL_POSITIONS:
+        return False, f"global tavan dolu ({config.MAX_TOTAL_POSITIONS})"
+    if config.DAILY_MAX_LOSS and config.DAILY_MAX_LOSS > 0:
+        try:
+            if today_realized_pnl() <= -config.DAILY_MAX_LOSS:
+                return False, "günlük zarar limiti"
+        except Exception:
+            pass
+    if open_count(p["sym"], p["dir"], reentry_exec.magic()) >= 1:
+        return False, "bu yönde zaten açık re-entry var"
+    return True, ""
+
+
+def _reentry_ac(fx: str, mt5_symbol: str, direction: str, magic: int) -> None:
+    """Re-entry emrini gönder — düz TP/SL geometrisi (kanıt böyle ölçüldü).
+
+    MOD-E probasyonundan MUAF (skip_probation=True): re-entry'nin kendi
+    zamanlaması var, üstüne 5 bar daha beklemek kanıtla uyuşmaz."""
+    cfg = dict(config.ROBUST_SCOPES.get(f"{fx}:{direction}")
+               or {"tp": 80, "sl": 110, "is_pct": False})
+    open_trade(f"{fx}:{direction}:REENTRY", fx, mt5_symbol, direction, cfg,
+               ["reentry"], magic=magic, skip_probation=True)
+
+
 def _market_open(scope_key, forexsai_sym, mt5_symbol, direction, cfg, voters, bot_signal):
     """Eski market girişi (momentum-continuation)."""
     if bot_signal:
@@ -2208,7 +2242,9 @@ def main():
                "PHASE1_CONFIG_RESTORE", "POS_TIGHT_ENABLED", "POS_TIGHT_BLOCK",
                "SELL_RSI_SHADOW_ENABLED", "PROBATION_SHADOW_ENABLED",
                "PROBATION_LIVE", "PROBATION_SYMBOLS", "PROBATION_BARS",
-               "PROBATION_MAX_WAIT_MIN", "SCOPE_LOSS_COOLDOWN_ENABLED"):
+               "PROBATION_MAX_WAIT_MIN", "REENTRY_MODE", "REENTRY_SYMBOLS",
+               "REENTRY_DELAY_TP_MIN", "REENTRY_DELAY_SL_MIN",
+               "SCOPE_LOSS_COOLDOWN_ENABLED"):
         _from = "config" if hasattr(config, _n) else "varsayılan(faz)"
         log.info("  ayar %-30s = %-8s (%s)", _n, pr.flag(config, _n), _from)
     log.info("=" * 64)
@@ -2315,6 +2351,14 @@ def main():
                     check_shadow_scopes()
                 except Exception as e:
                     log.warning("gölge scope döngü hatası: %s", e)
+
+            # ── RE-ENTRY: kapanan işlemleri yakala + kuyruğu işle ──
+            try:
+                reentry_exec.tara(mt5, log, resolve_symbol)
+                reentry_exec.isle(mt5, log, _reentry_ac, log_gate_skip,
+                                  shadow_log.record_shadow, _reentry_guard)
+            except Exception as e:
+                log.exception("re-entry hatası: %s", e)
 
             # ── MOD-E probasyon kuyruğu: süresi dolanları değerlendir ──
             try:

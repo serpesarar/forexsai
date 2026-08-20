@@ -81,6 +81,17 @@ DEFAULTS: dict[str, object] = {
     "PROBATION_BARS": 5,
     "PROBATION_Z": 1.28,
     "PROBATION_MAX_WAIT_MIN": 15,        # bu kadar sürede karara varılamazsa iptal
+    # ── RE-ENTRY (2026-08-20): ana işlem kapanınca aynı yönde bir kez daha gir.
+    # Üç kapılı sınav (bkz. reentry_exec.py başlığı):
+    #   bağımsızlık ✅ (iç %55 / dış %53 örtüşme — piramitte %94'tü)
+    #   eşit-risk alfa ✅ (iç +12.462$ / dış +3.850$)
+    #   plasebo ❌ dış-örneklemde geçilemedi (p=0.187; iç p=0.000)
+    # → VARSAYILAN GÖLGE. 2-4 hafta gölge verisinden sonra "live" yapılır.
+    "REENTRY_MODE": "shadow",            # "off" | "shadow" | "live"
+    "REENTRY_SYMBOLS": ("NDX.INDX",),    # kanıt yalnız NASDAQ'ta
+    "REENTRY_DELAY_TP_MIN": 5,
+    "REENTRY_DELAY_SL_MIN": 1,
+    "REENTRY_MAX_WAIT_MIN": 20,          # bu süreyi aşan niyet iptal
     # Opsiyonel (etkisi nötr ölçüldü)
     "SCOPE_LOSS_COOLDOWN_ENABLED": False,
     "SCOPE_LOSS_COOLDOWN_MIN": 120,

@@ -59,6 +59,14 @@ PRESETS: dict[str, dict[str, dict[str, str]]] = {
         "off": {"POS_TIGHT_ENABLED": "False", "POS_TIGHT_BLOCK": "False"},
     },
     # phase3 = MOD-E probasyonu. 'live' → emir 5 bar geciktirilir (probation_exec).
+    # re-entry: ana işlem kapanınca aynı yönde bir kez daha gir.
+    # dış-örneklemde bağımsızlık ✅ + eşit-risk alfa ✅ ama plasebo ❌ (p=0.187)
+    # → gölgeyle başla, 2-4 hafta veri sonrası live.
+    "reentry": {
+        "shadow": {"REENTRY_MODE": "'shadow'"},
+        "live": {"REENTRY_MODE": "'live'"},
+        "off": {"REENTRY_MODE": "'off'"},
+    },
     "phase3": {
         "live": {"PROBATION_LIVE": "True", "PROBATION_SHADOW_ENABLED": "True"},
         "shadow": {"PROBATION_SHADOW_ENABLED": "True", "PROBATION_LIVE": "False"},
