@@ -1945,5 +1945,170 @@
     "source": "session",
     "created_at": "2026-08-20T22:53:34.278935+00:00",
     "updated_at": "2026-08-20T22:53:34.278939+00:00"
+  },
+  {
+    "id": "bl_03a8e690fe",
+    "title": "[Analist] İndeks çıkış-asimetrisi teşhisi",
+    "detail": "NAS100+GER40 30g işlemlerinde kazanan ort. R ile kaybeden ort. R'yi ayrı ölç; MFE'nin ne kadarının çıkışta bırakıldığını çıkar. Başarı ölçütü: kaybeden-R'yi kısaltan bir çıkış kuralının aynı işlem setinde net R'yi pozitife çevirip çevirmediği (gölge).",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-13T22:48:18.061346+00:00",
+    "updated_at": "2026-08-13T22:48:18.061364+00:00"
+  },
+  {
+    "id": "bl_0ecc9513e2",
+    "title": "[Analist] XAU transition-SAR karşıt-yön bloğu",
+    "detail": "33 tekliften türetilen tek filtreyi (regime=transition & mtf=all_up & SAR karşıt yön → blokla) XAU ml/pulse inversion satırlarına gölge uygula. Başarı: bloklanan kümenin gerçekleşmiş WR'ı <%40 ise filtre kanıtlı.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-13T22:48:18.079691+00:00",
+    "updated_at": "2026-08-13T22:48:18.079704+00:00"
+  },
+  {
+    "id": "bl_7e852c55a7",
+    "title": "[Analist-Envanter] decider_exit_compare (Çıkış Politikası Kıyası) hiç çalıştırılmamış — bugünkü en kritik bulgu (indeks çıkış asimetrisi) tam bunun cevaplayacağı soru. B",
+    "detail": "decider_exit_compare (Çıkış Politikası Kıyası) hiç çalıştırılmamış — bugünkü en kritik bulgu (indeks çıkış asimetrisi) tam bunun cevaplayacağı soru. Bugün çalıştır: 'mevcut çıkış vs BE-trail vs erken-adverse-cross, indeks işlemlerinde net R farkı'.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-13T22:48:18.099489+00:00",
+    "updated_at": "2026-08-13T22:48:18.099502+00:00"
+  },
+  {
+    "id": "bl_a5a739731e",
+    "title": "[Analist-Envanter] bl_learning_context_dead (30 gün): get_learning_context_for_prompt() ÖLÜ KOD, hiçbir yerde tüketilmiyor — decider prompt'una öğrenme bağlamı hiç akmıy",
+    "detail": "bl_learning_context_dead (30 gün): get_learning_context_for_prompt() ÖLÜ KOD, hiçbir yerde tüketilmiyor — decider prompt'una öğrenme bağlamı hiç akmıyor olabilir. 30 gündür yüksek öncelikli bekliyor; ya bağla ya sil, karar ver.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-13T22:48:18.117345+00:00",
+    "updated_at": "2026-08-13T22:48:18.117359+00:00"
+  },
+  {
+    "id": "bl_d2b17a4abf",
+    "title": "[Analist-Envanter] 33 iyileştirme teklifinin çoğu tek kök nedene indirgeniyor: XAU inversion/cross modelleri 'transition + all_up + SAR bearish'te %0 WR SELL/BUY üretiyo",
+    "detail": "33 iyileştirme teklifinin çoğu tek kök nedene indirgeniyor: XAU inversion/cross modelleri 'transition + all_up + SAR bearish'te %0 WR SELL/BUY üretiyor (defalarca, critical). Tek bir 'transition+SAR karşıt yön bloğu' filtresi 6+ teklifi birden kapatır — gölge filtre olarak dene.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-13T22:48:18.136614+00:00",
+    "updated_at": "2026-08-13T22:48:18.136639+00:00"
+  },
+  {
+    "id": "bl_31710ba68d",
+    "title": "[Analist] Index SL daraltma geriye-dönük replay",
+    "detail": "NDX/GDAXI için bekleyen TP/SL önerisini (SL 50→~18) son 30g gerçek MT5 deal geçmişiyle simüle et. Başarı ölçütü: net pnl POZİTİF artış VE maksimum ardışık drawdown artmıyor. Geçerse insan onayına sun.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-15T22:47:17.526558+00:00",
+    "updated_at": "2026-08-15T22:47:17.526578+00:00"
+  },
+  {
+    "id": "bl_53d3a64ba1",
+    "title": "[Analist] Fakeout shadow per-symbol kırılımı",
+    "detail": "shadow_tracker fakeout kaynağını sembol×WR ayır. Başarı ölçütü: NDX-only n≥30 ve WR≥%55 ve avg_r>0 ise FAKEOUT_GATE_BLOCK=1 (NDX) için kanıt paketi; değilse 'hâlâ gölge, n=X' olarak beklet.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-15T22:47:17.541147+00:00",
+    "updated_at": "2026-08-15T22:47:17.541160+00:00"
+  },
+  {
+    "id": "bl_ce8bdb5a74",
+    "title": "[Analist-Envanter] bl_learning_context_dead (32 gün bayat, high): get_learning_context_for_prompt() hiçbir yerde tüketilmiyor. Bugün karar ver — decider prompt'una bağla",
+    "detail": "bl_learning_context_dead (32 gün bayat, high): get_learning_context_for_prompt() hiçbir yerde tüketilmiyor. Bugün karar ver — decider prompt'una bağla YA DA sil; ölü kod her gün kafa karıştırıyor.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-15T22:47:17.556753+00:00",
+    "updated_at": "2026-08-15T22:47:17.556770+00:00"
+  },
+  {
+    "id": "bl_5b89786ff1",
+    "title": "[Analist-Envanter] 'Gösterge Ayrıştırma (indicator_discrimination — WIN vs LOSS AUC)' aracı HİÇ çalıştırılmamış. Bugün NAS100+GER40 için koş: bot %54 WR'da kaybediyor, h",
+    "detail": "'Gösterge Ayrıştırma (indicator_discrimination — WIN vs LOSS AUC)' aracı HİÇ çalıştırılmamış. Bugün NAS100+GER40 için koş: bot %54 WR'da kaybediyor, hangi göstergenin kazananı kaybedenden ayırdığını bulmak tam bu 'küçük kazanç/büyük kayıp' sorununu hedefler.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-15T22:47:17.570375+00:00",
+    "updated_at": "2026-08-15T22:47:17.570389+00:00"
+  },
+  {
+    "id": "bl_7cb45fcb88",
+    "title": "[Analist-Envanter] 33 iyileştirme teklifi + 8 TP/SL önerisi haftalardır İNCELENMEMİŞ birikmiş; teklifler tekrar tekrar aynı temayı (XAU ml_cross/inv transition rejiminde",
+    "detail": "33 iyileştirme teklifi + 8 TP/SL önerisi haftalardır İNCELENMEMİŞ birikmiş; teklifler tekrar tekrar aynı temayı (XAU ml_cross/inv transition rejiminde all_up'a karşı SELL, %0 WR) işaret ediyor — bu tekrar eden kümeyi tek bir 'transition + karşı-trend inv bloğu' deneyiyle kapat.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-15T22:47:17.586898+00:00",
+    "updated_at": "2026-08-15T22:47:17.586915+00:00"
+  },
+  {
+    "id": "bl_e426d7e25d",
+    "title": "[Analist] Fakeout gölge sembol-kırılımı",
+    "detail": "shadow_tracker fakeout kaynağını sembol bazında ayır (özellikle NDX, çünkü gate yalnız NDX'i etkiler). Başarı ölçütü: NDX fakeout shadow n≥30 ve WR ≥%55 ise FAKEOUT_GATE_BLOCK terfisi kanıtlanmış olur; değilse gölgede kalır.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-20T22:51:17.881334+00:00",
+    "updated_at": "2026-08-20T22:51:17.881353+00:00"
+  },
+  {
+    "id": "bl_f24b08608e",
+    "title": "[Analist] Bias 10-dakika tüketim testi",
+    "detail": "Debate kararlarının %71.6'sı ilk 10dk'da tutmuyor, 10dk ufkunda %55.2 (baseline eşiti). Kararı yalnız ilk ~10-15dk penceresinde geçerli sayan bir tüketim kuralını gölgede ölç; başarı: kısa-ufuk yönlü isabetin baseline üstüne çıkması.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-20T22:51:17.919984+00:00",
+    "updated_at": "2026-08-20T22:51:17.920006+00:00"
+  },
+  {
+    "id": "bl_25a792166c",
+    "title": "[Analist-Envanter] decider_baseline_compare aracı HİÇ çalıştırılmamış — decider sistemin en güçlü kolu (XAU/GDAXI/NDX %59-74) ama bu edge Opus'un mu yoksa altındaki naiv",
+    "detail": "decider_baseline_compare aracı HİÇ çalıştırılmamış — decider sistemin en güçlü kolu (XAU/GDAXI/NDX %59-74) ama bu edge Opus'un mu yoksa altındaki naive gate'in mi olduğu bilinmiyor. Bugün bu aracı çalıştır: 'Opus kararı naive gate'e karşı değer katıyor mu?' — token bütçesini haklı çıkarır ya da çürütür.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-20T22:51:17.952838+00:00",
+    "updated_at": "2026-08-20T22:51:17.952876+00:00"
+  },
+  {
+    "id": "bl_9a1f430aec",
+    "title": "[Analist-Envanter] decider_post_mortem (SL Otopsisi) hiç koşulmamış — USOIL SELL-only kolu 50 işlemde %46 kaybediyor; bu araçla 27 kaybın ortak paydasını çıkar (rejim/sa",
+    "detail": "decider_post_mortem (SL Otopsisi) hiç koşulmamış — USOIL SELL-only kolu 50 işlemde %46 kaybediyor; bu araçla 27 kaybın ortak paydasını çıkar (rejim/saat/aşırılık kovası), USOIL SELL çıtası için somut filtre üret.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-20T22:51:18.037572+00:00",
+    "updated_at": "2026-08-20T22:51:18.037594+00:00"
+  },
+  {
+    "id": "bl_f107ba43ba",
+    "title": "[Analist-Envanter] Yüksek öncelikli backlog 37 gündür bayat: bl_entry_gate_bot_verify ('bot entry_gate canlıda gerçekten aktif mi') — bot 3 gündür işlem açmıyor; bu doğr",
+    "detail": "Yüksek öncelikli backlog 37 gündür bayat: bl_entry_gate_bot_verify ('bot entry_gate canlıda gerçekten aktif mi') — bot 3 gündür işlem açmıyor; bu doğrulama artık aciliyet kazandı, bugün kutuda kontrol edilmeli.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-20T22:51:18.103838+00:00",
+    "updated_at": "2026-08-20T22:51:18.103856+00:00"
   }
 ]
