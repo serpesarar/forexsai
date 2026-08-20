@@ -2258,6 +2258,7 @@ def main():
                "PROBATION_LIVE", "PROBATION_SYMBOLS", "PROBATION_BARS",
                "PROBATION_MAX_WAIT_MIN", "REENTRY_MODE", "REENTRY_SYMBOLS",
                "REENTRY_DELAY_TP_MIN", "REENTRY_DELAY_SL_MIN",
+               "USOIL_BUY_TP_RR", "USOIL_BUY_TP_SYMBOLS",
                "SCOPE_LOSS_COOLDOWN_ENABLED"):
         _from = "config" if hasattr(config, _n) else "varsayılan(faz)"
         log.info("  ayar %-30s = %-8s (%s)", _n, pr.flag(config, _n), _from)
