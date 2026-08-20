@@ -234,7 +234,10 @@ def bolum_a(split: datetime, end: datetime, m1, m1t):
     if not live:
         print("  islem yok\n"); return
     print(f"  {live[0]['utc']:%Y-%m-%d} -> {live[-1]['utc']:%Y-%m-%d}")
-    print(f"  1m bar kapsami: {s2u(m1t[0]):%Y-%m-%d} -> {s2u(m1t[-1]):%Y-%m-%d}")
+    if m1t:
+        print(f"  1m bar kapsami: {s2u(m1t[0]):%Y-%m-%d} -> {s2u(m1t[-1]):%Y-%m-%d}")
+    else:
+        print("  1m bar YOK — F1 yalniz 5m vekiliyle olculecek")
 
     feat_ok = 0
     for p in live:
@@ -433,7 +436,8 @@ def main():
     ap.add_argument("--end", default="2026-08-14")
     ap.add_argument("--spread", type=float, default=0.03)
     ap.add_argument("--tp", default="pct", choices=["pct", "r06"])
-    ap.add_argument("--m1", type=int, default=200000)
+    ap.add_argument("--m1", type=int, default=99000)
+    ap.add_argument("--m5", type=int, default=99000)
     a = ap.parse_args()
     if not connect():
         sys.exit(f"mt5.initialize basarisiz: {mt5.last_error()}")
@@ -442,9 +446,21 @@ def main():
     end = datetime.fromisoformat(a.end).replace(tzinfo=timezone.utc)
 
     m1, m1t = bars(mt5.TIMEFRAME_M1, a.m1)
-    b5, t5 = bars(mt5.TIMEFRAME_M5, 200000)
-    b30, t30 = bars(mt5.TIMEFRAME_M30, 60000)
-    b1h, t1h = bars(mt5.TIMEFRAME_H1, 40000)
+    b5, t5 = bars(mt5.TIMEFRAME_M5, a.m5)
+    b30, t30 = bars(mt5.TIMEFRAME_M30, 40000)
+    b1h, t1h = bars(mt5.TIMEFRAME_H1, 20000)
+    if not b5:
+        for n in (60000, 40000, 20000, 10000):
+            b5, t5 = bars(mt5.TIMEFRAME_M5, n)
+            if b5:
+                break
+    if not m1:
+        for n in (60000, 40000, 20000):
+            m1, m1t = bars(mt5.TIMEFRAME_M1, n)
+            if m1:
+                break
+    if not b5:
+        sys.exit("5m bar alinamadi")
     print(f"{SYM}: 1m={len(m1)} 5m={len(b5)} 30m={len(b30)} 1h={len(b1h)}")
     if b5:
         print(f"  5m kapsam: {s2u(t5[0]):%Y-%m-%d} -> {s2u(t5[-1]):%Y-%m-%d}")
