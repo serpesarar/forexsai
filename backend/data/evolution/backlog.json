@@ -2110,5 +2110,38 @@
     "source": "daily_analyst",
     "created_at": "2026-08-20T22:51:18.103838+00:00",
     "updated_at": "2026-08-20T22:51:18.103856+00:00"
+  },
+  {
+    "id": "bl_6839d69091",
+    "title": "Sonnet-high vs Opus karar kalitesi A/B",
+    "detail": "decider_journal'da artik 'effort' ve 'model' alanlari var; sonnet-high epoch'u >=100 karara ulasinca opus donemiyle WR/EV kiyasla. Kalite dusmusse DECIDE_EFFORT/DECIDE_MODEL geri alinir.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-21T18:02:54.728363+00:00",
+    "updated_at": "2026-08-21T18:02:54.728498+00:00"
+  },
+  {
+    "id": "bl_ea202cc0ca",
+    "title": "XAU FREE size_factor kapisi",
+    "detail": "308 islemde size>0.4 alt kumesi n=11 WR %81.8 +0.170R iken size<=0.15 n=110 WR %55.5 -0.089R. Dusuk-konviksiyon kesif islemleri net EV'yi negatife cekiyor. Bir alt esik (or. size>=0.3) kapisi sizintisiz olcumle test edilmeli.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-21T18:02:54.730037+00:00",
+    "updated_at": "2026-08-21T18:02:54.730040+00:00"
+  },
+  {
+    "id": "bl_fa3c31647b",
+    "title": "gold_brain motoru commit edilmemis",
+    "detail": "07-30..08-09 arasi XAUUSD'de gold_brain adli ucuncu karar motoru calismis (290 karar, sadece 17'si LLM'e gitmis; kural skoru >=70 kapisi). Repoda kodu YOK, 08-17'de sessizce FREE moda donulmus - muhtemelen git pull commit'lenmemis kodu ezdi. Kutuda kod aranmali, degerliyse commit edilmeli.",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-21T18:02:54.731183+00:00",
+    "updated_at": "2026-08-21T18:02:54.731185+00:00"
   }
 ]
