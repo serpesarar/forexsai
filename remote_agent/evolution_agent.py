@@ -419,12 +419,17 @@ def handle_claude_task(client, cmd: dict) -> tuple[str, int]:
 
     timeout = min(int(p.get("timeout", CLAUDE_TASK_DEFAULT_TIMEOUT)), CLAUDE_TASK_MAX_TIMEOUT)
     model = p.get("model") or getattr(cfg, "CLAUDE_TASK_MODEL", "sonnet")
+    # 2026-08-21: kutudaki ajan da Sonnet 5 + yüksek düşünme eforuyla çalışır
+    # (Opus kotası hızlı tükeniyordu). payload.effort ile çağrı bazında ezilebilir.
+    effort = p.get("effort") or getattr(cfg, "CLAUDE_TASK_EFFORT", "high")
     full_prompt = prompt if p.get("raw") else f"{CLAUDE_TASK_PROTOCOL}\n\nGÖREV:\n{prompt}"
 
     claude_bin = _resolve_claude_bin()
     argv = [claude_bin, "-p", "--dangerously-skip-permissions", "--model", model]
-    log.info("claude_task: model=%s cwd=%s timeout=%ss prompt=%d karakter",
-             model, cwd, timeout, len(full_prompt))
+    if effort:
+        argv += ["--effort", effort]
+    log.info("claude_task: model=%s efor=%s cwd=%s timeout=%ss prompt=%d karakter",
+             model, effort or "-", cwd, timeout, len(full_prompt))
     try:
         proc = subprocess.Popen(
             argv, cwd=str(cwd), stdin=subprocess.PIPE,

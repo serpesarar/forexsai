@@ -10,6 +10,7 @@ Kullanım:
     text = call_claude_cli_sync(system, user, model="haiku")     # sync
 
 Model kısa adları CLI'da geçerli: "haiku" | "sonnet" | "opus".
+Düşünme eforu ``--effort`` ile ayarlanır (varsayılan "high", CLAUDE_CLI_EFFORT ile ezilir).
 'claude' CLI kurulu+girişli DEĞİLSE None döner (çağıran yedeğe düşebilir).
 """
 from __future__ import annotations
@@ -17,11 +18,18 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
+import re
 import shutil
 import subprocess
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+# 2026-08-21: panelin TÜM AI çağrıları Sonnet 5 + yüksek düşünme eforu.
+# Opus kotayı hızlı tüketiyordu; derinlik model boyutu yerine efordan gelir.
+DEFAULT_EFFORT = os.getenv("CLAUDE_CLI_EFFORT", "high")
+_UNKNOWN_OPT = re.compile(r"unknown option|unrecognized option|--effort", re.I)
 
 _CLAUDE_BIN: Optional[str] = None
 _CHECKED = False
@@ -41,22 +49,29 @@ def claude_cli_available() -> bool:
 
 
 def call_claude_cli_sync(system_prompt: str, user_prompt: str,
-                         model: str = "sonnet", timeout: int = 180) -> Optional[str]:
+                         model: str = "sonnet", timeout: int = 180,
+                         effort: str = DEFAULT_EFFORT) -> Optional[str]:
     """Claude Code CLI'ı subprocess ile çağır (senkron). Metin döner, hata → None."""
     if not claude_cli_available():
         return None
     cmd = ["claude", "--dangerously-skip-permissions", "-p",
            "--model", model, "--output-format", "json"]
+    if effort:
+        cmd += ["--effort", effort]
     prompt = f"{system_prompt}\n\n{user_prompt}" if system_prompt else user_prompt
     try:
         r = subprocess.run(cmd, input=prompt, capture_output=True,
-                           text=True, timeout=timeout)
+                           text=True, encoding="utf-8", errors="replace", timeout=timeout)
     except FileNotFoundError:
         return None
     except subprocess.TimeoutExpired:
         logger.warning("[claude-cli] zaman aşımı (%ss, model=%s)", timeout, model)
         return None
     if r.returncode != 0:
+        # Eski CLI --effort'u bilmeyebilir → bir kez efor'suz tekrar dene (sessiz ölüm olmasın)
+        if effort and _UNKNOWN_OPT.search(r.stderr or ""):
+            logger.info("[claude-cli] --effort desteklenmiyor, efor'suz tekrar")
+            return call_claude_cli_sync(system_prompt, user_prompt, model, timeout, effort="")
         logger.warning("[claude-cli] exit %s (model=%s): %s", r.returncode, model, (r.stderr or "")[:200])
         return None
     # --output-format json → {"result": "...", "total_cost_usd":..., "duration_ms":...}
@@ -68,8 +83,9 @@ def call_claude_cli_sync(system_prompt: str, user_prompt: str,
 
 
 async def call_claude_cli(system_prompt: str, user_prompt: str,
-                          model: str = "sonnet", timeout: int = 180) -> Optional[str]:
+                          model: str = "sonnet", timeout: int = 180,
+                          effort: str = DEFAULT_EFFORT) -> Optional[str]:
     """call_claude_cli_sync'in async sarmalayıcısı (event loop'u bloklamaz)."""
     return await asyncio.to_thread(
-        call_claude_cli_sync, system_prompt, user_prompt, model, timeout
+        call_claude_cli_sync, system_prompt, user_prompt, model, timeout, effort
     )

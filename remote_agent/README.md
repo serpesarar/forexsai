@@ -45,7 +45,7 @@ Panelden (Mac) bu kutudaki **Claude Code'a doğrudan görev verilebilir**:
 
 ```bash
 python3 scripts/remote.py ask "botun son 2 saatteki TREND KAPISI satırlarını say"
-python3 scripts/remote.py ask "..." --model opus --timeout 1800 --cwd "yeni deneme"
+python3 scripts/remote.py ask "..." --effort high --timeout 1800 --cwd "yeni deneme"
 python3 scripts/remote.py sh   "git log --oneline -5"
 python3 scripts/remote.py pull
 python3 scripts/remote.py restart decider|bot|backend|agent

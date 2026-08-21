@@ -25,7 +25,9 @@ python3 scripts/remote.py status | watch <id> | health
 `ask` → kutudaki **Claude Code headless** çalışır, çıktı canlı akar; sonunda
 `=== SONUÇ ===` bloğu (durum/özet/bulgular/önerilen_adım) döner ve panel onu
 ayrıştırır. Yani kullanıcıya "şu komutu kutuda çalıştır" DEME — köprüden kendin
-yap, sonucu raporla. Model seçimi: `--model opus` (varsayılan sonnet).
+yap, sonucu raporla. Model: **Sonnet 5 + `--effort high`** (varsayılan; 2026-08-21'de
+Opus'tan geçildi — kota çok hızlı tükeniyordu, derinlik artık efordan geliyor).
+`--model`/`--effort` ile çağrı bazında ezilebilir.
 
 Kanal: Supabase `evolution_commands` kuyruğu → ajan 30 sn'de bir çeker.
 Güvenlik: cwd repo köküne kilitli, prompt/timeout tavanlı, görev protokolü

@@ -69,6 +69,7 @@ WEEKLY_JOBS = [
 # kutunun Claude'u arasında yapılandırılmış iş devri (=== SONUÇ === protokolü).
 CLAUDE_TASK_ENABLED = True          # False → köprü kapanır (komut reddedilir)
 CLAUDE_TASK_MODEL = "sonnet"        # varsayılan model; görev bazında ezilebilir
+CLAUDE_TASK_EFFORT = "high"         # düşünme eforu (low|medium|high); "" → CLI varsayılanı
 # CLAUDE_BIN = r"C:\Users\Mael\node_modules\@anthropic-ai\claude-code-win32-x64\claude.exe"
 #   Ajan sırayla dener: agent_config.CLAUDE_BIN → CLAUDE_BIN env → PATH →
 #   bilinen npm/node_modules yolları. Hiçbiri yoksa görev net hatayla düşer.

@@ -10,8 +10,9 @@ SERT GÜVENLİK (kodda zorlanır, Opus ihlal edemez): XAU SELL + USOIL BUY kalı
 size_factor [0,1.0]; günlük zarar limiti executor'da. Bunlar "veteran"a verilen kelepçe
 değil, firma kuralları — kanıtla -EV olduğu için.
 
-Model: Opus 4.8 (max) — yargı en iyi brain'i hak eder; kapı/durum seyrek olduğu için
-quota sürdürülebilir. Quota sıkışırsa DECIDE_MODEL="sonnet".
+Model (2026-08-21): Sonnet 5 + `--effort high`. Opus 5 kotayı çok hızlı yiyordu
+(~$0.35/çağrı headless); yargı derinliği artık model boyutundan değil DÜŞÜNME
+EFORUNDAN gelir. Geri dönüş: DECIDE_MODEL=claude-opus-5 (env).
 """
 from __future__ import annotations
 import json
@@ -68,8 +69,14 @@ def journal_lock(timeout: float = 10.0):
 # Asıl (canlı) karar modeli. 2026-07-26: "opus" alias'ı yerine AÇIK model
 # kimliği — alias CLI sürümüne göre farklı Opus'a çözülebiliyor, karar
 # kalitesi ve maliyet karşılaştırmaları model sabit olmadan anlamsızlaşır.
-# Env ile ezilebilir: DECIDE_MODEL=sonnet (quota sıkışırsa).
-DECIDE_MODEL = os.getenv("DECIDE_MODEL", "claude-opus-5")
+# 2026-08-21 OPUS → SONNET: Opus kotası çok hızlı tükeniyordu (gözlenen
+# headless maliyet ~$0.35/çağrı × ~60 çağrı/gün). Sonnet 5 + yüksek düşünme
+# eforu (DECIDE_EFFORT) aynı yargı derinliğini çok daha ucuza verir.
+# Env ile ezilebilir: DECIDE_MODEL=claude-opus-5 (geri dönüş).
+DECIDE_MODEL = os.getenv("DECIDE_MODEL", "claude-sonnet-5")
+# Düşünme eforu (claude CLI --effort). Karar kalitesi model küçüldüğünde
+# buradan telafi edilir; "high" varsayılan.
+DECIDE_EFFORT = os.getenv("DECIDE_EFFORT", "high")
 # GÖLGE model A/B: aynı veriye paralel karar verir, AYRI grade edilir (canlı değil, kıyas için).
 # 2026-07-03 KAPATILDI (None): canlı çift-çağrı 3 günde haftalık limitin %55'ini yedi.
 # Fable artık batch_eval.py ile ölçülür: kayıtlar birikir → TEK toplu çağrı → sızıntısız
@@ -339,9 +346,13 @@ def _claude_bin() -> str:
     return _CLAUDE_BIN_CACHE
 
 
-def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180) -> dict:
+def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180,
+                effort: str | None = None) -> dict:
     cmd = [_claude_bin(), "--dangerously-skip-permissions", "-p",
            "--model", model, "--output-format", "json"]
+    eff = DECIDE_EFFORT if effort is None else effort
+    if eff:
+        cmd += ["--effort", eff]
     try:
         # encoding ZORUNLU: text=True varsayılanı locale'dir (TR Windows'ta cp1252) →
         # Türkçe karakterli prompt UnicodeEncodeError atıp TÜM pass'i öldürüyordu
@@ -354,6 +365,12 @@ def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180) -> d
     except OSError as e:      # WinError 2: CLI yolu bulunamadı/erişilemedi → pass ölmesin
         return {"action": "WAIT", "reason": f"claude spawn hatası: {e}", "_error": True}
     if r.returncode != 0:
+        # ESKİ CLI KORUMASI: kutudaki claude sürümü --effort'u bilmiyorsa her karar
+        # sessizce WAIT'e düşerdi (2026-08-12 unicode vakasının aynısı). Bilinmeyen-
+        # seçenek hatasında bir kez efor'suz tekrar dene.
+        if eff and re.search(r"unknown option|unrecognized option|--effort", r.stderr or "", re.I):
+            print("  ⚠ CLI --effort desteklemiyor → efor'suz tekrar deneniyor")
+            return call_claude(prompt, model=model, timeout=timeout, effort="")
         # 2026-08-17 tanısı: CLI kota/rate-limit hatalarını stderr'e DEĞİL stdout'a JSON
         # olarak yazıyor — eskiden yalnız (boş) stderr loglanıyordu, gerçek sebep (kota mı,
         # auth mı) hiç görünmüyordu (467/3766 kayıtta "claude exit 1: " boş gövde).
@@ -371,6 +388,7 @@ def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180) -> d
     dec["_cost_usd"] = meta.get("total_cost_usd")
     dec["_ms"] = meta.get("duration_ms")
     dec["_model"] = model
+    dec["_effort"] = eff or None      # model/efor epoch'u: sonnet-high dönemi ayırt edilebilsin
     return dec
 
 
@@ -564,6 +582,7 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
         "multi_tf": ctx.get("multi_tf"),
         "forensics": ctx.get("forensics"),   # SL-otopsi snapshot
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),
+        "effort": dec.get("_effort", DECIDE_EFFORT),   # model/efor epoch etiketi
         "shadow_model": shadow,          # Fable5 A/B kararı (ayrı grade)
         "outcome": None,
     }
@@ -618,6 +637,7 @@ def append_journal(situation: dict, dec: dict) -> dict:
         "vix": situation.get("vix"),
         "context": situation.get("context"),
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),
+        "effort": dec.get("_effort", DECIDE_EFFORT),   # model/efor epoch etiketi
         "shadow_model": shadow,          # Fable5 A/B kararı (ayrı grade)
         "outcome": None,
     }

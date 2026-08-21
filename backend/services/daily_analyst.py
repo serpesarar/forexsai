@@ -34,7 +34,9 @@ logger = logging.getLogger(__name__)
 
 ENABLED = os.getenv("DAILY_ANALYST_ENABLED", "1") == "1"
 RUN_AT_UTC = os.getenv("DAILY_ANALYST_UTC", "22:45")  # notlamalar (22:20) bittikten sonra
-CLI_MODEL = os.getenv("DAILY_ANALYST_MODEL", "opus")
+# 2026-08-21: opus → sonnet (kota). Derinlik --effort high ile telafi edilir.
+CLI_MODEL = os.getenv("DAILY_ANALYST_MODEL", "sonnet")
+CLI_EFFORT = os.getenv("DAILY_ANALYST_EFFORT", "high")
 
 _REPO = Path(__file__).resolve().parents[2]
 REPORT_DIR = _REPO / "backend" / "data" / "evolution" / "analyst_reports"

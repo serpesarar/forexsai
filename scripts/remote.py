@@ -8,7 +8,7 @@ yapılandırılmış iş devri.
 
 Kullanım:
   python3 scripts/remote.py ask "botun son 2 saatteki TREND KAPISI satırlarını say"
-  python3 scripts/remote.py ask "..." --model opus --timeout 1800 --cwd "yeni deneme"
+  python3 scripts/remote.py ask "..." --effort high --timeout 1800 --cwd "yeni deneme"
   python3 scripts/remote.py sh  "git log --oneline -5"        # kabuk komutu
   python3 scripts/remote.py pull                               # git pull
   python3 scripts/remote.py restart decider                    # süreç yenile
@@ -125,7 +125,8 @@ def watch(client, cmd_id: str, quiet: bool = False) -> dict:
 
 
 def cmd_ask(client, a) -> None:
-    payload = {"prompt": a.text, "timeout": a.timeout, "model": a.model}
+    payload = {"prompt": a.text, "timeout": a.timeout, "model": a.model,
+               "effort": a.effort}
     if a.cwd:
         payload["cwd"] = a.cwd
     if a.raw:
@@ -225,6 +226,8 @@ def main() -> None:
     p = sub.add_parser("ask", help="kutudaki Claude Code'a görev ver")
     p.add_argument("text")
     p.add_argument("--model", default="sonnet")
+    p.add_argument("--effort", default="high",
+                   help="düşünme eforu (low|medium|high); '' → CLI varsayılanı")
     p.add_argument("--timeout", type=int, default=900)
     p.add_argument("--cwd", default=None)
     p.add_argument("--raw", action="store_true", help="protokol başlığı ekleme")
