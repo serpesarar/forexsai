@@ -147,6 +147,16 @@ BROKER_SYMBOL_MAP = dict(getattr(cfg, "BROKER_SYMBOL_MAP", {}) or {
 })
 
 
+#: Trade senkronunun son durumu — heartbeat'e ve panele taşınır.
+#: 2026-08-26 vakası: mt5_connect() YALNIZ açılışta çağrılıyordu; bağlantı
+#: sonradan düşünce history_deals_get sessizce None döndü, push_trades
+#: `if not deals: return 0` ile hiçbir iz bırakmadan çıktı ve bot_trades
+#: 8 gün boyunca donmuş kaldı — ajan "çevrimiçi" görünürken. Artık okuma
+#: hatası ile "yeni deal yok" AYRIŞTIRILIR, yeniden bağlanma denenir ve
+#: durum kalp atışıyla panele gider.
+TRADE_SYNC = {"ok": True, "last_push_at": None, "last_error": None, "fail_streak": 0}
+
+
 def push_trades(client, state: dict) -> int:
     """MT5 kapanan deal'leri watermark'tan itibaren bot_trades'e yaz."""
     if not HAS_MT5:
@@ -154,6 +164,24 @@ def push_trades(client, state: dict) -> int:
     last_ts = state.get("last_deal_ts", time.time() - 30 * 86400)
     deals = mt5.history_deals_get(datetime.fromtimestamp(last_ts - 3600, tz=timezone.utc),
                                   datetime.now(timezone.utc))
+    if deals is None:
+        # OKUMA HATASI — "yeni deal yok" ile aynı şey DEĞİL. Bağlantı düşmüş
+        # olabilir; sessizce geçme, logla ve yeniden bağlanmayı dene.
+        err = mt5.last_error()
+        TRADE_SYNC.update(ok=False, last_error=str(err),
+                          fail_streak=TRADE_SYNC["fail_streak"] + 1)
+        log.warning("history_deals_get None döndü (%s) — MT5 yeniden bağlanılıyor "
+                    "[üst üste %d]", err, TRADE_SYNC["fail_streak"])
+        try:
+            mt5.shutdown()
+        except Exception:
+            pass
+        if mt5_connect():
+            log.info("MT5 yeniden bağlandı — trade senkronu sonraki turda denenecek")
+        return 0
+
+    # Buradan sonrası sağlıklı okuma: boş tuple = gerçekten yeni deal yok.
+    TRADE_SYNC.update(ok=True, last_push_at=now_iso(), last_error=None, fail_streak=0)
     if not deals:
         return 0
     # Sadece pozisyon KAPATAN deal'ler (entry=1 → DEAL_ENTRY_OUT) gerçek sonuçtur
@@ -295,7 +323,13 @@ def push_heartbeat(client, extra: dict | None = None) -> None:
     meta = {
         "mt5": HAS_MT5,
         "open_positions": open_position_count(),
-        "agent_version": "1.0",
+        "agent_version": "1.1",
+        # Panel "ajan çevrimiçi ama işlem verisi bayat" durumunun SEBEBİNİ
+        # görebilsin diye trade senkron sağlığı da taşınır.
+        "trade_sync_ok": TRADE_SYNC["ok"],
+        "trade_sync_last_push": TRADE_SYNC["last_push_at"],
+        "trade_sync_error": TRADE_SYNC["last_error"],
+        "trade_sync_fail_streak": TRADE_SYNC["fail_streak"],
         **(extra or {}),
     }
     client.table("agent_heartbeat").upsert(

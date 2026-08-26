@@ -43,6 +43,50 @@ def _client():
     return get_supabase_client()
 
 
+# ── Sayfalı çekim ─────────────────────────────────────────────────────────
+# ⚠️ PostgREST'in sunucu tarafı `db-max-rows` ayarı 1000'dir; `.limit(5000)`
+# yazmak bunu AŞMAZ, istek sessizce 1000 satırda kesilir. 2026-08-26 denetimi:
+# `get_decider_stats` 30 gün istediği hâlde `total_decisions` tam 1000
+# dönüyordu (yani ~son 12 gün) ve `get_bot_vs_decider` ARTAN sıralamayla
+# çektiği için elindeki 1000 satır en ESKİ günlerdi → panel "14 gün öncesi"
+# gösteriyordu. Tüm çok-satırlı okumalar artık bu yardımcıdan geçer.
+PAGE_SIZE = 1000
+
+
+def _fetch_paged(table: str, select: str, *, order: str, desc: bool = True,
+                 cap: int = 8000, **eq_gte) -> List[dict]:
+    """Bir tabloyu sayfa sayfa çek — PostgREST 1000-satır tavanını aşar.
+
+    Args:
+        table: tablo adı.
+        select: PostgREST select ifadesi.
+        order: sıralama kolonu (sayfalama determinizmi için ZORUNLU).
+        desc: True → en yeni önce (panel her zaman en tazeyi ister).
+        cap: en fazla kaç satır (koruma).
+        **eq_gte: `eq__<kolon>` ve `gte__<kolon>` biçiminde filtreler.
+
+    Returns:
+        Satır listesi (sıralama korunur).
+    """
+    client = _client()
+    rows: List[dict] = []
+    for start in range(0, cap, PAGE_SIZE):
+        q = client.table(table).select(select)
+        for key, value in eq_gte.items():
+            if value is None:
+                continue
+            if key.startswith("eq__"):
+                q = q.eq(key[4:], value)
+            elif key.startswith("gte__"):
+                q = q.gte(key[5:], value)
+        chunk = (q.order(order, desc=desc)
+                 .range(start, start + PAGE_SIZE - 1).execute()).get("data") or []
+        rows.extend(chunk)
+        if len(chunk) < PAGE_SIZE:
+            break
+    return rows
+
+
 # ── Durum ─────────────────────────────────────────────────────────────────
 
 def get_remote_status(host: str = DEFAULT_HOST) -> Dict[str, Any]:
@@ -74,12 +118,27 @@ def get_remote_status(host: str = DEFAULT_HOST) -> Dict[str, Any]:
     pending = sum(1 for c in commands if c.get("status") == "pending")
     running = sum(1 for c in commands if c.get("status") == "running")
 
+    meta = (heartbeat or {}).get("meta") or {}
+    # Ajan "çevrimiçi" olması işlem senkronunun çalıştığı anlamına GELMEZ:
+    # 2026-08-18→26 arasında kalp atışı düzgün akarken bot_trades donmuştu
+    # (MT5 bağlantısı düşmüş, push_trades sessizce 0 dönüyordu). Ajan 1.1'den
+    # itibaren senkron sağlığını kalp atışına yazıyor; panel bunu ayrı gösterir.
+    trade_sync = {
+        "ok": meta.get("trade_sync_ok"),
+        "last_push": meta.get("trade_sync_last_push"),
+        "error": meta.get("trade_sync_error"),
+        "fail_streak": meta.get("trade_sync_fail_streak") or 0,
+        # Eski ajan sürümü bu alanları hiç yazmaz → "bilinmiyor" (uyarı basma).
+        "reported": meta.get("trade_sync_ok") is not None,
+    }
+
     return {
         "host": host,
         "online": online,
         "last_seen": heartbeat.get("last_seen") if heartbeat else None,
         "last_seen_ago_s": last_seen_ago_s,
-        "meta": (heartbeat or {}).get("meta") or {},
+        "meta": meta,
+        "trade_sync": trade_sync,
         "pending_commands": pending,
         "running_commands": running,
         "recent_commands": commands,
@@ -90,13 +149,10 @@ def get_remote_status(host: str = DEFAULT_HOST) -> Dict[str, Any]:
 
 def get_bot_performance(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, Any]:
     """bot_trades'ten sembol kırılımlı WR + toplam kâr (gerçek MT5 sonuçları)."""
-    client = _client()
     since = (_now() - timedelta(days=days)).isoformat()
-    res = (client.table("bot_trades")
-           .select("symbol,profit,commission,swap,close_time,comment")
-           .eq("host", host).gte("close_time", since)
-           .order("close_time", desc=True).limit(5000).execute())
-    trades = res.get("data") or []
+    trades = _fetch_paged(
+        "bot_trades", "symbol,profit,commission,swap,close_time,comment",
+        order="close_time", desc=True, eq__host=host, gte__close_time=since)
 
     by_symbol: Dict[str, Dict[str, Any]] = {}
     total_net = 0.0
@@ -122,7 +178,26 @@ def get_bot_performance(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, A
         "net_profit": round(total_net, 2),
         "by_symbol": by_symbol,
         "last_trade_at": trades[0].get("close_time") if trades else None,
+        # Tazelik denetimi (2026-08-26): ajan canlı görünürken bot_trades
+        # senkronu sessizce durabiliyor (vaka: 2026-08-18'den 26'sına kadar
+        # tek satır yazılmadı, panel hiçbir uyarı vermedi). Panel artık
+        # verinin YAŞINI gösterir — "sessiz bayat veri" bir daha olmasın.
+        "data_age_hours": _data_age_hours(trades[0].get("close_time") if trades else None),
     }
+
+
+#: bot_trades bu saatten eski ise panel "bayat" uyarısı basar. Bot hafta sonu
+#: işlem yapmaz; 3 gün eşiği normal hafta sonunu (Cuma 22:00 → Pazartesi 00:00)
+#: yanlış alarma çevirmez ama gerçek bir senkron kesintisini yakalar.
+TRADE_STALE_HOURS = 72
+
+
+def _data_age_hours(last_iso: Optional[str]) -> Optional[float]:
+    """Son işlemin üstünden kaç saat geçti (None = hiç işlem yok)."""
+    ts = _parse_ts(last_iso)
+    if ts is None:
+        return None
+    return round((_now() - ts).total_seconds() / 3600, 1)
 
 
 def _parse_decider_action(decision: Any) -> tuple[str, Optional[str]]:
@@ -154,12 +229,9 @@ def get_decider_stats(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, Any
     veya action=OPEN (BUY/SELL işlem). OPEN kararlarının outcome'u WIN/LOSS/null.
     win_rate yalnız sonuçlanan OPEN'lardan hesaplanır (WAIT'in sonucu olmaz).
     """
-    client = _client()
     since = (_now() - timedelta(days=days)).isoformat()
-    res = (client.table("decider_journal").select("decision,outcome,ts,symbol")
-           .eq("host", host).gte("inserted_at", since)
-           .order("inserted_at", desc=True).limit(5000).execute())
-    rows = res.get("data") or []
+    rows = _fetch_paged("decider_journal", "decision,outcome,ts,symbol",
+                        order="ts", desc=True, eq__host=host, gte__ts=since)
 
     decisions: Dict[str, int] = {}   # WAIT / BUY / SELL (kullanıcıya anlamlı)
     wait_count = 0
@@ -216,12 +288,9 @@ def get_decider_breakdown(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str,
     Kaynak decider_journal: her OPEN kararının yönü decision JSON'unda,
     sonucu outcome kolonunda (WIN/LOSS). WAIT'ler sembol başına ayrı sayılır.
     """
-    client = _client()
     since = (_now() - timedelta(days=days)).isoformat()
-    res = (client.table("decider_journal").select("decision,outcome,ts,symbol")
-           .eq("host", host).gte("inserted_at", since)
-           .order("ts", desc=True).limit(5000).execute())
-    rows = res.get("data") or []
+    rows = _fetch_paged("decider_journal", "decision,outcome,ts,symbol",
+                        order="ts", desc=True, eq__host=host, gte__ts=since)
 
     def _oc(o: Any) -> Optional[str]:
         s = (o if isinstance(o, str) else "").strip().upper()
@@ -300,6 +369,17 @@ def _session_label(raw_session: Optional[str], ts: Optional[datetime]) -> str:
     return "kapanış"
 
 
+# Karar listesi kotalari - panel "gun gun her islem" gezinmesi icin OPEN'lar
+# genis tutulur; WAIT'ler yalnizca baglam icin ornekleme alinir.
+OPEN_DECISION_QUOTA = 500
+WAIT_DECISION_QUOTA = 150
+
+
+def _round(v: Optional[float], digits: int) -> Optional[float]:
+    """None-guvenli yuvarlama - jsonb alanlari sik sik bos gelir."""
+    return round(v, digits) if v is not None else None
+
+
 def _fnum(v: Any) -> Optional[float]:
     """jsonb->>text alanları string döner; sayıya çevir, çöpse None."""
     if v is None or v == "":
@@ -334,29 +414,27 @@ def get_decider_symbol_history(symbol: str, days: int = 30,
     Ek olarak WAIT kararlarının karşı-olgusu (cf_pnl_r) "kaçırılan/elenen"
     olarak yön bazında toplanır: aşırı temkin de ölçülebilir bir maliyettir.
     """
-    client = _client()
     since = (_now() - timedelta(days=days)).isoformat()
+    # TP/SL detay takibi (2026-08-26): seviyelerin yanina gerceklesen yol da
+    # cekilir - mfe_r/mae_r (en iyi/en kotu nokta), tp_progress (hedefin yuzde
+    # kacina gidildi), maliyet-sonrasi net R ve cozulme ani. "Hangi gun hangi
+    # islemde ne kadar TP/SL yapmis" ancak bu alanlarla cevaplanabilir.
     sel = ("ts,outcome,"
-           "pnl_r:raw->>pnl_r,cf_pnl_r:raw->>cf_pnl_r,cf_outcome:raw->>cf_outcome,"
+           "pnl_r:raw->>pnl_r,pnl_r_net:raw->>pnl_r_net,cost_usd:raw->>cost_usd,"
+           "cf_pnl_r:raw->>cf_pnl_r,cf_outcome:raw->>cf_outcome,"
            "action:raw->decision->>action,direction:raw->decision->>direction,"
            "reason:raw->decision->>reason,size_factor:raw->decision->>size_factor,"
+           "management:raw->decision->>management,"
            "cf_dir:raw->counterfactual->>dir,"
            "session:raw->context->>session,gb_session:raw->gb_context->>session,"
            "entry:raw->trade->>entry_price,sl:raw->trade->>sl,tp:raw->trade->>tp,"
-           "rr:raw->trade->>rr,cf_rr:raw->counterfactual->>rr,mode:raw->>mode")
-    # PostgREST tek istekte en fazla 1000 satır döner (limit=4000 yazsak da) —
-    # XAU 30 günde 1000'i aşıyor ve sayfalama olmadan eski günler sessizce
-    # düşüyordu. Sayfa sayfa çekilir, 4000 satırda durulur.
-    rows: List[dict] = []
-    page = 1000
-    for start in range(0, 4000, page):
-        res = (client.table("decider_journal").select(sel)
-               .eq("host", host).eq("symbol", symbol).gte("ts", since)
-               .order("ts", desc=True).range(start, start + page - 1).execute())
-        chunk = res.get("data") or []
-        rows.extend(chunk)
-        if len(chunk) < page:
-            break
+           "rr:raw->trade->>rr,atr:raw->trade->>atr,spread:raw->trade->>spread,"
+           "mfe_r:raw->path->>mfe_r,mae_r:raw->path->>mae_r,"
+           "tp_progress:raw->path->>tp_progress,bars:raw->path->>bars_to_outcome,"
+           "outcome_at:raw->>outcome_at,shadow_model:raw->>shadow_model,"
+           "cf_rr:raw->counterfactual->>rr,mode:raw->>mode")
+    rows = _fetch_paged("decider_journal", sel, order="ts", desc=True, cap=6000,
+                        eq__host=host, eq__symbol=symbol, gte__ts=since)
 
     summary = _new_bucket()
     summary.update({"waits": 0, "foregone_r": 0.0, "missed_wins": 0})
@@ -423,22 +501,42 @@ def get_decider_symbol_history(symbol: str, days: int = 30,
                     if cf_r > 0:
                         dd["missed"]["wins"] += 1
 
-        # Liste kotası tür bazında: XAU gibi çok bekleyen sembollerde tek havuz
-        # kullanılsaydı son 200 satırın hepsi WAIT olur, "işlemler" sekmesi boş
-        # kalırdı. OPEN'lara ayrı kota verilir.
-        quota = 120 if action == "OPEN" else 80
+        # Liste kotasi tur bazinda: XAU gibi cok bekleyen sembollerde tek havuz
+        # kullanilsaydi son satirlarin hepsi WAIT olur, "islemler" sekmesi bos
+        # kalirdi. OPEN'lara ayri (ve genis) kota verilir - kullanici gun gun
+        # her islemi gezebilmeli.
+        quota = OPEN_DECISION_QUOTA if action == "OPEN" else WAIT_DECISION_QUOTA
         if sum(1 for x in decisions if (x["action"] == "OPEN") == (action == "OPEN")) < quota:
+            entry_p, sl_p, tp_p = _fnum(r.get("entry")), _fnum(r.get("sl")), _fnum(r.get("tp"))
             decisions.append({
                 "ts": r.get("ts"), "day": day, "session": session,
                 "action": action or "?", "direction": direction,
                 "outcome": outcome if outcome in ("WIN", "LOSS") else None,
                 "r": round(pnl_r, 3) if pnl_r is not None and outcome in ("WIN", "LOSS") else None,
+                "r_net": _round(_fnum(r.get("pnl_r_net")), 3),
+                "cost_usd": _round(_fnum(r.get("cost_usd")), 2),
                 "cf_direction": cf_dir,
                 "cf_outcome": str(r.get("cf_outcome")).upper() if r.get("cf_outcome") else None,
                 "cf_r": round(cf_r, 3) if cf_r is not None else None,
                 "size_factor": _fnum(r.get("size_factor")),
-                "entry": _fnum(r.get("entry")), "sl": _fnum(r.get("sl")), "tp": _fnum(r.get("tp")),
+                "entry": entry_p, "sl": sl_p, "tp": tp_p,
+                # Seviyelerin fiyat cinsinden UZAKLIGI: "ne kadar TP / ne kadar
+                # SL" sorusunun dogrudan cevabi (R degil, puan olarak).
+                "tp_distance": _round(abs(tp_p - entry_p), 2) if (tp_p and entry_p) else None,
+                "sl_distance": _round(abs(entry_p - sl_p), 2) if (sl_p and entry_p) else None,
+                # Gerceklesen cikis fiyati: WIN -> TP, LOSS -> SL (decider
+                # geometrisi sabit hedeflidir; ara cikis exit_policy ile gelir).
+                "exit_price": (tp_p if outcome == "WIN" else sl_p if outcome == "LOSS" else None),
+                "mfe_r": _round(_fnum(r.get("mfe_r")), 2),
+                "mae_r": _round(_fnum(r.get("mae_r")), 2),
+                "tp_progress": _round(_fnum(r.get("tp_progress")), 2),
+                "bars_to_outcome": _fnum(r.get("bars")),
+                "outcome_at": r.get("outcome_at"),
+                "atr": _round(_fnum(r.get("atr")), 2),
+                "spread": _round(_fnum(r.get("spread")), 2),
                 "rr": rr, "mode": r.get("mode"),
+                "shadow_model": r.get("shadow_model"),
+                "management": str(r.get("management") or "")[:300],
                 "reason": str(r.get("reason") or "")[:600],
             })
 
@@ -515,21 +613,23 @@ def get_bot_vs_decider(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, An
       - bot_kacirdi / bot_korundu: decider açtı, bot o pencerede hiç işlem yapmadı
     'Dersler' bu istatistiklerden kural-bazlı üretilir (LLM yok — dürüst sayım).
     """
-    client = _client()
     since = (_now() - timedelta(days=days)).isoformat()
 
-    trades = (client.table("bot_trades")
-              .select("ticket,symbol,direction,close_time,profit,commission,swap")
-              .eq("host", host).gte("close_time", since)
-              .order("close_time").limit(3000).execute()).get("data") or []
+    # ⚠️ Eskiden `.order("close_time").limit(3000)` idi: PostgREST 1000'de
+    # kestiği için elde kalan EN ESKİ 1000 satırdı ve eşleştirme hep geçmişe
+    # bakıyordu (panelde "14 gün öncesi"). Artık en yeniden başlayıp sayfalanır.
+    trades = _fetch_paged(
+        "bot_trades", "ticket,symbol,direction,close_time,profit,commission,swap",
+        order="close_time", desc=True, eq__host=host, gte__close_time=since)
+    trades.reverse()   # eşleştirme kronolojik ilerler
     for t in trades:
         t["net"] = (t.get("profit") or 0) + (t.get("commission") or 0) + (t.get("swap") or 0)
         t["nsym"] = _BOT_SYMBOL_MAP.get(t.get("symbol") or "", t.get("symbol"))
         t["t"] = _parse_ts(t.get("close_time"))
 
-    jrows = (client.table("decider_journal").select("decision,outcome,ts,symbol")
-             .eq("host", host).gte("inserted_at", since)
-             .order("ts").limit(5000).execute()).get("data") or []
+    jrows = _fetch_paged("decider_journal", "decision,outcome,ts,symbol",
+                         order="ts", desc=True, eq__host=host, gte__ts=since)
+    jrows.reverse()
     devents = []
     for r in jrows:
         action, direction = _parse_decider_action(r.get("decision"))
@@ -647,13 +747,12 @@ def get_bot_vs_decider(days: int = 30, host: str = DEFAULT_HOST) -> Dict[str, An
 def get_bot_trades(symbol: str, days: int = 30, host: str = DEFAULT_HOST,
                    limit: int = 40) -> Dict[str, Any]:
     """Tek sembolün son MT5 işlemleri (panelde sembole tıkla → detay)."""
-    client = _client()
     since = (_now() - timedelta(days=days)).isoformat()
-    res = (client.table("bot_trades")
-           .select("ticket,symbol,direction,volume,close_time,close_price,profit,commission,swap,comment")
-           .eq("host", host).eq("symbol", symbol).gte("close_time", since)
-           .order("close_time", desc=True).limit(limit).execute())
-    trades = res.get("data") or []
+    trades = _fetch_paged(
+        "bot_trades",
+        "ticket,symbol,direction,volume,close_time,close_price,profit,commission,swap,comment",
+        order="close_time", desc=True, cap=max(limit, PAGE_SIZE),
+        eq__host=host, eq__symbol=symbol, gte__close_time=since)[:limit]
     for t in trades:
         t["net"] = round((t.get("profit") or 0) + (t.get("commission") or 0) + (t.get("swap") or 0), 2)
     return {"symbol": symbol, "days": days, "trades": trades}

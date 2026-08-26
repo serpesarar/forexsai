@@ -10,6 +10,8 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Bot,
+  ChevronLeft,
+  ChevronRight,
   GitPullRequest,
   Loader2,
   MessagesSquare,
@@ -22,15 +24,21 @@ import {
 } from "lucide-react";
 
 import {
+  type DeciderDay,
+  type DeciderDecision,
+  type DeciderDirection,
   type RemoteCommandSummary,
+  TRADE_STALE_HOURS,
   useBotPerformance,
   useBotTrades,
   useBotVsDecider,
   useDeciderBreakdown,
   useDeciderStats,
+  useDeciderSymbolHistory,
   useRemoteCommand,
   useRemoteStatus,
 } from "@/lib/api/evolution";
+import DeciderTradeLog from "./DeciderTradeLog";
 import { emitOpenRun } from "./events";
 import { toast } from "./toast";
 import { Badge, GlassCard, ProgressBar, PulseDot, Ring, Section, Skeleton, cx, stagger, timeAgo } from "./ui";
@@ -70,9 +78,280 @@ function CommandRow({ cmd }: { cmd: RemoteCommandSummary }) {
   );
 }
 
-/** Decider yüzdesine tıkla → sembol × yön kırılımı + son kararlar (gerekçeli). */
+// ── Sembol derinlemesine geçmiş (gün × yön) ────────────────────────────────
+
+const shortSym = (s: string) => s.replace(".INDX", "").replace(".FOREX", "");
+
+function rColor(v: number | null): string {
+  if (v === null || Math.abs(v) < 0.005) return "#64748B";
+  return v > 0 ? "#34D399" : "#FB7185";
+}
+
+function fmtR(v: number | null | undefined, digits = 2): string {
+  if (v === null || v === undefined) return "—";
+  return `${v >= 0 ? "+" : ""}${v.toFixed(digits)}R`;
+}
+
+function dayLabel(day: string): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return day;
+  return new Intl.DateTimeFormat("tr-TR", {
+    day: "2-digit", month: "short", weekday: "short", timeZone: "UTC",
+  }).format(d);
+}
+
+/** Sıfır merkezli R çubuğu — kazanç sağa yeşil, kayıp sola kırmızı. */
+function RBar({ value, max }: { value: number; max: number }) {
+  const span = Math.max(0.5, max);
+  const pct = Math.min(50, (Math.abs(value) / span) * 50);
+  const pos = value >= 0;
+  return (
+    <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/[0.05]">
+      <div className="absolute inset-y-0 left-1/2 w-px bg-white/15" />
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: `${pct}%` }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className={cx("absolute inset-y-0 rounded-full", pos ? "left-1/2" : "right-1/2")}
+        style={{ background: rColor(value), boxShadow: `0 0 8px ${rColor(value)}55` }}
+      />
+    </div>
+  );
+}
+
+/** Gün bazlı tablo — her satır bir işlem günü, yön kırılımıyla. */
+function DayBreakdown({ days: rows }: { days: DeciderDay[] }) {
+  const active = rows.filter((d) => d.opens > 0 || d.waits > 0);
+  const maxAbs = Math.max(0.5, ...active.map((d) => Math.abs(d.net_r)));
+  if (active.length === 0) {
+    return <p className="py-6 text-center text-[12px] text-slate-500">Bu pencerede karar yok.</p>;
+  }
+  return (
+    <div className="space-y-1">
+      <div className="grid grid-cols-[66px_44px_44px_1fr] gap-1.5 px-2 pb-1 text-[10px] uppercase tracking-wide text-slate-600 sm:grid-cols-[92px_58px_60px_1fr] sm:gap-2">
+        <span>gün</span><span className="text-right">işlem</span><span className="text-right">isabet</span><span>net R · yön</span>
+      </div>
+      {active.map((d, i) => (
+        <motion.div
+          key={d.day}
+          initial={{ opacity: 0, x: -6 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: Math.min(i * 0.02, 0.3) }}
+          className="grid grid-cols-[66px_44px_44px_1fr] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[11px] odd:bg-white/[0.02] sm:grid-cols-[92px_58px_60px_1fr] sm:gap-2"
+        >
+          <span className="tabular-nums text-slate-300">{dayLabel(d.day)}</span>
+          <span className="text-right tabular-nums text-slate-400">
+            {d.opens > 0 && d.opens}
+            {d.waits > 0 && <span className="text-slate-600">{d.opens > 0 ? " /" : ""}{d.waits}b</span>}
+          </span>
+          <span className="text-right font-semibold tabular-nums" style={{ color: wrColor(d.win_rate) }}>
+            {d.win_rate !== null ? `%${Math.round(d.win_rate)}` : "—"}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="w-11 shrink-0 text-right font-semibold tabular-nums sm:w-14" style={{ color: rColor(d.net_r) }}>
+              {d.resolved > 0 ? fmtR(d.net_r, 1) : "—"}
+            </span>
+            {/* Dar ekranda çubuk yerini yön rozetlerine bırakır */}
+            <div className="hidden min-w-0 flex-1 sm:block"><RBar value={d.net_r} max={maxAbs} /></div>
+            <span className="flex shrink-0 gap-1">
+              {d.BUY.opens > 0 && (
+                <span className="rounded px-1 py-px text-[9.5px] font-medium text-emerald-300 ring-1 ring-emerald-400/25"
+                  title={`BUY ${d.BUY.opens} işlem · ${fmtR(d.BUY.net_r)}`}>
+                  A{d.BUY.opens}
+                </span>
+              )}
+              {d.SELL.opens > 0 && (
+                <span className="rounded px-1 py-px text-[9.5px] font-medium text-rose-300 ring-1 ring-rose-400/25"
+                  title={`SELL ${d.SELL.opens} işlem · ${fmtR(d.SELL.net_r)}`}>
+                  S{d.SELL.opens}
+                </span>
+              )}
+            </span>
+          </div>
+        </motion.div>
+      ))}
+      <p className="px-2 pt-2 text-[10px] leading-relaxed text-slate-600">
+        Gün = UTC takvim günü. "işlem" sütununda <span className="text-slate-500">3/12b</span> = 3 işlem kararı,
+        12 bekle. A/S rozetleri o günkü BUY/SELL işlem sayısı (üzerine gel → net R).
+      </p>
+    </div>
+  );
+}
+
+/** Yön bazlı kart — BUY ve SELL ayrı: isabet, net R, seans ve saat kırılımı. */
+function DirectionCard({ dir, d, breakeven }: { dir: string; d: DeciderDirection; breakeven: number | null }) {
+  const buy = dir === "BUY";
+  const sessions = Object.entries(d.by_session).slice(0, 5);
+  const maxHourOpens = Math.max(1, ...d.by_hour.map((h) => h.opens));
+  const beats = breakeven !== null && d.win_rate !== null && d.win_rate >= breakeven;
+  return (
+    <div className={cx("rounded-2xl border p-3.5", buy ? "border-emerald-400/20 bg-emerald-400/[0.03]" : "border-rose-400/20 bg-rose-400/[0.03]")}>
+      <div className="flex items-center justify-between">
+        <span className={cx("text-[13px] font-semibold", buy ? "text-emerald-300" : "text-rose-300")}>
+          {dir} <span className="text-slate-500">· {d.opens} işlem</span>
+        </span>
+        <span className="text-right">
+          <span className="text-base font-bold tabular-nums" style={{ color: wrColor(d.win_rate) }}>
+            {d.win_rate !== null ? `%${Math.round(d.win_rate)}` : "—"}
+          </span>
+          <span className="ml-2 text-sm font-bold tabular-nums" style={{ color: rColor(d.net_r) }}>{fmtR(d.net_r, 1)}</span>
+        </span>
+      </div>
+
+      {/* İsabet çubuğu + başabaş çizgisi: çizginin solu net kayıp demek */}
+      <div className="relative mt-2">
+        <ProgressBar pct={d.win_rate ?? 0} color={wrColor(d.win_rate)} />
+        {breakeven !== null && (
+          <div
+            className="absolute -top-0.5 h-3.5 w-px bg-white/70"
+            style={{ left: `${Math.min(100, breakeven)}%` }}
+            title={`başabaş %${breakeven}`}
+          />
+        )}
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] text-slate-500">
+        <span>işlem başı <span className="font-semibold" style={{ color: rColor(d.avg_r) }}>{fmtR(d.avg_r, 3)}</span></span>
+        <span>{d.wins}K / {d.losses}Z{d.pending > 0 ? ` / ${d.pending} bekliyor` : ""}</span>
+        {d.avg_size !== null && <span>ort. boyut {d.avg_size}</span>}
+        <span className={beats ? "text-emerald-400" : "text-amber-400"}>
+          {beats ? "başabaşın üstünde" : "başabaşın altında"}
+        </span>
+      </div>
+
+      {sessions.length > 0 && (
+        <div className="mt-3">
+          <h5 className="mb-1 text-[10px] uppercase tracking-wide text-slate-600">seans</h5>
+          <div className="space-y-1">
+            {sessions.map(([name, s]) => (
+              <div key={name} className="grid grid-cols-[64px_44px_50px_1fr] items-center gap-2 text-[10.5px]">
+                <span className="text-slate-400">{name}</span>
+                <span className="text-right tabular-nums text-slate-500">{s.opens}</span>
+                <span className="text-right font-semibold tabular-nums" style={{ color: wrColor(s.win_rate) }}>
+                  {s.win_rate !== null ? `%${Math.round(s.win_rate)}` : "—"}
+                </span>
+                <span className="text-right font-semibold tabular-nums" style={{ color: rColor(s.net_r) }}>{fmtR(s.net_r, 1)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {d.by_hour.length > 0 && (
+        <div className="mt-3">
+          <h5 className="mb-1 text-[10px] uppercase tracking-wide text-slate-600">saat (UTC) — yükseklik işlem sayısı, renk net R</h5>
+          <div className="flex h-12 items-end gap-px">
+            {Array.from({ length: 24 }, (_, h) => {
+              const b = d.by_hour.find((x) => x.hour === h);
+              if (!b) return <div key={h} className="h-px flex-1 bg-white/[0.05]" />;
+              return (
+                <div
+                  key={h}
+                  className="flex-1 rounded-t-sm"
+                  style={{
+                    height: `${Math.max(8, (b.opens / maxHourOpens) * 100)}%`,
+                    background: rColor(b.net_r),
+                    opacity: 0.85,
+                  }}
+                  title={`${String(h).padStart(2, "0")}:00 UTC · ${b.opens} işlem · ${b.win_rate !== null ? `%${Math.round(b.win_rate)}` : "—"} · ${fmtR(b.net_r, 1)}`}
+                />
+              );
+            })}
+          </div>
+          <div className="mt-0.5 flex justify-between text-[9px] text-slate-600"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+        </div>
+      )}
+
+      {d.missed.n > 0 && (
+        <p className="mt-2.5 rounded-lg bg-white/[0.03] px-2 py-1.5 text-[10.5px] leading-snug text-slate-500">
+          Bu yönde <span className="font-semibold text-slate-300">{d.missed.n}</span> kez beklendi
+          ({d.missed.wins} tanesi kazanacaktı) — vazgeçilen{" "}
+          <span className="font-semibold" style={{ color: rColor(d.missed.r) }}>{fmtR(d.missed.r, 1)}</span>.
+          Negatifse temkin doğruydu, pozitifse kazananlar kaçırılmış.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function SymbolHistoryView({ symbol, days }: { symbol: string; days: number }) {
+  const { data, isLoading } = useDeciderSymbolHistory(symbol, days);
+  const [tab, setTab] = useState<"day" | "dir" | "list">("list");
+  if (isLoading || !data) return <Skeleton className="h-56 w-full" />;
+  const s = data.summary;
+  const dirs = ["BUY", "SELL"].filter((d) => data.by_direction[d]);
+  return (
+    <div>
+      {/* Özet şeridi — WR tek başına yanıltıcı olduğu için net R hep yanında */}
+      <div className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
+        <Ring pct={s.win_rate ?? 0} color={wrColor(s.win_rate)} size={68} stroke={6}>
+          <span className="text-base font-bold tabular-nums text-white">
+            {s.win_rate !== null ? `%${Math.round(s.win_rate)}` : "—"}
+          </span>
+        </Ring>
+        <div className="min-w-0 flex-1 space-y-1 text-[11px] leading-relaxed text-slate-400">
+          <div>
+            <span className="text-lg font-bold tabular-nums" style={{ color: rColor(s.net_r) }}>{fmtR(s.net_r, 1)}</span>
+            <span className="ml-1.5 text-slate-500">net · işlem başı {fmtR(s.avg_r, 3)}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-slate-200">{s.opens}</span> işlem kararı ({s.resolved} sonuçlandı)
+            {s.pending > 0 && <span className="text-slate-500"> · {s.pending} bekliyor</span>}
+            {" · "}<span className="font-semibold text-slate-300">{s.waits}</span> bekle
+          </div>
+          {s.breakeven_wr !== null && (
+            <div className={s.above_breakeven ? "text-emerald-400" : "text-amber-400"}>
+              başabaş isabet %{s.breakeven_wr} (RR {s.rr_typical}) — {s.above_breakeven ? "üstünde, kâr tarafı" : "altında, isabet yüksek görünse de net kayıp"}
+            </div>
+          )}
+          <div className="text-slate-500">
+            {s.active_days} işlem günü
+            {s.best_day && <> · en iyi <span className="text-emerald-400">{dayLabel(s.best_day.day)} {fmtR(s.best_day.net_r, 1)}</span></>}
+            {s.worst_day && <> · en kötü <span className="text-rose-400">{dayLabel(s.worst_day.day)} {fmtR(s.worst_day.net_r, 1)}</span></>}
+          </div>
+          <div className="text-slate-500">
+            beklenen kararların karşı-olgusu (vazgeçilen):{" "}
+            <span className="font-semibold" style={{ color: rColor(s.foregone_r) }}>{fmtR(s.foregone_r, 1)}</span>
+            <span className="text-slate-600"> · {s.missed_wins} kaçan kazanan</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-3 flex gap-1.5">
+        {([["day", "Gün bazlı"], ["dir", "Yön bazlı"], ["list", "İşlem Defteri"]] as const).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => setTab(k)}
+            className={cx(
+              "rounded-full px-3 py-1 text-[11.5px] font-medium transition",
+              tab === k ? "bg-violet-500/20 text-violet-200 ring-1 ring-violet-400/30" : "text-slate-500 hover:text-slate-300",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "day" && <DayBreakdown days={data.by_day} />}
+      {tab === "dir" && (
+        dirs.length === 0 ? (
+          <p className="py-6 text-center text-[12px] text-slate-500">Bu pencerede işlem kararı yok.</p>
+        ) : (
+          <div className="space-y-3">
+            {dirs.map((d) => (
+              <DirectionCard key={d} dir={d} d={data.by_direction[d]} breakeven={s.breakeven_wr} />
+            ))}
+          </div>
+        )
+      )}
+      {tab === "list" && <DeciderTradeLog decisions={data.decisions} />}
+    </div>
+  );
+}
+
+/** Decider yüzdesine tıkla → sembol × yön kırılımı; sembole tıkla → gün/yön geçmişi. */
 function DeciderDetailSheet({ days, onClose }: { days: number; onClose: () => void }) {
   const { data, isLoading } = useDeciderBreakdown(days);
+  const [drill, setDrill] = useState<string | null>(null);
   const symbols = Object.entries(data?.by_symbol ?? {}).sort((a, b) => b[1].opens - a[1].opens);
   return (
     <motion.div
@@ -92,7 +371,22 @@ function DeciderDetailSheet({ days, onClose }: { days: number; onClose: () => vo
       >
         <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-3.5">
           <span className="flex items-center gap-2 text-sm font-semibold text-slate-100">
-            <Wifi size={15} className="text-violet-300" /> Claude Decider — istatistik
+            {drill ? (
+              <>
+                <button
+                  onClick={() => setDrill(null)}
+                  className="rounded-lg p-1 text-slate-400 transition hover:bg-white/5 hover:text-white"
+                  title="Sembol listesine dön"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                {shortSym(drill)} — gün & yön geçmişi
+              </>
+            ) : (
+              <>
+                <Wifi size={15} className="text-violet-300" /> Claude Decider — istatistik
+              </>
+            )}
             <Badge tone="slate">son {days} gün</Badge>
           </span>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white">
@@ -100,20 +394,24 @@ function DeciderDetailSheet({ days, onClose }: { days: number; onClose: () => vo
           </button>
         </div>
         <div className="overflow-y-auto px-5 py-4">
-          {isLoading && <Skeleton className="h-32 w-full" />}
-          {symbols.length > 0 && (
+          {drill && <SymbolHistoryView symbol={drill} days={days} />}
+          {!drill && isLoading && <Skeleton className="h-32 w-full" />}
+          {!drill && symbols.length > 0 && (
             <div className="space-y-3">
               {symbols.map(([sym, s], i) => (
-                <motion.div
+                <motion.button
                   key={sym}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3.5"
+                  onClick={() => setDrill(sym)}
+                  title="Gün bazlı ve yön bazlı geçmişi aç"
+                  className="w-full rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3.5 text-left transition hover:border-violet-400/30 hover:bg-white/[0.045]"
                 >
                   <div className="mb-2 flex items-baseline justify-between">
-                    <span className="text-[13px] font-semibold text-slate-200">
-                      {sym.replace(".INDX", "").replace(".FOREX", "")}
+                    <span className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-200">
+                      {shortSym(sym)}
+                      <ChevronRight size={13} className="text-slate-600" />
                     </span>
                     <span className="text-xs tabular-nums text-slate-500">
                       <span className="text-sm font-bold" style={{ color: wrColor(s.win_rate) }}>
@@ -134,11 +432,11 @@ function DeciderDetailSheet({ days, onClose }: { days: number; onClose: () => vo
                     <Badge tone="slate">{s.waits} bekle</Badge>
                     {s.open_pending > 0 && <Badge tone="blue">{s.open_pending} sonuç bekliyor</Badge>}
                   </div>
-                </motion.div>
+                </motion.button>
               ))}
             </div>
           )}
-          {(data?.recent?.length ?? 0) > 0 && (
+          {!drill && (data?.recent?.length ?? 0) > 0 && (
             <div className="mt-5">
               <h4 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                 Son kararlar — gerekçeleriyle
@@ -496,6 +794,37 @@ export default function RemoteBotBoard({ days }: { days: number }) {
             <Bot size={15} /> Bot İşlem Sonuçları
             <span className="text-xs font-normal text-slate-500">son {days} gün</span>
           </h3>
+          {/* Sessiz bayat veri koruması (2026-08-26): ajan çevrimiçi görünürken
+              bot_trades senkronu durabiliyor. Yaş eşiği aşılırsa panel susmaz. */}
+          {bot?.data_age_hours != null && bot.data_age_hours > TRADE_STALE_HOURS && (
+            <div className="mb-3 rounded-xl border border-amber-400/25 bg-amber-400/[0.06] px-3 py-2 text-[11px] leading-snug text-amber-200/85">
+              <p>
+                ⚠ Son işlem <span className="font-semibold">{Math.round(bot.data_age_hours / 24)} gün</span> önce
+                ({bot.last_trade_at ? timeAgo(bot.last_trade_at) : "—"}) — bu karne o tarihte donmuş.
+              </p>
+              {/* Sebebi ajanın kendi raporundan söyle; tahmin ettirme. */}
+              {status?.trade_sync?.reported ? (
+                status.trade_sync.ok === false ? (
+                  <p className="mt-1 text-rose-200/90">
+                    Sebep: kutudaki ajan MT5&apos;ten işlem geçmişini OKUYAMIYOR
+                    ({status.trade_sync.fail_streak} tur üst üste
+                    {status.trade_sync.error ? ` · ${status.trade_sync.error}` : ""}).
+                    MT5 terminali açık mı, ajan aynı hesaba bağlı mı?
+                  </p>
+                ) : (
+                  <p className="mt-1 text-slate-400">
+                    Ajanın MT5 okuması sağlıklı — demek ki bot bu sürede gerçekten
+                    pozisyon kapatmadı (açık pozisyon bekliyor olabilir).
+                  </p>
+                )
+              ) : (
+                <p className="mt-1 text-slate-400">
+                  Kutuda eski ajan sürümü çalışıyor (senkron sağlığı bildirilmiyor) —
+                  <code className="ml-1">git pull</code> sonrası sebep burada görünecek.
+                </p>
+              )}
+            </div>
+          )}
           {!bot || bot.total_trades === 0 ? (
             <p className="rounded-xl border border-dashed border-white/10 p-4 text-center text-[12px] text-slate-500">
               {online

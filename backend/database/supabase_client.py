@@ -269,6 +269,17 @@ class TableQuery:
         self.filters.append(f"{column}=is.{value}")
         return self
 
+    def raw_filter(self, expression: str) -> "TableQuery":
+        """Ham PostgREST filtresi — builder'da karşılığı olmayan operatörler için.
+
+        Örn. jsonb yol testi: raw_filter("factors->shadow_gates=not.is.null").
+        Çağıran sorumluluğunda: ifade PostgREST sözdizimine uymalı.
+        """
+        expr = str(expression or "").strip()
+        if expr:
+            self.filters.append(expr)
+        return self
+
     def or_(self, expression: str) -> "TableQuery":
         raw_expression = str(expression or "").strip()
         if not raw_expression:

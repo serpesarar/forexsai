@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 from database.supabase_client import get_supabase_client, is_db_available
@@ -1043,10 +1043,11 @@ async def log_prediction(
         # hattıdır. Shadow deneyleri (bypass_quality_filters) kapsam dışıdır.
         # Rapor aksiyonları #2 (XAU SELL), #3 (GDAXI pulse1), #5 (seans), #9 (takvim).
         # ═══════════════════════════════════════════════════════════════════════
+        shadow_gate_verdicts: List[Dict[str, Any]] = []
         if not bypass_quality_filters:
             try:
-                from services.signal_gates import apply_signal_gates
-                gated_direction, gate_notes = await apply_signal_gates(
+                from services.signal_gates import apply_signal_gates_ex
+                gated_direction, gate_notes, shadow_gate_verdicts = await apply_signal_gates_ex(
                     symbol, direction, effective_model_type, confidence=confidence
                 )
                 if gated_direction != direction:
@@ -1239,6 +1240,15 @@ async def log_prediction(
         # Geometri epoch etiketi: lifecycle ATR merdivenini bu etiketten tanır;
         # analizler de eski (static_pips) / yeni (atr_ladder_v1) dönemi ayırır.
         factors["target_type"] = "atr_ladder_v1" if pulse_ladder else "static_pips"
+        # Gölge kapı verdiktleri (2026-08-26): gölge modda "bloklardım" diyen
+        # kapılar. Sinyalin sonucu geldiğinde Gölge Modu paneli bu listeyi
+        # sonuçla eşleştirip kapının AÇILMASININ ne kazandıracağını ölçer.
+        # Yalnız adları saklanır (sebep metni ayrı alanda) — JSONB şişmesin.
+        if shadow_gate_verdicts:
+            factors["shadow_gates"] = [v["gate"] for v in shadow_gate_verdicts]
+            factors["shadow_gate_reasons"] = {
+                v["gate"]: v["reason"] for v in shadow_gate_verdicts
+            }
         if pulse_ladder:
             factors["atr_ladder_sl_dist"] = pulse_ladder["stop_loss_pips"]
         if _correlation_tag:

@@ -328,3 +328,44 @@ async def add_session_note(body: SessionNote):
     return evo.add_session_note(
         summary=body.summary, files=body.files, backlog_added=body.backlog_added,
     )
+
+
+# ── Gölge Modu paneli ────────────────────────────────────────────────────
+# Sistemde GÖLGE çalışan her şeyin (kapılar, ters modeller, kâğıt-işlemler)
+# tek karnesi. Bkz. services/shadow_overview.py.
+
+@router.get("/shadow/overview")
+async def shadow_overview(days: int = Query(30, ge=1, le=365)):
+    """Gölge Modu panelinin tek çağrılık verisi (fail-soft, 45 sn cache)."""
+    from services import shadow_overview as shadow
+    return await asyncio.to_thread(shadow.get_shadow_overview, days)
+
+
+@router.get("/shadow/gates")
+async def shadow_gates(days: int = Query(30, ge=1, le=365)):
+    """Gölge kapıların "açsam ne kazanırdım" karnesi."""
+    from services import shadow_overview as shadow
+    try:
+        return await asyncio.to_thread(shadow.get_shadow_gate_report, days)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@router.get("/shadow/models")
+async def shadow_models(days: int = Query(30, ge=1, le=365)):
+    """Gölge model ailelerinin (ters sinyal, çapraz ML) karnesi."""
+    from services import shadow_overview as shadow
+    try:
+        return await asyncio.to_thread(shadow.get_shadow_model_report, days)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+
+
+@router.get("/shadow/trades")
+async def shadow_trades(days: int = Query(30, ge=1, le=365)):
+    """Gölge kâğıt-işlemler (formasyon / sahte kırılım / meta) karnesi."""
+    from services import shadow_overview as shadow
+    try:
+        return await asyncio.to_thread(shadow.get_shadow_trade_report, days)
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=str(exc))

@@ -13,10 +13,16 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60_000,
+            staleTime: 30_000,
             gcTime: 10 * 60_000,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
+            // 2026-08-26: ikisi de `false` idi. Sonuç: bir panel bir kez
+            // yüklendikten sonra HİÇBİR ŞEY yeniden çekmiyordu — sekmeye geri
+            // dönmek, ağın kopup gelmesi, hiçbiri tetiklemiyordu. Kullanıcı
+            // günlerce eski veriye bakıyordu (Evrim Paneli'ndeki decider
+            // geçmişi vakası). staleTime zaten gereksiz isteği önlüyor;
+            // odak/yeniden-bağlanma tetiklerinin kapalı olması için sebep yok.
+            refetchOnWindowFocus: true,
+            refetchOnReconnect: true,
             retry: 1,
             retryDelay: 3000,
           },

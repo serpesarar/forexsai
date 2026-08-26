@@ -74,10 +74,36 @@ from __future__ import annotations
 
 import logging
 import os
+from contextvars import ContextVar
 from datetime import datetime, timezone
 from typing import Any, List, Optional, Sequence, Tuple
 
 logger = logging.getLogger(__name__)
+
+# ─── Gölge kapı kaydı (2026-08-26) ──────────────────────────────────────────
+# Gölge modda (*_BLOCK=0) bir kapı "bloklardım" dediğinde bu bilgi eskiden
+# YALNIZCA log satırına gidiyordu — yani ölçülemiyordu. Kapının açılmasının
+# doğru karar olup olmadığını görmek için verdikt sinyalin FACTORS'ına yazılır;
+# sinyalin sonucu (TP/SL) sonradan geldiğinde "bu kapı açılsaydı ne olurdu"
+# sorusu tek SQL ile cevaplanır. Gölge Modu paneli bunu okur.
+_shadow_sink: ContextVar[Optional[List[dict]]] = ContextVar(
+    "signal_gates_shadow_sink", default=None)
+
+
+def _shadow_verdict(gate: str, symbol: str, direction: str, reason: str) -> None:
+    """Gölge modda 'bloklardım' verdiktini toplayıcıya yaz (varsa)."""
+    sink = _shadow_sink.get()
+    if sink is None:
+        return
+    if any(v.get("gate") == gate for v in sink):
+        return
+    sink.append({
+        "gate": gate,
+        "symbol": symbol,
+        "direction": direction,
+        "reason": (reason or "")[:240],
+        "at": datetime.now(timezone.utc).isoformat(),
+    })
 
 # ─── Sabitler ────────────────────────────────────────────────────────────────
 
@@ -499,6 +525,9 @@ async def entry_score_gate(
         score, fails = compute_entry_score(symbol, direction, candles_5m, candles_30m, now=now)
         if score < min_score:
             if not _flag("ENTRY_SCORE_GATE_BLOCK", "0"):
+                _shadow_verdict(
+                    "entry_score_gate", symbol, direction,
+                    f"giriş skoru {score}/8 < {min_score} (ihlal: {', '.join(fails)})")
                 logger.info(
                     f"entry_score_gate SHADOW {symbol} {direction}: {score}/8 < {min_score} "
                     f"(ihlal: {', '.join(fails)}) — ölçülüyor, BLOKLANMIYOR"
@@ -584,6 +613,7 @@ async def fakeout_gate(
             if _flag("FAKEOUT_GATE_BLOCK", "0"):
                 logger.info(f"fakeout_gate BLOCK {symbol} {direction}: {reason}")
                 return False, reason
+            _shadow_verdict("fakeout_gate", symbol, direction, reason)
             logger.info(f"fakeout_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
         else:
             logger.debug(
@@ -692,6 +722,7 @@ def time_quality_gate(
     if _flag("TQ_GATE_BLOCK", "1"):
         logger.info(f"time_quality_gate BLOCK {symbol} {direction}: {reason}")
         return False, reason
+    _shadow_verdict("time_quality_gate", symbol, direction, reason)
     logger.info(f"time_quality_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
     return True, None
 
@@ -735,6 +766,7 @@ def xau_scalp_gate(symbol: str, direction: str) -> Tuple[bool, Optional[str]]:
     if _flag("XAU_SCALP_GATE_BLOCK", "0"):
         logger.info(f"xau_scalp_gate BLOCK {symbol} {direction}: {reason}")
         return False, reason
+    _shadow_verdict("xau_scalp_gate", symbol, direction, reason)
     logger.info(f"xau_scalp_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
     return True, None
 
@@ -778,6 +810,7 @@ async def trend_align_gate(symbol: str, direction: str) -> Tuple[bool, Optional[
             if _flag("TREND_ALIGN_GATE_BLOCK", "0"):
                 logger.info(f"trend_align_gate BLOCK {symbol} {direction}: {reason}")
                 return False, reason
+            _shadow_verdict("trend_align_gate", symbol, direction, reason)
             logger.info(f"trend_align_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
     except Exception as exc:  # fail-open
         logger.debug(f"trend_align_gate fail-open ({symbol}): {exc}")
@@ -829,6 +862,7 @@ async def wave_position_gate(symbol: str, direction: str) -> Tuple[bool, Optiona
             if _flag("WAVE_POSITION_GATE_BLOCK", "0"):
                 logger.info(f"wave_position_gate BLOCK {symbol} {direction}: {reason}")
                 return False, reason
+            _shadow_verdict("wave_position_gate", symbol, direction, reason)
             logger.info(f"wave_position_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
     except Exception as exc:  # fail-open
         logger.debug(f"wave_position_gate fail-open ({symbol}): {exc}")
@@ -873,6 +907,7 @@ async def vix_regime_gate(symbol: str, direction: str) -> Tuple[bool, Optional[s
             if _flag("VIX_REGIME_GATE_BLOCK", "1"):
                 logger.info(f"vix_regime_gate BLOCK {symbol} {direction}: {reason}")
                 return False, reason
+            _shadow_verdict("vix_regime_gate", symbol, direction, reason)
             logger.info(f"vix_regime_gate GÖLGE {symbol} {direction}: {reason} — bloklanMADI")
     except Exception as exc:  # fail-open
         logger.debug(f"vix_regime_gate fail-open ({symbol}): {exc}")
@@ -963,6 +998,7 @@ async def debate_bias_gate(
         if _flag("DEBATE_BIAS_GATE_BLOCK", "0"):
             logger.info(f"debate_bias_gate BLOCK {sym} {direction}: {reason}")
             return False, reason
+        _shadow_verdict("debate_bias_gate", sym, direction, reason)
         logger.info(f"debate_bias_gate GÖLGE {sym} {direction}: {reason} — bloklanMADI")
     except Exception as exc:  # fail-open
         logger.debug(f"debate_bias_gate fail-open ({symbol}): {exc}")
@@ -1012,6 +1048,43 @@ async def calendar_gate(symbol: str) -> Tuple[bool, Optional[str]]:
 # ─── Birleşik uygulayıcı ─────────────────────────────────────────────────────
 
 async def apply_signal_gates(
+    symbol: str,
+    direction: str,
+    model_type: str,
+    regime: Any = None,
+    confidence: Optional[float] = None,
+) -> Tuple[str, List[str]]:
+    """Geriye dönük uyumlu sarmalayıcı — bkz. apply_signal_gates_ex."""
+    gated, notes, _shadow = await apply_signal_gates_ex(
+        symbol, direction, model_type, regime=regime, confidence=confidence)
+    return gated, notes
+
+
+async def apply_signal_gates_ex(
+    symbol: str,
+    direction: str,
+    model_type: str,
+    regime: Any = None,
+    confidence: Optional[float] = None,
+) -> Tuple[str, List[str], List[dict]]:
+    """Kapıları uygula ve GÖLGE verdiktlerini de döndür.
+
+    Üçüncü eleman: gölge modda "bloklardım" diyen kapıların listesi
+    ([{gate, symbol, direction, reason, at}, ...]). prediction_logger bunu
+    `factors.shadow_gates` olarak yazar; Gölge Modu paneli sonuçla eşleştirip
+    "bu kapı açılsaydı ne olurdu" sorusunu cevaplar.
+    """
+    sink: List[dict] = []
+    token = _shadow_sink.set(sink)
+    try:
+        gated, notes = await _apply_signal_gates_inner(
+            symbol, direction, model_type, regime=regime, confidence=confidence)
+    finally:
+        _shadow_sink.reset(token)
+    return gated, notes, sink
+
+
+async def _apply_signal_gates_inner(
     symbol: str,
     direction: str,
     model_type: str,

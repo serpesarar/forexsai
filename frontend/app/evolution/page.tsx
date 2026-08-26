@@ -13,6 +13,7 @@ import {
   ArrowUp,
   Bot,
   Dna,
+  Ghost,
   GraduationCap,
   History,
   ListTodo,
@@ -33,6 +34,7 @@ import EvolutionLoop from "@/components/evolution/EvolutionLoop";
 import LessonsPanel from "@/components/evolution/LessonsPanel";
 import PerformanceBoard from "@/components/evolution/PerformanceBoard";
 import RemoteBotBoard from "@/components/evolution/RemoteBotBoard";
+import { ShadowSection } from "@/components/evolution/ShadowBoard";
 import SystemMap from "@/components/evolution/SystemMap";
 import { emitOpenRun } from "@/components/evolution/events";
 import { Toaster } from "@/components/evolution/toast";
@@ -43,6 +45,7 @@ const DAY_OPTIONS = [7, 30, 90, 365];
 const NAV = [
   { id: "performans", label: "Performans", icon: <TrendingUp size={14} /> },
   { id: "canli-bot", label: "Canlı Bot", icon: <Bot size={14} /> },
+  { id: "golge", label: "Gölge Modu", icon: <Ghost size={14} /> },
   { id: "analiz", label: "Analiz & Öğret", icon: <Terminal size={14} /> },
   { id: "bekleyen", label: "Bekleyen İşler", icon: <ListTodo size={14} /> },
   { id: "harita", label: "Sistem Haritası", icon: <Network size={14} /> },
@@ -262,6 +265,7 @@ function EvolutionPageInner() {
         <div className="space-y-16">
           <PerformanceBoard overview={overview} />
           <RemoteBotBoard days={days} />
+          <ShadowSection days={days} />
           <AnalysisRunner />
           <BacklogPanel />
           <SystemMap />

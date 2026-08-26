@@ -7,6 +7,28 @@ import { getApiBase } from "./base";
 
 const API = getApiBase();
 
+/**
+ * Canlı yenileme aralıkları (2026-08-26).
+ *
+ * Önceki hâlde detay sorgularının HİÇBİRİNDE `refetchInterval` yoktu; yalnız
+ * `staleTime` vardı. `staleTime` "veri bayat sayılsın mı" sorusunu cevaplar,
+ * yeniden çekmeyi TETİKLEMEZ — tetikleyici (odak/aralık/mount) yoksa panel
+ * açık kaldığı sürece ilk yüklenen veriyi gösterir. Decider işlem geçmişinin
+ * günlerce eski görünmesinin sebebi buydu.
+ *
+ * Aralıklar veri kaynağının GERÇEK tazelenme hızına göre seçildi:
+ * decider ~1 dk'da bir karar yazar, MT5 işlemleri kapanışta senkronlanır,
+ * katalog/kayıt dosyaları elle değişir.
+ */
+export const LIVE = {
+  /** Karar/işlem akışı — dakikalık tazelenen kaynaklar. */
+  fast: 30_000,
+  /** Kırılım/karne sorguları — hesabı ağır, dakikada bir yeter. */
+  normal: 60_000,
+  /** Yavaş değişen kataloglar. */
+  slow: 5 * 60_000,
+} as const;
+
 // ── Tipler ───────────────────────────────────────────────────────────────
 
 export interface ModelAccuracy {
@@ -240,6 +262,8 @@ export interface RemoteCommandSummary {
 }
 
 export interface RemoteStatus {
+  /** İşlem senkron sağlığı — 'çevrimiçi' ile aynı şey değildir. */
+  trade_sync?: TradeSyncHealth;
   host: string;
   online: boolean;
   last_seen: string | null;
@@ -257,6 +281,23 @@ export interface BotPerformance {
   net_profit: number;
   by_symbol: Record<string, { n: number; wins: number; net: number; win_rate: number | null }>;
   last_trade_at: string | null;
+  /** Son işlemin üstünden geçen saat — 72+ ise senkron durmuş olabilir. */
+  data_age_hours: number | null;
+}
+
+/** bot_trades senkronunun durduğunu sayan eşik (backend ile aynı). */
+export const TRADE_STALE_HOURS = 72;
+
+/**
+ * Ajanın MT5 işlem senkronu sağlığı (ajan ≥1.1). `reported=false` ise kutuda
+ * eski ajan sürümü çalışıyordur — durum BİLİNMİYOR, uyarı basılmaz.
+ */
+export interface TradeSyncHealth {
+  ok: boolean | null;
+  last_push: string | null;
+  error: string | null;
+  fail_streak: number;
+  reported: boolean;
 }
 
 export interface DeciderStats {
@@ -338,7 +379,7 @@ export function useOverview(days = 30) {
   return useQuery<Overview>({
     queryKey: ["evolution", "overview", days],
     queryFn: () => getJson(`/api/evolution/overview?days=${days}`),
-    refetchInterval: 60_000,
+    refetchInterval: LIVE.fast,
     // Gün aralığı değişince sayaçlar 0'a düşmesin — eski veri, yenisi gelene dek kalır
     placeholderData: (prev) => prev,
   });
@@ -364,7 +405,7 @@ export function useChangelog(limit = 60) {
   return useQuery<{ entries: ChangelogEntry[] }>({
     queryKey: ["evolution", "changelog", limit],
     queryFn: () => getJson(`/api/evolution/changelog?limit=${limit}`),
-    refetchInterval: 120_000,
+    refetchInterval: LIVE.normal,
   });
 }
 
@@ -372,6 +413,8 @@ export function useBacklog() {
   return useQuery<{ items: BacklogItem[] }>({
     queryKey: ["evolution", "backlog"],
     queryFn: () => getJson("/api/evolution/backlog"),
+    refetchInterval: LIVE.normal,
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -398,6 +441,8 @@ export function useLessons() {
   return useQuery<{ lessons: Lesson[] }>({
     queryKey: ["evolution", "lessons"],
     queryFn: () => getJson("/api/evolution/lessons"),
+    refetchInterval: LIVE.normal,
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -482,7 +527,7 @@ export function useBotPerformance(days = 30) {
   return useQuery<BotPerformance>({
     queryKey: ["evolution", "remote", "bot-performance", days],
     queryFn: () => getJson(`/api/evolution/remote/bot-performance?days=${days}`),
-    refetchInterval: 120_000,
+    refetchInterval: LIVE.normal,
     placeholderData: (prev) => prev,
     retry: 1,
   });
@@ -492,7 +537,7 @@ export function useDeciderStats(days = 30) {
   return useQuery<DeciderStats>({
     queryKey: ["evolution", "remote", "decider-stats", days],
     queryFn: () => getJson(`/api/evolution/remote/decider-stats?days=${days}`),
-    refetchInterval: 120_000,
+    refetchInterval: LIVE.fast,
     placeholderData: (prev) => prev,
     retry: 1,
   });
@@ -551,7 +596,9 @@ export function useModelDetail(strategy: string | null, days = 30) {
     queryKey: ["evolution", "model-detail", strategy, days],
     queryFn: () => getJson(`/api/learning/model-symbol-breakdown?strategy=${encodeURIComponent(strategy!)}&days=${days}`),
     enabled: !!strategy,
-    staleTime: 5 * 60_000,
+    staleTime: LIVE.normal,
+    refetchInterval: LIVE.normal,
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -571,7 +618,9 @@ export function useBotTrades(symbol: string | null, days = 30) {
     queryKey: ["evolution", "remote", "bot-trades", symbol, days],
     queryFn: () => getJson(`/api/evolution/remote/bot-trades?symbol=${encodeURIComponent(symbol!)}&days=${days}`),
     enabled: !!symbol,
-    staleTime: 60_000,
+    staleTime: LIVE.fast,
+    refetchInterval: LIVE.fast,
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -589,6 +638,109 @@ export interface DeciderBreakdown {
     by_direction: Record<string, { n: number; wins: number; losses: number; win_rate: number | null }>;
   }>;
   recent: { ts: string; symbol: string; direction: string; outcome: string | null; reason: string }[];
+}
+
+/** Bir kırılım kovası — gün, yön, seans ve saat hepsinde aynı şekil. */
+export interface DeciderBucket {
+  opens: number;
+  wins: number;
+  losses: number;
+  pending: number;
+  resolved: number;
+  net_r: number;
+  win_rate: number | null;
+  avg_r: number | null;
+}
+
+export interface DeciderDay extends DeciderBucket {
+  day: string;
+  waits: number;
+  foregone_r: number;
+  BUY: DeciderBucket;
+  SELL: DeciderBucket;
+}
+
+export interface DeciderDirection extends DeciderBucket {
+  avg_size: number | null;
+  missed: { n: number; wins: number; r: number };
+  by_session: Record<string, DeciderBucket>;
+  by_hour: (DeciderBucket & { hour: number })[];
+}
+
+export interface DeciderDecision {
+  ts: string;
+  day: string;
+  session: string;
+  action: string;
+  direction: string | null;
+  outcome: "WIN" | "LOSS" | null;
+  /** Brüt R (geometriden). */
+  r: number | null;
+  /** Spread SONRASI R — gerçek sonuç budur, `r` değil. */
+  r_net: number | null;
+  cost_usd: number | null;
+  cf_direction: string | null;
+  cf_outcome: string | null;
+  cf_r: number | null;
+  size_factor: number | null;
+  entry: number | null;
+  sl: number | null;
+  tp: number | null;
+  /** Hedefin girişe puan cinsinden uzaklığı ("ne kadar TP"). */
+  tp_distance: number | null;
+  /** Stop'un girişe puan cinsinden uzaklığı ("ne kadar SL"). */
+  sl_distance: number | null;
+  /** Gerçekleşen çıkış fiyatı: WIN→TP, LOSS→SL. */
+  exit_price: number | null;
+  /** Maximum Favorable Excursion — lehte gidilen en uzak nokta (R). */
+  mfe_r: number | null;
+  /** Maximum Adverse Excursion — aleyhte görülen en dip nokta (R). */
+  mae_r: number | null;
+  /** Hedefe ne kadar yaklaşıldı (0-1). */
+  tp_progress: number | null;
+  bars_to_outcome: number | null;
+  outcome_at: string | null;
+  atr: number | null;
+  spread: number | null;
+  rr: number | null;
+  mode: string | null;
+  shadow_model: string | null;
+  management: string;
+  reason: string;
+}
+
+export interface DeciderSymbolHistory {
+  symbol: string;
+  days: number;
+  total_rows: number;
+  summary: DeciderBucket & {
+    waits: number;
+    foregone_r: number;
+    missed_wins: number;
+    rr_typical: number | null;
+    breakeven_wr: number | null;
+    above_breakeven: boolean;
+    active_days: number;
+    best_day: { day: string; net_r: number } | null;
+    worst_day: { day: string; net_r: number } | null;
+    first_ts: string | null;
+    last_ts: string | null;
+  };
+  by_day: DeciderDay[];
+  by_direction: Record<string, DeciderDirection>;
+  decisions: DeciderDecision[];
+}
+
+export function useDeciderSymbolHistory(symbol: string | null, days = 30) {
+  return useQuery<DeciderSymbolHistory>({
+    queryKey: ["evolution", "remote", "decider-symbol-history", symbol, days],
+    queryFn: () =>
+      getJson(`/api/evolution/remote/decider-symbol-history?symbol=${encodeURIComponent(symbol!)}&days=${days}`),
+    enabled: !!symbol,
+    staleTime: LIVE.fast,
+    refetchInterval: LIVE.fast,
+    placeholderData: (prev) => prev,
+  });
 }
 
 export interface BotVsDecider {
@@ -613,7 +765,9 @@ export function useDeciderBreakdown(days = 30, enabled = true) {
     queryKey: ["evolution", "remote", "decider-breakdown", days],
     queryFn: () => getJson(`/api/evolution/remote/decider-breakdown?days=${days}`),
     enabled,
-    staleTime: 2 * 60_000,
+    staleTime: LIVE.fast,
+    refetchInterval: LIVE.fast,
+    placeholderData: (prev) => prev,
   });
 }
 
@@ -621,7 +775,170 @@ export function useBotVsDecider(days = 30) {
   return useQuery<BotVsDecider>({
     queryKey: ["evolution", "remote", "bot-vs-decider", days],
     queryFn: () => getJson(`/api/evolution/remote/bot-vs-decider?days=${days}`),
-    refetchInterval: 5 * 60_000,
+    refetchInterval: LIVE.normal,
+    placeholderData: (prev) => prev,
+    retry: 1,
+  });
+}
+
+// ── Gölge Modu paneli ────────────────────────────────────────────────────
+// Sistemde GÖLGE çalışan her şeyin tek karnesi: kapılar, ters modeller,
+// kâğıt-işlemler. Backend: services/shadow_overview.py.
+
+/** signal_metrics kanonik karnesi — WR asla yalnız okunmaz. */
+export interface CanonMetrics {
+  n: number;
+  wins: number;
+  partials: number;
+  losses: number;
+  ambiguous: number;
+  neutral: number;
+  open: number;
+  win_rate: number | null;
+  /** ASIL karar metriği. Negatifse WR yüksek olsa da kenar yoktur. */
+  expectancy_r: number | null;
+  median_r: number | null;
+  /** Geometrinin gerektirdiği başabaş WR = 1/(1+RR). */
+  breakeven_wr: number | null;
+  edge_pp: number | null;
+  avg_rr_geometry: number | null;
+  total_r: number;
+  excluded_r: number;
+  mixed_epochs: boolean;
+  warnings: string[];
+  by_epoch: Record<string, Omit<CanonMetrics, "by_epoch" | "headline">>;
+  headline: string;
+}
+
+export interface ShadowGateVerdict {
+  code: "ac" | "acma" | "notr" | "veri_yok";
+  label: string;
+  detail: string;
+}
+
+export interface ShadowGate {
+  id: string;
+  label: string;
+  note: string;
+  flag: string;
+  enabled: boolean;
+  blocking: boolean;
+  mode: "BLOK" | "GÖLGE";
+  would_block_total: number;
+  metrics: CanonMetrics;
+  verdict: ShadowGateVerdict;
+  recent: {
+    id: string;
+    at: string;
+    symbol: string;
+    model: string;
+    direction: string;
+    status: string;
+    reason: string | null;
+  }[];
+}
+
+export interface ShadowGateReport {
+  days: number;
+  signals_with_shadow_verdict: number;
+  gates: ShadowGate[];
+  measured_gates: number;
+  since_instrumented: string;
+  note: string;
+}
+
+export interface ShadowModelFamily {
+  id: string;
+  label: string;
+  note: string;
+  total: number;
+  metrics: CanonMetrics;
+  models: { model_type: string; total: number; metrics: CanonMetrics }[];
+}
+
+export interface ShadowModelReport {
+  days: number;
+  families: ShadowModelFamily[];
+  alerts: { level: string; text: string }[];
+}
+
+export interface ShadowTradeBucket {
+  key: string;
+  label: string;
+  total: number;
+  resolved: number;
+  wins: number;
+  losses: number;
+  expired: number;
+  open: number;
+  ambiguous: number;
+  degenerate: number;
+  win_rate: number | null;
+  median_rr: number | null;
+  breakeven_wr: number | null;
+  expectancy_r: number | null;
+  total_r: number;
+  edge_pp: number | null;
+  warnings: string[];
+  by_symbol?: ShadowTradeBucket[];
+  by_direction?: ShadowTradeBucket[];
+}
+
+export interface ShadowTradeReport {
+  days: number;
+  total: number;
+  enabled: boolean;
+  sources: ShadowTradeBucket[];
+  recent: {
+    at: string;
+    resolved_at: string | null;
+    source: string;
+    symbol: string;
+    direction: string;
+    pattern: string | null;
+    timeframe: string | null;
+    confidence: number | null;
+    status: string;
+    entry: number | null;
+    tp: number | null;
+    sl: number | null;
+    exit: number | null;
+    r: number | null;
+    ambiguous: boolean;
+    rr: number | null;
+  }[];
+  last_at: string | null;
+}
+
+export interface ShadowFlags {
+  gates: {
+    id: string;
+    label: string;
+    enabled_flag: string;
+    block_flag: string;
+    enabled: boolean;
+    blocking: boolean;
+    mode: "KAPALI" | "BLOK" | "GÖLGE";
+  }[];
+  experiments: { flag: string; label: string; on: boolean }[];
+}
+
+export interface ShadowOverview {
+  days: number;
+  generated_at: string;
+  errors: { block: string; error: string }[];
+  gates: ShadowGateReport | null;
+  models: ShadowModelReport | null;
+  trades: ShadowTradeReport | null;
+  flags: ShadowFlags | null;
+}
+
+export function useShadowOverview(days = 30) {
+  return useQuery<ShadowOverview>({
+    queryKey: ["evolution", "shadow", "overview", days],
+    queryFn: () => getJson(`/api/evolution/shadow/overview?days=${days}`),
+    refetchInterval: LIVE.normal,
+    staleTime: LIVE.normal,
     placeholderData: (prev) => prev,
     retry: 1,
   });
