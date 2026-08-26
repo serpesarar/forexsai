@@ -107,6 +107,8 @@ from services.signal_analytics import (
     sort_timeframes,
     summarize_scope,
 )
+# Kanonik dürüst metrikler — çıplak WR'ın yanında beklenti/başabaş/epoch taşır.
+from services.signal_metrics import aggregate_outcomes, summarize_for_panel
 from services.multi_target_tracker import tracker as multi_target_tracker
 from services.order_block_service import service as order_block_service
 from services.telegram_service import telegram_notifier
@@ -877,11 +879,42 @@ async def get_model_symbol_breakdown(
             for d in s["by_direction"].values():
                 d["win_rate"] = _wr(d["wins"], d["losses"])
 
+        # ── Kanonik dürüst metrikler (2026-08-21 çekirdek denetimi) ──────────
+        # Çıplak win_rate TEK BAŞINA yanıltıcı: RR 0,53 geometrisinde %80 WR,
+        # RR 2,0'da %45'ten kötüdür. Aşağıdaki blok her kırılıma beklenti (R),
+        # başabaş WR, kenar (pp) ve epoch ayrımını EKLER — mevcut alanlar
+        # bozulmadan (frontend kırılmaz), ama artık yanında gerçeği taşıyor.
+        try:
+            by_sym_rows: Dict[str, List[dict]] = {}
+            by_sym_dir_rows: Dict[str, Dict[str, List[dict]]] = {}
+            for pred in predictions:
+                sym = pred.get("symbol") or "?"
+                direction = (pred.get("ml_direction") or "?").upper()
+                by_sym_rows.setdefault(sym, []).append(pred)
+                by_sym_dir_rows.setdefault(sym, {}).setdefault(direction, []).append(pred)
+
+            for sym, s in by_symbol.items():
+                s["honest"] = summarize_for_panel(
+                    aggregate_outcomes(by_sym_rows.get(sym, []), default_symbol=sym)
+                )
+                for direction, d in s["by_direction"].items():
+                    d["honest"] = summarize_for_panel(
+                        aggregate_outcomes(
+                            by_sym_dir_rows.get(sym, {}).get(direction, []),
+                            default_symbol=sym,
+                        )
+                    )
+            overall_honest = summarize_for_panel(aggregate_outcomes(predictions))
+        except Exception as exc:  # fail-open: dürüst katman raporu düşürmesin
+            logger.warning(f"[learning] honest metrics failed for {strategy}: {exc}")
+            overall_honest = None
+
         res = {
             "strategy": strategy,
             "days": days,
             **totals,
             "win_rate": _wr(totals["wins"], totals["losses"]),
+            "honest": overall_honest,
             "by_symbol": by_symbol,
             "recent": recent,
         }

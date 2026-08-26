@@ -829,6 +829,8 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
 
     new_high = 0.0
     new_low = 0.0
+    # Aynı mumda hem TP hem SL değdi mi? (mum içi sıra bilinemez → belirsiz)
+    same_bar_tp_sl = False
 
     # Simulate candles chronologically
     for c in relevant_candles:
@@ -858,6 +860,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             continue
 
         # Check TP hits
+        tp_hit_this_candle = False
         for tp_name, tp_val in target_prices.items():
             if targets_hit.get(tp_name):
                 continue
@@ -870,9 +873,11 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
             if direction == "BUY" and (c_high - spread) >= tp_val and tp_drawdown_ok:
                 targets_hit[tp_name] = True
                 targets_hit_times[tp_name] = c_date
+                tp_hit_this_candle = True
             elif direction == "SELL" and (c_low + spread) <= tp_val and tp_drawdown_ok:
                 targets_hit[tp_name] = True
                 targets_hit_times[tp_name] = c_date
+                tp_hit_this_candle = True
 
         # Check SL hit
         hit_stop = False
@@ -886,6 +891,14 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         tp1_3_hit = any(tp in {"TP1", "TP2", "TP3"} for tp in targets_hit)
 
         if hit_stop:
+            # 2026-08-21 çekirdek denetimi: TP ve SL AYNI mumda değdiyse mum içi
+            # sıra bilinmez. Eskiden TP döngüsü önce koştuğu için bu sessizce
+            # WIN yazılıyordu; shadow_trade_tracker ise aynı olayı konservatif
+            # kayıp sayıyor — iki ölçüm sistemi zıt etiketliyordu. Artık olay
+            # işaretleniyor ve signal_metrics konservatif tarafı kanon kabul
+            # ediyor (factors.same_bar_tp_sl).
+            if tp_hit_this_candle:
+                same_bar_tp_sl = True
             # If TP1-3 was hit BEFORE (or in a previous candle), we exit with win!
             if tp1_3_hit:
                 new_status = "completed"
@@ -990,6 +1003,22 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     "stop_loss_pips": round(resolved_sl_pips, 2),
     "resolution_reason": resolution_reason,
     }
+
+    # Aynı-bar TP+SL belirsizliğini kalıcı olarak işaretle. signal_metrics bunu
+    # görünce sonucu konservatif kayıp (ambiguous_loss) sayar — böylece panel
+    # istatistikleri shadow_trade_tracker ile aynı olayı aynı yönde etiketler.
+    if same_bar_tp_sl:
+        try:
+            _existing = signal.get("factors")
+            if isinstance(_existing, str):
+                _existing = json.loads(_existing) if _existing.strip() else {}
+            _merged = dict(_existing) if isinstance(_existing, dict) else {}
+            _merged["same_bar_tp_sl"] = True
+            update_data["factors"] = _merged
+        except Exception as exc:
+            logger.warning(
+                f"lifecycle.same_bar_flag_failed | signal={signal_id[:8]} err={exc}"
+            )
 
     # İstersen ve DB kolonun varsa bunu aç:
     # if resolution_reason:
