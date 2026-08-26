@@ -2231,5 +2231,49 @@
     "source": "session",
     "created_at": "2026-08-26T16:00:23.313674+00:00",
     "updated_at": "2026-08-26T16:00:23.313684+00:00"
+  },
+  {
+    "id": "bl_01901ab633",
+    "title": "Gölge kapı verdiktlerini 30 gün sonra oku",
+    "detail": "factors.shadow_gates kaydı 2026-08-26'da başladı. n>=30 birikince Gölge Modu panelindeki 8 kapının verdiktine bak: bloklayacağı kümenin beklentisi negatifse kapıyı BLOK'a al (ilgili *_GATE_BLOCK=1), pozitifse kapıyı KAPAT. Özellikle entry_score_gate — bot tarafında ölçüm aleyhine çıkmıştı, panel tarafı ilk kez sızıntısız ölçülüyor.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-26T18:36:48.378098+00:00",
+    "updated_at": "2026-08-26T18:36:48.378230+00:00"
+  },
+  {
+    "id": "bl_66d1995649",
+    "title": "ml_cross kill-switch'i aşan yazar var",
+    "detail": "CROSS_MODEL_EXPERIMENT_ENABLED=0 olmasına rağmen son 30 günde 1104 ml_cross_xau_nasdaq(+_inv) satırı prediction_logs'a yazılmış (WR %33,5, kenar -30pp). prediction_logger'da güvenlik ağı olmasına rağmen satır giriyor: ya Railway ortamında bayrak 1, ya eski deploy hâlâ yazıyor. Gölge Modu paneli bunu uyarı olarak gösteriyor. Yazan süreci bul ve kes.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-26T18:37:07.165016+00:00",
+    "updated_at": "2026-08-26T18:37:07.165155+00:00"
+  },
+  {
+    "id": "bl_25d7218350",
+    "title": "Formasyon dedektörünün stop hesabı bozuk",
+    "detail": "shadow_pattern_trades'te formasyon işlemlerinin %30'unda stop girişe yapışık (hedef/stop orani >5, kayıplarda ort. RR 21,95). Bu geometri yapısal kayıptır: 1000 çözülmüş işlemde beklenti -0,236R, toplam -236R. harmonic_pattern_service'in SL seviyesi hesabını gözden geçir — muhtemelen pivot/invalidation seviyesi girişe çok yakın seçiliyor. Panel medyan RR + bozuk sayacıyla uyarıyor ama kök neden dedektörde.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-26T18:37:07.166706+00:00",
+    "updated_at": "2026-08-26T18:37:07.166710+00:00"
+  },
+  {
+    "id": "bl_d22785d648",
+    "title": "Meta sinyal: WR başabaşın üstünde ama beklenti negatif",
+    "detail": "Gölge kâğıt-işlemlerde meta WR %60,9 / başabaş %59,9 (kenar +1pp) AMA beklenti -0,097R, toplam -18,7R. Sebep: kazananlar ilan edilen 0,67R'yi realize etmiyor (gerçekte ort. 0,48R) — kısmi çıkış veya TP'ye tam ulaşmadan kapanma. Meta geometrisinin RR'ını yükselt ya da çıkışı gözden geçir.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-26T18:37:07.168072+00:00",
+    "updated_at": "2026-08-26T18:37:07.168076+00:00"
   }
 ]
