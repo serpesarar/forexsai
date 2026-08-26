@@ -2143,5 +2143,93 @@
     "source": "session",
     "created_at": "2026-08-21T18:02:54.731183+00:00",
     "updated_at": "2026-08-21T18:02:54.731185+00:00"
+  },
+  {
+    "id": "bl_1e2283ce0c",
+    "title": "Lifecycle ayni-bar TP+SL iyimser cozuluyor",
+    "detail": "signal_lifecycle.py:860-903 ayni mumda hem TP hem SL degerse TP once isaretlenip completed (WIN) yaziliyor; shadow_trade_tracker ayni durumu KONSERVATIF kayip sayiyor. Iki olcum sistemi ayni olayi zit etiketliyor.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-22T03:02:59.198709+00:00",
+    "updated_at": "2026-08-22T03:02:59.198895+00:00"
+  },
+  {
+    "id": "bl_6b8a705e36",
+    "title": "tp1_3_hit_then_sl tam WIN sayiliyor",
+    "detail": "signal_lifecycle.py:890-903: TP1 (RR~0.53) vurup sonra SL yiyen sinyal completed = tam kazanc gibi WR'a giriyor. n=316 satir etkileniyor. R-agirlikli metrik gerekiyor.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-22T03:02:59.200841+00:00",
+    "updated_at": "2026-08-22T03:02:59.200847+00:00"
+  },
+  {
+    "id": "bl_2b06c73eee",
+    "title": "Panel WR metrikleri epoch karistiriyor",
+    "detail": "prediction_logs meta: static_pips (RR 0.53) + meta_engine + atr_ladder_v1 ayni WR'da toplaniyor. XAU BUY static_pips %81.1 (bitis 05-19) vs atr_ladder_v1 %13.3 guncel. Endpointler factors.target_type ile epoch ayirmali.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-22T03:02:59.202125+00:00",
+    "updated_at": "2026-08-22T03:02:59.202129+00:00"
+  },
+  {
+    "id": "bl_82b91e2d36",
+    "title": "Kalan WR hesaplayan endpointleri signal_metrics'e tasi",
+    "detail": "learning.py'de accuracy-by-model, strategy-performance, smc-performance, ai-panel-performance hala ciplak WR donuyor; model-symbol-breakdown'a eklenen 'honest' blogu ornek alinarak hepsine eklenmeli. Ayrica bot_diagnostic_router, replay_router, reflex_router kendi WR'larini hesapliyor.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-22T04:24:23.567027+00:00",
+    "updated_at": "2026-08-22T04:24:23.567170+00:00"
+  },
+  {
+    "id": "bl_7b2cabf27d",
+    "title": "Frontend honest blogunu gostersin",
+    "detail": "Backend artik expectancy_r/breakeven_wr/edge_pp/by_epoch donuyor ama panel sadece win_rate gosteriyor. Evrim Paneli ve performans scoreboard'lari kenar(pp) negatifse WR'i kirmizi gostermeli, epoch karisimi varsa uyari cipi koymali.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-22T04:24:23.568612+00:00",
+    "updated_at": "2026-08-22T04:24:23.568615+00:00"
+  },
+  {
+    "id": "bl_10214016b4",
+    "title": "Gecmis satirlara same_bar_tp_sl geriye donuk isaretlenemez",
+    "detail": "Lifecycle bayragi yalnizca BUNDAN SONRA cozulen sinyallere yazilir. Gecmis tp1_3_hit_then_sl satirlarinin (n~316) kaci ayni-bar idi bilinmiyor; 1m replay ile geriye donuk isaretleme scripti yazilabilir.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-22T04:24:23.569832+00:00",
+    "updated_at": "2026-08-22T04:24:23.569835+00:00"
+  },
+  {
+    "id": "bl_f692130dcd",
+    "title": "429 kota hatasi gorunur degil",
+    "detail": "Decider cagrilarinin %82'si api_error_status=429 ile sessizce WAIT'e dusuyordu; journal'a yaziliyor ama panelde uyari YOK. Evrim Paneline 'son 24s hata orani' gostergesi + esik asilinca uyari eklenmeli. Aksi halde decider saatlerce karar uretmeden calisiyor gorunur.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-26T16:00:23.310336+00:00",
+    "updated_at": "2026-08-26T16:00:23.310564+00:00"
+  },
+  {
+    "id": "bl_84a3fd3721",
+    "title": "Decider cagri hacmi denetimi",
+    "detail": "Sandbox fix'i cagri basi maliyeti ~4x dusurdu ama cagri SAYISI hala olculmedi. CADENCE_SEC=1200 ve CONSULT_REV=1.6 esikleri ile gunluk gercek cagri sayisi/maliyeti journal'dan cikarilmali; 429 devam ederse asil kol burasi.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-26T16:00:23.313674+00:00",
+    "updated_at": "2026-08-26T16:00:23.313684+00:00"
   }
 ]
