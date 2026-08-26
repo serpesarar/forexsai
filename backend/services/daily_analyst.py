@@ -1,10 +1,10 @@
-"""Günlük Veri Analisti — Opus, panelin tüm verisini günde 1 kez inceler.
+"""Günlük Veri Analisti — LLM, panelin tüm verisini günde 1 kez inceler.
 
 Akış (DAILY_ANALYST_ENABLED=1, default açık; saat DAILY_ANALYST_UTC):
   1. Panelin tüm istatistikleri toplanır (model WR'ları, bias karnesi +
      dayanıklılık ufukları, decider kırılımı, bot performansı, Bot↔Decider
      diyaloğu, açık backlog).
-  2. Claude Code CLI (Opus) bir KIDEMLİ TRADING VERİ ANALİSTİ olarak çalıştırılır
+  2. Claude Code CLI (Sonnet 5 + efor=high) bir KIDEMLİ TRADING VERİ ANALİSTİ olarak çalıştırılır
      — abonelikten, API key yok. CLI yoksa mekanik yedek devreye girer
      (Bot↔Decider kural-bazlı dersleri yine de döngüye bağlanır).
   3. Çıktı otomatik dağıtılır:
@@ -325,7 +325,7 @@ def _distribute(report: dict, raw_text: str, mechanical: bool) -> Dict[str, int]
     try:
         REPORT_DIR.mkdir(parents=True, exist_ok=True)
         body = [f"# Günlük Analist Raporu — {today}",
-                f"_mod: {'mekanik yedek' if mechanical else 'Opus (' + CLI_MODEL + ')'}_", ""]
+                f"_mod: {'mekanik yedek' if mechanical else f'LLM ({CLI_MODEL}, efor={CLI_EFFORT})'}_", ""]
         if report.get("ozet"):
             body += ["## Özet", str(report["ozet"]), ""]
         if report.get("bulgular"):
@@ -351,7 +351,7 @@ def _distribute(report: dict, raw_text: str, mechanical: bool) -> Dict[str, int]
     try:
         from services.evolution_service import add_session_note
         add_session_note(
-            summary=(f"Günlük Analist ({'mekanik' if mechanical else 'Opus'}): "
+            summary=(f"Günlük Analist ({'mekanik' if mechanical else CLI_MODEL}): "
                      f"{counts['decider']} decider dersi enjekte, {counts['panel']} panel notu, "
                      f"{counts['backlog']} deney backlog'a. Özet: "
                      + str(report.get('ozet') or '')[:200]),
@@ -371,7 +371,7 @@ def _mechanical_report() -> dict:
                 "decider_dersleri": [], "bulgular": []}
     lessons = [l["text"] for l in bvd.get("lessons", []) if "henüz yeterli" not in l["text"]]
     return {
-        "ozet": "Opus CLI erişilemedi — Bot↔Decider kural-bazlı sayım dersleri otomatik bağlandı.",
+        "ozet": "Claude CLI erişilemedi — Bot↔Decider kural-bazlı sayım dersleri otomatik bağlandı.",
         "bulgular": [f"stats: {json.dumps(bvd.get('stats'), ensure_ascii=False)}"],
         "decider_dersleri": [t for l in lessons if ("decider" in l.lower() or "zıt" in l.lower())
                              for t in [l]][:2],
@@ -393,19 +393,20 @@ async def run_daily_analysis(force: bool = False) -> Dict[str, Any]:
     raw = ""
     if claude_cli_available():
         raw = await call_claude_cli(SYSTEM_PROMPT, _build_user_prompt(data),
-                                    model=CLI_MODEL, timeout=420) or ""
+                                    model=CLI_MODEL, timeout=420,
+                                    effort=CLI_EFFORT) or ""
         report = _extract_json(raw)
         if report:
             mechanical = False
         else:
-            logger.warning("[analyst] Opus çıktısı parse edilemedi — mekanik yedek")
+            logger.warning("[analyst] LLM çıktısı parse edilemedi — mekanik yedek")
     if report is None:
         report = _mechanical_report()
 
     counts = _distribute(report, raw, mechanical)
     logger.info("[analyst] günlük analiz bitti: %s (mod=%s)",
-                counts, "mekanik" if mechanical else "opus")
-    return {"mode": "mechanical" if mechanical else "opus",
+                counts, "mekanik" if mechanical else "llm")
+    return {"mode": "mechanical" if mechanical else "llm",
             "counts": counts, "ozet": report.get("ozet")}
 
 

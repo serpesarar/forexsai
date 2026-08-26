@@ -33,6 +33,30 @@ _UNKNOWN_OPT = re.compile(r"unknown option|unrecognized option|--effort", re.I)
 
 _CLAUDE_BIN: Optional[str] = None
 _CHECKED = False
+_SANDBOX: Optional[str] = None
+
+
+def _sandbox() -> Optional[str]:
+    """CLI'ın çalışacağı BOŞ dizin — CLAUDE.md otomatik keşfini engeller.
+
+    2026-08-26 ölçümü: aynı çağrı repo kökünde 55k cache-creation token/$0.34,
+    boş dizinde 11k/$0.071 (~4.7×). Panelin AI çağrıları kendi prompt'unu
+    taşır; CLAUDE.md hiçbir şey katmaz, yalnız kota yer.
+    Kapatmak için: CLAUDE_CLI_SANDBOX_CWD=0.
+    """
+    global _SANDBOX
+    if os.getenv("CLAUDE_CLI_SANDBOX_CWD", "1") != "1":
+        return None
+    if _SANDBOX is None:
+        import tempfile
+        from pathlib import Path
+        d = Path(tempfile.gettempdir()) / "forexsai_cli_sandbox"
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+            _SANDBOX = str(d)
+        except OSError:
+            _SANDBOX = ""          # fail-open: eski davranış (cwd miras)
+    return _SANDBOX or None
 
 
 def claude_cli_available() -> bool:
@@ -60,8 +84,10 @@ def call_claude_cli_sync(system_prompt: str, user_prompt: str,
         cmd += ["--effort", effort]
     prompt = f"{system_prompt}\n\n{user_prompt}" if system_prompt else user_prompt
     try:
+        # cwd=_sandbox(): CLAUDE.md otomatik yüklenmesin (çağrı başına ~$0.27 israf)
         r = subprocess.run(cmd, input=prompt, capture_output=True,
-                           text=True, encoding="utf-8", errors="replace", timeout=timeout)
+                           text=True, encoding="utf-8", errors="replace", timeout=timeout,
+                           cwd=_sandbox())
     except FileNotFoundError:
         return None
     except subprocess.TimeoutExpired:

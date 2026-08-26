@@ -77,6 +77,10 @@ DECIDE_MODEL = os.getenv("DECIDE_MODEL", "claude-sonnet-5")
 # Düşünme eforu (claude CLI --effort). Karar kalitesi model küçüldüğünde
 # buradan telafi edilir; "high" varsayılan.
 DECIDE_EFFORT = os.getenv("DECIDE_EFFORT", "high")
+# Çağrı zaman aşımı. 180 → 300: efor=high daha uzun düşünür; 21-26 Ağustos'ta
+# 10 karar 180s'e takılıp sessizce WAIT oldu. Cadence 1200s olduğu için 300s
+# hâlâ döngüyü geciktirmez.
+CALL_TIMEOUT = int(os.getenv("DECIDE_TIMEOUT", "300"))
 # GÖLGE model A/B: aynı veriye paralel karar verir, AYRI grade edilir (canlı değil, kıyas için).
 # 2026-07-03 KAPATILDI (None): canlı çift-çağrı 3 günde haftalık limitin %55'ini yedi.
 # Fable artık batch_eval.py ile ölçülür: kayıtlar birikir → TEK toplu çağrı → sızıntısız
@@ -346,7 +350,37 @@ def _claude_bin() -> str:
     return _CLAUDE_BIN_CACHE
 
 
-def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180,
+_SANDBOX_CACHE: Path | None = None
+
+
+def _sandbox() -> str:
+    """Claude CLI'ın çalışacağı BOŞ dizin — CLAUDE.md otomatik keşfini engeller.
+
+    2026-08-26 ÖLÇÜMÜ (kredi tükenmesinin ASIL sebebi): CLI, cwd'den yukarı
+    yürüyerek CLAUDE.md + CLAUDE-REASONING.md'yi HER çağrıda prompt'a
+    yüklüyordu. Aynı çağrı repo kökünde 55-57k cache-creation token / $0.34;
+    boş dizinde 10.7-11.5k / $0.071 → **~4.7× fark, çağrı başına ~$0.27 israf**.
+    Decider prompt'u zaten kendi PLAYBOOK/LESSONS/REGIME'ini MUTLAK yolla
+    okur (MEM sabiti) — CLAUDE.md karara hiçbir şey katmıyor, sadece kota yiyor.
+
+    NOT: yalnız CLI alt-sürecinin cwd'si değişir; Python tarafı etkilenmez.
+    Kapatmak için: DECIDER_SANDBOX_CWD=0 (eski davranış).
+    """
+    global _SANDBOX_CACHE
+    if os.getenv("DECIDER_SANDBOX_CWD", "1") != "1":
+        return str(HERE)
+    if _SANDBOX_CACHE is None:
+        import tempfile
+        d = Path(tempfile.gettempdir()) / "forexsai_decider_sandbox"
+        try:
+            d.mkdir(parents=True, exist_ok=True)
+            _SANDBOX_CACHE = d
+        except OSError:
+            _SANDBOX_CACHE = HERE      # fail-open: yazılamıyorsa eski davranış
+    return str(_SANDBOX_CACHE)
+
+
+def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = CALL_TIMEOUT,
                 effort: str | None = None) -> dict:
     cmd = [_claude_bin(), "--dangerously-skip-permissions", "-p",
            "--model", model, "--output-format", "json"]
@@ -358,8 +392,10 @@ def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = 180,
         # Türkçe karakterli prompt UnicodeEncodeError atıp TÜM pass'i öldürüyordu
         # (2026-08-12: 'charmap' codec can't encode character 'ş' ... — saatlerce
         #  hiç karar üretilmedi). stdout/stderr de aynı sebeple utf-8 okunur.
+        # cwd=_sandbox(): CLAUDE.md OTOMATİK YÜKLENMESİN (2026-08-26 ölçümü).
         r = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
-                           encoding="utf-8", errors="replace", timeout=timeout)
+                           encoding="utf-8", errors="replace", timeout=timeout,
+                           cwd=_sandbox())
     except subprocess.TimeoutExpired:
         return {"action": "WAIT", "reason": "claude timeout", "_error": True}
     except OSError as e:      # WinError 2: CLI yolu bulunamadı/erişilemedi → pass ölmesin
