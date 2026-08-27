@@ -2330,5 +2330,16 @@
     "source": "daily_analyst",
     "created_at": "2026-08-26T22:48:26.731859+00:00",
     "updated_at": "2026-08-26T22:48:26.731877+00:00"
+  },
+  {
+    "id": "bl_d11d58f867",
+    "title": "Ajanın MT5 IPC bağlantısı ölü — bot_trades 9+ gündür donmuş",
+    "detail": "Ajan 1.1'in ilk kalp atışı sebebi doğrudan raporladı: trade_sync_ok=false, hata (-10004, 'No IPC connection'). bot_trades son satırı 2026-08-17, ajan logunda son yazım 2026-08-18 00:12. Eski kodda push_trades bunu SESSİZCE 0 dönerek yutuyordu; artık görünür ve her turda yeniden bağlanma deneniyor ama initialize de -10004 veriyor. Muhtemel sebep: bot süreci terminali tutuyor ve ajan aynı terminale ikinci bir Python IPC oturumu açamıyor, ya da ajanın MT5_TERMINAL_PATH/hesap ayarı kutudaki aktif terminalle eşleşmiyor. Kontrol: kutuda kaç terminal64.exe çalışıyor, ajanın agent_config'indeki MT5_TERMINAL_PATH hangisini gösteriyor. Çözülene kadar panelin Bot İşlem Sonuçları karnesi 17 Ağustos'ta donmuş kalır (panel bunu artık uyarıyla söylüyor).",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-27T05:45:39.506766+00:00",
+    "updated_at": "2026-08-27T05:45:39.506960+00:00"
   }
 ]
