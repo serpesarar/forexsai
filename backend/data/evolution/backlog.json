@@ -2275,5 +2275,60 @@
     "source": "session",
     "created_at": "2026-08-26T18:37:07.168072+00:00",
     "updated_at": "2026-08-26T18:37:07.168076+00:00"
+  },
+  {
+    "id": "bl_3770e662a8",
+    "title": "[Analist] 0800_main suppress testi",
+    "detail": "NDX için 0800_main etiketli sinyalleri son 30 günlük bot geçmişinden çıkar, yalnızca 0945_confirm ile simüle et. Başarı ölçütü: net PnL ve WR karşılaştırması — beklenen WR katkısı %15→%40 yönünde kayma, hacim azalır ama zarar zincirleri kırılır. İki haftalık gerçek data yeterli.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-26T22:48:26.678349+00:00",
+    "updated_at": "2026-08-26T22:48:26.678364+00:00"
+  },
+  {
+    "id": "bl_22d9eebfb3",
+    "title": "[Analist] XAU counter-trend birleşik blok filtresi",
+    "detail": "33 AI-Ops teklifinin ortak koşulu: mtf_trend=all_up + regime=transition + SAR çelişkisi → counter-trend sinyal. Bu tek şart kombinasyonunu 2 hafta gölge modda uygula (SELL ve BUY her ikisi için). Başarı ölçütü: filtre devreye girdiği işlemlerde WR'nin mevcut cluster sıfırından ≥%55'e çıkması.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-26T22:48:26.692693+00:00",
+    "updated_at": "2026-08-26T22:48:26.692709+00:00"
+  },
+  {
+    "id": "bl_e162a5f0ee",
+    "title": "[Analist-Envanter] decider_post_mortem aracı hiç çalıştırılmamış: Bugün USOIL 3 SELL kaybı + XAU zincir kayıpları mevcut. Somut adım: 'son 7 günlük USOIL SELL kayıpları'",
+    "detail": "decider_post_mortem aracı hiç çalıştırılmamış: Bugün USOIL 3 SELL kaybı + XAU zincir kayıpları mevcut. Somut adım: 'son 7 günlük USOIL SELL kayıpları' sorusuyla decider_post_mortem'i bugün çalıştır — ortak payda rev_chan eşiği mi, seans zamanlaması mı net görülür.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-26T22:48:26.706007+00:00",
+    "updated_at": "2026-08-26T22:48:26.706022+00:00"
+  },
+  {
+    "id": "bl_089f2153f3",
+    "title": "[Analist-Envanter] bl_2242529436 VIXREG SELL terfi kararı 34 gün bekliyor (hedef ~2026-08-05, çoktan geçmiş): Somut adım: bu kartı aç, mevcut canlı WR verisine bak, terf",
+    "detail": "bl_2242529436 VIXREG SELL terfi kararı 34 gün bekliyor (hedef ~2026-08-05, çoktan geçmiş): Somut adım: bu kartı aç, mevcut canlı WR verisine bak, terfi et veya kapat — asılı karar backlog'u tıkıyor ve artık tarihi geçmiş.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-26T22:48:26.718488+00:00",
+    "updated_at": "2026-08-26T22:48:26.718502+00:00"
+  },
+  {
+    "id": "bl_d39bcf3fb4",
+    "title": "[Analist-Envanter] bl_learning_context_dead (43 gün, yüksek öncelik): get_learning_context_for_prompt() hiçbir yerde tüketilmiyor — ölü kod. Somut adım: fonksiyonun nere",
+    "detail": "bl_learning_context_dead (43 gün, yüksek öncelik): get_learning_context_for_prompt() hiçbir yerde tüketilmiyor — ölü kod. Somut adım: fonksiyonun nereye bağlanması gerektiğini belirle, bağlantı noktası yoksa sil. 43 gün boyunca ölü kod kalite sinyali bozuyor.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-26T22:48:26.731859+00:00",
+    "updated_at": "2026-08-26T22:48:26.731877+00:00"
   }
 ]
