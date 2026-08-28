@@ -758,6 +758,187 @@ def get_bot_trades(symbol: str, days: int = 30, host: str = DEFAULT_HOST,
     return {"symbol": symbol, "days": days, "trades": trades}
 
 
+# ── Sembol derinlemesine geçmiş — BOT (MT5 gerçek işlemler) ─────────────────
+# Decider'daki "gün & yön geçmişi" panelinin bot işlemleri için karşılığı.
+# 2026-08-27'den ÖNCE bot_trades yalnız ÇIKIŞ bilgisini taşıyordu (giriş
+# fiyatı/SL/TP hiç yazılmıyordu) — bu satırlar için giriş/R/TP-SL alanları
+# None döner (frontend eksik veriyi zaten zarifçe gösterir). O tarihten
+# sonraki her satırda evolution_agent._lookup_entry ile dolduruluyor.
+
+#: MT5 DEAL_REASON sabitleri (yalnız ilgilendiğimiz ikisi + haritalama).
+_MT5_REASON_TP = 5
+_MT5_REASON_SL = 4
+
+
+def _new_bot_bucket() -> Dict[str, Any]:
+    return {"n": 0, "wins": 0, "losses": 0, "tp_hits": 0, "sl_hits": 0,
+            "net": 0.0, "r_sum": 0.0, "r_n": 0}
+
+
+def _close_bot_bucket(b: Dict[str, Any]) -> Dict[str, Any]:
+    b["win_rate"] = round(100 * b["wins"] / b["n"], 1) if b["n"] else None
+    b["net"] = round(b["net"], 2)
+    b["avg_net"] = round(b["net"] / b["n"], 2) if b["n"] else None
+    b["avg_r"] = round(b["r_sum"] / b["r_n"], 3) if b["r_n"] else None
+    b.pop("r_sum", None)
+    b.pop("r_n", None)
+    return b
+
+
+def _bot_trade_r(direction: str, open_price: Optional[float], close_price: Optional[float],
+                 sl: Optional[float]) -> Optional[float]:
+    """Gerçekleşen fiyat hareketi / PLANLANAN stop mesafesi.
+
+    Sembol-agnostik: pip dönüşümü gerekmez, hepsi aynı fiyat biriminde.
+    Stop mesafesi yoksa (eski satır ya da SL'siz işlem) None — beklentiye
+    KATILMAZ, satır yine de listede görünür.
+    """
+    if open_price is None or close_price is None or sl is None:
+        return None
+    if direction == "BUY":
+        risk = open_price - sl
+        move = close_price - open_price
+    elif direction == "SELL":
+        risk = sl - open_price
+        move = open_price - close_price
+    else:
+        return None
+    if not risk or risk <= 0:
+        return None
+    return round(move / risk, 4)
+
+
+def get_bot_symbol_history(symbol: str, days: int = 30,
+                           host: str = DEFAULT_HOST) -> Dict[str, Any]:
+    """Bir sembolün BOT geçmişi — decider'ınkiyle aynı gün/yön/işlem-defteri şekli.
+
+    WR tek başına yanıltıcıdır (bkz. services/signal_metrics.py doktrini) —
+    bu yüzden RR planlı SL/TP'den hesaplanır ve başabaş çıta + net R her
+    zaman WR'ın yanında döner.
+    """
+    since = (_now() - timedelta(days=days)).isoformat()
+    rows = _fetch_paged(
+        "bot_trades",
+        "ticket,direction,volume,open_time,open_price,close_time,close_price,"
+        "sl,tp,profit,commission,swap,comment,raw",
+        order="close_time", desc=True, cap=4000,
+        eq__host=host, eq__symbol=symbol, gte__close_time=since)
+
+    summary = _new_bot_bucket()
+    by_day: Dict[str, Dict[str, Any]] = {}
+    by_dir: Dict[str, Dict[str, Any]] = {}
+    decisions: List[dict] = []
+    rr_seen: List[float] = []
+
+    for r in rows:
+        ts = _parse_ts(r.get("close_time"))
+        direction = (r.get("direction") or "").upper()
+        open_price = _fnum(r.get("open_price"))
+        close_price = _fnum(r.get("close_price"))
+        sl = _fnum(r.get("sl"))
+        tp = _fnum(r.get("tp"))
+        net = round((r.get("profit") or 0) + (r.get("commission") or 0) + (r.get("swap") or 0), 2)
+        win = net > 0
+        reason = ((r.get("raw") or {}).get("reason")
+                  if isinstance(r.get("raw"), dict) else None)
+        exit_label = ("TP" if reason == _MT5_REASON_TP
+                      else "SL" if reason == _MT5_REASON_SL else "manuel")
+        r_mult = _bot_trade_r(direction, open_price, close_price, sl)
+
+        # Planlanan RR (geometriden — sonuçtan bağımsız): TP/SL ikisi de
+        # varsa aynı mantık, sinyal tarafındaki _geometry_rr ile simetrik.
+        if open_price is not None and sl is not None and tp is not None:
+            risk = abs(open_price - sl)
+            reward = abs(tp - open_price)
+            if risk > 0:
+                rr_seen.append(reward / risk)
+
+        day = ts.astimezone(timezone.utc).strftime("%Y-%m-%d") if ts else "?"
+        session = _session_label(None, ts)
+
+        d = by_day.setdefault(day, {"day": day, **_new_bot_bucket(),
+                                    "BUY": _new_bot_bucket(), "SELL": _new_bot_bucket()})
+        dd = by_dir.setdefault(direction or "?", {
+            **_new_bot_bucket(), "by_session": {}, "by_hour": {},
+        })
+        sess = dd["by_session"].setdefault(session, _new_bot_bucket())
+        hour = ts.astimezone(timezone.utc).hour if ts else -1
+        hr = dd["by_hour"].setdefault(hour, _new_bot_bucket())
+
+        targets = [summary, d]
+        if direction in ("BUY", "SELL"):
+            targets.append(d[direction])
+        targets += [dd, sess, hr]
+        for b in targets:
+            b["n"] += 1
+            b["net"] += net
+            if win:
+                b["wins"] += 1
+            else:
+                b["losses"] += 1
+            if exit_label == "TP":
+                b["tp_hits"] += 1
+            elif exit_label == "SL":
+                b["sl_hits"] += 1
+            if r_mult is not None:
+                b["r_sum"] += r_mult
+                b["r_n"] += 1
+
+        if len(decisions) < 300:
+            decisions.append({
+                "ts": r.get("close_time"), "day": day, "session": session,
+                "direction": direction or None,
+                "entry": open_price, "exit": close_price, "sl": sl, "tp": tp,
+                "r": r_mult, "net": net, "win": win, "exit_reason": exit_label,
+                "volume": _fnum(r.get("volume")),
+                "commission": _fnum(r.get("commission")),
+                "swap": _fnum(r.get("swap")),
+                "comment": r.get("comment"),
+            })
+
+    rr_typ = round(sorted(rr_seen)[len(rr_seen) // 2], 3) if rr_seen else None
+    breakeven_wr = round(100 / (1 + rr_typ), 1) if rr_typ else None
+
+    for dd in by_dir.values():
+        dd["by_session"] = {k: _close_bot_bucket(v) for k, v in
+                            sorted(dd["by_session"].items(), key=lambda kv: -kv[1]["n"])}
+        dd["by_hour"] = [{"hour": h, **_close_bot_bucket(v)}
+                         for h, v in sorted(dd["by_hour"].items()) if h >= 0]
+        _close_bot_bucket(dd)
+
+    days_list = []
+    for day in sorted(by_day, reverse=True):
+        d = by_day[day]
+        d["BUY"] = _close_bot_bucket(d["BUY"])
+        d["SELL"] = _close_bot_bucket(d["SELL"])
+        days_list.append(_close_bot_bucket(d))
+
+    graded = [d for d in days_list if d["n"] > 0]
+    best = max(graded, key=lambda d: d["net"], default=None)
+    worst = min(graded, key=lambda d: d["net"], default=None)
+    _close_bot_bucket(summary)
+    summary.update({
+        "rr_typical": rr_typ,
+        "breakeven_wr": breakeven_wr,
+        "above_breakeven": (summary["win_rate"] is not None and breakeven_wr is not None
+                            and summary["win_rate"] >= breakeven_wr),
+        "active_days": len(graded),
+        "best_day": {"day": best["day"], "net": best["net"]} if best else None,
+        "worst_day": {"day": worst["day"], "net": worst["net"]} if worst else None,
+        "first_ts": rows[-1].get("close_time") if rows else None,
+        "last_ts": rows[0].get("close_time") if rows else None,
+        "with_geometry": sum(1 for x in decisions if x["r"] is not None),
+    })
+
+    return {
+        "symbol": symbol, "days": days, "total_rows": len(rows),
+        "summary": summary,
+        "by_day": days_list,
+        "by_direction": by_dir,
+        "decisions": decisions,
+    }
+
+
 # ── Komut kuyruğu ─────────────────────────────────────────────────────────
 
 ALLOWED_KINDS = {"run_analysis", "sync_lessons", "git_pull", "restart_bot"}

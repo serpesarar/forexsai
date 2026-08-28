@@ -157,6 +157,85 @@ BROKER_SYMBOL_MAP = dict(getattr(cfg, "BROKER_SYMBOL_MAP", {}) or {
 TRADE_SYNC = {"ok": True, "last_push_at": None, "last_error": None, "fail_streak": 0}
 
 
+def _lookup_entry(position_id: int) -> tuple:
+    """Bir pozisyonun giriş fiyatı/zamanı + PLANLANAN SL/TP'si.
+
+    Kapanan (OUT) deal'de yalnız ÇIKIŞ bilgisi var. Giriş, aynı position_id'yi
+    taşıyan AYRI bir deal'dedir (entry=0 = DEAL_ENTRY_IN) — MT5
+    ``history_deals_get(position=...)`` bunu doğrudan verir. Planlanan SL/TP
+    ise deal'de değil, pozisyonu açan ORDER'da durur (trailing sonradan
+    değiştirse bile bu İLK plandır — decider'ın ``trade.sl/tp`` alanına
+    karşılık gelir). İkisi de best-effort: bulunamazsa None döner, satır
+    yine de yazılır (eksik zenginlik veri kaybı değil).
+    """
+    open_price = open_time = sl = tp = None
+    try:
+        deals = mt5.history_deals_get(position=position_id)
+        entries = [d for d in (deals or []) if getattr(d, "entry", None) == 0]
+        if entries:
+            first = min(entries, key=lambda d: d.time)
+            open_price, open_time = first.price, first.time
+    except Exception:
+        pass
+    try:
+        orders = mt5.history_orders_get(position=position_id)
+        for o in orders or []:
+            if getattr(o, "sl", 0) or getattr(o, "tp", 0):
+                sl, tp = (o.sl or None), (o.tp or None)
+                break
+    except Exception:
+        pass
+    return open_price, open_time, sl, tp
+
+
+#: Geriye dönük dolum şeması sürümü — artırılırsa ajan bir kez daha tarar.
+ENTRY_BACKFILL_VERSION = 1
+
+
+def backfill_trade_entries(client, state: dict) -> int:
+    """Var olan bot_trades satırlarının open_price/sl/tp'sini bir KEZ doldurur.
+
+    2026-08-27'ye kadar push_trades yalnız ÇIKIŞ bilgisini yazıyordu —
+    open_price/open_time/sl/tp kolonları şemada vardı ama hiç kullanılmamıştı.
+    Bu, panelin bot işlemleri için decider'daki gibi giriş→çıkış / R / TP-SL
+    döküm göstermesini engelliyordu. Bir kerelik tarama state bayrağıyla
+    korunur — her turda tekrar 400+ satır taramaz.
+    """
+    if not HAS_MT5 or state.get("entry_backfill_version") == ENTRY_BACKFILL_VERSION:
+        return 0
+    try:
+        res = (client.table("bot_trades").select("ticket,raw")
+               .eq("host", HOST).is_("open_price", "null")
+               .limit(2000).execute())
+        rows = res.data or []
+    except Exception as e:
+        log.warning("backfill_trade_entries okunamadı: %s", e)
+        return 0
+
+    filled = 0
+    for r in rows:
+        pos_id = (r.get("raw") or {}).get("position_id")
+        if not pos_id:
+            continue
+        open_price, open_time, sl, tp = _lookup_entry(pos_id)
+        if open_price is None:
+            continue
+        try:
+            client.table("bot_trades").update({
+                "open_price": open_price,
+                "open_time": (datetime.fromtimestamp(open_time, tz=timezone.utc).isoformat()
+                              if open_time else None),
+                "sl": sl, "tp": tp,
+            }).eq("ticket", r["ticket"]).eq("host", HOST).execute()
+            filled += 1
+        except Exception as e:
+            log.warning("backfill güncelleme hatası (ticket=%s): %s", r.get("ticket"), e)
+
+    state["entry_backfill_version"] = ENTRY_BACKFILL_VERSION
+    log.info("bot_trades geriye dönük giriş/SL/TP dolumu: %d/%d satır", filled, len(rows))
+    return filled
+
+
 def push_trades(client, state: dict) -> int:
     """MT5 kapanan deal'leri watermark'tan itibaren bot_trades'e yaz."""
     if not HAS_MT5:
@@ -191,6 +270,8 @@ def push_trades(client, state: dict) -> int:
         if getattr(d, "entry", None) != 1:
             continue
         max_ts = max(max_ts, d.time)
+        # Giriş + planlanan SL/TP: canlı işlem olduğu için ucuz (tek deal grubu).
+        open_price, open_time, sl, tp = _lookup_entry(d.position_id)
         rows.append({
             "ticket": d.ticket,
             "host": HOST,
@@ -198,13 +279,18 @@ def push_trades(client, state: dict) -> int:
             "normalized_symbol": BROKER_SYMBOL_MAP.get(d.symbol),
             "direction": "SELL" if d.type == 0 else "BUY",  # kapatan deal ters yönlüdür
             "volume": d.volume,
+            "open_time": (datetime.fromtimestamp(open_time, tz=timezone.utc).isoformat()
+                         if open_time else None),
+            "open_price": open_price,
             "close_time": datetime.fromtimestamp(d.time, tz=timezone.utc).isoformat(),
             "close_price": d.price,
+            "sl": sl, "tp": tp,
             "profit": d.profit,
             "commission": d.commission,
             "swap": d.swap,
             "comment": d.comment,
             "magic": d.magic,
+            # reason: 4=SL, 5=TP, diğerleri manuel/expert/stop-out (MT5 sabitleri).
             "raw": {"position_id": d.position_id, "order": d.order, "reason": d.reason},
         })
     if rows:
@@ -893,6 +979,11 @@ def main() -> None:
         log.warning("MT5 bağlanamadı — trade push devre dışı, komut döngüsü sürüyor")
     reconcile_stale_commands(client)
     threading.Thread(target=_heartbeat_thread, daemon=True, name="heartbeat").start()
+    # Geriye dönük giriş/SL/TP dolumu (bir kerelik, ~400 satır × 2 MT5 çağrısı
+    # sürebilir) — ana döngüyü/komut kuyruğunu bekletmesin diye ayrı thread'de.
+    if HAS_MT5:
+        threading.Thread(target=backfill_trade_entries, args=(client, state),
+                         daemon=True, name="entry-backfill").start()
     last_push = 0.0
     last_update = time.time()  # açılışta pull zaten taze (start_agent döngüsü)
     while True:

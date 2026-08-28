@@ -198,6 +198,19 @@ async def remote_bot_trades(symbol: str = Query(..., min_length=2, max_length=20
         raise HTTPException(status_code=503, detail=str(e))
 
 
+@router.get("/remote/bot-symbol-history")
+async def remote_bot_symbol_history(
+    symbol: str = Query(..., min_length=2, max_length=20),
+    days: int = Query(30, ge=1, le=365),
+):
+    """Tek sembolün BOT geçmişi — decider'ınkiyle aynı gün/yön/işlem-defteri
+    şeklinde (Canlı Bot panelinde sembole tıkla → detay)."""
+    try:
+        return await asyncio.to_thread(remote.get_bot_symbol_history, symbol, days)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+
+
 @router.post("/analyst/run")
 async def run_analyst_now():
     """Günlük Veri Analisti'ni ŞİMDİ çalıştır (panelden manuel tetik)."""
