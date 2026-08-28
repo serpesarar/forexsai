@@ -360,10 +360,22 @@ class TableQuery:
             logger.error(f"Supabase insert error [{self.table_name}]: {e}")
             return {"data": None, "error": str(e)}
 
-    def insert_ignore(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Insert a row, returning {\"data\":None,\"duplicate\":True} on unique-constraint violation instead of raising."""
+    def insert_ignore(self, data: Dict[str, Any], on_conflict: str = "") -> Dict[str, Any]:
+        """Insert a row, silently skipping unique-constraint collisions.
+
+        When ``on_conflict`` (comma-separated column list) is given we ask
+        PostgREST for ``resolution=ignore-duplicates`` → the statement becomes
+        ``INSERT ... ON CONFLICT DO NOTHING`` and Postgres never raises (nor
+        logs) a 23505. Without it we fall back to catching the 409/23505 after
+        the fact — which still spams the Postgres error log, so always pass
+        ``on_conflict`` for hot paths.
+        """
         url = f"{self.client.url}/rest/v1/{self.table_name}"
-        headers = {"Prefer": "return=representation"}
+        if on_conflict:
+            url += f"?on_conflict={on_conflict}"
+            headers = {"Prefer": "return=minimal,resolution=ignore-duplicates"}
+        else:
+            headers = {"Prefer": "return=representation"}
         if self.client.is_auth_failed():
             return {"data": None, "error": self.client.get_auth_error(), "duplicate": False}
         try:
@@ -376,7 +388,10 @@ class TableQuery:
                 logger.debug(f"insert_ignore: duplicate detected in {self.table_name}")
                 return {"data": None, "error": None, "duplicate": True}
             resp.raise_for_status()
-            return {"data": resp.json(), "error": None, "duplicate": False}
+            # return=minimal (ON CONFLICT DO NOTHING path) → empty body; a
+            # conflict that was ignored also comes back 2xx with no rows.
+            body = resp.json() if resp.text.strip() else []
+            return {"data": body, "error": None, "duplicate": body == []}
         except Exception as e:
             err_text = str(e)
             if "23505" in err_text or "duplicate" in err_text.lower():
@@ -419,16 +434,17 @@ class TableQuery:
             logger.error(f"Supabase update error [{self.table_name}]: {e}")
             return {"data": None, "error": str(e)}
 
-    def delete(self) -> Dict[str, Any]:
+    def delete(self, returning: bool = False) -> Dict[str, Any]:
         if self.client.is_auth_failed():
             return {"data": None, "error": self.client.get_auth_error()}
         try:
+            headers = {"Prefer": "return=representation"} if returning else None
             resp = _retry_request(
-                lambda: self.client.http.delete(self._build_url()),
+                lambda: self.client.http.delete(self._build_url(), headers=headers),
                 label=f"DELETE {self.table_name}",
                 client=self.client,
             )
-            return {"data": resp.json() if resp.text else [], "error": None}
+            return {"data": resp.json() if resp.text.strip() else [], "error": None}
         except Exception as e:
             logger.error(f"Supabase delete error [{self.table_name}]: {e}")
             return {"data": None, "error": str(e)}

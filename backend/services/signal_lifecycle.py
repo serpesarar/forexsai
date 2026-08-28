@@ -1463,14 +1463,89 @@ async def cleanup_old_signals():
         if resolved_count:
             logger.info(f"🧹 Resolved {resolved_count} stale active signals beyond cleanup grace")
 
-        archive_cutoff = _utc_iso(_utc_now() - timedelta(days=ARCHIVE_AFTER_DAYS))
-        client.table("signal_checks").select("id").lt(
-            "created_at", archive_cutoff
-        ).limit(500).execute()
+        await _run_retention(client)
         logger.debug("Cleanup cycle completed")
 
     except Exception as e:
         logger.error(f"Cleanup error: {e}")
+
+
+def _retention_days(name: str, default: int) -> int:
+    try:
+        from config import settings
+        return int(getattr(settings, name, default) or default)
+    except Exception:
+        return default
+
+
+async def _bounded_delete(client, table: str, ts_col: str, cutoff_iso: str,
+                          batch: int = 5000, max_batches: int = 8) -> int:
+    """Delete `table` rows with `ts_col` < cutoff in bounded batches.
+
+    PostgREST honours limit on DELETE only alongside an explicit order, so we
+    always order by the timestamp ascending (oldest first) and stop once a
+    batch comes back short. Small awaits between batches keep autovacuum and
+    replication from falling behind.
+    """
+    removed = 0
+    for _ in range(max_batches):
+        res = await asyncio.to_thread(
+            lambda: client.table(table)
+            .lt(ts_col, cutoff_iso)
+            .order(ts_col, desc=False)
+            .limit(batch)
+            .delete(returning=True)
+        )
+        if res.get("error"):
+            logger.warning("retention delete %s failed: %s", table, res["error"])
+            return -1 if removed == 0 else removed
+        n = len(res.get("data") or [])
+        removed += n
+        if n < batch:
+            break
+        await asyncio.sleep(0.4)
+    if removed:
+        logger.info("🧹 retention: pruned %d rows from %s (older than %s)", removed, table, cutoff_iso)
+    return removed
+
+
+_RETENTION_BACKOFF: Dict[str, float] = {}
+_RETENTION_BACKOFF_SECONDS = 3600.0
+
+
+async def _run_retention(client) -> None:
+    """Enforce row retention on the append-only tables that were never pruned.
+
+    Root cause of the 2026-08-27 Supabase disk exhaustion: tanker_positions
+    (38 GB) plus signal_trajectory_snapshots (4.3 GB) and the frozen
+    signal_checks table (0.5 GB) grew unbounded. Each is only ever read within
+    a short trailing window, so anything past retention is dead weight.
+
+    A table that errors (e.g. a huge pre-cleanup backlog that trips the
+    statement timeout) is skipped for an hour so we never thrash the DB.
+    """
+    now = _utc_now()
+    now_mono = time.monotonic()
+    plan = [
+        ("tanker_positions", "observed_at", _retention_days("tanker_position_retention_days", 7)),
+        ("signal_trajectory_snapshots", "captured_at", _retention_days("trajectory_snapshot_retention_days", 30)),
+        ("signal_checks", "created_at", _retention_days("signal_checks_retention_days", 30)),
+    ]
+    for table, ts_col, days in plan:
+        if now_mono < _RETENTION_BACKOFF.get(table, 0.0):
+            continue
+        try:
+            cutoff = _utc_iso(now - timedelta(days=max(1, days)))
+            removed = await _bounded_delete(client, table, ts_col, cutoff, batch=3000, max_batches=6)
+            if removed < 0:
+                # delete errored (likely a pre-cleanup backlog tripping the
+                # statement timeout) — wait a full hour before retrying.
+                _RETENTION_BACKOFF[table] = now_mono + _RETENTION_BACKOFF_SECONDS
+            elif removed == 0:
+                _RETENTION_BACKOFF[table] = now_mono + 300.0
+        except Exception as exc:
+            logger.warning("retention pass for %s skipped: %s", table, exc)
+            _RETENTION_BACKOFF[table] = now_mono + _RETENTION_BACKOFF_SECONDS
 
 # ═════════════════════════════════════════════════════════════════════════════
 #  Dashboard Data: aggregated stats per model

@@ -30,6 +30,14 @@ class AISOilCollector:
         self._static_cache: Dict[int, Dict[str, Any]] = {}
         self._last_metrics_refresh_at = 0.0
         self._metrics_refresh_interval_seconds = 30.0
+        # Per-vessel write throttle. AIS position reports arrive every 2-10 s per
+        # ship; tanker_positions is only ever read in 12-48 h windows, so one row
+        # per vessel per minute is ample and cuts DB writes ~10-20x.
+        self._last_persist_at: Dict[int, float] = {}
+        self._min_persist_interval = max(
+            0.0, float(getattr(settings, "ais_min_persist_interval_seconds", 60) or 0)
+        )
+        self._dropped_since_log = 0
 
     def _subscription(self) -> Dict[str, Any]:
         return {
@@ -93,7 +101,7 @@ class AISOilCollector:
             "nav_status": position.get("NavigationalStatus"),
             "observed_at": self._parse_timestamp(meta.get("time_utc") or payload.get("time_utc") or position.get("Timestamp")),
             "data_source": "aisstream",
-            "raw_payload": payload,
+            "raw_payload": payload,  # kept only if AIS_STORE_RAW_PAYLOAD=1 downstream
             "meta": static.get("meta") or {},
         }
 
@@ -114,6 +122,19 @@ class AISOilCollector:
             return
         if normalized.get("lat") is None or normalized.get("lon") is None:
             return
+
+        if self._min_persist_interval > 0:
+            mmsi = normalized.get("mmsi")
+            now_mono = time.monotonic()
+            last = self._last_persist_at.get(mmsi)
+            if last is not None and (now_mono - last) < self._min_persist_interval:
+                self._dropped_since_log += 1
+                if self._dropped_since_log % 5000 == 0:
+                    logger.info("AIS throttle: skipped %d sub-interval position writes", self._dropped_since_log)
+                return
+            self._last_persist_at[mmsi] = now_mono
+            if len(self._last_persist_at) > 50000:
+                self._last_persist_at.clear()
 
         result = await asyncio.to_thread(persist_tanker_observation, normalized)
         if result.get("ok"):

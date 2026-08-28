@@ -10,7 +10,22 @@ from dateutil import parser as dateutil_parser
 
 from database.supabase_client import get_auth_error, get_supabase_client, is_auth_failed
 
+try:
+    from config import settings as _settings
+except Exception:  # pragma: no cover - config always present in app runtime
+    _settings = None
+
 logger = logging.getLogger(__name__)
+
+# In-memory mirror of the last tanker_state row we wrote per MMSI. Replaces a
+# per-AIS-message SELECT against tanker_state (was ~16M calls) — the upsert we
+# perform right after already produces the authoritative row, so we cache that.
+_STATE_CACHE: Dict[int, Dict[str, Any]] = {}
+_STATE_CACHE_MAX = 20000
+
+
+def _cfg(name: str, default: Any) -> Any:
+    return getattr(_settings, name, default) if _settings is not None else default
 
 REGIONS: Dict[str, Dict[str, Any]] = {
     "strait_of_hormuz": {
@@ -254,14 +269,39 @@ def _compute_status(
     }
 
 
-def get_tanker_state(mmsi: int) -> Optional[Dict[str, Any]]:
+def get_tanker_state(mmsi: int, use_cache: bool = True) -> Optional[Dict[str, Any]]:
+    """Latest tanker_state row for an MMSI.
+
+    On the hot AIS ingest path we serve this from ``_STATE_CACHE`` (populated by
+    the upsert in :func:`persist_tanker_observation`) so we only ever hit the DB
+    once per vessel per process lifetime. Pass ``use_cache=False`` for read
+    endpoints that need a guaranteed-fresh row.
+    """
+    if use_cache:
+        cached = _STATE_CACHE.get(int(mmsi))
+        if cached is not None:
+            return cached
     client = get_supabase_client()
     if client is None:
         return None
     if is_auth_failed():
         return None
     result = client.table("tanker_state").select("*").eq("mmsi", mmsi).limit(1).execute()
-    return _safe_row(result)
+    row = _safe_row(result)
+    if row is not None and use_cache:
+        _cache_state(int(mmsi), row)
+    return row
+
+
+def _cache_state(mmsi: int, row: Dict[str, Any]) -> None:
+    if len(_STATE_CACHE) >= _STATE_CACHE_MAX and mmsi not in _STATE_CACHE:
+        # Cheap eviction — drop an arbitrary older entry. tanker_state has
+        # ~34k total rows; this cap is only a memory guardrail.
+        try:
+            _STATE_CACHE.pop(next(iter(_STATE_CACHE)))
+        except StopIteration:
+            pass
+    _STATE_CACHE[mmsi] = row
 
 
 def get_recent_tankers(limit: int = 80, freshness_hours: int = 48) -> List[Dict[str, Any]]:
@@ -322,7 +362,7 @@ def persist_tanker_observation(observation: Dict[str, Any]) -> Dict[str, Any]:
         ship_type_code = observation.get("ship_type_code")
         ship_category = observation.get("ship_category") or estimate_ship_category(ship_type_code, observation.get("deadweight_tons"))
         region = observation.get("region") or detect_region(lat, lon)
-        previous_state = get_tanker_state(mmsi)
+        previous_state = get_tanker_state(mmsi, use_cache=True)
         status_info = _compute_status(region, lat, lon, observation.get("speed_knots"), observed_at, previous_state)
         estimated_barrels = int(observation.get("estimated_barrels") or estimate_barrels(ship_category))
         heading_bucket = _heading_bucket(region, observation.get("heading"))
@@ -347,8 +387,12 @@ def persist_tanker_observation(observation: Dict[str, Any]) -> Dict[str, Any]:
             "estimated_barrels": estimated_barrels,
             "observed_at": observed_at.isoformat(),
             "data_source": observation.get("data_source") or "aisstream",
-            "raw_payload": observation.get("raw_payload") or {},
         }
+        # raw_payload (full AIS websocket frame) is never read back — writing it
+        # on every row is what ballooned tanker_positions to 38 GB. Off by
+        # default; AIS_STORE_RAW_PAYLOAD=1 restores it for debugging.
+        if _cfg("ais_store_raw_payload", False):
+            position_row["raw_payload"] = observation.get("raw_payload") or {}
         state_row = {
             "mmsi": mmsi,
             "imo": observation.get("imo"),
@@ -376,11 +420,15 @@ def persist_tanker_observation(observation: Dict[str, Any]) -> Dict[str, Any]:
             "updated_at": _now().isoformat(),
         }
 
-        position_result = client.table("tanker_positions").insert_ignore(position_row)
+        position_result = client.table("tanker_positions").insert_ignore(
+            position_row, on_conflict="mmsi,observed_at"
+        )
         state_result = client.table("tanker_state").upsert(state_row, on_conflict="mmsi")
         write_error = position_result.get("error") or state_result.get("error")
         if write_error:
             return {"ok": False, "error": write_error}
+        # Feed the cache so the next observation for this vessel skips the DB read.
+        _cache_state(mmsi, state_row)
         return {
             "ok": True,
             "region": region,

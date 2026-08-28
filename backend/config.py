@@ -68,6 +68,16 @@ class Settings(BaseSettings):
     baltic_stockq_enabled: bool = Field(default=True, validation_alias="BALTIC_STOCKQ_ENABLED")
     oil_baltic_sync_autostart: bool = Field(default=True, validation_alias="OIL_BALTIC_SYNC_AUTOSTART")
     oil_baltic_sync_interval_seconds: int = Field(default=3600, validation_alias="OIL_BALTIC_SYNC_INTERVAL_SECONDS")
+    # ─── AIS ingest throttle + DB retention (2026-08-27 Supabase disk audit) ───
+    # tanker_positions yalnızca 12-48 saatlik pencerelerle okunuyor (bkz.
+    # oil_maritime_data_service._aggregate_from_positions). Her AIS pozisyon
+    # raporunu yazmak 45 GB DB'nin 38 GB'ını tek tabloya şişirdi. Vessel başına
+    # en fazla bu aralıkta bir satır yaz; retention_days'ten eskisini sil.
+    ais_min_persist_interval_seconds: int = Field(default=60, validation_alias="AIS_MIN_PERSIST_INTERVAL_SECONDS")
+    ais_store_raw_payload: bool = Field(default=False, validation_alias="AIS_STORE_RAW_PAYLOAD")
+    tanker_position_retention_days: int = Field(default=7, validation_alias="TANKER_POSITION_RETENTION_DAYS")
+    trajectory_snapshot_retention_days: int = Field(default=30, validation_alias="TRAJECTORY_SNAPSHOT_RETENTION_DAYS")
+    signal_checks_retention_days: int = Field(default=30, validation_alias="SIGNAL_CHECKS_RETENTION_DAYS")
     supabase_url: str | None = Field(default=None, validation_alias="SUPABASE_URL")
     supabase_key: str | None = Field(default=None, validation_alias=AliasChoices("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_KEY"))
     resend_api_key: str | None = Field(default=None, validation_alias="RESEND_API_KEY")
