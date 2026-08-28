@@ -527,7 +527,10 @@ export function useBotPerformance(days = 30) {
   return useQuery<BotPerformance>({
     queryKey: ["evolution", "remote", "bot-performance", days],
     queryFn: () => getJson(`/api/evolution/remote/bot-performance?days=${days}`),
-    refetchInterval: LIVE.normal,
+    // 2026-08-28: ajan artık işlemleri 20sn'de bir senkronluyor (eskiden 5dk) —
+    // panel tarafı da "anlık" hissi versin diye fast'e çekildi.
+    refetchInterval: LIVE.fast,
+    staleTime: LIVE.fast,
     placeholderData: (prev) => prev,
     retry: 1,
   });
@@ -778,7 +781,36 @@ export interface BotDirection extends BotBucket {
   by_hour: (BotBucket & { hour: number })[];
 }
 
+/** Magic numaradan çözülen strateji ailesi — her işlemde %100 dolu. */
+export interface BotStrategy {
+  code: string;
+  label: string;
+  note: string;
+}
+
+/**
+ * Momentum/SR girişlerinde bot'un kendi kaydettiği "parmak izi" (2026-08-28) —
+ * hangi modellerin oy verdiği, hangi eşiği geçtiği. Yalnız base-magic (momentum/
+ * SR) scope'unda yazılır; diğer stratejilerde (CHREV/VIXREG/…) bu alan null'dır
+ * — strateji adı yine de `strategy`'den bilinir, yalnız bu düzeyde ayrıntı yoktur.
+ */
+export interface BotFingerprint {
+  scope: string | null;
+  entry_type: string | null;
+  tp_source: string | null;
+  rr_planned: number | null;
+  voters: string[];
+  session: string | null;
+  mom_stretch: number | null;
+  mom_threshold: number | null;
+  backend_action: string | null;
+  backend_confidence: number | null;
+  priority: number | null;
+  lot_mult: number | null;
+}
+
 export interface BotTradeRow {
+  ticket: number | null;
   ts: string;
   day: string;
   session: string;
@@ -799,6 +831,10 @@ export interface BotTradeRow {
   commission: number | null;
   swap: number | null;
   comment: string | null;
+  /** Hangi kurala göre açıldı — magic'ten, her zaman dolu. */
+  strategy: BotStrategy;
+  /** Yalnız momentum/SR'da dolu; diğer stratejilerde null (uydurulmaz). */
+  fingerprint: BotFingerprint | null;
 }
 
 export interface BotSymbolHistory {
@@ -832,6 +868,21 @@ export function useBotSymbolHistory(symbol: string | null, days = 30) {
     refetchInterval: LIVE.fast,
     placeholderData: (prev) => prev,
   });
+}
+
+/**
+ * CSV indirme bağlantısı — giriş/çıkış/TP-SL/net $/R + HANGİ KURALA göre
+ * açıldığı tek dosyada. Auth gerekmez (panelin geri kalanıyla aynı erişim
+ * seviyesi); doğrudan `<a href>` olarak kullanılır, blob/fetch gerekmez.
+ * `symbol` boş → tüm semboller.
+ */
+export function botTradesExportUrl(opts: { symbol?: string | null; start?: string; end?: string }): string {
+  const params = new URLSearchParams();
+  if (opts.symbol) params.set("symbol", opts.symbol);
+  if (opts.start) params.set("start", opts.start);
+  if (opts.end) params.set("end", opts.end);
+  const qs = params.toString();
+  return `${API}/api/evolution/remote/bot-trades-export.csv${qs ? `?${qs}` : ""}`;
 }
 
 export interface BotVsDecider {

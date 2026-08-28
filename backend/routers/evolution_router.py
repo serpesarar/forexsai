@@ -10,7 +10,7 @@ import asyncio
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
 from services import evolution_service as evo
@@ -209,6 +209,32 @@ async def remote_bot_symbol_history(
         return await asyncio.to_thread(remote.get_bot_symbol_history, symbol, days)
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
+
+
+@router.get("/remote/bot-trades-export.csv")
+async def remote_bot_trades_export(
+    symbol: Optional[str] = Query(None, min_length=2, max_length=20,
+                                  description="Boş bırakılırsa tüm semboller"),
+    start: Optional[str] = Query(None, description="ISO tarih, örn. 2026-08-01 (dahil)"),
+    end: Optional[str] = Query(None, description="ISO tarih, örn. 2026-08-27 (dahil)"),
+):
+    """Bot işlemlerini CSV indir — giriş/çıkış/TP-SL/net $/R + HANGİ KURALA göre açıldığı.
+
+    Doğrudan tarayıcı linki olarak kullanılabilir (indirme, auth gerekmez —
+    panelin geri kalanıyla aynı erişim seviyesi)."""
+    try:
+        csv_text = await asyncio.to_thread(
+            remote.export_bot_trades_csv, symbol, start, end)
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e))
+    scope = symbol or "tum-semboller"
+    aralik = f"_{start or 'basi'}_{end or 'simdi'}"
+    filename = f"bot_islemleri_{scope}{aralik}.csv"
+    return Response(
+        content="﻿" + csv_text,  # BOM: Excel'de Türkçe karakterler bozulmasın
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.post("/analyst/run")

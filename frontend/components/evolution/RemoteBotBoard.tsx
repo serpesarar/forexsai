@@ -41,6 +41,7 @@ import {
   useRemoteStatus,
 } from "@/lib/api/evolution";
 import BotTradeLog from "./BotTradeLog";
+import CsvExportBar from "./CsvExportBar";
 import DeciderTradeLog from "./DeciderTradeLog";
 import { emitOpenRun } from "./events";
 import { toast } from "./toast";
@@ -797,6 +798,10 @@ function BotSymbolHistoryView({ symbol, days }: { symbol: string; days: number }
         </div>
       </div>
 
+      <div className="mb-3">
+        <CsvExportBar symbol={symbol} compact />
+      </div>
+
       <div className="mb-3 flex gap-1.5">
         {([["day", "Gün bazlı"], ["dir", "Yön bazlı"], ["list", "İşlem Defteri"]] as const).map(([k, label]) => (
           <button
@@ -993,10 +998,13 @@ export default function RemoteBotBoard({ days }: { days: number }) {
 
         {/* ── Bot performansı ── */}
         <GlassCard>
-          <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-300">
+          <h3 className="mb-2.5 flex items-center gap-2 text-sm font-semibold text-slate-300">
             <Bot size={15} /> Bot İşlem Sonuçları
-            <span className="text-xs font-normal text-slate-500">son {days} gün</span>
+            <span className="text-xs font-normal text-slate-500">son {days} gün · anlık</span>
           </h3>
+          <div className="mb-3">
+            <CsvExportBar compact />
+          </div>
           {/* Sessiz bayat veri koruması (2026-08-26): ajan çevrimiçi görünürken
               bot_trades senkronu durabiliyor. Yaş eşiği aşılırsa panel susmaz. */}
           {bot?.data_age_hours != null && bot.data_age_hours > TRADE_STALE_HOURS && (

@@ -82,7 +82,13 @@ log = logging.getLogger("evo-agent")
 HOST = getattr(cfg, "AGENT_HOST", "mt5_box")
 STATE_FILE = Path(__file__).parent / "agent_state.json"
 POLL_SECONDS = 30          # komut kuyruğu
-PUSH_SECONDS = 300         # trade/journal/heartbeat
+PUSH_SECONDS = 300         # journal/haftalık işler/heartbeat
+# 2026-08-28: İŞLEMLER ayrı ve DAHA SIK — panel "MT5'teki işlemler anlık
+# güncellensin" istiyor; 5dk'lık PUSH_SECONDS'la bir kapanan işlem panelde
+# görünmesi ortalama 2,5dk (en kötü 5dk) sürüyordu. push_trades tek başına
+# ucuz (bir history_deals_get + gerekirse birkaç position lookup) — journal/
+# haftalık işlerden ayırıp kısaltmak güvenli.
+TRADE_PUSH_SECONDS = int(getattr(cfg, "TRADE_PUSH_SECONDS", 20))
 CMD_TIMEOUT_DEFAULT = 1800  # run_analysis varsayılan zaman aşımı (sn)
 OUTPUT_LIMIT = 60_000      # komut çıktısının Supabase'e yazılan kuyruğu
 
@@ -329,6 +335,78 @@ def push_trades(client, state: dict) -> int:
             client.table("bot_trades").upsert(rows[i:i + 200]).execute()
         state["last_deal_ts"] = max_ts
         log.info("bot_trades += %d", len(rows))
+    return len(rows)
+
+
+#: entry_fingerprints.jsonl yolu — bot bunu SR/momentum girişlerinde yazar
+#: (record_fingerprint, forexsai_demo_bot.py). CHREV/VIXREG/DAYCOMBO/USOIL_
+#: BREAKOUT/reflex/reentry için satır YOK — yalnız base MAGIC_NUMBER kapsar.
+FINGERPRINT_FILE = Path(getattr(
+    cfg, "FINGERPRINT_JOURNAL",
+    str(Path(getattr(cfg, "REPO_ROOT", ".")) / "yeni deneme" / "entry_fingerprints.jsonl")))
+
+
+def push_fingerprints(client, state: dict) -> int:
+    """entry_fingerprints.jsonl → bot_entry_fingerprints (yalnız YENİ satırlar).
+
+    "Bu işlem HANGİ KURALA göre açıldı" sorusunun ham verisi. Dosya sadece
+    EKLENİR (rewrite yok) — journal'ın aksine tam byte-offset tail'i güvenli.
+    ticket = bot_trades.raw->>'position_id' ile eşleşir (panel tarafı JOIN'i
+    services/evolution_remote.py::get_bot_symbol_history yapar).
+    """
+    if not FINGERPRINT_FILE.exists():
+        return 0
+    size = FINGERPRINT_FILE.stat().st_size
+    offset = state.get("fingerprint_offset", 0)
+    if size < offset:            # dosya döndürülmüş/yeniden yazılmış
+        offset = 0
+    if size == offset:
+        return 0
+
+    try:
+        with FINGERPRINT_FILE.open("r", encoding="utf-8", errors="replace") as f:
+            f.seek(offset)
+            new_text = f.read()
+    except Exception as e:
+        log.warning("entry_fingerprints okunamadı: %s", e)
+        return 0
+
+    rows = []
+    for line in new_text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except Exception:
+            continue
+        ticket = rec.get("ticket")
+        if not ticket:
+            continue
+        rows.append({
+            "ticket": int(ticket),
+            "host": HOST,
+            "ts": rec.get("ts"),
+            "scope": rec.get("scope"),
+            "symbol": rec.get("symbol"),
+            "mt5_symbol": rec.get("mt5_symbol"),
+            "direction": rec.get("direction"),
+            "entry": rec.get("entry"),
+            "tp": rec.get("tp"),
+            "sl": rec.get("sl"),
+            "lot": rec.get("lot"),
+            "rr": rec.get("rr"),
+            "entry_type": rec.get("entry_type"),
+            "tp_source": rec.get("tp_source"),
+            "voters": rec.get("voters") or [],
+            "raw": rec,
+        })
+
+    if rows:
+        for i in range(0, len(rows), 200):
+            client.table("bot_entry_fingerprints").upsert(rows[i:i + 200]).execute()
+        log.info("bot_entry_fingerprints += %d", len(rows))
+    state["fingerprint_offset"] = size
     return len(rows)
 
 
@@ -1019,11 +1097,19 @@ def main() -> None:
         save_state(state)
     threading.Thread(target=_heartbeat_thread, daemon=True, name="heartbeat").start()
     last_push = 0.0
+    last_trade_push = 0.0
     last_update = time.time()  # açılışta pull zaten taze (start_agent döngüsü)
     while True:
         try:
-            if time.time() - last_push > PUSH_SECONDS:
+            # İşlemler AYRI ve DAHA SIK — "MT5'teki işlemler anlık güncellensin"
+            # (panel isteği, 2026-08-28). Journal/haftalık işler ucuz değil,
+            # onlar eski 5dk'lık ritimde kalır.
+            if time.time() - last_trade_push > TRADE_PUSH_SECONDS:
                 push_trades(client, state)
+                push_fingerprints(client, state)
+                save_state(state)
+                last_trade_push = time.time()
+            if time.time() - last_push > PUSH_SECONDS:
                 push_journal(client, state)
                 run_weekly_jobs(client, state)
                 save_state(state)

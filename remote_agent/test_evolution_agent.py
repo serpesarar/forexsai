@@ -19,6 +19,7 @@ Kapsam:
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import types
 from pathlib import Path
@@ -97,6 +98,17 @@ class FakeBotTradesClient:
     def table(self, name):
         assert name == "bot_trades"
         return FakeUpsertQuery(self.written)
+
+
+class FakeMultiTableClient:
+    """Birden çok tabloya upsert yapan çağrıları sahteler (ör. push_fingerprints)."""
+
+    def __init__(self):
+        self.by_table: dict[str, list[dict]] = {}
+
+    def table(self, name):
+        sink = self.by_table.setdefault(name, [])
+        return FakeUpsertQuery(sink)
 
 
 # ── 1) okuma hatası vs "yeni deal yok" ──────────────────────────────────────
@@ -281,3 +293,74 @@ def test_backfill_survives_warmup_query_failure(agent, closed_position):
                                   "raw": {"position_id": 555}}])
     filled = agent.backfill_trade_entries(client, {})
     assert filled == 1, "ısıtma hatası asıl dolumu engellememeli"
+
+
+# ── 4) giriş "parmak izi" senkronu (entry_fingerprints.jsonl → Supabase) ────
+
+def test_push_fingerprints_missing_file_is_noop(agent, tmp_path):
+    agent.FINGERPRINT_FILE = tmp_path / "yok.jsonl"
+    n = agent.push_fingerprints(FakeMultiTableClient(), {})
+    assert n == 0
+
+
+def test_push_fingerprints_reads_new_lines_only(agent, tmp_path):
+    """Byte-offset tail: ikinci çağrı yalnız YENİ satırları göndermeli."""
+    f = tmp_path / "entry_fingerprints.jsonl"
+    rec1 = {"ticket": 111, "ts": "2026-08-28T10:00:00+00:00", "scope": "NDX.INDX:momentum",
+            "symbol": "NDX.INDX", "mt5_symbol": "NAS100", "direction": "BUY",
+            "entry": 29000.0, "tp": 29100.0, "sl": 28950.0, "lot": 5.0, "rr": 2.0,
+            "entry_type": "market", "tp_source": "backend", "voters": ["mom_cont"]}
+    f.write_text(json.dumps(rec1) + "\n", encoding="utf-8")
+    agent.FINGERPRINT_FILE = f
+
+    client = FakeMultiTableClient()
+    state: dict = {}
+    n1 = agent.push_fingerprints(client, state)
+    assert n1 == 1
+    row = client.by_table["bot_entry_fingerprints"][0]
+    assert row["ticket"] == 111 and row["direction"] == "BUY"
+    assert row["voters"] == ["mom_cont"]
+    assert row["raw"]["scope"] == "NDX.INDX:momentum"
+
+    # Aynı offset'te ikinci çağrı: yeni satır yok → sıfır.
+    n2 = agent.push_fingerprints(client, state)
+    assert n2 == 0
+
+    # Dosyaya YENİ bir satır eklenince yalnız o gelmeli (birincisi tekrar değil).
+    rec2 = {**rec1, "ticket": 222, "direction": "SELL"}
+    with f.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(rec2) + "\n")
+    n3 = agent.push_fingerprints(client, state)
+    assert n3 == 1
+    assert len(client.by_table["bot_entry_fingerprints"]) == 2
+    assert client.by_table["bot_entry_fingerprints"][1]["ticket"] == 222
+
+
+def test_push_fingerprints_skips_malformed_and_ticketless_lines(agent, tmp_path):
+    f = tmp_path / "entry_fingerprints.jsonl"
+    f.write_text(
+        '{"ticket": 1, "direction": "BUY"}\n'
+        'not-json-garbage\n'
+        '{"direction": "SELL"}\n'          # ticket yok
+        '\n',                              # boş satır
+        encoding="utf-8",
+    )
+    agent.FINGERPRINT_FILE = f
+    client = FakeMultiTableClient()
+    n = agent.push_fingerprints(client, {})
+    assert n == 1
+    assert client.by_table["bot_entry_fingerprints"][0]["ticket"] == 1
+
+
+def test_push_fingerprints_handles_file_truncation(agent, tmp_path):
+    """Dosya döndürülüp küçülürse offset sıfırlanır (journal ile aynı kural)."""
+    f = tmp_path / "entry_fingerprints.jsonl"
+    f.write_text('{"ticket": 1}\n{"ticket": 2}\n{"ticket": 3}\n', encoding="utf-8")
+    agent.FINGERPRINT_FILE = f
+    state = {"fingerprint_offset": f.stat().st_size}  # dosyanın sonuna işaretli
+
+    f.write_text('{"ticket": 9}\n', encoding="utf-8")  # döndürüldü, küçüldü
+    client = FakeMultiTableClient()
+    n = agent.push_fingerprints(client, state)
+    assert n == 1
+    assert client.by_table["bot_entry_fingerprints"][0]["ticket"] == 9

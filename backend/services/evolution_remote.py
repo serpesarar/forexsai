@@ -9,8 +9,11 @@ için router'lar bu modülün fonksiyonlarını asyncio.to_thread ile çağırı
 """
 from __future__ import annotations
 
+import csv
+import io
 import json
 import logging
+import os
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
@@ -22,6 +25,73 @@ logger = logging.getLogger(__name__)
 DEFAULT_HOST = "mt5_box"
 ONLINE_WINDOW_SECONDS = 420  # heartbeat 5 dk'da bir → 7 dk görülmediyse çevrimdışı
 _CMD_ID_RE = re.compile(r"^cmd_([0-9a-f-]{36})$")
+
+# ── Bot işleminin HANGİ KURALA göre açıldığı (2026-08-28) ───────────────────
+# "yeni deneme/config.py" her strateji ailesine ayrı bir MAGIC verir (aynı
+# tabanın +N'i — bkz. yeni deneme/config.py MAGIC_NUMBER/CHANNEL_REVERSION_
+# MAGIC/VIX_REGIME_MAGIC/...). bot_trades.magic zaten senkronize olduğundan
+# bu eşleme YÜZDE YÜZ kapsıyor — 479/479 gerçek işlemde test edildi (2026-08-27).
+# Taban değer kutunun config.py'sinden gelir (gitignore'da); panel tarafı
+# BOT_MAGIC_BASE env'iyle ezilebilir, varsayılan kodda gözlemlenen değerdir.
+BOT_MAGIC_BASE = int(os.getenv("BOT_MAGIC_BASE", "52890969"))
+
+MAGIC_STRATEGY_MAP: Dict[int, Dict[str, str]] = {
+    0: {
+        "code": "momentum_sr",
+        "label": "Momentum / Destek-Direnç",
+        "note": ("5m/1H momentum devamlılığı + destek-direnç girişi. "
+                 "entry_score_gate (8 koşul) ile filtrelenir. Tek strateji "
+                 "ailesi içinde giriş 'parmak izi' (voters/eşikler) kaydı "
+                 "tutulur — aşağıdaki fingerprint alanı doluysa görünür."),
+    },
+    1: {
+        "code": "channel_reversion",
+        "label": "Kanal Dönüşü (CHREV)",
+        "note": ("5m/15m/30m/1H kanal-sınırı reddi (mean-reversion). "
+                 "2026-07-23 kanamasından sonra SL sonrası 60dk soğuma "
+                 "kilidi eklendi — art arda döngüsel giriş engellenir."),
+    },
+    2: {
+        "code": "vix_regime",
+        "label": "VIX Rejimi (VIXREG)",
+        "note": ("VIX eşiğe göre yön favorisi belirler (≥eşik→BUY, altı→SELL), "
+                 "model oylarıyla teyit ister. Zaman-kalitesi (TQ) kapısı "
+                 "çukur saatlerde yalnız çok-emin sinyale izin verir."),
+    },
+    3: {
+        "code": "reflex",
+        "label": "Reflex (olay-güdümlü scalp)",
+        "note": "NDX Reflex Engine — momentum devamlılığı (mom_cont) tetiklemesiyle açılan hızlı scalp.",
+    },
+    4: {
+        "code": "daycombo",
+        "label": "Gün Kombo (DAYCOMBO)",
+        "note": ("NDX'e özel: 14:00-19:30 UTC penceresinde gövde/aralık>0,5 "
+                 "barı sonrası market BUY. Günde en fazla 1 pozisyon."),
+    },
+    5: {
+        "code": "usoil_breakout",
+        "label": "USOIL Kırılım (Donchian+EMA200)",
+        "note": ("48-bar Donchian üst-bant kırılımı + EMA200 trend filtresi. "
+                 "⚠️ Sızıntısız canlı doğrulama P(EV>0)=%0,3 çıktı — CLAUDE.md "
+                 "bu scope'u GÖLGE'ye aldı (usoil-breakout-no-edge.md)."),
+    },
+    6: {
+        "code": "reentry",
+        "label": "Yeniden Giriş (reentry)",
+        "note": "Zararla kapanan bir pozisyonun ardından otomatik yeniden giriş denemesi (ayrı magic → slot kilidini tetiklemez).",
+    },
+}
+_UNKNOWN_STRATEGY = {"code": "bilinmiyor", "label": "Bilinmiyor / manuel",
+                     "note": "Bu işlem botun bilinen bir strateji ailesine ait değil (magic=0 veya elle açılmış olabilir)."}
+
+
+def strategy_for_magic(magic: Optional[int]) -> Dict[str, str]:
+    """Bot işleminin magic numarasından strateji ailesini çözer."""
+    if magic is None:
+        return _UNKNOWN_STRATEGY
+    offset = int(magic) - BOT_MAGIC_BASE
+    return MAGIC_STRATEGY_MAP.get(offset, _UNKNOWN_STRATEGY)
 
 
 def _now() -> datetime:
@@ -63,7 +133,7 @@ def _fetch_paged(table: str, select: str, *, order: str, desc: bool = True,
         order: sıralama kolonu (sayfalama determinizmi için ZORUNLU).
         desc: True → en yeni önce (panel her zaman en tazeyi ister).
         cap: en fazla kaç satır (koruma).
-        **eq_gte: `eq__<kolon>` ve `gte__<kolon>` biçiminde filtreler.
+        **eq_gte: `eq__<kolon>`, `gte__<kolon>` ve `lte__<kolon>` biçiminde filtreler.
 
     Returns:
         Satır listesi (sıralama korunur).
@@ -79,6 +149,8 @@ def _fetch_paged(table: str, select: str, *, order: str, desc: bool = True,
                 q = q.eq(key[4:], value)
             elif key.startswith("gte__"):
                 q = q.gte(key[5:], value)
+            elif key.startswith("lte__"):
+                q = q.lte(key[5:], value)
         chunk = (q.order(order, desc=desc)
                  .range(start, start + PAGE_SIZE - 1).execute()).get("data") or []
         rows.extend(chunk)
@@ -808,6 +880,43 @@ def _bot_trade_r(direction: str, open_price: Optional[float], close_price: Optio
     return round(move / risk, 4)
 
 
+def _fingerprints_by_ticket(days: int, host: str = DEFAULT_HOST) -> Dict[int, dict]:
+    """bot_entry_fingerprints'i ticket'a göre indeksli sözlük olarak döndürür.
+
+    IN(...) listesiyle JOIN etmek yerine aynı tarih penceresini çeker —
+    binlerce ticket'lı bir IN listesi PostgREST URL sınırına takılabilir;
+    tarih penceresi zaten aynı satır kümesini kapsıyor.
+    """
+    since = (_now() - timedelta(days=days)).isoformat()
+    try:
+        rows = _fetch_paged(
+            "bot_entry_fingerprints",
+            "ticket,scope,direction,entry,tp,sl,lot,rr,entry_type,tp_source,voters,raw",
+            order="ticket", desc=True, cap=4000,
+            eq__host=host, gte__ts=since)
+    except Exception as e:  # fail-soft: fingerprint zenginleştirmesi opsiyonel
+        logger.warning("bot_entry_fingerprints okunamadı (fail-soft): %s", e)
+        return {}
+    out: Dict[int, dict] = {}
+    for r in rows:
+        raw = r.get("raw") if isinstance(r.get("raw"), dict) else {}
+        out[r.get("ticket")] = {
+            "scope": r.get("scope"),
+            "entry_type": r.get("entry_type"),
+            "tp_source": r.get("tp_source"),
+            "rr_planned": _fnum(r.get("rr")),
+            "voters": r.get("voters") or [],
+            "session": raw.get("session"),
+            "mom_stretch": raw.get("mom_stretch"),
+            "mom_threshold": raw.get("mom_threshold"),
+            "backend_action": raw.get("backend_action"),
+            "backend_confidence": _fnum(raw.get("backend_conf")),
+            "priority": _fnum(raw.get("priority")),
+            "lot_mult": _fnum(raw.get("lot_mult")),
+        }
+    return out
+
+
 def get_bot_symbol_history(symbol: str, days: int = 30,
                            host: str = DEFAULT_HOST) -> Dict[str, Any]:
     """Bir sembolün BOT geçmişi — decider'ınkiyle aynı gün/yön/işlem-defteri şekli.
@@ -820,9 +929,15 @@ def get_bot_symbol_history(symbol: str, days: int = 30,
     rows = _fetch_paged(
         "bot_trades",
         "ticket,direction,volume,open_time,open_price,close_time,close_price,"
-        "sl,tp,profit,commission,swap,comment,raw",
+        "sl,tp,profit,commission,swap,comment,magic,raw",
         order="close_time", desc=True, cap=4000,
         eq__host=host, eq__symbol=symbol, gte__close_time=since)
+
+    # Giriş "parmak izi" (2026-08-28) — bot_entry_fingerprints.ticket, deal
+    # ticket'ı DEĞİL, bot_trades.raw->>'position_id' ile eşleşir (fresh market
+    # emrinde MT5'te result.order == pozisyon ticket'ı). Yalnız momentum/SR
+    # (base magic) yazıyor; eksikse sessizce None kalır (aşağıda .get ile).
+    fp_by_ticket = _fingerprints_by_ticket(days, host=host)
 
     summary = _new_bot_bucket()
     by_day: Dict[str, Dict[str, Any]] = {}
@@ -839,11 +954,13 @@ def get_bot_symbol_history(symbol: str, days: int = 30,
         tp = _fnum(r.get("tp"))
         net = round((r.get("profit") or 0) + (r.get("commission") or 0) + (r.get("swap") or 0), 2)
         win = net > 0
-        reason = ((r.get("raw") or {}).get("reason")
-                  if isinstance(r.get("raw"), dict) else None)
+        raw = r.get("raw") if isinstance(r.get("raw"), dict) else {}
+        reason = raw.get("reason")
         exit_label = ("TP" if reason == _MT5_REASON_TP
                       else "SL" if reason == _MT5_REASON_SL else "manuel")
         r_mult = _bot_trade_r(direction, open_price, close_price, sl)
+        strategy = strategy_for_magic(r.get("magic"))
+        fingerprint = fp_by_ticket.get(raw.get("position_id"))
 
         # Planlanan RR (geometriden — sonuçtan bağımsız): TP/SL ikisi de
         # varsa aynı mantık, sinyal tarafındaki _geometry_rr ile simetrik.
@@ -886,6 +1003,7 @@ def get_bot_symbol_history(symbol: str, days: int = 30,
 
         if len(decisions) < 300:
             decisions.append({
+                "ticket": r.get("ticket"),
                 "ts": r.get("close_time"), "day": day, "session": session,
                 "direction": direction or None,
                 "entry": open_price, "exit": close_price, "sl": sl, "tp": tp,
@@ -894,6 +1012,11 @@ def get_bot_symbol_history(symbol: str, days: int = 30,
                 "commission": _fnum(r.get("commission")),
                 "swap": _fnum(r.get("swap")),
                 "comment": r.get("comment"),
+                # "Hangi kurala göre açıldı" — magic her zaman var (strateji
+                # ailesi kesin); fingerprint yalnız momentum/SR'da var (detaylı
+                # voters/eşik — yoksa None, uydurulmaz).
+                "strategy": strategy,
+                "fingerprint": fingerprint,
             })
 
     rr_typ = round(sorted(rr_seen)[len(rr_seen) // 2], 3) if rr_seen else None
@@ -937,6 +1060,99 @@ def get_bot_symbol_history(symbol: str, days: int = 30,
         "by_direction": by_dir,
         "decisions": decisions,
     }
+
+
+# ── CSV dışa aktarım (2026-08-28) ────────────────────────────────────────────
+# "Bu işlemle ilgili TÜM bilgiler + hangi kurala göre açıldığı" — açılış/kapanış
+# zamanı+fiyatı, TP/SL, net $, R, çıkış sebebi, strateji ailesi ve (varsa)
+# momentum/SR'ın voters/eşik detayı tek satırda. `symbol=None` → tüm semboller.
+
+_CSV_COLUMNS = [
+    "ticket", "sembol", "yön", "acilis_zamani", "acilis_fiyati",
+    "hedef_tp", "stop_sl", "kapanis_zamani", "kapanis_fiyati",
+    "net_usd", "r_multiple", "cikis_sebebi", "lot", "komisyon", "swap",
+    "strateji_kodu", "strateji_adi", "strateji_notu",
+    "kural_detayi_voters", "kural_detayi_seans",
+    "kural_detayi_backend_guven", "kural_detayi_oncelik",
+    "mt5_yorum",
+]
+
+
+def export_bot_trades_csv(
+    symbol: Optional[str] = None,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+    host: str = DEFAULT_HOST,
+) -> str:
+    """Tarih aralığındaki bot işlemlerini CSV metni olarak üretir.
+
+    `start`/`end`: ISO tarih/saat (yalnız tarih de olur, örn. "2026-08-01").
+    `end` dahil edilir (o günün sonuna kadar) — kullanıcı "şu tarihe kadar"
+    dediğinde son günü kaybetmemek için gün sonuna (T23:59:59) tamamlanır.
+    """
+    filters: Dict[str, Any] = {"eq__host": host}
+    if symbol:
+        filters["eq__symbol"] = symbol
+    if start:
+        filters["gte__close_time"] = start
+    if end:
+        end_bound = end if "T" in end else f"{end}T23:59:59"
+        filters["lte__close_time"] = end_bound
+
+    rows = _fetch_paged(
+        "bot_trades",
+        "ticket,symbol,direction,volume,open_time,open_price,close_time,"
+        "close_price,sl,tp,profit,commission,swap,comment,magic,raw",
+        order="close_time", desc=True, cap=20000, **filters)
+
+    # Fingerprint JOIN'i: tarih penceresini bot_trades'inkiyle aynı tutmak
+    # için gün sayısına çeviriyoruz (yoksa varsayılan 3650 gün — "tüm zamanlar").
+    if start:
+        try:
+            span_days = max(1, (_now() - _parse_ts(
+                start if "T" in start else f"{start}T00:00:00+00:00")).days + 1)
+        except Exception:
+            span_days = 3650
+    else:
+        span_days = 3650
+    fp_by_ticket = _fingerprints_by_ticket(span_days, host=host)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(_CSV_COLUMNS)
+
+    for r in rows:
+        raw = r.get("raw") if isinstance(r.get("raw"), dict) else {}
+        direction = (r.get("direction") or "").upper()
+        open_price = _fnum(r.get("open_price"))
+        close_price = _fnum(r.get("close_price"))
+        sl = _fnum(r.get("sl"))
+        tp = _fnum(r.get("tp"))
+        net = round((r.get("profit") or 0) + (r.get("commission") or 0) + (r.get("swap") or 0), 2)
+        reason = raw.get("reason")
+        exit_label = ("TP" if reason == _MT5_REASON_TP
+                      else "SL" if reason == _MT5_REASON_SL else "manuel")
+        r_mult = _bot_trade_r(direction, open_price, close_price, sl)
+        strategy = strategy_for_magic(r.get("magic"))
+        fp = fp_by_ticket.get(raw.get("position_id"))
+
+        writer.writerow([
+            r.get("ticket"), r.get("symbol"), direction,
+            r.get("open_time") or "", open_price if open_price is not None else "",
+            tp if tp is not None else "", sl if sl is not None else "",
+            r.get("close_time") or "", close_price if close_price is not None else "",
+            net, r_mult if r_mult is not None else "", exit_label,
+            _fnum(r.get("volume")) or "", _fnum(r.get("commission")) or "",
+            _fnum(r.get("swap")) or "",
+            strategy["code"], strategy["label"], strategy["note"],
+            "|".join(fp["voters"]) if fp else "",
+            fp["session"] if fp else "",
+            fp["backend_confidence"] if fp else "",
+            fp["priority"] if fp else "",
+            r.get("comment") or "",
+        ])
+
+    return buf.getvalue()
 
 
 # ── Komut kuyruğu ─────────────────────────────────────────────────────────

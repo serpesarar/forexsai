@@ -13,6 +13,9 @@ AGENT_HOST = "mt5_box"          # panelde görünen kutu adı
 # ── Yollar (Windows kutusundaki gerçek yollar) ────────────────────────────
 REPO_ROOT = r"C:\Users\<kullanici>\Desktop\panel"   # panel reposunun kökü
 DECIDER_JOURNAL = REPO_ROOT + r"\claude_decider\memory\journal.jsonl"
+# Bot'un giriş "parmak izi" (2026-08-28) — hangi kurala göre açıldığı bilgisi.
+# Boş bırakılırsa varsayılan REPO_ROOT\yeni deneme\entry_fingerprints.jsonl kullanılır.
+FINGERPRINT_JOURNAL = REPO_ROOT + r"\yeni deneme\entry_fingerprints.jsonl"
 
 # ── MT5 (data_recorder ile aynı; boş bırakılırsa çalışan terminale bağlanır) ─
 MT5_TERMINAL_PATH = None        # ör: r"C:\Program Files\MetaTrader 5\terminal64.exe"
@@ -25,6 +28,12 @@ MT5_SERVER = None
 #   taskkill /F /FI "WINDOWTITLE eq forexsai_bot" & timeout /t 5
 #   start "forexsai_bot" cmd /k "cd /d %REPO%\yeni deneme && python forexsai_demo_bot.py"
 BOT_RESTART_SCRIPT = REPO_ROOT + r"\remote_agent\restart_bot.bat"
+
+# ── İşlem senkron sıklığı (2026-08-28) ────────────────────────────────────
+# Panel "MT5'teki işlemler anlık güncellensin" istedi — journal/haftalık
+# işlerden AYRI, daha kısa bir ritim. Düşürme: her turda 1 history_deals_get
+# + kapanan işlem sayısı kadar position lookup — ucuz, 10sn'ye kadar güvenli.
+TRADE_PUSH_SECONDS = 20
 
 # ── Oto-güncelleme (push et → kutu kendini günceller + süreçleri tazeler) ──
 AUTO_UPDATE_ENABLED = True

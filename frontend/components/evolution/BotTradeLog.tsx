@@ -16,7 +16,7 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Gavel } from "lucide-react";
 
 import type { BotTradeRow } from "@/lib/api/evolution";
 import { Badge, cx } from "./ui";
@@ -112,8 +112,69 @@ function Field({
   );
 }
 
+/**
+ * Kural detayı — açılan satırın üzerine BİR KEZ DAHA tıklayınca çıkar.
+ * Strateji ailesi (magic'ten) her zaman kesin; momentum/SR'da ayrıca bot'un
+ * kaydettiği "parmak izi" (voters/eşik/seans/backend güveni) de gösterilir —
+ * diğer stratejilerde bu ayrıntı bot tarafında hiç tutulmuyor, uydurulmaz.
+ */
+function RuleCard({ t }: { t: BotTradeRow }) {
+  const fp = t.fingerprint;
+  return (
+    <div className="mt-2 rounded-xl border border-orange-400/15 bg-orange-400/[0.04] px-3 py-2.5">
+      <div className="flex items-start gap-2">
+        <Gavel size={13} className="mt-0.5 shrink-0 text-orange-300" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11.5px] font-semibold text-orange-200">{t.strategy.label}</span>
+            <Badge tone="slate">{t.strategy.code}</Badge>
+          </div>
+          <p className="mt-1 text-[10.5px] leading-snug text-slate-400">{t.strategy.note}</p>
+        </div>
+      </div>
+
+      {fp ? (
+        <div className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-1 border-t border-white/[0.06] pt-2 text-[10.5px] tabular-nums sm:grid-cols-3">
+          {fp.voters.length > 0 && (
+            <div className="col-span-2 sm:col-span-3">
+              <div className="text-[9.5px] text-slate-600">oy veren modeller</div>
+              <div className="mt-0.5 flex flex-wrap gap-1">
+                {fp.voters.map((v) => (
+                  <Badge key={v} tone="blue">{v}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          {fp.mom_stretch !== null && (
+            <Field
+              label="momentum gerginliği / eşik"
+              value={`${fp.mom_stretch.toFixed(2)} / ${fp.mom_threshold?.toFixed(2) ?? "—"}`}
+            />
+          )}
+          {fp.entry_type && <Field label="giriş tipi" value={fp.entry_type} />}
+          {fp.tp_source && <Field label="TP kaynağı" value={fp.tp_source} />}
+          {fp.rr_planned !== null && <Field label="planlı RR" value={fp.rr_planned.toFixed(2)} />}
+          {fp.backend_action && <Field label="backend kararı" value={fp.backend_action} />}
+          {fp.backend_confidence !== null && (
+            <Field label="backend güveni" value={`%${Math.round(fp.backend_confidence)}`} />
+          )}
+          {fp.priority !== null && <Field label="öncelik skoru" value={fp.priority.toFixed(2)} />}
+          {fp.lot_mult !== null && <Field label="lot çarpanı" value={`×${fp.lot_mult.toFixed(2)}`} />}
+        </div>
+      ) : (
+        <p className="mt-2 border-t border-white/[0.06] pt-2 text-[10px] leading-snug text-slate-500">
+          Bu strateji için detaylı giriş kaydı (oy/eşik) tutulmuyor — bot yalnız
+          Momentum/Destek-Direnç girişlerinde "parmak izi" yazıyor. Strateji
+          ailesi (yukarıda) yine de kesin: magic numarasından geliyor.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function TradeRow({ t }: { t: BotTradeRow }) {
   const [open, setOpen] = useState(false);
+  const [showRule, setShowRule] = useState(false);
   const hasGeometry = t.entry !== null;
 
   return (
@@ -200,6 +261,30 @@ function TradeRow({ t }: { t: BotTradeRow }) {
                   <span className="text-slate-700">MT5 · </span>{t.comment}
                 </p>
               )}
+
+              {/* Satır zaten açık — BİR KEZ DAHA tıklayınca hangi kurala göre
+                  açıldığı çıkar (magic→strateji + varsa momentum/SR parmak izi). */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowRule((v) => !v); }}
+                className="mt-2.5 flex items-center gap-1.5 text-[10.5px] font-medium text-orange-300/80 transition hover:text-orange-200"
+              >
+                <Gavel size={11} />
+                Hangi kurala göre açıldı?
+                <ChevronDown size={11} className={cx("transition-transform", showRule && "rotate-180")} />
+              </button>
+              <AnimatePresence initial={false}>
+                {showRule && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.16 }}
+                    className="overflow-hidden"
+                  >
+                    <RuleCard t={t} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}
