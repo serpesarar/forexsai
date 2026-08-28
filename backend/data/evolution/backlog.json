@@ -2374,5 +2374,49 @@
     "source": "session",
     "created_at": "2026-08-28T03:55:06.416194+00:00",
     "updated_at": "2026-08-28T03:55:06.416332+00:00"
+  },
+  {
+    "id": "bl_c79425f76a",
+    "title": "[Analist] n=0 kök neden triage",
+    "detail": "live_lifecycle_monitor → bias_fill_outcomes sırasıyla çalıştır. İlki trade'lerin üretilip üretilmediğini, ikincisi puanlama pipeline'ının çalışıp çalışmadığını gösterir. Başarı ölçütü: iki araç da hatasız tamamlanırsa ve hâlâ n=0 ise sorun Railway'deki eski kodda; biri hata verirse o katman hedef.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-27T22:51:23.603768+00:00",
+    "updated_at": "2026-08-27T22:51:23.603784+00:00"
+  },
+  {
+    "id": "bl_e44906d042",
+    "title": "[Analist-Envanter] live_lifecycle_monitor (hiç çalıştırılmadı): Bugün çalıştırılması gereken tek araç bu — n=0'ın kaynağını (trade üretilmiyor mu, puanlanmıyor mu, feed",
+    "detail": "live_lifecycle_monitor (hiç çalıştırılmadı): Bugün çalıştırılması gereken tek araç bu — n=0'ın kaynağını (trade üretilmiyor mu, puanlanmıyor mu, feed mi kopuk) ayrıştırır. Somut adım: 'lifecycle/geometri/feed doğrulama' sorusuyla çalıştır, çıktıda hangi adımda veri düşüyor bak.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-27T22:51:23.618128+00:00",
+    "updated_at": "2026-08-27T22:51:23.618142+00:00"
+  },
+  {
+    "id": "bl_09ed997c8d",
+    "title": "[Analist-Envanter] rebuild_combo_stats (bl_cf8053c86b, 43 gün + araç listesinde): meta_combination_stats flip-aware muhasebeyle yeniden hesaplanmadıkça tüm kombinasyon i",
+    "detail": "rebuild_combo_stats (bl_cf8053c86b, 43 gün + araç listesinde): meta_combination_stats flip-aware muhasebeyle yeniden hesaplanmadıkça tüm kombinasyon istatistikleri yanlış — bu kirlilik, diğer araçların çıktısını da zehirler. Somut adım: 'rebuild_combo_stats' aracını şu soruyla çalıştır: 'flip_closed işlemleri nötr say, expired nötr say, sadece WIN/LOSS kapananları say.'",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-27T22:51:23.632569+00:00",
+    "updated_at": "2026-08-27T22:51:23.632583+00:00"
+  },
+  {
+    "id": "bl_249757c544",
+    "title": "[Analist-Envanter] bias_fill_outcomes (hiç çalıştırılmadı): Dünkü tahminler puanlanmamış — her geçen gün n=0'a bir gün daha ekleniyor. Somut adım: bugün çalıştır; eğer h",
+    "detail": "bias_fill_outcomes (hiç çalıştırılmadı): Dünkü tahminler puanlanmamış — her geçen gün n=0'a bir gün daha ekleniyor. Somut adım: bugün çalıştır; eğer hata verirse scoring pipeline'ının nerede koptuğu netleşir (bu, live_lifecycle_monitor bulgusunu tamamlar).",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "daily_analyst",
+    "created_at": "2026-08-27T22:51:23.645564+00:00",
+    "updated_at": "2026-08-27T22:51:23.645579+00:00"
   }
 ]
