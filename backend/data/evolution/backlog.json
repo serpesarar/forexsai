@@ -2341,5 +2341,38 @@
     "source": "session",
     "created_at": "2026-08-27T05:45:39.506766+00:00",
     "updated_at": "2026-08-27T05:45:39.506960+00:00"
+  },
+  {
+    "id": "bl_346f2369a0",
+    "title": "candle_cache 1m besleme uyuşmazlığı",
+    "detail": "NDX.INDX/GDAXI.INDX 1m barları MT5 M1 ile tutmuyor (2026-08-19 13:44 NAS100 fill 29539.3 iken bar 29516.9-29533.1; 08-26 22:00'de 76 puan sapma, hacim milyonlarda = farklı kaynak). candle_cache 1m üzerinden yapılan her sinyal-bar analizi şüpheli; kaynağı tespit et (data_recorder mi, DataHub resample mi) ve tek kaynağa indir.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-27T06:42:27.077224+00:00",
+    "updated_at": "2026-08-27T06:42:27.077348+00:00"
+  },
+  {
+    "id": "bl_94efdaa2ee",
+    "title": "tanker_positions 32M satır tablo-swap",
+    "detail": "7 gün tut + observed_at index'li yeni tabloya kopyala + rename + eski DROP; ~37 GB geri gelir; SQL hazır, kullanıcı onayı bekliyor",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-28T03:11:50.680543+00:00",
+    "updated_at": "2026-08-28T03:11:50.680687+00:00"
+  },
+  {
+    "id": "bl_2f918f61d8",
+    "title": "MetaTrader5 paketi thread-safe değil — ajan kodunda genel kural",
+    "detail": "2026-08-27'de backfill_trade_entries'i ayrı thread'de çalıştırmak MT5 API çağrılarının sessizce None dönmesine sebep oldu (479 satırın 0'ı doldu), heartbeat thread'iyle eşzamanlı erişim şüpheli. Düzeltme ANA thread'e taşımaktı. Ajana yeni bir özellik eklerken MT5 çağıran hiçbir kod ayrı thread'e konulmamalı — heartbeat thread'i zaten yalnız positions_get() gibi tek çağrı yaptığı için şimdilik güvenli ama büyürse aynı riski taşır. Kalıcı çözüm: tüm MT5 erişimini tek bir kilitle (threading.Lock) serileştirmek.",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-28T03:55:06.416194+00:00",
+    "updated_at": "2026-08-28T03:55:06.416332+00:00"
   }
 ]
