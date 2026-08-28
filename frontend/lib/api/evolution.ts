@@ -743,6 +743,97 @@ export function useDeciderSymbolHistory(symbol: string | null, days = 30) {
   });
 }
 
+// ── Bot sembol geçmişi — decider'ınkiyle AYNI şekil, gerçek MT5 işlemleri ──
+// 2026-08-27: bot_trades'e giriş/SL/TP zenginleştirmesi eklendi (bkz.
+// evolution_agent._lookup_entry); bu uç decider'ın gün/yön/işlem-defteri
+// panelinin bot karşılığıdır. R, planlanan SL'den hesaplanır (sembol-
+// agnostik — pip dönüşümü yok). Eski satırlarda (agent 1.2 öncesi) entry/
+// sl/tp/r alanları null gelebilir; bileşenler bunu zarifçe gösterir.
+
+/** Bir kırılım kovası — gün, yön, seans, saat hepsinde aynı şekil (bot). */
+export interface BotBucket {
+  n: number;
+  wins: number;
+  losses: number;
+  /** MT5 exit reason=5 (TP) ile kapanan işlem sayısı. */
+  tp_hits: number;
+  /** MT5 exit reason=4 (SL) ile kapanan işlem sayısı. */
+  sl_hits: number;
+  /** Net $ (profit + commission + swap). */
+  net: number;
+  win_rate: number | null;
+  avg_net: number | null;
+  /** Ortalama R — yalnız giriş+SL bilinen işlemlerden (bkz. summary.with_geometry). */
+  avg_r: number | null;
+}
+
+export interface BotDay extends BotBucket {
+  day: string;
+  BUY: BotBucket;
+  SELL: BotBucket;
+}
+
+export interface BotDirection extends BotBucket {
+  by_session: Record<string, BotBucket>;
+  by_hour: (BotBucket & { hour: number })[];
+}
+
+export interface BotTradeRow {
+  ts: string;
+  day: string;
+  session: string;
+  direction: string | null;
+  /** Giriş fiyatı — agent 1.2 öncesi satırlarda null. */
+  entry: number | null;
+  exit: number | null;
+  /** Planlanan stop (trailing sonradan değiştirmiş olabilir; bu İLK plandır). */
+  sl: number | null;
+  tp: number | null;
+  /** Gerçekleşen hareket / planlanan stop mesafesi. null → geometri yok. */
+  r: number | null;
+  net: number;
+  win: boolean;
+  /** MT5 deal reason'dan: "TP" | "SL" | "manuel". */
+  exit_reason: "TP" | "SL" | "manuel";
+  volume: number | null;
+  commission: number | null;
+  swap: number | null;
+  comment: string | null;
+}
+
+export interface BotSymbolHistory {
+  symbol: string;
+  days: number;
+  total_rows: number;
+  summary: BotBucket & {
+    rr_typical: number | null;
+    breakeven_wr: number | null;
+    above_breakeven: boolean;
+    active_days: number;
+    best_day: { day: string; net: number } | null;
+    worst_day: { day: string; net: number } | null;
+    first_ts: string | null;
+    last_ts: string | null;
+    /** Kaç işlemde R hesaplanabildi (giriş+SL mevcuttu) — şeffaflık için. */
+    with_geometry: number;
+  };
+  by_day: BotDay[];
+  by_direction: Record<string, BotDirection>;
+  decisions: BotTradeRow[];
+}
+
+export function useBotSymbolHistory(symbol: string | null, days = 30) {
+  return useQuery<BotSymbolHistory>({
+    queryKey: ["evolution", "remote", "bot-symbol-history", symbol, days],
+    queryFn: () =>
+      getJson(`/api/evolution/remote/bot-symbol-history?symbol=${encodeURIComponent(symbol!)}&days=${days}`),
+    enabled: !!symbol,
+    staleTime: LIVE.fast,
+    refetchInterval: LIVE.fast,
+    placeholderData: (prev) => prev,
+  });
+}
+
 export interface BotVsDecider {
   days: number;
   window_hours: number;

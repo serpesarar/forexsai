@@ -191,6 +191,9 @@ class FakeSelectChain:
     def is_(self, *a):
         return self
 
+    def order(self, *a):
+        return self
+
     def limit(self, *a):
         return self
 
@@ -262,3 +265,19 @@ def test_backfill_tolerates_lookup_miss(agent):
     client = FakeBackfillClient([{"ticket": 4, "raw": {"position_id": 777}}])
     filled = agent.backfill_trade_entries(client, {})
     assert filled == 0
+
+
+def test_backfill_survives_warmup_query_failure(agent, closed_position):
+    """Terminal-ısıtma sorgusu patlarsa dahi asıl dolum devam etmeli."""
+    real_deals = agent.mt5.history_deals_get
+
+    def _flaky(*a, **k):
+        if "position" not in k:
+            raise RuntimeError("ısıtma sorgusu koptu")
+        return real_deals(*a, **k)
+
+    agent.mt5.history_deals_get = _flaky
+    client = FakeBackfillClient([{"ticket": 2, "close_time": "2026-08-01T00:00:00+00:00",
+                                  "raw": {"position_id": 555}}])
+    filled = agent.backfill_trade_entries(client, {})
+    assert filled == 1, "ısıtma hatası asıl dolumu engellememeli"

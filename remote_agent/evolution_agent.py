@@ -189,7 +189,12 @@ def _lookup_entry(position_id: int) -> tuple:
 
 
 #: Geriye dönük dolum şeması sürümü — artırılırsa ajan bir kez daha tarar.
-ENTRY_BACKFILL_VERSION = 1
+#: 2026-08-27 v1→v2: v1 sırasında 479 satırın 0'ı doldu (ayrı thread'de MT5
+#: API'sine eşzamanlı erişim + eski pozisyonlar için terminal geçmiş önbelleği
+#: ısınmamış olabilir — MetaTrader5 paketi resmî olarak thread-safe DEĞİL).
+#: v2 ANA thread'de senkron çalışır ve önce geniş bir tarih aralığı çekerek
+#: terminalin deal geçmişini o dönem için önceden ısıtır.
+ENTRY_BACKFILL_VERSION = 2
 
 
 def backfill_trade_entries(client, state: dict) -> int:
@@ -200,25 +205,48 @@ def backfill_trade_entries(client, state: dict) -> int:
     Bu, panelin bot işlemleri için decider'daki gibi giriş→çıkış / R / TP-SL
     döküm göstermesini engelliyordu. Bir kerelik tarama state bayrağıyla
     korunur — her turda tekrar 400+ satır taramaz.
+
+    ⚠️ ANA THREAD'DE, senkron çağrılmalı (main() içinde, heartbeat thread'i
+    başlamadan ÖNCE) — MetaTrader5 paketi resmî olarak thread-safe değildir;
+    ayrı thread'de çalıştırılan ilk denemede (v1) 479 satırın 0'ı dolmuştu.
     """
     if not HAS_MT5 or state.get("entry_backfill_version") == ENTRY_BACKFILL_VERSION:
         return 0
     try:
-        res = (client.table("bot_trades").select("ticket,raw")
+        res = (client.table("bot_trades").select("ticket,close_time,raw")
                .eq("host", HOST).is_("open_price", "null")
-               .limit(2000).execute())
+               .order("close_time").limit(2000).execute())
         rows = res.data or []
     except Exception as e:
         log.warning("backfill_trade_entries okunamadı: %s", e)
         return 0
 
+    if not rows:
+        state["entry_backfill_version"] = ENTRY_BACKFILL_VERSION
+        return 0
+
+    # Terminal deal geçmişini bu aralık için ısıt — bazı MT5 kurulumlarında
+    # history_deals_get(position=...) yalnız daha önce bir tarih-aralığı
+    # sorgusuyla "görülmüş" dönemler için sonuç döndürür.
+    try:
+        first_ts = _parse_ts(rows[0].get("close_time"))
+        span_from = (first_ts - timedelta(days=1)) if first_ts else datetime.now(timezone.utc) - timedelta(days=90)
+        mt5.history_deals_get(span_from, datetime.now(timezone.utc))
+    except Exception as e:
+        log.warning("backfill ısıtma sorgusu başarısız (devam ediliyor): %s", e)
+
     filled = 0
+    no_position_id = 0
+    lookup_miss = 0
+    update_failed = 0
     for r in rows:
         pos_id = (r.get("raw") or {}).get("position_id")
         if not pos_id:
+            no_position_id += 1
             continue
         open_price, open_time, sl, tp = _lookup_entry(pos_id)
         if open_price is None:
+            lookup_miss += 1
             continue
         try:
             client.table("bot_trades").update({
@@ -229,10 +257,13 @@ def backfill_trade_entries(client, state: dict) -> int:
             }).eq("ticket", r["ticket"]).eq("host", HOST).execute()
             filled += 1
         except Exception as e:
+            update_failed += 1
             log.warning("backfill güncelleme hatası (ticket=%s): %s", r.get("ticket"), e)
 
     state["entry_backfill_version"] = ENTRY_BACKFILL_VERSION
-    log.info("bot_trades geriye dönük giriş/SL/TP dolumu: %d/%d satır", filled, len(rows))
+    log.info("bot_trades geriye dönük giriş/SL/TP dolumu: %d/%d satır "
+             "(position_id yok=%d, MT5'te bulunamadı=%d, güncelleme hatası=%d)",
+             filled, len(rows), no_position_id, lookup_miss, update_failed)
     return filled
 
 
@@ -978,12 +1009,15 @@ def main() -> None:
     if HAS_MT5 and not mt5_connect():
         log.warning("MT5 bağlanamadı — trade push devre dışı, komut döngüsü sürüyor")
     reconcile_stale_commands(client)
-    threading.Thread(target=_heartbeat_thread, daemon=True, name="heartbeat").start()
-    # Geriye dönük giriş/SL/TP dolumu (bir kerelik, ~400 satır × 2 MT5 çağrısı
-    # sürebilir) — ana döngüyü/komut kuyruğunu bekletmesin diye ayrı thread'de.
+    # Geriye dönük giriş/SL/TP dolumu (bir kerelik) — HEARTBEAT THREAD'İNDEN
+    # ÖNCE, ana thread'de SENKRON çalışır. MetaTrader5 paketi thread-safe
+    # değildir; ayrı thread'de denendiğinde (v1) MT5 çağrıları sessizce None
+    # dönmüştü. ~480 satır × ≤2 MT5 çağrısı — birkaç saniye sürer, kabul
+    # edilebilir tek seferlik başlangıç gecikmesi.
     if HAS_MT5:
-        threading.Thread(target=backfill_trade_entries, args=(client, state),
-                         daemon=True, name="entry-backfill").start()
+        backfill_trade_entries(client, state)
+        save_state(state)
+    threading.Thread(target=_heartbeat_thread, daemon=True, name="heartbeat").start()
     last_push = 0.0
     last_update = time.time()  # açılışta pull zaten taze (start_agent döngüsü)
     while True:

@@ -24,13 +24,15 @@ import {
 } from "lucide-react";
 
 import {
+  type BotDay,
+  type BotDirection,
   type DeciderDay,
   type DeciderDecision,
   type DeciderDirection,
   type RemoteCommandSummary,
   TRADE_STALE_HOURS,
   useBotPerformance,
-  useBotTrades,
+  useBotSymbolHistory,
   useBotVsDecider,
   useDeciderBreakdown,
   useDeciderStats,
@@ -38,6 +40,7 @@ import {
   useRemoteCommand,
   useRemoteStatus,
 } from "@/lib/api/evolution";
+import BotTradeLog from "./BotTradeLog";
 import DeciderTradeLog from "./DeciderTradeLog";
 import { emitOpenRun } from "./events";
 import { toast } from "./toast";
@@ -601,9 +604,233 @@ function BotVsDeciderCard({ days }: { days: number }) {
 }
 
 /** Sembole tıkla → o sembolün son MT5 işlemleri. */
+function netColor(v: number | null): string {
+  if (v === null || Math.abs(v) < 0.01) return "#64748B";
+  return v > 0 ? "#34D399" : "#FB7185";
+}
+
+function fmtNet(v: number, digits = 0): string {
+  return `${v >= 0 ? "+" : ""}${v.toLocaleString("tr-TR", { maximumFractionDigits: digits })} $`;
+}
+
+/** Gün bazlı tablo — bot karşılığı: net R yerine net $, yön kırılımı aynı. */
+function BotDayBreakdown({ days: rows }: { days: BotDay[] }) {
+  const active = rows.filter((d) => d.n > 0);
+  const maxAbs = Math.max(1, ...active.map((d) => Math.abs(d.net)));
+  if (active.length === 0) {
+    return <p className="py-6 text-center text-[12px] text-slate-500">Bu pencerede işlem yok.</p>;
+  }
+  return (
+    <div className="space-y-1">
+      <div className="grid grid-cols-[66px_44px_44px_1fr] gap-1.5 px-2 pb-1 text-[10px] uppercase tracking-wide text-slate-600 sm:grid-cols-[92px_58px_60px_1fr] sm:gap-2">
+        <span>gün</span><span className="text-right">işlem</span><span className="text-right">isabet</span><span>net $ · yön</span>
+      </div>
+      {active.map((d, i) => (
+        <motion.div
+          key={d.day}
+          initial={{ opacity: 0, x: -6 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: Math.min(i * 0.02, 0.3) }}
+          className="grid grid-cols-[66px_44px_44px_1fr] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[11px] odd:bg-white/[0.02] sm:grid-cols-[92px_58px_60px_1fr] sm:gap-2"
+        >
+          <span className="tabular-nums text-slate-300">{dayLabel(d.day)}</span>
+          <span className="text-right tabular-nums text-slate-400">{d.n}</span>
+          <span className="text-right font-semibold tabular-nums" style={{ color: wrColor(d.win_rate) }}>
+            {d.win_rate !== null ? `%${Math.round(d.win_rate)}` : "—"}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="w-14 shrink-0 text-right font-semibold tabular-nums text-[10.5px] sm:text-[11px]" style={{ color: netColor(d.net) }}>
+              {fmtNet(d.net)}
+            </span>
+            <div className="hidden min-w-0 flex-1 sm:block"><RBar value={d.net} max={maxAbs} /></div>
+            <span className="flex shrink-0 gap-1">
+              {d.BUY.n > 0 && (
+                <span className="rounded px-1 py-px text-[9.5px] font-medium text-emerald-300 ring-1 ring-emerald-400/25"
+                  title={`BUY ${d.BUY.n} işlem · ${fmtNet(d.BUY.net)}`}>
+                  A{d.BUY.n}
+                </span>
+              )}
+              {d.SELL.n > 0 && (
+                <span className="rounded px-1 py-px text-[9.5px] font-medium text-rose-300 ring-1 ring-rose-400/25"
+                  title={`SELL ${d.SELL.n} işlem · ${fmtNet(d.SELL.net)}`}>
+                  S{d.SELL.n}
+                </span>
+              )}
+            </span>
+          </div>
+        </motion.div>
+      ))}
+      <p className="px-2 pt-2 text-[10px] leading-relaxed text-slate-600">
+        Gün = UTC takvim günü. A/S rozetleri o günkü BUY/SELL işlem sayısı (üzerine gel → net $).
+      </p>
+    </div>
+  );
+}
+
+/** Yön bazlı kart — bot karşılığı: TP/SL sayacı + net $, R yalnız geometri varsa. */
+function BotDirectionCard({ dir, d, breakeven }: { dir: string; d: BotDirection; breakeven: number | null }) {
+  const buy = dir === "BUY";
+  const sessions = Object.entries(d.by_session).slice(0, 5);
+  const maxHourN = Math.max(1, ...d.by_hour.map((h) => h.n));
+  const beats = breakeven !== null && d.win_rate !== null && d.win_rate >= breakeven;
+  return (
+    <div className={cx("rounded-2xl border p-3.5", buy ? "border-emerald-400/20 bg-emerald-400/[0.03]" : "border-rose-400/20 bg-rose-400/[0.03]")}>
+      <div className="flex items-center justify-between">
+        <span className={cx("text-[13px] font-semibold", buy ? "text-emerald-300" : "text-rose-300")}>
+          {dir} <span className="text-slate-500">· {d.n} işlem</span>
+        </span>
+        <span className="text-right">
+          <span className="text-base font-bold tabular-nums" style={{ color: wrColor(d.win_rate) }}>
+            {d.win_rate !== null ? `%${Math.round(d.win_rate)}` : "—"}
+          </span>
+          <span className="ml-2 text-sm font-bold tabular-nums" style={{ color: netColor(d.net) }}>{fmtNet(d.net)}</span>
+        </span>
+      </div>
+
+      <div className="relative mt-2">
+        <ProgressBar pct={d.win_rate ?? 0} color={wrColor(d.win_rate)} />
+        {breakeven !== null && (
+          <div
+            className="absolute -top-0.5 h-3.5 w-px bg-white/70"
+            style={{ left: `${Math.min(100, breakeven)}%` }}
+            title={`başabaş %${breakeven}`}
+          />
+        )}
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] text-slate-500">
+        <span>işlem başı <span className="font-semibold" style={{ color: netColor(d.avg_net) }}>{d.avg_net !== null ? fmtNet(d.avg_net, 1) : "—"}</span></span>
+        <span>{d.tp_hits} TP / {d.sl_hits} SL</span>
+        {d.avg_r !== null && <span>ort. R <span className="font-semibold">{d.avg_r > 0 ? "+" : ""}{d.avg_r.toFixed(2)}</span></span>}
+        {breakeven !== null && (
+          <span className={beats ? "text-emerald-400" : "text-amber-400"}>
+            {beats ? "başabaşın üstünde" : "başabaşın altında"}
+          </span>
+        )}
+      </div>
+
+      {sessions.length > 0 && (
+        <div className="mt-3">
+          <h5 className="mb-1 text-[10px] uppercase tracking-wide text-slate-600">seans</h5>
+          <div className="space-y-1">
+            {sessions.map(([name, s]) => (
+              <div key={name} className="grid grid-cols-[64px_44px_50px_1fr] items-center gap-2 text-[10.5px]">
+                <span className="text-slate-400">{name}</span>
+                <span className="text-right tabular-nums text-slate-500">{s.n}</span>
+                <span className="text-right font-semibold tabular-nums" style={{ color: wrColor(s.win_rate) }}>
+                  {s.win_rate !== null ? `%${Math.round(s.win_rate)}` : "—"}
+                </span>
+                <span className="text-right font-semibold tabular-nums" style={{ color: netColor(s.net) }}>{fmtNet(s.net)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {d.by_hour.length > 0 && (
+        <div className="mt-3">
+          <h5 className="mb-1 text-[10px] uppercase tracking-wide text-slate-600">saat (UTC) — yükseklik işlem sayısı, renk net $</h5>
+          <div className="flex h-12 items-end gap-px">
+            {Array.from({ length: 24 }, (_, h) => {
+              const b = d.by_hour.find((x) => x.hour === h);
+              if (!b) return <div key={h} className="h-px flex-1 bg-white/[0.05]" />;
+              return (
+                <div
+                  key={h}
+                  className="flex-1 rounded-t-sm"
+                  style={{
+                    height: `${Math.max(8, (b.n / maxHourN) * 100)}%`,
+                    background: netColor(b.net),
+                    opacity: 0.85,
+                  }}
+                  title={`${String(h).padStart(2, "0")}:00 UTC · ${b.n} işlem · ${b.win_rate !== null ? `%${Math.round(b.win_rate)}` : "—"} · ${fmtNet(b.net)}`}
+                />
+              );
+            })}
+          </div>
+          <div className="mt-0.5 flex justify-between text-[9px] text-slate-600"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Sembole tıkla → bot'un gün/yön/işlem-defteri geçmişi (decider'ınkiyle aynı şekil). */
+function BotSymbolHistoryView({ symbol, days }: { symbol: string; days: number }) {
+  const { data, isLoading } = useBotSymbolHistory(symbol, days);
+  const [tab, setTab] = useState<"day" | "dir" | "list">("list");
+  if (isLoading || !data) return <Skeleton className="h-56 w-full" />;
+  const s = data.summary;
+  const dirs = ["BUY", "SELL"].filter((d) => data.by_direction[d]);
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-3">
+        <Ring pct={s.win_rate ?? 0} color={wrColor(s.win_rate)} size={68} stroke={6}>
+          <span className="text-base font-bold tabular-nums text-white">
+            {s.win_rate !== null ? `%${Math.round(s.win_rate)}` : "—"}
+          </span>
+        </Ring>
+        <div className="min-w-0 flex-1 space-y-1 text-[11px] leading-relaxed text-slate-400">
+          <div>
+            <span className="text-lg font-bold tabular-nums" style={{ color: netColor(s.net) }}>{fmtNet(s.net)}</span>
+            <span className="ml-1.5 text-slate-500">net · işlem başı {s.avg_net !== null ? fmtNet(s.avg_net, 1) : "—"}</span>
+          </div>
+          <div>
+            <span className="font-semibold text-slate-200">{s.n}</span> işlem
+            {" · "}<span className="text-emerald-400">{s.tp_hits} TP</span>
+            {" / "}<span className="text-rose-400">{s.sl_hits} SL</span>
+          </div>
+          {s.breakeven_wr !== null && (
+            <div className={s.above_breakeven ? "text-emerald-400" : "text-amber-400"}>
+              başabaş isabet %{s.breakeven_wr} (planlı RR {s.rr_typical}) — {s.above_breakeven ? "üstünde, kâr tarafı" : "altında, isabet yüksek görünse de net kayıp"}
+            </div>
+          )}
+          <div className="text-slate-500">
+            {s.active_days} işlem günü
+            {s.best_day && <> · en iyi <span className="text-emerald-400">{dayLabel(s.best_day.day)} {fmtNet(s.best_day.net)}</span></>}
+            {s.worst_day && <> · en kötü <span className="text-rose-400">{dayLabel(s.worst_day.day)} {fmtNet(s.worst_day.net)}</span></>}
+          </div>
+          {s.with_geometry < s.n && (
+            <div className="text-slate-600">
+              {s.with_geometry}/{s.n} işlemde giriş/SL bilgisi var (R hesaplanabilir) — geri kalanı 2026-08-27 zenginleştirmesinden önce kaydedilmiş.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mb-3 flex gap-1.5">
+        {([["day", "Gün bazlı"], ["dir", "Yön bazlı"], ["list", "İşlem Defteri"]] as const).map(([k, label]) => (
+          <button
+            key={k}
+            onClick={() => setTab(k)}
+            className={cx(
+              "rounded-full px-3 py-1 text-[11.5px] font-medium transition",
+              tab === k ? "bg-orange-500/20 text-orange-200 ring-1 ring-orange-400/30" : "text-slate-500 hover:text-slate-300",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "day" && <BotDayBreakdown days={data.by_day} />}
+      {tab === "dir" && (
+        dirs.length === 0 ? (
+          <p className="py-6 text-center text-[12px] text-slate-500">Bu pencerede işlem yok.</p>
+        ) : (
+          <div className="space-y-3">
+            {dirs.map((d) => (
+              <BotDirectionCard key={d} dir={d} d={data.by_direction[d]} breakeven={s.breakeven_wr} />
+            ))}
+          </div>
+        )
+      )}
+      {tab === "list" && <BotTradeLog decisions={data.decisions} />}
+    </div>
+  );
+}
+
+/** Sembole tıkla → bot'un o semboldeki gün/yön/işlem-defteri geçmişi (decider'ınkiyle aynı panel şekli). */
 function TradesSheet({ symbol, days, onClose }: { symbol: string; days: number; onClose: () => void }) {
-  const { data, isLoading } = useBotTrades(symbol, days);
-  const trades = data?.trades ?? [];
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -617,44 +844,20 @@ function TradesSheet({ symbol, days, onClose }: { symbol: string; days: number; 
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 40, opacity: 0, scale: 0.98 }}
         transition={{ type: "spring", damping: 28, stiffness: 320 }}
-        className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/10 bg-[#0B0F17] shadow-2xl"
+        className="flex max-h-[86vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#0B0F17] shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-3.5">
           <span className="flex items-center gap-2 text-sm font-semibold text-slate-100">
-            <Bot size={15} className="text-orange-300" /> {symbol} — son işlemler
+            <Bot size={15} className="text-orange-300" /> {symbol} — gün & yön geçmişi
             <Badge tone="slate">son {days} gün</Badge>
           </span>
           <button onClick={onClose} className="rounded-lg p-1.5 text-slate-500 transition hover:bg-white/5 hover:text-white">
             <X size={18} />
           </button>
         </div>
-        <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
-          {isLoading && <Skeleton className="h-24 w-full" />}
-          {!isLoading && trades.length === 0 && (
-            <p className="rounded-xl border border-dashed border-white/10 p-4 text-center text-[12px] text-slate-500">
-              Bu pencerede işlem yok.
-            </p>
-          )}
-          <div className="space-y-0.5">
-            {trades.map((t) => (
-              <div key={t.ticket} className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[11px] odd:bg-white/[0.02]">
-                <span className="flex items-center gap-2 text-slate-300">
-                  <span className={cx("font-semibold", t.direction === "BUY" ? "text-emerald-300" : "text-rose-300")}>
-                    {t.direction}
-                  </span>
-                  {t.volume != null && <span className="text-slate-500">{t.volume} lot</span>}
-                  {t.comment && <span className="truncate text-slate-600">{t.comment}</span>}
-                </span>
-                <span className="flex shrink-0 items-center gap-2.5 text-slate-500">
-                  <span className={cx("font-semibold tabular-nums", t.net >= 0 ? "text-emerald-300" : "text-rose-300")}>
-                    {t.net >= 0 ? "+" : ""}{t.net} $
-                  </span>
-                  {timeAgo(t.close_time)}
-                </span>
-              </div>
-            ))}
-          </div>
+        <div className="overflow-y-auto px-5 py-4">
+          <BotSymbolHistoryView symbol={symbol} days={days} />
         </div>
       </motion.div>
     </motion.div>
