@@ -650,6 +650,18 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     except Exception as _fx_exc:
         log.debug("fakeout veto fail-open: %s", _fx_exc)
 
+    # ATR sıkışma filtresi (2026-08-28) — varsayılan GÖLGE
+    if _squeeze_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
+        _log_trade("SQUEEZE_GATE", scope_key, mt5_symbol, direction, price, 0, 0,
+                   voters, "sikisik piyasa")
+        return
+
+    # Cuma öğleden sonra bloğu (2026-08-30) — varsayılan GÖLGE
+    if _friday_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
+        _log_trade("FRIDAY_GATE", scope_key, mt5_symbol, direction, price, 0, 0,
+                   voters, "cuma ogleden sonra")
+        return
+
     fixed_tp, fixed_sl = _fixed_distances(price, cfg, bot_signal,
                                           scope_key, mt5_symbol)
 
@@ -782,6 +794,20 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
             return
     except Exception as _fx_exc:
         log.debug("fakeout veto fail-open: %s", _fx_exc)
+
+    # ATR sıkışma filtresi (2026-08-28) — varsayılan GÖLGE
+    if _squeeze_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
+        _log_trade("SQUEEZE_GATE", scope_key, mt5_symbol, direction,
+                   tick.ask if direction == "BUY" else tick.bid, 0, 0,
+                   voters, "sikisik piyasa")
+        return
+
+    # Cuma öğleden sonra bloğu (2026-08-30) — varsayılan GÖLGE
+    if _friday_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
+        _log_trade("FRIDAY_GATE", scope_key, mt5_symbol, direction,
+                   tick.ask if direction == "BUY" else tick.bid, 0, 0,
+                   voters, "cuma ogleden sonra")
+        return
 
     price = tick.ask if direction == "BUY" else tick.bid
     # Türetilmiş TP/SL mesafesi — ATR_GEOMETRY kapsamındaysa ATR-ölçekli,
@@ -1374,6 +1400,81 @@ def _tq_decider_approval(forexsai_sym: str, direction: str) -> tuple[bool, str]:
     except Exception as exc:
         log.debug("tq decider onay okunamadı (fail-closed): %s", exc)
     return False, ""
+
+
+def _friday_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
+                   direction: str) -> bool:
+    """Cuma öğleden sonra giriş bloğu — VARSAYILAN GÖLGE.
+
+    Kanıt + neden gölge: phase_rules.DEFAULTS içindeki FRIDAY_BLOCK_* bloğu.
+    Mevcut TQ_FRIDAY_COOL'un üstüne biner: soğutma sinyali geçirdiyse bu kapı
+    yine de eler (canlı modda). Fail-open."""
+    if not pr.flag(config, "FRIDAY_BLOCK_ENABLED"):
+        return False
+    if forexsai_sym not in pr.flag(config, "FRIDAY_BLOCK_SYMBOLS"):
+        return False
+    now = datetime.now(timezone.utc)
+    if not pr.friday_blocks(now, pr.flag(config, "FRIDAY_BLOCK_FROM_HOUR")):
+        return False
+    blok = bool(pr.flag(config, "FRIDAY_BLOCK_LIVE"))
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    px = (tick.ask if direction == "BUY" else tick.bid) if tick else 0.0
+    extra = {"saat_utc": now.hour, "esik": pr.flag(config, "FRIDAY_BLOCK_FROM_HOUR")}
+    log.info("%s — CUMA KAPISI: %02d:00 UTC ≥ %s (Cuma öğleden sonra n=24 −4.050$, "
+             "plasebo p=0,015) → %s", scope_key, now.hour,
+             pr.flag(config, "FRIDAY_BLOCK_FROM_HOUR"),
+             "%s açılmadı" % direction if blok else "GÖLGE, işlem devam etti")
+    if blok:
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction, px,
+                      "friday_gate", extra=extra)
+        return True
+    shadow_log.record_shadow(scope_key, forexsai_sym, mt5_symbol, direction,
+                             "friday", "would_block", px, extra=extra)
+    return False
+
+
+def _squeeze_ratio(mt5_symbol: str) -> float | None:
+    """ATR14(1m)/ATR100(1m) — SIZINTISIZ (koşan bar hariç, pozisyon 1'den çekilir).
+
+    <1.0 = piyasa son 100 dakikanın ortalamasından sakin ("sıkışma")."""
+    rates = mt5.copy_rates_from_pos(mt5_symbol, mt5.TIMEFRAME_M1, 1, 130)
+    if rates is None or len(rates) < 102:
+        return None
+    bars = [{"high": float(r["high"]), "low": float(r["low"]),
+             "close": float(r["close"])} for r in rates]
+    return pr.squeeze_ratio(bars)
+
+
+def _squeeze_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
+                    direction: str) -> bool:
+    """ATR sıkışma filtresi — sakin piyasada doğan sinyali "likidite fitili" sayar.
+
+    VARSAYILAN GÖLGE (`SQZ_FILTER_BLOCK=False`): yalnız ölçer ve kaydeder,
+    canlı davranışı DEĞİŞTİRMEZ. Kanıt + neden gölge: phase_rules.DEFAULTS
+    içindeki SQZ_FILTER_* bloğu. Fail-open: veri yoksa giriş engellenmez."""
+    if not pr.flag(config, "SQZ_FILTER_ENABLED"):
+        return False
+    if forexsai_sym not in pr.flag(config, "SQZ_FILTER_SYMBOLS"):
+        return False
+    ratio = _squeeze_ratio(mt5_symbol)
+    if not pr.squeeze_blocks(ratio, float(pr.flag(config, "SQZ_FILTER_MIN"))):
+        return False
+    blok = bool(pr.flag(config, "SQZ_FILTER_BLOCK"))
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    px = (tick.ask if direction == "BUY" else tick.bid) if tick else 0.0
+    extra = {"sqz": round(ratio, 3),
+             "esik": float(pr.flag(config, "SQZ_FILTER_MIN"))}
+    log.info("%s — SIKIŞMA FİLTRESİ: ATR14/ATR100(1m)=%.3f < %.2f (sakin piyasa, "
+             "sinyal likidite fitili olabilir) → %s", scope_key, ratio,
+             float(pr.flag(config, "SQZ_FILTER_MIN")),
+             "%s açılmadı" % direction if blok else "GÖLGE, işlem devam etti")
+    if blok:
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction, px,
+                      "squeeze_gate", extra=extra)
+        return True
+    shadow_log.record_shadow(scope_key, forexsai_sym, mt5_symbol, direction,
+                             "squeeze", "would_block", px, extra=extra)
+    return False
 
 
 def _trend_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,

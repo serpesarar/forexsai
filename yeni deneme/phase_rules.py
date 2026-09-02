@@ -111,6 +111,45 @@ DEFAULTS: dict[str, object] = {
     "USOIL_BUY_TP_RR": 0.0,              # 0 = kapalı (%1,04 sabit hedef sürer)
     "USOIL_BUY_TP_SYMBOLS": ("USOIL.FOREX",),
     # Opsiyonel (etkisi nötr ölçüldü)
+    # ── FAZ 3 (2026-08-28) — ATR SIKIŞMA FİLTRESİ ────────────────────────
+    # Kaynak: dış AI'ın "SL adli tıp" raporu; 120 günlük SIZINTISIZ dış-örneklemde
+    # DOĞRULANDI (analyst_reports/sikisma_filtresi_denetimi_2026-08-28.md).
+    # Hipotez: ATR14(1m) son 100 dakikanın ortalamasının altındaysa (sıkışma),
+    # sinyali doğuran kıpırtı likidite fitilidir — giriş elenmeli.
+    #   eşik 1.00'da ELENECEK işlemler: DIŞ n=122 ortR −0.070 / −4.399$
+    #                                    İÇ  n= 11 ortR −0.292 / −1.028$
+    #   kalan küme:                      DIŞ n=132 ortR +0.111 / +6.802$ (baz +0.024)
+    #   4 ailenin 4'ünde de aynı yön (CHREV −0.216, MOM/SR −0.150, VIXREG −0.058).
+    # ⚠️ NEDEN GÖLGE: (a) koşullu plasebo YALNIZ 1.00'da geçti (p=0.043;
+    # 0.95→0.217, 1.05→0.073) — komşu eşiklerde geçmemesi sınırda etki imzası;
+    # (b) 3. kronolojik çeyrek filtreyle de negatif kalıyor (−0.093 → −0.065).
+    # Kart ölçüt-3 geçilmeden SQZ_FILTER_BLOCK açılmaz.
+    "SQZ_FILTER_ENABLED": True,              # ölç + gölge logla
+    "SQZ_FILTER_BLOCK": False,               # True → gerçekten bloklar
+    "SQZ_FILTER_MIN": 1.00,                  # ATR14(1m)/ATR100(1m) alt sınırı
+    "SQZ_FILTER_SYMBOLS": ("NDX.INDX",),     # kanıt yalnız NASDAQ'ta
+    # ── FAZ 3b (2026-08-30) — CUMA ÖĞLEDEN SONRA GİRİŞ BLOĞU ─────────────
+    # İki bağımsız ajan doğruladı. GERÇEKLEŞEN para (simülasyon değil), 282 NAS100:
+    #   Cuma ≥12 UTC : n=24  −4.050$  (dış AI −4.091$ ile uyumlu)
+    #   Cuma <12 UTC : n=16  +48$     → hasar tamamen öğleden sonra
+    #   en kötü hücre: Cuma 15 UTC, n=9, −3.557$
+    # Koşullu plasebo (5.000 rastgele eşit-büyüklükte blok): p=0,0150 GEÇTİ.
+    # ── 2026-08-30 CANLIYA ALINDI — 5 bağımsız test geçildi ────────────────
+    #  1) Permutasyon testi (20.000 karıştırma): kalan ortR +0,071 vs elenen
+    #     −0,349, fark +0,420 → p=0,0146 GEÇTİ
+    #  2) Eşik platosu: 10,11,12,13,14,15 UTC'nin HEPSİ +6.9k…+8.3k (filtresiz
+    #     +4.290) → tek bir sihirli saate bağlı DEĞİL, geniş plato
+    #  3) Hafta-çıkarma: 9 haftanın 9'unda da filtre bazı geçiyor
+    #  4) Aile kırılımı: 5 scope'un 4'ünde pozitif (yalnız DAYCOMBO −123, n=19)
+    #  5) Hacim: kalan n=258 ≥ 150 ✓ · davranış değişikliği yalnız %8,5 (24/282)
+    #  Ayrıca iki bağımsız ajan aynı sayıyı buldu (−4.050$ / −4.091$).
+    #  ⚠️ SINIR: kanıt NASDAQ'a özgü. Çapraz-sembol testinde GER40'ta Cuma ≥12
+    #  POZİTİF çıktı (+1.047$, n=7) → başka sembole GENELLEME YAPILMAZ.
+    #  Bu, TQ_FRIDAY_COOL'un (soğutma) tam bloğa yükseltilmesidir.
+    "FRIDAY_BLOCK_ENABLED": True,            # ölç + logla
+    "FRIDAY_BLOCK_LIVE": True,               # CANLI: gerçekten bloklar
+    "FRIDAY_BLOCK_FROM_HOUR": 12,            # UTC
+    "FRIDAY_BLOCK_SYMBOLS": ("NDX.INDX",),   # kanıt yalnız NASDAQ'ta
     "SCOPE_LOSS_COOLDOWN_ENABLED": False,
     "SCOPE_LOSS_COOLDOWN_MIN": 120,
     "SCOPE_LOSS_COOLDOWN_STREAK": 2,
@@ -325,6 +364,46 @@ def position_gate_blocks(direction: str, pos: Optional[float],
     if direction == "BUY":
         return pos > buy_max
     return False
+
+
+def _atr_from(bars: Sequence[dict]) -> Optional[float]:
+    """Wilder-olmayan basit ATR (ortalama TR). Yetersiz veri → None."""
+    if not bars or len(bars) < 2:
+        return None
+    trs = []
+    for i in range(1, len(bars)):
+        h, l = float(bars[i]["high"]), float(bars[i]["low"])
+        pc = float(bars[i - 1]["close"])
+        trs.append(max(h - l, abs(h - pc), abs(l - pc)))
+    return sum(trs) / len(trs) if trs else None
+
+
+def friday_blocks(now_utc, from_hour: int) -> bool:
+    """Cuma ≥from_hour UTC → giriş elenmeli. now_utc=None → fail-open (False)."""
+    if now_utc is None:
+        return False
+    return now_utc.weekday() == 4 and now_utc.hour >= int(from_hour)
+
+
+def squeeze_ratio(closed_1m: Sequence[dict], fast: int = 14,
+                  slow: int = 100) -> Optional[float]:
+    """ATR14(1m) / ATR100(1m) — sıkışma oranı. <1 = piyasa son 100 dakikanın
+    ortalamasından SAKİN. Yalnız KAPANMIŞ barlar verilmelidir (koşan bar
+    çağıran tarafta elenir). Yetersiz veri → None (fail-open)."""
+    if not closed_1m or len(closed_1m) < slow + 1:
+        return None
+    a_fast = _atr_from(list(closed_1m)[-(fast + 1):])
+    a_slow = _atr_from(list(closed_1m)[-(slow + 1):])
+    if not a_fast or not a_slow:
+        return None
+    return a_fast / a_slow
+
+
+def squeeze_blocks(ratio: Optional[float], min_ratio: float) -> bool:
+    """True → sıkışık piyasa, giriş elenmeli. ratio=None → fail-open (False)."""
+    if ratio is None:
+        return False
+    return float(ratio) < float(min_ratio)
 
 
 def rsi(closes: Sequence[float], period: int = 14) -> Optional[float]:

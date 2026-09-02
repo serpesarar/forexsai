@@ -53,20 +53,50 @@ def connect() -> bool:
     return bool(ok)
 
 
+# Broker offset'i makul aralik: hicbir broker UTC'den ±5 saatten fazla sapmaz
+# (Pepperstone = UTC+2/+3). Bunun disindaki her olcum BAYAT TICK demektir.
+OFFSET_MIN_SEC, OFFSET_MAX_SEC = -5 * 3600, 5 * 3600
+
+
 def detect_offset() -> int:
-    """Broker sunucu saati ile gerçek UTC arasındaki farkı (saniye) ölç."""
+    """Broker sunucu saati − gerçek UTC (saniye).
+
+    ⚠️ 2026-08-30 KRİTİK DÜZELTME: eski sürüm İLK tick veren sembolü kullanıyordu.
+    O sembol kapalı/likit değilse tick BAYAT olur ve offset saatlerce yanlış çıkar
+    (canlı vaka: −63.000 sn ölçüldü, doğrusu +10.800 sn → tüm zaman damgaları
+    +1230 dk kaydı; `nasdaq_tam_veri_2026-08-29` paketi bu yüzden kayıktı).
+    Yeni sürüm: BİRDEN FAZLA sembolden ölçer, makul aralık dışını ELER ve
+    MEDYAN alır; hiçbiri geçerli değilse hata verip durur (sessizce 0 dönmez)."""
     syms = list((getattr(config, "RECORDER_SYMBOLS", None) or {}).values()) if config else []
     syms += [s.name for s in (mt5.symbols_get() or [])[:20]]
+    now = _time.time()
+    olcumler = []
     for sym in syms:
         try:
             if not mt5.symbol_select(sym, True):
                 continue
             tk = mt5.symbol_info_tick(sym)
-            if tk and tk.time:
-                return int(round((tk.time - _time.time()) / 900.0) * 900)
+            if not tk or not tk.time:
+                continue
+            # tick'in kendisi bayat mi? (>15 dk once) → bu sembolu atla
+            if abs(tk.time - now) > 5 * 3600 + 900:
+                continue
+            cand = int(round((tk.time - now) / 900.0) * 900)
+            if OFFSET_MIN_SEC <= cand <= OFFSET_MAX_SEC:
+                olcumler.append(cand)
         except Exception:
             continue
-    return 0
+        if len(olcumler) >= 5:
+            break
+    if not olcumler:
+        sys.exit("HATA: broker offset ölçülemedi (tüm tick'ler bayat). "
+                 "Piyasa kapalıyken çalıştırıyorsan bekle — sessiz yanlış "
+                 "zaman damgası yazmaktansa durmak daha iyi.")
+    olcumler.sort()
+    off = olcumler[len(olcumler) // 2]          # medyan: tek bayat tick bozamaz
+    if len(set(olcumler)) > 1:
+        print(f"UYARI: semboller farklı offset verdi {olcumler} → medyan {off} kullanıldı")
+    return off
 
 
 def to_utc(epoch: int) -> str:
