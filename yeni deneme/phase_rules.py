@@ -58,14 +58,38 @@ DEFAULTS: dict[str, object] = {
     # FAZ 1 — varsayılan KAPALI (Faz-0 go/no-go sonrası açılır)
     "NDX_SESSION_BLOCK_ENABLED": False,
     "NDX_SESSION_BLOCK": (("22:00", "07:00"),),
-    "NDX_FRIDAY_BLOCK": False,
+    # ⚠️ 2026-08-30: repo varsayılanı False→True. Kutunun config'inde ~2026-08-07'den
+    # beri True'ydu ve işe yarıyordu; repo varsayılanı yanlış kalmıştı.
+    # Yeni kanıt (282 gerçek NAS100 işlemi, GERÇEKLEŞEN para — 3 ajan bağımsız doğruladı):
+    #   Cuma ≥12 UTC : n=24  −4.050$   ·   Cuma <12 UTC : n=16  +48$
+    #   en kötü hücre: Cuma 15 UTC n=9 −3.557$
+    #   permutasyon (20.000): kalan ortR +0,071 vs elenen −0,349 → p=0,0146
+    #   eşik platosu 10-15 UTC'nin hepsi iyi · hafta-çıkarma 9/9 · aile 4/5
+    # Hasar öğleden sonrada yoğunlaşsa da TÜM Cuma'yı bloklamanın maliyeti yok
+    # (Cuma sabahı zaten ≈başabaş, +48$/16 işlem) → bu geniş blok DOĞRU çözüm.
+    # ⚠️ NDX-only: GER40'ta Cuma ≥12 POZİTİF (+1.047$, n=7) → genellenmez.
+    "NDX_FRIDAY_BLOCK": True,
     "NDX_WEEKEND_HOLD_BLOCK": False,     # Cuma 20:45 UTC sonrası yeni giriş yok
     "NDX_WEEKEND_HOLD_FROM": "20:45",
     "NDX_SR_ENTRY_ENABLED": True,        # False → 1m S/R limit kolu kapalı
     "PHASE1_CONFIG_RESTORE": False,      # ONLY_CONFIRM=True + ZONE_MIN_TOUCH=4
     # FAZ 2 — gölge (ölç, bloklama)
+    # ── SIKI KONUM KAPISI — 2026-09-02: sembol-bazlı CANLI ────────────────
+    # Kanıt: botun KENDİ gölge ölçümü, gerçek TP/SL geometrisiyle geriye dönük
+    # çözülmüş 960 kayıt (shadow_log takip penceresi 10 bar → gerçek yarış
+    # olarak düzeltildikten sonra). "Bloklanacak sinyal gerçekte ne yapardı?":
+    #   GDAXI.INDX BUY : 22W/55L = %28,6  vs başabaş %64,0 → −35,4pp  z=−6,47
+    #                    p≈1e-10  → KAPI HAKLI, blokla
+    #   NDX.INDX  SELL : 31W/19L = %62,0  vs başabaş %57,9 → +4,1pp   → BLOKLAMA
+    #   USOIL     BUY  : 101W/1L = %99,0  vs başabaş %58,9 → +40,1pp  → BLOKLAMA
+    # ⚠️ Backtest bunun TERSİNİ söylüyordu (NDX'te 6s/0,60 → +8.401$ vs +4.290$).
+    # Backtest yanlıydı: 0,40 kapısından GEÇMİŞ işlemlere daha sıkı eşik uygulamak,
+    # sıkı kapının canlıda BLOKLAYACAĞI popülasyonu ölçmez. Gölge kaydı gerçek
+    # bloklanan kümeyi ölçüyor — bu yüzden gölge kanıtı backtest'i EZER.
+    # Gölge ölçümü TÜM sembollerde sürer; yalnız BLOKLAMA sembol listesiyle sınırlı.
     "POS_TIGHT_ENABLED": True,
-    "POS_TIGHT_BLOCK": False,
+    "POS_TIGHT_BLOCK": True,                    # sembol listesiyle sınırlı
+    "POS_TIGHT_SYMBOLS": ("GDAXI.INDX",),       # yalnız kanıtlanan sembol
     "POS_TIGHT_SELL_MIN": 0.60,
     "POS_TIGHT_BUY_MAX": 0.40,
     "SELL_RSI_SHADOW_ENABLED": True,
@@ -128,28 +152,6 @@ DEFAULTS: dict[str, object] = {
     "SQZ_FILTER_BLOCK": False,               # True → gerçekten bloklar
     "SQZ_FILTER_MIN": 1.00,                  # ATR14(1m)/ATR100(1m) alt sınırı
     "SQZ_FILTER_SYMBOLS": ("NDX.INDX",),     # kanıt yalnız NASDAQ'ta
-    # ── FAZ 3b (2026-08-30) — CUMA ÖĞLEDEN SONRA GİRİŞ BLOĞU ─────────────
-    # İki bağımsız ajan doğruladı. GERÇEKLEŞEN para (simülasyon değil), 282 NAS100:
-    #   Cuma ≥12 UTC : n=24  −4.050$  (dış AI −4.091$ ile uyumlu)
-    #   Cuma <12 UTC : n=16  +48$     → hasar tamamen öğleden sonra
-    #   en kötü hücre: Cuma 15 UTC, n=9, −3.557$
-    # Koşullu plasebo (5.000 rastgele eşit-büyüklükte blok): p=0,0150 GEÇTİ.
-    # ── 2026-08-30 CANLIYA ALINDI — 5 bağımsız test geçildi ────────────────
-    #  1) Permutasyon testi (20.000 karıştırma): kalan ortR +0,071 vs elenen
-    #     −0,349, fark +0,420 → p=0,0146 GEÇTİ
-    #  2) Eşik platosu: 10,11,12,13,14,15 UTC'nin HEPSİ +6.9k…+8.3k (filtresiz
-    #     +4.290) → tek bir sihirli saate bağlı DEĞİL, geniş plato
-    #  3) Hafta-çıkarma: 9 haftanın 9'unda da filtre bazı geçiyor
-    #  4) Aile kırılımı: 5 scope'un 4'ünde pozitif (yalnız DAYCOMBO −123, n=19)
-    #  5) Hacim: kalan n=258 ≥ 150 ✓ · davranış değişikliği yalnız %8,5 (24/282)
-    #  Ayrıca iki bağımsız ajan aynı sayıyı buldu (−4.050$ / −4.091$).
-    #  ⚠️ SINIR: kanıt NASDAQ'a özgü. Çapraz-sembol testinde GER40'ta Cuma ≥12
-    #  POZİTİF çıktı (+1.047$, n=7) → başka sembole GENELLEME YAPILMAZ.
-    #  Bu, TQ_FRIDAY_COOL'un (soğutma) tam bloğa yükseltilmesidir.
-    "FRIDAY_BLOCK_ENABLED": True,            # ölç + logla
-    "FRIDAY_BLOCK_LIVE": True,               # CANLI: gerçekten bloklar
-    "FRIDAY_BLOCK_FROM_HOUR": 12,            # UTC
-    "FRIDAY_BLOCK_SYMBOLS": ("NDX.INDX",),   # kanıt yalnız NASDAQ'ta
     "SCOPE_LOSS_COOLDOWN_ENABLED": False,
     "SCOPE_LOSS_COOLDOWN_MIN": 120,
     "SCOPE_LOSS_COOLDOWN_STREAK": 2,
@@ -376,13 +378,6 @@ def _atr_from(bars: Sequence[dict]) -> Optional[float]:
         pc = float(bars[i - 1]["close"])
         trs.append(max(h - l, abs(h - pc), abs(l - pc)))
     return sum(trs) / len(trs) if trs else None
-
-
-def friday_blocks(now_utc, from_hour: int) -> bool:
-    """Cuma ≥from_hour UTC → giriş elenmeli. now_utc=None → fail-open (False)."""
-    if now_utc is None:
-        return False
-    return now_utc.weekday() == 4 and now_utc.hour >= int(from_hour)
 
 
 def squeeze_ratio(closed_1m: Sequence[dict], fast: int = 14,

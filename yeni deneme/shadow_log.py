@@ -7,7 +7,12 @@ Canlı icraya HİÇ dokunmaz. İki iş yapar:
    (sızıntısız: sonuç bilinmeden kaydedilir).
 2. `resolve_pending(...)` — bot her taramada çağırır; yeterli bar geçmiş
    kayıtların sonucunu 1m barlardan ölçüp `shadow_followup.jsonl`'e yazar:
-     * Faz 2 kuralları  → sonraki 10 barın özeti (MFE/MAE, kapanış)
+     * Faz 2 kuralları  → GERÇEK geometriyle çözüm (scope'un TP/SL mesafesi,
+       bar-bar yarış, en fazla OUTCOME_MAX_MIN) + sonraki 10 barın özeti.
+       ⚠️ 2026-09-02 DÜZELTMESİ: eskiden YALNIZ 10 barlık MFE/MAE yazılıyordu.
+       TP'si 80 / SL'i 110 puan olan bir işlemi 10 bar çözemez — bu yüzden
+       946 kayıtlık POS_TIGHT gölge karnesi backtest ile ÇELİŞİYORDU ve
+       hiçbir kapı kararı kanıtla kapanamıyordu.
      * Faz 3 probasyon  → 5 barlık gürültü bandı verdikti + hipotetik TP/SL sonucu
 
 Durum `shadow_pending.json`'da tutulur (restart-dayanıklı). Tüm yollar fail-open:
@@ -28,7 +33,8 @@ GATE_SKIP_JSONL = HERE / "gate_skipped.jsonl"
 FOLLOWUP_JSONL = HERE / "shadow_followup.jsonl"
 PENDING_FILE = HERE / "shadow_pending.json"
 
-FOLLOWUP_BARS = 10                # Faz-2: "sonraki_10_bar_özeti"
+FOLLOWUP_BARS = 10                # Faz-2: kısa özet (geriye dönük uyumluluk)
+FOLLOWUP_MAX_MIN = 480            # Faz-2: gerçek TP/SL çözümü için üst sınır
 OUTCOME_MAX_MIN = 480             # Faz-3: hipotetik işlem en fazla 8 saat izlenir
 
 _pending: Optional[list] = None
@@ -67,11 +73,17 @@ def _append(path: Path, rec: dict) -> None:
 def record_shadow(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                   direction: str, rule: str, decision: str, price: float,
                   sl: float | None = None, tp: float | None = None,
-                  extra: dict | None = None, follow: bool = True) -> None:
+                  extra: dict | None = None, follow: bool = True,
+                  tp_dist: float | None = None,
+                  sl_dist: float | None = None) -> None:
     """Gölge kararı yaz + (follow=True ise) sonuç takibine al.
 
     decision: 'would_block' | 'would_wait' | 'would_allow' — kural gerçekten
     uygulansaydı ne olurdu. Canlı davranış BUNDAN ETKİLENMEZ.
+
+    tp_dist/sl_dist: scope'un GERÇEK geometrisi (puan). Verilirse çözümleme
+    10 barlık özet yerine gerçek TP/SL yarışıyla yapılır — karar verilebilir
+    bir karne ancak böyle çıkar (bkz. modül başlığındaki 2026-09-02 düzeltmesi).
     """
     try:
         rec = {
@@ -96,6 +108,8 @@ def record_shadow(scope_key: str, forexsai_sym: str, mt5_symbol: str,
             "scope": scope_key, "symbol": forexsai_sym, "mt5_symbol": mt5_symbol,
             "direction": direction, "rule": rule, "decision": decision,
             "price": rec["price"], "sl": rec["sl"], "tp": rec["tp"],
+            "tp_dist": None if tp_dist is None else float(tp_dist),
+            "sl_dist": None if sl_dist is None else float(sl_dist),
             "extra": extra or {},
         })
         _save()
@@ -192,8 +206,21 @@ def resolve_pending(fetch_bars: Callable[[str, int], Optional[Sequence[dict]]],
                 stage = it.get("stage")
 
                 if stage == "followup":
+                    tp_d, sl_d = it.get("tp_dist"), it.get("sl_dist")
+                    geo = tp_d and sl_d
+                    # Geometri varsa: yarış çözülene kadar bekle (tavan
+                    # FOLLOWUP_MAX_MIN). Yoksa eski 10-bar davranışı.
                     if age < (FOLLOWUP_BARS + 1) * 60:
                         keep.append(it); continue
+                    if geo:
+                        uzun = _bars_since(fetch_bars, it["mt5_symbol"], age,
+                                           min(int(age // 60) + 2, 600))
+                        sonuc = _hypothetical_outcome(it["direction"], it["price"],
+                                                      float(tp_d), float(sl_d), uzun)
+                        if sonuc is None and age < FOLLOWUP_MAX_MIN * 60:
+                            keep.append(it); continue     # yarış sürüyor, bekle
+                    else:
+                        sonuc = None
                     bars = _bars_since(fetch_bars, it["mt5_symbol"], age, FOLLOWUP_BARS)
                     fav, adv = _excursions(it["direction"], it["price"], bars)
                     _append(FOLLOWUP_JSONL, {
@@ -206,6 +233,9 @@ def resolve_pending(fetch_bars: Callable[[str, int], Optional[Sequence[dict]]],
                         "next10_low": min((float(b["low"]) for b in bars), default=None),
                         "next10_close": float(bars[-1]["close"]) if bars else None,
                         "mfe": round(fav, 2), "mae": round(adv, 2),
+                        # ⭐ asıl karne: gerçek TP/SL yarışının sonucu
+                        "outcome": sonuc,          # WIN | LOSS | None(çözülmedi)
+                        "tp_dist": tp_d, "sl_dist": sl_d,
                         "extra": it.get("extra") or {},
                     })
                     changed = True

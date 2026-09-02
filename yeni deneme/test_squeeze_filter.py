@@ -49,38 +49,33 @@ def test_varsayilan_golge():
     assert "NDX.INDX" in pr.flag(None, "SQZ_FILTER_SYMBOLS")
 
 
-# ── Cuma bloğu (2026-08-30) ────────────────────────────────────────────────
-import datetime as _dt
+# ── Cuma bloğu: KANONİK mekanizma NDX_FRIDAY_BLOCK (2026-08-30) ───────────
+# Ayrı bir FRIDAY_BLOCK_* kapısı eklenmiş ve sonra KALDIRILMIŞTIR: kutuda
+# NDX_FRIDAY_BLOCK zaten ~2026-08-07'den beri TÜM Cuma NDX girişlerini
+# bloklıyordu (kanıt: son Cuma işlemi 08-07, veri 08-26'ya kadar sürüyor ve
+# aradaki 3 Cuma'da tek işlem yok). Paralel ikinci mekanizma yerine kanıt
+# mevcut bayrağa bağlandı ve repo varsayılanı True yapıldı.
 
 
-def _utc(gun, saat):
-    """2026-08-{gun} {saat}:00 UTC — 28 Ağu Cuma, 27 Ağu Perşembe."""
-    return _dt.datetime(2026, 8, gun, saat, 0, tzinfo=_dt.timezone.utc)
+def test_cuma_kanonik_bayrak_acik():
+    assert pr.flag(None, "NDX_FRIDAY_BLOCK") is True
 
 
-def test_cuma_ogleden_sonra_bloklanir():
-    assert _utc(28, 12).weekday() == 4          # gerçekten Cuma
-    assert pr.friday_blocks(_utc(28, 12), 12) is True
-    assert pr.friday_blocks(_utc(28, 15), 12) is True
+def test_yinelenen_cuma_kapisi_kaldirildi():
+    assert not hasattr(pr, "friday_blocks"), "yinelenen mekanizma geri gelmis"
+    assert "FRIDAY_BLOCK_LIVE" not in pr.DEFAULTS
 
 
-def test_cuma_sabahi_gecer():
-    assert pr.friday_blocks(_utc(28, 11), 12) is False
-    assert pr.friday_blocks(_utc(28, 0), 12) is False
+# ── Sıkı konum kapısı sembol kapsamı (2026-09-02) ─────────────────────────
+def test_pos_tight_canli_ama_sembol_sinirli():
+    """Gölge ölçümü: GDAXI %28,6 (başabaş %64) → blokla; NDX %62,0 → bloklama."""
+    assert pr.flag(None, "POS_TIGHT_BLOCK") is True
+    syms = pr.flag(None, "POS_TIGHT_SYMBOLS")
+    assert "GDAXI.INDX" in syms
+    assert "NDX.INDX" not in syms, "NDX'te bloklamak gölge kanıtına aykiri"
+    assert "USOIL.FOREX" not in syms, "USOIL'de bloklananlar %99 kazaniyor"
 
 
-def test_diger_gunler_etkilenmez():
-    assert _utc(27, 15).weekday() == 3          # Perşembe
-    assert pr.friday_blocks(_utc(27, 15), 12) is False
-
-
-def test_veri_yoksa_fail_open():
-    assert pr.friday_blocks(None, 12) is False
-
-
-def test_cuma_canli():
-    """2026-08-30'da canlıya alındı (5 bağımsız test: permutasyon p=0,015,
-    eşik platosu 10-15 UTC, hafta-çıkarma 9/9, aile 4/5, hacim n=258)."""
-    assert pr.flag(None, "FRIDAY_BLOCK_LIVE") is True
-    assert pr.flag(None, "FRIDAY_BLOCK_ENABLED") is True
-    assert pr.flag(None, "FRIDAY_BLOCK_FROM_HOUR") == 12
+def test_pos_tight_esikleri_degismedi():
+    assert pr.flag(None, "POS_TIGHT_SELL_MIN") == 0.60
+    assert pr.flag(None, "POS_TIGHT_BUY_MAX") == 0.40
