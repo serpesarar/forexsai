@@ -1,0 +1,1 @@
+"""Strateji laboratuvarı — paylaşılan çekirdek."""
