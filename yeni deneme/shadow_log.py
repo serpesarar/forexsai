@@ -33,6 +33,16 @@ GATE_SKIP_JSONL = HERE / "gate_skipped.jsonl"
 FOLLOWUP_JSONL = HERE / "shadow_followup.jsonl"
 PENDING_FILE = HERE / "shadow_pending.json"
 
+# ⚠️ 2026-09-05 SAHTE ÇOĞALTMA DÜZELTMESİ
+# Bot 60-75 sn'de bir tarıyor ve aynı KOŞUL sürdükçe aynı gölge kararını tekrar
+# tekrar yazıyordu: XAUUSD 617 kayıt = 36 gerçek olay (17,1× şişme), GDAXI 113
+# kayıt = 14 olay (8,1×). Bu, karnedeki n'i sahte büyütüp p değerlerini
+# felaket derecede yanlış gösterdi (GDAXI p~1e-10 sanıldı, gerçekte 0,022).
+# Artık: aynı (scope, kural) için EPIZOD_SESSIZLIK boyunca sessizlik olmadan
+# ikinci kayıt YAZILMAZ. Bir epizod = kapının aralıksız ateşlediği süre.
+EPIZOD_SESSIZLIK = 1800           # sn — bu kadar sessizlikten sonra YENİ epizod
+_son_gorulme: dict = {}           # (scope, kural) -> son ateşleme zamanı
+
 FOLLOWUP_BARS = 10                # Faz-2: kısa özet (geriye dönük uyumluluk)
 FOLLOWUP_MAX_MIN = 480            # Faz-2: gerçek TP/SL çözümü için üst sınır
 OUTCOME_MAX_MIN = 480             # Faz-3: hipotetik işlem en fazla 8 saat izlenir
@@ -86,6 +96,14 @@ def record_shadow(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     bir karne ancak böyle çıkar (bkz. modül başlığındaki 2026-09-02 düzeltmesi).
     """
     try:
+        # ── EPIZOD BASTIRMA: süregelen aynı koşulu tekrar yazma ────────────
+        _anahtar = (scope_key, rule)
+        _simdi = time.time()
+        _onceki = _son_gorulme.get(_anahtar)
+        _son_gorulme[_anahtar] = _simdi
+        if _onceki is not None and (_simdi - _onceki) <= EPIZOD_SESSIZLIK:
+            return                     # aynı epizodun tekrarı — kayıt YOK
+
         rec = {
             "ts": datetime.now(timezone.utc).isoformat(),
             "scope": scope_key, "symbol": forexsai_sym, "mt5_symbol": mt5_symbol,

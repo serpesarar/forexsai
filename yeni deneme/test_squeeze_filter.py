@@ -67,15 +67,23 @@ def test_yinelenen_cuma_kapisi_kaldirildi():
 
 
 # ── Sıkı konum kapısı sembol kapsamı (2026-09-02) ─────────────────────────
-def test_pos_tight_canli_ama_sembol_sinirli():
-    """Gölge ölçümü: GDAXI %28,6 (başabaş %64) → blokla; NDX %62,0 → bloklama."""
-    assert pr.flag(None, "POS_TIGHT_BLOCK") is True
-    syms = pr.flag(None, "POS_TIGHT_SYMBOLS")
-    assert "GDAXI.INDX" in syms
-    assert "NDX.INDX" not in syms, "NDX'te bloklamak gölge kanıtına aykiri"
-    assert "USOIL.FOREX" not in syms, "USOIL'de bloklananlar %99 kazaniyor"
+def test_pos_tight_golgede():
+    """2026-09-05: sahte çoğaltma bulundu, canlı blok GERİ ALINDI.
+
+    GDAXI kanıtı 22W/55L (n=77) sanılıyordu; epizod bazında 2W/6L (n=8),
+    p=0,022 → 6 karşılaştırmada Bonferroni (p<0,0083) geçmiyor."""
+    assert pr.flag(None, "POS_TIGHT_BLOCK") is False, "kanıt yetersizken blok açılamaz"
+    assert pr.flag(None, "POS_TIGHT_SYMBOLS") == (), "hiçbir sembolde bloklamamalı"
+    assert pr.flag(None, "POS_TIGHT_ENABLED") is True, "ölçüm sürmeli"
 
 
 def test_pos_tight_esikleri_degismedi():
     assert pr.flag(None, "POS_TIGHT_SELL_MIN") == 0.60
     assert pr.flag(None, "POS_TIGHT_BUY_MAX") == 0.40
+
+
+def test_epizod_bastirma_aktif():
+    """Sahte çoğaltma bir daha olmasın: shadow_log epizod bastırması açık."""
+    import shadow_log
+    assert hasattr(shadow_log, "EPIZOD_SESSIZLIK")
+    assert shadow_log.EPIZOD_SESSIZLIK >= 600, "epizod penceresi çok kısa"

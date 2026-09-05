@@ -87,9 +87,23 @@ DEFAULTS: dict[str, object] = {
     # sıkı kapının canlıda BLOKLAYACAĞI popülasyonu ölçmez. Gölge kaydı gerçek
     # bloklanan kümeyi ölçüyor — bu yüzden gölge kanıtı backtest'i EZER.
     # Gölge ölçümü TÜM sembollerde sürer; yalnız BLOKLAMA sembol listesiyle sınırlı.
-    "POS_TIGHT_ENABLED": True,
-    "POS_TIGHT_BLOCK": True,                    # sembol listesiyle sınırlı
-    "POS_TIGHT_SYMBOLS": ("GDAXI.INDX",),       # yalnız kanıtlanan sembol
+    # ⛔ 2026-09-05 GERİ ALINDI — kanıt SAHTE ÇOĞALTMAYLA şişmişti.
+    # 09-02'de "GDAXI 22W/55L, n=77, z=−6,47, p≈1e-10" diye canlıya alınmıştı.
+    # Gerçek: bot 60-75 sn'de bir tarayıp aynı koşulu tekrar tekrar kaydediyordu
+    # (GDAXI 113 ham kayıt = yalnız 14 bağımsız epizod, 8,1× şişme).
+    # EPİZOD BAZINDA doğru tablo (backend/research/golge_karne.py):
+    #   GDAXI BUY : 2W/6L  = %25,0 vs başabaş %64,0 → fark −39,0  p=0,022
+    #   USOIL BUY : 11W/1L = %91,7 vs %58,9         → fark +32,8  p=0,021 (BLOKLAMA)
+    #   NDX  SELL : 8W/6L  = %57,1 vs %57,9         → fark  −0,8  p=0,955 (kanıt yok)
+    #   XAUUSD BUY: 17W/19L= %47,2 vs %42,9         → fark  +4,4  p=0,597 (kanıt yok)
+    # GDAXI'nin YÖNÜ doğru ama n=8 çözülmüş epizod ve 6 karşılaştırmada
+    # Bonferroni eşiği p<0,0083 → 0,022 GEÇMİYOR. Kanıt yeterli değil.
+    # Yeniden açma şartı: golge_karne.py'de GDAXI epizodu ≥30 ve p Bonferroni'yi
+    # geçtiğinde. shadow_log artık yazarken epizod bastırıyor, yani biriken
+    # kayıtlar bundan sonra gerçek olay sayısını verecek.
+    "POS_TIGHT_ENABLED": True,                  # ölçüm sürüyor
+    "POS_TIGHT_BLOCK": False,                   # ⛔ GÖLGEYE geri alındı
+    "POS_TIGHT_SYMBOLS": (),                    # hiçbir sembolde bloklamıyor
     "POS_TIGHT_SELL_MIN": 0.60,
     "POS_TIGHT_BUY_MAX": 0.40,
     "SELL_RSI_SHADOW_ENABLED": True,

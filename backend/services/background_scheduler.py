@@ -45,6 +45,16 @@ _last_error_analysis: Optional[datetime] = None
 _last_prediction_log: Dict[str, datetime] = {}  # Per symbol
 _last_pulse_log: Dict[str, datetime] = {}  # Per symbol, for Pulse signal logging
 PULSE_LOG_INTERVAL = 180  # Log Pulse/EMEL signals every 3 minutes (sync with lifecycle)
+# ── META (Core ensemble) — 2026-09-05 ────────────────────────────────────
+# Meta engine EKSİKTİ: yalnız biri /neural/{sembol} sayfasını açtığında
+# hesaplanıyor ve loglanıyordu. Sonuç: 21 günde 4 sembolde toplam 74 kayıt
+# (pulse1'de 530) — hem çok az, hem de "birinin bakmayı seçtiği anlar" olduğu
+# için YANLI örneklem. Artık diğer 6 model gibi arka planda periyodik koşuyor.
+# Not: meta_signal_logger kendi içinde 20 dk'lık yazma aralığı uyguluyor
+# (META_SNAPSHOT_INTERVAL_SECONDS), bu yüzden burada sık çağırmak DB'yi şişirmez.
+_last_meta_log: Dict[str, datetime] = {}
+META_LOG_INTERVAL = 300   # 5 dk'da bir değerlendir; yazma 20 dk'da bir olur
+
 _last_smc_log: Optional[datetime] = None
 _last_smc_scope_log: Dict[tuple[str, str], datetime] = {}
 SMC_LOG_INTERVAL = 180
@@ -614,6 +624,32 @@ async def log_pulse_signals_if_needed():
                 logger.error(f"{model_type} {tf} log error {symbol}: {e}")
 
 
+async def log_meta_signals_if_needed():
+    """Core/meta ensemble'ı periyodik değerlendir ve (yazma aralığı gelmişse) logla.
+
+    Diğer modeller gibi görünürlükten BAĞIMSIZ ölçüm sağlar. get_meta_signal
+    kendi içinde capture_meta_snapshot_if_due'yu çağırır; biz yalnız motoru
+    düzenli çalıştırıyoruz. Fail-open: hata sinyal akışını etkilemez."""
+    global _last_meta_log
+
+    now = datetime.now(timezone.utc)
+
+    for symbol in TRACKED_SYMBOLS:
+        last_log = _last_meta_log.get(symbol)
+        if last_log and (now - last_log).total_seconds() < META_LOG_INTERVAL:
+            continue
+        _last_meta_log[symbol] = now
+
+        if not is_db_available():
+            continue
+        try:
+            from services.meta_analysis_engine import get_meta_signal
+            await get_meta_signal(symbol)
+            await asyncio.sleep(0.3)
+        except Exception as e:
+            logger.error(f"meta log error {symbol}: {e}")
+
+
 async def log_smc_signals_if_needed():
     global _last_smc_log
 
@@ -943,6 +979,8 @@ async def background_scheduler_loop_with_rss():
                 # Log Pulse/EMEL signals every 15 min
                 await log_pulse_signals_if_needed()
                 await log_smc_signals_if_needed()
+                # Core/meta ensemble: arka planda periyodik (2026-09-05)
+                await log_meta_signals_if_needed()
                 from services.ai_panel_signal_logger import log_ai_panel_signals_if_needed
                 await log_ai_panel_signals_if_needed()
                 # RSS aggregation disabled locally since Python listener performs it
