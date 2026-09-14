@@ -618,6 +618,7 @@ def append_free_journal(ctx: dict, dec: dict) -> dict:
         "multi_tf": ctx.get("multi_tf"),
         "forensics": ctx.get("forensics"),   # SL-otopsi snapshot
         "entry_quality": ctx.get("entry_quality"),   # bıçak-yakalama/hacim kapısı (gölge ölçüm)
+        "regime": ctx.get("regime"),                 # rejim durumu (ölçüm)
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),
         "effort": dec.get("_effort", DECIDE_EFFORT),   # model/efor epoch etiketi
         "shadow_model": shadow,          # Fable5 A/B kararı (ayrı grade)
@@ -672,6 +673,7 @@ def append_journal(situation: dict, dec: dict) -> dict:
         "dirs_live": {d: (b.get("live") or {}) for d, b in (situation.get("directions") or {}).items()},
         "forensics": situation.get("forensics"),   # SL-otopsi: hacim/VIX/DXY/kanal/multi-TF S/R
         "entry_quality": situation.get("entry_quality"),   # bıçak-yakalama/hacim kapısı (gölge ölçüm)
+        "regime": situation.get("regime"),                 # rejim durumu (ölçüm; rejim değişince kapı buradan kurulacak)
         "vix": situation.get("vix"),
         "context": situation.get("context"),
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),

@@ -31,6 +31,7 @@ import event_calendar as evcal  # noqa: E402  (yüksek-etkili olay penceresi)
 import free_context as fx  # noqa: E402
 import forensics  # noqa: E402
 import entry_quality  # noqa: E402  (bıçak yakalama + hacim patlaması kapısı)
+import regime_meter  # noqa: E402  (rejim ölçümü — kapı değil, enstrüman + zarf uyarısı)
 from data_contract import validate_bars, validate_multi  # noqa: E402  (sıfır-güven)
 import outcomes  # noqa: E402
 
@@ -511,6 +512,7 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             dec, sit["entry_quality"] = entry_quality.apply_gate(
                 sit["symbol"], dec, sit.get("forensics"),
                 cf_direction=sit.get("primary_dir"))            # bıçak yakalama + hacim patlaması
+            sit["regime"] = regime_meter.measure(sit.get("forensics"), sit["symbol"])
             append_journal(sit, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
@@ -582,6 +584,7 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             dec, ctx["entry_quality"] = entry_quality.apply_gate(
                 FREE_SYMBOL, dec, ctx.get("forensics"),
                 cf_direction="BUY")                             # bıçak yakalama + hacim patlaması
+            ctx["regime"] = regime_meter.measure(ctx.get("forensics"), FREE_SYMBOL)
             append_free_journal(ctx, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}·free] {FREE_SYMBOL}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")

@@ -95,7 +95,33 @@ Trend kapılarını devretmek yanlış olurdu: decider'ın işlem tipinde ölç�
 
 ---
 
-## 4. Rejim: ölçüldü, ama zamanlanamıyor
+## 4. Rejim: ASIL SEBEP — örneklemde rejim çeşitliliği yok
+
+**Tüm 2,5 aylık journal TEK bir düşük-oynaklık rejiminden ibaret:**
+
+| gösterge | aralık | not |
+|---|---|---|
+| VIX | **15.1 – 19.6** (medyan 17.1) | VIX ≥ 20 olan kayıt: **0** |
+| VIX ≥ 18.4 (panelin kanıtlı eşiği) | kayıtların **%7.3**'ü | rejim fiilen hiç oluşmadı |
+| DXY | 98.6 – 101.6 | dar bant |
+
+Tek rejimden rejim etkisi öğrenilemez. "Rejim yakaladı mı?" sorusunun cevabı:
+**hayır — ortada yakalanacak bir rejim değişimi yok.** Denenen ve elenen adaylar:
+
+| rejim adayı | sonuç |
+|---|---|
+| geçmiş performansın kalıcılığı | r=0.006–0.053 → öngörü yok |
+| ADX(1h/4h) üst-TF trend gücü | train/test tutarsız (`<15` train %65.5 → test %57.3) |
+| ATR%(4h) oynaklık | ⚠ **KONFOUND**: ham `≥1.2` kovasının **223/223'ü USOIL**; sembol-içi yüzdelikte test dönemi dejenere (175/183 XAU) |
+| VIX bandı | aralık zaten yok (yukarıdaki tablo) |
+| 4h hacim genişlemesi | 0.7–1.0 "ölü bant" iki sette de negatif; gerisi tutarsız |
+
+⚠ **BU, `entry_quality` KAPISI İÇİN DE BİR UYARIDIR:** kapı eşikleri (chz_dir≥2.0,
+vol≥1.5) bu TEK rejim içinde ölçüldü. VIX 25'te aynı eşiklerin geçerli olduğu
+kanıtlanmadı. Bu yüzden `regime_meter.py` her karara rejim damgası basar ve koşul
+gözlenen zarfın dışına çıkarsa **"kapı kanıtı burada geçerli değil"** uyarısı verir.
+
+### 4-EK. Eski başlık: kalıcılık testi
 
 **4a. ADX hipotezi (iyi hafta ADX1h=33.6 vs kötü hafta 17.1) doğrulanmadı.**
 Tüm geçmişte ADX(1h) kovaları train/test arasında tutarsız (`<15` train %65.5 → test %57.3).
