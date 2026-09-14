@@ -2781,5 +2781,38 @@
     "source": "session",
     "created_at": "2026-09-14T05:28:47.898867+00:00",
     "updated_at": "2026-09-14T05:28:47.898869+00:00"
+  },
+  {
+    "id": "bl_b28c9db544",
+    "title": "backlog.json git'te izlenmemeli — kutu oto-guncellemesini kilitliyor",
+    "detail": "backend/data/evolution/backlog.json iki makinede de YAZILAN bir veri dosyasi ama git'te izleniyor. Panelden her backlog girdisi eklendiginde kutunun 'git pull --ff-only' adimi 'local changes would be overwritten' ile reddediyor ve kutu sessizce eski kodda kaliyor (2026-09-14'te yasandi, elle birlestirilerek acildi). Cozum: ya .gitignore'a al ve Supabase uzerinden senkronla, ya da ajanin auto_update_tick'ine backlog.json icin otomatik merge/stash adimi ekle",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T06:33:45.764207+00:00",
+    "updated_at": "2026-09-14T06:33:45.764456+00:00"
+  },
+  {
+    "id": "bl_998bbfd456",
+    "title": "Rejim degisince (VIX>=20) kapi kanitlarini YENIDEN olc",
+    "detail": "entry_quality esikleri (chz_dir>=2.0, vol>=1.5) VIX 15-19.6 araliginda olculdu; VIX>=20 hic gorulmedi. regime_meter journal'a rejim damgasi basiyor. VIX 20+ rejiminde >=150 karar birikince: (1) kapinin elenen kumesi o rejimde de negatif mi, (2) esikler kaymali mi, (3) rejim-bazli giris kapisi artik kurulabilir mi -- ucunu birden olc",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T06:54:53.218345+00:00",
+    "updated_at": "2026-09-14T06:54:53.218543+00:00"
+  },
+  {
+    "id": "bl_d86dc4c453",
+    "title": "USOIL oynaklik konfoundu: sembol-normalize ATR% ile yeniden bak",
+    "detail": "Ham ATR%(4h)>=1.2 kovasinin 223/223'u USOIL cikti, yani 'yuksek oynaklik kotu' bulgusu sembol etkisiydi. Sembol-ici yuzdelik denendi ama test donemi XAU-agirlikli (175/183) oldugu icin dejenere. Daha uzun veriyle veya sembol-basina ayri kronolojik bolme ile tekrar et",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T06:54:53.221831+00:00",
+    "updated_at": "2026-09-14T06:54:53.221837+00:00"
   }
 ]
