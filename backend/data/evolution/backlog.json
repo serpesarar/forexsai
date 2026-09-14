@@ -2836,5 +2836,27 @@
     "source": "session",
     "created_at": "2026-09-14T07:13:35.626167+00:00",
     "updated_at": "2026-09-14T07:13:35.626173+00:00"
+  },
+  {
+    "id": "bl_15e5f9d52e",
+    "title": "vix_sell_gate: n buyuyunce NDX disina genisletilsin mi",
+    "detail": "Kapi su an yalniz NDX SELL (n=21/25 kucuk). Havuz kurali CF yarilarinda tutarsiz cikti ve USOIL TERS yonde (+0.113R). Gergin VIX bandinda 100+ karar daha birikince: (1) NDX kanit gucleniyor mu, (2) GDAXI/XAU eklenebilir mi, (3) USOIL'in ters davranisi gercek mi yoksa n=15-24 gurultusu mu -- ucunu birden olc",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T07:24:43.219863+00:00",
+    "updated_at": "2026-09-14T07:24:43.220105+00:00"
+  },
+  {
+    "id": "bl_f2710cbd02",
+    "title": "Gergin VIX'te BUY LEHINE kanit da var — kullanilmiyor",
+    "detail": "VIX>=18.4 bandinda karsi-olgu BUY %70.0/+0.119R (VIX<18.4'te %62.5/-0.022R, +7.5pp fark). Su an sadece SELL frenleniyor; BUY tarafindaki pozitif kanit hic tuketilmiyor. Secenek: gergin rejimde BUY icin size_factor arttirimi ya da prompt'ta acik tesvik. Once n buyusun (BUY n=243 ama tek rejim dilimi)",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T07:24:43.223068+00:00",
+    "updated_at": "2026-09-14T07:24:43.223073+00:00"
   }
 ]
