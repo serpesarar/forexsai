@@ -110,6 +110,24 @@ tek bir çıktı verdi, ve 08-09'da sessizce durdu. Ölçülmemiş, terk edilmi�
 Trend yok. Son iki hafta, serinin **zıt yönlerdeki iki uç değeri** — küçük pozitif bir
 kenar etrafında ders kitabı ortalamaya-dönüş.
 
+## 1-D. ÇÜRÜTME DENEMELERİ — "son iki hafta yükseldi" bulgusu neleri atlattı?
+
+Kullanıcının gözlemi (%56.9 → %73.2 yükseliş) ciddiye alınıp bulguyu geçersiz
+kılabilecek her metodolojik açık tek tek denendi:
+
+| çürütme denemesi | sonuç |
+|---|---|
+| **Çözülme gecikmesi yanlılığı** — "taze hafta eksik çözülmüştür, WR yapay düşük" | ❌ ÇÜRÜDÜ: her hafta %99-100 çözülmüş (09-07: **161/161**). Ayrıca kazananlar kaybedenlerden 0.08sa **ERKEN** çözülüyor (medyan 3.15 vs 3.24sa) — yanlılık ters yönde bile değil |
+| **Yaş penceresi eşitlenmemiş** | ❌ ÇÜRÜDÜ: ≥24/48/72sa kısıtlarının üçünde de sayılar **birebir aynı** |
+| **Soru anındaki görüntü farklıydı** | ❌ ÇÜRÜDÜ: 09-13'te bilinen WR ile bugünkü WR **aynı** (üç haftada da fark +0.0pp) |
+| **Epoch karışımı** (RR değişimi WR'ı bozuyor) | ❌ ÇÜRÜDÜ: XAU dışında RR sabit 0.67; epoch-düzeltilmiş kenar serisi aynı sonucu veriyor |
+| **Sembol konfoundu** (oynaklık rejimi) | ✅ GERÇEKTİ — ama rejim iddiasını çürüttü (223/223 USOIL) |
+
+Yani gözlem **doğruydu** (o iki hafta gerçekten %56.9 → %73.2 yükseldi) ama
+**kalıcı değildi**: ertesi hafta %52.8. Yükseliş gerçek, sebebi "iyileşme" değil.
+
+---
+
 ## 2. Decider'ın çekirdek tezi veri tarafından çürütülüyor
 
 Decider mean-reversion çalışır: `primary_dir` = "en güçlü aşırılık yönü", kanıt kapıları
