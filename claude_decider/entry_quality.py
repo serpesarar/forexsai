@@ -85,14 +85,25 @@ def assess(forensics: dict | None, direction: str | None) -> dict:
     return out
 
 
-def apply_gate(symbol: str, dec: dict, forensics: dict | None) -> tuple[dict, dict]:
-    """OPEN kararına kapıyı uygula. Dönen: (karar, kalite).
+def apply_gate(symbol: str, dec: dict, forensics: dict | None,
+               cf_direction: str | None = None) -> tuple[dict, dict | None]:
+    """OPEN kararına kapıyı uygula. Dönen: (karar, kalite|None).
 
     GATE_BLOCKS False iken karar DEĞİŞMEZ — yalnız kalite journal'a yazılır
     (gölge ölçüm). True iken OPEN → WAIT.
+
+    OPEN olmayan kararlarda kapı karara dokunmaz ama `cf_direction` verilmişse
+    kalite yine de KARŞI-OLGU yönü için ölçülür: karşı-olgu her WAIT'te grade
+    edildiğinden gölge ölçümün örneklemi böyle ~3 katına çıkar (offline
+    doğrulama da hem OPEN hem karşı-olgu setinde yapılmıştı).
     """
-    quality = assess(forensics, dec.get("direction"))
-    if not GATE_ENABLED or str(dec.get("action", "")).upper() != "OPEN":
+    is_open = str(dec.get("action", "")).upper() == "OPEN"
+    direction = dec.get("direction") if is_open else cf_direction
+    if not GATE_ENABLED or not direction:
+        return dec, None
+    quality = assess(forensics, direction)
+    if not is_open:
+        quality["counterfactual_dir"] = direction     # kapı uygulanmadı, yalnız ölçüldü
         return dec, quality
     if not quality["blocked"]:
         return dec, quality

@@ -509,7 +509,8 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             dec = _drift_guard(sit["symbol"], dec, drift_map)   # rejim-flip askısı (journal'dan önce)
             dec = _weekend_guard(sit["symbol"], dec, now)       # hafta sonu gap koruması
             dec, sit["entry_quality"] = entry_quality.apply_gate(
-                sit["symbol"], dec, sit.get("forensics"))       # bıçak yakalama + hacim patlaması
+                sit["symbol"], dec, sit.get("forensics"),
+                cf_direction=sit.get("primary_dir"))            # bıçak yakalama + hacim patlaması
             append_journal(sit, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
@@ -579,7 +580,8 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             dec = _drift_guard(FREE_SYMBOL, dec, drift_map)     # rejim-flip askısı (free de dahil)
             dec = _weekend_guard(FREE_SYMBOL, dec, now)         # hafta sonu gap koruması
             dec, ctx["entry_quality"] = entry_quality.apply_gate(
-                FREE_SYMBOL, dec, ctx.get("forensics"))         # bıçak yakalama + hacim patlaması
+                FREE_SYMBOL, dec, ctx.get("forensics"),
+                cf_direction="BUY")                             # bıçak yakalama + hacim patlaması
             append_free_journal(ctx, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}·free] {FREE_SYMBOL}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")

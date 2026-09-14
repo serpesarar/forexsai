@@ -75,3 +75,20 @@ def test_wait_karari_dokunulmaz(monkeypatch):
     dec = {"action": "WAIT", "direction": "BUY", "size_factor": 0.0}
     out, _ = eq.apply_gate("NDX.INDX", dec, _fx(channel_z=-2.5, vol_ratio=1.0))
     assert out is dec      # salt supresif: WAIT'e dokunmaz
+
+
+def test_wait_karsi_olgu_yonuyle_olculur(monkeypatch):
+    """WAIT'te karar değişmez ama karşı-olgu yönü için kalite ÖLÇÜLÜR (gölge örneklemi)."""
+    monkeypatch.setattr(eq, "GATE_BLOCKS", True)
+    dec = {"action": "WAIT", "direction": None, "size_factor": 0.0}
+    out, q = eq.apply_gate("NDX.INDX", dec, _fx(channel_z=-2.5, vol_ratio=1.0),
+                           cf_direction="BUY")
+    assert out is dec
+    assert q["blocked"] and q["counterfactual_dir"] == "BUY" and q["chz_dir"] == 2.5
+
+
+def test_yonsuz_wait_bos_blob_yazmaz():
+    """Yön de karşı-olgu da yoksa journal'a boş blob yazılmaz (gürültü temizliği)."""
+    dec = {"action": "WAIT", "direction": None, "size_factor": 0.0}
+    out, q = eq.apply_gate("NDX.INDX", dec, _fx(channel_z=-2.5, vol_ratio=1.0))
+    assert out is dec and q is None
