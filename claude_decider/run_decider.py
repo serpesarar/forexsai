@@ -30,6 +30,7 @@ import evidence as ev  # noqa: E402
 import event_calendar as evcal  # noqa: E402  (yüksek-etkili olay penceresi)
 import free_context as fx  # noqa: E402
 import forensics  # noqa: E402
+import entry_quality  # noqa: E402  (bıçak yakalama + hacim patlaması kapısı)
 from data_contract import validate_bars, validate_multi  # noqa: E402  (sıfır-güven)
 import outcomes  # noqa: E402
 
@@ -507,6 +508,8 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             dec = decide_situation(sit, model=model)
             dec = _drift_guard(sit["symbol"], dec, drift_map)   # rejim-flip askısı (journal'dan önce)
             dec = _weekend_guard(sit["symbol"], dec, now)       # hafta sonu gap koruması
+            dec, sit["entry_quality"] = entry_quality.apply_gate(
+                sit["symbol"], dec, sit.get("forensics"))       # bıçak yakalama + hacim patlaması
             append_journal(sit, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
@@ -575,6 +578,8 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
             dec = decide_free(ctx, model=model)
             dec = _drift_guard(FREE_SYMBOL, dec, drift_map)     # rejim-flip askısı (free de dahil)
             dec = _weekend_guard(FREE_SYMBOL, dec, now)         # hafta sonu gap koruması
+            dec, ctx["entry_quality"] = entry_quality.apply_gate(
+                FREE_SYMBOL, dec, ctx.get("forensics"))         # bıçak yakalama + hacim patlaması
             append_free_journal(ctx, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}·free] {FREE_SYMBOL}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")

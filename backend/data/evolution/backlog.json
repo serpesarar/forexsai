@@ -2418,5 +2418,148 @@
     "source": "daily_analyst",
     "created_at": "2026-08-27T22:51:23.645564+00:00",
     "updated_at": "2026-08-27T22:51:23.645579+00:00"
+  },
+  {
+    "id": "bl_8476007fda",
+    "title": "TP büyütme (3-5xATR14) gölge ölçümü",
+    "detail": "Dış AI denetiminin yan bulgusu: NAS100'de TP'yi KÜÇÜLTMEK (2xATR) para kaybettiriyor ama BÜYÜTMEK kazandırıyor — 3/4/5xATR14 iki dönemde ve 4 kronolojik çeyrekte de pozitif, 5x tek tepe (DIŞ ortR +0.079 / İÇ +0.290 vs sabit +0.007/+0.147). Simülasyon MAX_OPEN_PER_SCOPE=1 slot işgalini, BUY'daki BE30+0.6R runner'ı ve swap'ı modellemiyor; aynı aile (TP_MODE=atr) 2026-08-15'te bir kez elendi. Yapılacak: ayrı gölge bayrağı (varsayılan eski davranış), 2 hafta canlı gölge ölçümü, koşullu plasebo, derin OOS. Rapor: analyst_reports/dis_ai_raporu_denetimi_2026-08-28.md",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-28T14:51:57.747713+00:00",
+    "updated_at": "2026-08-28T14:51:57.747834+00:00"
+  },
+  {
+    "id": "bl_0d6ee3dc62",
+    "title": "Sıkışma filtresi gölge ölçümü (2 hafta)",
+    "detail": "SQZ_FILTER_BLOCK=False ile canlıda gölge çalışıyor. 2 hafta sonra: shadow_log'daki would_block kayıtlarının gerçek sonuçlarını 1m replay ile ölç; (a) elenen küme hâlâ negatif mi, (b) 3. kronolojik çeyrek pozitife dönüyor mu, (c) plasebo 0.95-1.05 platosunda dayanıyor mu. Üçü de geçerse SQZ_FILTER_BLOCK=True. Rapor: analyst_reports/sikisma_filtresi_denetimi_2026-08-28.md",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-29T17:08:47.046223+00:00",
+    "updated_at": "2026-08-29T17:08:47.046342+00:00"
+  },
+  {
+    "id": "bl_a2510fb681",
+    "title": "Cuma: soğutma→blok yükseltmesi ölçülsün",
+    "detail": "Doğru eksende Cuma NAS100 n=40 SL%60 −4.002$ (6 haftanın 5'i negatif, dış AI Fisher p=0,014 diyor — bağımsız doğrulanmadı). Bot'ta TQ_FRIDAY_COOL=True zaten var (çukurda ek oy/decider onayı ister) ama TAM BLOK değil. Yapılacak: (a) Cuma'da soğutmadan GEÇEN işlemlerin karnesi ayrı çıkarılsın — soğutma zaten işini yapıyor mu? (b) tam blok karşı-olgusalı kronolojik dilimlerde + plasebo ile sınansın. Blok kararı bu iki ölçüm olmadan verilmez.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-08-30T00:35:10.070779+00:00",
+    "updated_at": "2026-08-30T00:35:10.071108+00:00"
+  },
+  {
+    "id": "bl_7eff2b0cd4",
+    "title": "İki gölge filtrenin birlikte ölçümü (Cuma + sıkışma)",
+    "detail": "SQZ_FILTER ve FRIDAY_BLOCK gölgede birlikte çalışıyor. Geriye dönük birleşik sonuç: 282->141 işlem, gerçekleşen +4.290$->+11.243$, kart 5/6 geçti. AÇIK KALAN: (a) hacim n=141<150, (b) iyileştirme bootstrap GA'sı sıfırı içeriyor (P=%90,4), (c) her iki filtre de aynı 2 aylık pencerede bulundu = seçim yanlılığı. Yapılacak: 2 hafta gölge -> shadow_log'daki would_block kayıtlarının gerçek sonucu 1m replay ile ölçülsün; n>=150 olur ve iyileştirme GA'sı sıfırın üstüne çıkarsa FRIDAY_BLOCK_LIVE=True + SQZ_FILTER_BLOCK=True. Rapor: analyst_reports/cikis_geometrisi_aramasi_2026-08-30.md",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-02T02:02:30.876972+00:00",
+    "updated_at": "2026-09-02T02:02:30.877221+00:00"
+  },
+  {
+    "id": "bl_9e5ff30c69",
+    "title": "Gölge takip penceresi 10 bar → gerçek TP/SL çözümü",
+    "detail": "shadow_log.py takip penceresi yalnız 10 bar MFE/MAE ölçüyor; TP 80 / SL 110 puanlık işlemi çözmeye yetmiyor, bu yüzden POS_TIGHT gölge karnesi (946 kayıt) backtest ile çelişiyor ve tartışma kanıtla kapanamıyor. Yapılacak: gate_skipped/shadow_followup kayıtlarını işlemin GERÇEK geometrisiyle (scope'un tp/sl mesafesi) 1m replay ile çöz, gate_audit tarzı. Sonra POS_TIGHT_BLOCK ve SQZ_FILTER_BLOCK kararları gerçek karneyle verilir. Rapor: analyst_reports/konum_kapisi_deneyleri_2026-09-02.md",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-02T18:25:11.761667+00:00",
+    "updated_at": "2026-09-02T18:25:11.761797+00:00"
+  },
+  {
+    "id": "bl_6444f947bd",
+    "title": "Kapı backtest'i yanlılığı — mevcut kapıların arkasında test yasağı",
+    "detail": "2026-09-02'de kanıtlandı: mevcut bir kapıdan (POS_SELL_MIN=0,40) GEÇMİŞ işlemlere daha sıkı eşik uygulayan backtest, sıkı kapının canlıda bloklayacağı popülasyonu ÖLÇMEZ ve ters sonuç verir (NDX'te backtest +8.401$ dedi, gölge karnesi bloklananların %62 kazandığını gösterdi). Yapılacak: (a) research/ altındaki kapı-backtest scriptlerine bu uyarı eklensin, (b) her yeni kapı önerisi için önce gölge kaydı biriktirilsin, backtest tek başına yeterli sayılmasın, (c) CLAUDE.md'ye kural olarak yazılsın.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-02T18:39:18.630668+00:00",
+    "updated_at": "2026-09-02T18:39:18.630791+00:00"
+  },
+  {
+    "id": "bl_ffc8ee7627",
+    "title": "Ters yön: geri çekilmede DAHA İYİ fiyattan giriş (pending limit)",
+    "detail": "Teyit-bekleme testi gösterdi ki beklemenin asıl maliyeti SELL'de daha KÖTÜ fiyattan girmek (13 TP→SL çevrilme, −9.060$). Tersi test edilmeli: sinyal sonrası kısa geri çekilmeyi bekleyip YUKARIDAN sat (SELL) / aşağıdan al (BUY). Bot'ta altyapı hazır: open_trade_sr pending limit + PENDING_EXPIRY_MIN=30. Ölçülecek: (a) doluluk oranı (kaç sinyal limitten dolar), (b) dolmayanların kaçırılan P&L'i, (c) dolanlarda SL'in fiyattan UZAKLAŞMASININ kazandırdığı. Rapor: analyst_reports/teyit_bekleme_girisi_2026-09-02.md",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-02T18:56:34.080397+00:00",
+    "updated_at": "2026-09-02T18:56:34.080659+00:00"
+  },
+  {
+    "id": "bl_2fc7927866",
+    "title": "S08 gölge bağlantısı + XAUUSD/USOIL/GDAXI bataryası",
+    "detail": "(1) S08'i (geri çekilmede daha iyi fiyattan limit) gölge bayrağı olarak bota bağla — kritik ölçüm: simülasyondaki %74 doluluk oranı canlıda gerçekleşiyor mu? X monoton arttığı için sonuç üst sınır; canlı doluluk tutmuyorsa fayda buharlaşır. (2) strategy/kosu.py ile aynı 8 stratejiyi XAUUSD, USOIL (SpotCrude), GDAXI (GER40) üzerinde koştur — kutudan bar+işlem CSV'si çekip --sembol ile ver, başka değişiklik gerekmez. NDX'te çürüyen bir strateji başka sembolde çalışabilir (ör. konum kapısı NDX'te zararlı, GDAXI'de z=−6,47 ile canlıya alındı).",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-04T16:30:18.161067+00:00",
+    "updated_at": "2026-09-04T16:30:18.161205+00:00"
+  },
+  {
+    "id": "bl_b4c202fd05",
+    "title": "GDAXI POS_TIGHT: epizod>=30 olunca yeniden değerlendir",
+    "detail": "09-02'de yanlışlıkla canlıya alınıp 09-05'te geri alındı (sahte çoğaltma: n=77 sanılan kanıt gerçekte 8 epizod). Yön doğru (bloklananlar %25 vs başabaş %64) ama Bonferroni geçmiyor (p=0,022 > 0,0083). shadow_log artık epizod bastırdığı için biriken kayıtlar gerçek olay sayısını verecek. Yapılacak: birkaç hafta sonra 'python backend/research/golge_karne.py --gun 42' koş; GDAXI epizodu >=30 ve p Bonferroni eşiğini geçiyorsa POS_TIGHT_BLOCK=True + POS_TIGHT_SYMBOLS=('GDAXI.INDX',) geri açılır.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-06T00:45:06.054074+00:00",
+    "updated_at": "2026-09-06T00:45:06.054328+00:00"
+  },
+  {
+    "id": "bl_ecebed6198",
+    "title": "entry_quality kapısını gölgeden canlıya al",
+    "detail": "2-3 hafta entry_quality.would_block canlı gölge ölçümü topla, elenen kümenin canlıda da negatif olduğu doğrulanınca ENTRY_QUALITY_BLOCK=True yap (kutunun decider_config.py'sine elle yazılmalı, gitignore'da)",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T05:28:47.893965+00:00",
+    "updated_at": "2026-09-14T05:28:47.894345+00:00"
+  },
+  {
+    "id": "bl_22314ca675",
+    "title": "USOIL decider'da askıya alınmalı",
+    "detail": "230 işlem WR %56.1 EV -0.063R (başabaş %59.9 altında); elenen alt küme -0.226R. HARD_BANS veya sembol askısı değerlendirilmeli",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T05:28:47.896088+00:00",
+    "updated_at": "2026-09-14T05:28:47.896091+00:00"
+  },
+  {
+    "id": "bl_37e860b0b1",
+    "title": "PLAYBOOK'a aşırılık-derinliği tablosu girmeli",
+    "detail": "Kapı OPEN'ı kesiyor ama model hala 'ne kadar aşırı o kadar iyi' diye muhakeme ediyor. chz_dir monoton düşüş tablosu (0.5-1.0 %65 -> >=2.5 %49.6) PLAYBOOK.md'ye yazılmalı ki model kendisi de kaçınsın",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T05:28:47.897561+00:00",
+    "updated_at": "2026-09-14T05:28:47.897563+00:00"
+  },
+  {
+    "id": "bl_d8a182878d",
+    "title": "4/4 TF trend uyumu = geç giriş hipotezi",
+    "detail": "n=137 WR %54.7 EV -0.134R: tüm TF'ler işlem yönünde hizalıyken decider kaybediyor (geç giriş?). n büyüyünce ayrı kapı adayı olarak yeniden ölç",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T05:28:47.898867+00:00",
+    "updated_at": "2026-09-14T05:28:47.898869+00:00"
   }
 ]
