@@ -6,9 +6,12 @@
 
 ## 0. Yönetici özeti
 
-1. **Decider sistematik olarak "önce yanlış, şimdi doğru" değil.** 11 haftanın tamamında
-   başabaşın etrafında salınıyor: toplam WR %61.1, başabaş %59.9 → **EV +0.006R**. Yani
-   ölçülebilir bir kenar yok, sıfırın hemen üstünde.
+1. **Bir tane gerçek "yanlış → doğru" var, ama Temmuz'da ve WR'a bakarak görülemez:**
+   XAU'nun stop geometrisi (2026-07-27) RR 0.40 → 0.67 düzeltildi; başabaş %71.4'ten
+   %59.9'a indi, EV −0.081R → +0.004R. Dikkat: **WR %65.0'ten %60.1'e DÜŞTÜ.** Sistem
+   yön tahmininde değil GEOMETRİDE yanlıştı (bkz. §1-B).
+   Bunun dışında sistem 11 haftadır başabaşın etrafında salınıyor: toplam WR %61.1,
+   başabaş %59.9 → **EV +0.006R**.
 2. **%73.2'lik hafta tek haftalık bir sıçramaydı ve hemen geri döndü:** ertesi hafta
    (09-07 → 09-13) **%52.8 / −0.118R**.
 3. **Decider'ın seçim alfası yok.** Karşı-olgu (her kayıtta "primary_dir açsaydı" mekanik
@@ -47,6 +50,64 @@
 | USOIL.FOREX | 230 | %56.1 | **−0.063R** | başabaşın altında, kanayan taraf |
 
 ---
+
+## 1-B. "Önceden yanlış yapıyordu, şimdi doğru yapıyor" — EVET, bir tane var
+
+Haftalık WR serisinde bu GÖRÜNMEZ, çünkü müdahalede **WR düştü ama EV yükseldi**.
+Epoch ayrılmadan bakmak (projenin `canonical-signal-metrics` kuralının yasakladığı şey)
+tam olarak bu bulguyu gizliyor.
+
+**XAU stop geometrisi müdahalesi** (2026-07-27, commit `85dc9b1`: 2.5 → 1.5 ATR):
+
+| dönem | n | RR | başabaş WR | gerçekleşen WR | EV | verdikt |
+|---|---|---|---|---|---|---|
+| ÖNCE | 123 | 0.40 | **%71.4** | %65.0 | **−0.081R** | ⛔ yapısal −EV |
+| SONRA | 409 | 0.67 | %59.9 | %60.1 | **+0.004R** | ✅ başabaşın üstü |
+
+Yanlış olan **yön tahmini değil, geometriydi**: sistem, kazanması için %71.4 WR gereken
+bir TP/SL ile oynuyordu ve %65 üretiyordu — yani iyi tahmin edip yine de para kaybediyordu.
+Stop 1.5 ATR'ye çekilince başabaş %59.9'a indi ve aynı sistem artıya geçti.
+**WR %65 → %60.1'e DÜŞTÜ, EV −0.081 → +0.004'e ÇIKTI.** Çıplak WR'ın neden yasak olduğunun
+ders niteliğinde örneği.
+
+⚠ Ama bu müdahale **Temmuz sonunda**; son iki haftadaki salınımın sebebi DEĞİL.
+
+**Diğer epoch'lar — ölçüldü, etkisiz:**
+
+| epoch | n | WR | kenar (WR−başabaş) | EV |
+|---|---|---|---|---|
+| Opus dönemi (08-21 öncesi) | 1055 | %61.0 | +1.2pp | −0.000R |
+| Sonnet+effort dönemi | 460 | %61.1 | +1.2pp | +0.020R |
+
+Model değişikliği karar kalitesini **ölçülebilir şekilde etkilememiş** (kenar birebir aynı:
++1.2pp). Kota tasarrufu bedavaya gelmiş — bu iyi haber.
+
+XAU serbest-zekâ (`hybrid_v1`) n=435, kenar +0.1pp, EV −0.005R; kanıt-temelli akış n=1080,
+kenar +1.6pp, EV +0.010R. Free mod hâlâ sistemin zayıf tarafı.
+
+**🔴 gold_brain hiç değerlendirilmemiş:** 2026-07-29/30'da kurulan COT+FRED altın
+zenginleştirmesi (`gold_brain.py`, `cot_gold.py`, `fred_macro.py`, git'e HİÇ commit
+edilmemiş) 07-30 → 08-09 arası **290 karar üretmiş, 290'ı da WAIT**, karşı-olgusu da
+hiç grade edilmemiş (`cf_outcome` 290/290 None). Yani: ne bir işlem açtı, ne ölçülebilir
+tek bir çıktı verdi, ve 08-09'da sessizce durdu. Ölçülmemiş, terk edilmiş alt-sistem.
+
+## 1-C. Epoch-düzeltilmiş haftalık kenar (WR − başabaş)
+
+| hafta | n | kenar |
+|---|---|---|
+| 06-29 | 29 | +2.2pp |
+| 07-06 | 87 | +3.3pp |
+| 07-13 | 156 | +1.7pp |
+| 07-20 | 161 | +4.7pp |
+| 07-27 | 399 | −1.5pp |
+| 08-03 | 91 | −0.5pp |
+| 08-17 | 156 | +4.9pp |
+| 08-24 | 137 | −2.9pp |
+| **08-31** | 138 | **+13.3pp** |
+| **09-07** | 161 | **−7.1pp** |
+
+Trend yok. Son iki hafta, serinin **zıt yönlerdeki iki uç değeri** — küçük pozitif bir
+kenar etrafında ders kitabı ortalamaya-dönüş.
 
 ## 2. Decider'ın çekirdek tezi veri tarafından çürütülüyor
 
