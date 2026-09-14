@@ -128,6 +128,43 @@ Yani gözlem **doğruydu** (o iki hafta gerçekten %56.9 → %73.2 yükseldi) am
 
 ---
 
+## 1-E. ✅ REJİM KAPISI BULUNDU — gergin VIX rejiminde NDX SELL
+
+İlk taramada kaba kova + min-n filtresine takılıp KAÇIRILDI. Bandı ayrı ele alınca
+etki **yönlü** çıkıyor (VIX ≥ 18.4, karşı-olgu seti):
+
+| yön | VIX ≥ 18.4 | VIX < 18.4 | fark |
+|---|---|---|---|
+| BUY | n=243 · %70.0 · **+0.119R** | n=2155 · %62.5 · −0.022R | **+7.5pp** |
+| SELL | n=79 · %55.7 · −0.070R | n=1551 · %60.5 · +0.010R | −4.8pp |
+
+Yani gergin rejimde piyasa YUKARI çalışıyor — panelin bağımsız kanıtıyla
+([[macro-ndx-vix-direction]]: plasebo p=0, OOS +17pp) **aynı yön**.
+
+**Sağlam çekirdek — NDX SELL, iki bağımsız sette de:**
+
+| set | n | WR | EV |
+|---|---|---|---|
+| gerçek OPEN | 21 | **%38.1** | **−0.364R** |
+| karşı-olgu | 25 | **%40.0** | **−0.332R** |
+
+Havuz (tüm semboller) doğrulaması: DECIDER n=91 · −0.167R · P(EV>0)=%1.7 · iki yarı da
+negatif · plasebo p=0.020 ✅ — **ama karşı-olguda yarılar tutarsız** (+0.028 / −0.165) ❌
+ve **USOIL gergin bantta TERS** (%66.7 · +0.113R). Bu yüzden kapı havuza değil
+**yalnız NDX'e** kapsamlandı.
+
+⚠ **Eşik benim madenciliğimden DEĞİL:** 18.4 projenin önceden bağımsız doğrulanmış
+eşiği; panelde `VIX_REGIME_GATE_BLOCK=1` ile zaten canlı. Decider'da yoktu — tıpkı
+bıçak-yakalama kapısı gibi, panelde doğrulanmış bir kural decider'a hiç taşınmamıştı.
+
+⚠ n=21/25 **KÜÇÜK** → varsayılan GÖLGE (`REGIME_VIX_SELL_BLOCK=False`). Panel tarafındaki
+güçlü ön-kanıt olmasa bu n ile hiç bağlanmazdı.
+
+**Uygulama:** `regime_meter.vix_sell_gate()` — gergin rejimde kapsamdaki sembolde SELL'i
+WAIT'e çevirir. BUY'a DOKUNMAZ (gergin bantta BUY daha iyi: %70.0).
+
+---
+
 ## 2. Decider'ın çekirdek tezi veri tarafından çürütülüyor
 
 Decider mean-reversion çalışır: `primary_dir` = "en güçlü aşırılık yönü", kanıt kapıları

@@ -283,6 +283,16 @@ GÖREV — {sym} için KENDİ görüşünü oluştur (kanıttan muhakeme et):
 - `live_drift` alanı varsa: bu yönün SON 30 canlı sonucu. drift_pp ≥15 (canlı, vaadin 15pp+
   altında) → kanıt hücrelerine güveni DÜŞÜR, boyut küçült; "KAPI ASKIDA" notu varsa OPEN
   önerme (rejim-flip şüphesi — kod OPEN'ı zaten WAIT'e çevirir, sen de gerekçende belirt).
+- `regime` alanı: karar anındaki piyasa rejimi (`vix_band`, `atrp_4h`, `adx_4h`, `tf_yatay`).
+  KRİTİK: `regime.disarida` BOŞ DEĞİLSE, tüm kanıt tablolarının ve kapı eşiklerinin ölçüldüğü
+  koşulların DIŞINDASIN. Kanıt tabloları 2026-06/09 arasında yalnız VIX 15.1-19.6 aralığında
+  toplandı (VIX≥20 olan tek kayıt yok) — o zarfın dışında `evidence` WR'ları KALİBRE DEĞİLDİR.
+  Bu durumda: kanıta güveni belirgin düşür, boyutu küçült (≤0.3) ya da WAIT de; gerekçende
+  hangi zarf ihlalini gördüğünü YAZ. `disarida` boşsa rejim tanıdık, normal muhakeme.
+- `entry_quality_by_dir` alanı: her aday yön için giriş kalitesi. `blocked=true` ise o yön
+  ölçülmüş kayıp kümesindedir
+  (bıçak yakalama: chz_dir≥2.0, ya da hacim patlaması: vol≥1.5 → elenen kümede canlı
+  EV −0.069R, 4 sembolün 4'ünde de negatif). Kanıtın güçlü değilse AÇMA.
 SADECE şu tek-satır JSON'u döndür:
 {{"action":"OPEN","direction":"BUY","size_factor":0.7,"entry":"market","reason":"kanıta dayalı kısa gerekçe","management":"stop/hedef/çıkış notu"}}
 (işlem açmıyorsan: {{"action":"WAIT","direction":null,"size_factor":0,"reason":"...","management":""}})"""
@@ -673,7 +683,8 @@ def append_journal(situation: dict, dec: dict) -> dict:
         "dirs_live": {d: (b.get("live") or {}) for d, b in (situation.get("directions") or {}).items()},
         "forensics": situation.get("forensics"),   # SL-otopsi: hacim/VIX/DXY/kanal/multi-TF S/R
         "entry_quality": situation.get("entry_quality"),   # bıçak-yakalama/hacim kapısı (gölge ölçüm)
-        "regime": situation.get("regime"),                 # rejim durumu (ölçüm; rejim değişince kapı buradan kurulacak)
+        "regime": situation.get("regime"),                 # rejim durumu (ölçüm)
+        "regime_gate": situation.get("regime_gate"),       # gergin VIX rejim kapısı (gölge ölçüm)
         "vix": situation.get("vix"),
         "context": situation.get("context"),
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),

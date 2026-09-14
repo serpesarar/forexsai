@@ -103,6 +103,54 @@ def _report(label: str, rows: list) -> bool:
     return ok
 
 
+def _regime_diversity(days: int) -> None:
+    """REJİM ÇEŞİTLİLİĞİ İZLEYİCİSİ — rejim kapısı ne zaman kurulabilir?
+
+    Denetimde rejim kapısı kurulamadı çünkü tüm örneklem TEK rejimdi (VIX 15.1-19.6,
+    VIX>=20 sıfır kayıt). Kapı ancak rejim çeşitlendiğinde kanıtla kurulabilir.
+    Bu bölüm o eşiğin gelip gelmediğini söyler.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    bands, disarida, vixs = {}, 0, []
+    for line in JOURNAL.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except Exception:
+            continue
+        t = _ts(rec)
+        rg = rec.get("regime")
+        if not (t and t >= cutoff and rg):
+            continue
+        b = rg.get("vix_band")
+        if b:
+            bands[b] = bands.get(b, 0) + 1
+        if rg.get("vix") is not None:
+            vixs.append(rg["vix"])
+        if rg.get("disarida"):
+            disarida += 1
+
+    print(f"\n{'='*70}\n### REJİM ÇEŞİTLİLİĞİ (rejim kapısı kurulabilir mi?)")
+    if not vixs:
+        print("   rejim damgası yok — decider'ın yeni turlarını bekleyin")
+        return
+    print(f"   VIX aralığı: {min(vixs):.1f} – {max(vixs):.1f}  (n={len(vixs)})")
+    print(f"   bantlar: {bands}")
+    print(f"   zarf DIŞI karar: {disarida}")
+    yeni = sum(n for b, n in bands.items() if b in ("gergin", "kriz"))
+    if yeni >= 150:
+        print(f"   ✅ YENİ REJİMDE {yeni} karar birikti → rejim kapısı ARTIK ÖLÇÜLEBİLİR.")
+        print("      Denetimi tekrarla: kapı eşikleri bu rejimde de geçerli mi, "
+              "rejim-bazlı giriş kapısı kurulabilir mi?")
+    elif yeni:
+        print(f"   ⏳ yeni rejimde {yeni}/150 karar — birikmeye devam ediyor")
+    else:
+        print("   ⏳ hâlâ TEK rejim (düşük oynaklık). Denetimdeki kapı eşikleri geçerli; "
+              "rejim kapısı için kanıt yok.")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="entry_quality canlı gölge karnesi")
     ap.add_argument("--gun", type=int, default=21, help="kaç günlük pencere (varsayılan 21)")
@@ -115,6 +163,7 @@ def main() -> None:
     real, cf = _samples(rows)
     ok_real = _report("GERÇEK OPEN kararları", real)
     ok_cf = _report("KARŞI-OLGU (WAIT'lerin 'açsaydı'sı)", cf)
+    _regime_diversity(a.gun)
     print("\n" + "=" * 70)
     print("ÖZET: " + ("her iki sette de ölçütler sağlandı → decider_config.py'ye "
                       "ENTRY_QUALITY_BLOCK=True yazılabilir"

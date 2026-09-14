@@ -506,13 +506,22 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                               f"%{fk.get('fake_probability')} ({fk.get('verdict')})")
                 except Exception as e:
                     print("  fakeout hatası (devam):", e)
+            # REJİM ölçümü KARARDAN ÖNCE: situation JSON'u prompt'a gömüldüğü için
+            # model rejimi ve zarf uyarısını GÖRÜR (ölçer atıl kalmasın).
+            sit["regime"] = regime_meter.measure(sit.get("forensics"), sit["symbol"])
+            # Her aday yön için giriş kalitesi — model KENDİSİ de kaçınabilsin diye
+            # (kapı zaten karardan sonra mekanik uygulanır; bu yalnız bilgi).
+            sit["entry_quality_by_dir"] = {
+                d: entry_quality.assess(sit.get("forensics"), d)
+                for d in (sit.get("directions") or {})}
             dec = decide_situation(sit, model=model)
             dec = _drift_guard(sit["symbol"], dec, drift_map)   # rejim-flip askısı (journal'dan önce)
             dec = _weekend_guard(sit["symbol"], dec, now)       # hafta sonu gap koruması
             dec, sit["entry_quality"] = entry_quality.apply_gate(
                 sit["symbol"], dec, sit.get("forensics"),
                 cf_direction=sit.get("primary_dir"))            # bıçak yakalama + hacim patlaması
-            sit["regime"] = regime_meter.measure(sit.get("forensics"), sit["symbol"])
+            dec, sit["regime_gate"] = regime_meter.vix_sell_gate(
+                sit["symbol"], dec, sit.get("regime"))          # gergin VIX rejiminde NDX SELL
             append_journal(sit, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")
@@ -578,13 +587,15 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                     print("  free-evidence hatası (devam):", e)
             mode_tag = "HİBRİT" if ctx.get("evidence_buy") else "SERBEST-ZEKÂ"
             print(f"[{now:%H:%M}] {FREE_SYMBOL} → Opus ({mode_tag}, çok-TF)...")
+            ctx["regime"] = regime_meter.measure(ctx.get("forensics"), FREE_SYMBOL)
+            ctx["entry_quality_by_dir"] = {
+                d: entry_quality.assess(ctx.get("forensics"), d) for d in ("BUY", "SELL")}
             dec = decide_free(ctx, model=model)
             dec = _drift_guard(FREE_SYMBOL, dec, drift_map)     # rejim-flip askısı (free de dahil)
             dec = _weekend_guard(FREE_SYMBOL, dec, now)         # hafta sonu gap koruması
             dec, ctx["entry_quality"] = entry_quality.apply_gate(
                 FREE_SYMBOL, dec, ctx.get("forensics"),
                 cf_direction="BUY")                             # bıçak yakalama + hacim patlaması
-            ctx["regime"] = regime_meter.measure(ctx.get("forensics"), FREE_SYMBOL)
             append_free_journal(ctx, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}·free] {FREE_SYMBOL}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")

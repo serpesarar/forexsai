@@ -59,3 +59,52 @@ def test_hepsi_yatay_uyum_none():
 def test_bilinmeyen_sembol_atr_zarfi_atlanir():
     r = rm.measure(_fx(vix=17.0, dxy=100.0), "BILINMEYEN")
     assert all("atrp_4h" not in d for d in r["disarida"])
+
+
+# ── rejim-tetikli kapı: gergin VIX'te NDX SELL ──────────────────────────────
+def _rg(vix):
+    return rm.measure(_fx(vix=vix, dxy=100.0, atr=175.0, level=25000.0), "NDX.INDX")
+
+
+def test_vix_kapisi_gergin_rejimde_tetiklenir(monkeypatch):
+    monkeypatch.setattr(rm, "VIX_SELL_GATE_BLOCKS", True)
+    dec = {"action": "OPEN", "direction": "SELL", "size_factor": 0.6, "reason": "x"}
+    out, info = rm.vix_sell_gate("NDX.INDX", dec, _rg(19.0))
+    assert out["action"] == "WAIT" and out["size_factor"] == 0.0
+    assert out["vix_regime_blocked"] and info["kural"] == "vix_sell_gate"
+
+
+def test_vix_kapisi_golgede_karari_degistirmez(monkeypatch):
+    monkeypatch.setattr(rm, "VIX_SELL_GATE_BLOCKS", False)
+    dec = {"action": "OPEN", "direction": "SELL", "size_factor": 0.6}
+    out, info = rm.vix_sell_gate("NDX.INDX", dec, _rg(19.0))
+    assert out["action"] == "OPEN" and info["would_block"] is True
+
+
+def test_vix_kapisi_sakin_rejimde_tetiklenmez(monkeypatch):
+    monkeypatch.setattr(rm, "VIX_SELL_GATE_BLOCKS", True)
+    dec = {"action": "OPEN", "direction": "SELL", "size_factor": 0.6}
+    out, info = rm.vix_sell_gate("NDX.INDX", dec, _rg(17.0))
+    assert out is dec and info is None
+
+
+def test_vix_kapisi_BUY_a_dokunmaz(monkeypatch):
+    """Kanıt SELL tarafındaydı; BUY gergin bantta DAHA İYİ (%70) — engellenmemeli."""
+    monkeypatch.setattr(rm, "VIX_SELL_GATE_BLOCKS", True)
+    dec = {"action": "OPEN", "direction": "BUY", "size_factor": 0.6}
+    out, info = rm.vix_sell_gate("NDX.INDX", dec, _rg(19.0))
+    assert out is dec and info is None
+
+
+def test_vix_kapisi_kapsam_disi_sembole_dokunmaz(monkeypatch):
+    """USOIL gergin bantta SELL'de +0.113R (TERSİ) — kapsam dışı kalmalı."""
+    monkeypatch.setattr(rm, "VIX_SELL_GATE_BLOCKS", True)
+    dec = {"action": "OPEN", "direction": "SELL", "size_factor": 0.6}
+    out, info = rm.vix_sell_gate("USOIL.FOREX", dec, _rg(19.0))
+    assert out is dec and info is None
+
+
+def test_vix_kapisi_rejim_yoksa_fail_open():
+    dec = {"action": "OPEN", "direction": "SELL", "size_factor": 0.6}
+    out, info = rm.vix_sell_gate("NDX.INDX", dec, None)
+    assert out is dec and info is None

@@ -24,6 +24,11 @@ BU YÜZDEN bu modül HİÇBİR ŞEYİ BLOKLAMAZ. İki işi var:
 """
 from __future__ import annotations
 
+try:
+    import decider_config as config          # kutunun yerel ayarları (gitignore'da)
+except Exception:                            # pragma: no cover
+    config = None
+
 # Denetimin gözlediği zarf — kapı kanıtlarının geçerli olduğu koşullar.
 OBSERVED = {
     "vix": (15.1, 19.6),
@@ -100,3 +105,60 @@ def measure(forensics: dict | None, symbol: str | None = None) -> dict | None:
         out["uyari"] = ("Kapı eşikleri (entry_quality) bu koşulda DOĞRULANMADI — "
                         "gözlenen rejim zarfının dışındasınız.")
     return out
+
+
+# ── REJİM-TETİKLİ KAPI: gergin VIX rejiminde NDX SELL ────────────────────────
+# Bu, denetimde kanıtı AYAKTA KALAN TEK rejim kuralıdır. Kapsamı bilinçli olarak
+# dar: havuz geneli (tüm semboller) çürüdü, yalnız NDX'te iki bağımsız veri seti
+# de aynı yönde ve güçlü.
+#
+# KANIT (2026-09-14, VIX>=18.4 bandı):
+#   NDX SELL · gerçek OPEN   n=21 WR %38.1 EV −0.364R
+#   NDX SELL · karşı-olgu    n=25 WR %40.0 EV −0.332R      (bağımsız set, aynı yön)
+#   havuz (tüm semboller)    DEC n=91 −0.167R P(EV>0)=%1.7 · CF n=79 −0.070R ama
+#                            CF yarıları TUTARSIZ (+0.028 / −0.165) → havuz BLOKLANMAZ
+#   USOIL SELL gergin bantta +0.113R (TERSİ) → kural USOIL'e UYGULANMAZ
+#   Plasebo (havuz, aynı kapsamda rastgele eleme): p=0.020
+#
+# EŞİK BENİM MADENCİLİĞİMDEN DEĞİL: 18.4 projenin önceden bağımsız doğrulanmış
+# eşiği ([[macro-ndx-vix-direction]]: plasebo p=0, OOS +17pp; panelde
+# VIX_REGIME_GATE_BLOCK=1 ile ZATEN canlı). Decider'da bu kapı yoktu.
+#
+# ⚠ n=21/25 KÜÇÜK. Bu yüzden varsayılan GÖLGE. Panel tarafındaki güçlü ön-kanıt
+# olmasa bu n ile hiç bağlanmazdı.
+VIX_SELL_GATE_SYMBOLS = frozenset(
+    getattr(config, "REGIME_VIX_SELL_SYMBOLS", ("NDX.INDX",)))
+VIX_SELL_GATE_ENABLED = bool(getattr(config, "REGIME_VIX_SELL_GATE", True))
+VIX_SELL_GATE_BLOCKS = bool(getattr(config, "REGIME_VIX_SELL_BLOCK", False))
+
+
+def vix_sell_gate(symbol: str, dec: dict, regime: dict | None) -> tuple[dict, dict | None]:
+    """Gergin VIX rejiminde (>=18.4) kapsamdaki sembolde SELL açma.
+
+    Dönen: (karar, tetik bilgisi|None). GÖLGE modda karar DEĞİŞMEZ.
+    """
+    if not (VIX_SELL_GATE_ENABLED and regime):
+        return dec, None
+    if symbol not in VIX_SELL_GATE_SYMBOLS:
+        return dec, None
+    if str(dec.get("action", "")).upper() != "OPEN" or str(dec.get("direction", "")).upper() != "SELL":
+        return dec, None
+    vix = regime.get("vix")
+    if vix is None or vix < VIX_HIGH:
+        return dec, None
+
+    info = {"kural": "vix_sell_gate", "vix": vix, "esik": VIX_HIGH, "sembol": symbol,
+            "kanit": "NDX SELL gergin bantta: gerçek %38.1 (n=21) / karşı-olgu %40.0 (n=25)"}
+    if not VIX_SELL_GATE_BLOCKS:
+        print(f"  👁 rejim kapısı (GÖLGE): {symbol} SELL — VIX {vix} >= {VIX_HIGH} (gergin rejim)")
+        info["would_block"] = True
+        return dec, info
+
+    print(f"  🛑 rejim kapısı: {symbol} SELL OPEN → WAIT — VIX {vix} >= {VIX_HIGH}")
+    dec = dict(dec)
+    dec["action"] = "WAIT"
+    dec["size_factor"] = 0.0
+    dec["vix_regime_blocked"] = True
+    dec["reason"] = (f"[REJİM KAPISI: VIX {vix} >= {VIX_HIGH}, gergin rejimde {symbol} SELL "
+                     f"ölçülen WR %38-40] " + str(dec.get("reason") or ""))[:500]
+    return dec, info
