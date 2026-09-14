@@ -2814,5 +2814,27 @@
     "source": "session",
     "created_at": "2026-09-14T06:54:53.221831+00:00",
     "updated_at": "2026-09-14T06:54:53.221837+00:00"
+  },
+  {
+    "id": "bl_82002dd739",
+    "title": "gold_brain: ya olc ya kaldir",
+    "detail": "claude_decider/gold_brain.py + cot_gold.py + fred_macro.py + gold_levels.py (kutuda yerel, git'e HIC commit edilmemis) 2026-07-30..08-09 arasi 290 karar uretti, 290'i da WAIT, cf_outcome 290/290 None — tek olculebilir cikti vermeden 08-09'da durmus. Karar: ya karsi-olgu grade'i baglanip olculur (o zaman COT+FRED enjeksiyonunun degeri gorulur) ya da kaldirilir. Su anki hali olcumsuz bakim yuku",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T07:13:35.621749+00:00",
+    "updated_at": "2026-09-14T07:13:35.621934+00:00"
+  },
+  {
+    "id": "bl_6b769cfb7e",
+    "title": "Diger sembollerin geometrisi de XAU gibi denetlensin",
+    "detail": "XAU'da RR 0.40 geometrisi yapisal -EV'ydi (basabas %71.4 vs gerceklesen %65) ve 07-27'de duzeltilince EV -0.081 -> +0.004 oldu. Ayni denetim USOIL icin yapilmali: USOIL n=230 WR %56.1 EV -0.063R, basabas %59.9'un ALTINDA. Soru: USOIL'in TP/SL geometrisi de mi yanlis (yani WR'i degil RR'i mi duzeltmeli)? exit_compare/stop_mults ile 12 politika kiyasi kosulmali",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-09-14T07:13:35.626167+00:00",
+    "updated_at": "2026-09-14T07:13:35.626173+00:00"
   }
 ]

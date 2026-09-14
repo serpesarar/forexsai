@@ -17,9 +17,10 @@
 3. **Decider'ın seçim alfası yok.** Karşı-olgu (her kayıtta "primary_dir açsaydı" mekanik
    sonucu) 11 haftanın 10'unda decider'ın ±4pp'si içinde. Yani sonuçları belirleyen
    decider'ın seçiciliği değil, piyasanın o haftaki hâli.
-4. **Aranan "rejim" doğrulanmadı.** İyi/kötü haftayı ayırdığı sanılan ADX(1h) farkı
-   (33.6 vs 17.1) tüm geçmişte tekrar etmiyor; rejim **kalıcı da değil** (geçmiş 50/100/200
-   işlemin WR'ı sonraki işlemi öngörmüyor, r≈0.01-0.05). **Rejim zamanlanamaz.**
+4. **"Rejim yakaladı" diye bir şey yok — çünkü örneklemde rejim ÇEŞİTLİLİĞİ yok.**
+   Tüm journal tek bir düşük-oynaklık rejimi: VIX 15.1–19.6, **VIX≥20 olan kayıt sıfır**.
+   Denenen rejim adaylarının hepsi elendi (ADX tutarsız, ATR% oynaklık USOIL konfoundu,
+   performans kalıcılığı r≈0.01-0.05). Detay §4.
 5. **Buna karşılık iki gerçek kapı bulundu ve OOS'ta ayakta kaldı** → `entry_quality.py`
    olarak GÖLGE modda canlıya bağlandı.
 
