@@ -157,8 +157,17 @@ gölge ölçümünden sonra açılmalı. `entry_quality` alanı artık her journ
 
 ## 6. Önerilen sonraki adımlar
 
-1. **2-3 hafta gölge ölçümü** → `entry_quality.would_block` ile canlı doğrulama, sonra
-   `ENTRY_QUALITY_BLOCK=True`.
+1. **2-3 hafta gölge ölçümü** → kutuda karneyi çalıştır:
+   ```
+   python claude_decider/entry_quality_report.py --gun 21
+   ```
+   Script gerçek OPEN ve karşı-olgu setlerini ayrı raporlar ve blok moda geçiş
+   ölçütünü (elenen kümede n≥100, EV<0, iki kronolojik yarıda da EV<0, kalan
+   kümenin EV'si yükselmiş) kendisi denetler. "SAĞLANDI" derse kutunun
+   `decider_config.py`'sine `ENTRY_QUALITY_BLOCK = True` yazılır (dosya
+   gitignore'da, elle eklenmeli).
+   Not: kapı WAIT kararlarında da karşı-olgu yönüyle ölçüldüğü için örneklem
+   ~3 kat hızlı birikir.
 2. **USOIL'i decider'da askıya al** — 230 işlem, %56.1 WR, −0.063R; elenen alt kümesi
    −0.226R. Sembolün kendisi başabaşın altında.
 3. **Derin aşırılığı prompt'ta da söyle** — kapı OPEN'ı kesiyor ama model hâlâ "ne kadar
