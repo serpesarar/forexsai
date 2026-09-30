@@ -82,3 +82,29 @@ def test_replace_candles_yahoo_gecmisini_siler():
     assert n == 3 and len(st["candles"]) == 3 and st["source"] == hub.MT5_RECORDER_SOURCE
     assert all(c["close"] == 98.1 for c in st["candles"])
     assert hub._mt5_candles_are_fresh(sym, "5m")
+
+
+def test_bos_okumada_sahiplik_alinmaz(monkeypatch):
+    """RLS yüzünden boş okuma → seeded False, Yahoo yedeği kapanmaz (2026-09-30 olayı)."""
+    class EmptyDB:
+        def table(self, *_):
+            return self
+        def select(self, *_):
+            return self
+        def eq(self, *_):
+            return self
+        def gte(self, *_):
+            return self
+        def order(self, *_, **__):
+            return self
+        def range(self, *_):
+            return self
+        def execute(self):
+            class R:
+                data = []
+            return R()
+    monkeypatch.setitem(feed._state, "symbols", {})
+    monkeypatch.setitem(feed._state, "running", True)
+    asyncio.run(feed._cycle(EmptyDB()))
+    assert feed._state["symbols"]["USOIL.FOREX"]["seeded"] is False
+    assert hub.recorder_feed_owns("USOIL.FOREX") is False

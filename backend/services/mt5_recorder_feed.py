@@ -122,7 +122,16 @@ async def _cycle(db) -> None:
                 st["bars"][tf] = n
             if tf == "1m":
                 c1m = candles
-        st["seeded"] = True
+        # Sahiplik (Yahoo'yu kapatma) YALNIZ gerçekten broker verisi geldiyse:
+        # okuma boş dönerse (RLS / kaydedici durmuş) yedek eskisi gibi çalışsın.
+        got = all(st["bars"].get(tf) for tf in TF_MS)
+        if not st["seeded"]:
+            st["seeded"] = got
+            if not got:
+                st["empty_reads"] = st.get("empty_reads", 0) + 1
+                logger.warning("[recorder-feed] %s: %s tablosundan veri okunamadı "
+                               "(RLS/anahtar?) → Yahoo yedeği sürüyor", symbol, TABLE)
+                continue
         lp = latest_price(c1m, now_s)
         if lp:
             await hub.ingest_live_price(symbol, lp[0], timestamp=lp[1], source=hub.MT5_RECORDER_SOURCE)
