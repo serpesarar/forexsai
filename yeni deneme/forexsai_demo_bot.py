@@ -511,6 +511,12 @@ def _atr_distances(scope_key: str, mt5_symbol: str) -> tuple[float, float] | Non
         return None
 
 
+def _fmt_gap(bot_signal: dict | None, price: float) -> str:
+    """Log için broker−backend fiyat farkı (%) — bilinmiyorsa '?'."""
+    g = pr.backend_basis_gap_pct(bot_signal, price)
+    return "?" if g is None else f"{g:.2f}"
+
+
 def _fixed_distances(price: float, cfg: dict, bot_signal: dict | None,
                      scope_key: str = "", mt5_symbol: str = "") -> tuple[float, float]:
     """tp/sl mesafesi. Scope ATR_GEOMETRY kapsamındaysa ATR-ölçekli, değilse
@@ -526,10 +532,16 @@ def _fixed_distances(price: float, cfg: dict, bot_signal: dict | None,
         sl_d = float(cfg["sl"])
     # Backend'in optimize SL'i yalnız SABİT geometride devreye girer — ATR
     # geometrisi kendi stop mesafesini araştırmadan alır, ezilmemeli.
+    # 2026-09-29: backend seviyesi farklı fiyat tabanındaysa / SL üretilmemişse
+    # KULLANILMAZ (pr.backend_sl_distance) — aksi hâlde SL = besleme farkı.
     if atr_geo is None and bot_signal and bot_signal.get("sl_price"):
-        d = abs(price - float(bot_signal["sl_price"]))
-        if d > 0:
+        d, why = pr.backend_sl_distance(bot_signal, price, config)
+        if d is not None:
             sl_d = d
+        else:
+            log.warning("[BASIS] %s backend SL kullanılmadı (%s, fark=%s%%) → "
+                        "config SL %.4f", scope_key or "?", why,
+                        _fmt_gap(bot_signal, price), sl_d)
 
     # ── USOIL BUY hedef mesafesi (2026-08-20 derin sınama) — varsayılan KAPALI
     # v3 raporu "TP=0,6R" dedi; 2.025 sızıntısız hipotetik girişte tam TERSİ
@@ -902,6 +914,13 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     # TP < 0.3×SL mesafesi → araştırılmış sabit geometriye düş.
     sign = 1 if direction == "BUY" else -1
     tp_d, sl_d = sign * (tp - price), sign * (price - sl)
+    # 2026-09-29: backend TP/SL mutlak seviyeleri başka fiyat tabanındaysa
+    # (emtia Yahoo vadelisine düştüğünde) ya da SL üretilmemişse → sabit geometri.
+    _, basis_why = pr.backend_sl_distance(bot_signal, price, config)
+    if basis_why in ("basis_gap", "degenerate"):
+        log.warning("[BASIS] %s (v2) backend seviyeleri kullanılmadı (%s, fark=%s%%)",
+                    scope_key, basis_why, _fmt_gap(bot_signal, price))
+        tp_d = sl_d = 0.0                      # aşağıdaki sabit-geometri dalına zorla
     if tp_d <= 0 or sl_d <= 0 or tp_d < 0.3 * sl_d:
         f_tp, f_sl = _fixed_distances(price, cfg, None, scope_key, mt5_symbol)
         log.warning("%s — backend TP/SL bayat/bozuk (tp_d=%.3f sl_d=%.3f, "
@@ -1037,6 +1056,7 @@ def record_fingerprint(ticket: int, scope_key: str, mt5_symbol: str, direction: 
         "entry_type": entry_type, "tp_source": tp_source, "voters": voters,
         "mom_stretch": _ENTRY_CTX.get("mom"), "mom_threshold": _ENTRY_CTX.get("thr"),
         "session": _ENTRY_CTX.get("session"),
+        "session_gate": _ENTRY_CTX.get("session_gate"),   # gölge seans filtresi işareti
         "backend_action": bs.get("action"),
         "backend_conf": bs.get("adjusted_confidence") or bs.get("confidence"),
         "lot_mult": bs.get("effective_lot_multiplier"),
@@ -1648,6 +1668,28 @@ def _market_open(scope_key, forexsai_sym, mt5_symbol, direction, cfg, voters, bo
         open_trade(scope_key, forexsai_sym, mt5_symbol, direction, cfg, voters)
 
 
+def _session_gate_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
+                         direction: str) -> bool:
+    """True → giriş engellendi (yalnız USOIL_SESSION_GATE_BLOCK açıkken).
+
+    Gölgede: engelleyeceği girişi loglar + gate_skipped.jsonl'e yazar +
+    parmak izine `session_gate` işareti koyar; işlem normal açılır."""
+    would, why = pr.session_gate(datetime.now(timezone.utc), scope_key, config)
+    if not would:
+        return False
+    block = bool(pr.flag(config, "USOIL_SESSION_GATE_BLOCK"))
+    _ENTRY_CTX["session_gate"] = "block" if block else "shadow"
+    log.info("%s — SEANS FİLTRESİ %s: %s → %s", scope_key,
+             "" if block else "[GÖLGE]", why,
+             "AÇILMADI" if block else "yine de devam (ölçüm)")
+    tick = mt5.symbol_info_tick(mt5_symbol)
+    if tick:
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
+                      tick.ask if direction == "BUY" else tick.bid,
+                      "usoil_session_gate", extra={"why": why, "shadow": not block})
+    return block
+
+
 def _route_open(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                 direction: str, cfg: dict, voters: list[str],
                 bot_signal: dict | None) -> None:
@@ -1657,6 +1699,10 @@ def _route_open(scope_key: str, forexsai_sym: str, mt5_symbol: str,
       - Aksi (normal momentum)         → S/R pullback (pending limit).
     """
     _ENTRY_CTX.clear()                                       # parmak izi bağlamı (taze)
+
+    # USOIL BUY seans filtresi (2026-09-30) — varsayılan GÖLGE: yalnız ölçer.
+    if _session_gate_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
+        return
 
     # Giriş skoru kapısı — momentum/SR scope'u otopsinin kanıt kapsamında.
     if _entry_score_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
@@ -2367,7 +2413,11 @@ def main():
                "PROBATION_MAX_WAIT_MIN", "REENTRY_MODE", "REENTRY_SYMBOLS",
                "REENTRY_DELAY_TP_MIN", "REENTRY_DELAY_SL_MIN",
                "USOIL_BUY_TP_RR", "USOIL_BUY_TP_SYMBOLS",
-               "SCOPE_LOSS_COOLDOWN_ENABLED"):
+               "SCOPE_LOSS_COOLDOWN_ENABLED", "BACKEND_BASIS_TOL_PCT",
+               "USOIL_SESSION_GATE_ENABLED", "USOIL_SESSION_GATE_BLOCK",
+               "USOIL_SESSION_START_UTC", "SHADOW_LOCK_ENABLED",
+               "SHADOW_LOCK_SYMBOLS", "SHADOW_LOCK_L_R", "SHADOW_LOCK_P",
+               "SHADOW_LOCK_FRAC"):
         _from = "config" if hasattr(config, _n) else "varsayılan(faz)"
         log.info("  ayar %-30s = %-8s (%s)", _n, pr.flag(config, _n), _from)
     log.info("=" * 64)

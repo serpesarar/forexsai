@@ -200,6 +200,12 @@ def manage_positions(mt5, log, resolve_symbol) -> None:
     except Exception as exc:                                    # fail-open
         log.warning("[MGMT] zaman stopu hatası: %s", exc)
 
+    # ── 2026-09-30: ZİKZAK KÂR KİLİDİ — GÖLGE (pozisyona DOKUNMAZ) ──────
+    try:
+        _shadow_lock_pass(mt5, log, resolve_symbol, now)
+    except Exception as exc:                                    # fail-open
+        log.warning("[GÖLGE-KİLİT] hata: %s", exc)
+
     # kapanan pozisyonların durumunu temizle
     stale = [k for k, v in st.items() if k not in live_tickets
              and now - v.get("first_seen", 0) > 86400]
@@ -207,6 +213,70 @@ def manage_positions(mt5, log, resolve_symbol) -> None:
         for k in stale:
             st.pop(k, None)
         _save_state()
+
+
+# ─── 2026-09-30 — zikzak kâr kilidi GÖLGESİ ─────────────────────────────────
+# Kural (pr.zz_lock_step): önce ≥0.3×SL aleyhe → sonra TP yolunun %60'ı → SL
+# giriş + ½TP'ye çekilirdi. Burada YALNIZ kaydedilir; order_send yok.
+# Sonuç ölçümü: kayıtlar MT5 deal geçmişiyle ticket üzerinden eşlenir —
+# "lock_hit" varsa kural kilit fiyatından çıkardı, yoksa gerçek sonuç geçerli.
+SHADOW_LOCK_STATE = Path(__file__).resolve().parent / "shadow_lock_state.json"
+SHADOW_LOCK_LOG = Path(__file__).resolve().parent / "shadow_lock.jsonl"
+
+
+def _shadow_lock_pass(mt5, log, resolve_symbol, now: float) -> None:
+    if not pr.flag(config, "SHADOW_LOCK_ENABLED"):
+        return
+    try:
+        sst = json.loads(SHADOW_LOCK_STATE.read_text())
+    except Exception:
+        sst = {}
+    magics = _all_bot_magics() - _usoil_breakout_magics()
+    seen, dirty = set(), False
+    for fxs_sym in pr.flag(config, "SHADOW_LOCK_SYMBOLS"):
+        mt5_symbol = resolve_symbol(fxs_sym)
+        if not mt5_symbol:
+            continue
+        tick = mt5.symbol_info_tick(mt5_symbol)
+        if tick is None:
+            continue
+        for pos in (mt5.positions_get(symbol=mt5_symbol) or []):
+            if pos.magic not in magics or pos.type != mt5.ORDER_TYPE_BUY:
+                continue
+            key = str(pos.ticket); seen.add(key)
+            s = sst.get(key)
+            if s is None:
+                if not pos.sl or not pos.tp:
+                    continue
+                s = sst[key] = {"entry": pos.price_open, "sl": pos.sl, "tp": pos.tp,
+                                "first_seen": now, "symbol": fxs_sym}
+                dirty = True
+            ev = pr.zz_lock_step(s, tick.bid, s["entry"], s["entry"] - s["sl"],
+                                 s["tp"] - s["entry"], config)
+            if ev is None:
+                continue
+            dirty = True
+            if ev in ("fired", "lock_hit"):
+                log.info("[GÖLGE-KİLİT] %s ticket=%s %s (giriş %.3f, kilit %.3f, bid %.3f)",
+                         fxs_sym, pos.ticket,
+                         "tetiklendi → SL kilide çekilirdi" if ev == "fired"
+                         else "kilit vurulurdu → kural burada kârla çıkardı",
+                         s["entry"], s["lock"], tick.bid)
+            try:
+                with open(SHADOW_LOCK_LOG, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({"ts": now, "ticket": pos.ticket, "symbol": fxs_sym,
+                                        "event": ev, "bid": tick.bid, "entry": s["entry"],
+                                        "sl": s["sl"], "tp": s["tp"],
+                                        "lock": s.get("lock")}) + "\n")
+            except Exception as exc:
+                log.debug("gölge kilit kaydı yazılamadı: %s", exc)
+    for k in [k for k, v in sst.items() if k not in seen and now - v.get("first_seen", 0) > 86400]:
+        sst.pop(k, None); dirty = True
+    if dirty:
+        try:
+            SHADOW_LOCK_STATE.write_text(json.dumps(sst))
+        except Exception:
+            pass
 
 
 # ─── FAZ 0.2 — zaman stopu (2026-08-14) ─────────────────────────────────────

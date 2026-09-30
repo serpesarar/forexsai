@@ -169,6 +169,38 @@ DEFAULTS: dict[str, object] = {
     "SCOPE_LOSS_COOLDOWN_ENABLED": False,
     "SCOPE_LOSS_COOLDOWN_MIN": 120,
     "SCOPE_LOSS_COOLDOWN_STREAK": 2,
+    # ── 2026-09-29 — BACKEND FİYAT TABANI KORUMASI ───────────────────────
+    # Backend'in sl_price'ı KENDİ fiyat beslemesindedir; bot onu broker
+    # fiyatından çıkarıyordu (d = |broker − sl_price|). 2026-09-03'ten beri
+    # backend emtia mumları Yahoo vadelisine (CL=F/GC=F) düştü → USOIL'de
+    # broker−backend farkı 0,2→4,7$ oldu ve SL mesafesi bu FARKA eşitlendi:
+    # ticket 390567007 SL 3,064 (%3,1, RR 0,34) → −3.064$ (config SL'le −1.470$).
+    # Fark sıfırken de optimizer SL üretmediğinde (sl_price == fiyat) %0,06'lık
+    # mikro SL'ler çıkıyordu. Tolerans aşılırsa backend seviyeleri KULLANILMAZ,
+    # araştırılmış config geometrisi devreye girer.
+    # Kanıt: analyst_reports/usoil_sl_fiyat_tabani_2026-09-29.md
+    "BACKEND_BASIS_TOL_PCT": 0.25,
+    # ── 2026-09-30 — USOIL BUY SEANS FİLTRESİ (GÖLGE) ─────────────────────
+    # 950 pulse USOIL BUY (config geometri): 13–23 UTC +8,8 cR/işlem (yarılar
+    # +4,8/+16,0) vs 0–12 UTC −4,5; bot 74 giriş 2.276$ → 3.937$; 17 ay rastgele
+    # BUY 6 çeyreğin 4'ünde iyileşme. KART GEÇİLEMEDİ: gün-blok bootstrap %81
+    # (<%90) + tek-pozisyon kısıtında toplam kazanç yok → yalnız ölç (BLOCK=False).
+    # Kanıt: analyst_reports/usoil_sl_fiyat_tabani_2026-09-29.md §8
+    "USOIL_SESSION_GATE_ENABLED": True,
+    "USOIL_SESSION_GATE_BLOCK": False,
+    "USOIL_SESSION_START_UTC": 13,          # bu saatten ÖNCE (0..12) → filtre engellerdi
+    "USOIL_SESSION_SCOPES": ("USOIL.FOREX:BUY",),
+    # ── 2026-09-30 — ZİKZAK KÂR KİLİDİ (GÖLGE, pozisyona DOKUNMAZ) ────────
+    # Kural: pozisyon önce ≥ L×SL mesafesi aleyhe gidip sonra TP yolunun
+    # P kesrine ulaşırsa SL → giriş + LOCK_FRAC×TP mesafesi. 44.064 varyantın en
+    # iyisi: kazananı zarara çevirmiyor (A+B 6/632) ama hiçbir (sembol,yön)
+    # grubunda 6/6 dilim tutmadı (USOIL BUY: bot +8R, pulse −8,5R, 17 ay −13,9R).
+    # Yalnız "tetiklendi" ve "kilit vurulurdu" anlarını kaydeder.
+    "SHADOW_LOCK_ENABLED": True,
+    "SHADOW_LOCK_SYMBOLS": ("USOIL.FOREX",),
+    "SHADOW_LOCK_L_R": 0.3,
+    "SHADOW_LOCK_P": 0.6,
+    "SHADOW_LOCK_FRAC": 0.5,
 }
 
 
@@ -269,6 +301,91 @@ def usoil_buy_tp_distance(scope_key: str, forexsai_sym: str, direction: str,
     if not sl_dist or sl_dist <= 0:
         return None
     return rr * float(sl_dist)
+
+
+def session_gate(now_utc: datetime, scope_key: str, config=None) -> tuple[bool, str]:
+    """USOIL BUY seans filtresi → (filtre bu girişi engellerdi mi, sebep).
+
+    Engelleme kararı çağırana ait (USOIL_SESSION_GATE_BLOCK); bu fonksiyon yalnız
+    "kural ne derdi" sorusunu cevaplar."""
+    if not flag(config, "USOIL_SESSION_GATE_ENABLED"):
+        return False, ""
+    base = ":".join(scope_key.split(":")[:2])
+    if not _in(base, flag(config, "USOIL_SESSION_SCOPES")):
+        return False, ""
+    start = int(flag(config, "USOIL_SESSION_START_UTC"))
+    if now_utc.hour < start:
+        return True, f"{now_utc.hour:02d} UTC < {start:02d} (0–{start - 1} UTC seansı)"
+    return False, ""
+
+
+def zz_lock_step(st: dict, bid: float, entry: float, sl_dist: float,
+                 tp_dist: float, config=None) -> Optional[str]:
+    """Zikzak kâr kilidi durum makinesi (BUY) — `st`'yi günceller, olay döndürür.
+
+    Olaylar: "loss_seen" (≥L×SL aleyhe), "fired" (sonra TP yolunun P kesri →
+    kilit fiyatı st["lock"]), "lock_hit" (tetik SONRASI fiyat kilide indi —
+    kural bu noktada kârla çıkardı). Olay yoksa None."""
+    if sl_dist <= 0 or tp_dist <= 0:
+        return None
+    if not st.get("loss_seen"):
+        if bid <= entry - float(flag(config, "SHADOW_LOCK_L_R")) * sl_dist:
+            st["loss_seen"] = True
+            return "loss_seen"
+        return None
+    if not st.get("fired"):
+        if bid >= entry + float(flag(config, "SHADOW_LOCK_P")) * tp_dist:
+            st["fired"] = True
+            st["lock"] = entry + float(flag(config, "SHADOW_LOCK_FRAC")) * tp_dist
+            return "fired"
+        return None
+    if not st.get("lock_hit") and bid <= st["lock"]:
+        st["lock_hit"] = True
+        return "lock_hit"
+    return None
+
+
+def backend_basis_gap_pct(bot_signal: Optional[dict], price: float) -> Optional[float]:
+    """Backend fiyatı ile broker fiyatı arasındaki fark (% broker). Bilinmiyorsa None."""
+    if not bot_signal or not price or price <= 0:
+        return None
+    try:
+        ref = float(bot_signal.get("current_market_price") or 0)
+    except (TypeError, ValueError):
+        return None
+    if ref <= 0:
+        return None
+    return abs(price - ref) / price * 100.0
+
+
+def backend_sl_distance(bot_signal: Optional[dict], price: float,
+                        config=None) -> tuple[Optional[float], str]:
+    """Backend SL'ini broker fiyatına göre MESAFEYE çevir → (mesafe, sebep).
+
+    None → backend SL'i kullanılmamalı (config geometrisine düş):
+      * "no_sl"        : sl_price yok
+      * "basis_gap"    : backend fiyatı broker'dan BACKEND_BASIS_TOL_PCT'den
+                         fazla sapmış — mutlak seviye başka bir enstrümanın
+                         tabanında, broker fiyatına taşınamaz
+      * "degenerate"   : sl_price == entry_price (optimizer SL üretmemiş;
+                         bot fiyat farkını SL sanıyordu)
+    Sebep "ok" ise mesafe = |fiyat − sl_price| (eski davranış, taban uyumlu).
+    """
+    if not bot_signal or not bot_signal.get("sl_price"):
+        return None, "no_sl"
+    try:
+        slp = float(bot_signal["sl_price"])
+        ent = float(bot_signal.get("entry_price") or 0)
+    except (TypeError, ValueError):
+        return None, "no_sl"
+    gap = backend_basis_gap_pct(bot_signal, price)
+    tol = float(flag(config, "BACKEND_BASIS_TOL_PCT"))
+    if gap is not None and gap > tol:
+        return None, "basis_gap"
+    if ent > 0 and abs(ent - slp) <= 1e-9 * max(1.0, abs(ent)):
+        return None, "degenerate"
+    d = abs(price - slp)
+    return (d, "ok") if d > 0 else (None, "degenerate")
 
 
 # ═══ FAZ 0.1 / 0.2 — pozisyon yönetimi kararları ════════════════════════════
