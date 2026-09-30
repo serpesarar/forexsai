@@ -123,6 +123,12 @@ _hub_running = False
 # poll so that stale upstream data cannot overwrite correct live MT5 prices/candles.
 MT5_PRICE_FRESHNESS_THRESHOLD = 120    # 2 min — skip upstream price if MT5 is fresher
 MT5_CANDLES_FRESHNESS_THRESHOLD = 900  # 15 min — skip upstream candle fetch if MT5 is fresher
+# Box recorder feed (services/mt5_recorder_feed.py): broker bars read back from
+# Supabase `indicator_snapshots`. 2026-09-30: the Redis bridge has been dead since
+# 2026-06-25, so hybrid mode fell back to Yahoo (CL=F futures ≠ SpotCrude spot;
+# gap 0.1–4.7$) for every symbol. The recorder feed restores the broker source.
+MT5_RECORDER_SOURCE = "mt5_recorder"
+MT5_RECORDER_PRICE_FRESHNESS_THRESHOLD = 300
 
 # ── Persistent-cache staleness gate ──────────────────────────────────────────
 # If the most recent candle in a Supabase cache is older than this threshold,
@@ -351,19 +357,45 @@ def _get_latest_candle_age_hours(candles: List[Dict]) -> Optional[float]:
         return None
 
 
+def recorder_feed_owns(symbol: str) -> bool:
+    """True → bu sembolün fiyat/mum kaynağı yalnız MT5 kaydedici beslemesi.
+
+    Besleme çalışıyor ve sembolü ilk yüklemeyi tamamladıysa Yahoo yedeği bu
+    sembolde HİÇ kullanılmaz (piyasa arasında bile): yedek başka bir enstrüman
+    (CL=F vadeli) olduğundan barları broker serisine karıştırıp candle_cache'e
+    yazıyordu. Kaydedici durursa veri donar → mevcut bayatlık kapıları sinyali keser.
+    """
+    try:
+        from services.mt5_recorder_feed import _state as feed_state
+    except Exception:
+        return False
+    if not feed_state.get("running"):
+        return False
+    st = (feed_state.get("symbols") or {}).get(_canonical_symbol(symbol))
+    return bool(st and st.get("seeded"))
+
+
 def _mt5_price_is_fresh(symbol: str) -> bool:
     """Return True when a recent MT5 price exists and is newer than the threshold.
 
     Used in hybrid mode to prevent upstream polls from overwriting live MT5 data.
+    Two MT5 sources: the Redis bridge (tick, 2 min window) and the box recorder
+    feed (closed 1m bars via Supabase, see mt5_recorder_feed — 5 min window
+    because a closed-bar price is inherently 1–2 min old).
     """
     entry = _prices.get(symbol, {})
-    if entry.get("source") != "mt5_redis":
+    source = entry.get("source")
+    if source == "mt5_redis":
+        threshold = MT5_PRICE_FRESHNESS_THRESHOLD
+    elif source == MT5_RECORDER_SOURCE:
+        threshold = MT5_RECORDER_PRICE_FRESHNESS_THRESHOLD
+    else:
         return False
     ts = entry.get("timestamp", 0)
     if not ts:
         return False
     age_seconds = time.time() - float(ts)
-    return age_seconds < MT5_PRICE_FRESHNESS_THRESHOLD
+    return age_seconds < threshold
 
 
 def _mt5_candles_are_fresh(symbol: str, timeframe: str) -> bool:
@@ -960,8 +992,12 @@ async def _pump_cycle():
 
         is_hybrid = get_market_data_source() == "hybrid"
 
+        # MT5 kaydedici beslemesi bu sembolün sahibiyse fiyat/5m/1h yedeği atlanır
+        # (EOD hâlâ yukarıdan — kaydedici günlük bar yazmıyor).
+        feed_owned = recorder_feed_owns(symbol)
+
         # ── Price (every 5s) ──
-        if allow_upstream_market_fetch and _should_fetch(f"price:{symbol}", PRICE_INTERVAL):
+        if allow_upstream_market_fetch and not feed_owned and _should_fetch(f"price:{symbol}", PRICE_INTERVAL):
             # In hybrid mode, skip upstream poll when MT5 has pushed a fresh price
             # recently — prevents stale upstream data from overwriting live MT5 quotes.
             if is_hybrid and _mt5_price_is_fresh(symbol):
@@ -985,7 +1021,7 @@ async def _pump_cycle():
                         logger.warning(f"[DataHub] Price broadcast failed for {symbol}: {e}")
 
         # ── 5m candles (every 5min) ──
-        if allow_upstream_market_fetch and _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
+        if allow_upstream_market_fetch and not feed_owned and _should_fetch(f"5m:{symbol}", CANDLE_5M_INTERVAL):
             # In hybrid mode, skip upstream if MT5 has been actively feeding 5m bars.
             if is_hybrid and _mt5_candles_are_fresh(symbol, "5m"):
                 _mark_fetched(f"5m:{symbol}")
@@ -1041,7 +1077,7 @@ async def _pump_cycle():
                     await _fire_candle_close_events(symbol, "4h", d4h)
 
         # ── 1h candles (every 5min) ──
-        if allow_upstream_market_fetch and _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
+        if allow_upstream_market_fetch and not feed_owned and _should_fetch(f"1h:{symbol}", CANDLE_1H_INTERVAL):
             is_seed = not is_seeded
 
             if symbol in _30M_DIRECT_SYMBOLS:
@@ -1552,6 +1588,11 @@ def get_hub_status() -> Dict[str, Any]:
         status["persistent_cache"] = get_cache_stats()
     except Exception:
         status["persistent_cache"] = {"available": False}
+    try:
+        from services.mt5_recorder_feed import get_feed_status
+        status["mt5_recorder_feed"] = get_feed_status()
+    except Exception:
+        status["mt5_recorder_feed"] = {"available": False}
     return status
 
 
@@ -1632,7 +1673,12 @@ async def ingest_live_price(
     with _lock:
         existing = _prices.get(canonical_symbol, {})
         existing_ts = _coerce_epoch_seconds(existing.get("timestamp")) if existing else 0.0
-        if existing_ts and ts_seconds + 1 < existing_ts:
+        # MT5 (broker) outranks the upstream fallback: a closed-bar MT5 price is
+        # older than Yahoo's "now" stamp by construction, but it is the traded
+        # instrument — never let the fallback's timestamp lock it out.
+        mt5_over_fallback = (source.startswith("mt5")
+                             and not str(existing.get("source", "")).startswith("mt5"))
+        if existing_ts and ts_seconds + 1 < existing_ts and not mt5_over_fallback:
             return False
         _prices[canonical_symbol] = payload
 
@@ -1761,6 +1807,31 @@ async def ingest_candles(
     _last_fetch[f"{tf}:{canonical_symbol}"] = now_ts
     _persist_async(canonical_symbol, tf, merged if len(normalized_candles) > 1 else normalized_candles)
     return len(normalized_candles)
+
+
+def replace_candles(symbol: str, timeframe: str, candles: List[Dict[str, Any]],
+                    source: str) -> int:
+    """Replace (not merge) a symbol's store for one timeframe with `candles`.
+
+    Used once per process by the recorder feed so that a history seeded from a
+    different instrument (Yahoo futures) is not left interleaved with broker bars.
+    No persistence — the recorder already wrote these rows to Supabase.
+    """
+    canonical_symbol = _canonical_symbol(symbol)
+    tf, store = _get_store_for_timeframe(timeframe)
+    if store is None or canonical_symbol not in TRACKED_SYMBOLS or tf in {"15m", "4h", "20m"}:
+        return 0
+    normalized = [n for n in (_normalize_ingested_candle(c, tf) for c in candles or []) if n]
+    if not normalized:
+        return 0
+    merged = _merge_candles([], normalized, 10 ** 6, interval_ms=_tf_interval_ms(tf))
+    now_ts = time.time()
+    with _lock:
+        store[canonical_symbol] = {"candles": merged, "timestamp": now_ts, "source": source}
+        if tf in {"5m", "30m", "1h"}:
+            _rebuild_derived(canonical_symbol)
+    _last_fetch[f"{tf}:{canonical_symbol}"] = now_ts
+    return len(merged)
 
 
 async def ingest_candle(

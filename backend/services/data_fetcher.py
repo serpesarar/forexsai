@@ -40,6 +40,9 @@ async def fetch_intraday_candles(symbol: str, interval: str = "5m", limit: int =
                         cache_stale = False
             
             if cache_stale:
+                from services.data_hub import recorder_feed_owns
+                if recorder_feed_owns(symbol):
+                    return candles       # yalnız MT5 kaynağı — Yahoo 1m karıştırma
                 from services.data_hub import _fetch_candles_from_api, ingest_candles
                 # Fetch 1m candles directly from API (upstream vendor or Yahoo Finance fallback)
                 fetched = await _fetch_candles_from_api(symbol, "1m", limit=limit)
