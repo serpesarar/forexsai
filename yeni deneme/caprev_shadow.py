@@ -15,6 +15,11 @@ KANIT (research/ndx_gate_forge/NIHAI_RAPOR.md, 2026-10-02):
   NDX 1h/30m/15m ertesi gün +0,34/+0,45/+0,77 R, DAX +0,35/+0,47 (B+; canlı değil).
   Stressiz ∧ yüksek VIX hücresi ≈ 0 → iki şart BİRLİKTE gerekli.
 
+Ölçümler (2026-10-02 eklendi): çıkış (a) seans sonu R_d0, (b) +1R/−1R ilk geçiş R_tp1 (hedef = giriş ask + stop mesafesi;
+aynı barda ikisi → stop; hiçbiri değilse R_d0), karışım R_half = ½R_d0 + ½R_tp1; ertesi gün R_d1. VIX: bot günlük SON VIX değerini
+kendi durum dosyasında tutar → olayda `vix_prev`, `vix_prev2`, `vix_chg_prev` (= önceki gün − ondan önceki gün) ve `vix_rising`
+(araştırmadaki "artan VIX" filtresi: değişim ≥ 0). İlk 2 işlem gününde geçmiş yoksa alanlar None.
+
 Veri: MT5 M15 barları (broker saati → UTC dönüşümü çağıran verir). Seans günü =
 yerel takvim günü, RTH = yerel saat aralığı; DST kuralları elle (tzdata bağımsız).
 """
@@ -43,6 +48,7 @@ MAX_LATE_S = 600                # olay barı kapanışından bu kadar sonra tesp
 OPEN_GRACE_MIN = 5              # kademe 1: açılıştan sonra ilk 5 dk içinde alınabilir
 FETCH_M15 = 3500                # ≈ 36 gün → ≥ 21 işlem günü kapanışı
 POLL_EVERY_S = 60
+VIX_HIST_DAYS = 15
 
 # market → profil. Dakikalar YEREL gün dakikası. win = kademe-2 tetikleyici penceresi
 # (bar bitişi ≤ win_end). Araştırma: NDX 03:00–15:00 NY, DAX 08:00–16:30 Berlin.
@@ -135,6 +141,26 @@ def daily_context(days: dict[date, dict], today: date) -> dict | None:
             "pdl": days[ds[-1]]["low"], "pdh": days[ds[-1]]["high"], "pdc": cl[-1]}
 
 
+def update_vix_hist(hist: dict, day: date, vix: float | None) -> dict:
+    """Günün SON görülen VIX değerini sakla (kapanışa yaklaşır); son VIX_HIST_DAYS gün tutulur."""
+    if vix is not None:
+        hist[str(day)] = float(vix)
+    for k in sorted(hist)[:-VIX_HIST_DAYS]:
+        hist.pop(k, None)
+    return hist
+
+
+def vix_features(hist: dict, today: date, vix: float | None) -> dict:
+    """Bugünden ÖNCEKİ iki günün son VIX'i → önceki gün değişimi (araştırmadaki 'artan VIX' girdisi)."""
+    prev = [k for k in sorted(hist) if k < str(today)]
+    p1 = hist[prev[-1]] if len(prev) >= 1 else None
+    p2 = hist[prev[-2]] if len(prev) >= 2 else None
+    chg = None if p1 is None or p2 is None else round(p1 - p2, 3)
+    return {"vix_prev": p1, "vix_prev2": p2, "vix_chg_prev": chg,
+            "vix_rising": None if chg is None else bool(chg >= 0),
+            "vix_chg_live": None if p1 is None or vix is None else round(float(vix) - p1, 3)}
+
+
 def tier2_trigger(bars: list[dict], prof: dict, today: date, pdl: float) -> dict | None:
     """Bugün pencere içindeki ilk KAPANMIŞ M15 barı: kapanış < önceki RTH dibi. Bar bitişi ≤ pencere sonu."""
     lo, hi = prof["win"]
@@ -148,7 +174,7 @@ def tier2_trigger(bars: list[dict], prof: dict, today: date, pdl: float) -> dict
 
 
 def make_event(market: str, tier: str, today: date, ctx: dict, vix: float, ask: float, bid: float,
-               t_now: float, trig_t: float | None, prof: dict) -> dict:
+               t_now: float, trig_t: float | None, prof: dict, vixf: dict | None = None) -> dict:
     stop = ask * (1 - STOP_K * ctx["dvol"])
     d0 = local_to_utc(today, prof["close"], prof["tz"])
     d1 = local_to_utc(next_trading_date(today), prof["close"], prof["tz"])
@@ -156,7 +182,7 @@ def make_event(market: str, tier: str, today: date, ctx: dict, vix: float, ask: 
             "entry_t": t_now, "entry_ask": ask, "entry_bid": bid, "stop": stop, "stop_dist": ask - stop,
             "dvol": ctx["dvol"], "r1": ctx["r1"], "r5": ctx["r5"], "vix": vix, "pdl": ctx["pdl"],
             "trigger_bar_t": trig_t, "latency_s": None if trig_t is None else round(t_now - (trig_t + BAR_MIN * 60), 1),
-            "d0_t": d0, "d1_t": d1, "status": "open"}
+            "tp1_price": ask + (ask - stop), "d0_t": d0, "d1_t": d1, "status": "open", **(vixf or {})}
 
 
 def resolve_event(ev: dict, m1: list[dict], now: float) -> dict:
@@ -189,7 +215,28 @@ def resolve_event(ev: dict, m1: list[dict], now: float) -> dict:
             out[f"R_{key}"] = round((last[-1]["close"] - SLIP_PTS - entry) / sd, 4)
             out[f"stopped_{key}"] = False
     out["mfe_R"], out["mae_R"] = round(mfe, 3), round(mae, 3)
-    if out.get("R_d0") is not None and out.get("R_d1") is not None:
+    # (b) +1R/−1R ilk geçiş (aynı seans günü, en geç d0 çıkışı); aynı barda ikisi → stop (kötümser)
+    tp_px = ev.get("tp1_price", ev["entry_ask"] + sd)
+    if out.get("R_tp1") is None:
+        for b in bars:
+            if b["t"] >= ev["d0_t"]:
+                break
+            if b["t"] + 60 <= ev["entry_t"]:
+                continue
+            first = b["t"] > ev["entry_t"]
+            if b["low"] <= stop:
+                px = min(b["open"], stop) if first else stop
+                out["R_tp1"], out["tp1_how"] = round((px - SLIP_PTS - entry) / sd, 4), "stop"
+                break
+            if b["high"] >= tp_px:
+                px = max(b["open"], tp_px) if first else tp_px
+                out["R_tp1"], out["tp1_how"] = round((px - SLIP_PTS - entry) / sd, 4), "target"
+                break
+        if out.get("R_tp1") is None and out.get("R_d0") is not None:
+            out["R_tp1"], out["tp1_how"] = out["R_d0"], "time"          # ne hedef ne stop → seans sonu
+    if out.get("R_d0") is not None and out.get("R_tp1") is not None:
+        out["R_half"] = round(0.5 * out["R_d0"] + 0.5 * out["R_tp1"], 4)
+    if out.get("R_d0") is not None and out.get("R_d1") is not None and out.get("R_tp1") is not None:
         out["status"] = "done"
     elif now > ev["d1_t"] + 6 * 86400:
         out["status"] = "expired"
@@ -247,9 +294,12 @@ def poll(mt5, log, resolve_symbol, get_vix, offset_fn, now: float | None = None,
         return
     _last_poll = now
     st = _load_state()
-    vix = None
-    vix_done = False
-    changed = False
+    vix = get_vix()                                   # cache'li; her taramada (geçmişi biriktirmek için)
+    us_today = to_local(now, "US")[0]
+    if vix is not None:
+        st["vix_hist"] = update_vix_hist(st.get("vix_hist", {}), us_today, vix)
+    vixf = vix_features(st.get("vix_hist", {}), us_today, vix)
+    changed = vix is not None
     for market, prof in PROFILES.items():
         sym = resolve_symbol(market)
         if not sym:
@@ -266,8 +316,6 @@ def poll(mt5, log, resolve_symbol, get_vix, offset_fn, now: float | None = None,
         _K5B[market] = {"t": now, **ctx} if market == "NDX.INDX" else _K5B.get(market, {})
         if wd not in TRADE_WEEKDAYS or not ctx["stress"]:
             continue
-        if not vix_done:
-            vix, vix_done = get_vix(), True
         if vix is None or vix < VIX_MIN:
             continue
         tick = mt5.symbol_info_tick(sym)
@@ -276,7 +324,7 @@ def poll(mt5, log, resolve_symbol, get_vix, offset_fn, now: float | None = None,
         # kademe 1: açılıştan sonraki ilk OPEN_GRACE_MIN dakikada
         k1 = f"{market}|{today}|k1"
         if prof["open"] <= mloc < prof["open"] + OPEN_GRACE_MIN and k1 not in st["fired"]:
-            ev = make_event(market, "k1", today, ctx, vix, tick.ask, tick.bid, now, None, prof)
+            ev = make_event(market, "k1", today, ctx, vix, tick.ask, tick.bid, now, None, prof, vixf)
             st["fired"][k1] = True
             st["open"].append(ev)
             _append({"kind": "event", **ev})
@@ -293,7 +341,7 @@ def poll(mt5, log, resolve_symbol, get_vix, offset_fn, now: float | None = None,
                 if late > MAX_LATE_S:
                     _append({"kind": "skip", "id": k2, "reason": "late", "latency_s": round(late, 1), "ts": now})
                 else:
-                    ev = make_event(market, "k2", today, ctx, vix, tick.ask, tick.bid, now, trig["t"], prof)
+                    ev = make_event(market, "k2", today, ctx, vix, tick.ask, tick.bid, now, trig["t"], prof, vixf)
                     st["open"].append(ev)
                     _append({"kind": "event", **ev})
                     log.info("CAPREV-GÖLGE %s k2: dip altı kapanış %.2f < pdl %.2f, VIX=%.1f ask=%.2f stop=%.2f (EMİR YOK)",
@@ -317,7 +365,8 @@ def poll(mt5, log, resolve_symbol, get_vix, offset_fn, now: float | None = None,
             continue
         if new["status"] in ("done", "expired"):
             _append({"kind": "result", **new})
-            log.info("CAPREV-GÖLGE sonuç %s: R_d0=%s R_d1=%s (%s)", new["id"], new.get("R_d0"), new.get("R_d1"), new["status"])
+            log.info("CAPREV-GÖLGE sonuç %s: R_d0=%s R_tp1=%s(%s) R_d1=%s (%s)", new["id"], new.get("R_d0"),
+                     new.get("R_tp1"), new.get("tp1_how"), new.get("R_d1"), new["status"])
             changed = True
         else:
             still.append(new)

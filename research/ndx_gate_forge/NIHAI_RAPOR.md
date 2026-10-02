@@ -82,7 +82,7 @@ ilk yarısı (a)'da −0,03. Filtre **gölgede ayrı etiketle ölçülmeli**, ku
 
 - Botta **CAPREV gölge kaydı çalışıyor** (`yeni deneme/caprev_shadow.py`, emir yok; NDX+DAX; aynı gün ve ertesi gün sonucu).
   Ana aday tek kademe olduğu için analizde **k2 (dip kırılımı) kayıtları esas alınır**; k1 (açılış) ayrı ölçümdür.
-  ⚠ Gölge şu an **(b) +1R/−1R sonucunu ve VIX değişimini kaydetmiyor** — eklemek küçük bir değişiklik (önerilir).
+  ✅ Gölge artık **(b) +1R/−1R sonucunu (`R_tp1`, `tp1_how`), karışımı (`R_half`) ve VIX önceki-gün değişimini (`vix_chg_prev`, `vix_rising`)** da kaydediyor (2026-10-02, 6 yeni birim testi; VIX geçmişi bot tarafından günlük son değerden biriktirilir, ilk 2 işlem gününde alanlar None).
 - Canlıya alma için: tamamen yeni dönemde ≥150 tek-pozisyon olay, iki yarı, gerçek dolum/spread/gece boşluğu kartı.
   Yılda ~10 olayla bu yıllar alır; o yüzden 10 yıllık geçmiş birincil kanıt olarak kalacak ve karar risk iştahına bağlı.
 - Bütün sonuçlar `docs/KAPI_KAYIT_DEFTERI.md`'de kayıtlı (GF-16…GF-20, CP).

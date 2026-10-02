@@ -196,7 +196,7 @@ Veri: Dukascopy 2025 (bid/ask), cache 2026 (+60 dk onarımlı), MT5 M1, Eylül `
 10. **Veto katkısı portföyde ölç** (E19); küçük alt kümeyi (≤20 gün) kanıt sayma.
 
 ## 4. Açık iş / sıradaki araştırma yönleri
-- **CAPREV gölge verisi** birikiyor (k2 = ana aday; yılda ~10 olay; ileri doğrulama yıllar sürer → 10 yıllık geçmiş birincil kanıt). Gölge çıktısı: `yeni deneme/caprev_shadow.jsonl`. ⚠ Gölge +1R/−1R sonucunu ve VIX değişimini henüz kaydetmiyor (eklenmeli).
+- **CAPREV gölge verisi** birikiyor (k2 = ana aday; yılda ~10 olay; ileri doğrulama yıllar sürer → 10 yıllık geçmiş birincil kanıt). Gölge çıktısı: `yeni deneme/caprev_shadow.jsonl`. Gölge `R_d0`, `R_tp1`/`tp1_how`, `R_half`, `R_d1`, `vix_chg_prev`/`vix_rising` alanlarını kaydeder (2026-10-02).
 - **K5b gölge karnesi:** `gate_skipped.jsonl` içinde `shadow:k5b_stress_dip`, sonuç `shadow_followup.jsonl`; ≥30 bağımsız epizod sonrası oku.
 - CAPREV: VIX 18,4–25 kovası zayıf (+0,09…+0,26); asıl kenar VIX 25+; düşük-VIX stres negatif. VIX tabanını yükseltme sonradan yapılacaksa yeni veri ister.
 - Gece taşıma (kademe 2) boşluk/dolum maliyeti canlıda doğrulanmadı; DAX için gölge henüz Berlin saat dilimiyle kuruldu, NDX'ten sonra değerlendir.

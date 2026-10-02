@@ -174,6 +174,86 @@ def test_k5b_check_requires_fresh_stress_context():
     assert cs.k5b_check("NDX.INDX", 19990.0)[0] is False        # bayat bağlam → fail-open (bloklamaz)
 
 
+def _flat_then(entry_t, n, base, patch):
+    """Düz seyir + patch(i, bar) ile belirli dakikalarda sapma."""
+    m1 = _m1(entry_t - 60, n, lambda i: base)
+    for i, b in enumerate(m1):
+        patch(i, b)
+    return m1
+
+
+def test_tp1_target_then_stop_gives_plus_one_while_d0_negative():
+    entry_t = cs.local_to_utc(date(2026, 10, 5), 600, "US")
+    ev = _event(entry_t)
+    sd = ev["stop_dist"]
+    up = ev["tp1_price"] + 5
+
+    def patch(i, b):
+        if i == 30:                                   # 30. dakika: hedef aşılır
+            b.update(open=ev['tp1_price'] - 3, high=up, low=ev['tp1_price'] - 4, close=up - 2)
+        if i >= 120:                                  # sonra düşüş: stop (d0 negatif) — ama +1R zaten alınmış
+            b.update(open=ev["stop"] - 50, high=ev["stop"] - 48, low=ev["stop"] - 60, close=ev["stop"] - 55)
+    m1 = _flat_then(entry_t, 3 * 24 * 60, 20000.0, patch)
+    now = ev["d1_t"] + 3600
+    r = cs.resolve_event(ev, m1, now)
+    assert r["tp1_how"] == "target" and abs(r["R_tp1"] - (1 - 0.4 / sd)) < 1e-3
+    assert r["R_d0"] < -1.0 and r["stopped_d0"]
+    assert abs(r["R_half"] - 0.5 * (r["R_d0"] + r["R_tp1"])) < 1e-3
+    assert r["status"] == "done"
+
+
+def test_tp1_same_bar_target_and_stop_is_stop():
+    entry_t = cs.local_to_utc(date(2026, 10, 5), 600, "US")
+    ev = _event(entry_t)
+
+    def patch(i, b):
+        if i == 10:
+            b.update(high=ev["tp1_price"] + 10, low=ev["stop"] - 10)   # aynı barda ikisi
+    m1 = _flat_then(entry_t, 3 * 24 * 60, 20000.0, patch)
+    r = cs.resolve_event(ev, m1, ev["d1_t"] + 3600)
+    assert r["tp1_how"] == "stop" and r["R_tp1"] < -0.99
+
+
+def test_tp1_neither_equals_session_close():
+    entry_t = cs.local_to_utc(date(2026, 10, 5), 600, "US")
+    ev = _event(entry_t)
+    m1 = _flat_then(entry_t, 3 * 24 * 60, 20000.0, lambda i, b: None)
+    r = cs.resolve_event(ev, m1, ev["d1_t"] + 3600)
+    assert r["tp1_how"] == "time" and r["R_tp1"] == r["R_d0"]
+
+
+def test_tp1_waits_until_day_end_when_no_touch():
+    entry_t = cs.local_to_utc(date(2026, 10, 5), 600, "US")
+    ev = _event(entry_t)
+    m1 = _flat_then(entry_t, 200, 20000.0, lambda i, b: None)
+    r = cs.resolve_event(ev, m1, entry_t + 200 * 60)
+    assert r.get("R_tp1") is None and r["status"] == "open"          # 16:00'a daha var, hiçbir şey olmadı
+
+
+def test_vix_features_and_history():
+    h = {}
+    cs.update_vix_hist(h, date(2026, 10, 1), 18.0)
+    cs.update_vix_hist(h, date(2026, 10, 1), 18.5)          # aynı günün son değeri kazanır
+    cs.update_vix_hist(h, date(2026, 10, 2), 19.5)
+    f = cs.vix_features(h, date(2026, 10, 5), 22.0)
+    assert f["vix_prev"] == 19.5 and f["vix_prev2"] == 18.5 and f["vix_chg_prev"] == 1.0 and f["vix_rising"] is True
+    assert f["vix_chg_live"] == 2.5
+    f2 = cs.vix_features({"2026-10-02": 19.5}, date(2026, 10, 5), 22.0)       # yetersiz geçmiş
+    assert f2["vix_chg_prev"] is None and f2["vix_rising"] is None
+    for d in range(1, 25):                                                      # budama
+        cs.update_vix_hist(h, date(2026, 11, d), 20.0)
+    assert len(h) <= cs.VIX_HIST_DAYS
+    falling = cs.vix_features({"2026-10-01": 20.0, "2026-10-02": 19.0}, date(2026, 10, 5), 21.0)
+    assert falling["vix_rising"] is False
+
+
+def test_event_carries_vix_fields():
+    ctx = {"dvol": 0.012, "r1": -0.02, "r5": -0.03, "pdl": 19900.0}
+    vf = cs.vix_features({"2026-10-01": 18.0, "2026-10-02": 19.0}, date(2026, 10, 5), 22.0)
+    ev = cs.make_event("NDX.INDX", "k2", date(2026, 10, 5), ctx, 22.0, 20000.0, 19998.7, 1.0, 0.0, NDX, vf)
+    assert ev["vix_rising"] is True and ev["vix_chg_prev"] == 1.0 and abs(ev["tp1_price"] - (20000 + ev["stop_dist"])) < 1e-9
+
+
 if __name__ == "__main__":
     n = 0
     for name, fn in sorted(globals().items()):
