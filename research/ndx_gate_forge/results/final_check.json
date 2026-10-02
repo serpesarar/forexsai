@@ -1,0 +1,560 @@
+{
+ "NDX 1h": {
+  "taban | R_d0": {
+   "n": 107,
+   "toplam": 25.65,
+   "ort": 0.24,
+   "P(>0)": 0.983,
+   "ilk/ikinci yarı": [
+    0.021,
+    0.454
+   ],
+   "en iyi 5 hariç toplam": 8.92
+  },
+  "taban | R_tp1": {
+   "n": 107,
+   "toplam": 15.67,
+   "ort": 0.146,
+   "P(>0)": 0.967,
+   "ilk/ikinci yarı": [
+    0.077,
+    0.215
+   ],
+   "en iyi 5 hariç toplam": 10.7
+  },
+  "taban | R_half": {
+   "n": 107,
+   "toplam": 20.66,
+   "ort": 0.193,
+   "P(>0)": 0.984,
+   "ilk/ikinci yarı": [
+    0.049,
+    0.335
+   ],
+   "en iyi 5 hariç toplam": 9.81
+  },
+  "artan VIX | R_d0": {
+   "n": 85,
+   "toplam": 22.76,
+   "ort": 0.268,
+   "P(>0)": 0.991,
+   "ilk/ikinci yarı": [
+    -0.031,
+    0.559
+   ],
+   "en iyi 5 hariç toplam": 6.96
+  },
+  "artan VIX | R_tp1": {
+   "n": 85,
+   "toplam": 14.79,
+   "ort": 0.174,
+   "P(>0)": 0.983,
+   "ilk/ikinci yarı": [
+    0.038,
+    0.307
+   ],
+   "en iyi 5 hariç toplam": 9.81
+  },
+  "artan VIX | R_half": {
+   "n": 85,
+   "toplam": 18.77,
+   "ort": 0.221,
+   "P(>0)": 0.991,
+   "ilk/ikinci yarı": [
+    0.004,
+    0.433
+   ],
+   "en iyi 5 hariç toplam": 8.39
+  },
+  "düşen VIX | R_d0": {
+   "n": 22,
+   "toplam": 2.89,
+   "ort": 0.131,
+   "P(>0)": 0.725,
+   "ilk/ikinci yarı": [
+    0.131,
+    0.132
+   ],
+   "en iyi 5 hariç toplam": -6.02
+  },
+  "düşen VIX | R_tp1": {
+   "n": 22,
+   "toplam": 0.89,
+   "ort": 0.04,
+   "P(>0)": 0.593,
+   "ilk/ikinci yarı": [
+    0.178,
+    -0.098
+   ],
+   "en iyi 5 hariç toplam": -4.09
+  },
+  "düşen VIX | R_half": {
+   "n": 22,
+   "toplam": 1.89,
+   "ort": 0.086,
+   "P(>0)": 0.677,
+   "ilk/ikinci yarı": [
+    0.154,
+    0.017
+   ],
+   "en iyi 5 hariç toplam": -5.05
+  }
+ },
+ "NDX 30m": {
+  "taban | R_d0": {
+   "n": 72,
+   "toplam": 28.47,
+   "ort": 0.395,
+   "P(>0)": 0.999,
+   "ilk/ikinci yarı": [
+    0.152,
+    0.639
+   ],
+   "en iyi 5 hariç toplam": 11.4
+  },
+  "taban | R_tp1": {
+   "n": 72,
+   "toplam": 20.49,
+   "ort": 0.285,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.227,
+    0.342
+   ],
+   "en iyi 5 hariç toplam": 15.52
+  },
+  "taban | R_half": {
+   "n": 72,
+   "toplam": 24.48,
+   "ort": 0.34,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.189,
+    0.491
+   ],
+   "en iyi 5 hariç toplam": 13.46
+  },
+  "artan VIX | R_d0": {
+   "n": 58,
+   "toplam": 28.16,
+   "ort": 0.486,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.235,
+    0.736
+   ],
+   "en iyi 5 hariç toplam": 11.86
+  },
+  "artan VIX | R_tp1": {
+   "n": 58,
+   "toplam": 21.02,
+   "ort": 0.362,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.276,
+    0.449
+   ],
+   "en iyi 5 hariç toplam": 16.05
+  },
+  "artan VIX | R_half": {
+   "n": 58,
+   "toplam": 24.59,
+   "ort": 0.424,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.256,
+    0.592
+   ],
+   "en iyi 5 hariç toplam": 13.96
+  },
+  "düşen VIX | R_d0": {
+   "n": 14,
+   "toplam": 0.3,
+   "ort": 0.022,
+   "P(>0)": 0.489,
+   "ilk/ikinci yarı": [
+    -0.194,
+    0.237
+   ],
+   "en iyi 5 hariç toplam": -5.42
+  },
+  "düşen VIX | R_tp1": {
+   "n": 14,
+   "toplam": -0.53,
+   "ort": -0.038,
+   "P(>0)": 0.426,
+   "ilk/ikinci yarı": [
+    0.024,
+    -0.099
+   ],
+   "en iyi 5 hariç toplam": -4.71
+  },
+  "düşen VIX | R_half": {
+   "n": 14,
+   "toplam": -0.11,
+   "ort": -0.008,
+   "P(>0)": 0.47,
+   "ilk/ikinci yarı": [
+    -0.085,
+    0.069
+   ],
+   "en iyi 5 hariç toplam": -4.71
+  }
+ },
+ "NDX 15m": {
+  "taban | R_d0": {
+   "n": 24,
+   "toplam": 19.73,
+   "ort": 0.822,
+   "P(>0)": 0.999,
+   "ilk/ikinci yarı": [
+    0.36,
+    1.284
+   ],
+   "en iyi 5 hariç toplam": 4.22
+  },
+  "taban | R_tp1": {
+   "n": 24,
+   "toplam": 14.17,
+   "ort": 0.59,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.661,
+    0.52
+   ],
+   "en iyi 5 hariç toplam": 9.2
+  },
+  "taban | R_half": {
+   "n": 24,
+   "toplam": 16.95,
+   "ort": 0.706,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.511,
+    0.902
+   ],
+   "en iyi 5 hariç toplam": 6.72
+  },
+  "artan VIX | R_d0": {
+   "n": 22,
+   "toplam": 21.12,
+   "ort": 0.96,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.485,
+    1.435
+   ],
+   "en iyi 5 hariç toplam": 5.61
+  },
+  "artan VIX | R_tp1": {
+   "n": 22,
+   "toplam": 15.56,
+   "ort": 0.707,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.813,
+    0.601
+   ],
+   "en iyi 5 hariç toplam": 10.59
+  },
+  "artan VIX | R_half": {
+   "n": 22,
+   "toplam": 18.34,
+   "ort": 0.834,
+   "P(>0)": 1.0,
+   "ilk/ikinci yarı": [
+    0.649,
+    1.018
+   ],
+   "en iyi 5 hariç toplam": 8.11
+  },
+  "düşen VIX | R_d0": {
+   "n": 2
+  },
+  "düşen VIX | R_tp1": {
+   "n": 2
+  },
+  "düşen VIX | R_half": {
+   "n": 2
+  }
+ },
+ "DAX 1h": {
+  "taban | R_d0": {
+   "n": 54,
+   "toplam": 9.22,
+   "ort": 0.171,
+   "P(>0)": 0.889,
+   "ilk/ikinci yarı": [
+    0.063,
+    0.278
+   ],
+   "en iyi 5 hariç toplam": -2.27
+  },
+  "taban | R_tp1": {
+   "n": 54,
+   "toplam": 6.58,
+   "ort": 0.122,
+   "P(>0)": 0.853,
+   "ilk/ikinci yarı": [
+    0.03,
+    0.214
+   ],
+   "en iyi 5 hariç toplam": 1.61
+  },
+  "taban | R_half": {
+   "n": 54,
+   "toplam": 7.9,
+   "ort": 0.146,
+   "P(>0)": 0.883,
+   "ilk/ikinci yarı": [
+    0.047,
+    0.246
+   ],
+   "en iyi 5 hariç toplam": -0.31
+  },
+  "artan VIX | R_d0": {
+   "n": 45,
+   "toplam": 11.84,
+   "ort": 0.263,
+   "P(>0)": 0.954,
+   "ilk/ikinci yarı": [
+    0.178,
+    0.345
+   ],
+   "en iyi 5 hariç toplam": 0.35
+  },
+  "artan VIX | R_tp1": {
+   "n": 45,
+   "toplam": 8.18,
+   "ort": 0.182,
+   "P(>0)": 0.932,
+   "ilk/ikinci yarı": [
+    0.108,
+    0.252
+   ],
+   "en iyi 5 hariç toplam": 3.21
+  },
+  "artan VIX | R_half": {
+   "n": 45,
+   "toplam": 10.01,
+   "ort": 0.222,
+   "P(>0)": 0.946,
+   "ilk/ikinci yarı": [
+    0.143,
+    0.299
+   ],
+   "en iyi 5 hariç toplam": 1.79
+  },
+  "düşen VIX | R_d0": {
+   "n": 9,
+   "toplam": -2.62,
+   "ort": -0.291,
+   "P(>0)": 0.108,
+   "ilk/ikinci yarı": [
+    0.188,
+    -0.674
+   ],
+   "en iyi 5 hariç toplam": -4.03
+  },
+  "düşen VIX | R_tp1": {
+   "n": 9,
+   "toplam": -1.6,
+   "ort": -0.178,
+   "P(>0)": 0.244,
+   "ilk/ikinci yarı": [
+    0.186,
+    -0.468
+   ],
+   "en iyi 5 hariç toplam": -4.03
+  },
+  "düşen VIX | R_half": {
+   "n": 9,
+   "toplam": -2.11,
+   "ort": -0.234,
+   "P(>0)": 0.168,
+   "ilk/ikinci yarı": [
+    0.187,
+    -0.571
+   ],
+   "en iyi 5 hariç toplam": -4.03
+  }
+ },
+ "DAX 30m": {
+  "taban | R_d0": {
+   "n": 37,
+   "toplam": 4.43,
+   "ort": 0.12,
+   "P(>0)": 0.775,
+   "ilk/ikinci yarı": [
+    0.006,
+    0.228
+   ],
+   "en iyi 5 hariç toplam": -4.98
+  },
+  "taban | R_tp1": {
+   "n": 37,
+   "toplam": 3.0,
+   "ort": 0.081,
+   "P(>0)": 0.712,
+   "ilk/ikinci yarı": [
+    0.002,
+    0.156
+   ],
+   "en iyi 5 hariç toplam": -1.97
+  },
+  "taban | R_half": {
+   "n": 37,
+   "toplam": 3.72,
+   "ort": 0.1,
+   "P(>0)": 0.753,
+   "ilk/ikinci yarı": [
+    0.004,
+    0.192
+   ],
+   "en iyi 5 hariç toplam": -3.47
+  },
+  "artan VIX | R_d0": {
+   "n": 32,
+   "toplam": 6.18,
+   "ort": 0.193,
+   "P(>0)": 0.87,
+   "ilk/ikinci yarı": [
+    0.172,
+    0.215
+   ],
+   "en iyi 5 hariç toplam": -3.24
+  },
+  "artan VIX | R_tp1": {
+   "n": 32,
+   "toplam": 4.5,
+   "ort": 0.141,
+   "P(>0)": 0.829,
+   "ilk/ikinci yarı": [
+    0.175,
+    0.106
+   ],
+   "en iyi 5 hariç toplam": -0.47
+  },
+  "artan VIX | R_half": {
+   "n": 32,
+   "toplam": 5.34,
+   "ort": 0.167,
+   "P(>0)": 0.856,
+   "ilk/ikinci yarı": [
+    0.173,
+    0.16
+   ],
+   "en iyi 5 hariç toplam": -1.84
+  },
+  "düşen VIX | R_d0": {
+   "n": 5,
+   "toplam": -1.75,
+   "ort": -0.349,
+   "P(>0)": 0.157,
+   "ilk/ikinci yarı": [
+    0.181,
+    -0.703
+   ],
+   "en iyi 5 hariç toplam": 0.0
+  },
+  "düşen VIX | R_tp1": {
+   "n": 5,
+   "toplam": -1.5,
+   "ort": -0.3,
+   "P(>0)": 0.186,
+   "ilk/ikinci yarı": [
+    0.304,
+    -0.703
+   ],
+   "en iyi 5 hariç toplam": 0.0
+  },
+  "düşen VIX | R_half": {
+   "n": 5,
+   "toplam": -1.62,
+   "ort": -0.325,
+   "P(>0)": 0.157,
+   "ilk/ikinci yarı": [
+    0.243,
+    -0.703
+   ],
+   "en iyi 5 hariç toplam": 0.0
+  }
+ },
+ "DAX 15m": {
+  "taban | R_d0": {
+   "n": 13,
+   "toplam": 2.38,
+   "ort": 0.183,
+   "P(>0)": 0.719,
+   "ilk/ikinci yarı": [
+    -0.093,
+    0.419
+   ],
+   "en iyi 5 hariç toplam": -5.09
+  },
+  "taban | R_tp1": {
+   "n": 13,
+   "toplam": -0.14,
+   "ort": -0.011,
+   "P(>0)": 0.492,
+   "ilk/ikinci yarı": [
+    -0.112,
+    0.075
+   ],
+   "en iyi 5 hariç toplam": -5.09
+  },
+  "taban | R_half": {
+   "n": 13,
+   "toplam": 1.12,
+   "ort": 0.086,
+   "P(>0)": 0.625,
+   "ilk/ikinci yarı": [
+    -0.102,
+    0.247
+   ],
+   "en iyi 5 hariç toplam": -5.09
+  },
+  "artan VIX | R_d0": {
+   "n": 13,
+   "toplam": 2.38,
+   "ort": 0.183,
+   "P(>0)": 0.719,
+   "ilk/ikinci yarı": [
+    -0.093,
+    0.419
+   ],
+   "en iyi 5 hariç toplam": -5.09
+  },
+  "artan VIX | R_tp1": {
+   "n": 13,
+   "toplam": -0.14,
+   "ort": -0.011,
+   "P(>0)": 0.492,
+   "ilk/ikinci yarı": [
+    -0.112,
+    0.075
+   ],
+   "en iyi 5 hariç toplam": -5.09
+  },
+  "artan VIX | R_half": {
+   "n": 13,
+   "toplam": 1.12,
+   "ort": 0.086,
+   "P(>0)": 0.625,
+   "ilk/ikinci yarı": [
+    -0.102,
+    0.247
+   ],
+   "en iyi 5 hariç toplam": -5.09
+  },
+  "düşen VIX | R_d0": {
+   "n": 0
+  },
+  "düşen VIX | R_tp1": {
+   "n": 0
+  },
+  "düşen VIX | R_half": {
+   "n": 0
+  }
+ }
+}

@@ -1,95 +1,91 @@
-# NASDAQ Kapı/Strateji Araştırması — Nihai Rapor v2 (2026-10-02)
+# NASDAQ Kapı/Strateji Araştırması — NİHAİ RAPOR v3 (2026-10-02)
 
-Bu klasörün dört turu + diğer ajanın üç çalışması (`ndx_five_gates_20260930`, `ndx_mechanism_round2_20260930`,
-`ndx_synthesis_20261002`) karşılaştırıldı. Canlı bot, bayraklar ve emirler değiştirilmedi. Ölçü birimleri:
-**gvol** = işlem getirisi / önceki 20 günün günlük volatilitesi (1×gvol stopla R'ye eşit); R (stop birimi); puan.
-Dolar vaadi yoktur. 2025–Eylül 2026 geçmişi birçok turda görüldü; yeni dokunulmamış dönem yok.
+Bu klasörün beş turu ile diğer ajanın dört çalışması (`ndx_five_gates_20260930`, `ndx_mechanism_round2_20260930`,
+`ndx_synthesis_20261002`, `ndx_caprev_paths_20261002`) karşılaştırıldı. v2'deki üç iddia bu sürümde **düzeltildi** (§5).
+Birimler: **R** = başlangıç riski (1R = 1 × önceki 20 işlem gününün günlük volatilitesi × giriş fiyatı). Dolar vaadi yok.
+Bütün dönemler geçmişe dönüktür; aynı NASDAQ geçmişine çok kez bakıldı (seçim yükü). Hiçbir aday canlıya hazır değildir.
 
-## 1. Bir bakışta
+## 1. Tek cümle sonuç
 
-| # | Çıktı | Tür | Kanıt özeti | Sınıf |
+Beş kanıtlı kapı yok. İki ajanın birbirinden bağımsız ulaştığı **tek ciddi aday CAPREV**: stresli ve korkulu bir günde
+(önceki gün NASDAQ ≤ −%1,5 veya 5 günde ≤ −%4, VIX ≥ 18,4) fiyat önceki seansın dibini kırınca **teyit beklemeden almak**.
+Bunun dışındaki her şey ya elendi ya da botun kendi örneklemine özgü zayıf gölge işaretidir.
+
+## 2. Önerilen aday — CAPREV (dondurulmuş kural)
+
+| Öğe | Kural |
+|---|---|
+| Gün koşulu | önceki nakit gün NDX ≤ −%1,5 **veya** son 5 gün ≤ −%4, **ve** önceki gün VIX ≥ 18,4; Pzt–Per |
+| Tetik | NY 03:00–15:00 arasında, önceki RTH (09:30–16:00) dibinin altındaki **ilk** kapanmış bar → sonraki bar açılışında BUY |
+| Risk | stop = giriş × (1 − günlük vol); lot bu mesafeye göre risk-eşitlenir (~300 puan; botun 110 p SL'iyle aynı lot KULLANILMAZ) |
+| Çıkış (iki aday, gölgede birlikte ölçülecek) | **(a) seans sonu 16:00** — en yüksek toplam, büyük günlere daha bağımlı · **(b) +1R hedef / −1R stop, en geç 16:00** — toplam daha düşük, dönemler arası daha dengeli, sermayeyi erken boşaltır |
+| Opsiyonel filtre | **artan VIX** (önceki VIX ≥ ondan önceki gün) — diğer ajanın sonradan bulduğu; DAX'ta aynı yönde (§3.3) |
+| Sıklık | yılda ~10 gün; sakin dönemlerde (ör. Temmuz–Eylül 2026) hiç yok |
+
+## 3. Kanıt
+
+### 3.1 NASDAQ — iki ajanın bağımsız kodu aynı sayıyı veriyor
+| Kaynak | Olay | (a) 16:00 toplam R / ort | (b) +1R hedef toplam / ort | (a) ilk–ikinci yarı ort | (b) ilk–ikinci yarı ort | En iyi 5 gün hariç (a) / (b) |
+|---|---|---|---|---|---|---|
+| 1h 2016–26 | 107 | +25,7 / +0,24 | +15,7 / +0,15 | +0,02 / +0,45 | +0,08 / +0,22 | +8,9 / +10,7 |
+| 30m 2021–26 | 72 | +28,5 / +0,40 | +20,5 / +0,29 | +0,15 / +0,64 | +0,23 / +0,34 | +11,4 / +15,5 |
+| 15m 2023–26 | 24 | +19,7 / +0,82 | +14,2 / +0,59 | +0,36 / +1,28 | +0,66 / +0,52 | +4,2 / +9,2 |
+| 1m 2025–26 gerçek bid/ask (diğer ajan) | 11 | +11,1 | +4,2 | — | — | en iyi 3 hariç +0,3 / +1,2 |
+
+Diğer ajanın sayıları: 1h +25,75 / +16,11 · 30m +27,62 / +19,91 · 15m +19,73 / +14,32 → **uyum**.
+Okuma: (a) daha çok kazanıyor ama 10 yılın ilk yarısında neredeyse sıfır (+0,02) ve büyük günlere yaslı. (b) her iki yarıda
+ve en iyi günler çıkarılınca daha sağlam. Kontroller (stressiz gün aynı olay ≈0, aynı olayda SELL negatif, aynı günlerde
+rastgele saat alımı gerçek sonucun altında) önceki turlarda geçti.
+
+### 3.2 Bağımsız piyasa: DAX (kural aynen, VIX = ABD VIX'i)
+| | Olay | (a) seans sonu | (b) +1R hedef | Ertesi gün kapanış (tur 4) |
 |---|---|---|---|---|
-| **1** | **CAPREV-2: stres günü iki kademeli alım** | YENİ STRATEJİ | NDX 1h/30m/15m + **bağımsız piyasa DAX** + günlük QQQ/NDX; saat plasebosu, kırpılmış ortalama, maliyet, gecikme ayakta | **B+** |
-| 2 | K5b: stres günü + önceki RTH dibi altında SELL yok | VETO (gölge) | CAPREV'in aynası; botta −12,8 p (41 karar/5 gün); diğer ajanın portföyünde +6,1R ama 11 gün, anlamsız | B− |
-| 3 | Kovalama endeksi ≥3 → SELL yok | VETO (yalnız bot) | bot SELL'lerinde monoton; diğer ajanın portföyünde +0,30R → **bota özgü** | C+ |
-| 4 | Pazartesi SELL yok · 5m hacim patlaması · 200g+%10 BUY yok · ay sonu | VETO | zaman dilimi/portföy testlerinde tutarsız; diğer ajan hacim ve uzama vetolarını reddetti | C |
-| K | REFLEX `mom_cont` canlıya alınmasın | KORUMA | kenarın tamamı geleceğe bakma sızıntısı (sızıntısız −0,08R) | A |
+| DAX 1h 2019–26 | 54 | +0,17 (P=0,89) | +0,12 | +0,35 (P=0,98) |
+| DAX 30m 2021–26 | 37 | +0,12 (P=0,78) | +0,08 | +0,47 (P=0,97) |
+| DAX 15m 2023–26 | 13 | +0,18 | −0,01 | +0,87 |
 
-## 2. CAPREV-2 — kural (dondurulmuş)
+DAX'ta aynı gün sonucu zayıf ve büyük günlere bağımlı; kenar ertesi güne taşınınca belirginleşiyor (DAX Xetra 17:30'da,
+ABD öğleden sonrası toparlanmasından ÖNCE kapanıyor — bu mekanizmayla tutarlı). Yön NASDAQ ile aynı, güç daha düşük.
 
-Koşul (gün başında bilinir): **önceki ABD işlem günü NDX ≤ −%1,5 veya son 5 gün ≤ −%4** VE **önceki gün VIX ≥ 18,4**, Pzt–Per.
-- **Kademe 1:** NY 09:30 açılışında BUY · stop 1×gvol · aynı gün 16:00 çıkış.
-- **Kademe 2 (ana kenar):** NY 03:00–15:00 arasında fiyatın **önceki RTH (09:30–16:00) dibinin altında kapattığı ilk bar** → sonraki bar açılışında BUY · stop 1×gvol · **ertesi gün 16:00** çıkış. Teyit beklenmez.
-- Lot, stop mesafesine göre risk-eşitlenir. 1×gvol ≈ %1,2–1,5 ≈ 300+ puan; botun 110 p SL'iyle aynı lot kullanılmaz.
+### 3.3 "Artan VIX" filtresi (diğer ajanın adayı) — bağımsız piyasada sınandı
+| | NDX 1h artan / düşen | NDX 30m artan / düşen | **DAX 1h artan / düşen** | **DAX 30m artan / düşen** |
+|---|---|---|---|---|
+| (a) ort R | +0,27 (85) / +0,13 (22) | +0,49 (58) / +0,02 (14) | **+0,26 (45) / −0,29 (9)** | **+0,19 (32) / −0,35 (5)** |
 
-Bot bağlamı: bu, **VIXREG'in BUY rejiminin zamanlanmış hâli**. VIX ≥ 18,4'te bot zaten BUY yönlü; CAPREV ne zaman ve hangi fiyattan alınacağını söylüyor.
+DAX bu filtreyle hiç seçilmemişti; yön aynı çıktı. Ama düşen-VIX hücreleri çok küçük (9 ve 5 olay) ve NDX 1h artan-VIX'in
+ilk yarısı (a)'da −0,03. Filtre **gölgede ayrı etiketle ölçülmeli**, kurala gömülmemeli.
 
-## 3. CAPREV kanıtı (tur 3 + tur 4)
+## 4. Diğer çıktılar (değişmedi)
 
-### 3.1 Ana sonuçlar
-| Kaynak | Kademe 2, aynı gün | Kademe 2, ertesi gün | Kademe 1+2 gün toplamı (aynı gün) |
-|---|---|---|---|
-| NDX 1h 2016–26 | +0,24 (n=107, P=0,98) | **+0,34** (P=0,99) | +0,27 (n=223, P=0,996) |
-| NDX 30m 2021–26 | +0,40 (n=72, P=1,00) | **+0,45** (P=1,00) | +0,39 (n=132, P=1,00) |
-| NDX 15m 2023–26 | +0,82 (n=24, P=1,00) | **+0,77** (P=1,00) | +0,72 (n=47) |
-| NDX 1m 2025–26 (gerçek bid/ask) | +0,98 (n=14, P=0,99) | +0,80 | — |
-| **DAX 1h 2019–26 (bağımsız piyasa, kural aynen)** | +0,17 (n=54, P=0,89) | **+0,35** (P=0,98, 6/8 yıl) | +0,16 |
-| **DAX 30m 2021–26** | +0,12 | **+0,47** (P=0,97) | +0,17 |
-| QQQ günlük 2015–26 (önceki dipten limit al, kapanışta sat) | +0,22, **10/11 yıl** | — | açılıştan alım +0,20, 9/11 |
-| NDX nakit günlük | +0,23, **11/11 yıl** | — | +0,20, 10/11 |
-| S&P 500 günlük | +0,06 (zayıf, 6/11) | — | +0,12, 8/11 |
-
-### 3.2 Diğer ajanın itirazlarına cevap (tur 4, `round4.py`, `cross_market.py`, `w7.py`)
-| İtiraz | Test | Sonuç |
+| Çıktı | Durum | Not |
 |---|---|---|
-| Yoğunlaşma: 11 olayda en iyi 5 gün çıkınca −1,35R | uzun veride kırpılmış ortalama (uçlar %5 atılınca), medyan, en iyi %10'un payı | kırpılmış +0,14 / +0,28 / +0,64 (1h/30m/15m), medyan pozitif. ⚠ 10 yıl 1h'te en iyi %10 olay toplamın tamamını taşıyor (2020/2022 kriz ağırlığı); 2021 sonrası daha dengeli (pay 0,75 / 0,45) |
-| Kriz piyangosu mu? | aynı olay günlerinde rastgele saatte alım, 200 tekrar | gerçek sonuç tekrarların **%100'ünün** üstünde (NDX 1h/30m/15m ve DAX 1h); zamanlama gerçek |
-| Stressiz/yüksek-VIX aynı olay pozitifti (+3,35R/33) | 4 hücre stres×VIX | stressiz∧yüksek VIX: NDX 0,00 / −0,08 / +0,07, DAX ≈0 → **iki şart birlikte gerekli** |
-| 1h'te seans dibi 09:00'dan | 09:00 vs 10:00 tanımı | +0,240 vs +0,237, fark yok |
-| TP80/SL110 kenarı öldürüyor | çıkış eğrisi | kenar **zamanda**: stopsuz getiri günlerce büyüyor (1h: aynı gün +0,31 → 4 gün +0,91). Braket ürünüyle karıştırılmamalı (diğer ajanla aynı görüş) |
-| Geri alımı beklemek? | anında vs geri alım | geri alım pozitif ama her kaynakta anında alımın yarısı |
-| Hacim (≥150 olay) | kademe 1+2 | 10 yılda **223 olay günü** → kart hacmi şartı karşılanabilir |
+| K5b: stres günü + önceki RTH dibi altında SELL yok | GÖLGE (bota bağlı) | CAPREV'in aynası; botta 41 karar/5 gün −12,8 p; diğer ajanın portföyünde +6,1R ama 11 gün, anlamsız |
+| Kovalama endeksi ≥3 → SELL yok | bota özgü, bağlanmadı | portföye taşınmadı (+0,30R) |
+| Pazartesi SELL yok · 5m hacim patlaması · 200g+%10 BUY yok · ay sonu | zayıf/tutarsız | diğer ajan hacim ve uzama vetolarını reddetti |
+| REFLEX `mom_cont` | **canlıya alınamaz** (kod kilidi) | kenarın tamamı geleceğe bakma sızıntısıydı |
 
-Ayrıca: maliyet ×3 ve +1 bar gecikme etkisi küçük; eşik ızgarası (−%1/−1,5/−2 × −%3/−4/−5) 9/9 pozitif.
-VIX 18,4–25 kovası zayıf ama pozitif (+0,12 / +0,08 / +0,26 / +0,09); kenar VIX 25+ ile büyüyor.
-Stres ∧ VIX < 18,4: 2016–20'de pozitifti, 2021 sonrası negatif → filtre gerekli.
+## 5. Düzeltmeler (v2'deki hatalarım — diğer ajanın denetimi haklı)
 
-### 3.3 Dürüst sınırlar
-- **Yılda ~22 gün; Temmuz–Eylül 2026 gibi düşük VIX dönemlerinde hiç çalışmaz.** VIXREG BUY rejimiyle aynı uykuda kalır.
-- Getiri sağa çarpık; 10 yıllık seride kriz yılları ağırlıklı.
-- Aynı NDX geçmişine dört tur bakıldı. En temiz bağımsız kanıt DAX ve günlük QQQ/NDX; S&P 500'de etki zayıf.
-- Diğer ajanın katı M1 icrasında (11 olay) +11,1R ama küçük örnek; aynı olay setinde onların ve bizim icra farkı raporlandı.
-- 1 gvol stop geniş; gerçek dolum ve gece boşluğu (kademe 2 bir gece taşır) canlıda doğrulanmadı.
+1. **"CAPREV-2 iki kademe, 223 olay günü → kart hacmi" yanlıştı.** `w7.py` açılış ve dip bacaklarını ayrı ayrı çözüp R'lerini
+   topluyordu; açık pozisyon varken ikinci giriş engellenmiyordu → gün başına **iki risk birimi**. Risk birimine bölününce
+   ≈ +0,135R/gün; tek açılış bacağından (+0,154) bile düşük. Tek pozisyonla yeniden yürütüldüğünde (diğer ajan) M1'de
+   +14,7R ama düşüş 1,1 → 3,9R ve risk başına getiri yarıya iniyor. **CAPREV-2 önerisini geri çekiyorum; ana aday tek
+   kademeli CAPREV (dip kırılımı).** Açılış alımı ayrı ve daha zayıf bir ölçümdür.
+2. **"Ertesi gün 16:00 en iyi stoplu çıkış" yalnız 1h/30m'de doğru.** Tek pozisyonla M1 ve 15m'de aynı gün daha iyi; gece
+   taşıma boşluk ve finansman riski ekliyor. Birincil çıkış aynı gün; ertesi gün yalnız DAX için anlamlı.
+3. **Günlük QQQ/NDX/SPX testinde stop yoktu** ve günlük OHLC'den stop/hedef sırası çıkarılamaz → zayıf destek, kanıt değil.
+4. **Saat plasebosu** yalnız dip olayının gerçekleştiği günlerde yapıldı: zamanlamanın önemini gösterir, uygulanabilir bir
+   sıfır hipotezi değildir.
+5. (Daha önce) "kovalama endeksi K5b'yi içerir" yanlıştı; μ∝σ² yalnız olası bir açıklama.
 
-## 4. Diğer ajanla karşılaştırma ve düzeltmelerim
+## 6. Durum ve sonraki adım
 
-| Konu | Diğer ajan | Bu çalışma | Ortak sonuç |
-|---|---|---|---|
-| Beş kanıtlı kapı | yok | yok | **uyumlu** |
-| Cache Şub–8 Mart 60 dk hatası | H1 kaynağıyla | açılış sıçramasıyla | **bağımsız teyit** |
-| 30 Eylül makro değeri | gün içi değer olduğunu buldu | düzeltildi (NDX 30.408,50 / VIX 16,34); sonuçları etkilemedi | düzeltildi |
-| K5 (tüm stres SELL vetosu) | portföyde dönemsel kararsız (−12,4R / +8,0R) | — | **yalnız K5b** gölgeye |
-| Kovalama endeksi | portföye +0,30R | botta monoton | **bota özgü**; ayrıca "K5b'yi içerir" ifadem **yanlıştı** (K5b iki bileşen, ≥3 eşiğine yetmez) |
-| Hacim / uzama vetoları | reddedildi (H2/H4) | C+ / tutarsız | **elendi** |
-| μ ∝ σ² | volatilite gruplarında fark olmaması bunu kanıtlamaz | — | **haklı**: yalnız olası açıklama, kanıt değil |
-| CAPREV | M1'de en güçlü fikir, kanıt yetersiz | uzun veri + DAX + günlük endeks | **en öncelikli gölge adayı** |
+- Botta **CAPREV gölge kaydı çalışıyor** (`yeni deneme/caprev_shadow.py`, emir yok; NDX+DAX; aynı gün ve ertesi gün sonucu).
+  Ana aday tek kademe olduğu için analizde **k2 (dip kırılımı) kayıtları esas alınır**; k1 (açılış) ayrı ölçümdür.
+  ⚠ Gölge şu an **(b) +1R/−1R sonucunu ve VIX değişimini kaydetmiyor** — eklemek küçük bir değişiklik (önerilir).
+- Canlıya alma için: tamamen yeni dönemde ≥150 tek-pozisyon olay, iki yarı, gerçek dolum/spread/gece boşluğu kartı.
+  Yılda ~10 olayla bu yıllar alır; o yüzden 10 yıllık geçmiş birincil kanıt olarak kalacak ve karar risk iştahına bağlı.
+- Bütün sonuçlar `docs/KAPI_KAYIT_DEFTERI.md`'de kayıtlı (GF-16…GF-20, CP).
 
-## 5. Genel dersler (dört turun özeti)
-1. **Rastgele girişte durum kapısı yok** (780 hücre plasebo altında). Kenar ya günlük rejimde ya stratejinin kendi yapısında.
-2. **Korku döner, coşku dönmez.** Stres sonrası aşağı aşırılık hem NDX'te hem DAX'ta geri dönüyor, yukarı aşırılık dönmüyor.
-3. **Teyit beklemek günlük ölçekte zarar.** Stres günü yeni dip satılmaz, alınır. Geri alımı beklemek kenarın yarısını kaçırır.
-4. **Braket ≠ zaman.** Toparlanma sürüklenmesi saatlerce-günlerce sürer; 80/110 braket onu yakalayamaz.
-5. **Veto katkısı portföyde ölçülmeli** (diğer ajanın katkısı): bir grubun ortalama kaybı, engellenince aynı miktarda kazanç demek değildir.
-6. **Bir kapıyı başka popülasyona taşımadan orada ölç.** Decider bıçak kapısı botta ters çalıştı; kovalama endeksi portföye taşınmadı.
-
-## 6. Önerilen sıra (hiçbiri canlı değil, 2. KURAL)
-1. **CAPREV-2 gölge scope** (yeni magic, emir yok): her stres∧VIX≥18,4 gününde kademe 1/2 olay anı, giriş fiyatı, VIX,
-   stop, aynı gün/ertesi gün sonuçları kaydedilsin. Uzun veriyle go-live kartı (≥150 olay, iki yarı, bootstrap, spread ×1,5,
-   sonraki-bar icra, tek pozisyon) çıkarılabilir. Canlı karar gerçek dolum + gece boşluğu doğrulandıktan sonra.
-2. K5b → bot `log_gate_skip` gölge nedeni (veto uygulanmadan ileriye dönük niyet logu).
-3. REFLEX: `REFLEX_LIVE=False` kalıcı; araştırma dedektörü düzeltilmeli.
-4. Cache Şub–8 Mart +60 dk DB onarımı.
-
-Dosyalar: `RAPOR.md` (tur 1–2), `PROTOCOL.md`…`PROTOCOL_4.md` (ön-kayıtlar), `round3.py`, `v3_robust.py`, `round4.py`,
-`cross_market.py`, `w7.py`, `pull_dax.py`; çıktılar `results/round3.json`, `v3_robust.json`, `v3_tail.json`, `round4.json`,
-`cross_market.json`, `w7.json`.
+Dosyalar: `final_check.py` → `results/final_check.json` (ajanlar arası tekrar + DAX artan-VIX / +1R testi);
+önceki turlar `RAPOR.md`, `PROTOCOL*.md`, `round3.py`, `round4.py`, `cross_market.py`, `w7.py`.

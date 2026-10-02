@@ -6,7 +6,7 @@ taranır (CLAUDE.md **3. KURAL**); araştırma bitince sonuç buraya eklenir —
 `docs/KAPI_ENVANTERI_2026-09-30.md` bu defterin 30 Eylül tarihli anlık görüntüsüdür (bot/backend/decider *durumları*
 için oraya bak); bu defter tüm dönemleri ve ajanları kapsar ve güncel tutulur.
 
-Son güncelleme: **2026-10-02**.
+Son güncelleme: **2026-10-02 (v3 son kıyas)**.
 
 ## 0. Yeni araştırmaya başlamadan önce (zorunlu sıra)
 
@@ -168,7 +168,8 @@ Veri: Dukascopy 2025 (bid/ask), cache 2026 (+60 dk onarımlı), MT5 M1, Eylül `
 | GF-16 | **CAPREV — kapitülasyon alımı** (stres ∧ VIX≥18,4, önceki RTH dibi altı ilk kapanış → BUY) | 10y 1h 9/11 yıl, 30m 6/6, 15m 4/4; saat plasebosu %100 üstü; stressiz ∧ yüksek VIX ≈0; stres ∧ düşük VIX negatif | B+ |
 | GF-17 | W1–W7: stres×VIX hücreleri, plasebo, dip tanımı, çıkış eğrisi, geri alım vs anında, açılış vs kırılım | kenar zamanda (ertesi gün 16:00 en iyi; TP80/SL110 öldürür); geri alım yarı etkili; iki şart birlikte gerekli | — |
 | GF-18 | CAPREV bağımsız piyasa (kural aynen) | DAX ertesi gün +0,35/+0,47 (P≈0,97); QQQ günlük 10/11 yıl, NDX nakit 11/11; SPX zayıf (6/11) | B+ |
-| **GF-19** | **CAPREV-2 (kademe 1 açılış + kademe 2 dip kırılımı)** | 10y 223 olay günü; **GÖLGE scope olarak bota yazıldı 2026-10-02** (`caprev_shadow.py`, `caprev_shadow.jsonl`) — emir yok | **B+ ADAY** |
+| GF-19 | CAPREV-2 (kademe 1 açılış + kademe 2 dip kırılımı) | ⚠ **GERİ ÇEKİLDİ (v3):** "223 olay günü" iki risk birimini topluyordu; risk birimine bölününce ≈+0,135R/gün, tek açılış bacağından düşük; tek-pozisyonla M1 +14,7R ama DD 1,1→3,9R. Gölge kodu (`caprev_shadow.py`) k1/k2'yi ayrı kaydeder → analizde k2 esas | X (tasarım) |
+| **GF-20** | **Son kıyas (`final_check.py`)**: ajanlar arası tekrar + diğer ajanın 'artan VIX' ve +1R hedefini DAX'ta sınama | iki bağımsız kod aynı sayıları veriyor (NDX 1h 25,65 vs 25,75R; 15m 19,73 vs 19,73). +1R hedef: toplam ↓ ama iki yarıda dengeli (1h ilk yarı +0,02→+0,08) ve en iyi 5 gün hariç daha yüksek. Artan VIX DAX'ta aynı yönde (+0,26 vs −0,29, 9 olay). **Nihai aday: tek kademeli CAPREV, çıkış (a) 16:00 veya (b) +1R/−1R gölgede birlikte; artan VIX ayrı etiket** | **B+ ADAY** (gölgede) |
 
 ### 2.6 Diğer ajanların çalışmaları (Codex)
 | ID | Klasör | Sonuç |
@@ -176,7 +177,7 @@ Veri: Dukascopy 2025 (bid/ask), cache 2026 (+60 dk onarımlı), MT5 M1, Eylül `
 | FG | `ndx_five_gates_20260930` | 432 + 1.620 değerlendirme; beş son aday Eylül'de elendi/ gölge adayı; **beş kanıtlı kapı bulunamadı**. Adaylar: açılış aralığı kırılımı (−0,89R), aşırı-hareketten dönüş SELL (+2,30R/38, seçim çıtası geçmedi), süpürme SELL (+0,23R), varyans oranı rejim (−8,13R, elendi), başarısız-kırılım geri alma BUY (−2,63R). Donmuş beşli portföy Eylül 123 karar +11,27R, %95 CI sıfırı içerir → yalnız gölge hipotezi. İlk tur beş kural (exhaustion_60_none_buy, sweep_60_quiet_buy, failed_break_60_h1_both, efficient_pullback_30_efficiency_both, midpoint_reclaim_30_quiet_sell) düzeltilmiş saatle tekrarlandı: değişmedi. Cache +60 dk hatasını bağımsız buldu (E4) |
 | MR | `ndx_mechanism_round2_20260930` | 20 türev tanım (D1–D5 × 2 varyant × 2 çıkış): **hiçbiri doğrulanmadı**. D3 "bekle + gürültü bandı + fiyatı kovalama" en ilginç ama 2025 H1 negatif; D4 stres sonrası teyitli BUY çöktü (iki pozitif özellik birleşince −3,01R). Gözlem: VIXREG'de M15 zaten hizalı SELL 115 karar −5,86 p vs diğerleri +11,03 (bota özgü, GF-15/V2 genel veride tekrarlanmadı). Yeni beşli portföy Eylül 73/+1,97R, Mayıs–Ağustos 286/−8,54R |
 | SY | `ndx_synthesis_20261002` | H1 (=K5b) +6,11R (11 gün, anlamsız) · H2 hacim vetosu reddedildi · H3 hacim şokunda bekleme reddedildi · H4 MA200+%10 & 4s aralık üst %20 BUY vetosu 5/5 dönemde zarar · H5 stres sonrası dibi geri alan BUY seyrek · CHASE +0,30R · **CAPREV M1 katı icrada 11 işlem +11,12R ama en iyi 5 gün çıkınca −1,35R; TP80/SL110 +1,07R**. Ders: spread×3'te taban portföy −88,7R → veto pozitif katkısı canlı strateji yapmaz |
-| CP | `ndx_caprev_paths_20261002` | CAPREV olay zamanı/kâr taşıma (FRESH_CROSS, CASH_ONLY, FAIL_10, HALF_RUNNER, VIX_COOLING + HALF_RISING/TP1_RISING) — **protokol yazılı, sonuç raporu henüz yok** (bitince buraya işle) |
+| CP | `ndx_caprev_paths_20261002` | 22 yapılandırma: yeni dip kırılımı, yalnız nakit seans, 10:00 başarısız-geri-alım çıkışı, düşen VIX → **tabandan zayıf/elendi**. **Artan VIX + tam +1R hedef**: tek başına toplam düşük (M1 9 işlem +5,6R) ama beşli araştırma portföyüne en büyük katkı (+9,4R; sermayeyi erken boşaltıyor); yalnız 7 gün, katkı CI sıfırı içerir. Yarı +1R / yarı 16:00 = iki getirinin karışımı (özdeşlik kanıtlandı), uç-gün bağımlılığını azaltır. v2'deki CAPREV-2 toplamının iki risk birimi olduğunu gösterdi (GF-19 düzeltmesi). Gece taşıma M1/15m'de daha kötü |
 | PM | `ndx_pattern_motifs` | NAS100 mum-dizisi atlası (tekrar eden motifler, plasebolu) — **rapor taslak** |
 
 ---
@@ -195,7 +196,7 @@ Veri: Dukascopy 2025 (bid/ask), cache 2026 (+60 dk onarımlı), MT5 M1, Eylül `
 10. **Veto katkısı portföyde ölç** (E19); küçük alt kümeyi (≤20 gün) kanıt sayma.
 
 ## 4. Açık iş / sıradaki araştırma yönleri
-- **CAPREV-2 gölge verisi** birikiyor (yılda ~22 gün; ileri doğrulama yıllar sürer → 10 yıllık geçmiş birincil kanıt). Gölge çıktısı: `yeni deneme/caprev_shadow.jsonl`.
+- **CAPREV gölge verisi** birikiyor (k2 = ana aday; yılda ~10 olay; ileri doğrulama yıllar sürer → 10 yıllık geçmiş birincil kanıt). Gölge çıktısı: `yeni deneme/caprev_shadow.jsonl`. ⚠ Gölge +1R/−1R sonucunu ve VIX değişimini henüz kaydetmiyor (eklenmeli).
 - **K5b gölge karnesi:** `gate_skipped.jsonl` içinde `shadow:k5b_stress_dip`, sonuç `shadow_followup.jsonl`; ≥30 bağımsız epizod sonrası oku.
 - CAPREV: VIX 18,4–25 kovası zayıf (+0,09…+0,26); asıl kenar VIX 25+; düşük-VIX stres negatif. VIX tabanını yükseltme sonradan yapılacaksa yeni veri ister.
 - Gece taşıma (kademe 2) boşluk/dolum maliyeti canlıda doğrulanmadı; DAX için gölge henüz Berlin saat dilimiyle kuruldu, NDX'ten sonra değerlendir.
