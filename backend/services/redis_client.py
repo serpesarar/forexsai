@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 _redis_client = None
 _redis_available = False
+_missing_url_warned = False  # REDIS_URL yoksa uyarı süreç başına 1 kez (her cache çağrısında log seli yapıyordu)
 
 
 def get_redis_url() -> Optional[str]:
@@ -31,14 +32,16 @@ def get_redis_url() -> Optional[str]:
 
 def get_redis() -> Optional[Any]:
     """Get or create Redis client singleton."""
-    global _redis_client, _redis_available
+    global _redis_client, _redis_available, _missing_url_warned
 
     if _redis_client is not None:
         return _redis_client
 
     redis_url = get_redis_url()
     if not redis_url:
-        logger.warning("No REDIS_URL found — broadcast cache disabled, using in-memory fallback")
+        if not _missing_url_warned:
+            logger.warning("No REDIS_URL found — broadcast cache disabled, using in-memory fallback")
+            _missing_url_warned = True
         _redis_available = False
         return None
 
