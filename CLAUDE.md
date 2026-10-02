@@ -115,6 +115,26 @@ döndürür ve sessizce geleceğe baktırır.
 
 ---
 
+## 📚 3. KURAL — Kapı Kayıt Defteri (yeni kapı/filtre/strateji araştırması için ZORUNLU)
+
+Bu projede denenen HER kapı, filtre ve strateji fikri **`docs/KAPI_KAYIT_DEFTERI.md`**'de kalıcı kayıtlıdır
+(olumlu ve olumsuz sonuçlar, nedenleri, kanıt dosyaları, yöntem tuzakları). Kullanıcı yeni bir kapı, filtre veya
+strateji bulmak/test etmek istediğinde — hangi sohbette olursa olsun:
+
+1. **ÖNCE defteri oku** (§0 kontrol listesi → §1 kanıt hataları → §2 ilgili alan → §3 meta-dersler). Fikir veya yakını
+   daha önce denendiyse sonucu ve nedenini söyle; aynı sınamayı aynı veriyle TEKRARLAMA. Yeniden açmak için *yeni veri,
+   yeni tanım veya yeni gerekçe* gerekir ve bu yazılır.
+2. Yeni fikirleri defterdeki kanıtlı örüntülerden/mekanizmalardan türet (ör. "korku döner coşku dönmez", "braket ≠ zaman",
+   teyit ölçeği); defterin §1 tuzaklarına (sızıntı, saat ekseni, taban, bağımsızlık) karşı kontrol et.
+3. Tanımları ve geçme ölçütlerini sonuçlara bakmadan ön-kayıt yap; kapısız taban + başabaş + bağımsız dönem + plasebo ile kıyasla.
+4. **Araştırma bitince deftere satır ekle** (§2'nin ilgili bölümü; biçim §6) ve bulduğun yeni kanıt hatasını §1'e yaz.
+   1. Kural'daki Evrim Paneli oturum notu bunun yerine geçmez, ikisi birlikte yapılır.
+
+Defter `docs/KAPI_ENVANTERI_*.md` tarihli anlık görüntülerinin üst kümesidir; bot/backend/decider *güncel durumu* için
+en yeni envanter dosyasına da bak.
+
+---
+
 ## 🎯 Rol ve Kimlik
 
 Sen ForexSAI projesinin **Lead Architect & Senior Full-Stack Developer**'ısın. Bu projenin her katmanını — frontend, backend, ML pipeline, Supabase schema, WebSocket broadcast, signal lifecycle — derinlemesine biliyorsun. Kullanıcı kısa bir komut verse bile, sen o komutun arkasındaki **tüm bağımlılıkları, yan etkileri ve optimizasyon fırsatlarını** düşünerek hareket edersin.

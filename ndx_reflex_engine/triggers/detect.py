@@ -202,9 +202,19 @@ def detect_orb(bars: pd.DataFrame, day: date) -> pd.DataFrame:
     return pd.DataFrame(out)
 
 
-def detect_mom_cont(bars: pd.DataFrame) -> pd.DataFrame:
+def detect_mom_cont(bars: pd.DataFrame, causal: bool = True) -> pd.DataFrame:
     """Momentum continuation: 15m stretch > MOM_STRETCH_ATR × ATR15 in trend
-    direction, then a 1m pullback-and-resume confirm bar."""
+    direction, then a 1m pullback-and-resume confirm bar.
+
+    ⚠️ 2026-10-02 LEAK FIX. The 15m bar below is LEFT-labelled (bin [T, T+15) carries
+    label T), so its close is only known at T+15. The original search window
+    (T, T+15] therefore lay INSIDE the bin whose stretch decided the event → the
+    stretch used a close up to 15 minutes in the future. Honest (causal) window is the
+    NEXT block (T+15, T+30], which is what the production service
+    (backend/services/reflex_engine_service.py) does. Same execution, same bars:
+    leaky +0.88R vs causal −0.08R (research/ndx_gate_forge/momcont.py). `causal=False`
+    reproduces the old (invalid) numbers for audit only — never use it for decisions.
+    """
     b15 = (
         bars.set_index("ts")
         .resample("15min")
@@ -223,7 +233,8 @@ def detect_mom_cont(bars: pd.DataFrame) -> pd.DataFrame:
             continue
         direction = "BUY" if s > 0 else "SELL"
         # 1m confirm inside the NEXT 15m block: pullback then close beyond prior 1m extreme
-        blk = bars[(bars["ts"] > ts15) & (bars["ts"] <= ts15 + pd.Timedelta(minutes=15))]
+        shift = pd.Timedelta(minutes=15 if causal else 0)
+        blk = bars[(bars["ts"] > ts15 + shift) & (bars["ts"] <= ts15 + shift + pd.Timedelta(minutes=15))]
         for k in range(2, len(blk)):
             w = blk.iloc[:k]
             b = blk.iloc[k - 1]

@@ -1,0 +1,298 @@
+{
+ "DAX 1h": {
+  "stress×VIXhi aynı gün": {
+   "n": 54,
+   "ort": 0.171,
+   "kırpılmış": 0.089,
+   "medyan": 0.206,
+   "isabet": 0.54,
+   "P(>0)": 0.889,
+   "yıl+": "4/8"
+  },
+  "stress×VIXhi ertesi gün": {
+   "n": 54,
+   "ort": 0.348,
+   "kırpılmış": 0.263,
+   "medyan": 0.203,
+   "isabet": 0.57,
+   "P(>0)": 0.976,
+   "yıl+": "6/8"
+  },
+  "ayna SELL aynı gün": {
+   "n": 54,
+   "ort": -0.187,
+   "kırpılmış": -0.307,
+   "medyan": -0.473,
+   "isabet": 0.33,
+   "P(>0)": 0.089,
+   "yıl+": "1/8"
+  },
+  "saat plasebosu": {
+   "gerçek": 0.171,
+   "plasebo_ort": -0.059,
+   "plasebo_%95": 0.043,
+   "yüzdelik": 1.0
+  },
+  "stress×VIXlo aynı gün": {
+   "n": 7,
+   "ort": 0.177,
+   "kırpılmış": 0.263,
+   "medyan": 0.449,
+   "isabet": 0.57,
+   "P(>0)": 0.775,
+   "yıl+": "3/5"
+  },
+  "nonstress×VIXhi aynı gün": {
+   "n": 210,
+   "ort": 0.007,
+   "kırpılmış": -0.017,
+   "medyan": 0.063,
+   "isabet": 0.53,
+   "P(>0)": 0.572,
+   "yıl+": "5/8"
+  },
+  "nonstress×VIXlo aynı gün": {
+   "n": 268,
+   "ort": -0.032,
+   "kırpılmış": -0.071,
+   "medyan": 0.019,
+   "isabet": 0.52,
+   "P(>0)": 0.223,
+   "yıl+": "2/7"
+  }
+ },
+ "DAX 30m": {
+  "stress×VIXhi aynı gün": {
+   "n": 37,
+   "ort": 0.12,
+   "kırpılmış": 0.055,
+   "medyan": 0.029,
+   "isabet": 0.54,
+   "P(>0)": 0.775,
+   "yıl+": "3/6"
+  },
+  "stress×VIXhi ertesi gün": {
+   "n": 37,
+   "ort": 0.472,
+   "kırpılmış": 0.401,
+   "medyan": 0.212,
+   "isabet": 0.54,
+   "P(>0)": 0.972,
+   "yıl+": "4/6"
+  },
+  "ayna SELL aynı gün": {
+   "n": 37,
+   "ort": -0.168,
+   "kırpılmış": -0.319,
+   "medyan": -0.451,
+   "isabet": 0.35,
+   "P(>0)": 0.173,
+   "yıl+": "1/6"
+  },
+  "saat plasebosu": {
+   "gerçek": 0.12,
+   "plasebo_ort": 0.022,
+   "plasebo_%95": 0.169,
+   "yüzdelik": 0.835
+  },
+  "stress×VIXlo aynı gün": {
+   "n": 6,
+   "ort": 0.031,
+   "kırpılmış": 0.099,
+   "medyan": 0.119,
+   "isabet": 0.67,
+   "P(>0)": 0.596,
+   "yıl+": "2/4"
+  },
+  "nonstress×VIXhi aynı gün": {
+   "n": 164,
+   "ort": 0.015,
+   "kırpılmış": -0.013,
+   "medyan": 0.074,
+   "isabet": 0.52,
+   "P(>0)": 0.613,
+   "yıl+": "4/6"
+  },
+  "nonstress×VIXlo aynı gün": {
+   "n": 217,
+   "ort": -0.063,
+   "kırpılmış": -0.091,
+   "medyan": -0.002,
+   "isabet": 0.5,
+   "P(>0)": 0.075,
+   "yıl+": "1/5"
+  }
+ },
+ "DAX 15m": {
+  "stress×VIXhi aynı gün": {
+   "n": 13,
+   "ort": 0.183,
+   "kırpılmış": 0.125,
+   "medyan": -0.052,
+   "isabet": 0.46,
+   "P(>0)": 0.719,
+   "yıl+": "2/4"
+  },
+  "stress×VIXhi ertesi gün": {
+   "n": 13,
+   "ort": 0.872,
+   "kırpılmış": 0.788,
+   "medyan": 0.63,
+   "isabet": 0.62,
+   "P(>0)": 0.97,
+   "yıl+": "3/4"
+  },
+  "ayna SELL aynı gün": {
+   "n": 13,
+   "ort": -0.196,
+   "kırpılmış": -0.369,
+   "medyan": -0.418,
+   "isabet": 0.31,
+   "P(>0)": 0.231,
+   "yıl+": "1/4"
+  },
+  "saat plasebosu": {
+   "gerçek": 0.183,
+   "plasebo_ort": 0.194,
+   "plasebo_%95": 0.547,
+   "yüzdelik": 0.495
+  },
+  "stress×VIXlo aynı gün": {
+   "n": 6,
+   "ort": -0.05,
+   "kırpılmış": -0.018,
+   "medyan": -0.023,
+   "isabet": 0.5,
+   "P(>0)": 0.377,
+   "yıl+": "1/4"
+  },
+  "nonstress×VIXhi aynı gün": {
+   "n": 87,
+   "ort": 0.018,
+   "kırpılmış": -0.002,
+   "medyan": 0.099,
+   "isabet": 0.52,
+   "P(>0)": 0.618,
+   "yıl+": "2/5"
+  },
+  "nonstress×VIXlo aynı gün": {
+   "n": 202,
+   "ort": -0.029,
+   "kırpılmış": -0.052,
+   "medyan": 0.008,
+   "isabet": 0.51,
+   "P(>0)": 0.257,
+   "yıl+": "1/4"
+  }
+ },
+ "Günlük endeksler (2015+)": {
+  "SPX stres∧VIX≥18,4": {
+   "n": 100,
+   "ort": 0.063,
+   "kırpılmış": 0.075,
+   "medyan": 0.123,
+   "isabet": 0.57,
+   "P(>0)": 0.713,
+   "yıl+": "6/11"
+  },
+  "SPX stres∧VIX<18,4": {
+   "n": 8,
+   "ort": -0.281,
+   "kırpılmış": -0.116,
+   "medyan": -0.279,
+   "isabet": 0.38,
+   "P(>0)": 0.362,
+   "yıl+": "3/7"
+  },
+  "SPX stressiz∧VIX≥18,4": {
+   "n": 297,
+   "ort": -0.144,
+   "kırpılmış": -0.125,
+   "medyan": -0.09,
+   "isabet": 0.43,
+   "P(>0)": 0.0,
+   "yıl+": "2/11"
+  },
+  "SPX kontrol: stres∧VIX≥18,4 açılıştan BUY": {
+   "n": 183,
+   "ort": 0.123,
+   "kırpılmış": 0.125,
+   "medyan": 0.108,
+   "isabet": 0.56,
+   "P(>0)": 0.935,
+   "yıl+": "8/11"
+  },
+  "QQQ stres∧VIX≥18,4": {
+   "n": 123,
+   "ort": 0.215,
+   "kırpılmış": 0.19,
+   "medyan": 0.176,
+   "isabet": 0.6,
+   "P(>0)": 0.992,
+   "yıl+": "10/11"
+  },
+  "QQQ stres∧VIX<18,4": {
+   "n": 32,
+   "ort": -0.085,
+   "kırpılmış": -0.081,
+   "medyan": -0.109,
+   "isabet": 0.47,
+   "P(>0)": 0.342,
+   "yıl+": "3/10"
+  },
+  "QQQ stressiz∧VIX≥18,4": {
+   "n": 271,
+   "ort": -0.02,
+   "kırpılmış": -0.01,
+   "medyan": -0.064,
+   "isabet": 0.48,
+   "P(>0)": 0.359,
+   "yıl+": "7/11"
+  },
+  "QQQ kontrol: stres∧VIX≥18,4 açılıştan BUY": {
+   "n": 247,
+   "ort": 0.201,
+   "kırpılmış": 0.196,
+   "medyan": 0.213,
+   "isabet": 0.59,
+   "P(>0)": 0.998,
+   "yıl+": "9/11"
+  },
+  "NDXCASH stres∧VIX≥18,4": {
+   "n": 127,
+   "ort": 0.23,
+   "kırpılmış": 0.199,
+   "medyan": 0.157,
+   "isabet": 0.58,
+   "P(>0)": 0.993,
+   "yıl+": "11/11"
+  },
+  "NDXCASH stres∧VIX<18,4": {
+   "n": 32,
+   "ort": -0.085,
+   "kırpılmış": -0.095,
+   "medyan": -0.049,
+   "isabet": 0.44,
+   "P(>0)": 0.34,
+   "yıl+": "4/10"
+  },
+  "NDXCASH stressiz∧VIX≥18,4": {
+   "n": 272,
+   "ort": -0.021,
+   "kırpılmış": -0.014,
+   "medyan": -0.057,
+   "isabet": 0.47,
+   "P(>0)": 0.334,
+   "yıl+": "6/11"
+  },
+  "NDXCASH kontrol: stres∧VIX≥18,4 açılıştan BUY": {
+   "n": 253,
+   "ort": 0.204,
+   "kırpılmış": 0.201,
+   "medyan": 0.248,
+   "isabet": 0.59,
+   "P(>0)": 0.999,
+   "yıl+": "10/11"
+  }
+ }
+}

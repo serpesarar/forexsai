@@ -1,0 +1,386 @@
+{
+ "genel_1m": {
+  "T1 gerilme pusulası": {
+   "fark_R": -0.0051,
+   "P(<0)": 0.555,
+   "n_gün": 104,
+   "doğru/grup": "3/5",
+   "gruplar": {
+    "C26": 0.075,
+    "D25a": 0.094,
+    "D25b": -0.093,
+    "M26": -0.09,
+    "S26": -0.138
+   }
+  },
+  "T2 bıçak (5m kanal karşı ≥2σ)": {
+   "fark_R": 0.022,
+   "P(<0)": 0.106,
+   "n_gün": 325,
+   "doğru/grup": "1/5",
+   "gruplar": {
+    "C26": 0.041,
+    "D25a": 0.019,
+    "D25b": 0.027,
+    "M26": 0.019,
+    "S26": -0.052
+   }
+  },
+  "T3 hacim patlaması (5m ≥1.5)": {
+   "fark_R": 0.0061,
+   "P(<0)": 0.226,
+   "n_gün": 255,
+   "doğru/grup": "3/5",
+   "gruplar": {
+    "C26": -0.021,
+    "D25a": 0.004,
+    "D25b": 0.012,
+    "M26": -0.026,
+    "S26": -0.016
+   }
+  },
+  "T2|T3 birleşik (decider kapısı)": {
+   "fark_R": 0.0149,
+   "P(<0)": 0.075,
+   "n_gün": 326,
+   "doğru/grup": "1/5",
+   "gruplar": {
+    "C26": 0.037,
+    "D25a": 0.009,
+    "D25b": 0.019,
+    "M26": 0.012,
+    "S26": -0.046
+   }
+  },
+  "T4 vol tertili (0=sakin)": {
+   "K1 Pazartesi SELL yok": {
+    "tertil0": -0.0832,
+    "tertil1": -0.0947,
+    "tertil2": -0.0576
+   },
+   "K5 Stres-dönüş SELL yok": {
+    "tertil0": 0.0195,
+    "tertil1": -0.0723,
+    "tertil2": -0.0927
+   },
+   "K6 Aşırı uzama BUY yok": {
+    "tertil0": 0.0277,
+    "tertil1": -0.096,
+    "tertil2": -0.0429
+   },
+   "T1 gerilme pusulası": {
+    "tertil0": 0.0411,
+    "tertil1": -0.0604,
+    "tertil2": -0.017
+   }
+  },
+  "T5 stres günü: teyitli SELL (fiyat<önceki dip)": {
+   "fark_R": -0.1791,
+   "P(<0)": 0.982,
+   "n_gün": 23,
+   "doğru/grup": "4/4",
+   "gruplar": {
+    "C26": -0.145,
+    "D25a": -0.051,
+    "D25b": -0.186,
+    "M26": -0.515
+   }
+  },
+  "T5 stres günü: teyitsiz SELL": {
+   "fark_R": -0.0382,
+   "P(<0)": 0.721,
+   "n_gün": 44,
+   "doğru/grup": "3/4",
+   "gruplar": {
+    "C26": -0.078,
+    "D25a": 0.093,
+    "D25b": -0.222,
+    "M26": -0.113
+   }
+  }
+ },
+ "bot_evreni_1m": {
+  "T1 gerilme pusulası": {
+   "fark_R": -0.0766,
+   "P(<0)": 0.678,
+   "n_gün": 13,
+   "doğru/grup": "3/5",
+   "gruplar": {
+    "C26": -0.001,
+    "D25a": 0.037,
+    "D25b": -0.39,
+    "M26": 0.239,
+    "S26": -0.996
+   }
+  },
+  "T2 bıçak (5m kanal karşı ≥2σ)": {
+   "fark_R": 0.0246,
+   "P(<0)": 0.322,
+   "n_gün": 171,
+   "doğru/grup": "3/5",
+   "gruplar": {
+    "C26": -0.023,
+    "D25a": 0.089,
+    "D25b": 0.028,
+    "M26": -0.0,
+    "S26": -0.108
+   }
+  },
+  "T3 hacim patlaması (5m ≥1.5)": {
+   "fark_R": -0.1099,
+   "P(<0)": 0.924,
+   "n_gün": 101,
+   "doğru/grup": "3/4",
+   "gruplar": {
+    "C26": -0.587,
+    "D25a": -0.081,
+    "D25b": -0.037,
+    "M26": 0.134
+   }
+  },
+  "T2|T3 birleşik (decider kapısı)": {
+   "fark_R": 0.0056,
+   "P(<0)": 0.455,
+   "n_gün": 179,
+   "doğru/grup": "3/5",
+   "gruplar": {
+    "C26": -0.075,
+    "D25a": 0.073,
+    "D25b": -0.005,
+    "M26": 0.007,
+    "S26": -0.108
+   }
+  },
+  "T4 vol tertili (0=sakin)": {
+   "K1 Pazartesi SELL yok": {
+    "tertil0": 0.1861,
+    "tertil1": -0.1822,
+    "tertil2": -0.0948
+   },
+   "K5 Stres-dönüş SELL yok": {
+    "tertil0": 0.4627,
+    "tertil1": 0.1932,
+    "tertil2": -0.4599
+   },
+   "K6 Aşırı uzama BUY yok": {
+    "tertil0": -0.0902,
+    "tertil1": 0.1154,
+    "tertil2": -0.0589
+   },
+   "T1 gerilme pusulası": {
+    "tertil0": 0.1733,
+    "tertil1": -0.1567,
+    "tertil2": -0.0995
+   }
+  },
+  "T5 stres günü: teyitli SELL (fiyat<önceki dip)": {
+   "fark_R": -0.5436,
+   "P(<0)": 0.854,
+   "n_gün": 7,
+   "doğru/grup": "1/2",
+   "gruplar": {
+    "D25a": 0.691,
+    "M26": -0.964
+   }
+  },
+  "T5 stres günü: teyitsiz SELL": {
+   "fark_R": -0.0146,
+   "P(<0)": 0.528,
+   "n_gün": 13,
+   "doğru/grup": "2/3",
+   "gruplar": {
+    "D25a": 0.552,
+    "D25b": -0.513,
+    "M26": -0.282
+   }
+  }
+ },
+ "30m_2021+": {
+  "T1 gerilme pusulası": {
+   "fark_R": -0.0201,
+   "P(<0)": 0.829,
+   "n_gün": 351,
+   "doğru/grup": "4/6",
+   "gruplar": {
+    "2021": -0.03,
+    "2022": -0.103,
+    "2023": 0.046,
+    "2024": -0.02,
+    "2025": -0.041,
+    "2026": 0.075
+   }
+  },
+  "T2 bıçak (bu TF kanal ≥2σ)": {
+   "fark_R": -0.0477,
+   "P(<0)": 0.997,
+   "n_gün": 897,
+   "doğru/grup": "6/6",
+   "gruplar": {
+    "2021": -0.0,
+    "2022": -0.04,
+    "2023": -0.035,
+    "2024": -0.113,
+    "2025": -0.04,
+    "2026": -0.016
+   }
+  },
+  "T3 hacim patlaması (bu TF ≥1.5)": {
+   "fark_R": -0.0009,
+   "P(<0)": 0.619,
+   "n_gün": 1024,
+   "doğru/grup": "4/6",
+   "gruplar": {
+    "2021": -0.003,
+    "2022": -0.002,
+    "2023": -0.006,
+    "2024": 0.005,
+    "2025": 0.003,
+    "2026": -0.009
+   }
+  },
+  "T4 T1 vol tertili": {
+   "tertil0": -0.0044,
+   "tertil1": -0.0194,
+   "tertil2": -0.0401
+  },
+  "T4 K1 Pazartesi SELL yok vol tertili": {
+   "tertil0": -0.1104,
+   "tertil1": -0.0217,
+   "tertil2": -0.0531
+  },
+  "T4 K5 Stres-dönüş SELL yok vol tertili": {
+   "tertil0": -0.0045,
+   "tertil1": -0.0599,
+   "tertil2": -0.0393
+  },
+  "T4 K6 Aşırı uzama BUY yok vol tertili": {
+   "tertil0": -0.018,
+   "tertil1": -0.0165,
+   "tertil2": -0.0625
+  }
+ },
+ "15m_2023+": {
+  "T1 gerilme pusulası": {
+   "fark_R": 0.012,
+   "P(<0)": 0.336,
+   "n_gün": 228,
+   "doğru/grup": "2/4",
+   "gruplar": {
+    "2023": 0.047,
+    "2024": -0.014,
+    "2025": -0.026,
+    "2026": 0.078
+   }
+  },
+  "T2 bıçak (bu TF kanal ≥2σ)": {
+   "fark_R": -0.013,
+   "P(<0)": 0.779,
+   "n_gün": 688,
+   "doğru/grup": "2/4",
+   "gruplar": {
+    "2023": 0.008,
+    "2024": -0.037,
+    "2025": 0.004,
+    "2026": -0.035
+   }
+  },
+  "T3 hacim patlaması (bu TF ≥1.5)": {
+   "fark_R": 0.0022,
+   "P(<0)": 0.308,
+   "n_gün": 672,
+   "doğru/grup": "1/4",
+   "gruplar": {
+    "2023": 0.0,
+    "2024": 0.005,
+    "2025": -0.001,
+    "2026": 0.006
+   }
+  },
+  "T4 T1 vol tertili": {
+   "tertil0": 0.0293,
+   "tertil1": -0.0089,
+   "tertil2": 0.0097
+  },
+  "T4 K1 Pazartesi SELL yok vol tertili": {
+   "tertil0": -0.1694,
+   "tertil1": 0.0241,
+   "tertil2": -0.0809
+  },
+  "T4 K5 Stres-dönüş SELL yok vol tertili": {
+   "tertil0": 0.1043,
+   "tertil1": 0.0422,
+   "tertil2": -0.0953
+  },
+  "T4 K6 Aşırı uzama BUY yok vol tertili": {
+   "tertil0": 0.0092,
+   "tertil1": -0.0506,
+   "tertil2": -0.0035
+  }
+ },
+ "T6_genel_1m": {
+  "S": {
+   "tutmak−kapatmak_R": -0.015,
+   "P(<0)": 0.583,
+   "gün": 122,
+   "dönemler": {
+    "C26": -0.104,
+    "M26": 0.147,
+    "S26": -0.213
+   }
+  },
+  "B": {
+   "tutmak−kapatmak_R": 0.0393,
+   "P(<0)": 0.272,
+   "gün": 122,
+   "dönemler": {
+    "C26": 0.105,
+    "M26": -0.117,
+    "S26": 0.287
+   }
+  }
+ },
+ "bot_islemleri": {
+  "_toplam": {
+   "karar": 317,
+   "puan/karar": 8.42
+  },
+  "T1 gerilme pusulası": {
+   "bloklanır": 18,
+   "gün": 4,
+   "bloklanan_p": -14.99,
+   "kalan_p": 9.83,
+   "bloklanan_usd": -1549.0,
+   "P(fark<0)": 0.837
+  },
+  "T2 bıçak": {
+   "bloklanır": 37,
+   "gün": 19,
+   "bloklanan_p": 46.98,
+   "kalan_p": 3.32,
+   "bloklanan_usd": 8690.0,
+   "P(fark<0)": 0.002
+  },
+  "T3 hacim patlaması": {
+   "bloklanır": 18,
+   "gün": 12,
+   "bloklanan_p": -25.63,
+   "kalan_p": 10.47,
+   "bloklanan_usd": -2307.0,
+   "P(fark<0)": 0.928
+  },
+  "T2|T3 birleşik": {
+   "bloklanır": 49,
+   "gün": 20,
+   "bloklanan_p": 27.94,
+   "kalan_p": 4.85,
+   "bloklanan_usd": 6846.0,
+   "P(fark<0)": 0.009
+  },
+  "T6 bot SELL 16:55'i aşan": {
+   "n": 23,
+   "gün": 22,
+   "tutmak_p": 13.97,
+   "16:55'te_kapat_p": -2.15
+  }
+ }
+}

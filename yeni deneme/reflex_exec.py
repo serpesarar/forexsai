@@ -36,7 +36,17 @@ REFLEX_MT5_SYMBOL = config.SYMBOL_MAP.get(REFLEX_SYMBOL, "USTEC")
 TIME_STOP_MIN = 15
 MAX_OPEN = 2                      # cap concurrent reflex positions
 # Live switch: env REFLEX_LIVE=1 OR config.REFLEX_LIVE=True. Default SHADOW.
-REFLEX_LIVE = os.environ.get("REFLEX_LIVE", "").strip() == "1" or getattr(config, "REFLEX_LIVE", False)
+_LIVE_REQUESTED = os.environ.get("REFLEX_LIVE", "").strip() == "1" or getattr(config, "REFLEX_LIVE", False)
+# ⚠️ 2026-10-02 SERT KİLİT: mom_cont'un "+0,29R transfer" kenarı geleceğe bakma sızıntısıydı
+# (araştırma dedektörü teyidi gerilme kararını veren 15dk diliminin İÇİNDE arıyordu).
+# Sızıntısız, üretim servisinin birebir kodu aynı icrayla −0,08R (P(EV>0)=%13) verdi.
+# Kanıt: research/ndx_gate_forge/momcont.py + NIHAI_RAPOR.md (§K7). Canlı açmak için
+# REFLEX_LIVE bayrağı YETMEZ; ayrıca REFLEX_LIVE_ACK_LEAK=1 ortam değişkeni gerekir
+# (yani bilerek, bu notu okuyarak). Varsayılan: GÖLGE.
+REFLEX_LIVE = _LIVE_REQUESTED and os.environ.get("REFLEX_LIVE_ACK_LEAK", "").strip() == "1"
+if _LIVE_REQUESTED and not REFLEX_LIVE:
+    print("[reflex_exec] REFLEX_LIVE istendi ama sızıntı kilidi açık değil → GÖLGE modunda kalıyor "
+          "(bkz. research/ndx_gate_forge/NIHAI_RAPOR.md §K7).")
 
 _seen: set[int] = set()          # signal ids already acted on (dedup within run)
 

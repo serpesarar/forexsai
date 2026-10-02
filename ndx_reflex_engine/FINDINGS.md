@@ -1,3 +1,9 @@
+> ⚠️ **2026-10-02 DÜZELTME — `mom_cont` "validated / +0,29R transfer" iddiaları GEÇERSİZ.**
+> `triggers/detect.py::detect_mom_cont` 15m barı sol-etiketle örnekliyor ve teyidi gerilme kararını veren dilimin İÇİNDE
+> arıyordu (gerilme kararı ≤15 dk gelecekten geliyor). Aynı icrayla sızıntılı +0,88R, sızıntısız −0,08R (P(EV>0)=%13).
+> Dedektör düzeltildi (`causal=True` varsayılan); `reflex_exec.REFLEX_LIVE` artık `REFLEX_LIVE_ACK_LEAK=1` olmadan canlı olmaz.
+> Kanıt: `research/ndx_gate_forge/momcont.py`, kayıt: `docs/KAPI_KAYIT_DEFTERI.md` GF-13 / E16.
+
 # NDX Reflex Engine — Research Findings (2026-07-04)
 
 Full protocol in DESIGN.md. Everything below is deduped, friction-included

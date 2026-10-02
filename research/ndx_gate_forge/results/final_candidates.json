@@ -1,0 +1,684 @@
+{
+ "a_genel_1m": {
+  "K1 Pazartesi SELL yok": {
+   "fark_R": -0.0801,
+   "P(<0)": 0.973,
+   "n_gün": 83,
+   "doğru/grup": "4/5",
+   "gruplar": {
+    "C26": -0.066,
+    "D25a": -0.162,
+    "D25b": -0.099,
+    "M26": 0.054,
+    "S26": -0.017
+   }
+  },
+  "(elendi) K2 FOMC öncesi 24s SELL yok": {
+   "fark_R": 0.2209,
+   "P(<0)": 0.022,
+   "n_gün": 25,
+   "doğru/grup": "1/5",
+   "gruplar": {
+    "C26": 0.259,
+    "D25a": 0.182,
+    "D25b": 0.328,
+    "M26": 0.306,
+    "S26": -0.264
+   }
+  },
+  "K3 Ay sonu dengeleme": {
+   "fark_R": -0.1447,
+   "P(<0)": 0.947,
+   "n_gün": 19,
+   "doğru/grup": "4/5",
+   "gruplar": {
+    "C26": -0.027,
+    "D25a": -0.278,
+    "D25b": -0.433,
+    "M26": -0.021,
+    "S26": 0.027
+   }
+  },
+  "K5 Stres-dönüş SELL yok": {
+   "fark_R": -0.0671,
+   "P(<0)": 0.887,
+   "n_gün": 45,
+   "doğru/grup": "3/4",
+   "gruplar": {
+    "C26": -0.1,
+    "D25a": 0.057,
+    "D25b": -0.218,
+    "M26": -0.169
+   }
+  },
+  "K6 Aşırı uzama BUY yok": {
+   "fark_R": -0.0328,
+   "P(<0)": 0.844,
+   "n_gün": 152,
+   "doğru/grup": "4/5",
+   "gruplar": {
+    "C26": 0.023,
+    "D25a": -0.108,
+    "D25b": -0.037,
+    "M26": -0.022,
+    "S26": -0.092
+   }
+  },
+  "K4a Pürüzlülük VR>1.2 (iki yön)": {
+   "fark_R": -0.0213,
+   "P(<0)": 1.0,
+   "n_gün": 251,
+   "doğru/grup": "5/5",
+   "gruplar": {
+    "C26": -0.017,
+    "D25a": -0.011,
+    "D25b": -0.036,
+    "M26": -0.027,
+    "S26": -0.014
+   }
+  },
+  "K4b VR>1.2 iken fade yok (post-hoc)": {
+   "fark_R": -0.0288,
+   "P(<0)": 0.874,
+   "n_gün": 251,
+   "doğru/grup": "4/5",
+   "gruplar": {
+    "C26": 0.022,
+    "D25a": -0.03,
+    "D25b": -0.052,
+    "M26": -0.048,
+    "S26": -0.041
+   }
+  }
+ },
+ "c_bot_evreni_1m": {
+  "K1 Pazartesi SELL yok": {
+   "fark_R": -0.0558,
+   "P(<0)": 0.688,
+   "n_gün": 21,
+   "doğru/grup": "2/4",
+   "gruplar": {
+    "D25a": -0.233,
+    "D25b": -0.071,
+    "M26": 0.112,
+    "S26": 0.15
+   }
+  },
+  "(elendi) K2 FOMC öncesi 24s SELL yok": {
+   "fark_R": -0.0267,
+   "P(<0)": 0.563,
+   "n_gün": 11,
+   "doğru/grup": "2/5",
+   "gruplar": {
+    "C26": -0.287,
+    "D25a": 0.523,
+    "D25b": 0.347,
+    "M26": 0.302,
+    "S26": -0.997
+   }
+  },
+  "K3 Ay sonu dengeleme": {
+   "fark_R": -0.1418,
+   "P(<0)": 0.699,
+   "n_gün": 4,
+   "doğru/grup": "2/3",
+   "gruplar": {
+    "C26": -0.432,
+    "D25a": -0.306,
+    "M26": 0.173
+   }
+  },
+  "K5 Stres-dönüş SELL yok": {
+   "fark_R": -0.0741,
+   "P(<0)": 0.669,
+   "n_gün": 13,
+   "doğru/grup": "2/3",
+   "gruplar": {
+    "D25a": 0.563,
+    "D25b": -0.513,
+    "M26": -0.403
+   }
+  },
+  "K6 Aşırı uzama BUY yok": {
+   "fark_R": -0.0351,
+   "P(<0)": 0.639,
+   "n_gün": 15,
+   "doğru/grup": "2/3",
+   "gruplar": {
+    "C26": -0.274,
+    "D25b": -0.015,
+    "M26": 0.033
+   }
+  },
+  "K4a Pürüzlülük VR>1.2 (iki yön)": {
+   "fark_R": -0.0306,
+   "P(<0)": 0.663,
+   "n_gün": 110,
+   "doğru/grup": "4/5",
+   "gruplar": {
+    "C26": -0.151,
+    "D25a": -0.143,
+    "D25b": 0.228,
+    "M26": -0.015,
+    "S26": -0.269
+   }
+  },
+  "K4b VR>1.2 iken fade yok (post-hoc)": {
+   "fark_R": 0.0053,
+   "P(<0)": 0.488,
+   "n_gün": 105,
+   "doğru/grup": "3/5",
+   "gruplar": {
+    "C26": -0.042,
+    "D25a": -0.163,
+    "D25b": 0.221,
+    "M26": 0.093,
+    "S26": -0.214
+   }
+  }
+ },
+ "b_30m_2021+": {
+  "K1 Pazartesi SELL yok": {
+   "fark_R": -0.0613,
+   "P(<0)": 0.992,
+   "n_gün": 259,
+   "doğru/grup": "6/6",
+   "gruplar": {
+    "2021": -0.054,
+    "2022": -0.019,
+    "2023": -0.047,
+    "2024": -0.001,
+    "2025": -0.15,
+    "2026": -0.115
+   }
+  },
+  "(elendi) K2 FOMC öncesi 24s SELL yok": {
+   "fark_R": -0.0013,
+   "P(<0)": 0.512,
+   "n_gün": 80,
+   "doğru/grup": "4/6",
+   "gruplar": {
+    "2021": -0.152,
+    "2022": -0.207,
+    "2023": -0.125,
+    "2024": -0.14,
+    "2025": 0.358,
+    "2026": 0.367
+   }
+  },
+  "K3 Ay sonu dengeleme": {
+   "fark_R": -0.0641,
+   "P(<0)": 0.903,
+   "n_gün": 62,
+   "doğru/grup": "4/6",
+   "gruplar": {
+    "2021": 0.235,
+    "2022": -0.045,
+    "2023": 0.076,
+    "2024": -0.364,
+    "2025": -0.244,
+    "2026": -0.037
+   }
+  },
+  "K5 Stres-dönüş SELL yok": {
+   "fark_R": -0.0369,
+   "P(<0)": 0.928,
+   "n_gün": 163,
+   "doğru/grup": "4/6",
+   "gruplar": {
+    "2021": 0.124,
+    "2022": -0.054,
+    "2023": -0.042,
+    "2024": 0.001,
+    "2025": -0.075,
+    "2026": -0.025
+   }
+  },
+  "K6 Aşırı uzama BUY yok": {
+   "fark_R": -0.0242,
+   "P(<0)": 0.88,
+   "n_gün": 462,
+   "doğru/grup": "5/6",
+   "gruplar": {
+    "2021": -0.061,
+    "2022": -0.231,
+    "2023": 0.001,
+    "2024": -0.0,
+    "2025": -0.046,
+    "2026": -0.031
+   }
+  }
+ },
+ "b_15m_2023+": {
+  "K1 Pazartesi SELL yok": {
+   "fark_R": -0.0744,
+   "P(<0)": 0.993,
+   "n_gün": 173,
+   "doğru/grup": "4/4",
+   "gruplar": {
+    "2023": -0.051,
+    "2024": -0.004,
+    "2025": -0.143,
+    "2026": -0.111
+   }
+  },
+  "(elendi) K2 FOMC öncesi 24s SELL yok": {
+   "fark_R": 0.0687,
+   "P(<0)": 0.239,
+   "n_gün": 54,
+   "doğru/grup": "2/4",
+   "gruplar": {
+    "2023": -0.144,
+    "2024": -0.153,
+    "2025": 0.322,
+    "2026": 0.377
+   }
+  },
+  "K3 Ay sonu dengeleme": {
+   "fark_R": -0.1129,
+   "P(<0)": 0.941,
+   "n_gün": 36,
+   "doğru/grup": "2/4",
+   "gruplar": {
+    "2023": 0.085,
+    "2024": -0.327,
+    "2025": -0.243,
+    "2026": 0.031
+   }
+  },
+  "K5 Stres-dönüş SELL yok": {
+   "fark_R": -0.0207,
+   "P(<0)": 0.703,
+   "n_gün": 74,
+   "doğru/grup": "3/4",
+   "gruplar": {
+    "2023": -0.04,
+    "2024": 0.015,
+    "2025": -0.049,
+    "2026": -0.011
+   }
+  },
+  "K6 Aşırı uzama BUY yok": {
+   "fark_R": -0.0155,
+   "P(<0)": 0.749,
+   "n_gün": 382,
+   "doğru/grup": "4/4",
+   "gruplar": {
+    "2023": -0.008,
+    "2024": -0.002,
+    "2025": -0.036,
+    "2026": -0.026
+   }
+  }
+ },
+ "d_bot_islemleri": {
+  "_toplam": {
+   "karar": 317,
+   "puan/karar": 8.42,
+   "usd": 28536.0
+  },
+  "K1 Pazartesi SELL yok | CHREV": {
+   "bloklanır_n": 3,
+   "bloklanan_puan": -46.93,
+   "kalan_puan": 3.82
+  },
+  "K1 Pazartesi SELL yok": {
+   "bloklanır_n": 34,
+   "bloklanan_puan/karar": 6.58,
+   "bloklanan_usd": 1119.0,
+   "kalan_puan/karar": 8.64
+  },
+  "(elendi) K2 FOMC öncesi 24s SELL yok | CHREV": {
+   "bloklanır_n": 1,
+   "bloklanan_puan": 80.0,
+   "kalan_puan": -4.64
+  },
+  "(elendi) K2 FOMC öncesi 24s SELL yok": {
+   "bloklanır_n": 10,
+   "bloklanan_puan/karar": 4.0,
+   "bloklanan_usd": 200.0,
+   "kalan_puan/karar": 8.56
+  },
+  "K3 Ay sonu dengeleme | CHREV": {
+   "bloklanır_n": 0,
+   "bloklanan_puan": null,
+   "kalan_puan": -1.61
+  },
+  "K3 Ay sonu dengeleme": {
+   "bloklanır_n": 0,
+   "bloklanan_puan/karar": null,
+   "bloklanan_usd": 0.0,
+   "kalan_puan/karar": 8.42
+  },
+  "K5 Stres-dönüş SELL yok | CHREV": {
+   "bloklanır_n": 8,
+   "bloklanan_puan": -15.15,
+   "kalan_puan": 3.8
+  },
+  "K5 Stres-dönüş SELL yok": {
+   "bloklanır_n": 99,
+   "bloklanan_puan/karar": -7.26,
+   "bloklanan_usd": -3595.0,
+   "kalan_puan/karar": 15.54
+  },
+  "K6 Aşırı uzama BUY yok | CHREV": {
+   "bloklanır_n": 13,
+   "bloklanan_puan": -7.78,
+   "kalan_puan": 3.73
+  },
+  "K6 Aşırı uzama BUY yok": {
+   "bloklanır_n": 36,
+   "bloklanan_puan/karar": 4.56,
+   "bloklanan_usd": 532.0,
+   "kalan_puan/karar": 8.91
+  },
+  "K4a Pürüzlülük VR>1.2 (iki yön) | CHREV": {
+   "bloklanır_n": 2,
+   "bloklanan_puan": -110.0,
+   "kalan_puan": 6.72
+  },
+  "K4a Pürüzlülük VR>1.2 (iki yön)": {
+   "bloklanır_n": 65,
+   "bloklanan_puan/karar": 23.11,
+   "bloklanan_usd": 18407.0,
+   "kalan_puan/karar": 4.63
+  },
+  "K4b VR>1.2 iken fade yok (post-hoc) | CHREV": {
+   "bloklanır_n": 0,
+   "bloklanan_puan": null,
+   "kalan_puan": -1.61
+  },
+  "K4b VR>1.2 iken fade yok (post-hoc)": {
+   "bloklanır_n": 26,
+   "bloklanan_puan/karar": 35.57,
+   "bloklanan_usd": 5961.0,
+   "kalan_puan/karar": 5.99
+  },
+  "K1+K3+K5+K6": {
+   "bloklanır_n": 160,
+   "bloklanan_puan/karar": -0.28,
+   "bloklanan_usd": -512.0,
+   "kalan_puan/karar": 17.28,
+   "kalan_usd": 29048.0
+  }
+ },
+ "e_vekil_portfoy": {
+  "KAPISIZ (vekil)": {
+   "C26": {
+    "size": 127,
+    "mean": 0.123,
+    "sum": 15.583
+   },
+   "D25a": {
+    "size": 192,
+    "mean": -0.097,
+    "sum": -18.563
+   },
+   "D25b": {
+    "size": 119,
+    "mean": -0.204,
+    "sum": -24.258
+   },
+   "M26": {
+    "size": 134,
+    "mean": 0.186,
+    "sum": 24.974
+   },
+   "S26": {
+    "size": 41,
+    "mean": -0.06,
+    "sum": -2.446
+   }
+  },
+  "K1 Pazartesi SELL yok": {
+   "C26": {
+    "size": 127,
+    "mean": 0.123,
+    "sum": 15.583
+   },
+   "D25a": {
+    "size": 179,
+    "mean": -0.069,
+    "sum": -12.296
+   },
+   "D25b": {
+    "size": 103,
+    "mean": -0.165,
+    "sum": -17.009
+   },
+   "M26": {
+    "size": 117,
+    "mean": 0.211,
+    "sum": 24.691
+   },
+   "S26": {
+    "size": 32,
+    "mean": -0.215,
+    "sum": -6.894
+   }
+  },
+  "(elendi) K2 FOMC öncesi 24s SELL yok": {
+   "C26": {
+    "size": 122,
+    "mean": 0.131,
+    "sum": 15.927
+   },
+   "D25a": {
+    "size": 191,
+    "mean": -0.113,
+    "sum": -21.527
+   },
+   "D25b": {
+    "size": 116,
+    "mean": -0.211,
+    "sum": -24.482
+   },
+   "M26": {
+    "size": 125,
+    "mean": 0.172,
+    "sum": 21.472
+   },
+   "S26": {
+    "size": 39,
+    "mean": -0.011,
+    "sum": -0.44
+   }
+  },
+  "K3 Ay sonu dengeleme": {
+   "C26": {
+    "size": 125,
+    "mean": 0.122,
+    "sum": 15.253
+   },
+   "D25a": {
+    "size": 185,
+    "mean": -0.088,
+    "sum": -16.213
+   },
+   "D25b": {
+    "size": 119,
+    "mean": -0.204,
+    "sum": -24.258
+   },
+   "M26": {
+    "size": 128,
+    "mean": 0.19,
+    "sum": 24.376
+   },
+   "S26": {
+    "size": 41,
+    "mean": -0.06,
+    "sum": -2.446
+   }
+  },
+  "K5 Stres-dönüş SELL yok": {
+   "C26": {
+    "size": 127,
+    "mean": 0.123,
+    "sum": 15.583
+   },
+   "D25a": {
+    "size": 175,
+    "mean": -0.128,
+    "sum": -22.378
+   },
+   "D25b": {
+    "size": 113,
+    "mean": -0.187,
+    "sum": -21.171
+   },
+   "M26": {
+    "size": 100,
+    "mean": 0.314,
+    "sum": 31.354
+   },
+   "S26": {
+    "size": 41,
+    "mean": -0.06,
+    "sum": -2.446
+   }
+  },
+  "K6 Aşırı uzama BUY yok": {
+   "C26": {
+    "size": 123,
+    "mean": 0.14,
+    "sum": 17.259
+   },
+   "D25a": {
+    "size": 192,
+    "mean": -0.097,
+    "sum": -18.563
+   },
+   "D25b": {
+    "size": 100,
+    "mean": -0.265,
+    "sum": -26.548
+   },
+   "M26": {
+    "size": 119,
+    "mean": 0.168,
+    "sum": 19.943
+   },
+   "S26": {
+    "size": 41,
+    "mean": -0.06,
+    "sum": -2.446
+   }
+  },
+  "K4a Pürüzlülük VR>1.2 (iki yön)": {
+   "C26": {
+    "size": 117,
+    "mean": 0.169,
+    "sum": 19.723
+   },
+   "D25a": {
+    "size": 180,
+    "mean": -0.104,
+    "sum": -18.797
+   },
+   "D25b": {
+    "size": 109,
+    "mean": -0.219,
+    "sum": -23.895
+   },
+   "M26": {
+    "size": 129,
+    "mean": 0.2,
+    "sum": 25.742
+   },
+   "S26": {
+    "size": 36,
+    "mean": -0.109,
+    "sum": -3.922
+   }
+  },
+  "K4b VR>1.2 iken fade yok (post-hoc)": {
+   "C26": {
+    "size": 123,
+    "mean": 0.159,
+    "sum": 19.598
+   },
+   "D25a": {
+    "size": 187,
+    "mean": -0.093,
+    "sum": -17.347
+   },
+   "D25b": {
+    "size": 115,
+    "mean": -0.216,
+    "sum": -24.829
+   },
+   "M26": {
+    "size": 133,
+    "mean": 0.181,
+    "sum": 24.069
+   },
+   "S26": {
+    "size": 38,
+    "mean": -0.16,
+    "sum": -6.067
+   }
+  },
+  "K1+K3+K5+K6": {
+   "C26": {
+    "size": 121,
+    "mean": 0.14,
+    "sum": 16.929
+   },
+   "D25a": {
+    "size": 158,
+    "mean": -0.063,
+    "sum": -9.924
+   },
+   "D25b": {
+    "size": 81,
+    "mean": -0.201,
+    "sum": -16.289
+   },
+   "M26": {
+    "size": 70,
+    "mean": 0.343,
+    "sum": 24.035
+   },
+   "S26": {
+    "size": 32,
+    "mean": -0.215,
+    "sum": -6.894
+   }
+  },
+  "K1+K3+K5+K6 toplam": {
+   "n": 462,
+   "ΣR": 7.86,
+   "ort": 0.017,
+   "kapısız_n": 613,
+   "kapısız_ΣR": -4.71
+  },
+  "TÜM ADAYLAR (elenenler dahil)": {
+   "C26": {
+    "size": 106,
+    "mean": 0.202,
+    "sum": 21.411
+   },
+   "D25a": {
+    "size": 145,
+    "mean": -0.106,
+    "sum": -15.334
+   },
+   "D25b": {
+    "size": 69,
+    "mean": -0.256,
+    "sum": -17.63
+   },
+   "M26": {
+    "size": 65,
+    "mean": 0.315,
+    "sum": 20.472
+   },
+   "S26": {
+    "size": 26,
+    "mean": -0.21,
+    "sum": -5.458
+   }
+  }
+ }
+}

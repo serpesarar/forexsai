@@ -36,6 +36,10 @@ import phase_rules as pr
 import probation_exec
 import reentry_exec
 import shadow_log
+try:                                    # CAPREV-2 / K5b GÖLGE — emir göndermez; import hatası botu durdurmaz
+    import caprev_shadow
+except Exception:                       # pragma: no cover
+    caprev_shadow = None
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -670,6 +674,7 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
 
     fixed_tp, fixed_sl = _fixed_distances(price, cfg, bot_signal,
                                           scope_key, mt5_symbol)
+    _k5b_shadow(scope_key, forexsai_sym, mt5_symbol, direction, price, fixed_tp, fixed_sl)
 
     if candles is None:
         candles = candles_1m(mt5_symbol, config.ZONE_LOOKBACK)
@@ -812,6 +817,7 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     # Türetilmiş TP/SL mesafesi — ATR_GEOMETRY kapsamındaysa ATR-ölçekli,
     # değilse araştırılmış sabit (index: puan, USOIL: yüzde).
     tp_dist, sl_dist = _fixed_distances(price, cfg, None, scope_key, mt5_symbol)
+    _k5b_shadow(scope_key, forexsai_sym, mt5_symbol, direction, price, tp_dist, sl_dist)
 
     if direction == "BUY":
         tp, sl = price + tp_dist, price - sl_dist
@@ -1021,6 +1027,28 @@ def log_gate_skip(scope_key: str, mt5_symbol: str, forexsai_sym: str,
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
     except Exception as exc:
         log.debug("gate_skip log yazilamadi: %s", exc)
+
+
+def _k5b_shadow(scope_key: str, forexsai_sym: str, mt5_symbol: str, direction: str,
+                price: float, tp_dist: float, sl_dist: float) -> None:
+    """K5b GÖLGE (2026-10-02): stres günü (dün NDX ≤ −%1,5 veya 5g ≤ −%4) VE fiyat önceki
+    RTH dibinin altındayken SELL → 'bloklardım' kaydı. İŞLEM AYNEN AÇILIR; yalnız ölçüm.
+    Kanıt: research/ndx_gate_forge/NIHAI_RAPOR.md (B−; bot SELL'lerinde 41 karar / 5 gün,
+    ort. −12,8 puan). Sonuç shadow_log ile gerçek TP/SL geometrisinde ölçülür."""
+    try:
+        if direction != "SELL" or forexsai_sym != "NDX.INDX" or caprev_shadow is None:
+            return
+        if not getattr(config, "K5B_SHADOW_ENABLED", True):
+            return
+        hit, extra = caprev_shadow.k5b_check(forexsai_sym, price)
+        if hit:
+            shadow_log.record_shadow(scope_key, forexsai_sym, mt5_symbol, direction,
+                                     "k5b_stress_dip", "would_block", price,
+                                     extra=extra, tp_dist=tp_dist, sl_dist=sl_dist)
+            log.info("%s — [GÖLGE] K5b (stres günü + önceki RTH dibi altında SELL) "
+                     "bloklardı — işlem devam etti", scope_key)
+    except Exception as exc:                # fail-open
+        log.debug("k5b gölge hatası: %s", exc)
 
 
 def _log_trade(mode, scope, sym, direction, price, tp, sl, voters, note):
@@ -2398,6 +2426,7 @@ def main():
                    ("ENTRY_SCORE_GATE_ENABLED", True), ("ENTRY_SCORE_MIN", 7),
                    ("ENTRY_SCORE_GATE_BLOCK", False), ("ENTRY_SCORE_GATE_CHREV", False),
                    ("VIX_REGIME_MICRO_GATE", True), ("VIX_REGIME_MICRO_BLOCK", False),
+                   ("CAPREV_SHADOW_ENABLED", True), ("K5B_SHADOW_ENABLED", True),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
@@ -2496,6 +2525,14 @@ def main():
                     check_daycombo()
                 except Exception as e:
                     log.exception("daycombo hata: %s", e)
+
+            # ── CAPREV-2 GÖLGE (NDX+DAX kapitülasyon alımı) + K5b bağlamı — EMİR YOK ──
+            #    Kanıt/kural: research/ndx_gate_forge/NIHAI_RAPOR.md (B+, canlı DEĞİL).
+            if caprev_shadow is not None and getattr(config, "CAPREV_SHADOW_ENABLED", True):
+                try:
+                    caprev_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset)
+                except Exception as e:
+                    log.warning("caprev gölge hatası: %s", e)
 
             # ── USOIL BREAKOUT-DEVAM: Donchian(48×5m) kırılımı + EMA200 trend
             #    hizası (AYRI magic+5; 2026-08-06 araştırması, TEST %62.7 n=185) ──
