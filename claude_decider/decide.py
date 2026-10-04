@@ -394,7 +394,8 @@ def _sandbox() -> str:
 
 
 def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = CALL_TIMEOUT,
-                effort: str | None = None) -> dict:
+                effort: str | None = None, _respawned: bool = False) -> dict:
+    global _CLAUDE_BIN_CACHE
     cmd = [_claude_bin(), "--dangerously-skip-permissions", "-p",
            "--model", model, "--output-format", "json"]
     eff = DECIDE_EFFORT if effort is None else effort
@@ -412,6 +413,14 @@ def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = CALL_TIME
     except subprocess.TimeoutExpired:
         return {"action": "WAIT", "reason": "claude timeout", "_error": True}
     except OSError as e:      # WinError 2: CLI yolu bulunamadı/erişilemedi → pass ölmesin
+        # 2026-10-04: cache'lenen yol CLI güncellemesiyle (npm yeniden yazımı) bayatlayınca
+        # süreç ölene dek HER karar spawn hatasıyla WAIT'e düşüyordu (09-27→10-04, ~1070
+        # karar). Cache'i boşalt, yolu yeniden çöz, bir kez tekrar dene.
+        if not _respawned:
+            _CLAUDE_BIN_CACHE = None
+            print(f"  ⚠ claude spawn hatası ({e}) → CLI yolu yeniden çözülüp tekrar deneniyor")
+            return call_claude(prompt, model=model, timeout=timeout, effort=effort,
+                               _respawned=True)
         return {"action": "WAIT", "reason": f"claude spawn hatası: {e}", "_error": True}
     if r.returncode != 0:
         # ESKİ CLI KORUMASI: kutudaki claude sürümü --effort'u bilmiyorsa her karar
