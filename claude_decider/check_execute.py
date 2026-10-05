@@ -23,9 +23,8 @@ for sym, ms in rd._SYM_MAP.items():
     req = {"action": mt5.TRADE_ACTION_DEAL, "symbol": ms, "volume": lot, "type": mt5.ORDER_TYPE_BUY,
            "price": tick.ask, "sl": round(sl, info.digits), "tp": round(tp, info.digits),
            "deviation": ex.DEVIATION_POINTS, "magic": ex.DECIDER_MAGIC,
-           "comment": ex.mk_comment(sym, "BUY"), "type_time": mt5.ORDER_TIME_GTC,
-           "type_filling": mt5.ORDER_FILLING_RETURN}
-    chk = mt5.order_check(req)
+           "comment": ex.mk_comment(sym, "BUY"), "type_time": mt5.ORDER_TIME_GTC}
+    chk = ex.check_with_fill_modes(mt5, req, info)
     print(f"{sym:12s} {ms:10s} lot={lot} atr={atr:.3f} spread/ATR={(tick.ask-tick.bid)/atr:.3f} "
           f"stops_ok={ex.stops_ok(tick.ask, req['tp'], req['sl'], info.trade_stops_level, info.point)} "
           f"order_check retcode={getattr(chk,'retcode',None)} {getattr(chk,'comment','')}")

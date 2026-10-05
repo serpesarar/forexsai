@@ -110,7 +110,8 @@ def _today_order_count() -> int:
     return n
 
 
-def _send_with_fill_modes(mt5, request: dict, info):
+def _fill_modes(mt5, info) -> list:
+    """Sembolün desteklediği filling-mode'lar (IOC → FOK → RETURN); okunamazsa hepsi."""
     fm = getattr(info, "filling_mode", 0) if info else 0
     modes = []
     if fm & 2:
@@ -118,15 +119,21 @@ def _send_with_fill_modes(mt5, request: dict, info):
     if fm & 1:
         modes.append(mt5.ORDER_FILLING_FOK)
     modes.append(mt5.ORDER_FILLING_RETURN)
-    result = None
-    for mode in modes:
+    if not (fm & 3):
+        modes = [mt5.ORDER_FILLING_IOC, mt5.ORDER_FILLING_FOK, mt5.ORDER_FILLING_RETURN]
+    return modes
+
+
+def check_with_fill_modes(mt5, request: dict, info):
+    """order_check'i filling-mode'larla dene; ilk 10030-DIŞI sonucu döndür (mode request'e yazılır).
+    10030 = yalnız yanlış filling → sonraki mod; diğer ret (margin/stop/volume) gerçek ret'tir."""
+    chk = None
+    for mode in _fill_modes(mt5, info):
         request["type_filling"] = mode
-        result = mt5.order_send(request)
-        if result is None:
-            continue
-        if result.retcode != FILLING_UNSUPPORTED:
-            return result
-    return result
+        chk = mt5.order_check(request)
+        if chk is not None and chk.retcode != FILLING_UNSUPPORTED:
+            return chk
+    return chk
 
 
 def send_order(mt5, sit_symbol: str, mt5_symbol: str, dec: dict, atr: float | None,
@@ -186,15 +193,12 @@ def send_order(mt5, sit_symbol: str, mt5_symbol: str, dec: dict, atr: float | No
                "type_time": mt5.ORDER_TIME_GTC}
     rec.update({"lot": lot, "entry": entry, "tp": tp, "sl": sl, "atr": round(atr, 5),
                 "spread": round(spread, 5)})
-    # order_check: filling-mode ayrımından bağımsız, margin/stop/volume doğrulaması
-    request["type_filling"] = mt5.ORDER_FILLING_RETURN
-    chk = mt5.order_check(request)
+    # order_check ÖNCE (margin/stop/volume doğrulaması) — kabul edilen filling-mode request'te kalır
+    chk = check_with_fill_modes(mt5, request, info)
     if chk is None or chk.retcode not in (0, mt5.TRADE_RETCODE_DONE):
-        code = getattr(chk, "retcode", None)
-        comment = getattr(chk, "comment", mt5.last_error())
-        if code != FILLING_UNSUPPORTED:        # filling hatası dışındaki ret gerçek ret
-            return done("rejected", f"order_check ret={code} {comment}")
-    res = _send_with_fill_modes(mt5, request, info)
+        return done("rejected", f"order_check ret={getattr(chk, 'retcode', None)} "
+                                f"{getattr(chk, 'comment', mt5.last_error())}")
+    res = mt5.order_send(request)
     if res is None:
         return done("rejected", f"order_send None: {mt5.last_error()}")
     if res.retcode != mt5.TRADE_RETCODE_DONE:
