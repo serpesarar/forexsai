@@ -29,7 +29,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from decide import JOURNAL_JSONL, call_claude, journal_lock  # noqa: E402
 
-MODEL = "claude-fable-5"
+MODEL = "claude-sonnet-5-5"
 MAX_PER_CALL = 70           # tek çağrıda değerlendirilen kayıt (çıktı token güvenliği)
 SHUFFLE_SEED = 42           # tekrarlanabilir karıştırma (answer key lokalde)
 

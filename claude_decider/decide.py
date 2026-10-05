@@ -72,8 +72,9 @@ def journal_lock(timeout: float = 10.0):
 # 2026-08-21 OPUS → SONNET: Opus kotası çok hızlı tükeniyordu (gözlenen
 # headless maliyet ~$0.35/çağrı × ~60 çağrı/gün). Sonnet 5 + yüksek düşünme
 # eforu (DECIDE_EFFORT) aynı yargı derinliğini çok daha ucuza verir.
+# 2026-10-04: varsayılan Sonnet 5 → Sonnet 5.5 (claude-sonnet-5-5), efor high aynı.
 # Env ile ezilebilir: DECIDE_MODEL=claude-opus-5 (geri dönüş).
-DECIDE_MODEL = os.getenv("DECIDE_MODEL", "claude-sonnet-5")
+DECIDE_MODEL = os.getenv("DECIDE_MODEL", "claude-sonnet-5-5")
 # Düşünme eforu (claude CLI --effort). Karar kalitesi model küçüldüğünde
 # buradan telafi edilir; "high" varsayılan.
 DECIDE_EFFORT = os.getenv("DECIDE_EFFORT", "high")
@@ -324,7 +325,9 @@ def _claude_bin() -> str:
     zorunlu hale geliyordu. Platform paketi adı değiştiği için glob ile aranır.
     """
     global _CLAUDE_BIN_CACHE
-    if _CLAUDE_BIN_CACHE:
+    # 2026-10-04: cache'teki yol artık yoksa yeniden çöz (CLI self-update exe'yi
+    # yeniden adlandırınca decider 09-27'den beri ölü yolla WinError 2 veriyordu).
+    if _CLAUDE_BIN_CACHE and (_CLAUDE_BIN_CACHE == "claude" or Path(_CLAUDE_BIN_CACHE).exists()):
         return _CLAUDE_BIN_CACHE
     import shutil
     home = Path.home()
