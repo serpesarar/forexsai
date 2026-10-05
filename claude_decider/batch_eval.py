@@ -102,7 +102,7 @@ def _pack(e, idx: int) -> dict | None:
     return pack
 
 
-def build_batch(limit: int = MAX_PER_CALL, model: str = MODEL):
+def build_batch(limit: int = MAX_PER_CALL, model: str = MODEL, since: str | None = None):
     """Ölçülebilir kayıtları (cf grade'li) seç, paketle, SHUFFLE et. Dönüş (packs, key).
     model-parametrik: aynı kayıtlar farklı modellerce ayrı ayrı değerlendirilebilir (adil A/B)."""
     if not JOURNAL_JSONL.exists():
@@ -112,6 +112,8 @@ def build_batch(limit: int = MAX_PER_CALL, model: str = MODEL):
     usable = [e for e in rows
               if e.get("cf_outcome") in ("WIN", "LOSS") and e.get("dirs_live")
               and not (e.get("batch_eval") or {}).get(model)]          # bu model daha önce görmedi
+    if since:                      # ISO tarih öneki karşılaştırması ("2026-09-11")
+        usable = [e for e in usable if str(e.get("ts") or "") >= since]
     usable = usable[-limit:]
     random.seed(SHUFFLE_SEED)
     random.shuffle(usable)                                             # kronolojik zinciri KIR
@@ -266,15 +268,17 @@ def report():
 
 
 def main():
-    limit, model = MAX_PER_CALL, MODEL
+    limit, model, since = MAX_PER_CALL, MODEL, None
     for a in sys.argv[1:]:
+        if a.startswith("--since="):
+            since = a.split("=", 1)[1]          # örn. --since=2026-09-11 (replay penceresi)
         if a.startswith("--limit="):
             limit = int(a.split("=")[1])
         elif a.startswith("--model="):
             model = a.split("=", 1)[1]          # örn. --model=opus → adil A/B (aynı paketler)
     if "--report" in sys.argv:
         report(); return
-    packs, key = build_batch(limit, model)
+    packs, key = build_batch(limit, model, since)
     print(f"[{model}] ölçülebilir (cf-grade'li, bu modelce sorulmamış) kayıt: {len(packs)}")
     if not packs:
         print("⏳ değerlendirilecek yeni kayıt yok."); return
