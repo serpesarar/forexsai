@@ -182,7 +182,7 @@ def fetch_bars_after_mt5(symbol: str, since_ts: float) -> list[dict]:
 
 
 def open_positions_summary() -> dict:
-    # Decider Pepperstone'da işlem AÇMAZ (shadow); varsa pozisyonları bağlam için göster
+    # Açık pozisyonları (bot + decider) bağlam için göster; decider --live'da yalnız kendi magic'iyle açar
     if not _HAS_MT5:
         return {"count": 0, "by": {}, "note": ""}
     poss = mt5.positions_get() or []
@@ -617,10 +617,20 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
 
 
 def execute(sit: dict, dec: dict) -> None:
-    """Onaylı kararı MT5'e gönder — SIRADAKI ADIM (botun open_trade/open_trade_sr'ına bağlanacak).
-    Şu an kasıtlı boş: shadow doğrulanmadan canlı emir gönderilmez."""
-    print(f"  ⚠️  execute() henüz bağlı değil — {sit['symbol']} {dec.get('direction')} "
-          f"size={dec.get('size_factor')} icra edilmedi.")
+    """Onaylı kararı MT5'e GERÇEK emir olarak gönder (2026-10-05, demo + küçük boyut).
+    Tüm güvenlikler execute_mt5.send_order içinde (demo kilidi, boyut/adet tavanı, kill-switch).
+    Buraya yalnız `--live` + live_eligible() geçen OPEN kararlar gelir."""
+    from decide import stop_mults
+    import execute_mt5
+    sym = sit["symbol"]
+    mt5_sym = _SYM_MAP.get(sym)
+    if not _HAS_MT5 or not mt5_sym:
+        print(f"  ⚠️  execute: {sym} MT5 sembolü çözülemedi — emir yok.")
+        return
+    d = str(dec.get("direction") or "").upper()
+    live = ((sit.get("directions") or {}).get(d) or {}).get("live") or {}
+    tp_atr, sl_atr = stop_mults(sym)
+    execute_mt5.send_order(mt5, sym, mt5_sym, dec, live.get("atr"), tp_atr, sl_atr)
 
 
 def preflight() -> list[str]:
@@ -645,7 +655,7 @@ def preflight() -> list[str]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true")
-    ap.add_argument("--live", action="store_true", help="shadow KAPALI (execute çağrılır; henüz stub)")
+    ap.add_argument("--live", action="store_true", help="shadow KAPALI (execute → MT5 demo emri; küçük boyut, execute_mt5.py)")
     ap.add_argument("--model", default=DECIDE_MODEL)
     args = ap.parse_args()
     shadow = not args.live
