@@ -6,7 +6,7 @@ taranır (CLAUDE.md **3. KURAL**); araştırma bitince sonuç buraya eklenir —
 `docs/KAPI_ENVANTERI_2026-09-30.md` bu defterin 30 Eylül tarihli anlık görüntüsüdür (bot/backend/decider *durumları*
 için oraya bak); bu defter tüm dönemleri ve ajanları kapsar ve güncel tutulur.
 
-Son güncelleme: **2026-10-02 (v3 son kıyas)**.
+Son güncelleme: **2026-10-07 (§2.7 işlem otopsisi aracı)**.
 
 ## 0. Yeni araştırmaya başlamadan önce (zorunlu sıra)
 
@@ -179,6 +179,26 @@ Veri: Dukascopy 2025 (bid/ask), cache 2026 (+60 dk onarımlı), MT5 M1, Eylül `
 | SY | `ndx_synthesis_20261002` | H1 (=K5b) +6,11R (11 gün, anlamsız) · H2 hacim vetosu reddedildi · H3 hacim şokunda bekleme reddedildi · H4 MA200+%10 & 4s aralık üst %20 BUY vetosu 5/5 dönemde zarar · H5 stres sonrası dibi geri alan BUY seyrek · CHASE +0,30R · **CAPREV M1 katı icrada 11 işlem +11,12R ama en iyi 5 gün çıkınca −1,35R; TP80/SL110 +1,07R**. Ders: spread×3'te taban portföy −88,7R → veto pozitif katkısı canlı strateji yapmaz |
 | CP | `ndx_caprev_paths_20261002` | 22 yapılandırma: yeni dip kırılımı, yalnız nakit seans, 10:00 başarısız-geri-alım çıkışı, düşen VIX → **tabandan zayıf/elendi**. **Artan VIX + tam +1R hedef**: tek başına toplam düşük (M1 9 işlem +5,6R) ama beşli araştırma portföyüne en büyük katkı (+9,4R; sermayeyi erken boşaltıyor); yalnız 7 gün, katkı CI sıfırı içerir. Yarı +1R / yarı 16:00 = iki getirinin karışımı (özdeşlik kanıtlandı), uç-gün bağımlılığını azaltır. v2'deki CAPREV-2 toplamının iki risk birimi olduğunu gösterdi (GF-19 düzeltmesi). Gece taşıma M1/15m'de daha kötü |
 | PM | `ndx_pattern_motifs` | NAS100 mum-dizisi atlası (tekrar eden motifler, plasebolu) — **rapor taslak** |
+
+### 2.7 İşlem otopsisi aracı (`scripts/islem_otopsi/`, skill `/islem-otopsi`, 2026-10-07)
+Gerçek MT5 kapanışları (`bot_trades`) + broker 1m (`indicator_snapshots`, tick hacmi mevsimsel düzeltilmiş); saat ekseni işlem başına fiyat eşleştirmesiyle; plasebo = aynı sembol/yön/UTC saati/SL-TP mesafesi, ±10 gün rastgele giriş.
+
+| ID | Tarih | Fikir | Sonuç (560 işlem, 2026-06-30 → 10-07) | Sınıf |
+|---|---|---|---|---|
+| IO-01 | 2026-10-07 | Giriş anı rastgeleden iyi mi (eşli plasebo) | −0,01R/işlem [−0,09…+0,08], P(>0)=%44; NDX BUY +0,18 vs rastgele −0,05 (n=71) tek olumlu taraf; NDX SELL +0,02 vs +0,08 | B |
+| IO-02 | 2026-10-07 | SL mekanizmaları bota özgü mü | yön doğru %30,8 (plasebo %30,7), hiç çalışmadı %41 (%38), neredeyse TP %17 (%17), yön yanlış %29 (%24) → mekanizmalar braketin doğası | B |
+| IO-03 | 2026-10-07 | Hacim: SL'ye giderken hacim düşüyor/artıyor mu | hayır — 12 ölçünün hiçbiri ayırmıyor (bar-başı hacim yönü dahil); yalnız çıkış barı ×1,14 vs ×1,08. ⚠ toplam-hacim yön oranı TANIM GEREĞİ ayırır (kaybedende aleyhte bar sayısı fazla) — bar başına ölç | X |
+| IO-04 | 2026-10-07 | "Kötü bağlam" bayrakları (1h ters trend, kovalama, MTF çelişki, kayıp sonrası tekrar, VIX karşıtı, aralık ucunda) | SL oranı farkı −3…+0 pp (n=83–148) → etkisiz | X |
+| IO-05 | 2026-10-07 | **RSI_DIV_KARSI** — son 20 dk yeni uç, RSI ≥2 puan teyitsiz → o yöne açma | n=78; iki yarıda da aleyhte (−0,28/−0,08R vs +0,01/+0,09R); VIXREG NDX SELL 42 karar −0,18R, MOMSR 21 −0,53R. 15 bayrak arasından seçildi, odak da görüldü | **C ADAY** (ileri doğrulama: `--since 2026-10-08`) |
+| IO-06 | 2026-10-07 | DAR_STOP (SL<1×ATR5) | +22,5pp (n=40) ama etkinin çoğu USOIL_BRK (zaten gölge, B17); MOMSR'de +0,03R | X (B17'nin tekrarı) |
+| IO-07 | 2026-10-07 | Erken çıkış R≤−0,3/−0,5 @5/10/15/30 dk | hepsi net negatif (−3,9…−17,4R); ayrışma 16. dk | X (M9 teyidi) |
+| IO-08 | 2026-10-07 | SL×{0,75–2} · TP×{0,75–1,5} geometri (yönetimsiz, kalibrasyon %98,5) | 15 varyantın hepsi −0,06…+0,03R/işlem | X (OLD-20 teyidi) |
+| IO-09 | 2026-10-07 | NDX "girişten sonra 20 p düşüş gelir" → X puan geri çekilme limiti (S08 yeniden sınama; X 10–40, 30/120 dk, atla/piyasa, 2 geometri; `research/limit_kilit_20261007/`) | 20 p düşüş SL'lerin %96'sında, TP'lerin %64'ünde (DAYCOMBO+REENTRY %100/%55); 20 p düşmeyenlerin %92'si TP. 32 varyantın 30'u negatif; S08 ana hipotezi −551 p, iki yarıda ve 09-02 sonrasında negatif → S08 +19.606$ tekrarlanmadı (ters seçilim, OLD-21) | X |
+| IO-12 | 2026-10-08 | claude_decider sembol başına kural araması (`research/decider_kural_20261008/`; 452 bağımsız OPEN, 828 WAIT-cf, ileri+geri, plasebo 10×) | iki yönde geçen kural gerçek 138 vs plasebo medyan 142 (79–177) → gösterge-eşik kuralı YOK. Seçim değeri: XAU BUY +0,20R (OPEN +0,06 vs WAIT-cf −0,14, iki yarıda +); NDX BUY −0,20R ve USOIL SELL −0,13R zararlı | X (eşik kuralları) |
+| D4 | 2026-10-08 | decider: VIX<18,4 iken NDX BUY açma (K1'in decider'a uygulanması, D3 aynası) | NDX BUY'ların 44/45'i VIX'e karşı, −0,13R; aylar tutarsız | B ADAY |
+| D5 | 2026-10-08 | decider: USOIL SELL kapat (bot B1 ile aynı) | −0,13R (n=88), WAIT-cf +0,04R, 4 ayın 3'ünde ≤0 | B ADAY |
+| IO-11 | 2026-10-07 | "SL'leri en çok önleyen giriş kuralı" kaba-kuvvet araması (`research/sl_onleme_kural_20261007/`; 1.946+2.158 tekli/ikili veto, kronolojik ileri/geri bölme) | eğitim↔sınama Spearman +0,03 / −0,08; eğitimin en iyi %5'i sınamada %60 / %34 pozitif; eğitimde +16R'lik kurallar sınamada −12R → giriş vetosu genelleşmiyor | X |
+| IO-10 | 2026-10-07 | TP'nin %f'i dolunca SL = giriş + %L·TP (f 0,6–0,9 × L 0–0,5; kullanıcı önerisi 0,8/0,3) | 0,8/0,3: −0,3R (23 SL kurtarır / 57 TP öldürür); 16 varyantın 16'sı 2. yarıda ve 09-02 sonrasında negatif, pozitifler 1. yarı + USOIL | X (M9 teyidi) |
 
 ---
 
