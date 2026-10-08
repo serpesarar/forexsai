@@ -25,6 +25,8 @@ yeni deneme/tickdata/
 claude_decider/decider_config.py
 claude_decider/vix_live.json
 claude_decider/memory/journal.jsonl
+claude_decider/memory/LESSONS_AUTO.md
+claude_decider/memory/candidate_history.json
 
 # Local research documents — never commit
 day_structure_research.md

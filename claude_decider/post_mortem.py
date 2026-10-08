@@ -33,7 +33,8 @@ random.seed(17)
 PERM_M = 400
 MIN_SIDE = 8          # her tarafta (win/loss) min örnek
 TFS = ("1m", "5m", "30m", "1h", "4h")
-LESSONS = HERE / "memory" / "LESSONS.md"
+# Otomatik bloklar git-DIŞI dosyaya (kutuda takipli LESSONS.md değişirse git pull --ff-only reddeder)
+LESSONS = HERE / "memory" / "LESSONS_AUTO.md"
 
 
 def _load():

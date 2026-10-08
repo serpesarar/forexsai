@@ -1005,9 +1005,25 @@ def process_commands(client) -> None:
 
 # ── Haftalık zamanlayıcı ─────────────────────────────────────────────────
 
+# Koda gömülü haftalık işler — agent_config.py gitignore'da olduğu için config'e yazılan iş
+# push'la taşınamaz. Aynı id config'de varsa config kazanır.
+# 2026-10-08: decider öğrenme döngüsü 2026-07-23'ten beri hiç çalışmamıştı (yalnız elle
+# tetiklenebiliyordu) → LESSONS_AUTO.md haftalık güncellenir, decider her kararda okur.
+BUILTIN_WEEKLY_JOBS = [
+    {"id": "decider_distill", "name": "Decider öğrenme (distill_journal, haftalık)",
+     "command": "python distill_journal.py", "cwd": "claude_decider", "day": "sun", "hour_utc": 9},
+]
+
+
+def _weekly_jobs() -> list:
+    jobs = list(getattr(cfg, "WEEKLY_JOBS", []) or [])
+    ids = {j.get("id") for j in jobs}
+    return jobs + [j for j in BUILTIN_WEEKLY_JOBS if j["id"] not in ids]
+
+
 def run_weekly_jobs(client, state: dict) -> None:
-    """cfg.WEEKLY_JOBS: [{'id','command','cwd','day','hour_utc'}] — haftada 1 koşar."""
-    jobs = getattr(cfg, "WEEKLY_JOBS", [])
+    """WEEKLY_JOBS (config) + BUILTIN_WEEKLY_JOBS: [{'id','command','cwd','day','hour_utc'}] — haftada 1 koşar."""
+    jobs = _weekly_jobs()
     if not jobs:
         return
     now = datetime.now(timezone.utc)

@@ -32,6 +32,7 @@ import free_context as fx  # noqa: E402
 import forensics  # noqa: E402
 import entry_quality  # noqa: E402  (bıçak yakalama + hacim patlaması kapısı)
 import regime_meter  # noqa: E402  (rejim ölçümü — kapı değil, enstrüman + zarf uyarısı)
+import evidence_rules  # noqa: E402  (D4/D5 kanıt kuralları — karardan sonra mekanik)
 from data_contract import validate_bars, validate_multi  # noqa: E402  (sıfır-güven)
 import outcomes  # noqa: E402
 
@@ -229,27 +230,44 @@ def fetch_vix() -> tuple[float | None, str]:
 
 
 # ── Bağlam + durum ───────────────────────────────────────────────────────────
-def recent_journal_summary(n: int = 8) -> str:
-    """Opus'un her kararda gördüğü yakın-geçmiş. C — FIRSAT MUHASEBESİ dahil: model
-    yalnız gerçekleşen kaybı görürse çekingenliği öğrenir (kanıt: 360 kaçırılan kazanana
-    karşı 79 yakalanan). Vazgeçilen-R'yi göstermek çekingenliği 'bedava' olmaktan çıkarır."""
+RECENT_WINDOW_DAYS = int(os.getenv("RECENT_WINDOW_DAYS", "30"))
+RECENT_MIN_N = 10
+
+
+def recent_journal_summary(symbol: str | None = None) -> str:
+    """Karara giren geçmiş özeti — UZUN pencere, sembol-yön bazlı, kalibre taban.
+
+    2026-10-08 değişikliği: eskiden "son 24s gerçekleşen R + VAZGEÇİLEN R — aşırı temkin de
+    maliyettir" yazılıyordu. Bu, birkaç saatlik şans/şanssızlığı karar girdisi yapıyor ve
+    bekleyişler kazandığında modeli daha çok açmaya itiyordu (kısa dönem gürültü takibi).
+    research/decider_kural_20261008: SL mekanikleri açmadığı fırsatlarla aynı; tek tek sonuçlar
+    gürültü. Şimdi: son RECENT_WINDOW_DAYS günde bu sembolde yön başına açtıklarının ve
+    açmadıklarının (karşı-olgu) ortalama R'si + n — yalnız n≥RECENT_MIN_N ise.
+    """
     from decide import load_journal
     from datetime import timedelta
     rows = load_journal(clean=True)
     if not rows:
         return "henüz geçmiş yok"
-    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
-    day = [r for r in rows if r.get("ts", "") >= cutoff]
-    if not day:
-        day = rows[-n:]
-    opens = [r for r in day if str((r.get("decision") or {}).get("action", "")).upper() == "OPEN"]
-    realized = sum(r.get("pnl_r") or 0 for r in day if r.get("outcome") in ("WIN", "LOSS"))
-    foregone = sum(r.get("cf_pnl_r") or 0 for r in day
-                   if str((r.get("decision") or {}).get("action", "")).upper() == "WAIT"
-                   and r.get("cf_outcome") in ("WIN", "LOSS"))
-    return (f"son 24s: {len(day)} karar, {len(opens)} OPEN; gerçekleşen {realized:+.2f}R; "
-            f"VAZGEÇİLEN {foregone:+.2f}R (beklediklerinin cf toplamı — aşırı temkin de maliyettir, "
-            f"pozitifse kazananları kaçırıyorsun demektir)")
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=RECENT_WINDOW_DAYS)).isoformat()
+    rows = [r for r in rows if r.get("ts", "") >= cutoff and (symbol is None or r.get("symbol") == symbol)]
+    parts = []
+    for d in ("BUY", "SELL"):
+        opened = [r["pnl_r"] for r in rows if str((r.get("decision") or {}).get("action", "")).upper() == "OPEN"
+                  and (r.get("decision") or {}).get("direction") == d and r.get("outcome") in ("WIN", "LOSS")
+                  and isinstance(r.get("pnl_r"), (int, float))]
+        waited = [r["cf_pnl_r"] for r in rows if str((r.get("decision") or {}).get("action", "")).upper() == "WAIT"
+                  and (r.get("counterfactual") or {}).get("dir") == d and r.get("cf_outcome") in ("WIN", "LOSS")
+                  and isinstance(r.get("cf_pnl_r"), (int, float))]
+        if len(opened) >= RECENT_MIN_N or len(waited) >= RECENT_MIN_N:
+            fo = f"{sum(opened) / len(opened):+.2f}R (n={len(opened)})" if opened else "—"
+            fw = f"{sum(waited) / len(waited):+.2f}R (n={len(waited)})" if waited else "—"
+            parts.append(f"{d}: açtıkların ort {fo}, açmadıkların ort {fw}")
+    if not parts:
+        return f"son {RECENT_WINDOW_DAYS} gün: yeterli örnek yok (yön başına <{RECENT_MIN_N})"
+    return (f"son {RECENT_WINDOW_DAYS} gün, bu sembol — " + " · ".join(parts) +
+            ". Not: tek tek kazanç/kayıp serileri kanıt değildir; bu ortalamalar da tekrar kayıtlı "
+            "kararları içerir (ham, bağımsızlaştırılmamış).")
 
 
 # ── HAFTA SONU GAP KORUMASI (2026-07-09 otopsisi) ────────────────────────────
@@ -377,7 +395,7 @@ def _context(positions: dict, now: datetime, symbol: str | None = None) -> dict:
            "positions_by_symbol": positions.get("by", {}),
            "exposure_note": positions.get("note", ""),
            "near_event": bool(nev),
-           "recent": recent_journal_summary()}
+           "recent": recent_journal_summary(symbol)}
     if nev:
         ctx["event"] = nev            # {"event", "impact", "minutes_to", "window_min"}
     if wk is not None:
@@ -522,6 +540,8 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                 cf_direction=sit.get("primary_dir"))            # bıçak yakalama + hacim patlaması
             dec, sit["regime_gate"] = regime_meter.vix_sell_gate(
                 sit["symbol"], dec, sit.get("regime"))          # gergin VIX rejiminde NDX SELL
+            dec, sit["evidence_rules"] = evidence_rules.apply(
+                sit["symbol"], dec, sit)                       # D4/D5 kanıt kuralları (2026-10-08)
             append_journal(sit, dec)["shadow"] = shadow
             act, d, sf = dec.get("action"), dec.get("direction"), dec.get("size_factor")
             print(f"  [{tag}] {sit['symbol']}: {act} {d or ''} size={sf} | {str(dec.get('reason'))[:90]}")

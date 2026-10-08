@@ -88,7 +88,10 @@ CALL_TIMEOUT = int(os.getenv("DECIDE_TIMEOUT", "300"))
 # değerlendirme (sonuçlar+fiyat+zaman sıyrılır, shuffle). ~60 çağrı/gün → 1 çağrı/gün.
 # GÖZLENEN canlı headless maliyet (3 gün, journal): Opus $0.34/çağrı, Fable $0.55/çağrı —
 # "Fable ucuz" varsayımı YANLIŞTI; gerçek tasarruf kolu çağrı SAYISI (CONSULT_REV/cadence/batch).
-SHADOW_MODEL = None
+# 2026-10-08: env ile açılabilir (SHADOW_MODEL=claude-opus-5 gibi) — MODEL DEĞİŞİKLİĞİ ÖNCE BURADA
+# gölgede ölçülür, sonra DECIDE_MODEL'e terfi eder (opus→opus-5→sonnet-5→sonnet-5-5 geçişlerinin
+# her biri davranışı değiştirdi; gölgesiz geçiş karşılaştırmayı imkânsız kılıyor).
+SHADOW_MODEL = os.getenv("SHADOW_MODEL") or None
 # Per-sembol ATR stop çarpanları (grading + trade). Varsayılan RR~0.67.
 # XAUUSD "patient WR" ([[xauusd-meta-stop-sizing]]): dar stop → dönüş tamamlanmadan SL.
 # Geniş SL ver → sabırlı bounce stop yemeden realize olsun (canlı gözlem: XAU BUY %43/−0.29R dar stopla).
@@ -167,6 +170,18 @@ HARD_BANS: set[tuple[str, str]] = {("XAUUSD", "SELL"), ("USOIL.FOREX", "BUY")} |
 LIVE_BLOCKED: set[tuple[str, str]] = {("NDX.INDX", "BUY")}
 
 
+# CANLI-İCRA İZİN LİSTESİ (2026-10-08, research/decider_kural_20261008): gerçek emir YALNIZ
+# decider'ın seçiminin değer kattığı ölçülen yönlerde. Ölçü: bağımsızlaştırılmış OPEN ort R ile
+# aynı sembol-yönde AÇMADIĞI fırsatların (WAIT karşı-olgusu) ort R'si:
+#   XAU BUY +0,06 vs −0,14 (iki yarıda da +) · DAX BUY +0,07 vs −0,02 · NDX SELL +0,04 vs −0,04
+# Diğer yönler karar + kâğıt ölçümüne devam eder; liste haftalık distill_journal raporuyla gözden
+# geçirilir. Env: LIVE_ALLOWED="XAUUSD:BUY,GDAXI.INDX:BUY,NDX.INDX:SELL" · "*" → kısıt yok.
+_LIVE_ALLOWED_ENV = os.getenv("LIVE_ALLOWED", "XAUUSD:BUY,GDAXI.INDX:BUY,NDX.INDX:SELL")
+LIVE_ALLOWED: set[tuple[str, str]] | None = (
+    None if _LIVE_ALLOWED_ENV.strip() == "*" else
+    {tuple(x.strip().split(":", 1)) for x in _LIVE_ALLOWED_ENV.split(",") if ":" in x})
+
+
 def live_eligible(symbol: str, direction: str | None) -> tuple[bool, str]:
     """Gerçek emir gönderilebilir mi? (execute() yolunun tek kapısı.)"""
     key = (symbol, str(direction or "").upper())
@@ -174,6 +189,8 @@ def live_eligible(symbol: str, direction: str | None) -> tuple[bool, str]:
         return False, "SERT YASAK (kanıtlı -EV)"
     if key in LIVE_BLOCKED:
         return False, "CANLI-DIŞI (EV≈0 ölçüldü; gölgede ölçüm sürüyor)"
+    if LIVE_ALLOWED is not None and key not in LIVE_ALLOWED:
+        return False, "CANLI İZİN LİSTESİ DIŞI (seçim değeri kanıtlanmadı; kâğıtta ölçüm sürüyor)"
     return True, ""
 
 SYSTEM = (
@@ -184,8 +201,11 @@ SYSTEM = (
     "bunlar BİZİM verimizde çöktü) DEĞİL, sana verilen geçmiş istatistiğe dayan. "
     "EŞİK (RR~0.67, breakeven WR ~%60): kanıt WR≥%62 net kurulumları AÇ; %59-62 SINIRDA ise KÜÇÜK "
     "boyutla (0.3-0.4) değerlendir — illa mükemmellik bekleme; yalnız WR<%58 veya bağlam kötüyse BEKLE. "
-    "AŞIRI TEMKİNLİ OLMA: geçmişte açmadığın çok kurulum kazanıyordu (özellikle NDX/GDAXI/USOIL). "
-    "AMA XAUUSD'de temkinli kal (canlı zayıf). size_factor ∈ [0,1.0]: konviksiyon × bağlam. "
+    "Açmak da beklemek de maliyettir; kararın ölçüsü kanıtın gücüdür — kısa dönemli kazanç/kayıp "
+    "serileri ve tek işlemlerin hikâyesi kanıt DEĞİLDİR. LESSONS'taki kanıt kurallarını (VIX rejimi, "
+    "yasaklı yönler) bir anlatıyla çiğneme; kod zaten uygular. Senin katkın kanıt tablosunun "
+    "GÖRMEDİĞİ bağlamı tartmak: yakın takvim olayı, olağan dışı fiyat/likidite davranışı, veri "
+    "tutarsızlığı. size_factor ∈ [0,1.0]: konviksiyon × bağlam. "
     "Çıktın SADECE tek-satır JSON."
 )
 
@@ -251,6 +271,7 @@ def build_prompt(situation: dict) -> str:
 
 === LESSONS (terfi etmiş dersler) ===
 {_read('LESSONS.md')}
+{_read('LESSONS_AUTO.md')}
 
 === REGIME (güncel piyasa bağlamı) ===
 {_read('REGIME.md')}
@@ -546,6 +567,7 @@ def build_free_prompt(ctx: dict) -> str:
 
 === LESSONS (terfi etmiş dersler) ===
 {_read('LESSONS.md')}
+{_read('LESSONS_AUTO.md')}
 
 === REGIME (güncel piyasa bağlamı) ===
 {_read('REGIME.md')}
@@ -697,6 +719,7 @@ def append_journal(situation: dict, dec: dict) -> dict:
         "entry_quality": situation.get("entry_quality"),   # bıçak-yakalama/hacim kapısı (gölge ölçüm)
         "regime": situation.get("regime"),                 # rejim durumu (ölçüm)
         "regime_gate": situation.get("regime_gate"),       # gergin VIX rejim kapısı (gölge ölçüm)
+        "evidence_rules": situation.get("evidence_rules"), # D4/D5 kanıt kuralları (engellenen = cf)
         "vix": situation.get("vix"),
         "context": situation.get("context"),
         "model": dec.get("_model", DECIDE_MODEL), "cost_usd": dec.get("_cost_usd"),

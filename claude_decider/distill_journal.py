@@ -23,13 +23,18 @@ sys.path.insert(0, str(HERE))
 from decide import JOURNAL_JSONL  # noqa: E402
 from evidence import load_tables, REV_EDGES, ADX_EDGES, _bucket  # noqa: E402
 
-LESSONS = HERE / "memory" / "LESSONS.md"
+# 2026-10-08: git-DIŞI dosya (kutuda takipli LESSONS.md değişirse git pull --ff-only reddeder).
+# build_prompt LESSONS.md + LESSONS_AUTO.md ikisini de okur.
+LESSONS = HERE / "memory" / "LESSONS_AUTO.md"
 MIN_N = 20          # bir desen terfi için min örnek (deduped)
 MIN_LIFT = 0.08     # base'e göre min +8pp
 PLACEBO_M = 300
 DEDUP_SEC = 3600
 AUTO_START = "<!-- AUTO-LESSONS START (distill_journal.py üretir) -->"
 AUTO_END = "<!-- AUTO-LESSONS END -->"
+SEL_MIN_HALF = 15   # seçim-değeri: her yarıda açılan VE açılmayan için min bağımsız örnek
+SEL_MIN_GAP = 0.05  # R/işlem — iki yarıda da bu kadar fark yoksa hüküm "belirsiz"
+FWD_FRAC = 0.6      # aday desen: ilk %60'ta keşfet, son %40'ta R ile doğrula
 
 
 def _load_graded():
@@ -94,6 +99,71 @@ def _feat(r, key):
     return live.get(key)
 
 
+def _independent(rows: list, act: str) -> list:
+    """Sembol başına tek pozisyon: sonuç gelmeden gelen sonraki karar sayılmaz (tekrar kayıt, E6)."""
+    pick, busy = [], {}
+    for r in sorted(rows, key=lambda x: x["ts"]):
+        d = r.get("decision") or {}
+        if str(d.get("action", "")).upper() != act:
+            continue
+        if act == "OPEN":
+            ok = r.get("outcome") in ("WIN", "LOSS") and isinstance(r.get("pnl_r"), (int, float))
+            dr, pnl = d.get("direction"), r.get("pnl_r")
+        else:
+            ok = r.get("cf_outcome") in ("WIN", "LOSS") and isinstance(r.get("cf_pnl_r"), (int, float))
+            dr, pnl = (r.get("counterfactual") or {}).get("dir"), r.get("cf_pnl_r")
+        if not ok or dr not in ("BUY", "SELL") or r["ts"] < busy.get(r["symbol"], ""):
+            continue
+        busy[r["symbol"]] = r.get("outcome_at") or r["ts"]
+        pick.append((r["ts"], r["symbol"], dr, float(pnl)))
+    return pick
+
+
+def selection_value(rows: list) -> list[str]:
+    """Decider'ın SEÇİMİ değer katıyor mu? Açtıklarının ort R'si − açmadığı fırsatların (WAIT
+    karşı-olgusu) ort R'si, sembol-yön başına, kronolojik İKİ YARIDA AYRI. Hüküm yalnız iki yarıda
+    aynı işaret ve ≥SEL_MIN_GAP ise verilir (research/decider_kural_20261008 yöntemi)."""
+    opens, waits = _independent(rows, "OPEN"), _independent(rows, "WAIT")
+    out = ["**Seçim değeri (açtıkların − açmadıkların, bağımsız, iki yarı):**"]
+    keys = sorted({(s, d) for _, s, d, _ in opens})
+    for sym, dr in keys:
+        o = [x for x in opens if x[1] == sym and x[2] == dr]
+        w = [x for x in waits if x[1] == sym and x[2] == dr]
+        if len(o) < 2 * SEL_MIN_HALF or len(w) < 2 * SEL_MIN_HALF:
+            continue
+        mid = sorted(x[0] for x in o + w)[(len(o) + len(w)) // 2]
+        gaps = []
+        for half in (lambda t: t < mid, lambda t: t >= mid):
+            oh = [x[3] for x in o if half(x[0])]; wh = [x[3] for x in w if half(x[0])]
+            gaps.append(sum(oh) / len(oh) - sum(wh) / len(wh) if oh and wh else None)
+        if None in gaps:
+            continue
+        if all(g >= SEL_MIN_GAP for g in gaps):
+            tag = "✅ seçimin DEĞER KATIYOR — bu yönde kanıtla açmaya devam"
+        elif all(g <= -SEL_MIN_GAP for g in gaps):
+            tag = "❌ seçimin ZARAR VERİYOR — bu yönde açtıkların, açmadıklarından kötü: çok daha seçici ol / küçült"
+        else:
+            tag = "≈ belirsiz (yarılar tutarsız) — bu yönde konviksiyonunu düşük tut"
+        mo = sum(x[3] for x in o) / len(o); mw = sum(x[3] for x in w) / len(w)
+        out.append(f"  {sym} {dr}: açtıkların {mo:+.2f}R (n={len(o)}) vs açmadıkların {mw:+.2f}R (n={len(w)}); "
+                   f"yarı farkları {gaps[0]:+.2f}/{gaps[1]:+.2f} → {tag}")
+    if len(out) == 1:
+        out.append(f"  (yeterli bağımsız örnek yok — her yarıda ≥{SEL_MIN_HALF})")
+    return out
+
+
+def _forward_ok(g: list, key: str, op: str, thr: float) -> tuple[bool, float]:
+    """Keşfedilen eşik son %40'ta (keşif dışı) R bazında da işe yarıyor mu?"""
+    test = g[int(len(g) * FWD_FRAC):]
+    hit = [r for r in test if _feat(r, key) is not None and
+           ((_feat(r, key) >= thr) if op == ">=" else (_feat(r, key) <= thr))]
+    rest = [r for r in test if r not in hit and _feat(r, key) is not None]
+    if len(hit) < 5 or len(rest) < 5:
+        return False, float("nan")
+    diff = sum(r.get("pnl_r", 0) for r in hit) / len(hit) - sum(r.get("pnl_r", 0) for r in rest) / len(rest)
+    return diff > 0, diff
+
+
 def distill():
     rows, g = _load_graded()
     tables = load_tables()
@@ -103,6 +173,7 @@ def distill():
     cost = sum((r.get("cost_usd") or 0) for r in rows)
     lines.append(f"_Son güncelleme: {datetime.now():%Y-%m-%d %H:%M} · journal {len(rows)} kayıt "
                  f"({len(g)} grade-deduped, {len(waits)} WAIT, {len(opens)} açık) · ~${cost:.2f} quota_\n")
+    lines += selection_value(rows) + [""]
 
     if len(g) < MIN_N:
         lines.append(f"⏳ **Yetersiz veri** ({len(g)}/{MIN_N} grade-deduped işlem). Kanıt-kapısı için "
@@ -155,11 +226,17 @@ def distill():
         pairs = [(_feat(r, key), 1 if r["outcome"] == "WIN" else 0) for r in g if _feat(r, key) is not None]
         if len(pairs) < MIN_N:
             continue
-        vals = [p[0] for p in pairs]; wins = [p[1] for p in pairs]
+        disc = pairs[:int(len(pairs) * FWD_FRAC)]          # g kronolojik → ilk %60 keşif
+        vals = [p[0] for p in disc]; wins = [p[1] for p in disc]
         op, thr, lift_pp, p = _placebo_best_split(vals, wins)
-        if op and lift_pp >= MIN_LIFT * 100 and p < 0.05:
-            msg = f"✅ {key} {op} {thr:.2g} → +{lift_pp:.0f}pp WR (n≥{MIN_N}, placebo p={p:.3f}) [{label}]"
+        fwd, fwd_diff = _forward_ok(g, key, op, thr) if op else (False, float("nan"))
+        if op and lift_pp >= MIN_LIFT * 100 and p < 0.05 and fwd:
+            msg = (f"✅ {key} {op} {thr:.2g} → +{lift_pp:.0f}pp WR keşifte (placebo p={p:.3f}), "
+                   f"ileri dönemde {fwd_diff:+.2f}R/işlem [{label}]")
             promoted.append(msg); lines.append(f"  {msg}")
+        elif op and lift_pp >= MIN_LIFT * 100 and p < 0.05:
+            lines.append(f"  ✂ {key} {op} {thr:.2g}: keşifte +{lift_pp:.0f}pp ama ileri dönemde tutmadı "
+                         f"({fwd_diff:+.2f}R) — terfi YOK")
         elif op and lift_pp >= MIN_LIFT * 100:
             lines.append(f"  ⏳ {key} {op} {thr:.2g} → +{lift_pp:.0f}pp ama placebo p={p:.2f} (≥0.05) — izleniyor")
     if not promoted and "⏳" not in "".join(lines[-4:]):
