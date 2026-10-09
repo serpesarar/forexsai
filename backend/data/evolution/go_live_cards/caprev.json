@@ -1,0 +1,154 @@
+{
+ "scope": "caprev",
+ "aciklama": "NDX stres∧VIX≥18,4 günü, önceki RTH dibi altındaki ilk kapanış → BUY; stop 1×günlük vol, çıkış 16:00 ET",
+ "tarih": "2026-10-09T01:58:52",
+ "sembol": "NAS100",
+ "spread_oran": 6e-05,
+ "ana_olcum": "NDX 1h, çıkış 16:00 (R_d0)",
+ "olay": 107,
+ "aralik": [
+  "2016-06-27",
+  "2026-06-24"
+ ],
+ "wr": 56.1,
+ "ort_R": 0.24,
+ "toplam_R": 25.65,
+ "en_iyi_5_haric_toplam": 8.92,
+ "bootstrap_%95": [
+  0.029,
+  0.466
+ ],
+ "yillar_pozitif": "7/10",
+ "checks": {
+  "1_hacim": {
+   "deger": 107,
+   "esik": "≥150",
+   "gecti": false
+  },
+  "2_beklenti": {
+   "deger": "ortR=+0.240 P(EV>0)=%98.6",
+   "esik": "ortR>0 ve P≥%90",
+   "gecti": "True"
+  },
+  "3_kararlilik": {
+   "deger": "ilk=+0.021 son=+0.454",
+   "esik": "ikisi de ≥0",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "spread×1.5: ortR=+0.236",
+   "esik": ">0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "kapanış-girişi ortR=+0.247 vs gerçek +0.240",
+   "esik": "fark < 0,5×|gerçek ortR|",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "çakışan işlem=0, n=107 ortR=+0.240",
+   "esik": ">0 (tek pozisyon)",
+   "gecti": true
+  }
+ },
+ "verdikt": "RED",
+ "yan_olcumler": {
+  "1h R_tp1": {
+   "olay": 107,
+   "aralik": [
+    "2016-06-27",
+    "2026-06-24"
+   ],
+   "ort_R": 0.146,
+   "toplam_R": 15.67,
+   "en_iyi_5_haric_toplam": 10.7,
+   "yillar_pozitif": "8/10",
+   "verdikt": "RED",
+   "gecen": [
+    "2_beklenti",
+    "3_kararlilik",
+    "4_surtunme",
+    "5_icra",
+    "6_sira_bagimli"
+   ]
+  },
+  "30m R_d0": {
+   "olay": 72,
+   "aralik": [
+    "2021-09-29",
+    "2026-06-24"
+   ],
+   "ort_R": 0.395,
+   "toplam_R": 28.47,
+   "en_iyi_5_haric_toplam": 11.4,
+   "yillar_pozitif": "6/6",
+   "verdikt": "RED",
+   "gecen": [
+    "2_beklenti",
+    "3_kararlilik",
+    "4_surtunme",
+    "5_icra",
+    "6_sira_bagimli"
+   ]
+  },
+  "30m R_tp1": {
+   "olay": 72,
+   "aralik": [
+    "2021-09-29",
+    "2026-06-24"
+   ],
+   "ort_R": 0.285,
+   "toplam_R": 20.49,
+   "en_iyi_5_haric_toplam": 15.52,
+   "yillar_pozitif": "6/6",
+   "verdikt": "RED",
+   "gecen": [
+    "2_beklenti",
+    "3_kararlilik",
+    "4_surtunme",
+    "5_icra",
+    "6_sira_bagimli"
+   ]
+  },
+  "15m R_d0": {
+   "olay": 24,
+   "aralik": [
+    "2023-09-27",
+    "2026-06-24"
+   ],
+   "ort_R": 0.822,
+   "toplam_R": 19.73,
+   "en_iyi_5_haric_toplam": 4.22,
+   "yillar_pozitif": "4/4",
+   "verdikt": "RED",
+   "gecen": [
+    "2_beklenti",
+    "3_kararlilik",
+    "4_surtunme",
+    "5_icra",
+    "6_sira_bagimli"
+   ]
+  },
+  "15m R_tp1": {
+   "olay": 24,
+   "aralik": [
+    "2023-09-27",
+    "2026-06-24"
+   ],
+   "ort_R": 0.59,
+   "toplam_R": 14.17,
+   "en_iyi_5_haric_toplam": 9.2,
+   "yillar_pozitif": "4/4",
+   "verdikt": "RED",
+   "gecen": [
+    "2_beklenti",
+    "3_kararlilik",
+    "4_surtunme",
+    "5_icra",
+    "6_sira_bagimli"
+   ]
+  }
+ },
+ "m1_kanit": "ndx_synthesis_20261002: M1 katı icra (sonraki M1 açılışı + gerçek spread) 11 işlem +11,12R, en iyi 5 gün çıkınca −1,35R",
+ "not": "Mac'te üretildi (research/ndx_gate_forge/caprev_card.py). CAPREV-2 GF-19'da geri çekildi; kart tek kademeli CAPREV içindir. Yılda ~10 olay: 1. ölçüt yapısal olarak geçilemez."
+}

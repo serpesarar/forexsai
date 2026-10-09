@@ -1,0 +1,210 @@
+{
+ "OOS-A": {
+  "ad": "OOS-A",
+  "n": 195,
+  "wr": 55.9,
+  "ortR": -0.03,
+  "toplamR": -5.9,
+  "P": 0.315,
+  "CI": [
+   -0.16,
+   0.087
+  ],
+  "yarilar": [
+   -0.11,
+   0.048
+  ],
+  "spread15_ortR": -0.04,
+  "checks": {
+   "1_hacim": true,
+   "2_beklenti": false,
+   "3_kararlilik": false,
+   "4_surtunme": false,
+   "5_icra": true,
+   "6_sira_bagimli": false
+  },
+  "verdikt": "SHADOW"
+ },
+ "IS": {
+  "ad": "IS",
+  "n": 130,
+  "wr": 63.1,
+  "ortR": 0.09,
+  "toplamR": 11.6,
+  "P": 0.881,
+  "CI": [
+   -0.063,
+   0.223
+  ],
+  "yarilar": [
+   0.116,
+   0.063
+  ],
+  "spread15_ortR": 0.063,
+  "checks": {
+   "1_hacim": false,
+   "2_beklenti": false,
+   "3_kararlilik": true,
+   "4_surtunme": true,
+   "5_icra": true,
+   "6_sira_bagimli": true
+  },
+  "verdikt": "RED"
+ },
+ "OOS-B": {
+  "ad": "OOS-B",
+  "n": 31,
+  "wr": 71.0,
+  "ortR": 0.226,
+  "toplamR": 7.0,
+  "P": 0.872,
+  "CI": [
+   -0.182,
+   0.494
+  ],
+  "yarilar": [
+   0.267,
+   0.188
+  ],
+  "spread15_ortR": 0.226,
+  "checks": {
+   "1_hacim": false,
+   "2_beklenti": false,
+   "3_kararlilik": true,
+   "4_surtunme": true,
+   "5_icra": true,
+   "6_sira_bagimli": true
+  },
+  "verdikt": "RED"
+ },
+ "OOS-A+B": {
+  "ad": "KART: OOS-A+B",
+  "n": 226,
+  "wr": 58.0,
+  "ortR": 0.005,
+  "toplamR": 1.1,
+  "P": 0.528,
+  "CI": [
+   -0.12,
+   0.118
+  ],
+  "yarilar": [
+   -0.068,
+   0.077
+  ],
+  "spread15_ortR": -0.003,
+  "checks": {
+   "1_hacim": true,
+   "2_beklenti": false,
+   "3_kararlilik": false,
+   "4_surtunme": false,
+   "5_icra": true,
+   "6_sira_bagimli": true
+  },
+  "verdikt": "SHADOW"
+ },
+ "OOS-A (Cuma dahil)": {
+  "ad": "OOS-A (Cuma dahil)",
+  "n": 248,
+  "wr": 56.9,
+  "ortR": -0.015,
+  "toplamR": -3.7,
+  "P": 0.387,
+  "CI": [
+   -0.125,
+   0.084
+  ],
+  "yarilar": [
+   -0.053,
+   0.023
+  ],
+  "spread15_ortR": -0.026,
+  "checks": {
+   "1_hacim": true,
+   "2_beklenti": false,
+   "3_kararlilik": false,
+   "4_surtunme": false,
+   "5_icra": true,
+   "6_sira_bagimli": false
+  },
+  "verdikt": "SHADOW"
+ },
+ "IS (Cuma dahil)": {
+  "ad": "IS (Cuma dahil)",
+  "n": 148,
+  "wr": 61.5,
+  "ortR": 0.062,
+  "toplamR": 9.2,
+  "P": 0.801,
+  "CI": [
+   -0.09,
+   0.194
+  ],
+  "yarilar": [
+   0.12,
+   0.004
+  ],
+  "spread15_ortR": 0.039,
+  "checks": {
+   "1_hacim": false,
+   "2_beklenti": false,
+   "3_kararlilik": true,
+   "4_surtunme": true,
+   "5_icra": true,
+   "6_sira_bagimli": true
+  },
+  "verdikt": "RED"
+ },
+ "OOS-B (Cuma dahil)": {
+  "ad": "OOS-B (Cuma dahil)",
+  "n": 42,
+  "wr": 64.3,
+  "ortR": 0.11,
+  "toplamR": 4.6,
+  "P": 0.738,
+  "CI": [
+   -0.252,
+   0.364
+  ],
+  "yarilar": [
+   0.152,
+   0.069
+  ],
+  "spread15_ortR": 0.11,
+  "checks": {
+   "1_hacim": false,
+   "2_beklenti": false,
+   "3_kararlilik": true,
+   "4_surtunme": true,
+   "5_icra": true,
+   "6_sira_bagimli": true
+  },
+  "verdikt": "RED"
+ },
+ "OOS-A+B (Cuma dahil)": {
+  "ad": "KART: OOS-A+B (Cuma dahil)",
+  "n": 290,
+  "wr": 57.9,
+  "ortR": 0.003,
+  "toplamR": 1.0,
+  "P": 0.529,
+  "CI": [
+   -0.102,
+   0.101
+  ],
+  "yarilar": [
+   -0.059,
+   0.066
+  ],
+  "spread15_ortR": -0.006,
+  "checks": {
+   "1_hacim": true,
+   "2_beklenti": false,
+   "3_kararlilik": false,
+   "4_surtunme": false,
+   "5_icra": true,
+   "6_sira_bagimli": true
+  },
+  "verdikt": "SHADOW"
+ }
+}

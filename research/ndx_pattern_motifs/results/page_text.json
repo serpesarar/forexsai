@@ -1,0 +1,65 @@
+{
+ "lead": "100 mumluk alanlar içinde, her mumun tepe, dip ve kapanış seviyesi (açılışına göre %) seçilen sapma payı içinde kalacak şekilde birebir tekrar eden ardışık mum dizilerini aradık. Dizinin uzunluğu serbest: 3 mumluk küçük bir kalıp da olabilir, 100 mumun tamamı da. Her sonucu, mum yönleri rastgele karıştırılmış bir seriyle (plasebo) kıyasladık. Tarihler MT5 sunucu saatidir, yani grafiğindeki saatle aynı.",
+ "default_scan": {
+  "tf": "1m",
+  "q": 0.7,
+  "tol": 0.03,
+  "k": 75
+ },
+ "findings": [
+  "<b>Senin örneğin tekrar etmiyor.</b> 16–17 Eylül M15 alanı (100 mum, FOMC günü: yükseliş → flaş çöküş → V dönüş) 3 yıllık M15 geçmişinde mum mum hiç tekrar etmedi. %0,10 payda bile tam eşleşme 0; bu pay tipik bir M15 mumunun boyu kadar. En benzer geçmiş alanlarda %0,05 payla 100 mumun en fazla 40'ı tutuyor. Mum yönleri rastgele karıştırılmış seride de 41 tutuyor.",
+  "<b>Flaş çöküş + V dönüş çekirdeği (20 mum) de mum mum tekrar etmiyor.</b> Yalnız çizgisine bakınca (mum boyları serbest, rota %20'lik bant içinde) M15'te 30, M5'te 38, M1'de 73 benzer an var. Plasebo seri sırasıyla 39, 32 ve 100 veriyor. Yani bu şekil NASDAQ'ta rastgele bir seriden daha sık görülmüyor.",
+  "<b>Her mum birebir tutsun dersek en uzun tekrar 6–9 mum.</b> Pay %0,005'ten %0,20'ye kadar denendi. 9 mumu geçen birebir tekrar hiçbir ayarda yok. Tek 9 mumluk tekrar M1'de, %0,005 payla: 2025-01-30 04:39 ve 2025-02-18 11:31.",
+  "<b>Kısmi eşleşmede %0,02 → %0,10 payları dört zaman diliminde tek tek koşuldu.</b> Mumların %90'ı tutsun dersek en uzun tekrar 20 mum (M1'de 30), %80'de 30 mum (M1'de 50), %70'te 75 mum (M30'da 50). 100 mumluk dizi hiçbir ayarda tekrar etmiyor. En uzun örnek: M1'de %0,03 payla 75 mumluk bir \"Ters-V Tepe Dönüşü\", %70 tutmayla 3 kez (2025-11-25 19:06, 2026-07-01 20:06, 2026-08-13 16:57; plasebo 0). 75 mumluk tekrarların hepsi 2–3 kez görülüyor.",
+  "<b>2.907 farklı model, ama tesadüf düzeyinde.</b> Tekrar bulunan 523 hücrede (zaman dilimi × pay × mum sayısı × eşleşme modu) gerçek/plasebo oranının medyanı 1,0. Oranın 1,5'i geçtiği 21 hücre (%4) var; hepsi 2–5 tekrarlık küçük sayılar, 3'e 2 gibi farklar. Bu kadar hücrede şans eseri beklenen düzey bu.",
+  "<b>Uzun tekrarların hangi seansta çıktığını pay belirliyor.</b> 30 mum ve üstü tekrarlar M15'te %51, M30'da %59 oranında Asya seansında (sunucu 01–09). M1'de ise %65'i ABD seansında. Sebep: pay büyüdükçe yalnız büyük mumlu diziler sayıma girebiliyor, büyük mumlar da ABD seansında. Yani tekrar, seçilen payın o seansın mum boyuna uymasından geliyor.",
+  "<b>Tekrarlardan sonra yön ayrışmıyor.</b> 30'dan fazla tekrarı olan 1.063 modelde sonraki 10 mumda yükselme oranı tabanla neredeyse aynı (zaman dilimi ortalamaları 0 ile −1,5 puan arası). Bu modellerin hiçbiri tek başına işlem sinyali değil.",
+  "<b>Araç hazır.</b> Daire içine aldığın modelin başlangıç ve bitiş saatini (MT5 saatiyle) verdiğinde, 4 zaman diliminde tam ve kısmi eşleşmeleri, en yakın geçmiş anların tarih listesini ve plasebo kıyasını birkaç dakikada çıkarır."
+ ],
+ "method": [
+  [
+   "Veri",
+   "M15 ve M30: Pepperstone NAS100 (botun MT5 broker'ı), 2023-10-02 → 2026-10-02, 3 yıl. M1: 2025-01-02 → 2026-10-02; 2025 Dukascopy US100, 2026 broker verisi. M5, M1'den türetildi. Kutudaki MT5 terminali 1 dakikalığı yalnız ~100 gün geriye tutuyor. Dukascopy veri sunucusuna da bu ağdan erişilemedi. Bu yüzden M1 ve M5 yaklaşık 21 ay. 2025-08-22 → 08-27 ve 2026-01-01 → 02-10 arasında veri yok; diziler bu boşlukların üstünden geçmiyor."
+  ],
+  [
+   "Mum benzerliği",
+   "Her mum, açılışına göre üç sayıyla tanımlanır: tepe %, dip %, kapanış %. İki mumun benzer sayılması için üç farkın da seçilen payı geçmemesi gerekir. Yani gövde boyu, üst fitil ve alt fitil birlikte tutmalı."
+  ],
+  [
+   "Model ve tekrar",
+   "Model, ardışık k mumdur (3 ile 100 arası; 100 mumluk alan üst sınır). Başka bir yerde k mumun her biri eşleşirse bir tekrar sayılır. Tekrarlar birbiriyle çakışmaz; aynı yerin bir mum kaydırılmışı ayrı tekrar değildir."
+  ],
+  [
+   "Pay sınırı",
+   "Birebir modda pay, dizideki mumların medyan boyunun en fazla üçte biri olabilir. Daha büyük payda sessiz saatlerin minik mumları her şeyle eşleşir. Bu yüzden büyük paylar (ör. M30'da %0,20) yalnız büyük mumlu dizilerde geçerli. Paylar: M1 %0,005–0,02, M5 %0,01–0,07, M15 %0,02–0,15, M30 %0,03–0,20."
+  ],
+  [
+   "Kısmi eşleşme",
+   "Uzun diziler (10–100 mum) için: mumların en az %90, %80 veya %70'i pay içinde kalırsa tekrar sayılır; ilk mum mutlaka tutmalı. Pay, dizideki mumların medyan boyunun üçte ikisine kadar çıkabilir. Paylar dört zaman diliminde %0,02'den %0,10'a 0,01 adımla (M1'de ayrıca %0,01)."
+  ],
+  [
+   "Hücre başına model",
+   "Her mum sayısı ve pay için en çok tekrar eden 6 farklı model gösterilir (M1 birebir modunda 3). Bir modelin tekrarları başka bir modelin tekrarı olarak sayılmaz."
+  ],
+  [
+   "Plasebo",
+   "Aynı seride her mum yarı olasılıkla ters çevrilir: yeşil ↔ kırmızı, üst ↔ alt fitil. Mum boyları ve oynaklık aynen kalır, yalnız yön dizilimi rastgele olur. Gerçek tekrar sayısı plaseboyu belirgin biçimde geçmiyorsa o model tesadüftür."
+  ],
+  [
+   "Şablon araması",
+   "Mum mum: tam eşleşme (k/k) ve en iyi kısmi eşleşme (k mumdan kaçı tutuyor). Ölçeksiz mod: mum boyları son 20 mumun ortalama aralığına bölünür; böylece bir M15 modeli M1, M5 ve M30'da da aranabilir. Çizgi benzerliği: kapanışların çizdiği rota, ölçek serbest bırakılarak (0,1–10 kat) karşılaştırılır; mumların %90'ı şablon yüksekliğinin %10, 15 veya 20'si genişliğindeki bant içinde kalmalıdır. Şablonun kendisi her iki seride de sayılmaz."
+  ],
+  [
+   "İsimler",
+   "3 mumdan kısa diziler için mum tipleri (Doji, Çekiç, Marubozu…) ve klasik adlar (Sabah Yıldızı, Üç Beyaz Asker, Yutan Boğa…). Daha uzun diziler için kapanış rotasının dönüş noktalarına göre ad (V-Dip Dönüşü, Çift Tepe, Boğa Bayrağı…). Adlar otomatik ve açıklayıcıdır."
+  ],
+  [
+   "Sonraki 10 mum",
+   "Bilgi amaçlıdır, bir işlem kuralı değildir. Bir modeli canlıya almak için ayrı doğrulama (canlıya alma kartı) gerekir."
+  ],
+  [
+   "Saat",
+   "Tüm tarihler MT5 sunucu saatidir: New York + 7 saat (yazın UTC+3). Telefondaki grafiğinle aynı."
+  ]
+ ]
+}

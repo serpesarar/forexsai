@@ -21,6 +21,7 @@ FAMILY_BY_OFFSET = {
     4: "DAYCOMBO",
     5: "USOIL_BRK",  # USOIL breakout (gölge)
     6: "REENTRY",
+    7: "CAPREV",     # CAPREV portföyü NDX+DAX canlı (2026-10-09, kart 6/6)
     20: "DECIDER",   # claude_decider demo icrası
 }
 MANUAL_MAGIC = 0

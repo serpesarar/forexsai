@@ -1,0 +1,88 @@
+{
+ "scope": "chrev",
+ "tur": "canlı işlem kartı (E22)",
+ "tarih": "2026-10-09T02:11:22",
+ "aralik": [
+  "2026-06-30",
+  "2026-10-05"
+ ],
+ "karar": 66,
+ "bacak": 66,
+ "wr": 60.6,
+ "ort_R": -0.016,
+ "toplam_R": -1.03,
+ "net_usd": 1596.0,
+ "bootstrap_%95": [
+  -0.201,
+  0.174
+ ],
+ "p_ev_pozitif": 0.448,
+ "sembol_yon": {
+  "GDAXI.INDX BUY": {
+   "n": 21,
+   "ortR": 0.11,
+   "net$": 2684.0
+  },
+  "GDAXI.INDX SELL": {
+   "n": 13,
+   "ortR": -0.036,
+   "net$": 70.0
+  },
+  "NDX.INDX BUY": {
+   "n": 13,
+   "ortR": -0.071,
+   "net$": -506.0
+  },
+  "NDX.INDX SELL": {
+   "n": 15,
+   "ortR": 0.035,
+   "net$": 684.0
+  },
+  "USOIL.FOREX SELL": {
+   "n": 4,
+   "ortR": -0.619,
+   "net$": -1336.0
+  }
+ },
+ "aylik_ortR": {
+  "2026-06": -0.993,
+  "2026-07": -0.082,
+  "2026-08": 0.127,
+  "2026-09": 0.674,
+  "2026-10": 0.53
+ },
+ "checks": {
+  "1_hacim": {
+   "deger": 66,
+   "esik": "≥100 karar",
+   "gecti": false
+  },
+  "2_beklenti": {
+   "deger": "ortR=-0.016 P(EV>0)=%44.8",
+   "esik": "ortR>0 ve P≥%90",
+   "gecti": false
+  },
+  "3_kararlilik": {
+   "deger": "ilk=-0.095 son=+0.064",
+   "esik": "ikisi de ≥0",
+   "gecti": false
+  },
+  "4_surtunme": {
+   "deger": "+0,5×spread: ortR=-0.023",
+   "esik": ">0",
+   "gecti": false
+  },
+  "5_icra": {
+   "deger": "kâğıt giriş ortR=-0.044 vs gerçek -0.016",
+   "esik": "fark < 0,5×|gerçek ortR|",
+   "gecti": false
+  },
+  "6_sira_bagimli": {
+   "deger": "tek pozisyonla n=50 ortR=-0.036",
+   "esik": ">0",
+   "gecti": false
+  }
+ },
+ "verdikt": "RED",
+ "not": "research/canli_kart_20261009/live_card.py; bot_trades + indicator_snapshots, karar bazında."
+}

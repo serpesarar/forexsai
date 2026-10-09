@@ -40,6 +40,10 @@ try:                                    # CAPREV-2 / K5b GÖLGE — emir gönder
     import caprev_shadow
 except Exception:                       # pragma: no cover
     caprev_shadow = None
+try:                                    # CAPREV portföyü CANLI (kart 6/6, 2026-10-09) — import hatası botu durdurmaz
+    import caprev_live
+except Exception:                       # pragma: no cover
+    caprev_live = None
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -243,6 +247,8 @@ def _bot_magics() -> set:
         m.add(config.CHANNEL_REVERSION_MAGIC)
     if getattr(config, "VIX_REGIME_ENABLED", False):
         m.add(config.VIX_REGIME_MAGIC)
+    if caprev_live is not None and getattr(config, "CAPREV_LIVE", True):
+        m.add(caprev_live.magic(config))       # günlük zarar freni + global tavan CAPREV'i de sayar
     return m
 
 
@@ -2418,6 +2424,7 @@ def main():
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
                    ("DAYCOMBO_SL", 110.0),
+                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0),
                    ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
                    ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
                    ("USOIL_BREAKOUT_SL_ATR", 1.0),
@@ -2477,6 +2484,14 @@ def main():
         while True:
             log.info("─── tarama @ %s ───", datetime.now(timezone.utc).strftime("%H:%M:%S"))
 
+            # ── CAPREV seans-kapanışı çıkışı: günlük zarar freninden ÖNCE (fren 'continue' eder,
+            #    açık CAPREV pozisyonu yine de seans kapanışında kapanmalı) ──
+            if caprev_live is not None and getattr(config, "CAPREV_LIVE", True) and config.LIVE_TRADING:
+                try:
+                    caprev_live.manage_exits(mt5, config, log)
+                except Exception as e:
+                    log.warning("caprev çıkış hatası: %s", e)
+
             # ── Global risk geçidi (günlük zarar freni) ──
             if config.DAILY_MAX_LOSS and config.DAILY_MAX_LOSS > 0:
                 try:
@@ -2533,6 +2548,17 @@ def main():
                     caprev_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset)
                 except Exception as e:
                     log.warning("caprev gölge hatası: %s", e)
+
+            # ── CAPREV portföyü CANLI (NDX+DAX; go_live_cards/caprev_portfoy.json 6/6, kullanıcı
+            #    kararı 2026-10-09, 1 lot). Kapatma: config.CAPREV_LIVE = False. Gölgeden SONRA
+            #    çağrılır (VIX geçmişini gölge günceller). Seans-kapanışı çıkışını da bu yönetir.
+            if caprev_live is not None:
+                try:
+                    caprev_live.poll(mt5, config, log, resolve_symbol, get_vix, _daycombo_offset,
+                                     _send_market_order, _mk_comment,
+                                     lambda: check_autotrading(verbose=False), _log_trade)
+                except Exception as e:
+                    log.warning("caprev canlı hatası: %s", e)
 
             # ── USOIL BREAKOUT-DEVAM: Donchian(48×5m) kırılımı + EMA200 trend
             #    hizası (AYRI magic+5; 2026-08-06 araştırması, TEST %62.7 n=185) ──

@@ -1,0 +1,71 @@
+{
+ "scope": "reentry",
+ "tur": "canlı işlem kartı (E22)",
+ "tarih": "2026-10-09T02:11:22",
+ "aralik": [
+  "2026-08-24",
+  "2026-10-07"
+ ],
+ "karar": 19,
+ "bacak": 19,
+ "wr": 84.2,
+ "ort_R": 0.446,
+ "toplam_R": 8.47,
+ "net_usd": 12560.0,
+ "bootstrap_%95": [
+  0.053,
+  0.711
+ ],
+ "p_ev_pozitif": 0.985,
+ "sembol_yon": {
+  "NDX.INDX BUY": {
+   "n": 9,
+   "ortR": 0.516,
+   "net$": 9658.0
+  },
+  "NDX.INDX SELL": {
+   "n": 10,
+   "ortR": 0.382,
+   "net$": 2902.0
+  }
+ },
+ "aylik_ortR": {
+  "2026-08": 0.385,
+  "2026-09": 0.58,
+  "2026-10": -1.0
+ },
+ "checks": {
+  "1_hacim": {
+   "deger": 19,
+   "esik": "≥100 karar",
+   "gecti": false
+  },
+  "2_beklenti": {
+   "deger": "ortR=+0.446 P(EV>0)=%98.5",
+   "esik": "ortR>0 ve P≥%90",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "ilk=+0.344 son=+0.538",
+   "esik": "ikisi de ≥0",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "+0,5×spread: ortR=+0.439",
+   "esik": ">0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "kâğıt giriş ortR=+0.444 vs gerçek +0.446",
+   "esik": "fark < 0,5×|gerçek ortR|",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "tek pozisyonla n=19 ortR=+0.446",
+   "esik": ">0",
+   "gecti": true
+  }
+ },
+ "verdikt": "RED",
+ "not": "research/canli_kart_20261009/live_card.py; bot_trades + indicator_snapshots, karar bazında."
+}

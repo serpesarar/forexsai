@@ -1,0 +1,61 @@
+{
+ "scope": "caprev_portfoy",
+ "aciklama": "CAPREV (stres∧VIX≥18,4, önceki RTH dibi altı ilk kapanış → BUY, stop 1×gvol, seans kapanışında çık) NDX + DAX birlikte",
+ "tarih": "2026-10-09T02:18:56",
+ "semboller": [
+  "NAS100",
+  "GER40"
+ ],
+ "olay": 161,
+ "bagimsiz_gun": 134,
+ "wr": 55.3,
+ "ort_R": 0.217,
+ "toplam_R": 34.87,
+ "en_iyi_5_gun_haric_toplam": 12.4,
+ "pozitif_yil": "7/10",
+ "bootstrap_%95": [
+  0.031,
+  0.402
+ ],
+ "checks": {
+  "1_hacim": {
+   "deger": "161 işlem / 134 bağımsız gün",
+   "esik": "≥150 işlem (+ön kayıt: ≥100 bağımsız gün)",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "ortR=+0.217 P(EV>0)=%99.0",
+   "esik": "ortR>0 ve P≥%90",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "ilk=+0.064 son=+0.367",
+   "esik": "ikisi de ≥0",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "spread×1.5: ortR=+0.213",
+   "esik": ">0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "kapanış-girişi +0.225 vs gerçek +0.217",
+   "esik": "fark < 0,5×|ortR|",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "gün başına tek pozisyon n=134 ortR=+0.160",
+   "esik": ">0",
+   "gecti": true
+  }
+ },
+ "verdikt": "LIVE",
+ "uyarilar": [
+  "toplamın %64'ü en iyi 5 günden",
+  "ilk yarı zayıf (+0,064)",
+  "NDX geçmişine 4+ turda bakıldı (E23); DAX kural değiştirilmeden sınanan bağımsız piyasa",
+  "M1 katı icra yalnız NDX 11 işlem",
+  "canlı/gölge ileri kanıt yok (gölge 0 olay)"
+ ],
+ "not": "research/ndx_gate_forge/caprev_pooled.py; ön kayıt research/canli_kart_20261009/PROTOCOL.md §C"
+}

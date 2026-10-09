@@ -1,0 +1,366 @@
+<title>NAS100 Mum Dizisi Atlası</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Düzen: tek sütun okuma akışı; üstte cevap, ortada iki araç (örnek araması + tekrar ızgarası), sonda yöntem. MT5 grafik ekranı tonları. */
+:root {
+  --bg: #eef2f6; --panel: #ffffff; --ink: #142233; --muted: #5a6b7d; --line: #d5dde6;
+  --accent: #1d5fc4; --accent-soft: #e3ecfa; --up: #11865a; --down: #cf3c3a; --ctx: #b3bfcc;
+  --band: rgba(29, 95, 196, .07); --warn: #9a5b00; --warn-soft: #fbf0dc;
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0a1320; --panel: #101c2c; --ink: #e4ebf3; --muted: #8b9cb0; --line: #213149;
+  --accent: #5c9dff; --accent-soft: #15284a; --up: #2fbd85; --down: #ee5d58; --ctx: #3b4b62;
+  --band: rgba(92, 157, 255, .09); --warn: #f0b252; --warn-soft: #2b2212; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0a1320; --panel: #101c2c; --ink: #e4ebf3; --muted: #8b9cb0; --line: #213149;
+  --accent: #5c9dff; --accent-soft: #15284a; --up: #2fbd85; --down: #ee5d58; --ctx: #3b4b62;
+  --band: rgba(92, 157, 255, .09); --warn: #f0b252; --warn-soft: #2b2212; color-scheme: dark }
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 36px 64px; display: grid; gap: 40px; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 800; font-stretch: 112%; letter-spacing: -.01em; line-height: 1.05; }
+h2 { font-size: 23px; font-weight: 750; font-stretch: 108%; }
+h3 { font-size: 16px; font-weight: 700; }
+p { margin: 0; max-width: 72ch; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+.mono, .num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+header { display: grid; gap: 14px; }
+.cov { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font-family: var(--f-mono); font-size: 12px; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 5px 9px; }
+.chip b { color: var(--accent); font-weight: 600; }
+section { display: grid; gap: 16px; }
+.answer { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 18px 20px; display: grid; gap: 10px; }
+.answer ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 80ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--panel); }
+.seg button { font: 600 13px var(--f-mono); color: var(--muted); background: none; border: 0; padding: 7px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.seg button:focus-visible, .cell:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lbl { font-size: 12px; color: var(--muted); font-family: var(--f-mono); text-transform: uppercase; letter-spacing: .06em; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; min-width: 0; }
+.tpl-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; align-items: baseline; }
+.big-chart svg { width: 100%; height: 240px; display: block; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; font-size: 13px; width: 100%; }
+th, td { padding: 7px 9px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { font-family: var(--f-mono); font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .05em; }
+td.num { font-family: var(--f-mono); }
+.grid-heat td { padding: 0; }
+.cell { display: grid; width: 100%; min-width: 76px; padding: 7px 9px; border: 0; background: transparent; color: var(--ink); cursor: pointer; text-align: right; font-family: var(--f-mono); }
+.cell .r { font-size: 15px; font-weight: 600; }
+.cell .p { font-size: 11px; color: var(--muted); }
+.cell[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: -2px; background: var(--accent-soft); }
+.cell.zero { color: var(--muted); cursor: default; }
+.cards { display: grid; gap: 16px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.card-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 13px; }
+.stats span b { font-family: var(--f-mono); font-weight: 600; }
+.pill { font-family: var(--f-mono); font-size: 11px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.pill.hot { border-color: var(--accent); color: var(--accent); }
+.pill.cold { border-color: var(--warn); color: var(--warn); background: var(--warn-soft); }
+.multiples { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.mini { border: 1px solid var(--line); border-radius: 6px; padding: 6px; display: grid; gap: 4px; min-width: 0; }
+.mini svg { width: 100%; height: 90px; display: block; }
+.mini .t { font-family: var(--f-mono); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
+details summary { cursor: pointer; font-size: 13px; color: var(--accent); }
+details .scroll { margin-top: 8px; max-height: 260px; overflow-y: auto; }
+.cu { fill: var(--up); stroke: var(--up); } .cd { fill: var(--down); stroke: var(--down); } .cc { fill: var(--ctx); stroke: var(--ctx); }
+.band { fill: var(--band); } .ax { fill: var(--muted); font: 10px var(--f-mono); } .gl { stroke: var(--line); stroke-width: 1; }
+.note { font-size: 13px; color: var(--muted); max-width: 80ch; }
+.method { display: grid; gap: 10px; }
+.method dl { display: grid; grid-template-columns: minmax(120px, 190px) 1fr; gap: 8px 18px; margin: 0; font-size: 14px; }
+.method dt { font-weight: 700; } .method dd { margin: 0; color: var(--muted); min-width: 0; }
+@media (max-width: 640px) { .method dl { grid-template-columns: 1fr; } .method dd { margin-bottom: 6px; } .wrap { padding-inline: 16px; } }
+@media (prefers-reduced-motion: no-preference) { .card { animation: rise .25s ease-out both; } @keyframes rise { from { transform: translateY(4px); opacity: .6 } to { transform: none; opacity: 1 } } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">NASDAQ 100 · NAS100 · mum mum benzerlik taraması</div>
+    <h1>NAS100 Mum Dizisi Atlası</h1>
+    <p id="lead"></p>
+    <div class="cov" id="coverage"></div>
+  </header>
+
+  <section class="answer" aria-labelledby="ans-h">
+    <h2 id="ans-h">Kısa cevap</h2>
+    <ol id="findings"></ol>
+  </section>
+
+  <section aria-labelledby="tpl-h">
+    <div>
+      <div class="eyebrow">1 · Senin örneğin</div>
+      <h2 id="tpl-h">Bu model geçmişte kaç kez tekrarlandı?</h2>
+    </div>
+    <div class="controls">
+      <div class="seg" id="tpl-pick" role="group" aria-label="Şablon"></div>
+    </div>
+    <div class="panel big-chart">
+      <div class="tpl-head">
+        <h3 id="tpl-name"></h3>
+        <span class="mono muted" id="tpl-meta"></span>
+      </div>
+      <div id="tpl-chart"></div>
+    </div>
+    <div class="controls">
+      <span class="lbl">Ölçüm</span>
+      <div class="seg" id="tpl-mode" role="group" aria-label="Ölçüm modu"></div>
+      <span class="lbl">Zaman dilimi</span>
+      <div class="seg" id="tpl-tf" role="group" aria-label="Zaman dilimi"></div>
+    </div>
+    <div class="panel scroll"><table id="tpl-table"></table></div>
+    <p class="note" id="tpl-note"></p>
+    <div class="cards" id="tpl-best"></div>
+  </section>
+
+  <section aria-labelledby="scan-h">
+    <div>
+      <div class="eyebrow">2 · Tarama</div>
+      <h2 id="scan-h">En çok tekrar eden mum dizileri</h2>
+    </div>
+    <p class="note">"Her mum birebir" modunda dizinin tüm mumları pay içinde olmalı. Uzun diziler (10–100 mum) için kısmi modları seç: mumların %90, %80 veya %70'i tutarsa da tekrar sayılır. Her hücre: o mum sayısı ve sapma payında en çok tekrar eden dizinin tekrar sayısı. Altındaki gri sayı, aynı mum boylarının yönleri rastgele karıştırılmış (plasebo) serisinde çıkan en iyi tekrar. Bir hücreye dokun, o dizileri ve tarihlerini aşağıda gör.</p>
+    <div class="controls">
+      <span class="lbl">Zaman dilimi</span>
+      <div class="seg" id="scan-tf" role="group" aria-label="Zaman dilimi"></div>
+      <span class="lbl">Eşleşme</span>
+      <div class="seg" id="scan-q" role="group" aria-label="Eşleşme koşulu"></div>
+    </div>
+    <div class="panel scroll"><table class="grid-heat" id="heat"></table></div>
+    <p class="note" id="longest"></p>
+    <div class="cards" id="motifs"></div>
+  </section>
+
+  <section class="method" aria-labelledby="m-h">
+    <div class="eyebrow">3 · Yöntem</div>
+    <h2 id="m-h">Nasıl ölçtük</h2>
+    <dl id="method"></dl>
+  </section>
+</div>
+
+<script>
+const DATA = __DATA__;
+const TF_LABEL = { "1m": "M1", "5m": "M5", "15m": "M15", "30m": "M30" };
+const fmtN = n => n.toLocaleString("tr-TR");
+const pct = v => (v == null ? "–" : (v * 100).toFixed(0) + "%");
+const tolTxt = t => "%" + String(t).replace(".", ",");
+const el = (tag, attrs = {}, html = "") => { const e = document.createElement(tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (html) e.innerHTML = html; return e; };
+
+function candleSVG(ohlc, lead, k, opt = {}) {
+  const W = opt.w || 300, H = opt.h || 90, P = 6, n = ohlc.length;
+  let lo = Infinity, hi = -Infinity;
+  for (const r of ohlc) { lo = Math.min(lo, r[2]); hi = Math.max(hi, r[1]); }
+  if (hi - lo < 1e-9) { hi += 0.01; lo -= 0.01; }
+  const padL = opt.axis ? 46 : 2, padB = opt.axis ? 18 : 2;
+  const xw = (W - padL - 2) / n, bw = Math.max(1, xw * 0.62);
+  const y = v => P + (hi - v) / (hi - lo) * (H - P * 2 - padB);
+  let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${opt.label || "mum grafiği"}">`;
+  if (opt.axis) {
+    for (let g = 0; g <= 4; g++) {
+      const v = lo + (hi - lo) * g / 4, yy = y(v);
+      s += `<line class="gl" x1="${padL}" x2="${W}" y1="${yy}" y2="${yy}"/><text class="ax" x="${padL - 4}" y="${yy + 3}" text-anchor="end">${v >= 0 ? "+" : ""}${v.toFixed(2)}%</text>`;
+    }
+    (opt.ticks || []).forEach(([i, t]) => { s += `<text class="ax" x="${padL + i * xw + xw / 2}" y="${H - 4}" text-anchor="middle">${t}</text>`; });
+  }
+  if (k < n) s += `<rect class="band" x="${padL + lead * xw}" y="0" width="${k * xw}" height="${H - padB}"/>`;
+  ohlc.forEach((r, i) => {
+    const [o, h, l, c] = r, ctx = i < lead || i >= lead + k;
+    const cls = ctx ? "cc" : (c >= o ? "cu" : "cd"), cx = padL + i * xw + xw / 2;
+    const top = y(Math.max(o, c)), bh = Math.max(1, Math.abs(y(o) - y(c)));
+    s += `<line class="${cls}" x1="${cx}" x2="${cx}" y1="${y(h)}" y2="${y(l)}" stroke-width="1"/>`;
+    s += `<rect class="${cls}" x="${cx - bw / 2}" y="${top}" width="${bw}" height="${bh}"/>`;
+  });
+  return s + "</svg>";
+}
+
+function segButtons(host, items, current, onPick) {
+  host.innerHTML = "";
+  items.forEach(([val, label]) => {
+    const b = el("button", { type: "button", "aria-pressed": String(val === current) }, label);
+    b.addEventListener("click", () => onPick(val));
+    host.appendChild(b);
+  });
+}
+
+function mini(o, extra) {
+  return `<div class="mini">${candleSVG(o.ohlc, o.lead, o.k, { w: 160, h: 90, label: o.start })}<div class="t"><span>${o.start}</span><span>${extra || ""}</span></div></div>`;
+}
+
+/* ── üst bilgi ── */
+document.getElementById("lead").textContent = DATA.lead;
+document.getElementById("coverage").innerHTML = DATA.coverage.map(c => `<span class="chip"><b>${TF_LABEL[c.tf]}</b> ${fmtN(c.n)} mum · ${c.span[0].slice(0, 10)} → ${c.span[1].slice(0, 10)} · ${c.src}</span>`).join("");
+document.getElementById("findings").innerHTML = DATA.findings.map(f => `<li>${f}</li>`).join("");
+document.getElementById("method").innerHTML = DATA.method.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("");
+
+/* ── 1 · şablon ── */
+const st = { tpl: 0, mode: "abs", tf: "15m", tplTol: null };
+function renderTemplate() {
+  const T = DATA.templates[st.tpl];
+  segButtons(document.getElementById("tpl-pick"), DATA.templates.map((t, i) => [i, t.label]), st.tpl, v => { st.tpl = v; renderTemplate(); });
+  document.getElementById("tpl-name").textContent = `Otomatik ad: ${T.name}`;
+  document.getElementById("tpl-meta").textContent = `${TF_LABEL[T.tf]} · ${T.k} mum · ${T.start} → ${T.end} (MT5 sunucu saati) · ${T.composition}`;
+  const ticks = [[0, T.start.slice(5)], [T.k - 1, T.end.slice(5)]];
+  document.getElementById("tpl-chart").innerHTML = candleSVG(T.candles.ohlc, 0, T.k, { w: 1000, h: 240, axis: true, ticks, label: T.label });
+  const modes = [["abs", "Mum mum · mutlak %"], ["atr", "Mum mum · ölçeksiz"], ["shape", "Çizgi benzerliği"]];
+  if (st.mode === "abs" && st.tf !== T.tf) st.tf = T.tf;
+  segButtons(document.getElementById("tpl-mode"), modes, st.mode, v => { st.mode = v; st.tplTol = null; if (v === "abs") st.tf = T.tf; renderTemplate(); });
+  const SH = DATA.shape_templates.find(x => x.label === T.label);
+  const tfs = st.mode === "shape" ? [...new Set(SH.rows.map(r => r.tf))].sort((a, b) => parseInt(a) - parseInt(b))
+    : T.results.filter(r => r[st.mode] && r[st.mode].length).map(r => r.tf).sort((a, b) => parseInt(a) - parseInt(b));
+  if (!tfs.includes(st.tf)) st.tf = tfs.includes(T.tf) ? T.tf : tfs[0];
+  segButtons(document.getElementById("tpl-tf"), tfs.map(t => [t, TF_LABEL[t]]), st.tf, v => { st.tf = v; st.tplTol = null; renderTemplate(); });
+  if (st.mode === "shape") { renderShape(T, SH); return; }
+  const R = T.results.find(r => r.tf === st.tf)[st.mode];
+  const unit = st.mode === "abs" ? (t => tolTxt(t)) : (t => "×" + String(t).replace(".", ","));
+  if (st.tplTol == null) st.tplTol = R[Math.min(2, R.length - 1)].tol;
+  let h = `<thead><tr><th>Sapma payı</th><th>Tam eşleşme (${T.k}/${T.k})</th><th>En iyi kısmi</th><th>Plasebo en iyi</th><th>Ortalama tutan mum</th><th>Plasebo ortalama</th></tr></thead><tbody>`;
+  R.forEach(r => {
+    h += `<tr${r.tol === st.tplTol ? ' style="background:var(--accent-soft)"' : ""}><td><button class="cell" style="min-width:0;text-align:left" aria-pressed="${r.tol === st.tplTol}" data-tol="${r.tol}">${unit(r.tol)}</button></td><td class="num">${r.full}</td><td class="num">${r.best}/${T.k}</td><td class="num">${r.placebo_best}/${T.k}</td><td class="num">${(r.mean_match * 100).toFixed(1)}%</td><td class="num">${(r.placebo_mean_match * 100).toFixed(1)}%</td></tr>`;
+  });
+  const tb = document.getElementById("tpl-table");
+  tb.innerHTML = h + "</tbody>";
+  tb.querySelectorAll("button[data-tol]").forEach(b => b.addEventListener("click", () => { st.tplTol = +b.dataset.tol; renderTemplate(); }));
+  document.getElementById("tpl-note").textContent = st.mode === "abs"
+    ? `Mutlak modda her mumun tepe, dip ve kapanışı (açılışına göre %) şablondaki karşılığından en fazla seçilen pay kadar sapabilir. Yalnız şablonun kendi zaman diliminde (${TF_LABEL[T.tf]}) anlamlı. Şablonun kendisi ve kaydırmaları sayılmadı.`
+    : "Ölçeksiz modda mum boyları, son 20 mumun ortalama aralığına bölünür. Pay ×0,20 = mum ortalama boyunun %20'si kadar sapma. Bu sayede aynı model farklı zaman dilimlerinde ve farklı volatilite dönemlerinde aranabilir.";
+  const row = R.find(r => r.tol === st.tplTol);
+  const host = document.getElementById("tpl-best");
+  host.innerHTML = "";
+  const card = el("div", { class: "card" });
+  card.innerHTML = `<div class="card-top"><h3>En yakın örnekler · ${TF_LABEL[st.tf]} · pay ${unit(row.tol)}</h3><span class="pill">${row.full} tam eşleşme</span></div>
+    <div class="multiples">${row.show.map(o => mini(o, `${o.matched}/${T.k} mum`)).join("")}</div>
+    <details><summary>İlk ${row.matches.length} eşleşmenin listesi</summary><div class="scroll"><table><thead><tr><th>Başlangıç (sunucu)</th><th>Bitiş</th><th>Fiyat</th><th>Tutan mum</th><th>Sonraki ${DATA.config.fwd} mum</th></tr></thead><tbody>
+    ${row.matches.map(m => `<tr><td class="num">${m.start}</td><td class="num">${m.end}</td><td class="num">${m.price}</td><td class="num">${m.matched}/${T.k}</td><td class="num">${m.fwd == null ? "–" : (m.fwd > 0 ? "+" : "") + m.fwd.toFixed(2) + "%"}</td></tr>`).join("")}
+    </tbody></table></div></details>`;
+  host.appendChild(card);
+}
+
+function renderShape(T, SH) {
+  const rows = SH.rows.filter(r => r.tf === st.tf);
+  if (st.tplTol == null) st.tplTol = rows[rows.length - 1].rel;
+  let h = `<thead><tr><th>Sapma payı (şablon yüksekliğinin)</th><th>Tekrar</th><th>Plasebo</th><th>Sonraki ${DATA.config.fwd} mumda yükselen</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    const sel = r.rel === st.tplTol;
+    h += `<tr${sel ? ' style="background:var(--accent-soft)"' : ""}><td><button class="cell" style="min-width:0;text-align:left" aria-pressed="${sel}" data-tol="${r.rel}">%${Math.round(r.rel * 100)}</button></td><td class="num">${r.count}</td><td class="num">${r.placebo}</td><td class="num">${r.fwd_up == null ? "–" : pct(r.fwd_up) + " (n=" + r.fwd_n + ")"}</td></tr>`;
+  });
+  const tb = document.getElementById("tpl-table");
+  tb.innerHTML = h + "</tbody>";
+  tb.querySelectorAll("button[data-tol]").forEach(b => b.addEventListener("click", () => { st.tplTol = +b.dataset.tol; renderTemplate(); }));
+  document.getElementById("tpl-note").textContent = `Çizgi modunda mum boyları değil, kapanışların çizdiği rota karşılaştırılır. Aday, ölçeği serbest bırakılarak şablona oturtulur (küçük ya da büyük aynı şekil sayılır). Mumların en az %90'ı, şablon yüksekliğinin seçilen yüzdesi kadar bir bant içinde kalmalı. Plasebo: aynı mum boyları, rastgele yönler.`;
+  const r = rows.find(x => x.rel === st.tplTol);
+  const host = document.getElementById("tpl-best");
+  host.innerHTML = "";
+  const card = el("div", { class: "card" });
+  card.innerHTML = `<div class="card-top"><h3>Çizgisi en benzer anlar · ${TF_LABEL[st.tf]} · pay %${Math.round(r.rel * 100)}</h3><span class="pill ${r.count > r.placebo * 1.5 ? "hot" : "cold"}">${r.count} tekrar · plasebo ${r.placebo}</span></div>
+    ${r.show.length ? `<div class="multiples">${r.show.map(o => mini(o, "r=" + o.corr)).join("")}</div>` : `<p class="note">Bu payda eşleşme yok. Payı büyütmeyi dene.</p>`}
+    ${r.matches.length ? `<details><summary>İlk ${r.matches.length} eşleşmenin listesi</summary><div class="scroll"><table><thead><tr><th>Başlangıç (sunucu)</th><th>Bitiş</th><th>Fiyat</th><th>Benzerlik (r)</th><th>Ölçek</th><th>Sonraki ${DATA.config.fwd} mum</th></tr></thead><tbody>
+    ${r.matches.map(m => `<tr><td class="num">${m.start}</td><td class="num">${m.end}</td><td class="num">${m.price}</td><td class="num">${m.corr}</td><td class="num">×${m.scale}</td><td class="num">${m.fwd == null ? "–" : (m.fwd > 0 ? "+" : "") + m.fwd.toFixed(2) + "%"}</td></tr>`).join("")}
+    </tbody></table></div></details>` : ""}`;
+  host.appendChild(card);
+}
+
+/* ── 2 · tarama ── */
+const sc = { tf: null, q: 1, tol: null, k: null };
+const Q_LABEL = { 1: "Her mum birebir", 0.9: "Mumların %90'ı", 0.8: "Mumların %80'i", 0.7: "Mumların %70'i" };
+const MOTIFS = {}, LOAD = {};
+function loadMotifs(tf) {
+  if (MOTIFS[tf] || LOAD[tf] === "loading") return;
+  LOAD[tf] = "loading";
+  fetch(`data_${tf}.json`)
+    .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+    .then(j => {
+      const fix = m => ({ ...m,
+        occurrences: m.occ.map(a => ({ start: a[0], end: a[1], price: a[2], fwd: a[3], rms: a[4], matched: a[5] })),
+        show: m.show.map(x => ({ ...x, ohlc: x.ohlc.map(r => r.map(v => v / 1000)) })) });
+      MOTIFS[tf] = { exact: j.exact.map(fix), partial: j.partial.map(fix) };
+      LOAD[tf] = "ok";
+    })
+    .catch(() => { LOAD[tf] = "error"; })
+    .finally(() => { if (sc.tf === tf) renderScan(); });
+}
+function scanBlock(T) {
+  const M = MOTIFS[T.tf];
+  if (sc.q === 1) return { tols: T.exact.tols, grid: T.exact.grid, motifs: M ? M.exact : null, longest: T.exact.longest || [], n: T.exact.n_motifs };
+  const P = T.partial || { tols: [], grid: [], n_by_q: {} };
+  return { tols: P.tols, grid: P.grid.filter(g => g.q === sc.q), motifs: M ? M.partial.filter(m => m.q === sc.q) : null,
+           longest: [], countsOnly: !!P.counts_only, n: (P.n_by_q || {})[String(sc.q)] || 0 };
+}
+function renderScan() {
+  const tfs = DATA.tfs.map(t => t.tf);
+  if (!sc.tf) { sc.tf = DATA.default_scan.tf; sc.q = DATA.default_scan.q ?? 1; }
+  segButtons(document.getElementById("scan-tf"), tfs.map(t => [t, TF_LABEL[t]]), sc.tf, v => { sc.tf = v; sc.tol = null; sc.k = null; renderScan(); });
+  const T = DATA.tfs.find(t => t.tf === sc.tf);
+  const qs = [1, ...((T.partial && T.partial.qs) || [])];
+  if (!qs.includes(sc.q)) sc.q = 1;
+  segButtons(document.getElementById("scan-q"), qs.map(q => [q, Q_LABEL[q]]), sc.q, v => { sc.q = v; sc.tol = null; sc.k = null; renderScan(); });
+  const B = scanBlock(T);
+  const ks = [...new Set(B.grid.map(g => g.k))].sort((a, b) => a - b);
+  if (sc.tol == null) {
+    const d = DATA.default_scan;
+    const ok = d.tf === sc.tf && (d.q ?? 1) === sc.q;
+    sc.tol = ok ? d.tol : B.tols[Math.floor(B.tols.length / 2)];
+    sc.k = ok ? d.k : ks[0];
+  }
+  let h = `<thead><tr><th>Mum sayısı</th>${B.tols.map(t => `<th>Pay ${tolTxt(t)}</th>`).join("")}</tr></thead><tbody>`;
+  ks.forEach(k => {
+    h += `<tr><td class="num" style="padding:7px 9px">${k} mum</td>`;
+    B.tols.forEach(t => {
+      const g = B.grid.find(x => x.k === k && x.tol === t);
+      if (!g) { h += `<td><span class="cell zero">·</span></td>`; return; }
+      const r = g.top.length ? g.top[0] : 0, sel = sc.k === k && sc.tol === t;
+      h += r ? `<td><button type="button" class="cell" aria-pressed="${sel}" data-k="${k}" data-t="${t}"><span class="r">${r}</span><span class="p">plasebo ${g.placebo_top}</span></button></td>`
+             : `<td><span class="cell zero"><span class="r">0</span><span class="p">plasebo ${g.placebo_top}</span></span></td>`;
+    });
+    h += "</tr>";
+  });
+  const heat = document.getElementById("heat");
+  heat.innerHTML = h + "</tbody>";
+  heat.querySelectorAll("button.cell").forEach(b => b.addEventListener("click", () => { sc.k = +b.dataset.k; sc.tol = +b.dataset.t; renderScan(); }));
+  const n = B.n;
+  document.getElementById("longest").innerHTML = (sc.q === 1
+    ? "Mum mum eşleşen en uzun tekrar: " + B.longest.map(l => `pay ${tolTxt(l.tol)} → <b>${l.k} mum</b>${l.b ? ` <span class="mono">(${l.a} ↔ ${l.b})</span>` : ""}`).join(" · ")
+    : `Bu modda bir tekrar sayılması için dizideki mumların en az <b>%${Math.round(sc.q * 100)}</b>'i pay içinde kalmalı, ilk mum mutlaka tutmalı.`)
+    + ` <span class="muted">· Bu zaman dilimi ve modda toplam <b>${n}</b> farklı model.</span>`;
+  const host = document.getElementById("motifs");
+  if (!B.motifs) {
+    if (LOAD[sc.tf] === "error") {
+      host.innerHTML = `<p class="note">${TF_LABEL[sc.tf]} model verisi yüklenemedi. Sayfayı yenileyip tekrar dene; tablo yukarıda yine geçerli.</p>`;
+      LOAD[sc.tf] = undefined;
+    } else {
+      host.innerHTML = `<p class="note">${TF_LABEL[sc.tf]} modelleri yükleniyor…</p>`;
+      loadMotifs(sc.tf);
+    }
+    return;
+  }
+  const ms = B.motifs.filter(m => m.k === sc.k && m.tol === sc.tol);
+  host.innerHTML = ms.length ? "" : (B.countsOnly
+    ? `<p class="note">M1 kısmi modda yalnız tekrar sayıları var. Örnek grafikler ve tarihler, tarama sırasında bilgisayar uykuya geçtiği için kaydedilemedi.</p>`
+    : `<p class="note">Bu hücrede tekrar eden dizi yok.</p>`);
+  ms.forEach((m, i) => {
+    const ratio = m.placebo_top ? m.count / m.placebo_top : null;
+    const pill = ratio == null ? "" : ratio >= 1.5 ? `<span class="pill hot">plaseboyu ${ratio.toFixed(1)}× geçiyor</span>` : `<span class="pill cold">plasebo düzeyinde (${m.placebo_top})</span>`;
+    const f = m.fwd, part = sc.q !== 1;
+    const card = el("div", { class: "card" });
+    card.innerHTML = `<div class="card-top"><h3>${i + 1}. ${m.name}</h3><div class="stats">${pill}</div></div>
+      <div class="stats"><span><b>${m.count}</b> kez tekrar</span><span><b>${m.k}</b> mum · pay <b>${tolTxt(m.tol)}</b>${part ? ` · mumların ≥%${Math.round(m.q * 100)}'i` : ""}</span><span>${m.composition}</span><span>aynı 100 mumluk alanda en fazla <b>${m.dense100}</b></span>
+      <span>sonraki ${DATA.config.fwd} mumda yükselen: <b>${pct(f.up)}</b> (taban ${pct(f.base_up)}, n=${f.n})</span></div>
+      <div class="multiples">${m.show.map((o, j) => mini(o, j === 0 ? "örnek" : (part ? `${o.matched}/${m.k}` : ""))).join("")}</div>
+      <details><summary>${m.occurrences.length} tekrarın tarih listesi (MT5 sunucu saati)</summary><div class="scroll"><table><thead><tr><th>Başlangıç</th><th>Bitiş</th><th>Fiyat</th>${part ? "<th>Tutan mum</th>" : ""}<th>Ort. sapma</th><th>Sonraki ${DATA.config.fwd} mum</th></tr></thead><tbody>
+      ${m.occurrences.map(o => `<tr><td class="num">${o.start}</td><td class="num">${o.end}</td><td class="num">${o.price}</td>${part ? `<td class="num">${o.matched}/${m.k}</td>` : ""}<td class="num">${tolTxt(o.rms.toFixed(4))}</td><td class="num">${o.fwd == null ? "–" : (o.fwd > 0 ? "+" : "") + o.fwd.toFixed(2) + "%"}</td></tr>`).join("")}
+      </tbody></table></div></details>`;
+    host.appendChild(card);
+  });
+}
+
+renderTemplate();
+renderScan();
+</script>
