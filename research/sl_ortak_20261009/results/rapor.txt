@@ -1,0 +1,246 @@
+
+### A) GDAXI (iki yön): n=67 · SL oranı %39 · ort R +0.053
+  [ileri] keşifte en SL'li 10 tip → sınamada:
+    g15_adx orta                                                                                    keşif +  27pp | sınama n=  9   +22pp ort R -0.15
+    ctx_onceki_dk düşük (≤14.8)                                                                     keşif +  27pp | sınama n=  5   -13pp ort R +0.42
+    g60_bb_genislik orta                                                                            keşif +  24pp | sınama n= 13    +5pp ort R +0.09
+    pre_dist_ema20_1m yüksek (>-0.667) VE pre_ret_15 yüksek (>-0.656)                               keşif +  24pp | sınama n= 10   -13pp ort R +0.57
+    pre_dist_ema20_1m yüksek (>-0.667) VE g1_ema20_egim yüksek (>-0.145)                            keşif +  24pp | sınama n=  9   -11pp ort R +0.57
+    → en iyi 10'un sınama SL farkı ort -6.3pp · plasebo ort +0.4pp, %90 üst +8.5pp → tesadüften ayırt edilemiyor
+  [geri] keşifte en SL'li 10 tip → sınamada:
+    dow orta VE yon = BUY                                                                           keşif +  17pp | sınama n=  3   -42pp ort R +0.56
+    dow orta                                                                                        keşif +  13pp | sınama n=  3   -42pp ort R +0.56
+    aile = MOMSR                                                                                    keşif +  10pp | sınama n= 17    +5pp ort R +0.03
+    aile = MOMSR VE yon = BUY                                                                       keşif +  10pp | sınama n= 17    +5pp ort R +0.03
+    hour_utc düşük (≤8) VE yon = BUY                                                                keşif +   8pp | sınama n= 11   -15pp ort R +0.45
+    → en iyi 10'un sınama SL farkı ort -9.5pp · plasebo ort -3.4pp, %90 üst -3.4pp → tesadüften ayırt edilemiyor
+
+### B) GDAXI BUY: benzer geçmiş işlemlerin SL oranı bu işlemin SL'sini öngörüyor mu? (0,5 = hayır)
+    bar k=5: 0.451
+    bar k=10: AUC 0.428 (plasebo %95 üst 0.667)
+    bar k=20: 0.329
+    gösterge k=5: 0.478
+    gösterge k=10: AUC 0.401 (plasebo %95 üst 0.688)
+    gösterge k=20: 0.282
+    hepsi k=5: 0.443
+    hepsi k=10: AUC 0.449 (plasebo %95 üst 0.684)
+    hepsi k=20: 0.304
+
+### C) GDAXI: keşif SL'lerinden 4 küme → sınamada kümeye düşen işlemlerin SL oranı (taban %33)
+    keşif: k0: n=6 SL %50 · k1: n=9 SL %44 · k2: n=9 SL %33 · k3: n=16 SL %44
+    sınama: k0: n=3 SL %0 · k1: n=8 SL %50 · k2: n=4 SL %0 · k3: n=12 SL %42
+    k0 merkezi: geo_exp_tau_min yüksek, g1_macd_h yüksek, geo_tp_atr5 yüksek, g60_di düşük
+    k1 merkezi: geo_be_wr düşük, geo_rr yüksek, vwap_atr yüksek, ctx_onceki_dk yüksek
+    k2 merkezi: geo_rr düşük, geo_be_wr yüksek, g5_macd_h_degisim yüksek, g15_bb_genislik yüksek
+    k3 merkezi: geo_be_wr yüksek, geo_rr düşük, pre_vol_dir_30 yüksek, g1_adx yüksek
+
+### A) NDX (iki yön): n=309 · SL oranı %40 · ort R +0.056
+  [ileri] keşifte en SL'li 10 tip → sınamada:
+    g15_bb_pctb orta VE g15_ema50 yüksek (>1.73)                                                    keşif +  49pp | sınama n=  9   -24pp ort R +0.56
+    g5_ema20 orta VE g5_ema200 yüksek (>3.37)                                                       keşif +  43pp | sınama n= 10    -5pp ort R +0.23
+    g60_rsi yüksek (>61.8) VE pre_day_move_pct orta                                                 keşif +  43pp | sınama n= 13    +3pp ort R +0.04
+    ctx_acik_poz yüksek (>2) VE g5_ema20_egim orta                                                  keşif +  42pp | sınama n=  1   +65pp ort R -1.00
+    pre_dist_ema50_5m orta VE g5_ema200 yüksek (>3.37)                                              keşif +  42pp | sınama n= 10    -5pp ort R +0.29
+    → en iyi 10'un sınama SL farkı ort +19.9pp · plasebo ort +0.8pp, %90 üst +5.1pp → GEÇTİ
+  [geri] keşifte en SL'li 10 tip → sınamada:
+    g15_ema20 orta VE g1_cmf yüksek (>0.0928)                                                       keşif +  49pp | sınama n= 20    +2pp ort R +0.05
+    g15_rsi orta VE g1_cmf yüksek (>0.0928)                                                         keşif +  48pp | sınama n= 21    -5pp ort R +0.17
+    g15_rsi orta VE g5_obv_egim yüksek (>0.268)                                                     keşif +  48pp | sınama n= 20   +12pp ort R -0.23
+    g1_cmf yüksek (>0.0928) VE g60_bb_pctb düşük (≤0.617)                                           keşif +  48pp | sınama n= 27   -13pp ort R +0.22
+    g60_macd_h_degisim orta VE g1_cmf yüksek (>0.0928)                                              keşif +  46pp | sınama n= 20    +2pp ort R -0.04
+    → en iyi 10'un sınama SL farkı ort +0.2pp · plasebo ort +1.3pp, %90 üst +4.8pp → tesadüften ayırt edilemiyor
+
+### A) NDX BUY: n=72 · SL oranı %32 · ort R +0.187
+  [ileri] keşifte en SL'li 10 tip → sınamada:
+    pre_dist_ema20_1m düşük (≤-1.27) VE g5_macd_h_degisim düşük (≤-0.035)                           keşif +  27pp | sınama n=  2   +22pp ort R -0.14
+    g1_ema20 düşük (≤-1.27) VE g5_macd_h_degisim düşük (≤-0.035)                                    keşif +  27pp | sınama n=  2   +22pp ort R -0.14
+    pre_dist_ema20_1m düşük (≤-1.27) VE g1_macd_h düşük (≤-0.226)                                   keşif +  23pp | sınama n=  1   -28pp ort R +0.71
+    pre_dist_ema20_1m düşük (≤-1.27) VE g1_stoch düşük (≤22.4)                                      keşif +  23pp | sınama n=  3    +6pp ort R +0.14
+    g1_ema20 düşük (≤-1.27) VE g1_macd_h düşük (≤-0.226)                                            keşif +  23pp | sınama n=  1   -28pp ort R +0.71
+    → en iyi 10'un sınama SL farkı ort -4.3pp · plasebo ort -0.2pp, %90 üst +5.6pp → tesadüften ayırt edilemiyor
+  [geri] keşifte en SL'li 10 tip → sınamada:
+    hour_utc düşük (≤15) VE aile = DAYCOMBO                                                         keşif +  11pp | sınama n=  4   -35pp ort R +0.77
+    aile = DAYCOMBO VE session = ABD                                                                keşif +  11pp | sınama n=  8   -22pp ort R +0.52
+    hour_utc düşük (≤15)                                                                            keşif +  10pp | sınama n= 28    -3pp ort R +0.20
+    hour_utc düşük (≤15) VE yon = BUY                                                               keşif +  10pp | sınama n= 28    -3pp ort R +0.20
+    pre_consec düşük (≤-1)                                                                          keşif +   8pp | sınama n= 22   +11pp ort R -0.08
+    → en iyi 10'un sınama SL farkı ort -13.0pp · plasebo ort -2.2pp, %90 üst -2.2pp → tesadüften ayırt edilemiyor
+
+### A) NDX SELL: n=237 · SL oranı %42 · ort R +0.016
+  [ileri] keşifte en SL'li 10 tip → sınamada:
+    g60_stoch yüksek (>70.8) VE g15_bb_pctb orta                                                    keşif +  47pp | sınama n= 17    -4pp ort R +0.12
+    pre_range_pos_4h orta VE g60_ema20_egim yüksek (>0.29)                                          keşif +  46pp | sınama n=  9   +21pp ort R -0.29
+    pre_range_pos_4h orta VE g5_ema200 yüksek (>3.83)                                               keşif +  44pp | sınama n=  7   +12pp ort R -0.18
+    g60_ema20_egim yüksek (>0.29) VE g5_ema50 orta                                                  keşif +  44pp | sınama n= 18   +21pp ort R -0.36
+    pre_rsi1 yüksek (>66.9) VE g5_cmf orta                                                          keşif +  44pp | sınama n=  2    +5pp ort R -0.14
+    → en iyi 10'un sınama SL farkı ort +12.0pp · plasebo ort +1.5pp, %90 üst +5.5pp → GEÇTİ
+  [geri] keşifte en SL'li 10 tip → sınamada:
+    g60_ema50 yüksek (>2.23) VE g1_di orta                                                          keşif +  40pp | sınama n=  1   +60pp ort R -1.00
+    pre_dist_ema50_1h yüksek (>1.89) VE g1_di orta                                                  keşif +  40pp | sınama n=  3    -7pp ort R +0.15
+    g60_ema50 yüksek (>2.23) VE g1_stoch orta                                                       keşif +  39pp | sınama n=  4   +35pp ort R -0.57
+    g60_ema50 yüksek (>2.23) VE g1_ema20_egim orta                                                  keşif +  39pp | sınama n=  3   +60pp ort R -1.00
+    g60_rsi yüksek (>60) VE g1_di orta                                                              keşif +  39pp | sınama n=  4   -15pp ort R +0.30
+    → en iyi 10'un sınama SL farkı ort +20.7pp · plasebo ort +0.4pp, %90 üst +3.8pp → GEÇTİ
+
+### B) NDX BUY: benzer geçmiş işlemlerin SL oranı bu işlemin SL'sini öngörüyor mu? (0,5 = hayır)
+    bar k=5: 0.506
+    bar k=10: AUC 0.579 (plasebo %95 üst 0.619)
+    bar k=20: 0.498
+    gösterge k=5: 0.604
+    gösterge k=10: AUC 0.635 (plasebo %95 üst 0.630)
+    gösterge k=20: 0.504
+    hepsi k=5: 0.630
+    hepsi k=10: AUC 0.575 (plasebo %95 üst 0.623)
+    hepsi k=20: 0.520
+
+### B) NDX SELL: benzer geçmiş işlemlerin SL oranı bu işlemin SL'sini öngörüyor mu? (0,5 = hayır)
+    bar k=5: 0.529
+    bar k=10: AUC 0.507 (plasebo %95 üst 0.567)
+    bar k=20: 0.515
+    gösterge k=5: 0.475
+    gösterge k=10: AUC 0.524 (plasebo %95 üst 0.562)
+    gösterge k=20: 0.529
+    hepsi k=5: 0.498
+    hepsi k=10: AUC 0.533 (plasebo %95 üst 0.562)
+    hepsi k=20: 0.519
+
+### C) NDX: keşif SL'lerinden 4 küme → sınamada kümeye düşen işlemlerin SL oranı (taban %35)
+    keşif: k0: n=64 SL %45 · k1: n=41 SL %37 · k2: n=42 SL %45 · k3: n=38 SL %42
+    sınama: k0: n=54 SL %33 · k1: n=15 SL %40 · k2: n=21 SL %43 · k3: n=34 SL %32
+    k0 merkezi: ctx_onceki_dk yüksek, pre_mtf_agree düşük, g1_bb_pctb düşük, g1_di düşük
+    k1 merkezi: pre_vol_slope_30 yüksek, pre_vol_ratio_5_60 yüksek, g1_bb_genislik yüksek, geo_exp_tau_min yüksek
+    k2 merkezi: panel_aleyhte yüksek, pre_mtf_agree düşük, ctx_onceki_dk yüksek, g60_di düşük
+    k3 merkezi: g15_bb_genislik yüksek, g60_macd_h_degisim yüksek, vwap_atr yüksek, g15_ema20_egim yüksek
+
+### A) USOIL (iki yön): n=147 · SL oranı %49 · ort R -0.072
+  [ileri] keşifte en SL'li 10 tip → sınamada:
+    geo_rr yüksek (>1.16) VE pre_wick_against3 düşük (≤0.208)                                       keşif +  45pp | sınama n=  7   -10pp ort R +0.62
+    geo_be_wr düşük (≤0.463) VE pre_wick_against3 düşük (≤0.208)                                    keşif +  45pp | sınama n=  7   -10pp ort R +0.62
+    pre_di_align5 düşük (≤3.85) VE panel_lehte düşük (≤3)                                           keşif +  45pp | sınama n= 21   -14pp ort R +0.15
+    g5_di düşük (≤3.85) VE panel_lehte düşük (≤3)                                                   keşif +  45pp | sınama n= 21   -14pp ort R +0.15
+    geo_tp_atr5 yüksek (>3.55) VE pre_dist_ema50_5m düşük (≤0.993)                                  keşif +  39pp | sınama n= 17   -17pp ort R +0.42
+    → en iyi 10'un sınama SL farkı ort -21.6pp · plasebo ort -1.0pp, %90 üst +8.5pp → tesadüften ayırt edilemiyor
+  [geri] keşifte en SL'li 10 tip → sınamada:
+    pre_adx5 yüksek (>26.4) VE g15_ema20_egim yüksek (>0.4)                                         keşif +  33pp | sınama n= 34    -8pp ort R -0.07
+    g5_adx yüksek (>26.4) VE g15_ema20_egim yüksek (>0.4)                                           keşif +  33pp | sınama n= 33   -10pp ort R -0.05
+    g15_stoch yüksek (>74.7) VE g60_bb_pctb yüksek (>0.927)                                         keşif +  33pp | sınama n= 28   -14pp ort R +0.02
+    pre_adx5 yüksek (>26.4) VE g15_macd_h yüksek (>0.0908)                                          keşif +  32pp | sınama n= 38   -18pp ort R +0.14
+    g5_adx yüksek (>26.4) VE g15_macd_h yüksek (>0.0908)                                            keşif +  32pp | sınama n= 38   -18pp ort R +0.14
+    → en iyi 10'un sınama SL farkı ort -13.9pp · plasebo ort +1.3pp, %90 üst +6.9pp → tesadüften ayırt edilemiyor
+
+### A) USOIL BUY: n=102 · SL oranı %43 · ort R -0.040
+  [ileri] keşifte en SL'li 10 tip → sınamada:
+    geo_rr yüksek (>1) VE geo_tp_atr5 yüksek (>2.75)                                                keşif +  44pp | sınama n=  9    -2pp ort R +0.53
+    geo_be_wr düşük (≤0.499) VE geo_tp_atr5 yüksek (>2.75)                                          keşif +  44pp | sınama n=  9    -2pp ort R +0.53
+    geo_rr yüksek (>1) VE geo_sl_atr1h düşük (≤0.756)                                               keşif +  42pp | sınama n=  5    -6pp ort R +0.73
+    geo_rr yüksek (>1) VE pre_bbw_pct5 düşük (≤0.635)                                               keşif +  42pp | sınama n=  7    -3pp ort R +0.55
+    geo_be_wr düşük (≤0.499) VE geo_sl_atr1h düşük (≤0.756)                                         keşif +  42pp | sınama n=  5    -6pp ort R +0.73
+    → en iyi 10'un sınama SL farkı ort -1.6pp · plasebo ort -2.0pp, %90 üst +9.7pp → tesadüften ayırt edilemiyor
+  [geri] keşifte en SL'li 10 tip → sınamada:
+    pre_range_pos_4h yüksek (>0.592) VE g5_ema20_egim yüksek (>0.107)                               keşif +  29pp | sınama n= 38    -4pp ort R -0.04
+    g15_ema50 yüksek (>2.8) VE g15_ema20 yüksek (>1.2)                                              keşif +  29pp | sınama n= 18    -8pp ort R -0.02
+    pre_range_pos_4h yüksek (>0.592)                                                                keşif +  25pp | sınama n= 45    -5pp ort R -0.01
+    g5_ema20_egim yüksek (>0.107)                                                                   keşif +  25pp | sınama n= 45    -1pp ort R -0.10
+    g5_obv_egim yüksek (>0.0682)                                                                    keşif +  25pp | sınama n= 34    +0pp ort R -0.05
+    → en iyi 10'un sınama SL farkı ort -0.8pp · plasebo ort +4.2pp, %90 üst +16.1pp → tesadüften ayırt edilemiyor
+
+### B) USOIL BUY: benzer geçmiş işlemlerin SL oranı bu işlemin SL'sini öngörüyor mu? (0,5 = hayır)
+    bar k=5: 0.599
+    bar k=10: AUC 0.598 (plasebo %95 üst 0.590)
+    bar k=20: 0.544
+    gösterge k=5: 0.562
+    gösterge k=10: AUC 0.522 (plasebo %95 üst 0.576)
+    gösterge k=20: 0.513
+    hepsi k=5: 0.578
+    hepsi k=10: AUC 0.546 (plasebo %95 üst 0.601)
+    hepsi k=20: 0.450
+
+### B) USOIL SELL: benzer geçmiş işlemlerin SL oranı bu işlemin SL'sini öngörüyor mu? (0,5 = hayır)
+    bar k=5: 0.434
+    bar k=10: AUC 0.440 (plasebo %95 üst 0.635)
+    gösterge k=5: 0.368
+    gösterge k=10: AUC 0.332 (plasebo %95 üst 0.663)
+    hepsi k=5: 0.389
+    hepsi k=10: AUC 0.332 (plasebo %95 üst 0.591)
+
+### C) USOIL: keşif SL'lerinden 4 küme → sınamada kümeye düşen işlemlerin SL oranı (taban %53)
+    keşif: k0: n=24 SL %38 · k1: n=40 SL %35 · k2: n=5 SL %100 · k3: n=19 SL %68
+    sınama: k0: n=9 SL %44 · k1: n=20 SL %65 · k2: n=1 SL %0 · k3: n=29 SL %48
+    k0 merkezi: g60_bb_genislik yüksek, pre_vol_seas_5 yüksek, pre_vol_seas_15 yüksek, pre_slope_ema50_1h yüksek
+    k1 merkezi: geo_rr yüksek, panel_aleyhte yüksek, geo_exp_tau_min yüksek, dow yüksek
+    k2 merkezi: geo_exp_tau_min yüksek, geo_sl_sigma yüksek, pre_sl_struct_margin yüksek, g15_ema50 düşük
+    k3 merkezi: panel_aleyhte yüksek, pre_range_pos_4h düşük, g15_ema50 düşük, g5_ema50 düşük
+
+### A) XAUUSD (iki yön): n=42 · SL oranı %31 · ort R +0.150
+  [ileri] keşifte en SL'li 10 tip → sınamada:
+    panel_net düşük (≤0) VE session = ASYA                                                          keşif +  22pp | sınama n=  8   -11pp ort R +0.45
+    panel_net düşük (≤0)                                                                            keşif +  17pp | sınama n= 12    -7pp ort R +0.39
+    panel_net düşük (≤0) VE aile = DECIDER                                                          keşif +  17pp | sınama n= 12    -7pp ort R +0.39
+    panel_net düşük (≤0) VE yon = BUY                                                               keşif +  17pp | sınama n= 12    -7pp ort R +0.39
+    panel_net düşük (≤0) VE dow orta                                                                keşif +  10pp | sınama n=  0  +nanpp ort R +nan
+    → en iyi 10'un sınama SL farkı ort -3.6pp · plasebo ort +0.6pp, %90 üst +0.6pp → tesadüften ayırt edilemiyor
+  [geri] keşifte en SL'li 10 tip → sınamada:
+    aile = DECIDER                                                                                  keşif +   0pp | sınama n= 25    +0pp ort R +0.07
+    yon = BUY                                                                                       keşif +   0pp | sınama n= 25    +0pp ort R +0.07
+    aile = DECIDER VE yon = BUY                                                                     keşif +   0pp | sınama n= 25    +0pp ort R +0.07
+    session = ASYA                                                                                  keşif +  -0pp | sınama n= 18    +3pp ort R +0.02
+    aile = DECIDER VE session = ASYA                                                                keşif +  -0pp | sınama n= 18    +3pp ort R +0.02
+    → en iyi 10'un sınama SL farkı ort +1.4pp · plasebo ort +1.0pp, %90 üst +1.0pp → GEÇTİ
+
+### B) XAUUSD BUY: benzer geçmiş işlemlerin SL oranı bu işlemin SL'sini öngörüyor mu? (0,5 = hayır)
+    bar k=5: 0.273
+    bar k=10: AUC 0.483 (plasebo %95 üst 0.618)
+    gösterge k=5: 0.451
+    gösterge k=10: AUC 0.490 (plasebo %95 üst 0.645)
+    hepsi k=5: 0.323
+    hepsi k=10: AUC 0.432 (plasebo %95 üst 0.670)
+
+### D) NASDAQ: botun SL'ye yatkın tipleri, botun ÇALIŞMADIĞI 2025-01 → 2026-06'da (sentetik giriş) da SL'ye yatkın mı?
+
+  NDX BUY: bot n=72 SL %32 · sentetik n=4756 SL %42.8 ort R -0.011
+    pre_di_align5 orta VE pre_dist_ema50_5m orta                                               bot + 33pp | 2025-26 n= 1335  -0.4pp [-4.6…+3.7] ort R -0.003 
+    g5_ema50 orta VE g5_ema20_egim orta                                                        bot + 33pp | 2025-26 n= 1133  +0.7pp [-3.6…+5.2] ort R -0.023 
+    g5_di orta VE pre_dist_ema50_5m orta                                                       bot + 33pp | 2025-26 n= 1335  -0.4pp [-4.6…+3.7] ort R -0.003 
+    pre_dist_ema50_5m orta VE g5_ema20_egim orta                                               bot + 31pp | 2025-26 n= 1149  -0.0pp [-4.3…+4.4] ort R -0.011 
+    pre_di_align5 orta VE g5_ema50 orta                                                        bot + 29pp | 2025-26 n= 1317  +0.4pp [-3.8…+4.6] ort R -0.017 
+    g5_ema50 orta VE g5_di orta                                                                bot + 29pp | 2025-26 n= 1317  +0.4pp [-3.9…+4.3] ort R -0.017 
+    g5_ema50 orta VE pre_rsi5 orta                                                             bot + 29pp | 2025-26 n= 1211  +0.4pp [-4.0…+4.4] ort R -0.017 
+    g5_ema50 orta VE g5_rsi orta                                                               bot + 29pp | 2025-26 n= 1211  +0.4pp [-3.8…+4.6] ort R -0.017 
+    g5_ema50 orta VE pre_consec düşük (≤-1)                                                    bot + 28pp | 2025-26 n=  804  -0.7pp [-4.9…+3.9] ort R +0.001 
+    g5_ema20_egim orta VE pre_ret_60 orta                                                      bot + 28pp | 2025-26 n= 1328  -0.1pp [-3.7…+3.7] ort R -0.010 
+    → gerçek koşulların 2025-26 SL farkı ort +0.1pp · rastgele 2'li koşullar ort -0.2pp, %90 üst +3.9pp · %95'i sıfırın üstünde: 10 içinden 0
+
+  NDX SELL: bot n=237 SL %42 · sentetik n=4756 SL %44.6 ort R -0.042
+    pre_ret_15 orta VE g1_cmf yüksek (>0.0985)                                                 bot + 44pp | 2025-26 n=  566  -1.0pp [-5.8…+3.7] ort R -0.025 
+    g60_rsi yüksek (>60) VE g5_ema20 orta                                                      bot + 40pp | 2025-26 n=  357  -5.7pp [-11.5…+0.6] ort R +0.056 
+    g60_rsi yüksek (>60) VE g5_ema20_egim orta                                                 bot + 40pp | 2025-26 n=  309  -1.9pp [-7.9…+4.4] ort R -0.009 
+    g60_ema20 yüksek (>1.01) VE g5_ema20_egim orta                                             bot + 40pp | 2025-26 n=  329  -3.6pp [-9.0…+2.4] ort R +0.020 
+    g60_ema50 yüksek (>1.79) VE pre_ret_15 orta                                                bot + 40pp | 2025-26 n=  480  -4.4pp [-9.7…+1.7] ort R +0.034 
+    g15_ema200 yüksek (>3.38) VE pre_ret_15 orta                                               bot + 40pp | 2025-26 n=  500  -6.4pp [-11.5…-1.0] ort R +0.069 
+    g60_ema20 yüksek (>1.01) VE g5_ema20 orta                                                  bot + 37pp | 2025-26 n=  380  -6.7pp [-12.0…-1.1] ort R +0.074 
+    g60_rsi yüksek (>60) VE pre_rsi5 orta                                                      bot + 36pp | 2025-26 n=  310  -5.6pp [-11.9…+1.1] ort R +0.055 
+    g60_rsi yüksek (>60) VE g5_rsi orta                                                        bot + 36pp | 2025-26 n=  310  -5.6pp [-11.8…+1.2] ort R +0.055 
+    g60_ema20 yüksek (>1.01) VE pre_rsi5 orta                                                  bot + 36pp | 2025-26 n=  329  -6.3pp [-11.9…-0.5] ort R +0.067 
+    → gerçek koşulların 2025-26 SL farkı ort -4.7pp · rastgele 2'li koşullar ort -0.2pp, %90 üst +3.5pp · %95'i sıfırın üstünde: 10 içinden 0
+
+### B) NDX sentetik 2025-26 BUY (örneklem): benzer geçmiş işlemlerin SL oranı bu işlemin SL'sini öngörüyor mu? (0,5 = hayır)
+    bar k=5: 0.475
+    bar k=10: AUC 0.479 (plasebo %95 üst 0.524)
+    bar k=20: 0.480
+    gösterge k=5: 0.465
+    gösterge k=10: AUC 0.471 (plasebo %95 üst 0.526)
+    gösterge k=20: 0.474
+    hepsi k=5: 0.487
+    hepsi k=10: AUC 0.489 (plasebo %95 üst 0.520)
+    hepsi k=20: 0.478
+
+### B) NDX sentetik 2025-26 SELL (örneklem): benzer geçmiş işlemlerin SL oranı bu işlemin SL'sini öngörüyor mu? (0,5 = hayır)
+    bar k=5: 0.487
+    bar k=10: AUC 0.495 (plasebo %95 üst 0.526)
+    bar k=20: 0.479
+    gösterge k=5: 0.475
+    gösterge k=10: AUC 0.463 (plasebo %95 üst 0.525)
+    gösterge k=20: 0.479
+    hepsi k=5: 0.483
+    hepsi k=10: AUC 0.502 (plasebo %95 üst 0.522)
+    hepsi k=20: 0.503

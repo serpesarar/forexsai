@@ -1,0 +1,146 @@
+
+######## GERCEK — bar+gösterge+panel (tüm dönem): n=300 · A (döndü→TP) 100 · B (SL) 200 · 'hep D'de çık' -27.1R
+                 özellik  A_TP_medyan  B_SL_medyan   AUC     p  AUC_ilk  AUC_son     q tutarlı
+           atr_genisleme        0.965        1.024 0.598 0.010    0.555    0.662 0.240    evet
+    hacim_giris_oncesi60      215.642      174.692 0.404 0.008    0.434    0.371 0.240    evet
+              hacim_son5      226.400      178.800 0.417 0.018    0.436    0.401 0.240    evet
+        D_kapanis_konumu        0.343        0.220 0.417 0.020    0.417    0.413 0.240    evet
+             alt_fitil_3        0.247        0.213 0.417 0.020    0.388    0.461 0.240    evet
+                 hacim_D      242.500      196.500 0.417 0.016    0.437    0.389 0.240    evet
+          hacim_onceki10      222.550      166.050 0.419 0.020    0.440    0.397 0.240    evet
+       g1_macd_h_degisim       -0.061       -0.074 0.426 0.042    0.439    0.421 0.410    evet
+hacim_max10_saatine_gore        1.136        1.237 0.573 0.044    0.608    0.524 0.410    evet
+               g15_stoch       46.176       55.949 0.564 0.062    0.585    0.525 0.520    evet
+           sl_mesafe_atr        3.281        2.834 0.436 0.072    0.422    0.434 0.549    evet
+              g15_macd_h       -0.087       -0.027 0.563 0.092    0.586    0.510 0.643    evet
+      g60_macd_h_degisim       -0.012       -0.002 0.556 0.148    0.565    0.521 0.698    evet
+ hacim_son5_saatine_gore        1.028        1.054 0.555 0.132    0.587    0.511 0.698    evet
+                  g1_adx       24.083       27.256 0.552 0.170    0.603    0.505 0.698    evet
+                  g5_rsi       42.747       45.675 0.551 0.162    0.568    0.533 0.698    evet
+                rsi5_yon       42.747       45.675 0.551 0.162    0.568    0.533 0.698    evet
+    hacim_D_saatine_gore        1.045        1.105 0.551 0.162    0.577    0.510 0.698    evet
+              g60_ema200        1.804        1.656 0.550 0.170    0.526    0.600 0.698    evet
+         dusus_hizi_R_dk        0.073        0.090 0.544 0.220    0.555    0.544 0.698    evet
+  [bar] 24 özellik
+    ilk→son: sınama AUC 0.553 (plasebo %95 üst 0.604) · kural 81/120 işlemde D'de çık → net -15.6R
+    son→ilk: sınama AUC 0.566 (plasebo %95 üst 0.601) · kural 75/180 işlemde D'de çık → net -4.6R
+  [gösterge] 56 özellik
+    ilk→son: sınama AUC 0.454 (plasebo %95 üst 0.562) · kural 63/120 işlemde D'de çık → net -18.5R
+    son→ilk: sınama AUC 0.475 (plasebo %95 üst 0.604) · kural 56/180 işlemde D'de çık → net -10.7R
+  [panel+makro] 4 özellik
+    ilk→son: sınama AUC 0.391 (plasebo %95 üst 0.599) · kural 56/120 işlemde D'de çık → net -19.5R
+    son→ilk: sınama AUC 0.449 (plasebo %95 üst 0.560) · kural 20/180 işlemde D'de çık → net -1.5R
+  [HEPSİ] 84 özellik
+    ilk→son: sınama AUC 0.516 (plasebo %95 üst 0.576) · kural 72/120 işlemde D'de çık → net -12.9R
+    son→ilk: sınama AUC 0.530 (plasebo %95 üst 0.588) · kural 74/180 işlemde D'de çık → net -4.1R
+
+######## GERCEK — TICK dönemi (28 Ağu+) tüm özellikler: n=52 · A (döndü→TP) 24 · B (SL) 28 · 'hep D'de çık' -15.2R
+             özellik  A_TP_medyan  B_SL_medyan   AUC     p  AUC_ilk  AUC_son     q tutarlı
+       atr_genisleme        0.917        0.987 0.744 0.006    0.721    0.787 0.617    evet
+   tik_spread_max5_R        0.023        0.028 0.648 0.062    0.738    0.546 0.986    evet
+           panel_net        0.000        0.000 0.644 0.050    0.608    0.731 0.986    evet
+          tik_denge1       -0.026       -0.069 0.357 0.070    0.308    0.426 0.986    evet
+       once_tp_kesri        0.174        0.372 0.637 0.092    0.621    0.676 0.986    evet
+         tik_akis5_R       -0.340       -0.461 0.365 0.104    0.375    0.333 0.986    evet
+      g5_bb_genislik        1.215        1.053 0.382 0.124    0.329    0.481 0.986    evet
+  g60_macd_h_degisim       -0.023       -0.004 0.612 0.174    0.725    0.481 0.986   hayır
+   g5_macd_h_degisim       -0.021       -0.029 0.388 0.158    0.425    0.333 0.986    evet
+          g15_macd_h       -0.159       -0.070 0.609 0.192    0.771    0.454 0.986   hayır
+      aleyhte_bar_10        6.500        6.000 0.394 0.158    0.358    0.444 0.986    evet
+       panel_aleyhte        0.000        0.000 0.396 0.134    0.462    0.287 0.986    evet
+          g60_macd_h        0.110        0.014 0.397 0.226    0.379    0.407 0.986    evet
+          g60_ema200       -0.952        0.254 0.603 0.200    0.617    0.731 0.986    evet
+  tik_10sn_aleyhte_R       -0.172       -0.241 0.399 0.204    0.325    0.398 0.986    evet
+         tik_denge15       -0.009       -0.023 0.399 0.230    0.483    0.222 0.986    evet
+hacim_giris_oncesi60      254.533      213.383 0.402 0.216    0.354    0.361 0.986    evet
+       sl_mesafe_atr        2.293        2.204 0.403 0.222    0.383    0.407 0.986    evet
+          tik_denge5       -0.029       -0.035 0.403 0.232    0.475    0.269 0.986    evet
+    D_kapanis_konumu        0.302        0.228 0.409 0.255    0.392    0.407 0.986    evet
+  [bar] 24 özellik
+    ilk→son: sınama AUC 0.556 (plasebo %95 üst 0.667) · kural 13/21 işlemde D'de çık → net -1.7R
+    son→ilk: sınama AUC 0.579 (plasebo %95 üst 0.659) · kural 13/31 işlemde D'de çık → net -3.0R
+  [gösterge] 56 özellik
+    ilk→son: sınama AUC 0.389 (plasebo %95 üst 0.668) · kural 11/21 işlemde D'de çık → net -4.3R
+    son→ilk: sınama AUC 0.404 (plasebo %95 üst 0.689) · kural 26/31 işlemde D'de çık → net -10.7R
+  [panel+makro] 4 özellik
+    ilk→son: sınama AUC 0.736 (plasebo %95 üst 0.745) · kural 0/21 işlemde D'de çık → net +0.0R
+    son→ilk: sınama AUC 0.565 (plasebo %95 üst 0.623) · kural 23/31 işlemde D'de çık → net -6.8R
+  [tick] 19 özellik
+    ilk→son: sınama AUC 0.519 (plasebo %95 üst 0.704) · kural 15/21 işlemde D'de çık → net -2.1R
+    son→ilk: sınama AUC 0.450 (plasebo %95 üst 0.667) · kural 21/31 işlemde D'de çık → net -9.4R
+  [HEPSİ] 103 özellik
+    ilk→son: sınama AUC 0.463 (plasebo %95 üst 0.676) · kural 14/21 işlemde D'de çık → net -2.8R
+    son→ilk: sınama AUC 0.537 (plasebo %95 üst 0.646) · kural 19/31 işlemde D'de çık → net -8.4R
+
+######## SENTETIK — bar+gösterge+panel (tüm dönem): n=4748 · A (döndü→TP) 1388 · B (SL) 3360 · 'hep D'de çık' +36.2R
+          özellik  A_TP_medyan  B_SL_medyan   AUC     p  AUC_ilk  AUC_son     q tutarlı
+ D_kapanis_konumu        0.267        0.225 0.458 0.002    0.455    0.462 0.042    evet
+g1_macd_h_degisim       -0.062       -0.070 0.462 0.002    0.465    0.458 0.042    evet
+       g1_bb_pctb       -0.017       -0.032 0.470 0.002    0.473    0.464 0.042    evet
+    atr_genisleme        1.084        1.060 0.472 0.002    0.467    0.480 0.042    evet
+          g60_adx       23.482       24.375 0.526 0.010    0.516    0.543 0.140    evet
+    once_tp_kesri        0.291        0.259 0.475 0.008    0.473    0.479 0.134    evet
+    sl_mesafe_atr        3.989        3.727 0.477 0.014    0.475    0.481 0.168    evet
+     ema20_1m_atr       -2.159       -2.220 0.477 0.026    0.483    0.468 0.168    evet
+         g1_ema20       -2.159       -2.220 0.477 0.026    0.483    0.468 0.168    evet
+      g15_bb_pctb        0.332        0.378 0.523 0.016    0.522    0.523 0.168    evet
+        g15_ema20       -0.469       -0.348 0.522 0.020    0.518    0.528 0.168    evet
+         g5_ema50       -1.314       -1.106 0.522 0.030    0.522    0.521 0.180    evet
+       hacim_son5      175.000      157.200 0.478 0.026    0.480    0.476 0.168    evet
+           g5_rsi       41.401       42.198 0.520 0.042    0.524    0.514 0.193    evet
+         rsi5_yon       41.401       42.198 0.520 0.042    0.524    0.514 0.193    evet
+         g5_ema20       -1.027       -0.942 0.520 0.046    0.527    0.509 0.193    evet
+   hacim_onceki10      156.400      145.600 0.480 0.036    0.479    0.482 0.189    evet
+   g5_bb_genislik        1.046        1.014 0.480 0.026    0.471    0.496 0.168    evet
+          g15_rsi       46.416       47.082 0.520 0.034    0.511    0.532 0.189    evet
+          hacim_D      189.000      179.000 0.481 0.046    0.480    0.482 0.193    evet
+  [bar] 24 özellik
+    ilk→son: sınama AUC 0.564 (plasebo %95 üst 0.531) · kural 493/1900 işlemde D'de çık → net +27.3R
+    son→ilk: sınama AUC 0.551 (plasebo %95 üst 0.524) · kural 786/2848 işlemde D'de çık → net +11.0R
+  [gösterge] 56 özellik
+    ilk→son: sınama AUC 0.523 (plasebo %95 üst 0.530) · kural 1035/1900 işlemde D'de çık → net +19.8R
+    son→ilk: sınama AUC 0.522 (plasebo %95 üst 0.528) · kural 1560/2848 işlemde D'de çık → net +13.2R
+  [panel+makro] 4 özellik
+    ilk→son: sınama AUC 0.475 (plasebo %95 üst 0.534) · kural 1584/1900 işlemde D'de çık → net -10.0R
+    son→ilk: sınama AUC 0.478 (plasebo %95 üst 0.518) · kural 771/2848 işlemde D'de çık → net -14.4R
+  [HEPSİ] 84 özellik
+    ilk→son: sınama AUC 0.544 (plasebo %95 üst 0.528) · kural 1315/1900 işlemde D'de çık → net +16.3R
+    son→ilk: sınama AUC 0.534 (plasebo %95 üst 0.522) · kural 1983/2848 işlemde D'de çık → net +29.1R
+
+######## SENTETIK — TICK dönemi (28 Ağu+) tüm özellikler: n=1772 · A (döndü→TP) 520 · B (SL) 1252 · 'hep D'de çık' +19.6R
+          özellik  A_TP_medyan  B_SL_medyan   AUC     p  AUC_ilk  AUC_son     q tutarlı
+g1_macd_h_degisim       -0.059       -0.069 0.456 0.008    0.455    0.458 0.131    evet
+     ema20_1m_atr       -2.122       -2.208 0.457 0.008    0.462    0.450 0.131    evet
+         g1_ema20       -2.122       -2.208 0.457 0.008    0.462    0.450 0.131    evet
+ D_kapanis_konumu        0.269        0.227 0.459 0.002    0.460    0.459 0.131    evet
+       g1_bb_pctb       -0.011       -0.027 0.460 0.010    0.470    0.444 0.131    evet
+          g60_adx       21.864       23.387 0.539 0.006    0.528    0.550 0.131    evet
+        panel_net        0.000        0.000 0.538 0.008    0.526    0.555 0.131    evet
+           g1_rsi       32.261       31.340 0.462 0.014    0.469    0.454 0.131    evet
+         rsi1_yon       32.261       31.340 0.462 0.014    0.469    0.454 0.131    evet
+       tik_verim5        0.049        0.054 0.537 0.012    0.526    0.549 0.131    evet
+         vwap_atr       -4.705       -3.483 0.537 0.022    0.531    0.548 0.162    evet
+        g1_macd_h       -0.212       -0.227 0.465 0.018    0.471    0.455 0.154    evet
+       g15_ema200       -0.794       -0.239 0.535 0.012    0.525    0.561 0.131    evet
+        g60_ema50       -0.248        0.027 0.534 0.020    0.522    0.560 0.158    evet
+          g15_rsi       45.153       46.887 0.534 0.028    0.534    0.536 0.175    evet
+        g15_ema50       -0.682       -0.383 0.533 0.030    0.531    0.540 0.175    evet
+           g60_di       -1.405        0.257 0.533 0.034    0.527    0.542 0.175    evet
+            g1_di      -19.572      -19.614 0.468 0.032    0.474    0.460 0.175    evet
+         g1_ema50       -3.024       -3.099 0.468 0.044    0.475    0.462 0.188    evet
+        g5_ema200       -1.751       -0.862 0.532 0.034    0.532    0.534 0.175    evet
+  [bar] 24 özellik
+    ilk→son: sınama AUC 0.527 (plasebo %95 üst 0.537) · kural 368/709 işlemde D'de çık → net -8.5R
+    son→ilk: sınama AUC 0.527 (plasebo %95 üst 0.531) · kural 649/1063 işlemde D'de çık → net +16.4R
+  [gösterge] 56 özellik
+    ilk→son: sınama AUC 0.532 (plasebo %95 üst 0.558) · kural 404/709 işlemde D'de çık → net +0.9R
+    son→ilk: sınama AUC 0.532 (plasebo %95 üst 0.525) · kural 706/1063 işlemde D'de çık → net +18.3R
+  [panel+makro] 4 özellik
+    ilk→son: sınama AUC 0.546 (plasebo %95 üst 0.569) · kural 281/709 işlemde D'de çık → net +12.8R
+    son→ilk: sınama AUC 0.518 (plasebo %95 üst 0.524) · kural 412/1063 işlemde D'de çık → net +19.7R
+  [tick] 19 özellik
+    ilk→son: sınama AUC 0.533 (plasebo %95 üst 0.544) · kural 239/709 işlemde D'de çık → net +2.1R
+    son→ilk: sınama AUC 0.517 (plasebo %95 üst 0.535) · kural 235/1063 işlemde D'de çık → net -4.1R
+  [HEPSİ] 103 özellik
+    ilk→son: sınama AUC 0.536 (plasebo %95 üst 0.552) · kural 378/709 işlemde D'de çık → net -3.6R
+    son→ilk: sınama AUC 0.544 (plasebo %95 üst 0.524) · kural 632/1063 işlemde D'de çık → net +39.0R

@@ -1,0 +1,45 @@
+# Ön-kayıt sonrası keşif kontrolleri (kanıt sınıfı düşürücü/yükseltici değil, yorum için)
+
+## C-x) Panel SELL, bot SELL girişinin ±30 dk'sı HARİÇ: n=548, SL %43, ort R -0.012
+  tümü                               C1: n= 156/  548  SL % 54 vs % 39  fark +15.3pp [+2.3…+33.2] ✓  ortR -0.202 vs +0.064 [-0.58…-0.04]
+  tümü                               C2: n= 118/  548  SL % 53 vs % 40  fark +12.3pp [+1.8…+26.6] ✓  ortR -0.179 vs +0.034 [-0.44…-0.04]
+  1. yarı                            C1: n= 117/  274  SL % 48 vs % 35  fark +12.8pp [-4.3…+36.5]  ortR -0.098 vs +0.124 [-0.61…+0.07]
+  2. yarı                            C1: n=  39/  274  SL % 72 vs % 41  fark +30.9pp [+11.2…+49.9] ✓  ortR -0.512 vs +0.023 [-0.85…-0.19]
+
+## C-y) Panel SELL, bot SELL girişine ±30 dk YAKIN: n=205, SL %40, ort R +0.046
+  tümü                               C1: n=  62/  205  SL % 63 vs % 29  fark +33.5pp [+18.6…+53.2] ✓  ortR -0.358 vs +0.222 [-0.95…-0.32]
+  tümü                               C2: n=  53/  205  SL % 62 vs % 32  fark +30.7pp [+14.4…+53.5] ✓  ortR -0.347 vs +0.184 [-0.92…-0.25]
+  1. yarı                            C1: n=  26/  102  SL % 54 vs % 37  fark +17.0pp [+3.9…+33.5] ✓  ortR -0.202 vs +0.093 [-0.58…-0.07]
+  2. yarı                            C1: n=  36/  103  SL % 69 vs % 21  fark +48.5pp [+30.9…+69.4] ✓  ortR -0.471 vs +0.369 [-1.18…-0.55]
+
+## bot — seansa göre (n: {'US 13-20': 110, 'ASYA/gece': 73, 'EU 07-13': 54})
+  ASYA/gece                          C1: n=  17/   73  SL % 59 vs % 36  fark +23.1pp [+6.2…+40.0] ✓  ortR -0.252 vs +0.101 [-0.69…-0.02]
+  ASYA/gece                          C2: n=   8/   73  SL % 62 vs % 38  fark +24.0pp [+8.0…+44.8] ✓  ortR -0.352 vs +0.064 [-0.76…-0.15]
+  EU 07-13                           C1: n=  20/   54  SL % 60 vs % 32  fark +27.6pp [+1.8…+51.4] ✓  ortR -0.192 vs +0.207 [-0.84…+0.11]
+  EU 07-13                           C2: n=   8/   54  SL % 88 vs % 35  fark +52.7pp [+32.0…+76.7] ✓  ortR -0.784 vs +0.206 [-1.45…-0.60]
+  US 13-20                           C1: n=  29/  110  SL % 59 vs % 37  fark +21.6pp [+4.6…+40.7] ✓  ortR -0.272 vs +0.087 [-0.70…-0.06]
+  US 13-20                           C2: n=  28/  110  SL % 57 vs % 38  fark +19.3pp [-2.2…+41.0]  ortR -0.239 vs +0.071 [-0.68…+0.10]
+
+## engellenen — seansa göre (n: {'ASYA/gece': 652, 'US 13-20': 161, 'EU 07-13': 136})
+  ASYA/gece                          C1: n=  75/  652  SL % 39 vs % 44  fark  -4.8pp [-31.7…+26.8]  ortR +0.061 vs -0.023 [-0.46…+0.55]
+  ASYA/gece                          C2: n=  47/  652  SL % 19 vs % 45  fark -25.6pp [-45.2…+8.8]  ortR +0.399 vs -0.045 [-0.11…+0.80]
+  EU 07-13                           C1: n=   7/  136  SL % 57 vs % 35  fark +22.3pp [-16.9…+54.3]  ortR -0.259 vs +0.127 [-0.95…+0.29]
+  EU 07-13                           C2: n=0 yetersiz
+  US 13-20                           C1: n=  11/  161  SL % 45 vs % 38  fark  +7.5pp [-30.0…+50.7]  ortR -0.056 vs +0.073 [-0.88…+0.54]
+  US 13-20                           C2: n=   6/  161  SL % 50 vs % 38  fark +11.9pp [-34.0…+70.2]  ortR -0.135 vs +0.071 [-1.22…+0.57]
+
+## panel — seansa göre (n: {'US 13-20': 753})
+  US 13-20                           C1: n= 218/  753  SL % 56 vs % 36  fark +20.3pp [+8.6…+34.1] ✓  ortR -0.246 vs +0.106 [-0.59…-0.14]
+  US 13-20                           C2: n= 171/  753  SL % 56 vs % 38  fark +17.6pp [+8.5…+29.8] ✓  ortR -0.231 vs +0.073 [-0.50…-0.14]
+
+## piyasa 24s — seansa göre (n: {'ASYA/gece': 785, 'US 13-20': 515, 'EU 07-13': 481})
+  ASYA/gece                          C1: n= 120/  785  SL % 37 vs % 40  fark  -3.8pp [-20.5…+13.9]  ortR +0.096 vs +0.030 [-0.26…+0.35]
+  ASYA/gece                          C2: n=  68/  785  SL % 22 vs % 42  fark -19.5pp [-33.7…-0.7]  ortR +0.348 vs +0.011 [+0.01…+0.59]
+  EU 07-13                           C1: n=  80/  481  SL % 45 vs % 41  fark  +3.6pp [-11.1…+19.9]  ortR -0.049 vs +0.014 [-0.33…+0.19]
+  EU 07-13                           C2: n=  56/  481  SL % 43 vs % 42  fark  +1.0pp [-18.9…+21.5]  ortR -0.011 vs +0.005 [-0.39…+0.34]
+  US 13-20                           C1: n=  76/  515  SL % 47 vs % 38  fark  +9.1pp [-2.5…+22.8]  ortR -0.089 vs +0.068 [-0.40…+0.04]
+  US 13-20                           C2: n=  61/  515  SL % 51 vs % 38  fark +12.7pp [-1.9…+28.6]  ortR -0.149 vs +0.071 [-0.49…+0.02]
+
+## F') Fark-içinde-fark: panel SELL (bot-yakın HARİÇ) vs aynı dönem piyasa (06-20 UTC)
+  F) C1: bot etkisi +15.3pp − piyasa etkisi +6.3pp = +9.0pp  gün-blok %95 [-6.2…+27.7]
+  F) C2: bot etkisi +12.3pp − piyasa etkisi +5.1pp = +7.3pp  gün-blok %95 [-7.6…+24.1]

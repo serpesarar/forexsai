@@ -1,0 +1,148 @@
+# IO-18 sağlamlık turu — sonuçlar (ön-kayıt: PROTOCOL.md)
+
+## A) Bot içi — NDX SELL n=237, SL %42, ort R +0.016
+  A1 tümü                            C1: n=  66/  237  SL % 59 vs % 36  fark +23.4pp [+11.7…+34.9] ✓  ortR -0.243 vs +0.115 [-0.56…-0.13]
+     kurtarılan R +16.0  gün-blok %95 [+3.7…+29.9]
+  A1 tümü                            C2: n=  44/  237  SL % 64 vs % 37  fark +26.3pp [+13.9…+39.6] ✓  ortR -0.359 vs +0.101 [-0.72…-0.23]
+     kurtarılan R +15.8  gün-blok %95 [+5.9…+27.8]
+  A2 ay ay (C1 / C2): SL% koşullu vs diğer, kurtarılan R
+     2026-06 (n=  1): C1 n= 0 SL %nan vs %  0 kurt  -0.0R · C2 n= 0 SL %nan vs %  0 kurt  -0.0R
+     2026-07 (n=185): C1 n=46 SL % 63 vs % 36 kurt +16.6R · C2 n=37 SL % 62 vs % 38 kurt +12.8R
+     2026-08 (n= 27): C1 n=12 SL % 42 vs % 40 kurt  -2.2R · C2 n= 2 SL % 50 vs % 40 kurt  -0.3R
+     2026-09 (n= 16): C1 n= 8 SL % 62 vs % 25 kurt  +1.6R · C2 n= 5 SL % 80 vs % 27 kurt  +3.3R
+     2026-10 (n=  8): C1 n= 0 SL %nan vs % 38 kurt  -0.0R · C2 n= 0 SL %nan vs % 38 kurt  -0.0R
+     ay-dışarıda (o ay çıkarılınca C1 kurtarılan R / SL farkı):
+       −2026-06: C1 +16.0R  +23.2pp · C2 +15.8R  +26.1pp
+       −2026-07: C1  -0.6R  +15.6pp · C2  +3.0R  +35.9pp
+       −2026-08: C1 +18.2R  +27.7pp · C2 +16.1R  +27.4pp
+       −2026-09: C1 +14.4R  +22.4pp · C2 +12.5R  +23.6pp
+       −2026-10: C1 +16.0R  +23.5pp · C2 +15.8R  +26.3pp
+  A3 aile:
+       VIXREG                        C1: n=  60/  206  SL % 62 vs % 36  fark +26.1pp [+16.1…+35.7] ✓  ortR -0.282 vs +0.119 [-0.59…-0.20]
+       VIXREG                        C2: n=  41/  206  SL % 66 vs % 38  fark +28.3pp [+17.4…+40.9] ✓  ortR -0.396 vs +0.101 [-0.74…-0.27]
+       diğer                         C1: n=   6/   31  SL % 33 vs % 36  fark  -2.7pp [-47.4…+41.7]  ortR +0.150 vs +0.093 [-0.70…+0.76]
+       diğer                         C2: n=3 yetersiz
+  A4 eşik platosu (kurtarılan R · SL farkı pp · n):
+     1h EMA50 altı ≥ ATR    1:  +8.4R  +13pp n127 | 1.25:  +9.5R  +14pp n116 | 1.5: +11.8R  +16pp n104 | 1.75: +16.2R  +21pp n80 | 2: +16.0R  +23pp n66 | 2.25: +13.4R  +22pp n52 | 2.5: +11.8R  +21pp n44 | 3: +10.1R  +32pp n21
+     15m EMA50 altı ≥ ATR   1:  +6.6R   +8pp n91 | 1.5:  +5.2R   +8pp n76 | 2:  +4.1R   +6pp n53 | 2.5:  +2.0R   +4pp n44 | 3:  +5.3R  +13pp n26 | 4:  +2.6R  +12pp n13
+     5m EMA50 altı ≥ ATR    1:  +3.9R   +4pp n85 | 1.5:  +3.8R   +4pp n78 | 2:  -2.9R   -4pp n61 | 3:  +1.0R   +2pp n39 | 4:  +1.0R   +3pp n20
+     1h EMA20 altı ≥ ATR    1: +13.6R  +17pp n81 | 1.5: +10.2R  +16pp n47 | 2:  +7.2R  +16pp n32 | 2.5:  +4.5R  +26pp n12
+     1h EMA200 altı ≥ ATR   1: +10.4R  +15pp n136 | 2:  +5.0R   +9pp n111 | 3: +10.9R  +15pp n74 | 4: +14.9R  +27pp n42
+     1h RSI ≤               30:  +2.3R  +12pp n15 | 33: +10.4R  +24pp n30 | 35: +15.8R  +26pp n44 | 38: +13.9R  +19pp n64 | 40: +15.2R  +19pp n78 | 45:  +2.1R   +6pp n131
+     15m RSI ≤              30:  -2.6R   -7pp n25 | 33:  +1.0R   +2pp n32 | 35:  +0.1R   -0pp n38 | 38:  -0.7R   -1pp n51 | 40:  -1.2R   -1pp n58 | 45:  +7.3R   +8pp n91
+     5m RSI ≤               30:  +0.8R   +2pp n25 | 33:  +3.2R   +6pp n36 | 35:  -1.3R   -2pp n47 | 38:  -3.3R   -5pp n62 | 40:  +0.3R   -0pp n69 | 45:  -2.0R   -2pp n91
+  A5 seçim düzeltmeli maks. istatistik (99 özellik × 2 kuyruk × 9 eşik, destek ≥25):
+     gözlenen en iyi kural +18.0R · boş dağılım (dairesel kaydırma ×1000) medyan +16.5R, %95 +22.4R → p(maks) = 0.298
+     C1'in kendi değeri +16.0R → p(C1 düzeyinde bir kural tesadüfen bulunur) = 0.573
+
+# ── Geometri G1 (birincil: fiyat×%0,373, RR 0,73)
+
+## B) Botun ENGELLENEN NDX SELL sinyalleri (G1): n=949, SL %41, ort R +0.017
+  tümü                               C1: n=  93/  949  SL % 41 vs % 41  fark  -0.4pp [-26.4…+27.0]  ortR +0.023 vs +0.017 [-0.51…+0.43]
+  tümü                               C2: n=  53/  949  SL % 23 vs % 42  fark -19.7pp [-39.9…+14.5]  ortR +0.338 vs -0.002 [-0.23…+0.66]
+  aile=CHREV                         C1: n=  14/   72  SL % 79 vs % 45  fark +33.7pp [-15.3…+61.9]  ortR -0.629 vs -0.046 [-1.05…+0.31]
+  aile=CHREV                         C2: n=1 yetersiz
+  aile=VIXREG                        C1: n=  79/  877  SL % 34 vs % 41  fark  -6.8pp [-31.4…+22.5]  ortR +0.139 vs +0.021 [-0.41…+0.54]
+  aile=VIXREG                        C2: n=  52/  877  SL % 21 vs % 42  fark -20.4pp [-40.1…+11.8]  ortR +0.364 vs +0.011 [-0.24…+0.69]
+  1. yarı                            C1: n=  59/  474  SL % 37 vs % 39  fark  -2.0pp [-39.3…+36.3]  ortR +0.085 vs +0.051 [-0.62…+0.66]
+  2. yarı                            C1: n=  34/  475  SL % 47 vs % 43  fark  +4.0pp [-34.9…+50.6]  ortR -0.084 vs -0.015 [-0.88…+0.58]
+
+## B') engelleme nedenine göre: n=949, SL %41, ort R +0.017
+  tümü                               C1: n=  93/  949  SL % 41 vs % 41  fark  -0.4pp [-26.4…+27.6]  ortR +0.023 vs +0.017 [-0.49…+0.46]
+  tümü                               C2: n=  53/  949  SL % 23 vs % 42  fark -19.7pp [-38.8…+13.5]  ortR +0.338 vs -0.002 [-0.25…+0.68]
+  reason=chrev_adx_gate              C1: n=   6/   22  SL % 50 vs % 62  fark -12.5pp [-50.6…+36.4]  ortR -0.135 vs -0.351 [-0.61…+0.83]
+  reason=chrev_adx_gate              C2: n=1 yetersiz
+  reason=entry_window_gate           C1: n=  77/  812  SL % 40 vs % 39  fark  +1.6pp [-25.4…+33.3]  ortR +0.034 vs +0.062 [-0.57…+0.46]
+  reason=entry_window_gate           C2: n=  46/  812  SL % 17 vs % 40  fark -22.7pp [-43.0…+9.1]  ortR +0.429 vs +0.037 [-0.18…+0.74]
+  reason=position_gate               C1: n=   7/   29  SL % 43 vs % 64  fark -20.8pp [-64.7…+31.9]  ortR -0.011 vs -0.371 [-0.51…+1.08]
+  reason=position_gate               C2: n=3 yetersiz
+  reason=tq_cool                     C1: n=3 yetersiz
+  reason=tq_cool                     C2: n=3 yetersiz
+  reason=trend_gate                  C1: n=0 yetersiz
+  reason=trend_gate                  C2: n=0 yetersiz
+  1. yarı                            C1: n=  59/  474  SL % 37 vs % 39  fark  -2.0pp [-36.9…+34.3]  ortR +0.085 vs +0.051 [-0.59…+0.63]
+  2. yarı                            C1: n=  34/  475  SL % 47 vs % 43  fark  +4.0pp [-31.9…+49.3]  ortR -0.084 vs -0.015 [-0.86…+0.59]
+
+## C) Panel modelleri NDX SELL (G1): n=753, SL %42, ort R +0.004
+  tümü                               C1: n= 218/  753  SL % 56 vs % 36  fark +20.3pp [+8.5…+34.2] ✓  ortR -0.246 vs +0.106 [-0.60…-0.15]
+  tümü                               C2: n= 171/  753  SL % 56 vs % 38  fark +17.6pp [+8.1…+28.9] ✓  ortR -0.231 vs +0.073 [-0.51…-0.15]
+  model=meta                         C1: n=  15/   50  SL % 53 vs % 29  fark +24.8pp [-5.3…+53.3]  ortR -0.193 vs +0.236 [-0.92…+0.13]
+  model=meta                         C2: n=  13/   50  SL % 54 vs % 30  fark +24.1pp [-9.3…+54.8]  ortR -0.202 vs +0.216 [-0.94…+0.17]
+  model=ml:main                      C1: n=  55/  178  SL % 58 vs % 41  fark +16.7pp [+1.4…+35.9] ✓  ortR -0.277 vs +0.013 [-0.63…-0.01]
+  model=ml:main                      C2: n=  41/  178  SL % 54 vs % 45  fark  +9.1pp [-9.0…+30.5]  ortR -0.198 vs -0.040 [-0.55…+0.16]
+  model=pulse1                       C1: n=  56/  199  SL % 59 vs % 36  fark +22.6pp [+7.2…+38.6] ✓  ortR -0.289 vs +0.101 [-0.66…-0.10]
+  model=pulse1                       C2: n=  46/  199  SL % 63 vs % 37  fark +26.4pp [+11.5…+41.0] ✓  ortR -0.361 vs +0.097 [-0.72…-0.19]
+  model=pulse2                       C1: n=  33/  105  SL % 55 vs % 33  fark +21.2pp [+4.0…+43.0] ✓  ortR -0.214 vs +0.153 [-0.76…-0.06]
+  model=pulse2                       C2: n=  24/  105  SL % 54 vs % 36  fark +18.4pp [+3.1…+33.0] ✓  ortR -0.207 vs +0.111 [-0.56…-0.03]
+  model=pulse3                       C1: n=  57/  177  SL % 54 vs % 33  fark +21.1pp [+6.8…+42.5] ✓  ortR -0.211 vs +0.153 [-0.71…-0.10]
+  model=pulse3                       C2: n=  46/  177  SL % 52 vs % 36  fark +16.3pp [+5.1…+33.7] ✓  ortR -0.173 vs +0.109 [-0.58…-0.10]
+  model=smc                          C1: n=2 yetersiz
+  model=smc                          C2: n=1 yetersiz
+  1. yarı                            C1: n= 120/  376  SL % 51 vs % 33  fark +18.0pp [+2.0…+39.7] ✓  ortR -0.149 vs +0.162 [-0.67…-0.04]
+  2. yarı                            C1: n=  98/  377  SL % 63 vs % 39  fark +24.2pp [+11.1…+40.3] ✓  ortR -0.364 vs +0.054 [-0.70…-0.17]
+
+## D) Decider NDX SELL kararları (G1): n=451, SL %41, ort R +0.024
+  tümü                               C1: n=  43/  451  SL % 42 vs % 41  fark  +1.2pp [-20.3…+20.0]  ortR +0.006 vs +0.026 [-0.35…+0.35]
+  tümü                               C2: n=  30/  451  SL % 37 vs % 41  fark  -4.4pp [-27.7…+26.8]  ortR +0.096 vs +0.019 [-0.49…+0.51]
+  act=OPEN                           C1: n=  30/  356  SL % 43 vs % 40  fark  +2.8pp [-30.1…+28.4]  ortR -0.020 vs +0.030 [-0.52…+0.47]
+  act=OPEN                           C2: n=  19/  356  SL % 37 vs % 41  fark  -4.1pp [-39.6…+33.5]  ortR +0.093 vs +0.022 [-0.55…+0.67]
+  act=WAIT                           C1: n=  13/   95  SL % 38 vs % 41  fark  -3.0pp [-31.3…+27.0]  ortR +0.065 vs +0.013 [-0.45…+0.57]
+  act=WAIT                           C2: n=  11/   95  SL % 36 vs % 42  fark  -5.3pp [-40.2…+49.1]  ortR +0.101 vs +0.009 [-0.84…+0.70]
+  1. yarı                            C1: n=  34/  225  SL % 44 vs % 38  fark  +6.4pp [-20.0…+27.8]  ortR -0.033 vs +0.078 [-0.46…+0.37]
+  2. yarı                            C1: n=   9/  226  SL % 33 vs % 43  fark -10.0pp [-43.9…+29.6]  ortR +0.153 vs -0.019 [-0.50…+0.73]
+
+## E) Aynı dönem sinyalsiz piyasa 06-15→10-09 (G1): n=1149, SL %41, ort R +0.028
+  tümü                               C1: n= 181/ 1149  SL % 46 vs % 40  fark  +6.3pp [-4.4…+17.7]  ortR -0.063 vs +0.046 [-0.31…+0.08]
+  tümü                               C2: n= 131/ 1149  SL % 45 vs % 40  fark  +5.1pp [-8.1…+19.1]  ortR -0.049 vs +0.038 [-0.34…+0.13]
+  1. yarı                            C1: n=  92/  574  SL % 42 vs % 39  fark  +3.0pp [-7.4…+14.3]  ortR -0.003 vs +0.048 [-0.26…+0.13]
+  2. yarı                            C1: n=  89/  575  SL % 49 vs % 40  fark  +9.7pp [-8.2…+31.5]  ortR -0.125 vs +0.043 [-0.55…+0.16]
+
+# ── Geometri G2 (yan: 0,84×ATR1h, RR 0,73)
+
+## B) Botun ENGELLENEN NDX SELL sinyalleri (G2): n=952, SL %45, ort R -0.051
+  tümü                               C1: n=  93/  952  SL % 39 vs % 46  fark  -7.2pp [-30.1…+17.6]  ortR +0.060 vs -0.064 [-0.33…+0.50]
+  tümü                               C2: n=  53/  952  SL % 21 vs % 47  fark -25.9pp [-40.6…+0.7]  ortR +0.371 vs -0.076 [+0.01…+0.71]
+  aile=CHREV                         C1: n=  14/   72  SL % 64 vs % 48  fark +16.0pp [-27.5…+46.5]  ortR -0.382 vs -0.105 [-0.81…+0.47]
+  aile=CHREV                         C2: n=1 yetersiz
+  aile=VIXREG                        C1: n=  79/  880  SL % 34 vs % 46  fark -11.5pp [-32.9…+18.1]  ortR +0.139 vs -0.060 [-0.28…+0.59]
+  aile=VIXREG                        C2: n=  52/  880  SL % 19 vs % 46  fark -27.0pp [-42.3…-0.8]  ortR +0.397 vs -0.070 [-0.01…+0.72]
+  1. yarı                            C1: n=  61/  476  SL % 38 vs % 48  fark -10.7pp [-40.0…+22.7]  ortR +0.078 vs -0.108 [-0.41…+0.74]
+  2. yarı                            C1: n=  32/  476  SL % 41 vs % 43  fark  -2.8pp [-35.6…+38.5]  ortR +0.027 vs -0.022 [-0.65…+0.62]
+
+## C) Panel modelleri NDX SELL (G2): n=756, SL %43, ort R -0.009
+  tümü                               C1: n= 218/  756  SL % 52 vs % 39  fark +13.4pp [+3.7…+24.9] ✓  ortR -0.175 vs +0.058 [-0.43…-0.06]
+  tümü                               C2: n= 171/  756  SL % 53 vs % 40  fark +12.8pp [+4.0…+22.9] ✓  ortR -0.181 vs +0.041 [-0.40…-0.07]
+  model=meta                         C1: n=  15/   50  SL % 53 vs % 31  fark +21.9pp [-5.7…+46.2]  ortR -0.193 vs +0.186 [-0.81…+0.13]
+  model=meta                         C2: n=  13/   50  SL % 54 vs % 32  fark +21.4pp [-13.8…+49.8]  ortR -0.202 vs +0.169 [-0.86…+0.23]
+  model=ml:main                      C1: n=  55/  178  SL % 49 vs % 40  fark  +9.3pp [-4.8…+26.0]  ortR -0.119 vs +0.041 [-0.46…+0.10]
+  model=ml:main                      C2: n=  41/  178  SL % 46 vs % 42  fark  +4.7pp [-11.9…+24.6]  ortR -0.072 vs +0.010 [-0.42…+0.20]
+  model=pulse1                       C1: n=  56/  199  SL % 57 vs % 40  fark +17.3pp [+1.0…+33.0] ✓  ortR -0.259 vs +0.040 [-0.57…-0.01]
+  model=pulse1                       C2: n=  46/  199  SL % 61 vs % 40  fark +21.0pp [+5.8…+35.2] ✓  ortR -0.323 vs +0.040 [-0.60…-0.11]
+  model=pulse2                       C1: n=  33/  105  SL % 52 vs % 39  fark +12.6pp [-3.3…+31.2]  ortR -0.161 vs +0.057 [-0.53…+0.05]
+  model=pulse2                       C2: n=  24/  105  SL % 50 vs % 41  fark  +9.3pp [-5.3…+25.5]  ortR -0.135 vs +0.025 [-0.43…+0.10]
+  model=pulse3                       C1: n=  57/  180  SL % 51 vs % 38  fark +12.7pp [-2.3…+32.6]  ortR -0.150 vs +0.069 [-0.56…+0.04]
+  model=pulse3                       C2: n=  46/  180  SL % 52 vs % 39  fark +13.4pp [+1.9…+30.3] ✓  ortR -0.173 vs +0.059 [-0.52…-0.03]
+  model=smc                          C1: n=2 yetersiz
+  model=smc                          C2: n=1 yetersiz
+  1. yarı                            C1: n= 122/  378  SL % 48 vs % 35  fark +13.2pp [-1.5…+34.0]  ortR -0.107 vs +0.122 [-0.59…+0.03]
+  2. yarı                            C1: n=  96/  378  SL % 57 vs % 42  fark +15.1pp [+2.3…+30.2] ✓  ortR -0.261 vs -0.000 [-0.51…-0.04]
+
+## D) Decider NDX SELL kararları (G2): n=451, SL %40, ort R +0.032
+  tümü                               C1: n=  43/  451  SL % 44 vs % 40  fark  +4.2pp [-17.9…+23.1]  ortR -0.034 vs +0.039 [-0.40…+0.31]
+  tümü                               C2: n=  30/  451  SL % 37 vs % 41  fark  -4.0pp [-26.7…+27.6]  ortR +0.096 vs +0.027 [-0.50…+0.48]
+  act=OPEN                           C1: n=  30/  356  SL % 47 vs % 41  fark  +5.9pp [-25.0…+30.7]  ortR -0.077 vs +0.024 [-0.55…+0.43]
+  act=OPEN                           C2: n=  19/  356  SL % 37 vs % 42  fark  -4.7pp [-34.9…+32.8]  ortR +0.093 vs +0.011 [-0.56…+0.63]
+  act=WAIT                           C1: n=  13/   95  SL % 38 vs % 37  fark  +1.9pp [-32.4…+32.3]  ortR +0.065 vs +0.097 [-0.57…+0.54]
+  act=WAIT                           C2: n=  11/   95  SL % 36 vs % 37  fark  -0.5pp [-37.1…+52.2]  ortR +0.101 vs +0.092 [-0.92…+0.63]
+  1. yarı                            C1: n=  34/  225  SL % 47 vs % 41  fark  +6.2pp [-22.2…+28.2]  ortR -0.084 vs +0.024 [-0.53…+0.42]
+  2. yarı                            C1: n=   9/  226  SL % 33 vs % 39  fark  -5.8pp [-40.2…+29.6]  ortR +0.153 vs +0.052 [-0.52…+0.72]
+
+## E) Aynı dönem sinyalsiz piyasa 06-15→10-09 (G2): n=1152, SL %42, ort R +0.011
+  tümü                               C1: n= 181/ 1152  SL % 45 vs % 41  fark  +4.4pp [-6.6…+16.8]  ortR -0.054 vs +0.023 [-0.27…+0.11]
+  tümü                               C2: n= 131/ 1152  SL % 42 vs % 42  fark  +0.5pp [-11.7…+13.1]  ortR +0.004 vs +0.012 [-0.22…+0.19]
+  1. yarı                            C1: n=  92/  576  SL % 45 vs % 41  fark  +3.2pp [-8.6…+17.7]  ortR -0.041 vs +0.015 [-0.29…+0.14]
+  2. yarı                            C1: n=  89/  576  SL % 46 vs % 40  fark  +5.6pp [-11.3…+26.4]  ortR -0.067 vs +0.030 [-0.45…+0.21]
+
+## F) Fark-içinde-fark (bot gerçek işlemleri vs aynı dönem piyasa G1)
+  F) C1: bot etkisi +23.4pp − piyasa etkisi +6.3pp = +17.1pp  gün-blok %95 [+3.0…+31.3] ✓
+  F) C2: bot etkisi +26.3pp − piyasa etkisi +5.1pp = +21.3pp  gün-blok %95 [+5.3…+36.3] ✓
