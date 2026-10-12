@@ -1,0 +1,51 @@
+{
+ "scope": "xau_1h_yeni_tepe_buy",
+ "tarih": "2026-10-10T14:40:14",
+ "olay": 1563,
+ "ort_R": 0.324,
+ "taban_rastgele_buy": 0.16,
+ "toplam_R": 506.8,
+ "en_iyi_5_gun_haric": 420.2,
+ "bootstrap_P": 0.999,
+ "checks": {
+  "1_hacim": {
+   "deger": "1563",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "ortR +0.324 P %99.9",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "+0.193/+0.455",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "spread×1,5 +0.285",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "kapanış-girişi +0.404 vs gerçek +0.324",
+   "gecti": true
+  },
+  "6_tek_poz": {
+   "deger": "zaten tek pozisyon",
+   "gecti": true
+  }
+ },
+ "yillar": {
+  "2016": 0.373,
+  "2017": 0.603,
+  "2018": -0.423,
+  "2019": 0.161,
+  "2020": 0.68,
+  "2021": 0.044,
+  "2022": -0.009,
+  "2023": 0.357,
+  "2024": 0.62,
+  "2025": 0.866,
+  "2026": 0.187
+ },
+ "verdikt": "LIVE",
+ "uyari": "kural XAU'da post-hoc seçildi (MOM-H genel sınavı geçmedi); XAU intraday botta kapalı (BLOCKED_SYMBOLS)"
+}

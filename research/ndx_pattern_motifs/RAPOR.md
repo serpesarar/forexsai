@@ -154,6 +154,31 @@ M1 %0,01 eski çekirdekle kaldı. Pay başına süre M1 ~2–15 dk (%0,02 en yav
   mumlar uygun → ABD seansı). Önceki "M15 %69 Asya" sayısı dar paylardandı.
 - n ≥ 30 olan 1.063 motifte ileri 10 mum yön farkı TF ortalaması 0 ile −1,5 puan.
 
+### 7. Modeller İŞLEM olarak — ATR TP/SL ızgarası (`trade_eval.py`, `trade_eval_null*.py`, 2026-10-09)
+
+Ön kayıt (docstring): ≥30 tekrarlı 1.063 model; giriş = model sonrası ilk mum açılışı, ATR14 (önceki 14 mum),
+TP {0,5 1 1,5 2 3}×ATR × SL {0,5 1 1,5 2}×ATR × BUY/SELL, en çok 60 mum, aynı mumda ikisi → SL, 1,5 puan spread.
+Her modelde tekrarların ilk yarısında en iyi (yön, TP, SL) seçilir, ikinci yarıda ölçülür.
+
+| TF | model | seçim yarısı ortR | sınama ortR | sınamada pozitif | plasebo sınama |
+|---|---|---|---|---|---|
+| M30 | 128 | +0,305 | −0,027 | %47 | −0,013 |
+| M15 | 250 | +0,257 | −0,073 | %38 | +0,013 |
+| M5 | 305 | +0,252 | −0,042 | %39 | −0,062 |
+| M1 | 380 | +0,173 | −0,084 | %29 | −0,134 |
+
+Tüm sınama işlemleri: 143.177 işlem, −0,062R. Havuzda en iyi sabit geometri ≈ 0 (M30/M15 BUY TP2–3/SL1,5–2 +0,006R = NDX sürüklenmesi).
+
+**Seçimde en iyi K model (ön kayıt K=20, 50) → sınama:** K=20 +0,209R; rastgele-zaman plasebosu (30 tekrar) en iyi
++0,123 (p<0,04); **oynaklık-eşli plasebo** (aynı uygunluk maskesinden rastgele giriş) en iyi +0,109 (p<0,04).
+K=50 +0,019R, plasebo p=0,10 / 0,17 → **K'ya duyarlı**. Top-20: 15'i TP3/SL0,5 (piyango geometrisi), 14 SELL;
+TF dağılımı M1 7, M15 5, M5 5, M30 3.
+Top-20 portföy kartı (sınama yarıları): 534 işlem (2024-08 → 2026-10), WR %21,2, ortR +0,197, P(EV>0) %95,9
+(CI −0,022…+0,415), yarılar +0,068/+0,326, spread×1,5 +0,141, tek pozisyon (60 mum meşgul) 301 işlem +0,148 → ölçütler
+sayısal olarak geçiyor. **Ama:** 258 günün en kârlı 5'i çıkınca +105 → +47,6R, en kârlı 10'u çıkınca +3,2R;
+mekanizma yok (veri madenciliği, 1.063 × 40 yapılandırmadan seçim); K=50'de kaybolur; 20 ayrı model dedektörü gerekir.
+Sınıf: **C+ aday — yalnız ileri gölge**, canlıya alma önerilmez.
+
 ## Dosyalar
 
 - `build_bars.py` — 4 TF bar seti (`data/bars_<tf>.parquet`, gitignore'da)
