@@ -1,4 +1,6 @@
-"""xau_shadow.py (canlı mantık) ↔ xau_card_sl.py (araştırma) sadakat testi — XAU 1h, 2016 → 2026-09-02."""
+"""xau_shadow.py (canlı mantık) ↔ xau_card_sl.py (araştırma) sadakat testi — XAU 1h, 2016 → 2026-09-02.
+⚠️ ESKİ: 2026-10-16'da xau_shadow mekanik R0B_G1 tanımına geçti (atr_before/is_signal/resolve API'si kalktı) →
+bu betik artık çalışmaz; güncel parite: research/xau_best_days_20261015/golge_parite/parity.py"""
 import sys, importlib.util as u
 from pathlib import Path
 import numpy as np, pandas as pd

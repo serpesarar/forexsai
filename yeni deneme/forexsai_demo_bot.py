@@ -2566,10 +2566,11 @@ def main():
 
             # ── XAU 1h "yeni 20-mum tepesinde BUY" GÖLGE (SL 1,5×ATR, 20 bar) — EMİR YOK. Amaç: gerçek dolum
             #    farkını ölçmek (kart icra ölçütü ✗). Kanıt: research/pinbar_20261010 (MK-03/04). Kapatma:
-            #    config.XAU_SHADOW_ENABLED = False. Çıktı: xau_shadow.jsonl
+            #    config.XAU_SHADOW_ENABLED = False. Çıktı: xau_shadow.jsonl. 2026-10-16: mekanik R0B_G1 tanımına
+            #    hizalandı + S2 (önceki gün >%1 atla, MK-12) filtreli varyant yan yana (XAU_SHADOW_S2_ENABLED/_THR).
             if xau_shadow is not None and getattr(config, "XAU_SHADOW_ENABLED", True):
                 try:
-                    xau_shadow.poll(mt5, log, resolve_symbol, _daycombo_offset)
+                    xau_shadow.poll(mt5, log, resolve_symbol, _daycombo_offset, get_vix=get_vix, config=config)
                 except Exception as e:
                     log.warning("xau gölge hatası: %s", e)
 
