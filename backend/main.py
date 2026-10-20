@@ -649,6 +649,7 @@ router_module_names = [
     "patterns_router",
     "fakeout_router",
     "shadow_tracker_router",
+    "candle_similarity_router",
 ]
 
 for module_name in router_module_names:

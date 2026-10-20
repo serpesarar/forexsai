@@ -44,6 +44,10 @@ try:                                    # XAU 1h yeni-tepe BUY GÖLGE (MK-04) �
     import xau_shadow
 except Exception:                       # pragma: no cover
     xau_shadow = None
+try:                                    # XAU günlük swing (Golden Donchian) GÖLGE — emir göndermez
+    import xau_swing_shadow
+except Exception:                       # pragma: no cover
+    xau_swing_shadow = None
 try:                                    # CAPREV portföyü CANLI (kart 6/6, 2026-10-09) — import hatası botu durdurmaz
     import caprev_live
 except Exception:                       # pragma: no cover
@@ -2428,7 +2432,7 @@ def main():
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
                    ("DAYCOMBO_SL", 110.0),
-                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("XAU_SHADOW_ENABLED", True),
+                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
                    ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
                    ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
                    ("USOIL_BREAKOUT_SL_ATR", 1.0),
@@ -2573,6 +2577,16 @@ def main():
                     xau_shadow.poll(mt5, log, resolve_symbol, _daycombo_offset, get_vix=get_vix, config=config)
                 except Exception as e:
                     log.warning("xau gölge hatası: %s", e)
+
+            # ── XAU GÜNLÜK SWING "Golden Donchian" GÖLGE (D1 55-gün tepesi + EMA200, SL 2×ATR / TP 4×ATR / 20 gün)
+            #    — EMİR YOK. Kanıt: xau_swing_research + XS-01 (research/xau_swing_oos_20261020, 2008-21 bağımsız
+            #    +0,39R vs taban +0,15, P %98); 18 yılda 86 işlem → kart hacmi (≥150) geçilemez → gölge.
+            #    Kapatma: config.XAU_SWING_SHADOW_ENABLED = False. Çıktı: xau_swing_shadow.jsonl.
+            if xau_swing_shadow is not None and getattr(config, "XAU_SWING_SHADOW_ENABLED", True):
+                try:
+                    xau_swing_shadow.poll(mt5, log, resolve_symbol)
+                except Exception as e:
+                    log.warning("xau swing gölge hatası: %s", e)
 
             # ── USOIL BREAKOUT-DEVAM: Donchian(48×5m) kırılımı + EMA200 trend
             #    hizası (AYRI magic+5; 2026-08-06 araştırması, TEST %62.7 n=185) ──

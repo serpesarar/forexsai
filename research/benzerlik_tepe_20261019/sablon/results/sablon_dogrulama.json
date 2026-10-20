@@ -1,0 +1,464 @@
+{
+ "birincil": {
+  "sablon_aralik_bar": {
+   "T1": [
+    "2026-07-06 00:00:00+00:00",
+    "2026-07-21 23:00:00+00:00",
+    276
+   ],
+   "T2": [
+    "2026-07-17 00:00:00+00:00",
+    "2026-07-29 23:00:00+00:00",
+    207
+   ],
+   "T3": [
+    "2026-08-13 00:00:00+00:00",
+    "2026-08-20 23:00:00+00:00",
+    138
+   ]
+  },
+  "pencere_uzunluklari": [
+   166,
+   207,
+   248
+  ],
+  "gelistirme_sorgu_gunu": 2357,
+  "birlesik_esik_%2": 3.633,
+  "birlesik_esik_%5": 4.139,
+  "esik_%2_r": 0.897,
+  "esik_%5_r": 0.866,
+  "ciftler": [
+   {
+    "cift": "T1-T2",
+    "d_tam_aralik": 6.404,
+    "r": 0.68,
+    "yuzdelik_%_T1_dagiliminda": 7.25,
+    "yuzdelik_%_T2_dagiliminda": 17.95,
+    "yuzdelik_%_T1_tum_pencereler": 3.17,
+    "dedektor_T2_sonunda_T1_ile": {
+     "D": 6.183,
+     "r": 0.701,
+     "yuzdelik_%": 5.6
+    },
+    "dedektor_T1_sonunda_T2_ile": {
+     "D": 6.569,
+     "r": 0.663,
+     "yuzdelik_%": 19.13
+    }
+   },
+   {
+    "cift": "T1-T3",
+    "d_tam_aralik": 8.44,
+    "r": 0.444,
+    "yuzdelik_%_T1_dagiliminda": 24.27,
+    "yuzdelik_%_T3_dagiliminda": 31.69,
+    "yuzdelik_%_T1_tum_pencereler": 16.41,
+    "dedektor_T3_sonunda_T1_ile": {
+     "D": 6.517,
+     "r": 0.668,
+     "yuzdelik_%": 8.27
+    },
+    "dedektor_T1_sonunda_T3_ile": {
+     "D": 5.806,
+     "r": 0.737,
+     "yuzdelik_%": 14.59
+    }
+   },
+   {
+    "cift": "T2-T3",
+    "d_tam_aralik": 4.071,
+    "r": 0.871,
+    "yuzdelik_%_T2_dagiliminda": 2.76,
+    "yuzdelik_%_T3_dagiliminda": 2.84,
+    "yuzdelik_%_T2_tum_pencereler": 1.19,
+    "dedektor_T3_sonunda_T2_ile": {
+     "D": 5.326,
+     "r": 0.778,
+     "yuzdelik_%": 10.56
+    },
+    "dedektor_T2_sonunda_T3_ile": {
+     "D": 4.071,
+     "r": 0.871,
+     "yuzdelik_%": 2.84
+    }
+   }
+  ],
+  "kendisi_haric_digerleriyle": {
+   "T1": {
+    "D": 5.806,
+    "r": 0.737,
+    "yuzdelik_%": 16.97
+   },
+   "T2": {
+    "D": 4.071,
+    "r": 0.871,
+    "yuzdelik_%": 2.89
+   },
+   "T3": {
+    "D": 5.326,
+    "r": 0.778,
+    "yuzdelik_%": 11.24
+   }
+  },
+  "sablon_basina_D_dagilimi": {
+   "T1": {
+    "p1": 5.21,
+    "p2": 5.569,
+    "p5": 6.089,
+    "p25": 8.509,
+    "p50": 11.589
+   },
+   "T2": {
+    "p1": 3.583,
+    "p2": 3.879,
+    "p5": 4.482,
+    "p25": 7.641,
+    "p50": 11.755
+   },
+   "T3": {
+    "p1": 3.604,
+    "p2": 3.91,
+    "p5": 4.486,
+    "p25": 7.365,
+    "p50": 11.576
+   }
+  },
+  "ozellikler": {
+   "T1": {
+    "baslangic": "2026-07-06 00:00:00+00:00",
+    "bitis": "2026-07-21 23:00:00+00:00",
+    "bar": 276,
+    "islem_gunu": 14,
+    "net_%": -1.9144348997810368,
+    "aralik_%": 5.833537166820868,
+    "aralik_/_onceki_gunluk_aralik": 2.5925483619277387,
+    "tepe_konum": 0.610909090909091,
+    "dip_konum": 0.8,
+    "maks_dusus_%": -4.720841614188675,
+    "1s_oynaklik_bp": 24.87796162325222,
+    "onceki_20g_tepeye_uzaklik_%": -2.688105451179279,
+    "zigzag_0.5%_bacak": 24,
+    "zigzag_0.5%_tepeler_%": [
+     0.5,
+     -1.19,
+     -1.26,
+     -1.85,
+     0.2,
+     0.52,
+     0.47,
+     -0.49,
+     -3.06,
+     -2.7,
+     -2.77
+    ],
+    "zigzag_1.0%_bacak": 10,
+    "zigzag_1.0%_tepeler_%": [
+     0.5,
+     0.52,
+     0.47,
+     -2.7
+    ]
+   },
+   "T2": {
+    "baslangic": "2026-07-17 00:00:00+00:00",
+    "bitis": "2026-07-29 23:00:00+00:00",
+    "bar": 207,
+    "islem_gunu": 11,
+    "net_%": -5.15954423852627,
+    "aralik_%": 7.865804066543447,
+    "aralik_/_onceki_gunluk_aralik": 3.9483431642348927,
+    "tepe_konum": 0.3058252427184466,
+    "dip_konum": 0.9902912621359223,
+    "maks_dusus_%": -6.978498938494415,
+    "1s_oynaklik_bp": 38.03555265951427,
+    "onceki_20g_tepeye_uzaklik_%": -4.895435403329895,
+    "zigzag_0.5%_bacak": 32,
+    "zigzag_0.5%_tepeler_%": [
+     -0.28,
+     0.09,
+     0.02,
+     1.04,
+     1.01,
+     0.77,
+     -1.01,
+     -1.15,
+     -1.58,
+     -0.95,
+     -2.85,
+     -3.33,
+     -3.16,
+     -3.45,
+     -3.32
+    ],
+    "zigzag_1.0%_bacak": 17,
+    "zigzag_1.0%_tepeler_%": [
+     0.09,
+     1.04,
+     1.01,
+     -0.95,
+     -3.33,
+     -3.16,
+     -3.45,
+     -3.32
+    ]
+   },
+   "T3": {
+    "baslangic": "2026-08-13 00:00:00+00:00",
+    "bitis": "2026-08-20 23:00:00+00:00",
+    "bar": 138,
+    "islem_gunu": 7,
+    "net_%": -1.7915325875339283,
+    "aralik_%": 3.882428097459112,
+    "aralik_/_onceki_gunluk_aralik": 2.001728805286907,
+    "tepe_konum": 0.40875912408759124,
+    "dip_konum": 0.9708029197080292,
+    "maks_dusus_%": -3.5555981899494604,
+    "1s_oynaklik_bp": 20.04685496147162,
+    "onceki_20g_tepeye_uzaklik_%": 1.024399205063542,
+    "zigzag_0.5%_bacak": 8,
+    "zigzag_0.5%_tepeler_%": [
+     1.43,
+     1.65,
+     -0.28,
+     -0.52
+    ],
+    "zigzag_1.0%_bacak": 2,
+    "zigzag_1.0%_tepeler_%": [
+     1.65
+    ]
+   }
+  }
+ },
+ "alternatif_gorsel": {
+  "sablon_aralik_bar": {
+   "T1": [
+    "2026-07-07 07:00:00+00:00",
+    "2026-07-21 15:00:00+00:00",
+    239
+   ],
+   "T2": [
+    "2026-07-16 12:00:00+00:00",
+    "2026-07-29 23:00:00+00:00",
+    218
+   ],
+   "T3": [
+    "2026-08-11 08:00:00+00:00",
+    "2026-08-20 06:00:00+00:00",
+    160
+   ]
+  },
+  "pencere_uzunluklari": [
+   174,
+   218,
+   262
+  ],
+  "gelistirme_sorgu_gunu": 2356,
+  "birlesik_esik_%2": 3.927,
+  "birlesik_esik_%5": 4.447,
+  "esik_%2_r": 0.88,
+  "esik_%5_r": 0.846,
+  "ciftler": [
+   {
+    "cift": "T1-T2",
+    "d_tam_aralik": 6.5,
+    "r": 0.67,
+    "yuzdelik_%_T1_dagiliminda": 8.87,
+    "yuzdelik_%_T2_dagiliminda": 17.53,
+    "yuzdelik_%_T1_tum_pencereler": 4.0,
+    "dedektor_T2_sonunda_T1_ile": {
+     "D": 6.5,
+     "r": 0.67,
+     "yuzdelik_%": 8.87
+    },
+    "dedektor_T1_sonunda_T2_ile": {
+     "D": 5.836,
+     "r": 0.734,
+     "yuzdelik_%": 13.54
+    }
+   },
+   {
+    "cift": "T1-T3",
+    "d_tam_aralik": 5.339,
+    "r": 0.777,
+    "yuzdelik_%_T1_dagiliminda": 1.91,
+    "yuzdelik_%_T3_dagiliminda": 3.31,
+    "yuzdelik_%_T1_tum_pencereler": 0.68,
+    "dedektor_T3_sonunda_T1_ile": {
+     "D": 6.54,
+     "r": 0.666,
+     "yuzdelik_%": 9.17
+    },
+    "dedektor_T1_sonunda_T3_ile": {
+     "D": 6.347,
+     "r": 0.685,
+     "yuzdelik_%": 7.98
+    }
+   },
+   {
+    "cift": "T2-T3",
+    "d_tam_aralik": 7.272,
+    "r": 0.587,
+    "yuzdelik_%_T2_dagiliminda": 21.48,
+    "yuzdelik_%_T3_dagiliminda": 15.28,
+    "yuzdelik_%_T2_tum_pencereler": 15.79,
+    "dedektor_T3_sonunda_T2_ile": {
+     "D": 8.053,
+     "r": 0.493,
+     "yuzdelik_%": 26.15
+    },
+    "dedektor_T2_sonunda_T3_ile": {
+     "D": 7.272,
+     "r": 0.587,
+     "yuzdelik_%": 15.28
+    }
+   }
+  ],
+  "kendisi_haric_digerleriyle": {
+   "T1": {
+    "D": 5.836,
+    "r": 0.734,
+    "yuzdelik_%": 16.77
+   },
+   "T2": {
+    "D": 6.5,
+    "r": 0.67,
+    "yuzdelik_%": 12.78
+   },
+   "T3": {
+    "D": 6.54,
+    "r": 0.666,
+    "yuzdelik_%": 19.52
+   }
+  },
+  "sablon_basina_D_dagilimi": {
+   "T1": {
+    "p1": 4.964,
+    "p2": 5.356,
+    "p5": 5.919,
+    "p25": 8.42,
+    "p50": 11.328
+   },
+   "T2": {
+    "p1": 3.696,
+    "p2": 3.987,
+    "p5": 4.589,
+    "p25": 7.865,
+    "p50": 11.988
+   },
+   "T3": {
+    "p1": 4.633,
+    "p2": 5.101,
+    "p5": 5.732,
+    "p25": 8.366,
+    "p50": 10.493
+   }
+  },
+  "ozellikler": {
+   "T1": {
+    "baslangic": "2026-07-07 07:00:00+00:00",
+    "bitis": "2026-07-21 15:00:00+00:00",
+    "bar": 239,
+    "islem_gunu": 13,
+    "net_%": -1.1387360675693015,
+    "aralik_%": 5.833537166820868,
+    "aralik_/_onceki_gunluk_aralik": 2.9650443940934506,
+    "tepe_konum": 0.5798319327731093,
+    "dip_konum": 0.7983193277310925,
+    "maks_dusus_%": -4.720841614188675,
+    "1s_oynaklik_bp": 25.776908915430397,
+    "onceki_20g_tepeye_uzaklik_%": -2.688105451179279,
+    "zigzag_0.5%_bacak": 23,
+    "zigzag_0.5%_tepeler_%": [
+     0.06,
+     -0.27,
+     -0.34,
+     -0.93,
+     1.14,
+     1.46,
+     1.41,
+     0.44,
+     -2.16,
+     -1.79,
+     -1.86
+    ],
+    "zigzag_1.0%_bacak": 9,
+    "zigzag_1.0%_tepeler_%": [
+     0.06,
+     1.46,
+     1.41,
+     -1.79
+    ]
+   },
+   "T2": {
+    "baslangic": "2026-07-16 12:00:00+00:00",
+    "bitis": "2026-07-29 23:00:00+00:00",
+    "bar": 218,
+    "islem_gunu": 12,
+    "net_%": -6.236981307898926,
+    "aralik_%": 8.416266173752307,
+    "aralik_/_onceki_gunluk_aralik": 4.315268357099703,
+    "tepe_konum": 0.004608294930875576,
+    "dip_konum": 0.9907834101382489,
+    "maks_dusus_%": -7.216847521175707,
+    "1s_oynaklik_bp": 37.2485125685378,
+    "onceki_20g_tepeye_uzaklik_%": -4.410096611429093,
+    "zigzag_0.5%_bacak": 33,
+    "zigzag_0.5%_tepeler_%": [
+     0.15,
+     -1.42,
+     -1.04,
+     -1.12,
+     -0.11,
+     -0.14,
+     -0.38,
+     -2.14,
+     -2.27,
+     -2.7,
+     -2.08,
+     -3.95,
+     -4.43,
+     -4.26,
+     -4.55,
+     -4.42
+    ],
+    "zigzag_1.0%_bacak": 18,
+    "zigzag_1.0%_tepeler_%": [
+     0.15,
+     -1.04,
+     -0.11,
+     -0.14,
+     -2.08,
+     -4.43,
+     -4.26,
+     -4.55,
+     -4.42
+    ]
+   },
+   "T3": {
+    "baslangic": "2026-08-11 08:00:00+00:00",
+    "bitis": "2026-08-20 06:00:00+00:00",
+    "bar": 160,
+    "islem_gunu": 9,
+    "net_%": -0.16905400617501787,
+    "aralik_%": 3.2617750283365554,
+    "aralik_/_onceki_gunluk_aralik": 1.6886154112687504,
+    "tepe_konum": 0.5911949685534591,
+    "dip_konum": 0.9056603773584906,
+    "maks_dusus_%": -2.8473894519569165,
+    "1s_oynaklik_bp": 18.068837656639236,
+    "onceki_20g_tepeye_uzaklik_%": 1.024399205063542,
+    "zigzag_0.5%_bacak": 9,
+    "zigzag_0.5%_tepeler_%": [
+     0.28,
+     1.78,
+     2.01,
+     0.07
+    ],
+    "zigzag_1.0%_bacak": 3,
+    "zigzag_1.0%_tepeler_%": [
+     2.01
+    ]
+   }
+  }
+ }
+}

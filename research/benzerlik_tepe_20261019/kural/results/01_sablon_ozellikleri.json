@@ -1,0 +1,1715 @@
+{
+ "sorgu_saat_utc": 20,
+ "veri_son_bar": "2026-10-02 04:00:00+00:00",
+ "sablon_gunleri": {
+  "T1_kullanici": {
+   "gun_sayisi": 12,
+   "ilk": "2026-07-06",
+   "son": "2026-07-21",
+   "son5_en_dusuk_kapanis_gunu": "2026-07-17",
+   "kapanislar": [
+    29711.6,
+    29181.8,
+    29167.2,
+    29701.5,
+    29837.9,
+    29216.7,
+    29588.1,
+    29508.3,
+    28971.3,
+    28565.7,
+    28592.3,
+    29100.9
+   ]
+  },
+  "T1_incel": {
+   "gun_sayisi": 10,
+   "ilk": "2026-07-06",
+   "son": "2026-07-17",
+   "son5_en_dusuk_kapanis_gunu": "2026-07-17",
+   "kapanislar": [
+    29711.6,
+    29181.8,
+    29167.2,
+    29701.5,
+    29837.9,
+    29216.7,
+    29588.1,
+    29508.3,
+    28971.3,
+    28565.7
+   ]
+  },
+  "T2": {
+   "gun_sayisi": 9,
+   "ilk": "2026-07-17",
+   "son": "2026-07-29",
+   "son5_en_dusuk_kapanis_gunu": "2026-07-29",
+   "kapanislar": [
+    28565.7,
+    28592.3,
+    29100.9,
+    29000.1,
+    28564.3,
+    28135.2,
+    28035.4,
+    27795.6,
+    27122.0
+   ]
+  },
+  "T3": {
+   "gun_sayisi": 6,
+   "ilk": "2026-08-13",
+   "son": "2026-08-20",
+   "son5_en_dusuk_kapanis_gunu": "2026-08-20",
+   "kapanislar": [
+    30108.6,
+    30040.1,
+    29977.1,
+    29472.0,
+    29469.9,
+    29219.2
+   ]
+  }
+ },
+ "kendi_penceresi": {
+  "T1_kullanici": {
+   "W_kendi": 12,
+   "net": -0.0069,
+   "net_s": -0.6832,
+   "eff": 0.0132,
+   "rv_ratio": 1.0387,
+   "pos": 0.5488,
+   "rng_s": 5.6248,
+   "dist60_s": -3.0155,
+   "dist20_s": -1.8479,
+   "dist60_pct": -2.9939,
+   "dist20_pct": -1.8454,
+   "dd60_s": -5.5532,
+   "swings": 9.0,
+   "lh": 2.0,
+   "pull_s": 4.7976,
+   "sref": 0.0101
+  },
+  "T1_incel": {
+   "W_kendi": 10,
+   "net": -0.0254,
+   "net_s": -2.5248,
+   "eff": 0.0572,
+   "rv_ratio": 1.0675,
+   "pos": 0.2214,
+   "rng_s": 5.6248,
+   "dist60_s": -3.0155,
+   "dist20_s": -2.7033,
+   "dist60_pct": -2.9939,
+   "dist20_pct": -2.6881,
+   "dd60_s": -7.3948,
+   "swings": 7.0,
+   "lh": 1.0,
+   "pull_s": 4.7976,
+   "sref": 0.0101
+  },
+  "T2": {
+   "W_kendi": 9,
+   "net": -0.066,
+   "net_s": -5.9687,
+   "eff": 0.1284,
+   "rv_ratio": 1.5948,
+   "pos": 0.0351,
+   "rng_s": 6.8517,
+   "dist60_s": -4.8267,
+   "dist20_s": -3.3998,
+   "dist60_pct": -5.1943,
+   "dist20_pct": -3.6874,
+   "dd60_s": -11.4379,
+   "swings": 11.0,
+   "lh": 4.0,
+   "pull_s": 6.546,
+   "sref": 0.0111
+  },
+  "T3": {
+   "W_kendi": 6,
+   "net": -0.0163,
+   "net_s": -1.5398,
+   "eff": 0.0916,
+   "rv_ratio": 0.8402,
+   "pos": 0.0931,
+   "rng_s": 3.5927,
+   "dist60_s": -1.6388,
+   "dist20_s": 0.0,
+   "dist60_pct": -1.7224,
+   "dist20_pct": 0.0,
+   "dd60_s": -4.8972,
+   "swings": 2.0,
+   "lh": 0.0,
+   "pull_s": 3.4148,
+   "sref": 0.0106
+  }
+ },
+ "sondaki_W_penceresi": {
+  "W=6": {
+   "sablonlar": {
+    "T1_kullanici": {
+     "net": {
+      "deger": -0.004,
+      "gelistirme_yuzdeligi": 34.1
+     },
+     "net_s": {
+      "deger": -0.394,
+      "gelistirme_yuzdeligi": 34.0
+     },
+     "eff": {
+      "deger": 0.0171,
+      "gelistirme_yuzdeligi": 8.9
+     },
+     "rv_ratio": {
+      "deger": 0.9758,
+      "gelistirme_yuzdeligi": 46.9
+     },
+     "pos": {
+      "deger": 0.5488,
+      "gelistirme_yuzdeligi": 38.8
+     },
+     "rng_s": {
+      "deger": 5.6248,
+      "gelistirme_yuzdeligi": 73.9
+     },
+     "dist60_s": {
+      "deger": -3.0155,
+      "gelistirme_yuzdeligi": 28.7
+     },
+     "dist20_s": {
+      "deger": -1.8479,
+      "gelistirme_yuzdeligi": 22.2
+     },
+     "dist60_pct": {
+      "deger": -2.9939,
+      "gelistirme_yuzdeligi": 30.3
+     },
+     "dist20_pct": {
+      "deger": -1.8454,
+      "gelistirme_yuzdeligi": 22.8
+     },
+     "dd60_s": {
+      "deger": -5.5532,
+      "gelistirme_yuzdeligi": 28.2
+     },
+     "swings": {
+      "deger": 5.0,
+      "gelistirme_yuzdeligi": 70.0
+     },
+     "lh": {
+      "deger": 1.0,
+      "gelistirme_yuzdeligi": 82.8
+     },
+     "pull_s": {
+      "deger": 4.7507,
+      "gelistirme_yuzdeligi": 80.6
+     },
+     "sref": {
+      "deger": 0.0101,
+      "gelistirme_yuzdeligi": 45.8
+     }
+    },
+    "T1_incel": {
+     "net": {
+      "deger": -0.039,
+      "gelistirme_yuzdeligi": 8.7
+     },
+     "net_s": {
+      "deger": -3.8682,
+      "gelistirme_yuzdeligi": 8.3
+     },
+     "eff": {
+      "deger": 0.1724,
+      "gelistirme_yuzdeligi": 80.6
+     },
+     "rv_ratio": {
+      "deger": 0.9477,
+      "gelistirme_yuzdeligi": 44.1
+     },
+     "pos": {
+      "deger": 0.2214,
+      "gelistirme_yuzdeligi": 14.8
+     },
+     "rng_s": {
+      "deger": 5.6248,
+      "gelistirme_yuzdeligi": 73.9
+     },
+     "dist60_s": {
+      "deger": -3.0155,
+      "gelistirme_yuzdeligi": 28.7
+     },
+     "dist20_s": {
+      "deger": -2.7033,
+      "gelistirme_yuzdeligi": 16.9
+     },
+     "dist60_pct": {
+      "deger": -2.9939,
+      "gelistirme_yuzdeligi": 30.3
+     },
+     "dist20_pct": {
+      "deger": -2.6881,
+      "gelistirme_yuzdeligi": 17.9
+     },
+     "dd60_s": {
+      "deger": -7.3948,
+      "gelistirme_yuzdeligi": 20.4
+     },
+     "swings": {
+      "deger": 4.0,
+      "gelistirme_yuzdeligi": 60.5
+     },
+     "lh": {
+      "deger": 1.0,
+      "gelistirme_yuzdeligi": 82.8
+     },
+     "pull_s": {
+      "deger": 4.7976,
+      "gelistirme_yuzdeligi": 81.1
+     },
+     "sref": {
+      "deger": 0.0101,
+      "gelistirme_yuzdeligi": 45.8
+     }
+    },
+    "T2": {
+     "net": {
+      "deger": -0.0704,
+      "gelistirme_yuzdeligi": 2.2
+     },
+     "net_s": {
+      "deger": -6.3726,
+      "gelistirme_yuzdeligi": 3.2
+     },
+     "eff": {
+      "deger": 0.1811,
+      "gelistirme_yuzdeligi": 82.6
+     },
+     "rv_ratio": {
+      "deger": 1.8544,
+      "gelistirme_yuzdeligi": 88.7
+     },
+     "pos": {
+      "deger": 0.0354,
+      "gelistirme_yuzdeligi": 3.0
+     },
+     "rng_s": {
+      "deger": 6.8005,
+      "gelistirme_yuzdeligi": 83.5
+     },
+     "dist60_s": {
+      "deger": -4.8779,
+      "gelistirme_yuzdeligi": 18.8
+     },
+     "dist20_s": {
+      "deger": -3.451,
+      "gelistirme_yuzdeligi": 13.8
+     },
+     "dist60_pct": {
+      "deger": -5.2479,
+      "gelistirme_yuzdeligi": 19.7
+     },
+     "dist20_pct": {
+      "deger": -3.7419,
+      "gelistirme_yuzdeligi": 13.6
+     },
+     "dd60_s": {
+      "deger": -11.4379,
+      "gelistirme_yuzdeligi": 12.1
+     },
+     "swings": {
+      "deger": 7.0,
+      "gelistirme_yuzdeligi": 83.9
+     },
+     "lh": {
+      "deger": 3.0,
+      "gelistirme_yuzdeligi": 96.5
+     },
+     "pull_s": {
+      "deger": 6.5221,
+      "gelistirme_yuzdeligi": 90.7
+     },
+     "sref": {
+      "deger": 0.0111,
+      "gelistirme_yuzdeligi": 58.6
+     }
+    },
+    "T3": {
+     "net": {
+      "deger": -0.0163,
+      "gelistirme_yuzdeligi": 20.9
+     },
+     "net_s": {
+      "deger": -1.5398,
+      "gelistirme_yuzdeligi": 21.5
+     },
+     "eff": {
+      "deger": 0.0916,
+      "gelistirme_yuzdeligi": 49.1
+     },
+     "rv_ratio": {
+      "deger": 0.8402,
+      "gelistirme_yuzdeligi": 32.2
+     },
+     "pos": {
+      "deger": 0.0931,
+      "gelistirme_yuzdeligi": 6.9
+     },
+     "rng_s": {
+      "deger": 3.5927,
+      "gelistirme_yuzdeligi": 38.4
+     },
+     "dist60_s": {
+      "deger": -1.6388,
+      "gelistirme_yuzdeligi": 38.3
+     },
+     "dist20_s": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 100.0
+     },
+     "dist60_pct": {
+      "deger": -1.7224,
+      "gelistirme_yuzdeligi": 37.8
+     },
+     "dist20_pct": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 100.0
+     },
+     "dd60_s": {
+      "deger": -4.8972,
+      "gelistirme_yuzdeligi": 31.8
+     },
+     "swings": {
+      "deger": 2.0,
+      "gelistirme_yuzdeligi": 28.4
+     },
+     "lh": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 57.2
+     },
+     "pull_s": {
+      "deger": 3.4148,
+      "gelistirme_yuzdeligi": 66.6
+     },
+     "sref": {
+      "deger": 0.0106,
+      "gelistirme_yuzdeligi": 54.6
+     }
+    }
+   },
+   "gelistirme_dagilimi": {
+    "net": {
+     "5": -0.0531,
+     "10": -0.0368,
+     "25": -0.011,
+     "50": 0.0077,
+     "75": 0.0235,
+     "90": 0.0385,
+     "95": 0.0518
+    },
+    "net_s": {
+     "5": -4.9605,
+     "10": -3.4097,
+     "25": -1.1086,
+     "50": 0.7411,
+     "75": 2.3097,
+     "90": 3.8304,
+     "95": 5.1015
+    },
+    "eff": {
+     "5": 0.0101,
+     "10": 0.0188,
+     "25": 0.045,
+     "50": 0.0928,
+     "75": 0.1541,
+     "90": 0.2171,
+     "95": 0.2611
+    },
+    "rv_ratio": {
+     "5": 0.5593,
+     "10": 0.6207,
+     "25": 0.7807,
+     "50": 1.0092,
+     "75": 1.383,
+     "90": 1.9121,
+     "95": 2.4383
+    },
+    "pos": {
+     "5": 0.0691,
+     "10": 0.1474,
+     "25": 0.3573,
+     "50": 0.6739,
+     "75": 0.8985,
+     "90": 0.9685,
+     "95": 0.985
+    },
+    "rng_s": {
+     "5": 1.9413,
+     "10": 2.241,
+     "25": 2.9822,
+     "50": 4.1481,
+     "75": 5.7513,
+     "90": 8.0118,
+     "95": 9.8488
+    },
+    "dist60_s": {
+     "5": -11.4204,
+     "10": -9.006,
+     "25": -3.6305,
+     "50": -0.4572,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist20_s": {
+     "5": -5.9412,
+     "10": -4.1992,
+     "25": -1.5602,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist60_pct": {
+     "5": -13.9727,
+     "10": -8.9442,
+     "25": -3.9449,
+     "50": -0.4173,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist20_pct": {
+     "5": -6.7035,
+     "10": -4.5612,
+     "25": -1.4375,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dd60_s": {
+     "5": -15.6114,
+     "10": -12.556,
+     "25": -6.2783,
+     "50": -2.4979,
+     "75": -0.7536,
+     "90": -0.2326,
+     "95": -0.1113
+    },
+    "swings": {
+     "5": 1.0,
+     "10": 1.0,
+     "25": 2.0,
+     "50": 4.0,
+     "75": 6.0,
+     "90": 9.0,
+     "95": 13.0
+    },
+    "lh": {
+     "5": 0.0,
+     "10": 0.0,
+     "25": 0.0,
+     "50": 0.0,
+     "75": 1.0,
+     "90": 2.0,
+     "95": 3.0
+    },
+    "pull_s": {
+     "5": 0.8491,
+     "10": 0.9905,
+     "25": 1.49,
+     "50": 2.449,
+     "75": 4.1619,
+     "90": 6.3177,
+     "95": 8.0219
+    },
+    "sref": {
+     "5": 0.0052,
+     "10": 0.0054,
+     "25": 0.0091,
+     "50": 0.0104,
+     "75": 0.013,
+     "90": 0.016,
+     "95": 0.0174
+    }
+   },
+   "gelistirme_gun": 2180,
+   "ilk_gecerli": "2017-02-28 20:00:00+00:00"
+  },
+  "W=9": {
+   "sablonlar": {
+    "T1_kullanici": {
+     "net": {
+      "deger": -0.0023,
+      "gelistirme_yuzdeligi": 32.7
+     },
+     "net_s": {
+      "deger": -0.2258,
+      "gelistirme_yuzdeligi": 32.9
+     },
+     "eff": {
+      "deger": 0.0066,
+      "gelistirme_yuzdeligi": 4.9
+     },
+     "rv_ratio": {
+      "deger": 0.9186,
+      "gelistirme_yuzdeligi": 39.6
+     },
+     "pos": {
+      "deger": 0.5488,
+      "gelistirme_yuzdeligi": 36.6
+     },
+     "rng_s": {
+      "deger": 5.6248,
+      "gelistirme_yuzdeligi": 58.8
+     },
+     "dist60_s": {
+      "deger": -3.0155,
+      "gelistirme_yuzdeligi": 25.2
+     },
+     "dist20_s": {
+      "deger": -1.8479,
+      "gelistirme_yuzdeligi": 16.5
+     },
+     "dist60_pct": {
+      "deger": -2.9939,
+      "gelistirme_yuzdeligi": 26.7
+     },
+     "dist20_pct": {
+      "deger": -1.8454,
+      "gelistirme_yuzdeligi": 17.6
+     },
+     "dd60_s": {
+      "deger": -5.5532,
+      "gelistirme_yuzdeligi": 28.2
+     },
+     "swings": {
+      "deger": 7.0,
+      "gelistirme_yuzdeligi": 67.4
+     },
+     "lh": {
+      "deger": 2.0,
+      "gelistirme_yuzdeligi": 84.4
+     },
+     "pull_s": {
+      "deger": 4.7976,
+      "gelistirme_yuzdeligi": 71.5
+     },
+     "sref": {
+      "deger": 0.0101,
+      "gelistirme_yuzdeligi": 45.8
+     }
+    },
+    "T1_incel": {
+     "net": {
+      "deger": -0.0393,
+      "gelistirme_yuzdeligi": 11.7
+     },
+     "net_s": {
+      "deger": -3.9019,
+      "gelistirme_yuzdeligi": 11.0
+     },
+     "eff": {
+      "deger": 0.1014,
+      "gelistirme_yuzdeligi": 64.5
+     },
+     "rv_ratio": {
+      "deger": 1.1152,
+      "gelistirme_yuzdeligi": 60.7
+     },
+     "pos": {
+      "deger": 0.2214,
+      "gelistirme_yuzdeligi": 13.7
+     },
+     "rng_s": {
+      "deger": 5.6248,
+      "gelistirme_yuzdeligi": 58.8
+     },
+     "dist60_s": {
+      "deger": -3.0155,
+      "gelistirme_yuzdeligi": 25.2
+     },
+     "dist20_s": {
+      "deger": -2.7033,
+      "gelistirme_yuzdeligi": 12.1
+     },
+     "dist60_pct": {
+      "deger": -2.9939,
+      "gelistirme_yuzdeligi": 26.7
+     },
+     "dist20_pct": {
+      "deger": -2.6881,
+      "gelistirme_yuzdeligi": 13.3
+     },
+     "dd60_s": {
+      "deger": -7.3948,
+      "gelistirme_yuzdeligi": 20.4
+     },
+     "swings": {
+      "deger": 6.0,
+      "gelistirme_yuzdeligi": 59.5
+     },
+     "lh": {
+      "deger": 1.0,
+      "gelistirme_yuzdeligi": 69.9
+     },
+     "pull_s": {
+      "deger": 4.7976,
+      "gelistirme_yuzdeligi": 71.5
+     },
+     "sref": {
+      "deger": 0.0101,
+      "gelistirme_yuzdeligi": 45.8
+     }
+    },
+    "T2": {
+     "net": {
+      "deger": -0.066,
+      "gelistirme_yuzdeligi": 5.2
+     },
+     "net_s": {
+      "deger": -5.9687,
+      "gelistirme_yuzdeligi": 5.2
+     },
+     "eff": {
+      "deger": 0.1284,
+      "gelistirme_yuzdeligi": 75.2
+     },
+     "rv_ratio": {
+      "deger": 1.5948,
+      "gelistirme_yuzdeligi": 84.0
+     },
+     "pos": {
+      "deger": 0.0351,
+      "gelistirme_yuzdeligi": 2.8
+     },
+     "rng_s": {
+      "deger": 6.8517,
+      "gelistirme_yuzdeligi": 73.4
+     },
+     "dist60_s": {
+      "deger": -4.8267,
+      "gelistirme_yuzdeligi": 17.0
+     },
+     "dist20_s": {
+      "deger": -3.3998,
+      "gelistirme_yuzdeligi": 9.6
+     },
+     "dist60_pct": {
+      "deger": -5.1943,
+      "gelistirme_yuzdeligi": 17.6
+     },
+     "dist20_pct": {
+      "deger": -3.6874,
+      "gelistirme_yuzdeligi": 9.9
+     },
+     "dd60_s": {
+      "deger": -11.4379,
+      "gelistirme_yuzdeligi": 12.1
+     },
+     "swings": {
+      "deger": 11.0,
+      "gelistirme_yuzdeligi": 85.6
+     },
+     "lh": {
+      "deger": 4.0,
+      "gelistirme_yuzdeligi": 95.4
+     },
+     "pull_s": {
+      "deger": 6.546,
+      "gelistirme_yuzdeligi": 85.5
+     },
+     "sref": {
+      "deger": 0.0111,
+      "gelistirme_yuzdeligi": 58.6
+     }
+    },
+    "T3": {
+     "net": {
+      "deger": -0.0162,
+      "gelistirme_yuzdeligi": 22.3
+     },
+     "net_s": {
+      "deger": -1.5248,
+      "gelistirme_yuzdeligi": 22.5
+     },
+     "eff": {
+      "deger": 0.0643,
+      "gelistirme_yuzdeligi": 42.0
+     },
+     "rv_ratio": {
+      "deger": 0.7426,
+      "gelistirme_yuzdeligi": 19.9
+     },
+     "pos": {
+      "deger": 0.0931,
+      "gelistirme_yuzdeligi": 6.5
+     },
+     "rng_s": {
+      "deger": 3.5927,
+      "gelistirme_yuzdeligi": 21.6
+     },
+     "dist60_s": {
+      "deger": -1.6388,
+      "gelistirme_yuzdeligi": 33.9
+     },
+     "dist20_s": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 100.0
+     },
+     "dist60_pct": {
+      "deger": -1.7224,
+      "gelistirme_yuzdeligi": 33.8
+     },
+     "dist20_pct": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 100.0
+     },
+     "dd60_s": {
+      "deger": -4.8972,
+      "gelistirme_yuzdeligi": 31.8
+     },
+     "swings": {
+      "deger": 3.0,
+      "gelistirme_yuzdeligi": 25.8
+     },
+     "lh": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 42.0
+     },
+     "pull_s": {
+      "deger": 3.4148,
+      "gelistirme_yuzdeligi": 55.7
+     },
+     "sref": {
+      "deger": 0.0106,
+      "gelistirme_yuzdeligi": 54.6
+     }
+    }
+   },
+   "gelistirme_dagilimi": {
+    "net": {
+     "5": -0.0673,
+     "10": -0.0449,
+     "25": -0.0115,
+     "50": 0.0116,
+     "75": 0.0314,
+     "90": 0.0464,
+     "95": 0.0596
+    },
+    "net_s": {
+     "5": -6.1334,
+     "10": -4.1374,
+     "25": -1.1717,
+     "50": 1.1487,
+     "75": 2.913,
+     "90": 4.6794,
+     "95": 5.9458
+    },
+    "eff": {
+     "5": 0.0068,
+     "10": 0.0149,
+     "25": 0.0369,
+     "50": 0.0774,
+     "75": 0.1274,
+     "90": 0.182,
+     "95": 0.2126
+    },
+    "rv_ratio": {
+     "5": 0.5668,
+     "10": 0.6333,
+     "25": 0.7869,
+     "50": 1.0063,
+     "75": 1.361,
+     "90": 1.9089,
+     "95": 2.435
+    },
+    "pos": {
+     "5": 0.0708,
+     "10": 0.1599,
+     "25": 0.3883,
+     "50": 0.7063,
+     "75": 0.9035,
+     "90": 0.9707,
+     "95": 0.9861
+    },
+    "rng_s": {
+     "5": 2.4837,
+     "10": 2.8366,
+     "25": 3.7964,
+     "50": 5.1471,
+     "75": 6.9951,
+     "90": 9.7119,
+     "95": 11.8528
+    },
+    "dist60_s": {
+     "5": -10.8364,
+     "10": -8.2786,
+     "25": -3.0301,
+     "50": -0.0069,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist20_s": {
+     "5": -4.9907,
+     "10": -3.3034,
+     "25": -0.7004,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist60_pct": {
+     "5": -12.5315,
+     "10": -8.0431,
+     "25": -3.3,
+     "50": -0.009,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist20_pct": {
+     "5": -5.213,
+     "10": -3.6685,
+     "25": -0.739,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dd60_s": {
+     "5": -15.6114,
+     "10": -12.556,
+     "25": -6.2783,
+     "50": -2.4979,
+     "75": -0.7536,
+     "90": -0.2326,
+     "95": -0.1113
+    },
+    "swings": {
+     "5": 2.0,
+     "10": 2.0,
+     "25": 3.0,
+     "50": 5.0,
+     "75": 9.0,
+     "90": 13.0,
+     "95": 18.0
+    },
+    "lh": {
+     "5": 0.0,
+     "10": 0.0,
+     "25": 0.0,
+     "50": 1.0,
+     "75": 2.0,
+     "90": 3.0,
+     "95": 4.0
+    },
+    "pull_s": {
+     "5": 1.0674,
+     "10": 1.3167,
+     "25": 1.9378,
+     "50": 3.0543,
+     "75": 5.1773,
+     "90": 7.782,
+     "95": 10.1677
+    },
+    "sref": {
+     "5": 0.0052,
+     "10": 0.0054,
+     "25": 0.0091,
+     "50": 0.0104,
+     "75": 0.013,
+     "90": 0.016,
+     "95": 0.0174
+    }
+   },
+   "gelistirme_gun": 2180,
+   "ilk_gecerli": "2017-02-28 20:00:00+00:00"
+  },
+  "W=10": {
+   "sablonlar": {
+    "T1_kullanici": {
+     "net": {
+      "deger": -0.0028,
+      "gelistirme_yuzdeligi": 32.6
+     },
+     "net_s": {
+      "deger": -0.2754,
+      "gelistirme_yuzdeligi": 32.8
+     },
+     "eff": {
+      "deger": 0.0066,
+      "gelistirme_yuzdeligi": 4.3
+     },
+     "rv_ratio": {
+      "deger": 1.0714,
+      "gelistirme_yuzdeligi": 57.1
+     },
+     "pos": {
+      "deger": 0.5488,
+      "gelistirme_yuzdeligi": 36.0
+     },
+     "rng_s": {
+      "deger": 5.6248,
+      "gelistirme_yuzdeligi": 53.7
+     },
+     "dist60_s": {
+      "deger": -3.0155,
+      "gelistirme_yuzdeligi": 24.2
+     },
+     "dist20_s": {
+      "deger": -1.8479,
+      "gelistirme_yuzdeligi": 14.8
+     },
+     "dist60_pct": {
+      "deger": -2.9939,
+      "gelistirme_yuzdeligi": 25.7
+     },
+     "dist20_pct": {
+      "deger": -1.8454,
+      "gelistirme_yuzdeligi": 15.8
+     },
+     "dd60_s": {
+      "deger": -5.5532,
+      "gelistirme_yuzdeligi": 28.2
+     },
+     "swings": {
+      "deger": 8.0,
+      "gelistirme_yuzdeligi": 68.8
+     },
+     "lh": {
+      "deger": 2.0,
+      "gelistirme_yuzdeligi": 82.0
+     },
+     "pull_s": {
+      "deger": 4.7976,
+      "gelistirme_yuzdeligi": 68.9
+     },
+     "sref": {
+      "deger": 0.0101,
+      "gelistirme_yuzdeligi": 45.8
+     }
+    },
+    "T1_incel": {
+     "net": {
+      "deger": -0.0254,
+      "gelistirme_yuzdeligi": 18.0
+     },
+     "net_s": {
+      "deger": -2.5248,
+      "gelistirme_yuzdeligi": 17.1
+     },
+     "eff": {
+      "deger": 0.0572,
+      "gelistirme_yuzdeligi": 40.0
+     },
+     "rv_ratio": {
+      "deger": 1.0675,
+      "gelistirme_yuzdeligi": 56.6
+     },
+     "pos": {
+      "deger": 0.2214,
+      "gelistirme_yuzdeligi": 13.4
+     },
+     "rng_s": {
+      "deger": 5.6248,
+      "gelistirme_yuzdeligi": 53.7
+     },
+     "dist60_s": {
+      "deger": -3.0155,
+      "gelistirme_yuzdeligi": 24.2
+     },
+     "dist20_s": {
+      "deger": -2.7033,
+      "gelistirme_yuzdeligi": 10.7
+     },
+     "dist60_pct": {
+      "deger": -2.9939,
+      "gelistirme_yuzdeligi": 25.7
+     },
+     "dist20_pct": {
+      "deger": -2.6881,
+      "gelistirme_yuzdeligi": 11.8
+     },
+     "dd60_s": {
+      "deger": -7.3948,
+      "gelistirme_yuzdeligi": 20.4
+     },
+     "swings": {
+      "deger": 7.0,
+      "gelistirme_yuzdeligi": 62.4
+     },
+     "lh": {
+      "deger": 1.0,
+      "gelistirme_yuzdeligi": 66.1
+     },
+     "pull_s": {
+      "deger": 4.7976,
+      "gelistirme_yuzdeligi": 68.9
+     },
+     "sref": {
+      "deger": 0.0101,
+      "gelistirme_yuzdeligi": 45.8
+     }
+    },
+    "T2": {
+     "net": {
+      "deger": -0.0843,
+      "gelistirme_yuzdeligi": 2.8
+     },
+     "net_s": {
+      "deger": -7.6307,
+      "gelistirme_yuzdeligi": 3.6
+     },
+     "eff": {
+      "deger": 0.1542,
+      "gelistirme_yuzdeligi": 86.9
+     },
+     "rv_ratio": {
+      "deger": 1.5341,
+      "gelistirme_yuzdeligi": 82.4
+     },
+     "pos": {
+      "deger": 0.0296,
+      "gelistirme_yuzdeligi": 2.4
+     },
+     "rng_s": {
+      "deger": 8.129,
+      "gelistirme_yuzdeligi": 80.0
+     },
+     "dist60_s": {
+      "deger": -3.5494,
+      "gelistirme_yuzdeligi": 21.3
+     },
+     "dist20_s": {
+      "deger": -2.1224,
+      "gelistirme_yuzdeligi": 12.8
+     },
+     "dist60_pct": {
+      "deger": -3.8465,
+      "gelistirme_yuzdeligi": 21.8
+     },
+     "dist20_pct": {
+      "deger": -2.3182,
+      "gelistirme_yuzdeligi": 13.3
+     },
+     "dd60_s": {
+      "deger": -11.4379,
+      "gelistirme_yuzdeligi": 12.1
+     },
+     "swings": {
+      "deger": 11.0,
+      "gelistirme_yuzdeligi": 82.6
+     },
+     "lh": {
+      "deger": 4.0,
+      "gelistirme_yuzdeligi": 93.8
+     },
+     "pull_s": {
+      "deger": 7.7278,
+      "gelistirme_yuzdeligi": 88.1
+     },
+     "sref": {
+      "deger": 0.0111,
+      "gelistirme_yuzdeligi": 58.6
+     }
+    },
+    "T3": {
+     "net": {
+      "deger": -0.0053,
+      "gelistirme_yuzdeligi": 30.5
+     },
+     "net_s": {
+      "deger": -0.5013,
+      "gelistirme_yuzdeligi": 30.9
+     },
+     "eff": {
+      "deger": 0.0184,
+      "gelistirme_yuzdeligi": 11.5
+     },
+     "rv_ratio": {
+      "deger": 0.7712,
+      "gelistirme_yuzdeligi": 23.2
+     },
+     "pos": {
+      "deger": 0.0931,
+      "gelistirme_yuzdeligi": 6.3
+     },
+     "rng_s": {
+      "deger": 3.5927,
+      "gelistirme_yuzdeligi": 18.0
+     },
+     "dist60_s": {
+      "deger": -1.6388,
+      "gelistirme_yuzdeligi": 32.4
+     },
+     "dist20_s": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 100.0
+     },
+     "dist60_pct": {
+      "deger": -1.7224,
+      "gelistirme_yuzdeligi": 32.6
+     },
+     "dist20_pct": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 100.0
+     },
+     "dd60_s": {
+      "deger": -4.8972,
+      "gelistirme_yuzdeligi": 31.8
+     },
+     "swings": {
+      "deger": 4.0,
+      "gelistirme_yuzdeligi": 32.0
+     },
+     "lh": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 37.8
+     },
+     "pull_s": {
+      "deger": 3.4148,
+      "gelistirme_yuzdeligi": 52.8
+     },
+     "sref": {
+      "deger": 0.0106,
+      "gelistirme_yuzdeligi": 54.6
+     }
+    }
+   },
+   "gelistirme_dagilimi": {
+    "net": {
+     "5": -0.07,
+     "10": -0.0472,
+     "25": -0.0135,
+     "50": 0.0129,
+     "75": 0.0329,
+     "90": 0.0499,
+     "95": 0.062
+    },
+    "net_s": {
+     "5": -6.3422,
+     "10": -4.2388,
+     "25": -1.3444,
+     "50": 1.288,
+     "75": 3.1441,
+     "90": 4.9068,
+     "95": 6.3331
+    },
+    "eff": {
+     "5": 0.0079,
+     "10": 0.0163,
+     "25": 0.0381,
+     "50": 0.0729,
+     "75": 0.1211,
+     "90": 0.1712,
+     "95": 0.202
+    },
+    "rv_ratio": {
+     "5": 0.5727,
+     "10": 0.6312,
+     "25": 0.7832,
+     "50": 1.0057,
+     "75": 1.3529,
+     "90": 1.9007,
+     "95": 2.4544
+    },
+    "pos": {
+     "5": 0.0722,
+     "10": 0.1621,
+     "25": 0.3993,
+     "50": 0.7118,
+     "75": 0.9064,
+     "90": 0.9717,
+     "95": 0.9862
+    },
+    "rng_s": {
+     "5": 2.6285,
+     "10": 3.0235,
+     "25": 4.0172,
+     "50": 5.4225,
+     "75": 7.4132,
+     "90": 10.2557,
+     "95": 12.9335
+    },
+    "dist60_s": {
+     "5": -10.2305,
+     "10": -7.7465,
+     "25": -2.6502,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist20_s": {
+     "5": -4.3786,
+     "10": -2.9953,
+     "25": -0.5053,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist60_pct": {
+     "5": -12.0563,
+     "10": -7.9328,
+     "25": -3.0608,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist20_pct": {
+     "5": -4.9469,
+     "10": -3.2884,
+     "25": -0.4893,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dd60_s": {
+     "5": -15.6114,
+     "10": -12.556,
+     "25": -6.2783,
+     "50": -2.4979,
+     "75": -0.7536,
+     "90": -0.2326,
+     "95": -0.1113
+    },
+    "swings": {
+     "5": 2.0,
+     "10": 3.0,
+     "25": 4.0,
+     "50": 6.0,
+     "75": 10.0,
+     "90": 14.0,
+     "95": 20.05
+    },
+    "lh": {
+     "5": 0.0,
+     "10": 0.0,
+     "25": 0.0,
+     "50": 1.0,
+     "75": 2.0,
+     "90": 4.0,
+     "95": 5.0
+    },
+    "pull_s": {
+     "5": 1.134,
+     "10": 1.4397,
+     "25": 2.1053,
+     "50": 3.2373,
+     "75": 5.4109,
+     "90": 8.2459,
+     "95": 10.7076
+    },
+    "sref": {
+     "5": 0.0052,
+     "10": 0.0054,
+     "25": 0.0091,
+     "50": 0.0104,
+     "75": 0.013,
+     "90": 0.016,
+     "95": 0.0174
+    }
+   },
+   "gelistirme_gun": 2180,
+   "ilk_gecerli": "2017-02-28 20:00:00+00:00"
+  },
+  "W=12": {
+   "sablonlar": {
+    "T1_kullanici": {
+     "net": {
+      "deger": -0.0069,
+      "gelistirme_yuzdeligi": 28.1
+     },
+     "net_s": {
+      "deger": -0.6832,
+      "gelistirme_yuzdeligi": 28.1
+     },
+     "eff": {
+      "deger": 0.0132,
+      "gelistirme_yuzdeligi": 10.1
+     },
+     "rv_ratio": {
+      "deger": 1.0387,
+      "gelistirme_yuzdeligi": 53.9
+     },
+     "pos": {
+      "deger": 0.5488,
+      "gelistirme_yuzdeligi": 34.5
+     },
+     "rng_s": {
+      "deger": 5.6248,
+      "gelistirme_yuzdeligi": 45.0
+     },
+     "dist60_s": {
+      "deger": -3.0155,
+      "gelistirme_yuzdeligi": 22.5
+     },
+     "dist20_s": {
+      "deger": -1.8479,
+      "gelistirme_yuzdeligi": 11.6
+     },
+     "dist60_pct": {
+      "deger": -2.9939,
+      "gelistirme_yuzdeligi": 23.9
+     },
+     "dist20_pct": {
+      "deger": -1.8454,
+      "gelistirme_yuzdeligi": 12.3
+     },
+     "dd60_s": {
+      "deger": -5.5532,
+      "gelistirme_yuzdeligi": 28.2
+     },
+     "swings": {
+      "deger": 9.0,
+      "gelistirme_yuzdeligi": 65.4
+     },
+     "lh": {
+      "deger": 2.0,
+      "gelistirme_yuzdeligi": 76.7
+     },
+     "pull_s": {
+      "deger": 4.7976,
+      "gelistirme_yuzdeligi": 64.3
+     },
+     "sref": {
+      "deger": 0.0101,
+      "gelistirme_yuzdeligi": 45.8
+     }
+    },
+    "T1_incel": {
+     "net": {
+      "deger": -0.0569,
+      "gelistirme_yuzdeligi": 8.5
+     },
+     "net_s": {
+      "deger": -5.6413,
+      "gelistirme_yuzdeligi": 7.7
+     },
+     "eff": {
+      "deger": 0.1041,
+      "gelistirme_yuzdeligi": 72.7
+     },
+     "rv_ratio": {
+      "deger": 1.125,
+      "gelistirme_yuzdeligi": 60.8
+     },
+     "pos": {
+      "deger": 0.176,
+      "gelistirme_yuzdeligi": 10.4
+     },
+     "rng_s": {
+      "deger": 7.0759,
+      "gelistirme_yuzdeligi": 65.4
+     },
+     "dist60_s": {
+      "deger": -1.5644,
+      "gelistirme_yuzdeligi": 30.2
+     },
+     "dist20_s": {
+      "deger": -1.2522,
+      "gelistirme_yuzdeligi": 15.0
+     },
+     "dist60_pct": {
+      "deger": -1.5645,
+      "gelistirme_yuzdeligi": 31.3
+     },
+     "dist20_pct": {
+      "deger": -1.2543,
+      "gelistirme_yuzdeligi": 15.3
+     },
+     "dd60_s": {
+      "deger": -7.3948,
+      "gelistirme_yuzdeligi": 20.4
+     },
+     "swings": {
+      "deger": 10.0,
+      "gelistirme_yuzdeligi": 70.5
+     },
+     "lh": {
+      "deger": 3.0,
+      "gelistirme_yuzdeligi": 84.7
+     },
+     "pull_s": {
+      "deger": 6.2463,
+      "gelistirme_yuzdeligi": 77.9
+     },
+     "sref": {
+      "deger": 0.0101,
+      "gelistirme_yuzdeligi": 45.8
+     }
+    },
+    "T2": {
+     "net": {
+      "deger": -0.0744,
+      "gelistirme_yuzdeligi": 5.3
+     },
+     "net_s": {
+      "deger": -6.732,
+      "gelistirme_yuzdeligi": 5.3
+     },
+     "eff": {
+      "deger": 0.1197,
+      "gelistirme_yuzdeligi": 79.6
+     },
+     "rv_ratio": {
+      "deger": 1.4322,
+      "gelistirme_yuzdeligi": 79.2
+     },
+     "pos": {
+      "deger": 0.0269,
+      "gelistirme_yuzdeligi": 2.2
+     },
+     "rng_s": {
+      "deger": 8.9279,
+      "gelistirme_yuzdeligi": 80.2
+     },
+     "dist60_s": {
+      "deger": -2.7505,
+      "gelistirme_yuzdeligi": 23.0
+     },
+     "dist20_s": {
+      "deger": -1.3236,
+      "gelistirme_yuzdeligi": 14.6
+     },
+     "dist60_pct": {
+      "deger": -2.9939,
+      "gelistirme_yuzdeligi": 23.9
+     },
+     "dist20_pct": {
+      "deger": -1.4521,
+      "gelistirme_yuzdeligi": 14.3
+     },
+     "dd60_s": {
+      "deger": -11.4379,
+      "gelistirme_yuzdeligi": 12.1
+     },
+     "swings": {
+      "deger": 12.0,
+      "gelistirme_yuzdeligi": 80.0
+     },
+     "lh": {
+      "deger": 4.0,
+      "gelistirme_yuzdeligi": 90.5
+     },
+     "pull_s": {
+      "deger": 8.593,
+      "gelistirme_yuzdeligi": 88.3
+     },
+     "sref": {
+      "deger": 0.0111,
+      "gelistirme_yuzdeligi": 58.6
+     }
+    },
+    "T3": {
+     "net": {
+      "deger": -0.0157,
+      "gelistirme_yuzdeligi": 23.3
+     },
+     "net_s": {
+      "deger": -1.4851,
+      "gelistirme_yuzdeligi": 23.6
+     },
+     "eff": {
+      "deger": 0.0436,
+      "gelistirme_yuzdeligi": 32.0
+     },
+     "rv_ratio": {
+      "deger": 0.7949,
+      "gelistirme_yuzdeligi": 25.6
+     },
+     "pos": {
+      "deger": 0.0955,
+      "gelistirme_yuzdeligi": 6.3
+     },
+     "rng_s": {
+      "deger": 3.6025,
+      "gelistirme_yuzdeligi": 12.3
+     },
+     "dist60_s": {
+      "deger": -1.6388,
+      "gelistirme_yuzdeligi": 29.7
+     },
+     "dist20_s": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 100.0
+     },
+     "dist60_pct": {
+      "deger": -1.7224,
+      "gelistirme_yuzdeligi": 30.2
+     },
+     "dist20_pct": {
+      "deger": 0.0,
+      "gelistirme_yuzdeligi": 100.0
+     },
+     "dd60_s": {
+      "deger": -4.8972,
+      "gelistirme_yuzdeligi": 31.8
+     },
+     "swings": {
+      "deger": 5.0,
+      "gelistirme_yuzdeligi": 34.2
+     },
+     "lh": {
+      "deger": 1.0,
+      "gelistirme_yuzdeligi": 59.1
+     },
+     "pull_s": {
+      "deger": 3.4148,
+      "gelistirme_yuzdeligi": 47.3
+     },
+     "sref": {
+      "deger": 0.0106,
+      "gelistirme_yuzdeligi": 54.6
+     }
+    }
+   },
+   "gelistirme_dagilimi": {
+    "net": {
+     "5": -0.0764,
+     "10": -0.0531,
+     "25": -0.0125,
+     "50": 0.0155,
+     "75": 0.0357,
+     "90": 0.0555,
+     "95": 0.0705
+    },
+    "net_s": {
+     "5": -7.0593,
+     "10": -4.7468,
+     "25": -1.2332,
+     "50": 1.5116,
+     "75": 3.4849,
+     "90": 5.3754,
+     "95": 6.8625
+    },
+    "eff": {
+     "5": 0.006,
+     "10": 0.013,
+     "25": 0.0336,
+     "50": 0.0692,
+     "75": 0.1084,
+     "90": 0.1534,
+     "95": 0.1822
+    },
+    "rv_ratio": {
+     "5": 0.5858,
+     "10": 0.6427,
+     "25": 0.7908,
+     "50": 1.0037,
+     "75": 1.3473,
+     "90": 1.9106,
+     "95": 2.4513
+    },
+    "pos": {
+     "5": 0.0738,
+     "10": 0.1673,
+     "25": 0.4217,
+     "50": 0.7265,
+     "75": 0.9116,
+     "90": 0.9739,
+     "95": 0.9868
+    },
+    "rng_s": {
+     "5": 2.9325,
+     "10": 3.4323,
+     "25": 4.3675,
+     "50": 5.934,
+     "75": 8.0973,
+     "90": 11.1383,
+     "95": 14.1386
+    },
+    "dist60_s": {
+     "5": -9.5953,
+     "10": -7.4279,
+     "25": -2.3091,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist20_s": {
+     "5": -3.8663,
+     "10": -2.1148,
+     "25": -0.166,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist60_pct": {
+     "5": -11.2565,
+     "10": -7.3875,
+     "25": -2.5817,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dist20_pct": {
+     "5": -4.0761,
+     "10": -2.3574,
+     "25": -0.1912,
+     "50": 0.0,
+     "75": 0.0,
+     "90": 0.0,
+     "95": 0.0
+    },
+    "dd60_s": {
+     "5": -15.6114,
+     "10": -12.556,
+     "25": -6.2783,
+     "50": -2.4979,
+     "75": -0.7536,
+     "90": -0.2326,
+     "95": -0.1113
+    },
+    "swings": {
+     "5": 2.0,
+     "10": 3.0,
+     "25": 5.0,
+     "50": 7.0,
+     "75": 11.0,
+     "90": 17.0,
+     "95": 25.0
+    },
+    "lh": {
+     "5": 0.0,
+     "10": 0.0,
+     "25": 0.0,
+     "50": 1.0,
+     "75": 2.0,
+     "90": 4.0,
+     "95": 6.0
+    },
+    "pull_s": {
+     "5": 1.2852,
+     "10": 1.5928,
+     "25": 2.339,
+     "50": 3.5422,
+     "75": 5.8674,
+     "90": 9.1716,
+     "95": 11.9097
+    },
+    "sref": {
+     "5": 0.0052,
+     "10": 0.0054,
+     "25": 0.0091,
+     "50": 0.0104,
+     "75": 0.013,
+     "90": 0.016,
+     "95": 0.0174
+    }
+   },
+   "gelistirme_gun": 2180,
+   "ilk_gecerli": "2017-02-28 20:00:00+00:00"
+  }
+ }
+}

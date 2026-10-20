@@ -1,0 +1,859 @@
+{
+ "W": 9,
+ "ndx_son_bar": "2026-10-02 04:00:00+00:00",
+ "dax_son_bar": "2026-10-02 04:00:00+00:00",
+ "kurallar": {
+  "K1": {
+   "pos": [
+    "<=",
+    0.222
+   ],
+   "net_s": [
+    "<=",
+    -1.524
+   ],
+   "dist60_s": [
+    ">=",
+    -4.827
+   ],
+   "rv_ratio": [
+    ">=",
+    0.742
+   ],
+   "swings": [
+    ">=",
+    3
+   ],
+   "eff": [
+    "<=",
+    0.129
+   ]
+  },
+  "K2": {
+   "pos": [
+    "<=",
+    0.222
+   ],
+   "net_s": [
+    "<=",
+    -3.901
+   ],
+   "dist60_s": [
+    ">=",
+    -4.827
+   ],
+   "rv_ratio": [
+    ">=",
+    1.115
+   ],
+   "swings": [
+    ">=",
+    6
+   ],
+   "eff": [
+    "<=",
+    0.129
+   ],
+   "lh": [
+    ">=",
+    1
+   ]
+  },
+  "K3": {
+   "pos": [
+    "<=",
+    0.222
+   ],
+   "net_s": [
+    "<=",
+    -1.524
+   ],
+   "rv_ratio": [
+    ">=",
+    0.742
+   ],
+   "swings": [
+    ">=",
+    3
+   ],
+   "eff": [
+    "<=",
+    0.129
+   ]
+  },
+  "K1lit": {
+   "pos": [
+    "<=",
+    0.549
+   ],
+   "net_s": [
+    "<=",
+    -0.225
+   ],
+   "dist60_s": [
+    ">=",
+    -4.827
+   ],
+   "rv_ratio": [
+    ">=",
+    0.742
+   ],
+   "swings": [
+    ">=",
+    3.0
+   ],
+   "eff": [
+    "<=",
+    0.129
+   ]
+  }
+ },
+ "tanimlayici": {
+  "NDX_K1": {
+   "yanan_gun_payi_%": 3.76,
+   "gelistirme_yil": 8.74,
+   "olusum_bolum": 36,
+   "tamamlanma_olay": 14,
+   "yilda_bolum": 4.12,
+   "bolum_basina_yanan_gun_medyan": 2.0,
+   "sablonlarda": {
+    "T1_incel": true,
+    "T1_kullanici": false,
+    "T2": true,
+    "T3": true
+   },
+   "2026_06_sonrasi_yanan_gunler": [
+    "2026-06-05",
+    "2026-06-26",
+    "2026-07-17",
+    "2026-07-23",
+    "2026-07-24",
+    "2026-07-29",
+    "2026-08-20"
+   ],
+   "2026_olusum": [
+    "2026-01-20",
+    "2026-02-04",
+    "2026-03-20",
+    "2026-06-05",
+    "2026-06-26",
+    "2026-07-17",
+    "2026-08-20"
+   ],
+   "2026_tamamlanma": [
+    "2026-02-06",
+    "2026-07-27"
+   ]
+  },
+  "NDX_K2": {
+   "yanan_gun_payi_%": 1.24,
+   "gelistirme_yil": 8.74,
+   "olusum_bolum": 16,
+   "tamamlanma_olay": 4,
+   "yilda_bolum": 1.83,
+   "bolum_basina_yanan_gun_medyan": 1.0,
+   "sablonlarda": {
+    "T1_incel": true,
+    "T1_kullanici": false,
+    "T2": true,
+    "T3": false
+   },
+   "2026_06_sonrasi_yanan_gunler": [
+    "2026-07-17",
+    "2026-07-29"
+   ],
+   "2026_olusum": [
+    "2026-02-05",
+    "2026-07-17"
+   ],
+   "2026_tamamlanma": []
+  },
+  "NDX_K3": {
+   "yanan_gun_payi_%": 5.55,
+   "gelistirme_yil": 8.74,
+   "olusum_bolum": 46,
+   "tamamlanma_olay": 20,
+   "yilda_bolum": 5.26,
+   "bolum_basina_yanan_gun_medyan": 2.0,
+   "sablonlarda": {
+    "T1_incel": true,
+    "T1_kullanici": false,
+    "T2": true,
+    "T3": true
+   },
+   "2026_06_sonrasi_yanan_gunler": [
+    "2026-06-05",
+    "2026-06-26",
+    "2026-07-17",
+    "2026-07-23",
+    "2026-07-24",
+    "2026-07-29",
+    "2026-08-20"
+   ],
+   "2026_olusum": [
+    "2026-01-20",
+    "2026-02-04",
+    "2026-03-20",
+    "2026-06-05",
+    "2026-06-26",
+    "2026-07-17",
+    "2026-08-20"
+   ],
+   "2026_tamamlanma": [
+    "2026-02-06",
+    "2026-07-27"
+   ]
+  },
+  "NDX_K1lit": {
+   "yanan_gun_payi_%": 13.94,
+   "gelistirme_yil": 8.74,
+   "olusum_bolum": 55,
+   "tamamlanma_olay": 46,
+   "yilda_bolum": 6.29,
+   "bolum_basina_yanan_gun_medyan": 5.0,
+   "sablonlarda": {
+    "T1_incel": true,
+    "T1_kullanici": true,
+    "T2": true,
+    "T3": true
+   },
+   "2026_06_sonrasi_yanan_gunler": [
+    "2026-06-05",
+    "2026-06-08",
+    "2026-06-09",
+    "2026-06-11",
+    "2026-06-23",
+    "2026-06-24",
+    "2026-06-25",
+    "2026-06-26",
+    "2026-06-29",
+    "2026-07-01",
+    "2026-07-02",
+    "2026-07-06",
+    "2026-07-07",
+    "2026-07-08",
+    "2026-07-13",
+    "2026-07-16",
+    "2026-07-17",
+    "2026-07-20",
+    "2026-07-21",
+    "2026-07-22",
+    "2026-07-23",
+    "2026-07-24",
+    "2026-07-29",
+    "2026-07-30",
+    "2026-07-31",
+    "2026-08-20",
+    "2026-08-25",
+    "2026-08-28",
+    "2026-09-01",
+    "2026-09-02",
+    "2026-09-10",
+    "2026-09-14",
+    "2026-09-15",
+    "2026-09-16"
+   ],
+   "2026_olusum": [
+    "2026-01-20",
+    "2026-06-05",
+    "2026-08-20"
+   ],
+   "2026_tamamlanma": [
+    "2026-01-22",
+    "2026-02-11",
+    "2026-03-17",
+    "2026-06-10",
+    "2026-06-30",
+    "2026-07-27",
+    "2026-09-03"
+   ]
+  },
+  "DAX_K1": {
+   "yanan_gun_payi_%": 4.74,
+   "gelistirme_yil": 5.19,
+   "olusum_bolum": 27,
+   "tamamlanma_olay": 10,
+   "yilda_bolum": 5.21,
+   "bolum_basina_yanan_gun_medyan": 2.0
+  },
+  "DAX_K2": {
+   "yanan_gun_payi_%": 0.23,
+   "gelistirme_yil": 5.19,
+   "olusum_bolum": 3,
+   "tamamlanma_olay": 0,
+   "yilda_bolum": 0.58,
+   "bolum_basina_yanan_gun_medyan": 1.0
+  },
+  "DAX_K3": {
+   "yanan_gun_payi_%": 6.32,
+   "gelistirme_yil": 5.19,
+   "olusum_bolum": 30,
+   "tamamlanma_olay": 14,
+   "yilda_bolum": 5.79,
+   "bolum_basina_yanan_gun_medyan": 2.0
+  },
+  "DAX_K1lit": {
+   "yanan_gun_payi_%": 17.53,
+   "gelistirme_yil": 5.19,
+   "olusum_bolum": 32,
+   "tamamlanma_olay": 30,
+   "yilda_bolum": 6.17,
+   "bolum_basina_yanan_gun_medyan": 6.0
+  },
+  "NDX_K1_W6": {
+   "kural": {
+    "pos": [
+     "<=",
+     0.222
+    ],
+    "net_s": [
+     "<=",
+     -1.539
+    ],
+    "dist60_s": [
+     ">=",
+     -4.878
+    ],
+    "rv_ratio": [
+     ">=",
+     0.84
+    ],
+    "swings": [
+     ">=",
+     2.0
+    ],
+    "eff": [
+     "<=",
+     0.182
+    ]
+   },
+   "yanan_gun_payi_%": 4.36,
+   "olusum_bolum": 44,
+   "sablonlarda": {
+    "T1_incel": true,
+    "T1_kullanici": false,
+    "T2": true,
+    "T3": true
+   }
+  },
+  "NDX_K1_W12": {
+   "kural": {
+    "pos": [
+     "<=",
+     0.177
+    ],
+    "net_s": [
+     "<=",
+     -1.485
+    ],
+    "dist60_s": [
+     ">=",
+     -2.751
+    ],
+    "rv_ratio": [
+     ">=",
+     0.794
+    ],
+    "swings": [
+     ">=",
+     5.0
+    ],
+    "eff": [
+     "<=",
+     0.12
+    ]
+   },
+   "yanan_gun_payi_%": 2.39,
+   "olusum_bolum": 30,
+   "sablonlarda": {
+    "T1_incel": true,
+    "T1_kullanici": false,
+    "T2": true,
+    "T3": true
+   }
+  }
+ },
+ "aile_ozeti": {
+  "hucre": 18,
+  "P_fark<0>=0.975": 0,
+  "P_fark>0>=0.975": 0,
+  "gecen": []
+ },
+ "dogrulama_gucu": [
+  {
+   "piyasa": "NDX",
+   "kural": "K1",
+   "olay": "olusum",
+   "ufuk": "1s",
+   "n": 6,
+   "MDE80_bp": 42.768619039183086
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1",
+   "olay": "tamamlanma",
+   "ufuk": "1s",
+   "n": 1,
+   "MDE80_bp": 53.24054890926611
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1",
+   "olay": "olusum",
+   "ufuk": "1g",
+   "n": 6,
+   "MDE80_bp": 223.34946119110538
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1",
+   "olay": "tamamlanma",
+   "ufuk": "1g",
+   "n": 1,
+   "MDE80_bp": 599.1260315985154
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1",
+   "olay": "olusum",
+   "ufuk": "5g",
+   "n": 5,
+   "MDE80_bp": 396.6568046320844
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1",
+   "olay": "tamamlanma",
+   "ufuk": "5g",
+   "n": 1,
+   "MDE80_bp": 717.4293281664977
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1",
+   "olay": "olusum",
+   "ufuk": "1s",
+   "n": 3,
+   "MDE80_bp": 36.97773121078024
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1",
+   "olay": "tamamlanma",
+   "ufuk": "1s",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1",
+   "olay": "olusum",
+   "ufuk": "1g",
+   "n": 3,
+   "MDE80_bp": 174.54069952309243
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1",
+   "olay": "tamamlanma",
+   "ufuk": "1g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1",
+   "olay": "olusum",
+   "ufuk": "5g",
+   "n": 3,
+   "MDE80_bp": 491.381683156155
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1",
+   "olay": "tamamlanma",
+   "ufuk": "5g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K2",
+   "olay": "olusum",
+   "ufuk": "1s",
+   "n": 1,
+   "MDE80_bp": 62.95679356496224
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K2",
+   "olay": "tamamlanma",
+   "ufuk": "1s",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K2",
+   "olay": "olusum",
+   "ufuk": "1g",
+   "n": 1,
+   "MDE80_bp": 461.52309856650487
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K2",
+   "olay": "tamamlanma",
+   "ufuk": "1g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K2",
+   "olay": "olusum",
+   "ufuk": "5g",
+   "n": 1,
+   "MDE80_bp": 1120.3601943478943
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K2",
+   "olay": "tamamlanma",
+   "ufuk": "5g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K2",
+   "olay": "olusum",
+   "ufuk": "1s",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K2",
+   "olay": "tamamlanma",
+   "ufuk": "1s",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K2",
+   "olay": "olusum",
+   "ufuk": "1g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K2",
+   "olay": "tamamlanma",
+   "ufuk": "1g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K2",
+   "olay": "olusum",
+   "ufuk": "5g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K2",
+   "olay": "tamamlanma",
+   "ufuk": "5g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K3",
+   "olay": "olusum",
+   "ufuk": "1s",
+   "n": 6,
+   "MDE80_bp": 53.299798753525806
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K3",
+   "olay": "tamamlanma",
+   "ufuk": "1s",
+   "n": 1,
+   "MDE80_bp": 76.10921718207685
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K3",
+   "olay": "olusum",
+   "ufuk": "1g",
+   "n": 6,
+   "MDE80_bp": 228.52709674959758
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K3",
+   "olay": "tamamlanma",
+   "ufuk": "1g",
+   "n": 1,
+   "MDE80_bp": 592.1296841524916
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K3",
+   "olay": "olusum",
+   "ufuk": "5g",
+   "n": 5,
+   "MDE80_bp": 557.910893673752
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K3",
+   "olay": "tamamlanma",
+   "ufuk": "5g",
+   "n": 1,
+   "MDE80_bp": 1034.4330560545875
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K3",
+   "olay": "olusum",
+   "ufuk": "1s",
+   "n": 4,
+   "MDE80_bp": 29.32235226587371
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K3",
+   "olay": "tamamlanma",
+   "ufuk": "1s",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K3",
+   "olay": "olusum",
+   "ufuk": "1g",
+   "n": 4,
+   "MDE80_bp": 149.6845016272077
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K3",
+   "olay": "tamamlanma",
+   "ufuk": "1g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K3",
+   "olay": "olusum",
+   "ufuk": "5g",
+   "n": 4,
+   "MDE80_bp": 410.3900199792729
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K3",
+   "olay": "tamamlanma",
+   "ufuk": "5g",
+   "n": 0,
+   "MDE80_bp": Infinity
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1lit",
+   "olay": "olusum",
+   "ufuk": "1s",
+   "n": 3,
+   "MDE80_bp": 65.66197707883182
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1lit",
+   "olay": "tamamlanma",
+   "ufuk": "1s",
+   "n": 7,
+   "MDE80_bp": 38.67126392825101
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1lit",
+   "olay": "olusum",
+   "ufuk": "1g",
+   "n": 3,
+   "MDE80_bp": 228.32599491074245
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1lit",
+   "olay": "tamamlanma",
+   "ufuk": "1g",
+   "n": 7,
+   "MDE80_bp": 104.29586345617427
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1lit",
+   "olay": "olusum",
+   "ufuk": "5g",
+   "n": 3,
+   "MDE80_bp": 467.85495054294194
+  },
+  {
+   "piyasa": "NDX",
+   "kural": "K1lit",
+   "olay": "tamamlanma",
+   "ufuk": "5g",
+   "n": 6,
+   "MDE80_bp": 305.2565432348932
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1lit",
+   "olay": "olusum",
+   "ufuk": "1s",
+   "n": 7,
+   "MDE80_bp": 33.5272971179308
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1lit",
+   "olay": "tamamlanma",
+   "ufuk": "1s",
+   "n": 5,
+   "MDE80_bp": 35.27343578474098
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1lit",
+   "olay": "olusum",
+   "ufuk": "1g",
+   "n": 7,
+   "MDE80_bp": 129.66935602376589
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1lit",
+   "olay": "tamamlanma",
+   "ufuk": "1g",
+   "n": 5,
+   "MDE80_bp": 140.67477020026993
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1lit",
+   "olay": "olusum",
+   "ufuk": "5g",
+   "n": 7,
+   "MDE80_bp": 313.84084302083534
+  },
+  {
+   "piyasa": "DAX",
+   "kural": "K1lit",
+   "olay": "tamamlanma",
+   "ufuk": "5g",
+   "n": 5,
+   "MDE80_bp": 361.98397680354583
+  }
+ ],
+ "bolum_ici_yol": {
+  "K1": {
+   "eslesen_bolum": 14,
+   "sure_gun_medyan": 4.5,
+   "olusum_to_tamamlanma_bp_ort": -103.2405904688995,
+   "olusum_to_tamamlanma_bp_medyan": -96.7694009363651,
+   "negatif_pay_%": 57.14285714285714
+  },
+  "K2": {
+   "eslesen_bolum": 4,
+   "sure_gun_medyan": 4.0,
+   "olusum_to_tamamlanma_bp_ort": -63.07605074671318,
+   "olusum_to_tamamlanma_bp_medyan": -17.083264924213637,
+   "negatif_pay_%": 50.0
+  },
+  "K3": {
+   "eslesen_bolum": 18,
+   "sure_gun_medyan": 4.0,
+   "olusum_to_tamamlanma_bp_ort": -165.53442873008825,
+   "olusum_to_tamamlanma_bp_medyan": -40.3853614470151,
+   "negatif_pay_%": 55.55555555555556
+  }
+ },
+ "bugun": {
+  "NDX_son_sorgu_gunu": {
+   "ts": "2026-10-01 20:00:00+00:00",
+   "kapanis": 30527.1,
+   "pos": 0.71,
+   "net_s": 2.529,
+   "dist60_s": 0.0,
+   "dist60_pct": 0.0,
+   "rv_ratio": 0.823,
+   "swings": 6.0,
+   "eff": 0.095,
+   "lh": 1.0,
+   "K1": false,
+   "K2": false,
+   "K3": false,
+   "K1lit": false
+  },
+  "NDX_son_bar": {
+   "ts": "2026-10-02 04:00:00+00:00",
+   "kapanis": 30673.6,
+   "pos": 0.716,
+   "net_s": 0.517,
+   "dist60_s": 0.0,
+   "dist60_pct": 0.0,
+   "rv_ratio": 0.811,
+   "swings": 5.0,
+   "eff": 0.021,
+   "lh": 1.0,
+   "K1": false,
+   "K2": false,
+   "K3": false,
+   "K1lit": false
+  },
+  "NDX_K1_son_yanan_gun": "2026-08-20",
+  "DAX_son_sorgu_gunu": {
+   "ts": "2026-10-01 19:00:00+00:00",
+   "kapanis": 24974.5,
+   "pos": 0.142,
+   "net_s": -1.687,
+   "dist60_s": -3.665,
+   "dist60_pct": -3.028,
+   "rv_ratio": 1.063,
+   "swings": 8.0,
+   "eff": 0.044,
+   "lh": 3.0,
+   "K1": true,
+   "K2": false,
+   "K3": true,
+   "K1lit": true
+  },
+  "DAX_son_bar": {
+   "ts": "2026-10-02 04:00:00+00:00",
+   "kapanis": 25070.6,
+   "pos": 0.242,
+   "net_s": -2.768,
+   "dist60_s": -3.665,
+   "dist60_pct": -3.028,
+   "rv_ratio": 1.084,
+   "swings": 8.0,
+   "eff": 0.079,
+   "lh": 3.0,
+   "K1": false,
+   "K2": false,
+   "K3": false,
+   "K1lit": true
+  },
+  "DAX_K1_son_yanan_gun": "2026-10-01"
+ }
+}

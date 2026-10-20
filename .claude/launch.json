@@ -43,6 +43,26 @@
       ],
       "cwd": "frontend",
       "port": 3010
+    },
+    {
+      "name": "backend-similarity-test",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-c",
+        "import uvicorn;from fastapi import FastAPI;from fastapi.middleware.cors import CORSMiddleware;from routers.candle_similarity_router import router;app=FastAPI();app.add_middleware(CORSMiddleware,allow_origins=['*'],allow_methods=['*'],allow_headers=['*']);app.include_router(router);uvicorn.run(app,host='127.0.0.1',port=8079)"
+      ],
+      "cwd": "backend",
+      "port": 8079
+    },
+    {
+      "name": "frontend-similarity-test",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "NEXT_PUBLIC_API_URL=http://localhost:8079 exec npm run dev -- -p 3012"
+      ],
+      "cwd": "frontend",
+      "port": 3012
     }
   ]
 }

@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Dna } from "lucide-react";
+import { Dna, ScanSearch } from "lucide-react";
 
 import { DashboardIcon, TradingIcon, AnalysisIcon, SignalsIcon, ForexsAILogoIcon } from "./ui/CustomIcons";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
 interface SharedNavHeaderProps {
-  activePage: "dashboard" | "trading" | "analysis" | "signals" | "evolution";
+  activePage: "dashboard" | "trading" | "analysis" | "signals" | "evolution" | "similarity";
   /** Content rendered in center of top row (e.g. market tickers) */
   centerContent?: React.ReactNode;
   /** Content rendered on right side of top row (e.g. theme toggle, auto-refresh, user menu) */
@@ -23,6 +23,7 @@ export default function SharedNavHeader({ activePage, centerContent, rightConten
     { href: "/analysis", key: "analysis" as const, label: "Analysis", icon: AnalysisIcon, iconColor: "text-amber-400" },
     { href: "/signals", key: "signals" as const, label: "Detailed Signals", icon: SignalsIcon, iconColor: "text-red-400" },
     { href: "/evolution", key: "evolution" as const, label: "Evrim", icon: Dna, iconColor: "text-emerald-400" },
+    { href: "/mum-eslestirme", key: "similarity" as const, label: "Mum Eşleştirme", icon: ScanSearch, iconColor: "text-teal-400" },
   ];
 
   return (

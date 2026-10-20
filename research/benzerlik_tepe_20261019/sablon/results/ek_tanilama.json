@@ -1,0 +1,63 @@
+{
+ "b_aile_plasebo": {
+  "fark": {
+   "gercek_ust_%5_hucre": 2,
+   "gercek_alt_%5_hucre": 0,
+   "plasebo_ort_ust": 0.78,
+   "P(plasebo_ust>=gercek)": 0.204,
+   "P(plasebo_alt>=gercek)": 1.0,
+   "maks_yuzdelik_gercek": 0.988,
+   "P(plasebo_maks>=gercek_maks)": 0.156
+  },
+  "olay_medyan": {
+   "gercek_ust_%5_hucre": 2,
+   "gercek_alt_%5_hucre": 2,
+   "plasebo_ort_ust": 0.78,
+   "P(plasebo_ust>=gercek)": 0.194,
+   "P(plasebo_alt>=gercek)": 0.164,
+   "maks_yuzdelik_gercek": 0.986,
+   "P(plasebo_maks>=gercek_maks)": 0.178
+  }
+ },
+ "c_kendini_tanima_f1": {
+  "T1": {
+   "sorgu": "2026-07-21 20:00:00+00:00",
+   "D": 5.614999270659484,
+   "r": 0.7536858061757301,
+   "yuzdelik_%": 16.12218922358931,
+   "%2_benzer": false,
+   "en_yakin": "T3",
+   "L": 166
+  },
+  "T2": {
+   "sorgu": "2026-07-29 20:00:00+00:00",
+   "D": 1.9009546694780628,
+   "r": 0.9717685261296058,
+   "yuzdelik_%": 0.0,
+   "%2_benzer": true,
+   "en_yakin": "T2",
+   "L": 207
+  },
+  "T3": {
+   "sorgu": "2026-08-20 20:00:00+00:00",
+   "D": 5.685394594717944,
+   "r": 0.7474710023621249,
+   "yuzdelik_%": 16.588884174798473,
+   "%2_benzer": false,
+   "en_yakin": "T2",
+   "L": 166
+  }
+ },
+ "d_dax_ndx_ortusme": {
+  "f=0.33": {
+   "dax_benzer_gun": 31,
+   "ndx_2020+_benzer_gun": 32,
+   "dax_gunlerinin_ndx_±3g_icinde_payi_%": 25.806451612903224
+  },
+  "f=1.00": {
+   "dax_benzer_gun": 31,
+   "ndx_2020+_benzer_gun": 36,
+   "dax_gunlerinin_ndx_±3g_icinde_payi_%": 48.38709677419355
+  }
+ }
+}

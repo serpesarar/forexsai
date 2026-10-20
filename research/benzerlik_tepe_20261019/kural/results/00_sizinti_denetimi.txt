@@ -1,0 +1,13 @@
+zigzag oyuncak (θ=1): (4, 0, 1.3) beklenen: salınım 3 (0→1.2? <θ değil: 1.2≥1 ✓; 1.2→-0.1 ✓; -0.1→1.5 ✓; 1.5→0.2 ✓) → 4; tepeler 1.2,1.5 → alçalan 0
+NDX 2019-06-03 satır 749 ts eşit True maks fark 0.0 NaN uyumsuz 0
+NDX 2022-03-15 satır 1444 ts eşit True maks fark 0.0 NaN uyumsuz 0
+NDX 2025-11-28 satır 2366 ts eşit True maks fark 0.0 NaN uyumsuz 0
+Traceback (most recent call last):
+  File "<stdin>", line 14, in <module>
+  File "/opt/homebrew/lib/python3.13/site-packages/numpy/lib/nanfunctions.py", line 476, in nanmax
+    res = np.fmax.reduce(a, axis=axis, out=out, **kwargs)
+ValueError: zero-size array to reduction operation fmax which has no identity
+DAX 2021-06-03 satır 366 ts eşit True maks fark 0.0 NaN uyumsuz 0
+DAX 2023-03-15 satır 825 ts eşit True maks fark 0.0 NaN uyumsuz 0
+DAX 2025-11-28 satır 1515 ts eşit True maks fark 0.0 NaN uyumsuz 0
+DAX sorgu günü: 1726 geçerli özellik: 1540 ilk geçerli: 2020-09-21 19:00:00+00:00
