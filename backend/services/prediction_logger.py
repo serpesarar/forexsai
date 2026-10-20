@@ -449,6 +449,15 @@ async def _apply_entry_optimizer(record: dict) -> dict:
         return record
 
 
+def _writes_enabled() -> bool:
+    """Tek-yazar politikası: PREDICTION_LOGS_WRITER=0 olan süreç yazmaz (fail-open: açık)."""
+    try:
+        from services.writer_identity import prediction_log_writes_enabled
+        return prediction_log_writes_enabled()
+    except Exception:
+        return True
+
+
 def _stamp_writer(record: dict) -> None:
     """factors.writer = {host, sha}: satırı hangi dağıtımın yazdığı (2026-10-20)."""
     factors = record.get("factors")
@@ -546,6 +555,8 @@ async def log_smc_prediction(
     *,
     reasoning: Optional[list[Any]] = None,
 ) -> Optional[str]:
+    if not _writes_enabled():
+        return None
     if direction not in {"BUY", "SELL"}:
         return None
 
@@ -1000,6 +1011,8 @@ async def log_prediction(
     Returns:
         prediction_id (UUID string) if successful, None otherwise
     """
+    if not _writes_enabled():
+        return None
     # ── ml_cross kill-switch güvenlik ağı (2026-08-01 envanter denetimi) ──
     # CROSS_MODEL_EXPERIMENT_ENABLED=0 iken hiçbir yazar (eski deploy'un cron'u,
     # elle çağrı, inversion aynası) ml_cross satırı ekleyemez. Kanıt: bayrak
@@ -1539,6 +1552,8 @@ async def get_recent_predictions(
 
 async def mark_prediction_checked(prediction_id: str) -> bool:
     """Mark a prediction as having its outcome checked."""
+    if not _writes_enabled():
+        return False
     if not is_db_available():
         return False
     

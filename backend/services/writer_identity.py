@@ -55,6 +55,19 @@ def _git_sha() -> str:
     return _UNKNOWN
 
 
+#: Bu süreç prediction_logs'a yazar mı? Tek yazar Railway (2026-10-20 kararı):
+#: MT5 kutusunun backend'i ``PREDICTION_LOGS_WRITER=0`` ile çalışır — evrim
+#: paneli / analist / tartışma için ayakta kalır ama sinyal satırı EKLEMEZ ve
+#: lifecycle ile satır GÜNCELLEMEZ (iki yazar aynı sinyali farklı beslemeyle
+#: — NDX girişi ~89 puan farklı — yazıyor, iki lifecycle aynı satırı çözüyordu).
+PREDICTION_LOGS_WRITER_ENV = "PREDICTION_LOGS_WRITER"
+
+
+def prediction_log_writes_enabled() -> bool:
+    """'0' → bu süreç prediction_logs'a satır eklemez/güncellemez. Varsayılan açık."""
+    return os.getenv(PREDICTION_LOGS_WRITER_ENV, "1").strip() != "0"
+
+
 @lru_cache(maxsize=1)
 def writer_identity() -> Dict[str, str]:
     """Süreç ömrü boyunca sabit yazar kimliği (önbellekli)."""

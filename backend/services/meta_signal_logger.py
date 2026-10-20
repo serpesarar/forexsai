@@ -108,6 +108,9 @@ async def capture_meta_snapshot_if_due(signal_data: Dict[str, Any]) -> Optional[
 
 
 async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h") -> Optional[str]:
+    from services.writer_identity import prediction_log_writes_enabled
+    if not prediction_log_writes_enabled():
+        return None  # tek-yazar: bu süreç prediction_logs'a meta satırı yazmaz
     try:
         from database.supabase_client import get_supabase_client, is_db_available
         from services.prediction_logger import _check_session_filter, _close_existing_signal, _get_current_session, _has_active_signal

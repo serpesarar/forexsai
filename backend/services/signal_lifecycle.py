@@ -1963,6 +1963,9 @@ async def check_lifecycle_if_needed():
     """Called from background_scheduler every 60s; runs lifecycle every minute."""
     global _last_lifecycle_check, _last_cleanup_run
 
+    from services.writer_identity import prediction_log_writes_enabled
+    if not prediction_log_writes_enabled():
+        return  # tek-yazar: bu süreç (MT5 kutusu) prediction_logs satırı çözmez
     now = _utc_now()
     if _last_lifecycle_check and (now - _last_lifecycle_check).total_seconds() < LIFECYCLE_CHECK_INTERVAL:
         return
