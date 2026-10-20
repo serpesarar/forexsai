@@ -1,0 +1,132 @@
+2026-10-18 17:50:57,665  INFO  ─── tarama @ 21:50:57 ───
+2026-10-18 17:51:07,057  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.0–101.1) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-18 17:52:17,128  INFO  ─── tarama @ 21:52:17 ───
+2026-10-18 17:52:27,487  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.0–101.1) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-18 17:53:35,989  INFO  ─── tarama @ 21:53:35 ───
+2026-10-18 17:53:48,312  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.0–101.1) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-18 17:55:02,139  INFO  ─── tarama @ 21:55:02 ───
+2026-10-18 17:55:13,453  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.0–101.1) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-18 17:56:24,764  INFO  ─── tarama @ 21:56:24 ───
+2026-10-18 17:56:30,953  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.0–101.1) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-18 17:57:44,079  INFO  ─── tarama @ 21:57:44 ───
+2026-10-18 17:57:57,983  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.0–101.1) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-18 17:59:07,914  INFO  ─── tarama @ 21:59:07 ───
+2026-10-18 17:59:17,142  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.0–101.1) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-18 18:00:26,600  INFO  ─── tarama @ 22:00:26 ───
+2026-10-18 18:00:34,032  INFO  USOIL.FOREX:BUY — 3 voter + backend OK (action=FALLBACK_MARKET prio=35 lot×1.00)
+2026-10-18 18:00:34,056  INFO  USOIL.FOREX:BUY — GİRİŞ SKORU KAPISI [GÖLGE]: giriş skoru 3/8 < 7 (ihlal: ema200_tarafi,adx_dusuk,1h_karsi_momentum,bicak_yakalama,5m_trend) → BUY yine de açıldı (ölçüm)
+2026-10-18 18:00:34,080  INFO  USOIL.FOREX:BUY — normal momentum (M15 stretch=-0.61 ≤ eşik=2.00, seans=normal/New_York) → S/R pullback
+2026-10-18 18:00:36,730  INFO  [fakeout] kurallar yüklendi (USOIL.FOREX, 2026-07-16T23:19:20.593611+00:00)
+2026-10-18 18:00:36,819  WARNING  [BASIS] USOIL.FOREX:BUY backend SL kullanılmadı (basis_gap, fark=1.08%) → config SL 1.4915
+2026-10-18 18:00:36,826  INFO  USOIL.FOREX:BUY — uygun destek yok (3 bölge) → AÇILMADI (kovalama yok)
+2026-10-18 18:01:45,845  INFO  ─── tarama @ 22:01:45 ───
+2026-10-18 18:01:54,557  INFO  USOIL.FOREX:BUY — 3 voter + backend OK (action=FALLBACK_MARKET prio=35 lot×1.00)
+2026-10-18 18:01:54,561  INFO  USOIL.FOREX:BUY — GİRİŞ SKORU KAPISI [GÖLGE]: giriş skoru 2/8 < 7 (ihlal: ema200_tarafi,adx_dusuk,hacim_patlamasi,1h_karsi_momentum,bicak_yakalama,5m_trend) → BUY yine de açıldı (ölçüm)
+2026-10-18 18:01:54,562  INFO  USOIL.FOREX:BUY — normal momentum (M15 stretch=-0.66 ≤ eşik=2.00, seans=normal/New_York) → S/R pullback
+2026-10-18 18:01:54,613  WARNING  [BASIS] USOIL.FOREX:BUY backend SL kullanılmadı (basis_gap, fark=1.00%) → config SL 1.4904
+2026-10-18 18:01:54,619  INFO  USOIL.FOREX:BUY — uygun destek yok (2 bölge) → AÇILMADI (kovalama yok)
+2026-10-18 18:03:02,354  INFO  ─── tarama @ 22:03:02 ───
+2026-10-18 18:03:13,777  INFO  USOIL.FOREX:BUY — 3 voter + backend OK (action=FALLBACK_MARKET prio=35 lot×1.00)
+2026-10-18 18:03:13,780  INFO  USOIL.FOREX:BUY — GİRİŞ SKORU KAPISI [GÖLGE]: giriş skoru 4/8 < 7 (ihlal: ema200_tarafi,1h_karsi_momentum,bicak_yakalama,5m_trend) → BUY yine de açıldı (ölçüm)
+2026-10-18 18:03:13,783  INFO  USOIL.FOREX:BUY — normal momentum (M15 stretch=-1.04 ≤ eşik=2.00, seans=normal/New_York) → S/R pullback
+2026-10-18 18:03:13,831  WARNING  [BASIS] USOIL.FOREX:BUY backend SL kullanılmadı (basis_gap, fark=0.85%) → config SL 1.4881
+2026-10-18 18:03:13,837  INFO  USOIL.FOREX:BUY — uygun destek yok (2 bölge) → AÇILMADI (kovalama yok)
+2026-10-18 18:04:21,266  INFO  ─── tarama @ 22:04:21 ───
+2026-10-18 18:04:33,502  INFO  USOIL.FOREX:BUY — 3 voter + backend OK (action=FALLBACK_MARKET prio=35 lot×1.00)
+2026-10-18 18:04:33,505  INFO  USOIL.FOREX:BUY — GİRİŞ SKORU KAPISI [GÖLGE]: giriş skoru 4/8 < 7 (ihlal: ema200_tarafi,1h_karsi_momentum,bicak_yakalama,5m_trend) → BUY yine de açıldı (ölçüm)
+2026-10-18 18:04:33,507  INFO  USOIL.FOREX:BUY — normal momentum (M15 stretch=-1.13 ≤ eşik=2.00, seans=normal/New_York) → S/R pullback
+2026-10-18 18:04:33,556  WARNING  [BASIS] USOIL.FOREX:BUY backend SL kullanılmadı (basis_gap, fark=0.81%) → config SL 1.4875
+2026-10-18 18:04:33,562  INFO  USOIL.FOREX:BUY — uygun destek yok (2 bölge) → AÇILMADI (kovalama yok)
+2026-10-18 18:05:45,698  INFO  ─── tarama @ 22:05:45 ───
+2026-10-18 18:05:54,357  INFO  USOIL.FOREX:BUY — 3 voter + backend OK (action=FALLBACK_MARKET prio=35 lot×1.00)
+2026-10-18 18:05:54,361  INFO  USOIL.FOREX:BUY — GİRİŞ SKORU KAPISI [GÖLGE]: giriş skoru 3/8 < 7 (ihlal: ema200_tarafi,hacim_patlamasi,1h_karsi_momentum,bicak_yakalama,5m_trend) → BUY yine de açıldı (ölçüm)
+2026-10-18 18:05:54,363  INFO  USOIL.FOREX:BUY — normal momentum (M15 stretch=-1.50 ≤ eşik=2.00, seans=normal/New_York) → S/R pullback
+2026-10-18 18:05:54,415  WARNING  [BASIS] USOIL.FOREX:BUY backend SL kullanılmadı (basis_gap, fark=0.64%) → config SL 1.4849
+2026-10-18 18:05:54,422  INFO  USOIL.FOREX:BUY — uygun destek yok (3 bölge) → AÇILMADI (kovalama yok)
+2026-10-18 18:07:02,858  INFO  ─── tarama @ 22:07:02 ───
+2026-10-18 18:07:12,532  INFO  USOIL.FOREX:BUY — 3 voter + backend OK (action=FALLBACK_MARKET prio=35 lot×1.00)
+2026-10-18 18:07:12,536  INFO  USOIL.FOREX:BUY — GİRİŞ SKORU KAPISI [GÖLGE]: giriş skoru 4/8 < 7 (ihlal: ema200_tarafi,1h_karsi_momentum,bicak_yakalama,5m_trend) → BUY yine de açıldı (ölçüm)
+2026-10-18 18:07:12,538  INFO  USOIL.FOREX:BUY — normal momentum (M15 stretch=-1.56 ≤ eşik=2.00, seans=normal/New_York) → S/R pullback
+2026-10-18 18:07:12,586  WARNING  [BASIS] USOIL.FOREX:BUY backend SL kullanılmadı (basis_gap, fark=0.60%) → config SL 1.4844
+2026-10-18 18:07:12,594  INFO  USOIL.FOREX:BUY — uygun destek yok (3 bölge) → AÇILMADI (kovalama yok)
+2026-10-18 18:08:19,989  INFO  ─── tarama @ 22:08:19 ───
+2026-10-18 18:08:33,897  INFO  USOIL.FOREX:BUY — 3 voter + backend OK (action=FALLBACK_MARKET prio=35 lot×1.00)
+2026-10-18 18:08:33,900  INFO  USOIL.FOREX:BUY — GİRİŞ SKORU KAPISI [GÖLGE]: giriş skoru 4/8 < 7 (ihlal: ema200_tarafi,1h_karsi_momentum,bicak_yakalama,5m_trend) → BUY yine de açıldı (ölçüm)
+2026-10-18 18:08:33,902  INFO  USOIL.FOREX:BUY — normal momentum (M15 stretch=-1.50 ≤ eşik=2.00, seans=normal/New_York) → S/R pullback
+2026-10-18 18:08:33,948  WARNING  [BASIS] USOIL.FOREX:BUY backend SL kullanılmadı (basis_gap, fark=0.63%) → config SL 1.4848
+2026-10-18 18:08:33,956  INFO  USOIL.FOREX:BUY — uygun destek yok (3 bölge) → AÇILMADI (kovalama yok)
+2026-10-18 18:09:43,000  INFO  ─── tarama @ 22:09:43 ───
+2026-10-18 18:09:53,307  INFO  USOIL.FOREX:BUY — 3 voter + backend OK (action=FALLBACK_MARKET prio=35 lot×1.00)
+2026-10-18 18:09:53,310  INFO  USOIL.FOREX:BUY — GİRİŞ SKORU KAPISI [GÖLGE]: giriş skoru 4/8 < 7 (ihlal: ema200_tarafi,1h_karsi_momentum,bicak_yakalama,5m_trend) → BUY yine de açıldı (ölçüm)
+2026-10-18 18:09:53,312  INFO  USOIL.FOREX:BUY — normal momentum (M15 stretch=-1.44 ≤ eşik=2.00, seans=normal/New_York) → S/R pullback
+2026-10-18 18:09:53,360  WARNING  [BASIS] USOIL.FOREX:BUY backend SL kullanılmadı (basis_gap, fark=0.67%) → config SL 1.4853
+2026-10-18 18:09:53,411  INFO  [CANLI] ✅ LIMIT kuruldu ticket=405554591 (≤30dk) → USOIL.FOREX:BUY | SpotCrude BUY LIMIT @ 99.67 TP=100.585[sr] SL=98.184 lot=10.0 | fiyat=99.684 (7 dokunuşlu bölge, toplam 3 S/R)
+2026-10-18 18:11:02,536  INFO  ─── tarama @ 22:11:02 ───
+2026-10-18 18:11:10,993  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
+2026-10-18 18:12:19,528  INFO  ─── tarama @ 22:12:19 ───
+2026-10-18 18:12:28,879  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
+2026-10-18 18:13:37,005  INFO  ─── tarama @ 22:13:37 ───
+2026-10-18 18:13:48,559  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
+2026-10-18 18:15:00,669  INFO  ─── tarama @ 22:15:00 ───
+2026-10-18 18:15:07,570  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
+2026-10-18 18:16:15,454  INFO  ─── tarama @ 22:16:15 ───
+2026-10-18 18:16:27,689  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
+2026-10-18 18:17:36,054  INFO  ─── tarama @ 22:17:36 ───
+2026-10-18 18:17:42,565  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
+2026-10-18 18:18:55,359  INFO  ─── tarama @ 22:18:55 ───
+2026-10-18 18:19:02,704  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
+2026-10-20 07:50:52,241  INFO  ─── tarama @ 11:50:52 ───
+2026-10-20 07:50:56,794  INFO  USOIL.FOREX:BUY — yeterli sinyal yok (0/1)
+2026-10-20 07:52:04,045  INFO  ─── tarama @ 11:52:04 ───
+2026-10-20 07:52:08,695  INFO  USOIL.FOREX:BUY — yeterli sinyal yok (0/1)
+2026-10-20 07:53:18,760  INFO  ─── tarama @ 11:53:18 ───
+2026-10-20 07:53:24,719  INFO  USOIL.FOREX:BUY — yeterli sinyal yok (0/1)
+2026-10-20 07:54:31,821  INFO  ─── tarama @ 11:54:31 ───
+2026-10-20 07:54:37,241  INFO  USOIL.FOREX:BUY — yeterli sinyal yok (0/1)
+2026-10-20 07:55:43,502  INFO  ─── tarama @ 11:55:43 ───
+2026-10-20 07:55:48,340  INFO  USOIL.FOREX:BUY — yeterli sinyal yok (0/1)
+2026-10-20 07:56:55,002  INFO  ─── tarama @ 11:56:55 ───
+2026-10-20 07:56:59,909  INFO  USOIL.FOREX:BUY — yeterli sinyal yok (0/1)
+2026-10-20 07:58:07,123  INFO  ─── tarama @ 11:58:07 ───
+2026-10-20 07:58:12,630  INFO  USOIL.FOREX:BUY — yeterli sinyal yok (0/1)
+2026-10-20 07:59:19,232  INFO  ─── tarama @ 11:59:19 ───
+2026-10-20 07:59:25,375  INFO  USOIL.FOREX:BUY — yeterli sinyal yok (0/1)
+2026-10-20 08:00:32,295  INFO  ─── tarama @ 12:00:32 ───
+2026-10-20 08:00:37,150  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.64, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:01:49,455  INFO  ─── tarama @ 12:01:49 ───
+2026-10-20 08:01:56,875  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.69, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:03:05,092  INFO  ─── tarama @ 12:03:05 ───
+2026-10-20 08:03:09,776  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.76, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:04:16,520  INFO  ─── tarama @ 12:04:16 ───
+2026-10-20 08:04:21,135  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:05:28,866  INFO  ─── tarama @ 12:05:28 ───
+2026-10-20 08:05:33,731  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:06:40,674  INFO  ─── tarama @ 12:06:40 ───
+2026-10-20 08:06:46,233  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.73, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:07:53,921  INFO  ─── tarama @ 12:07:53 ───
+2026-10-20 08:08:00,641  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.66, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:09:08,046  INFO  ─── tarama @ 12:09:08 ───
+2026-10-20 08:09:15,116  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.69, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:10:23,508  INFO  ─── tarama @ 12:10:23 ───
+2026-10-20 08:10:29,790  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.68, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:11:36,057  INFO  ─── tarama @ 12:11:36 ───
+2026-10-20 08:11:41,656  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.64, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:12:49,017  INFO  ─── tarama @ 12:12:49 ───
+2026-10-20 08:12:55,385  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.61, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:14:01,718  INFO  ─── tarama @ 12:14:01 ───
+2026-10-20 08:14:07,100  INFO  USOIL.FOREX:BUY — KONUM KAPISI: fiyat 4s dalganın TEPESİNDE (konum 0.64, dalga 100.4–102.5) → BUY açılmadı; dalga dönünce yeniden bakılacak (kanıt: dipten SELL WR %53 −3.7k$ / tepeden %66 +2.9k$)
+2026-10-20 08:15:13,698  INFO  ─── tarama @ 12:15:13 ───
+2026-10-20 08:15:19,663  INFO  USOIL.FOREX:BUY — [GÖLGE] sıkı konum kapısı bloklardı (konum 0.60) — işlem devam etti
+2026-10-20 08:15:20,280  INFO  USOIL.FOREX:BUY — 2 voter + backend OK (action=FALLBACK_MARKET prio=35 lot×1.00)
+2026-10-20 08:15:20,281  INFO  USOIL.FOREX:BUY — SEANS FİLTRESİ [GÖLGE]: 12 UTC < 13 (0–12 UTC seansı) → yine de devam (ölçüm)
+2026-10-20 08:15:20,293  INFO  USOIL.FOREX:BUY — GİRİŞ SKORU KAPISI [GÖLGE]: giriş skoru 5/8 < 7 (ihlal: ema200_tarafi,adx_dusuk,bicak_yakalama) → BUY yine de açıldı (ölçüm)
+2026-10-20 08:15:20,299  INFO  USOIL.FOREX:BUY — normal momentum (M15 stretch=0.64 ≤ eşik=2.00, seans=normal/New_York) → S/R pullback
+2026-10-20 08:15:20,893  INFO  [fakeout] kurallar yüklendi (USOIL.FOREX, 2026-07-16T23:19:20.593611+00:00)
+2026-10-20 08:15:20,954  WARNING  [BASIS] USOIL.FOREX:BUY backend SL kullanılmadı (basis_gap, fark=0.87%) → config SL 1.5156
+2026-10-20 08:15:21,022  INFO  [CANLI] ✅ LIMIT kuruldu ticket=406667349 (≤30dk) → USOIL.FOREX:BUY | SpotCrude BUY LIMIT @ 101.636 TP=102.694[fixed] SL=100.121 lot=10.0 | fiyat=101.717 (6 dokunuşlu bölge, toplam 4 S/R)
+2026-10-20 08:16:28,977  INFO  ─── tarama @ 12:16:28 ───
+2026-10-20 08:16:32,541  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
+2026-10-20 08:17:40,098  INFO  ─── tarama @ 12:17:40 ───
+2026-10-20 08:17:43,186  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
+2026-10-20 08:18:51,323  INFO  ─── tarama @ 12:18:51 ───
+2026-10-20 08:18:54,780  INFO  USOIL.FOREX:BUY — zaten açık pozisyon/bekleyen emir var (1+0), atlanıyor
