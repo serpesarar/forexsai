@@ -1,0 +1,27 @@
+07-28 öncesi (kaymış etiketler düzeltildi)    offset -180 dk  medyan|Δ|=  7.620  n=159
+07-28 öncesi (kaymış etiketler düzeltildi)    offset  -60 dk  medyan|Δ|=  5.505  n=158
+07-28 öncesi (kaymış etiketler düzeltildi)    offset   -3 dk  medyan|Δ|=  1.015  n=156
+07-28 öncesi (kaymış etiketler düzeltildi)    offset   -2 dk  medyan|Δ|=  0.640  n=156
+07-28 öncesi (kaymış etiketler düzeltildi)    offset   -1 dk  medyan|Δ|=  0.325  n=156
+07-28 öncesi (kaymış etiketler düzeltildi)    offset   +0 dk  medyan|Δ|=  0.640  n=157
+07-28 öncesi (kaymış etiketler düzeltildi)    offset   +1 dk  medyan|Δ|=  1.120  n=155
+07-28 öncesi (kaymış etiketler düzeltildi)    offset  +60 dk  medyan|Δ|=  5.280  n=146
+07-28 öncesi (kaymış etiketler düzeltildi)    offset +180 dk  medyan|Δ|=  8.100  n=137
+07-28 sonrası (UTC etiketli)                  offset -180 dk  medyan|Δ|= 13.050  n=640
+07-28 sonrası (UTC etiketli)                  offset  -60 dk  medyan|Δ|=  8.780  n=669
+07-28 sonrası (UTC etiketli)                  offset   -3 dk  medyan|Δ|=  0.960  n=684
+07-28 sonrası (UTC etiketli)                  offset   -2 dk  medyan|Δ|=  0.740  n=684
+07-28 sonrası (UTC etiketli)                  offset   -1 dk  medyan|Δ|=  0.390  n=686
+07-28 sonrası (UTC etiketli)                  offset   +0 dk  medyan|Δ|=  0.700  n=686
+07-28 sonrası (UTC etiketli)                  offset   +1 dk  medyan|Δ|=  0.980  n=687
+07-28 sonrası (UTC etiketli)                  offset  +60 dk  medyan|Δ|=  6.390  n=677
+07-28 sonrası (UTC etiketli)                  offset +180 dk  medyan|Δ|= 11.090  n=677
+
+İcra (68) gerçek sonuç × simülasyon sonucu:
+sim_outcome   LOSS  WIN
+exec_outcome           
+LOSS            34    0
+WIN              0   60
+
+ATR kapalı-bar kontrolü: 200 örnekte ihlal = 0
+Giriş gecikmesi (karar→ilk yol barı, dk) gölge: {'count': 757.0, 'mean': 0.62, 'std': 1.59, 'min': 0.0, '25%': 0.24, '50%': 0.48, '75%': 0.72, 'max': 26.73}
