@@ -31,6 +31,19 @@ doğrulama; uyarlanabilir filtre (son W günde sıkışık kötüyse engelle); r
 | Veri kaynağı etkisi? | **Var** | aynı panel olayları iki farklı 1m tablosuyla Δ −0,152 vs −0,063; sıkışık etiketi %81 örtüşüyor |
 | Diğer semboller? | DAX zayıf aynı yön (Δ −0,13, P %81), USOIL ters | — |
 
+## Yedinci tur — VIXREG vekili (botun asıl sinyal tipi, bot öncesi bağımsız dönem) — `rapor7.md`, `yon_ayrimi.csv`
+Vekil = önceki gün VIX rejiminin lehte yönündeki pulse1/2/3 sinyalleri, Asya/Cuma hariç, sabit 80/110 puan.
+| küme | n | Δ (sıkışık − diğer) | P(Δ<0) | saat-içi P |
+|---|---|---|---|---|
+| vekil bot dönemi 06-15→10-09 | 250 | −0,209 | %95 | %95 |
+| gerçek bot VIXREG | 207 | −0,260 | %99 | %97 |
+| **vekil bot öncesi 02-18→06-12** | 393 | **+0,075** | %22 | %31 |
+| vekil bot öncesi · SELL / · BUY | 84 / 309 | −0,09 / **+0,13** | %69 / %12 | %64 / %24 |
+| panel bot öncesi tüm model · SELL / · BUY | 1.363 / 2.547 | −0,002 / **+0,123** | %49 / %1,5 | %53 / %3 |
+Vekil bot döneminde gerçek botun etkisini birebir üretiyor → etki botun koduna değil sinyal tipine ve **döneme** ait;
+aynı sinyal tipi şubat–haziranda etki göstermiyor (BUY'da ters). Yön ayrımı da kurtarmıyor (ön-kayıtlı ölçüt 3: bot öncesi
+vekilde P(Δ<0) ≥ %90 → %22, GEÇMEDİ).
+
 ## Hüküm: KULLANILAMAZ (şimdilik) — GÖLGE kalır, ileri kartla izlenir
 Ön-kayıtlı 4 ölçütten 1'i (ileri dönem) açıkça düştü. Geçmişteki güçlü etki keşif ve geri doğrulama dönemine
 (06-29 → 08-27) yoğunlaşmış. Kural donduruluktan sonra görülen tek dönemde (08-28 →) engel para kaybettirirdi. Bağımsız
