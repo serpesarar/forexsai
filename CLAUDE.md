@@ -42,6 +42,9 @@ Bot restart'ı açık pozisyon varken ertelenir; erteleme artık **borç** olara
 yazılır ve pozisyon kapanınca ödenir (72 saat sonra zorla). *2026-07-23'te bu
 borç mekanizması yokken bot 3 gün eski kodla çalıştı ve düzeltmeler sessizce
 devre dışı kaldı — tekrarlarsa ilk bakılacak yer burasıdır.*
+*2026-10-20: tekrarladı — ajanın ana döngüsü eski state kopyasını yazarak borcu siliyordu (bot 10-15'ten
+beri yeniden başlamadı). `save_state` artık `pending_restarts`'ı diskten korur (afd54638); doğrulama:
+`remote.py sh "type remote_agent\\agent_state.json"` içinde borç görünmeli.*
 
 ### Kutunun `config.py`'si gitignore'da
 `yeni deneme/config.py` (şifre içerir) push edilemez → yeni ayarlar koda
