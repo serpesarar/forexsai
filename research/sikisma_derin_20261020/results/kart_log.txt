@@ -1,0 +1,39 @@
+{
+ "scope": "sqz_filter_ndx",
+ "aciklama": "B14 sıkışma filtresi: ATR14(1m)/ATR100(1m) < 1,00 → NDX girişi engel",
+ "tarih": "2026-10-20T14:45:16+00:00",
+ "ileri_baslangic": "2026-08-28",
+ "olay": 45,
+ "sikisik": 21,
+ "ortR_sikisik": 0.096,
+ "ortR_diger": 0.297,
+ "checks": {
+  "1_hacim": {
+   "deger": 45,
+   "esik": "≥150",
+   "gecti": false
+  },
+  "2_H1": {
+   "deger": "Δ=-0.200 P(Δ<0)=%71.1",
+   "esik": "P≥%95",
+   "gecti": false
+  },
+  "3_saat_ici": {
+   "deger": "Δ_tab=+0.100 P=%27.7",
+   "esik": "P≥%90",
+   "gecti": false
+  },
+  "4_engel_kazanci": {
+   "deger": "kurt_R=-2.02 P=%37.2; ağırlık modu +2.10R P=%71.1",
+   "esik": "P≥%90",
+   "gecti": false
+  },
+  "5_kararlilik": {
+   "deger": "yarılar Δ -0.185 / -0.196",
+   "esik": "ikisi de <0",
+   "gecti": true
+  }
+ },
+ "verdikt": "GÖLGE",
+ "kaynak": "research/sikisma_derin_20261020/ (SONUC.md, ön-kayıt PROTOCOL.md + ileri_kart.py başlığı)"
+}

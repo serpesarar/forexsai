@@ -539,5 +539,18 @@
     "needs_backend": false,
     "est_runtime": "~1 dk",
     "learn_targets": []
+  },
+  {
+    "id": "sqz_ileri_kart_20261020",
+    "name": "NDX sıkışma filtresi (B14) — ileri dönem kartı",
+    "kind": "script",
+    "command": "python3 research/sikisma_derin_20261020/ileri_kart.py",
+    "cwd": ".",
+    "category": "backtest",
+    "what_it_does": "2026-08-28 sonrası gerçek bot NDX işlemlerinde (DECIDER/MANUEL hariç) ATR14/ATR100<1,00 filtresini ön-kayıtlı 5 ölçütle (hacim ≥150, P(Δ<0) ≥%95, saat-içi, engel kazancı, yarılar) yeniden ölçer; emir/ayar değiştirmez. Derin sınama (IO-22): kullanılamaz, GÖLGE.",
+    "output": "backend/data/evolution/go_live_cards/sqz_filter_ndx.json",
+    "needs_backend": false,
+    "est_runtime": "seconds",
+    "learn_targets": []
   }
 ]

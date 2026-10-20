@@ -65,6 +65,17 @@ def squeeze(d: pd.DataFrame) -> np.ndarray:
     return out
 
 
+def md(df: pd.DataFrame) -> str:
+    """tabulate gerektirmeyen markdown tablo."""
+    def f(v):
+        if isinstance(v, float):
+            return "" if np.isnan(v) else f"{v:.3f}"
+        return str(v)
+    head = "| " + " | ".join(map(str, df.columns)) + " |"
+    sep = "|" + "---|" * len(df.columns)
+    return "\n".join([head, sep] + ["| " + " | ".join(f(v) for v in r) + " |" for r in df.itertuples(index=False)])
+
+
 # ── kurallar: True = bu işlem engellenirdi ───────────────────────────────────
 
 def k1_daily(d: pd.DataFrame) -> np.ndarray:
@@ -130,8 +141,9 @@ def plac_pct(d: pd.DataFrame, blk: np.ndarray, elig: np.ndarray) -> float:
     k, pool = int(blk.sum()), np.flatnonzero(elig)
     if k == 0 or k > pool.size:
         return np.nan
-    saved = -d.R.to_numpy()[blk].sum()
-    sims = np.array([-d.R.to_numpy()[RNG.choice(pool, k, replace=False)].sum() for _ in range(N_PLAC)])
+    r = np.nan_to_num(d.R.to_numpy(float))          # BE/eksik R → 0 (pandas sum ile aynı)
+    saved = -r[blk].sum()
+    sims = np.array([-r[RNG.choice(pool, k, replace=False)].sum() for _ in range(N_PLAC)])
     return float((sims < saved).mean())
 
 
@@ -188,7 +200,7 @@ def main() -> None:
          f"\nİşlem: {len(d)} bot NDX (DECIDER hariç), geçmiş {int((d.t0 < DAY).sum())}, 10-19 "
          f"{int(((d.t0 >= DAY) & (d.t0 < DAY + pd.Timedelta(days=1))).sum())}. Birim R; $ ikincil (lot 1→30 değişti)."]
     tab = pd.DataFrame([row(d, b, e, n) for n, b, e in rules])
-    L.append("\n" + tab.to_markdown(index=False))
+    L.append("\n" + md(tab))
     chain_stats(d, L)
     y = d[(d.t0 >= DAY) & (d.t0 < DAY + pd.Timedelta(days=1))]
     L.append("\n## 10-19 işlemleri ve her kuralın hükmü")
@@ -197,7 +209,7 @@ def main() -> None:
     yy = y[cols].copy()
     for k, b in flags.items():
         yy[k] = np.where(b[y.index], "ENGEL", "")
-    L.append(yy.to_markdown(index=False, floatfmt=".3f"))
+    L.append(md(yy))
     d.to_csv(OUT / "islemler_kurallar.csv", index=False)
     txt = "\n".join(L)
     (OUT / "rapor.md").write_text(txt, encoding="utf-8")

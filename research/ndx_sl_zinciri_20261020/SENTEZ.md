@@ -43,7 +43,16 @@ Toplam −8.629 $. DECIDER aynı gün 0,1 lotla ±3–6 $ (önemsiz).
 | DAYCOMBO günde 1 | −930 $ | +7.699 $ |
 | SQZ ≥1,00 (B14, şu an gölge) | +2.400 $ | +11.029 $ |
 | REENTRY yalnız TP sonrası | −7.572 $ | +1.057 $ |
-Tek gün kanıt değildir. Geçmiş 330 işlemde plasebolu sınama `run.py`'de yazıldı (ön-kayıt PROTOCOL.md); bu oturumda
-araç kesintisi yüzünden ÇALIŞTIRILAMADI → sıradaki adım.
-SQZ'nin defter durumu: B14, plasebo yalnız 1,00 eşiğinde geçiyor, 3. çeyrek negatif → tek günlük 4/4 isabet yeniden
-açma gerekçesi değil, ama geçmiş testinin ilk bakılacak kuralı.
+Tek gün kanıt değildir. **Geçmiş testi (`run.py` → `results/rapor.md`, 315 işlem, plasebolu): hiçbiri geçmedi.**
+| kural | geçmişte engellenen | geçmişte kurtarılan R | plasebo % | yarılar |
+|---|---|---|---|---|
+| K1 fren tüm magic | 1 | −0,71 | 54 | −0,00/−0,71 |
+| K2 üst üste binme yok | 28 | −7,66 | 9 | +0,55/−8,21 |
+| K3 SL sonrası 60 dk | 107 | −14,44 | 16 | −4,44/−10,00 |
+| K4 DAYCOMBO günde 1 | 21 | −8,45 | 28 | −0,00/−8,45 |
+| K5a SQZ (DAYCOMBO+REENTRY) | 25 | −6,09 | 89 | −0,00/−6,09 |
+| K5b SQZ (tüm aileler) | 153 | +5,05 | 97,5 | +8,27/−3,22 |
+| K6 REENTRY yalnız TP sonrası | 10 | −3,78 | 61 | −0,00/−3,78 |
+Geçmişte üst üste açılan işlemler +0,198R, SL sonrası 60 dk içinde açılanlar +0,124R, günün 2.+ DAYCOMBO'su +0,348R
+(diğerleri +0,05) → zincirler genelde kazandırmış; 10-19 kötü bir gündü. Kalıcı ders kural değil **risk**: fren düzeltildi
+(B20, 7862f6c2). SQZ ayrıntısı: `research/sikisma_derin_20261020/SONUC.md` (IO-22, kullanılamaz).
