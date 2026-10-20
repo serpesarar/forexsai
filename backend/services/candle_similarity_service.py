@@ -48,6 +48,24 @@ CACHE_TTL_S = 60
 LIVE_TRUST = ("NDX.INDX", "GDAXI.INDX")   # canlı DataHub mumları broker verisi (emtia Yahoo vadelisi → yalnız arşiv)
 
 
+def _numpy_inplace_bug() -> bool:
+    """numpy < 2.3 + Python 3.14: geçici-dizi eleme (LOAD_FAST_BORROW) yerel diziyi YERİNDE değiştirir (s + 1 → s bozulur).
+
+    2026-10-20'de yerel .venv'de (3.14 + numpy 1.26.4) yakalandı; büyük (> 256 KB) dizilerde sessizce yanlış sonuç.
+    """
+    def probe(k: int) -> int:
+        arr = np.arange(100_000)
+        _ = arr + k - 1
+        return int(arr[-1])
+    return probe(3) != 99_999
+
+
+NUMPY_BROKEN = _numpy_inplace_bug()
+if NUMPY_BROKEN:                                              # pragma: no cover
+    logger.error("candle-similarity: numpy %s + bu Python sürümü yerinde-değiştirme hatası veriyor — numpy>=2.3 kurun",
+                 np.__version__)
+
+
 @dataclass(frozen=True)
 class Series:
     ts: np.ndarray        # int64 UTC saniye
@@ -280,6 +298,8 @@ _cache: dict[tuple, tuple[float, dict]] = {}
 
 
 async def get_similarity(symbol: str, tf: str = "1h", n: int = 50, k: int = 20) -> dict[str, Any]:
+    if NUMPY_BROKEN:
+        raise RuntimeError(f"numpy {np.__version__} bu Python sürümünde sayıları bozuyor; numpy>=2.3 kurun (pip install 'numpy>=2.3')")
     sym = canonical(symbol)
     if tf not in TIMEFRAMES:
         raise ValueError(f"desteklenmeyen zaman dilimi: {tf}")
