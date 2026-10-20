@@ -249,7 +249,12 @@ def signal_direction(model: str, payload: dict) -> tuple[str, str]:
 # ─── Pozisyon yönetimi ───────────────────────────────────────────────────────
 
 def _bot_magics() -> set:
-    """Botun tüm magic'leri (momentum + channel_reversion + vix_regime) — global sayım."""
+    """Botun tüm magic'leri — günlük zarar freni + global pozisyon tavanı sayımı.
+
+    ⚠️ 2026-10-20: DAYCOMBO (+4), USOIL BREAKOUT (+5) ve REENTRY (+6) bu kümede
+    YOKTU → 30 lotluk bu ailelerin zararı DAILY_MAX_LOSS'u hiç tetiklemiyordu.
+    2026-10-19'da realize −4.230$ (16:30 UTC) ve −7.530$ (17:47) iken fren susunca
+    iki işlem daha açıldı (research/ndx_sl_zinciri_20261020/SENTEZ.md)."""
     m = {config.MAGIC_NUMBER}
     if getattr(config, "CHANNEL_REVERSION_ENABLED", False):
         m.add(config.CHANNEL_REVERSION_MAGIC)
@@ -257,6 +262,9 @@ def _bot_magics() -> set:
         m.add(config.VIX_REGIME_MAGIC)
     if caprev_live is not None and getattr(config, "CAPREV_LIVE", True):
         m.add(caprev_live.magic(config))       # günlük zarar freni + global tavan CAPREV'i de sayar
+    m.add(config.MAGIC_NUMBER + 4)                                            # DAYCOMBO_MAGIC
+    m.add(int(getattr(config, "USOIL_BREAKOUT_MAGIC", config.MAGIC_NUMBER + 5)))
+    m.add(reentry_exec.magic())                                               # MAGIC + 6
     return m
 
 
@@ -302,13 +310,51 @@ def total_open_positions() -> int:
     return sum(1 for p in (mt5.positions_get() or []) if p.magic in magics)
 
 
+_BROKER_OFF = {"sec": None, "t": 0.0}
+BROKER_OFFSET_MAX_SEC = 5 * 3600          # bu broker UTC+2/+3; üstü = bayat tick
+BROKER_OFFSET_DEFAULT_SEC = 3 * 3600      # hiç ölçülemezse (hafta sonu açılışı)
+
+
+def _broker_offset_sec() -> int:
+    """Broker sunucu saati − gerçek UTC (saniye, tam saate yuvarlı; 1 saat cache).
+
+    Bayat tick (hafta sonu) saçma bir fark verir → son geçerli değer korunur."""
+    now = time.time()
+    st = _BROKER_OFF
+    if st["sec"] is not None and now - st["t"] < 3600:
+        return st["sec"]
+    sec = None
+    for fx in ("NDX.INDX", "XAUUSD", "USOIL.FOREX", "GDAXI.INDX"):
+        try:
+            sym = resolve_symbol(fx)
+            tick = mt5.symbol_info_tick(sym) if sym else None
+        except Exception:
+            tick = None
+        if tick and tick.time:
+            off = int(round((tick.time - now) / 3600.0) * 3600)
+            if abs(off) <= BROKER_OFFSET_MAX_SEC and abs(tick.time - now - off) < 600:
+                sec = off
+                break
+    if sec is None:
+        sec = st["sec"] if st["sec"] is not None else BROKER_OFFSET_DEFAULT_SEC
+    st["sec"], st["t"] = sec, now
+    return sec
+
+
 def today_realized_pnl() -> float:
-    """Bugün (UTC) botun realize net P/L (her iki magic; günlük zarar freni)."""
-    from datetime import time as _dtime
+    """Bugün (UTC) botun realize net P/L — günlük zarar freni.
+
+    ⚠️ 2026-10-20: `history_deals_get(from, to)` BROKER saati bekler (deal.time
+    broker etiketlidir, UTC+3). Eskiden UTC verildiği için pencere 21:00 UTC
+    (dün) → şimdi−3 saat idi: son 3 saatin kayıpları görünmüyordu. Kutuda
+    doğrulandı: 2026-10-19 16:32 UTC'de fren −1.486$ görüyordu, gerçek −4.684$
+    (research/ndx_sl_zinciri_20261020/box_pnl_window.py)."""
+    from datetime import time as _dtime, timedelta as _td
     magics = _bot_magics()
-    start = datetime.combine(datetime.now(timezone.utc).date(), _dtime.min,
-                             tzinfo=timezone.utc)
-    deals = mt5.history_deals_get(start, datetime.now(timezone.utc)) or []
+    off = _td(seconds=_broker_offset_sec())
+    now_utc = datetime.now(timezone.utc)
+    start = datetime.combine(now_utc.date(), _dtime.min, tzinfo=timezone.utc)
+    deals = mt5.history_deals_get(start + off, now_utc + off + _td(minutes=1)) or []
     return sum(d.profit + d.swap + getattr(d, "commission", 0.0)
                for d in deals if d.magic in magics)
 
