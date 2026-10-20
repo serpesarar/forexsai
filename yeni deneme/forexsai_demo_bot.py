@@ -731,6 +731,7 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         _log_trade("SQUEEZE_GATE", scope_key, mt5_symbol, direction, price, 0, 0,
                    voters, "sikisik piyasa")
         return
+    _sqz_ema50_shadow(scope_key, forexsai_sym, mt5_symbol, direction, price)
 
     fixed_tp, fixed_sl = _fixed_distances(price, cfg, bot_signal,
                                           scope_key, mt5_symbol)
@@ -1590,6 +1591,39 @@ def _squeeze_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                              "squeeze", "would_block", px, extra=extra,
                              tp_dist=_tp_d, sl_dist=_sl_d)
     return False
+
+
+def _sqz_ema50_shadow(scope_key: str, forexsai_sym: str, mt5_symbol: str,
+                      direction: str, price: float) -> None:
+    """IO-23 gölge kaydı: DAYCOMBO/REENTRY girişinde SQZ + 1h EMA50 uzaklığı.
+
+    Her giriş (would_block VE would_allow) sonuç takibiyle yazılır → ileride
+    aday kombonun iki tarafı da ölçülür. Emre DOKUNMAZ; her hata sessizce yutulur."""
+    try:
+        if not pr.flag(config, "SQZ_EMA50_SHADOW_ENABLED"):
+            return
+        if pr.scope_suffix(scope_key) not in pr.flag(config, "SQZ_EMA50_SCOPES"):
+            return
+        rates = mt5.copy_rates_from_pos(mt5_symbol, mt5.TIMEFRAME_H1, 1, 200)
+        bars = [{"high": float(r["high"]), "low": float(r["low"]), "close": float(r["close"])}
+                for r in (rates if rates is not None else [])]
+        dist = pr.ema50_dist_atr(bars, price)
+        sqz = _squeeze_ratio(mt5_symbol)
+        would = pr.sqz_ema50_would_block(sqz, dist[0] if dist else None, direction,
+                                         float(pr.flag(config, "SQZ_FILTER_MIN")),
+                                         float(pr.flag(config, "SQZ_EMA50_DIST_MAX")))
+        if would is None:
+            return
+        extra = {"sqz": round(sqz, 3), "ema50_dist_atr": round(dist[0], 3),
+                 "ema50_1h": round(dist[1], 2), "atr_1h": round(dist[2], 2)}
+        tp_d, sl_d = _scope_geometry(scope_key, forexsai_sym, mt5_symbol, price)
+        shadow_log.record_shadow(scope_key, forexsai_sym, mt5_symbol, direction, "sqz_ema50",
+                                 "would_block" if would else "would_allow", price,
+                                 extra=extra, tp_dist=tp_d, sl_dist=sl_d)
+        log.info("%s — [GÖLGE] SQZ∧EMA50: sqz=%.3f uzaklık=%.2f ATR → %s", scope_key, sqz,
+                 dist[0], "would_block" if would else "would_allow")
+    except Exception as exc:
+        log.debug("sqz_ema50 gölge kaydı atlandı: %s", exc)
 
 
 def _trend_gate_blocks(scope_key: str, mt5_symbol: str, direction: str,

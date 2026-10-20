@@ -166,6 +166,15 @@ DEFAULTS: dict[str, object] = {
     "SQZ_FILTER_BLOCK": False,               # True → gerçekten bloklar
     "SQZ_FILTER_MIN": 1.00,                  # ATR14(1m)/ATR100(1m) alt sınırı
     "SQZ_FILTER_SYMBOLS": ("NDX.INDX",),     # kanıt yalnız NASDAQ'ta
+    # ── 2026-10-20 — SQZ ∧ 1h EMA50 YAKINLIĞI GÖLGE KAYDI (IO-23, C) ────────
+    # Aday: ATR14/ATR100(1m) < 1,00 VE (fiyat − 1h EMA50)/ATR14(1h) ≤ 1,32 → DAYCOMBO/
+    # REENTRY girişi kötü. 356 yeniden üretilmiş DAYCOMBO'da −0,10R vs +0,07R, P %85,
+    # plasebo %93, 2025 tek başına zayıf → kanıt yetersiz, YALNIZ ölçüm: her DAYCOMBO/
+    # REENTRY girişi would_block / would_allow olarak sonuç takibiyle yazılır, emre
+    # dokunulmaz. Karar: ≥60 ileri işlem (research/daycombo_kombo_20261020/SONUC.md).
+    "SQZ_EMA50_SHADOW_ENABLED": True,
+    "SQZ_EMA50_SCOPES": ("DAYCOMBO", "REENTRY"),
+    "SQZ_EMA50_DIST_MAX": 1.32,
     "SCOPE_LOSS_COOLDOWN_ENABLED": False,
     "SCOPE_LOSS_COOLDOWN_MIN": 120,
     "SCOPE_LOSS_COOLDOWN_STREAK": 2,
@@ -530,6 +539,38 @@ def squeeze_blocks(ratio: Optional[float], min_ratio: float) -> bool:
     if ratio is None:
         return False
     return float(ratio) < float(min_ratio)
+
+
+EMA50_SPAN, ATR1H_N, EMA50_MIN_BARS = 50, 14, 120
+
+
+def ema50_dist_atr(bars_1h: Sequence[dict], price: float) -> Optional[tuple[float, float, float]]:
+    """(fiyat − EMA50(1h)) / ATR14(1h) — islem_otopsi `pre_dist_ema50_1h` ile aynı tanım
+    (EMA span 50, ATR Wilder α=1/14). Yalnız KAPANMIŞ 1h barlar verilmeli.
+    Dönüş: (uzaklık_ATR, ema50, atr) · yetersiz veri → None."""
+    if not bars_1h or len(bars_1h) < EMA50_MIN_BARS or not price:
+        return None
+    k = 2.0 / (EMA50_SPAN + 1)
+    ema = float(bars_1h[0]["close"])
+    for b in bars_1h[1:]:
+        ema = float(b["close"]) * k + ema * (1 - k)
+    trs = true_ranges(bars_1h)
+    atr = trs[0]
+    for x in trs[1:]:
+        atr = atr + (x - atr) / ATR1H_N
+    if atr <= 0:
+        return None
+    return (float(price) - ema) / atr, ema, atr
+
+
+def sqz_ema50_would_block(sqz: Optional[float], dist_atr: Optional[float], direction: str,
+                          sqz_min: float = 1.0, dist_max: float = 1.32) -> Optional[bool]:
+    """IO-23 adayı: sıkışık VE fiyat 1h EMA50'ye (lehte tarafta) yakın. Veri yoksa None.
+    SELL için uzaklık işaret çevrilerek okunur (lehte = EMA50'nin altında)."""
+    if sqz is None or dist_atr is None:
+        return None
+    signed = dist_atr if direction == "BUY" else -dist_atr
+    return bool(sqz < sqz_min and signed <= dist_max)
 
 
 def rsi(closes: Sequence[float], period: int = 14) -> Optional[float]:
