@@ -740,6 +740,27 @@ def time_quality_gate(
     return True, None
 
 
+def time_quality_recheck(
+    symbol: str, direction: str, model_type: str, confidence: Optional[float],
+) -> Tuple[bool, Optional[dict]]:
+    """TQ kapısını NİHAİ güvenle yeniden uygula (Precision Veto cezasından sonra).
+
+    apply_signal_gates veto'dan ÖNCE koşar; ceza güveni eşiğin altına indirse
+    de kapı ham güveni görmüş olur (2026-10-20: çukurda güven 50-75 olan 8
+    pulse satırı, hepsinde ham = nihai + ceza ≥ 80). Dönüş: (izinli, gölge
+    verdikti | None) — gölge modda verdikt factors.shadow_gates'e eklenmeli.
+    """
+    if _base_model(model_type) not in TQ_GATED_MODELS:
+        return True, None
+    sink: List[dict] = []
+    token = _shadow_sink.set(sink)
+    try:
+        allowed, _ = time_quality_gate(symbol, direction, confidence)
+    finally:
+        _shadow_sink.reset(token)
+    return allowed, (sink[0] if sink else None)
+
+
 def tq_session_exception(symbol: str, confidence: Optional[float]) -> bool:
     """NDX 18 UTC seans bloğu altın-istisnası: güven ≥ eşik ise saat açılır.
 

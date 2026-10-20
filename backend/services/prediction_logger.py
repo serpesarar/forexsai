@@ -449,6 +449,46 @@ async def _apply_entry_optimizer(record: dict) -> dict:
         return record
 
 
+def _stamp_writer(record: dict) -> None:
+    """factors.writer = {host, sha}: satırı hangi dağıtımın yazdığı (2026-10-20)."""
+    factors = record.get("factors")
+    if not isinstance(factors, dict):
+        return
+    try:
+        from services.writer_identity import writer_identity
+        factors["writer"] = writer_identity()
+    except Exception as e:
+        logger.debug("writer_identity atlandı: %s", e)
+
+
+def _tq_allows_final_confidence(record: dict) -> bool:
+    """Veto cezası güveni düşürdüyse zaman-kalitesi kapısını nihai güvenle tekrarla.
+
+    Gölge modda bloklamaz; verdikti factors.shadow_gates'e ekler. Fail-open.
+    """
+    try:
+        from services.signal_gates import time_quality_recheck
+        allowed, verdict = time_quality_recheck(
+            record.get("symbol"), record.get("ml_direction"),
+            record.get("model_type"), record.get("ml_confidence"))
+    except Exception as e:
+        logger.debug("TQ veto-sonrası kontrol atlandı (fail-open): %s", e)
+        return True
+    if not allowed:
+        logger.info("[tq] veto-sonrası BLOK %s %s %s güven=%s",
+                    record.get("symbol"), record.get("model_type"),
+                    record.get("ml_direction"), record.get("ml_confidence"))
+        return False
+    factors = record.get("factors")
+    if verdict and isinstance(factors, dict):
+        gates = list(factors.get("shadow_gates") or [])
+        if verdict["gate"] not in gates:
+            gates.append(verdict["gate"])
+            factors["shadow_gates"] = gates
+            factors.setdefault("shadow_gate_reasons", {})[verdict["gate"]] = verdict["reason"]
+    return True
+
+
 async def _apply_precision_veto(record: dict) -> bool:
     """Precision Veto Engine geçişi — sinyal prediction_logs'a yazılMADAN önce.
 
@@ -476,6 +516,8 @@ async def _apply_precision_veto(record: dict) -> bool:
             record["ml_confidence"] = round(vr.adjusted_confidence, 2)
             if isinstance(record.get("factors"), dict):
                 record["factors"]["precision_veto_penalty"] = round(vr.total_penalty, 1)
+            if not _tq_allows_final_confidence(record):
+                return False
         # Macro daily-bias context → persist onto the signal itself (prediction_logs
         # factors) so it lands next to the realized outcome. This is what makes the
         # "does aligning with the bias help?" question TRAINABLE — signal_vetoes only
@@ -653,6 +695,7 @@ async def log_smc_prediction(
             return None
         # Entry Optimizer — shadow/enforce moduna göre çağrılır
         record = await _apply_entry_optimizer(record)
+        _stamp_writer(record)
         result = client.table("prediction_logs").insert_ignore(record)
 
         if safe_get_error(result):
@@ -1198,6 +1241,7 @@ async def log_prediction(
 
         # Calculate actual price targets for DB storage using fixed pip values
         pulse_ladder = None
+        geometry_type = "static_pips"  # factors.target_type — SAKLANAN geometriyi anlatır
         if entry_price and entry_price > 0:
             # XAUUSD v2 model emits a single-target risk profile (TP=$10, SL=$15);
             # honor it instead of the legacy TP1/2/3/4 ladder so lifecycle does not
@@ -1214,9 +1258,14 @@ async def log_prediction(
                 targets_dict = {"TP1": round(tp_price, 4)}
                 targets_dict["SL"] = round(sl_price, 4)
                 stop_loss_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
+                # 2026-10-20: merdiven hesaplansa da KULLANILMIYOR — eskiden etiket
+                # atr_ladder_v1 + atr_ladder_sl_dist yazılıyordu, hedefler v2 tek-hedefti.
+                pulse_ladder = None
+                geometry_type = "model_single_v1"
             elif pulse_ladder:
                 targets_dict = dict(pulse_ladder["targets"])
                 stop_loss_pips = pulse_ladder["stop_loss_pips"]
+                geometry_type = "atr_ladder_v1"
             else:
                 target_prices = calculate_target_prices(entry_price, direction, symbol, normalized_timeframe)
                 sl_price = calculate_stoploss_price(entry_price, direction, symbol, normalized_timeframe)
@@ -1239,7 +1288,7 @@ async def log_prediction(
             pass
         # Geometri epoch etiketi: lifecycle ATR merdivenini bu etiketten tanır;
         # analizler de eski (static_pips) / yeni (atr_ladder_v1) dönemi ayırır.
-        factors["target_type"] = "atr_ladder_v1" if pulse_ladder else "static_pips"
+        factors["target_type"] = geometry_type
         # Gölge kapı verdiktleri (2026-08-26): gölge modda "bloklardım" diyen
         # kapılar. Sinyalin sonucu geldiğinde Gölge Modu paneli bu listeyi
         # sonuçla eşleştirip kapının AÇILMASININ ne kazandıracağını ölçer.
@@ -1344,6 +1393,7 @@ async def log_prediction(
                 return None
             # Entry Optimizer — shadow/enforce moduna göre çağrılır
             record = await _apply_entry_optimizer(record)
+        _stamp_writer(record)
         result = client.table("prediction_logs").insert_ignore(record)
 
         if safe_get_error(result):
@@ -1411,7 +1461,7 @@ async def log_prediction(
                 try:
                     inv_ml = dict(ml)
                     inv_ml["direction"] = "SELL" if direction == "BUY" else "BUY"
-                    if pulse_ladder and entry_price:
+                    if geometry_type != "static_pips" and entry_price:
                         # ATR merdivenli pulse satırında ayna geometriyi koru:
                         # None bırakmak _inv'i legacy 30/50 merdivene düşürür ve
                         # düz/ters kıyası farklı geometrilerde ölçülürdü.

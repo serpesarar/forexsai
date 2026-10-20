@@ -47,6 +47,11 @@ from utils.market_hours import is_symbol_market_open
 
 logger = logging.getLogger(__name__)
 
+#: factors.target_type değerleri: satırın KENDİ TP/SL seviyeleri esas alınır ve
+#: çözüm penceresi PULSE_ATR_WINDOW_MIN'e uzatılır. ``model_single_v1`` = XAU v2
+#: modelinin tek-hedef profili (2026-10-20'ye dek yanlışlıkla atr_ladder_v1 etiketliydi).
+STORED_GEOMETRY_TARGET_TYPES = frozenset({"atr_ladder_v1", "model_single_v1"})
+
 
 # Thread-safe SimpleCache for dashboard statistics
 class SimpleCache:
@@ -707,7 +712,7 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     # uzatılır (10dk'lık pencerede 1×ATR SL hiç test edilemeden window_resolve
     # üretiyordu; kayıpların ~üçte biri bu muhasebeydi).
     _row_factors = signal.get("factors") if isinstance(signal.get("factors"), dict) else {}
-    is_atr_ladder = str(_row_factors.get("target_type") or "") == "atr_ladder_v1"
+    is_atr_ladder = str(_row_factors.get("target_type") or "") in STORED_GEOMETRY_TARGET_TYPES
     if is_atr_ladder:
         import os as _os
         try:
@@ -758,6 +763,13 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
         # ATR merdivenli satırda SL de satırın kendi seviyesidir — statik config
         # SL'i (NDX 50p) ezerse ölçüm yine eski geometriye döner (denetim KN-1).
         _stored_sl = _coerce_float((signal.get("targets") or {}).get("SL"))
+        if _stored_sl is None:
+            # 2026-10-20: bu düzeltmeden önce her güncelleme targets'ı SL'siz
+            # yazıyordu → merdiven SL'i ilk kontrolden sonra kayboluyordu.
+            # Hâlâ aktif o satırlar için SL'i factors'taki mesafeden kur.
+            _sl_dist = _coerce_float(_row_factors.get("atr_ladder_sl_dist"))
+            if _sl_dist and _sl_dist > 0:
+                _stored_sl = entry_price - _sl_dist if direction == "BUY" else entry_price + _sl_dist
         if _is_sane_stored_level(entry_price, _stored_sl, direction, is_stop=True):
             sl_price = _stored_sl
     resolved_sl_pips = abs(pips_from_price_change(abs(entry_price - sl_price), symbol))
@@ -999,7 +1011,10 @@ async def _process_signal(client, signal: dict) -> Optional[str]:
     "highest_profit_pips": round(new_high, 2),
     "lowest_drawdown_pips": round(new_low, 2),
     "targets_hit": dict(targets_hit),
-    "targets": dict(target_prices),
+    # SL de yazılır: target_prices yalnız TP1-4 taşır; SL'siz yazım saklanan
+    # seviyeyi siliyor, sonraki kontroller statik config SL'ine düşüyordu
+    # (2026-10-20: atr_ladder_v1 satırlarının ~%90'ı bu yüzden statik SL ile çözüldü).
+    "targets": {**dict(target_prices), "SL": round(sl_price, 4)},
     "stop_loss_pips": round(resolved_sl_pips, 2),
     "resolution_reason": resolution_reason,
     }

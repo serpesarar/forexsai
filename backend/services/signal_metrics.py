@@ -71,6 +71,11 @@ WIN_CLASSES = frozenset({WIN, PARTIAL})
 #: Aynı barda hem TP hem SL değdiğini gösteren çözüm sebepleri.
 _SAME_BAR_REASONS = frozenset({"tp1_3_hit_then_sl"})
 
+#: Deney model_type önekleri — üretim karnesine KARIŞMAZ. ml_cross_xau_nasdaq
+#: (+ _inv aynası) 2026-07-01'de kanıtla kapatılan deney; Railway'de bayrak 1
+#: kaldığı için 2026-10'da hâlâ ~65 satır/gün yazıyordu (bkz. KAPI_KAYIT_DEFTERI E-satırı).
+EXPERIMENT_MODEL_PREFIXES: Tuple[str, ...] = ("ml_cross",)
+
 #: Epoch etiketi bulunmayan satırlar için. Karışım tespitinde sayılır.
 UNKNOWN_EPOCH = "unknown"
 
@@ -152,6 +157,12 @@ class Metrics:
 
 
 # ── yardımcılar ─────────────────────────────────────────────────────────────
+
+def is_experiment_row(sig: dict) -> bool:
+    """Satır izole bir deneye mi ait (ör. ml_cross_*)? Üretim karnesinden dışlanır."""
+    model_type = str(sig.get("model_type") or "").lower().strip()
+    return model_type.startswith(EXPERIMENT_MODEL_PREFIXES)
+
 
 def signal_epoch(sig: dict) -> str:
     """``factors.target_type`` epoch etiketi.
@@ -360,11 +371,13 @@ def aggregate_outcomes(
     *,
     default_symbol: Optional[str] = None,
     split_epochs: bool = True,
+    include_experiments: bool = False,
 ) -> Metrics:
     """Sinyal satırlarından dürüst karne üretir.
 
     WR, beklenti (R), başabaş WR ve epoch kırılımı BİRLİKTE döner — çıplak WR
-    raporlanamasın diye bilinçli olarak tek pakette.
+    raporlanamasın diye bilinçli olarak tek pakette. Deney satırları
+    (``is_experiment_row``) yalnız ``include_experiments=True`` ile sayılır.
     """
     total = Metrics()
     rr_samples: List[float] = []
@@ -373,6 +386,8 @@ def aggregate_outcomes(
     seen_epochs: set = set()
 
     for sig in rows or []:
+        if not include_experiments and is_experiment_row(sig):
+            continue
         out = signal_outcome(sig, default_symbol=default_symbol)
         seen_epochs.add(out.epoch)
 

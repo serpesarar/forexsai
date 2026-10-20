@@ -253,6 +253,11 @@ async def log_meta_prediction(signal_data: Dict[str, Any], timeframe: str = "1h"
             "model_type": META_MODEL_TYPE,
         }
 
+        try:
+            from services.writer_identity import writer_identity
+            record["factors"]["writer"] = writer_identity()
+        except Exception as _wi_err:
+            logger.debug("[MetaSignalLogger] writer_identity atlandı: %s", _wi_err)
         result = client.table("prediction_logs").insert_ignore(record)
         if safe_get_error(result):
             logger.error("[MetaSignalLogger] prediction_logs insert error: %s", result["error"])

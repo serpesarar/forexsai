@@ -328,7 +328,7 @@ def get_shadow_model_report(days: int = 30) -> Dict[str, Any]:
             {
                 "model_type": mt,
                 "total": len(rs),
-                "metrics": summarize_for_panel(aggregate_outcomes(rs)),
+                "metrics": summarize_for_panel(aggregate_outcomes(rs, include_experiments=True)),
             }
             for mt, rs in sorted(buckets.items(), key=lambda kv: -len(kv[1]))
         ]
@@ -337,7 +337,7 @@ def get_shadow_model_report(days: int = 30) -> Dict[str, Any]:
             "label": meta["label"],
             "note": meta["note"],
             "total": len(all_rows),
-            "metrics": summarize_for_panel(aggregate_outcomes(all_rows)),
+            "metrics": summarize_for_panel(aggregate_outcomes(all_rows, include_experiments=True)),
             "models": models,
         })
 

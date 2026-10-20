@@ -3386,5 +3386,38 @@
     "source": "session",
     "created_at": "2026-10-20T02:22:22.003676+00:00",
     "updated_at": "2026-10-20T02:22:22.003811+00:00"
+  },
+  {
+    "id": "bl_4250bade24",
+    "title": "Railway CROSS_MODEL_EXPERIMENT_ENABLED=0 yap",
+    "detail": "Railway env'de bayrak 1; kullanıcı panelden 0'a çekmeli veya silmeli",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-10-20T02:51:40.220315+00:00",
+    "updated_at": "2026-10-20T02:51:40.220461+00:00"
+  },
+  {
+    "id": "bl_6b9952f7da",
+    "title": "atr_ladder_v1 epoch'unu 1m replay ile yeniden çöz",
+    "detail": "07-28→10-20 merdiven satırları ilk kontrolden sonra statik SL ile çözüldü; epoch karnesi kirli",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-10-20T02:51:40.222930+00:00",
+    "updated_at": "2026-10-20T02:51:40.222934+00:00"
+  },
+  {
+    "id": "bl_a67ea627cb",
+    "title": "KAPI_KAYIT_DEFTERI E-satırı: yazar denetimi 2026-10-20",
+    "detail": "ml_cross Railway env, lifecycle SL silme, TQ veto sırası",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-10-20T02:51:40.224731+00:00",
+    "updated_at": "2026-10-20T02:51:40.224733+00:00"
   }
 ]
