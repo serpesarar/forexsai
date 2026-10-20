@@ -44,6 +44,10 @@ Vekil bot döneminde gerçek botun etkisini birebir üretiyor → etki botun kod
 aynı sinyal tipi şubat–haziranda etki göstermiyor (BUY'da ters). Yön ayrımı da kurtarmıyor (ön-kayıtlı ölçüt 3: bot öncesi
 vekilde P(Δ<0) ≥ %90 → %22, GEÇMEDİ).
 
+**İleri dönem ek kaynaklarda da (08-28 →):** VIXREG vekili 64 sinyal Δ 0,000 (06-15→08-27: −0,326, P %97);
+panel tüm modeller 324 sinyal Δ **+0,109** (ters). Etki 06-15 → 08-27 penceresine özgü; o tarihten sonra bot, vekil
+ve panelin üçünde de yok → dönemlik bir örüntü, kalıcı bir filtre değil.
+
 ## Hüküm: KULLANILAMAZ (şimdilik) — GÖLGE kalır, ileri kartla izlenir
 Ön-kayıtlı 4 ölçütten 1'i (ileri dönem) açıkça düştü. Geçmişteki güçlü etki keşif ve geri doğrulama dönemine
 (06-29 → 08-27) yoğunlaşmış. Kural donduruluktan sonra görülen tek dönemde (08-28 →) engel para kaybettirirdi. Bağımsız
