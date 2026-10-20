@@ -1812,6 +1812,40 @@ def _session_gate_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     return block
 
 
+def _weekly_open_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
+                        direction: str) -> bool:
+    """True → hafta sonu açılışının ilk WEEKLY_OPEN_BLOCK_MIN dakikası, giriş yok.
+
+    Açılış anı 1m barlardaki ≥24 s boşluktan bulunur; bar zamanı da 'şimdi' de broker
+    saatinden (tick.time) alınır → DST/offset hatası yok. Fail-open: veri yoksa engellemez."""
+    try:
+        if not pr.flag(config, "WEEKLY_OPEN_BLOCK_ENABLED"):
+            return False
+        if forexsai_sym not in pr.flag(config, "WEEKLY_OPEN_BLOCK_SYMBOLS"):
+            return False
+        window = float(pr.flag(config, "WEEKLY_OPEN_BLOCK_MIN"))
+        rates = mt5.copy_rates_from_pos(mt5_symbol, mt5.TIMEFRAME_M1, 0, int(window) + 30)
+        tick = mt5.symbol_info_tick(mt5_symbol)
+        if rates is None or len(rates) < 2 or not tick:
+            return False
+        mins = pr.minutes_since_weekly_open([int(r["time"]) for r in rates], float(tick.time),
+                                            float(pr.flag(config, "WEEKLY_OPEN_GAP_HOURS")))
+        if not pr.weekly_open_blocks(mins, window):
+            return False
+        block = bool(pr.flag(config, "WEEKLY_OPEN_BLOCK"))
+        _ENTRY_CTX["weekly_open"] = "block" if block else "shadow"
+        log.info("%s — HAFTALIK AÇILIŞ KAPISI%s: açılıştan %.0f dk sonra (< %.0f) → %s",
+                 scope_key, "" if block else " [GÖLGE]", mins, window,
+                 "%s açılmadı" % direction if block else "yine de devam (ölçüm)")
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction,
+                      tick.ask if direction == "BUY" else tick.bid, "weekly_open_gate",
+                      extra={"dk": round(mins, 1), "shadow": not block})
+        return block
+    except Exception as exc:
+        log.debug("haftalık açılış kapısı fail-open: %s", exc)
+        return False
+
+
 def _route_open(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                 direction: str, cfg: dict, voters: list[str],
                 bot_signal: dict | None) -> None:
@@ -1821,6 +1855,10 @@ def _route_open(scope_key: str, forexsai_sym: str, mt5_symbol: str,
       - Aksi (normal momentum)         → S/R pullback (pending limit).
     """
     _ENTRY_CTX.clear()                                       # parmak izi bağlamı (taze)
+
+    # Haftalık açılış kapısı (2026-10-20, kullanıcı kararı) — ilk 60 dk giriş yok.
+    if _weekly_open_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
+        return
 
     # USOIL BUY seans filtresi (2026-09-30) — varsayılan GÖLGE: yalnız ölçer.
     if _session_gate_blocks(scope_key, forexsai_sym, mt5_symbol, direction):

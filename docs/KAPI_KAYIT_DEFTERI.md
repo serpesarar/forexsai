@@ -93,6 +93,7 @@ Kanıt sınıfı: **A** gerçek para/bağımsız ikinci veri/OOS+plasebo · **B*
 | B13 | POS_TIGHT (SELL ≥0,60 / BUY ≤0,40) | GÖLGE (geri alındı) | X | sahte çoğaltma (E6) |
 | B14 | SQZ ATR14/ATR100 ≥1,0 | GÖLGE | ~~B~~ **C** | plasebo yalnız 1,00'da geçiyor; **2026-10-20 IO-22: ileri dönemde (08-28→) tutmadı** — engel −2,0R, saat içi ters; bot öncesi panelde ters; ileri kart `go_live_cards/sqz_filter_ndx.json` |
 | B20 | DAILY_MAX_LOSS + MAX_TOTAL_POSITIONS kapsamı | AKTİF (düzeltildi 2026-10-20) | A (olay) | `_bot_magics()` DAYCOMBO/USOIL_BRK/REENTRY'yi saymıyordu + `history_deals_get` UTC verilip broker saati bekleniyordu (son 3 s görünmüyordu); 10-19'da fren −4.684$'ı −1.486$ gördü → 2 SL daha (IO-21, 7862f6c2) |
+| B21 | USOIL haftalık açılış kapısı (hafta sonu boşluğundan sonraki ilk 60 dk yeni giriş yok; açılış 1m bar boşluğundan bulunur) | AKTİF (2026-10-20, kullanıcı kararı) | C (kanıt zayıf) | IO-25 vakası #405554591; botun geçmişinde 1 benzer işlem, panel −0,15R yarılar tutarsız → risk azaltıcı kullanıcı kuralı, kenar iddiası yok; `gate_skipped` reason `weekly_open_gate` ile izlenir |
 | B15 | USOIL_SESSION_GATE (13 UTC öncesi BUY) | GÖLGE | ~~B~~ **C** | kart geçilemedi (bootstrap %81); 2026-10-20 IO-24: ileri dönem −0,4R, engellenen ve panel sinyallerinde ters |
 | B16 | SELL_RSI (5m RSI>55) | GÖLGE | C | ölçüm |
 | B17 | USOIL_BREAKOUT | GÖLGE | X | 368 olay P(EV>0)=%0,3; −895$/5 gün |
