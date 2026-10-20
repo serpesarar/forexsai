@@ -41,8 +41,7 @@ B = 5000
 
 
 def connect() -> bool:
-    return bool(mt5.initialize(login=config.MT5_LOGIN, password=config.MT5_PASSWORD, server=config.MT5_SERVER)
-                or mt5.initialize())
+    return bool(mt5.initialize())
 
 
 def load_trades() -> list[dict]:
