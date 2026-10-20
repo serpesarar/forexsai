@@ -3364,5 +3364,27 @@
     "source": "session",
     "created_at": "2026-10-10T18:56:57.178662+00:00",
     "updated_at": "2026-10-10T18:56:57.178793+00:00"
+  },
+  {
+    "id": "bl_28660019d5",
+    "title": "ME-11 aday: şekil eşleşmesi sonrası NDX ileri oynaklık fazlası",
+    "detail": "D1 şekil dedektörü (ME-09 şablonları) NDX 15m ve 1h'te saat eşli tabanda ileri RV +%14-36 (P≥0,99, 15m doğrulama +%31, 9 olay); 30m/DAX/kural dedektöründe yok, sonradan bulundu. Yeni veriyle (2026-10 sonrası 15m/1h) saat+getiri+oynaklık eşli tabanla ön-kayıtlı tekrar; geçerse yalnız risk (lot/stop) bilgisi olarak düşünülür, yön değil.",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-10-20T00:39:00.573166+00:00",
+    "updated_at": "2026-10-20T00:39:00.573291+00:00"
+  },
+  {
+    "id": "bl_c8fac99a42",
+    "title": "XAU swing gölgesi: ilk gerçek sinyalde dolum farkını kontrol et",
+    "detail": "xau_swing_shadow.jsonl'de live_entry (ask) vs araştırma girişi (D1 açılış) farkı ve R_live; altın şu an EMA200 altında (4140 < 4295), sinyal trend dönünce gelir. Bot restart borcu ödenince modül yüklenir — 'ayar XAU_SWING_SHADOW_ENABLED' satırını kontrol et.",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-10-20T02:22:22.003676+00:00",
+    "updated_at": "2026-10-20T02:22:22.003811+00:00"
   }
 ]

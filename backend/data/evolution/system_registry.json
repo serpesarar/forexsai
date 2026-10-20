@@ -1056,5 +1056,19 @@
   "file": "backend/research/_bars_upto.py",
   "category": "research",
   "purpose": "mt5.copy_rates_from verilen tarihten İLERİYE bar döndürür; geçmiş bir karar anını yeniden kuran her analiz bunu kullanırsa geleceğe bakar. rates_upto/candles_upto copy_rates_range penceresi çekip karar anından sonraki ve koşan barları keser."
+ },
+ {
+  "id": "candle_similarity_service",
+  "name": "Mum Benzerlik Tarayıcısı (görsel eşleştirme)",
+  "file": "backend/services/candle_similarity_service.py",
+  "category": "analysis",
+  "purpose": "Son N mumu (20–150) geçmişteki tüm N mumluk pencerelerle oto-ölçekli OHLC konumlarıyla (gövde+fitil, ölçek bağımsız) eşleştirir; eşlerin sonrasını koşulsuz taban + aynı-saat tipik hareketle birlikte döner. API /api/candle-similarity/{symbol}, panel /mum-eslestirme. Arşiv backend/data/candle_history (build_candle_history.py). Geriye-dönük karne: yön isabeti tabandan farksız (bilgi amaçlı)."
+ },
+ {
+  "id": "xau_swing_shadow",
+  "name": "XAU günlük swing (Golden Donchian) gölgesi",
+  "file": "yeni deneme/xau_swing_shadow.py",
+  "category": "bot",
+  "purpose": "D1 55-gün tepesi + EMA200 BUY, SL 2×ATR / TP 4×ATR / 20 gün; EMİR YOK, xau_swing_shadow.jsonl'e yazar. XS-01 bağımsız dönem (2008-21) +0,39R vs taban +0,15, P %98; 18 yılda 86 işlem → kart hacmi geçilemez → gölge. Araştırmayla sadakat 86/86."
  }
 ]

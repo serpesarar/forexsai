@@ -513,5 +513,31 @@
     "needs_backend": false,
     "est_runtime": "seconds",
     "learn_targets": []
+  },
+  {
+    "id": "candle_similarity_karne",
+    "name": "Mum Benzerlik Tarayıcısı — geriye-dönük isabet karnesi",
+    "kind": "script",
+    "command": "python3 backend/scripts/build_candle_history.py && python3 backend/scripts/candle_similarity_backtest.py",
+    "cwd": ".",
+    "category": "validation",
+    "what_it_does": "4 sembol × 5 TF × n∈{50,100}, arşivin son %30'unda 200 sızıntısız sorgu: eşleşme çoğunluk yönü vs rastgele komşu vs hep-çoğunluk; büyüklükte eşleşme vs aynı-saat tipik hareket korelasyonu. Çıktı backend/data/candle_similarity_reliability.json (panel her sonucun yanında gösterir). 2026-10-20: 38/40 hücre 'tabandan farksız' ya da altında; saatin tipik hareketi büyüklükte eşleşmeden iyi.",
+    "output": "backend/data/candle_similarity_reliability.json",
+    "needs_backend": false,
+    "est_runtime": "~3 dk",
+    "learn_targets": []
+  },
+  {
+    "id": "xau_swing_xs01",
+    "name": "XAU günlük swing bağımsız dönem (XS-01) + gölge sadakati",
+    "kind": "script",
+    "command": "cd research/xau_swing_oos_20261020 && python3 xs_test.py && python3 parite.py",
+    "cwd": ".",
+    "category": "validation",
+    "what_it_does": "Golden Donchian kuralını değiştirmeden Dukascopy 2008-01→2021-04'te sınar (54 işlem, +0,39R vs her gün BUY +0,15, P %98, iki yarı +) ve yeni deneme/xau_swing_shadow.py'nin araştırma koduyla 86/86 aynı işlemi ürettiğini doğrular.",
+    "output": "research/xau_swing_oos_20261020/sonuc.json",
+    "needs_backend": false,
+    "est_runtime": "~1 dk",
+    "learn_targets": []
   }
 ]
