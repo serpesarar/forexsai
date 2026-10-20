@@ -28,7 +28,8 @@ Env bayrakları:
   ENTRY_SCORE_GATE_BLOCK=0   → 1 ise GERÇEKTEN bloklar (2026-08-11'den beri GÖLGE)
   ENTRY_SCORE_MIN=7          → minimum skor eşiği (0-8)
   FAKEOUT_GATE_ENABLED=1     → sahte kırılım radarı (default açık — değerlendir+logla)
-  FAKEOUT_GATE_BLOCK=0       → 1 ise GERÇEKTEN bloklar (default GÖLGE: sadece log)
+  FAKEOUT_GATE_BLOCK=1       → 2026-10-20'den beri default BLOK, yalnız FAKEOUT_GATE_BLOCK_SYMBOLS
+                               (default NDX.INDX) içinde; diğer semboller GÖLGE. 0 → her yerde gölge.
   FAKEOUT_BLOCK_PROB=80      → blok için minimum sahte-kırılım olasılığı (%)
   DEBATE_BIAS_GATE_ENABLED=1 → tartışma-bias karşıt-sinyal freni (default açık — logla)
   DEBATE_BIAS_GATE_BLOCK=0   → 1 ise GERÇEKTEN bloklar (default GÖLGE: sadece log)
@@ -557,6 +558,18 @@ async def entry_score_gate(
 #: NDX %70/%83 · GDAXI %75/%89 · XAU %72/%93 (tp0.75) · USOIL %86/%81 (kantil eşik).
 #: Kural dosyası olmayan sembolde kapı no-op'tur (fail-open).
 FAKEOUT_GATED_MODELS = {"pulse1", "pulse2", "pulse3", "smc"}
+#: Blok modunun uygulandığı semboller. Canlı sinyal-bazlı doğrulama (2026-10-20, 60g, atr_ladder_v1):
+#: NDX'te kapının "bloklardım" dediği pulse/smc sinyalleri %25,6 (n=39; 18 bağımsız 2s-olay, 4 kazanan /
+#: 12 kaybeden) vs geçenler %53,6 (n=334); iki 30g yarıda da (%30,8 vs %52,4 · %23,1 vs %55,1).
+#: DAX/XAU/USOIL'de fark yok (dedektör orada %70/%70'i geçmedi) → gölgede kalır.
+FAKEOUT_BLOCK_SYMBOLS_DEFAULT = "NDX.INDX,NDX,NAS100,USTEC"
+
+
+def _fakeout_block_active(symbol: str) -> bool:
+    if not _flag("FAKEOUT_GATE_BLOCK", "1"):
+        return False
+    allowed = {x.strip().upper() for x in os.getenv("FAKEOUT_GATE_BLOCK_SYMBOLS", FAKEOUT_BLOCK_SYMBOLS_DEFAULT).split(",") if x.strip()}
+    return _norm_symbol(symbol) in allowed
 
 
 async def fakeout_gate(
@@ -570,8 +583,8 @@ async def fakeout_gate(
     %70/30 OOS). Örn. pen_atr≥0.865 & body_ratio≥0.78 → sahte %89 (train n=91) /
     %87.8 (test n=41); vol_ratio≥1.274 & body_ratio≥0.78 → %85.7 OOS.
 
-    GÖLGE MODU (default): FAKEOUT_GATE_BLOCK=0 iken yalnızca INFO loglar,
-    bloklamaz — canlı sinyal-bazlı doğrulama toplandıktan sonra açılmalı.
+    BLOK yalnız FAKEOUT_GATE_BLOCK_SYMBOLS (default NDX.INDX) içinde — canlı sinyal-bazlı doğrulama
+    2026-10-20'de NDX'te geçti; diğer sembollerde GÖLGE (yalnız loglar, factors.shadow_gates).
     Kurallar sembole özgü JSON'dan gelir; başka sembolde kural yoksa no-op.
     Fail-open: servis/veri hatası asla sinyal bloklamaz.
     """
@@ -610,7 +623,7 @@ async def fakeout_gate(
                 f"Fakeout kapısı: {bo.get('level_kind')} {bo.get('level_price')} "
                 f"kırılımı sinyal yönünde ama sahte olasılığı %{prob:.0f} ({why})"
             )
-            if _flag("FAKEOUT_GATE_BLOCK", "0"):
+            if _fakeout_block_active(symbol):
                 logger.info(f"fakeout_gate BLOCK {symbol} {direction}: {reason}")
                 return False, reason
             _shadow_verdict("fakeout_gate", symbol, direction, reason)
