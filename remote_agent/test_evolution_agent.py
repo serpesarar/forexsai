@@ -364,3 +364,28 @@ def test_push_fingerprints_handles_file_truncation(agent, tmp_path):
     n = agent.push_fingerprints(client, state)
     assert n == 1
     assert client.by_table["bot_entry_fingerprints"][0]["ticket"] == 9
+
+
+# ── 2026-10-20: restart borcu ana döngünün eski state kopyasıyla silinmemeli ──
+def test_pending_restart_survives_main_loop_save(agent, tmp_path, monkeypatch):
+    monkeypatch.setattr(agent, "STATE_FILE", tmp_path / "agent_state.json")
+    state = agent.load_state()                       # ana döngü: açılışta yüklenen kopya (borç yok)
+    state["last_deal_ts"] = 1
+    agent.save_state(state)
+    agent._queue_pending_restart("bot", "test")      # borç dosyaya yazılır
+    state["last_deal_ts"] = 2
+    agent.save_state(state)                          # ana döngü turu — borcu SİLMEMELİ
+    disk = json.loads((tmp_path / "agent_state.json").read_text())
+    assert disk["last_deal_ts"] == 2
+    assert "bot" in disk[agent.PENDING_RESTART_KEY]
+
+
+def test_paid_restart_not_resurrected(agent, tmp_path, monkeypatch):
+    monkeypatch.setattr(agent, "STATE_FILE", tmp_path / "agent_state.json")
+    agent._queue_pending_restart("bot", "test")
+    state = agent.load_state()                       # bellekte borçlu kopya
+    st = agent.load_state(); st[agent.PENDING_RESTART_KEY] = {}
+    agent.save_state(st, own_pending=True)           # borç ödendi
+    agent.save_state(state)                          # eski kopya borcu geri getirmemeli
+    disk = json.loads((tmp_path / "agent_state.json").read_text())
+    assert disk[agent.PENDING_RESTART_KEY] == {}

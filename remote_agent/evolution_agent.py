@@ -108,8 +108,25 @@ def load_state() -> dict:
         return {}
 
 
-def save_state(state: dict) -> None:
-    STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
+def save_state(state: dict, own_pending: bool = False) -> None:
+    """Durumu yaz. Restart borcu (PENDING_RESTART_KEY) YALNIZ borç fonksiyonlarına aittir.
+
+    2026-10-20 bulgusu: ana döngü açılışta yüklediği `state`'i her turda yazıyordu; borç
+    fonksiyonları dosyaya yazdığı `pending_restarts`'ı bir sonraki turda bu eski kopya
+    siliyordu → ertelenen restart'lar hiç ödenmedi (bot 10-15'ten beri eski kodla). Artık
+    own_pending=False iken borç anahtarı diskteki hâliyle korunur (bellekteki değer yok sayılır).
+    """
+    out = dict(state)
+    if not own_pending:
+        try:
+            disk = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            disk = {}
+        if PENDING_RESTART_KEY in disk:
+            out[PENDING_RESTART_KEY] = disk[PENDING_RESTART_KEY]
+        else:
+            out.pop(PENDING_RESTART_KEY, None)
+    STATE_FILE.write_text(json.dumps(out, indent=2), encoding="utf-8")
 
 
 def supa():
@@ -855,7 +872,7 @@ def _queue_pending_restart(target: str, behind: str = "") -> None:
     if target not in pend:
         pend[target] = {"since": now_iso(), "commits": behind}
         st[PENDING_RESTART_KEY] = pend
-        save_state(st)
+        save_state(st, own_pending=True)
         log.warning("[oto] %s restart'ı ERTELENDİ → borç yazıldı, "
                     "pozisyon kapanınca uygulanacak", target)
 
@@ -892,7 +909,7 @@ def flush_pending_restarts(client) -> None:
                 done.append((target, info, out))
                 pend.pop(target, None)
     st[PENDING_RESTART_KEY] = pend
-    save_state(st)
+    save_state(st, own_pending=True)
     if done and client is not None:
         try:
             client.table("evolution_commands").insert({
