@@ -36,6 +36,7 @@ import phase_rules as pr
 import probation_exec
 import reentry_exec
 import shadow_log
+import decider_early_cut
 try:                                    # CAPREV-2 / K5b GÖLGE — emir göndermez; import hatası botu durdurmaz
     import caprev_shadow
 except Exception:                       # pragma: no cover
@@ -2617,6 +2618,14 @@ def main():
                     caprev_live.manage_exits(mt5, config, log)
                 except Exception as e:
                     log.warning("caprev çıkış hatası: %s", e)
+
+            # ── Decider XAU erken kesme (DX-04): fren 'continue'undan ÖNCE — açık decider
+            #    pozisyonu fren devredeyken de yönetilmeli ──
+            if config.LIVE_TRADING:
+                try:
+                    decider_early_cut.manage(mt5, log, resolve_symbol)
+                except Exception as e:
+                    log.warning("erken kesme hatası: %s", e)
 
             # ── Global risk geçidi (günlük zarar freni) ──
             if config.DAILY_MAX_LOSS and config.DAILY_MAX_LOSS > 0:

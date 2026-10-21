@@ -188,6 +188,15 @@ DEFAULTS: dict[str, object] = {
     "WEEKLY_OPEN_BLOCK_SYMBOLS": ("USOIL.FOREX",),
     "WEEKLY_OPEN_BLOCK_MIN": 60,
     "WEEKLY_OPEN_GAP_HOURS": 24,
+    # ── 2026-10-21 — DECIDER XAU ERKEN KESME (kullanıcı kararı, defter DX-04, B) ──
+    # decider_early_cut.py: decider (magic 52890989) XAUUSD BUY pozisyonu ilk kez ≥5 dk
+    # yaşındayken son kapalı 1m kapanışında R ≤ −0,5 → piyasadan kapat (tek karar).
+    "DECIDER_EARLY_CUT_ENABLED": True,
+    "DECIDER_EARLY_CUT_MAGIC": 52890989,
+    "DECIDER_EARLY_CUT_SYMBOLS": ("XAUUSD",),
+    "DECIDER_EARLY_CUT_MIN": 5,
+    "DECIDER_EARLY_CUT_MAX_LATE_MIN": 10,
+    "DECIDER_EARLY_CUT_R": -0.5,
     "SCOPE_LOSS_COOLDOWN_ENABLED": False,
     "SCOPE_LOSS_COOLDOWN_MIN": 120,
     "SCOPE_LOSS_COOLDOWN_STREAK": 2,
