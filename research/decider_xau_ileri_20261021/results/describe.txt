@@ -1,0 +1,101 @@
+## 1. Envanter (ham)
+                                     n  dup  usable                            first                             last
+source         direction mode                                                                                        
+live_demo_exec BUY       free       94    0      94 2026-10-05 04:23:12.121260+00:00 2026-10-20 06:11:54.779192+00:00
+shadow_journal BUY       evidence    6    0       6 2026-06-30 12:57:20.196493+00:00 2026-06-30 20:38:07.208962+00:00
+                         free      680   76     652 2026-07-03 14:10:32.264183+00:00 2026-10-20 23:29:44.910202+00:00
+               SELL      free      107    0      99 2026-07-24 01:35:28.096731+00:00 2026-10-20 11:17:39.829313+00:00
+
+Yinelenen (≤10sn, aynı yön) kayıtların günleri: {'10-05': 23, '10-06': 26, '10-07': 27}
+Kullanılamayan (giriş barı karardan >30 dk sonra: hafta sonu/veri boşluğu): {'07-03 Fri': 1, '07-24 Fri': 1, '07-25 Sat': 2, '07-26 Sun': 2, '07-27 Mon': 3, '07-28 Tue': 10, '08-27 Thu': 9, '08-28 Fri': 4, '09-07 Mon': 1, '10-04 Sun': 1, '10-07 Wed': 1}
+
+ANALİZ KÜMESİ n=776 | veri boşluklu (ilk 240dk'da >5dk boşluk) 30
+source          direction  epoch                  
+live_demo_exec  BUY        SL1.5ATR_rr0.67(07-27+)     94
+shadow_journal  BUY        SL1.5ATR_rr0.67(07-27+)    523
+                           SL2.5ATR_rr0.40(≤07-27)     60
+                SELL       SL1.5ATR_rr0.67(07-27+)     45
+                           SL2.5ATR_rr0.40(≤07-27)     54
+
+Aylık: direction          BUY  SELL
+decision_time_utc           
+2026-06              6     0
+2026-07            177    85
+2026-08            113     8
+2026-09            115     0
+2026-10            266     6
+
+Model/epok: model              direction
+claude-opus-5      BUY          226
+                   SELL          54
+claude-sonnet-5    BUY          177
+claude-sonnet-5-5  BUY          260
+                   SELL           6
+opus               BUY           14
+                   SELL          39
+
+## 2. Orijinal geometri (mesafeler girişten, $ ve kapalı-bar ATR birimi)
+                                     n  tp_usd  sl_usd  tp_atr5  sl_atr5  atr_m5  atr_m15  atr_h1  spread
+direction epoch                                                                                          
+BUY       SL1.5ATR_rr0.67(07-27+)  617   4.104   6.156    0.990    1.485   4.149    6.988  14.830    0.13
+          SL2.5ATR_rr0.40(≤07-27)   60   3.343   8.357    0.999    2.498   3.348    6.084  13.875    0.14
+SELL      SL1.5ATR_rr0.67(07-27+)   45   4.881   7.322    0.987    1.481   4.429    8.146  14.104    0.19
+          SL2.5ATR_rr0.40(≤07-27)   54   3.748   9.371    0.955    2.388   3.935    6.988  12.664    0.14
+M15/H1 ATR biriminde medyan TP/SL: {'tp_atr15': 0.577, 'sl_atr15': 0.901, 'tp_atrh1': 0.273, 'sl_atrh1': 0.432}
+
+## 3. Sonuçlar (orijinal geometri, broker 1m, spread dahil, aynı-bar=LOSS)
+                                                      n     WR  başabaş_WR  ort_R  ort_$_0.01lot  top_$_0.01lot  timeout  medyan_süre_dk
+source         direction epoch                                                                                                          
+live_demo_exec BUY       SL1.5ATR_rr0.67(07-27+)   94.0  0.638       0.600  0.064          0.679         63.780      0.0            11.0
+shadow_journal BUY       SL1.5ATR_rr0.67(07-27+)  523.0  0.597       0.600 -0.004          0.002          1.175      1.0            14.0
+                         SL2.5ATR_rr0.40(≤07-27)   60.0  0.633       0.714 -0.113         -0.918        -55.099      0.0            27.0
+               SELL      SL1.5ATR_rr0.67(07-27+)   45.0  0.644       0.600  0.074          0.155          6.994      0.0            17.0
+                         SL2.5ATR_rr0.40(≤07-27)   54.0  0.556       0.714 -0.203         -2.262       -122.157      1.0            25.0
+
+Tüm BUY: {'n': 677.0, 'WR': 0.606, 'başabaş_WR': 0.61, 'ort_R': -0.005, 'ort_$_0.01lot': 0.015, 'top_$_0.01lot': 9.857, 'timeout': 1.0, 'medyan_süre_dk': 14.0}
+Tüm SELL: {'n': 99.0, 'WR': 0.596, 'başabaş_WR': 0.662, 'ort_R': -0.077, 'ort_$_0.01lot': -1.163, 'top_$_0.01lot': -115.163, 'timeout': 1.0, 'medyan_süre_dk': 23.0}
+
+İCRA (gerçek MT5 demo, magic 52890989): n=94 WR=0.638 gerçek P&L toplam=40.93$ ort=0.435$ | lot dağılımı {0.01: 58, 0.02: 31, 0.03: 5} | aynı işlemlerin sim R ort=+0.064 | dönem 10-05→10-20
+Ekim (10-05+) BUY executed=False: n=172 WR=0.547 sim R ort=-0.085
+Ekim (10-05+) BUY executed=True: n=94 WR=0.638 sim R ort=+0.064
+  icra edilmeyen 172 kararın 27'i açık decider pozisyonu varken (R -0.198); kalan 145 (R -0.064) için neden live_orders.jsonl olmadan doğrulanamadı (olası: canlıya geçiş öncesi, günlük 10 emir tavanı, spread/ATR>0,15, kill-switch)
+Journal kendi notu (5m, spread'siz) × bizim 1m simülasyon (gölge): 
+sim_outcome  LOSS  TIMEOUT48h  WIN
+j_outcome                         
+EXPIRE          0           0    1
+LOSS          239           0   37
+None            0           1    0
+WIN            32           1  371
+
+## 4. MFE/MAE profili (ATR5 birimi, medyan [p25,p75]) — giriş barından itibaren, sonuç bağımsız ufuklar
+ yön      sonuç   n            MFE30            MAE30            MFE60            MAE60           MFE120           MAE120           MFE240           MAE240 MFEsess MAEsess
+ BUY       LOSS 266 0.41 [0.18,0.67] 2.01 [1.47,2.75] 0.52 [0.22,0.97] 2.67 [1.85,3.87] 0.76 [0.29,1.88] 3.74 [2.49,5.13] 1.24 [0.49,3.63] 4.46 [3.07,6.97]    3.38    7.16
+ BUY TIMEOUT48h   1 0.72 [0.72,0.72] 0.97 [0.97,0.97] 0.72 [0.72,0.72] 0.97 [0.97,0.97] 0.72 [0.72,0.72] 0.97 [0.97,0.97] 0.72 [0.72,0.72] 0.97 [0.97,0.97]    0.72    0.97
+ BUY        WIN 410 1.60 [1.08,2.27] 0.65 [0.30,1.04] 2.13 [1.42,3.10] 0.81 [0.38,1.43] 2.87 [1.78,4.20] 1.24 [0.60,2.48] 3.52 [2.13,6.26] 2.00 [0.83,4.15]    5.04    3.86
+SELL       LOSS  39 0.40 [0.21,0.63] 2.08 [1.04,3.41] 0.50 [0.29,0.76] 2.93 [1.84,4.02] 0.66 [0.36,1.12] 3.57 [2.72,5.72] 0.80 [0.55,1.49] 3.93 [3.29,7.33]    0.89    8.37
+SELL TIMEOUT48h   1 0.24 [0.24,0.24] 0.06 [0.06,0.06] 0.24 [0.24,0.24] 0.06 [0.06,0.06] 0.24 [0.24,0.24] 0.06 [0.06,0.06] 0.24 [0.24,0.24] 0.06 [0.06,0.06]    0.24    0.06
+SELL        WIN  59 1.39 [0.91,2.10] 0.58 [0.29,0.83] 1.91 [1.17,2.84] 0.74 [0.44,1.54] 2.62 [1.89,4.09] 1.22 [0.56,2.18] 3.00 [2.08,4.88] 2.58 [1.14,5.47]    3.12    7.53
+
+$ cinsinden medyan MFE/MAE (yön×sonuç): 
+                      mfe_30m_usd  mfe_60m_usd  mfe_120m_usd  mfe_240m_usd  mae_30m_usd  mae_60m_usd  mae_120m_usd  mae_240m_usd
+direction outcome                                                                                                               
+BUY       LOSS               1.51         2.02          3.07          4.88         7.83        10.88         14.84         18.63
+          TIMEOUT48h         1.86         1.86          1.86          1.86         2.50         2.50          2.50          2.50
+          WIN                6.51         8.89         11.55         14.96         2.61         3.38          5.28          8.14
+SELL      LOSS               1.81         2.42          2.97          4.28         9.12        12.59         15.49         19.40
+          TIMEOUT48h         0.72         0.72          0.72          0.72         0.17         0.17          0.17          0.17
+          WIN                5.58         7.87         10.64         14.31         2.31         3.51          5.49         12.52
+
+Yön bazında tüm işlemler (sonuçtan bağımsız) medyan/ortalama ATR5:
+  BUY: H30: MFE med 1.03/ort 1.31, MAE med 1.04/ort 1.36, getiri ort -0.029, H60: MFE med 1.49/ort 1.83, MAE med 1.49/ort 1.91, getiri ort -0.018, H120: MFE med 2.07/ort 2.77, MAE med 2.18/ort 2.80, getiri ort +0.081, H240: MFE med 2.83/ort 4.02, MAE med 3.13/ort 4.07, getiri ort +0.086
+  SELL: H30: MFE med 0.87/ort 1.19, MAE med 0.74/ort 1.37, getiri ort -0.001, H60: MFE med 1.05/ort 1.64, MAE med 1.37/ort 2.04, getiri ort -0.160, H120: MFE med 1.88/ort 2.21, MAE med 2.04/ort 2.98, getiri ort -0.571, H240: MFE med 2.13/ort 2.79, MAE med 3.52/ort 4.85, getiri ort -1.458
+
+## 5. SL vuran işlemler SL'den önce ne kadar lehte gitti (R = orijinal SL mesafesi; SL barının lehte kısmı sayılmaz)
+  BUY LOSS n=266: ≥+0.25R 44.7% | ≥+0.5R 11.3% | ≥+0.67R(orijinal TP'nin 1.0 ATR'si≈) 0.0% | ≥+1R 0.0% | medyan 0.21R
+     SL1.5ATR_rr0.67(07-27+): n=244 ≥+0.25R 46.3% ≥+0.5R 12.3% ≥+1R 0.0%
+     SL2.5ATR_rr0.40(≤07-27): n=22 ≥+0.25R 27.3% ≥+0.5R 0.0% ≥+1R 0.0%
+  SELL LOSS n=39: ≥+0.25R 43.6% | ≥+0.5R 7.7% | ≥+0.67R(orijinal TP'nin 1.0 ATR'si≈) 0.0% | ≥+1R 0.0% | medyan 0.19R
+     SL1.5ATR_rr0.67(07-27+): n=16 ≥+0.25R 62.5% ≥+0.5R 18.8% ≥+1R 0.0%
+     SL2.5ATR_rr0.40(≤07-27): n=23 ≥+0.25R 30.4% ≥+0.5R 0.0% ≥+1R 0.0%
+  BUY WIN n=410: TP'den önce aleyhte (R) medyan 0.30 | ≥0.5R 25.6% | ≥0.75R 9.0% | ≥0.9R 3.2% (SL'i 0.5R/0.75R'e daraltmak bu kazananları öldürürdü)
+  SELL WIN n=59: TP'den önce aleyhte (R) medyan 0.26 | ≥0.5R 18.6% | ≥0.75R 8.5% | ≥0.9R 0.0% (SL'i 0.5R/0.75R'e daraltmak bu kazananları öldürürdü)

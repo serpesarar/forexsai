@@ -175,6 +175,28 @@ DEFAULTS: dict[str, object] = {
     "SQZ_EMA50_SHADOW_ENABLED": True,
     "SQZ_EMA50_SCOPES": ("DAYCOMBO", "REENTRY"),
     "SQZ_EMA50_DIST_MAX": 1.32,
+    # ── 2026-10-20 — HAFTALIK AÇILIŞ KAPISI (kullanıcı kararı, IO-25) ──────
+    # Hafta sonu kapanışından sonraki ilk WEEKLY_OPEN_BLOCK_MIN dakika yeni giriş yok.
+    # Vaka: #405554591 USOIL BUY, açılışın 9. dk'sında düşen bıçakta (15 dk −5,8 ATR5)
+    # açıldı, −1.486$. ⚠️ KANIT ZAYIF: botun geçmişinde benzer 1 işlem; panel 199 sinyal
+    # −0,15R ama yarılar tutarsız. Kullanıcı riski azaltan kural olarak istedi (BLOK).
+    # Açılış zamanı saatten değil VERİDEN bulunur: son 1m barlarda ≥ GAP_HOURS boşluk →
+    # boşluktan sonraki ilk bar = açılış (DST/broker saati bağımsız; günlük bakım arası
+    # ~1 s olduğundan eşik 24 s).
+    "WEEKLY_OPEN_BLOCK_ENABLED": True,
+    "WEEKLY_OPEN_BLOCK": True,               # False → yalnız gölge kaydı
+    "WEEKLY_OPEN_BLOCK_SYMBOLS": ("USOIL.FOREX",),
+    "WEEKLY_OPEN_BLOCK_MIN": 60,
+    "WEEKLY_OPEN_GAP_HOURS": 24,
+    # ── 2026-10-21 — DECIDER XAU ERKEN KESME (kullanıcı kararı, defter DX-04, B) ──
+    # decider_early_cut.py: decider (magic 52890989) XAUUSD BUY pozisyonu ilk kez ≥5 dk
+    # yaşındayken son kapalı 1m kapanışında R ≤ −0,5 → piyasadan kapat (tek karar).
+    "DECIDER_EARLY_CUT_ENABLED": True,
+    "DECIDER_EARLY_CUT_MAGIC": 52890989,
+    "DECIDER_EARLY_CUT_SYMBOLS": ("XAUUSD",),
+    "DECIDER_EARLY_CUT_MIN": 5,
+    "DECIDER_EARLY_CUT_MAX_LATE_MIN": 10,
+    "DECIDER_EARLY_CUT_R": -0.5,
     "SCOPE_LOSS_COOLDOWN_ENABLED": False,
     "SCOPE_LOSS_COOLDOWN_MIN": 120,
     "SCOPE_LOSS_COOLDOWN_STREAK": 2,
@@ -539,6 +561,25 @@ def squeeze_blocks(ratio: Optional[float], min_ratio: float) -> bool:
     if ratio is None:
         return False
     return float(ratio) < float(min_ratio)
+
+
+def minutes_since_weekly_open(bar_times: Sequence[int], now_ts: float,
+                              gap_hours: float = 24.0) -> Optional[float]:
+    """Son hafta sonu boşluğundan (ardışık 1m bar arası ≥ gap_hours) sonraki ilk bardan
+    bu yana geçen dakika. Pencerede böyle bir boşluk yoksa None (açılıştan çok sonra).
+    bar_times ve now_ts AYNI saat tabanında olmalı (ör. ikisi de broker saati)."""
+    if not bar_times or len(bar_times) < 2:
+        return None
+    t = [float(x) for x in bar_times]
+    for i in range(len(t) - 1, 0, -1):
+        if t[i] - t[i - 1] >= gap_hours * 3600.0:
+            return (float(now_ts) - t[i]) / 60.0
+    return None
+
+
+def weekly_open_blocks(minutes_since_open: Optional[float], window_min: float) -> bool:
+    """Açılıştan bu yana < window_min dakika → True. Bilinmiyorsa False (fail-open)."""
+    return minutes_since_open is not None and 0 <= minutes_since_open < float(window_min)
 
 
 EMA50_SPAN, ATR1H_N, EMA50_MIN_BARS = 50, 14, 120
