@@ -74,3 +74,20 @@ def test_one_position_per_symbol_and_kill_switch(tmp_path, monkeypatch):
     (tmp_path / "OFF").write_text("x")
     monkeypatch.setattr(ex, "KILL_FILE", tmp_path / "OFF")
     assert ex.killed()
+
+
+def test_no_daily_limit_when_zero(tmp_path, monkeypatch):
+    """2026-10-21: günlük sınır kaldırıldı (0) — çok sayıda önceki 'sent' kaydı emri engellemez; >0 iken engeller."""
+    import json
+    log = tmp_path / "o.jsonl"
+    day = ex._now().strftime("%Y-%m-%d")
+    log.write_text("\n".join(json.dumps({"ts": f"{day}T01:00:00+00:00", "status": "sent"}) for _ in range(25)))
+    monkeypatch.setattr(ex, "LIVE_MAX_ORDERS_PER_DAY", 0)
+    sent = []
+    monkeypatch.setattr(ex, "LIVE_ORDERS_JSONL", log)
+    monkeypatch.setattr(ex, "KILL_FILE", tmp_path / "OFF")
+    r = ex.send_order(_fake_mt5(sent=sent), "GDAXI.INDX", "GER40", {"direction": "BUY", "size_factor": 0.3}, 5.0, 1.0, 1.5)
+    assert r["status"] == "sent"
+    monkeypatch.setattr(ex, "LIVE_MAX_ORDERS_PER_DAY", 10)
+    r = ex.send_order(_fake_mt5(sent=sent), "GDAXI.INDX", "GER40", {"direction": "BUY", "size_factor": 0.3}, 5.0, 1.0, 1.5)
+    assert r["status"] == "skipped"

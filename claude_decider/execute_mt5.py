@@ -5,7 +5,7 @@ execute_mt5.py — Decider kararını MT5'e GERÇEK emir olarak gönder (2026-10
 Tasarım ilkeleri (hepsi kodla zorlanır, prompt'la değil):
  1. YALNIZ DEMO hesap: account_info().trade_mode != DEMO → emir YOK (ALLOW_REAL_ACCOUNT=False).
  2. Küçük boyut: lot = LIVE_BASE_LOT × min(size_factor, LIVE_SIZE_CAP), step'e yuvarlanır.
- 3. Sembol başına en fazla 1 decider pozisyonu; toplam LIVE_MAX_OPEN; günlük LIVE_MAX_ORDERS_PER_DAY.
+ 3. Sembol başına en fazla 1 decider pozisyonu; toplam LIVE_MAX_OPEN; günlük LIVE_MAX_ORDERS_PER_DAY (0 = sınırsız).
  4. TP/SL = decide.build_trade ile AYNI geometri (ATR çarpanları) — gölge grade ile birebir
     karşılaştırılabilir kalsın. Giriş = anlık tick (BUY→ask, SELL→bid), mesafeler entry'den.
  5. Ayrı magic (DECIDER_MAGIC): bot'un trade_manager'ı (BE/timestop) yalnız kendi magic'lerine
@@ -31,7 +31,10 @@ DECIDER_MAGIC = 52890989          # bot: 52890969 (+1,+2,+3,+5 kullanımda) — 
 LIVE_BASE_LOT = 0.10              # size_factor=1.0'ın lot karşılığı (bot demo LOT_SIZE ile aynı)
 LIVE_SIZE_CAP = 0.3               # "küçük boyut": size_factor bu tavana kırpılır → ≤0.03 lot
 LIVE_MAX_OPEN = 3                 # eşzamanlı decider pozisyonu (tüm semboller)
-LIVE_MAX_ORDERS_PER_DAY = 10      # UTC günü başına gönderilen emir
+# 2026-10-21 kullanıcı kararı: günlük sınır KALDIRILDI (0 = sınırsız). Ortak 10'luk sınır XAU/NDX emirleriyle
+# sabah doluyor, DAX BUY kararlarının 16/23'ü icra edilemiyordu (defter DX-05). Diğer korumalar sürüyor:
+# sembol başına 1 pozisyon, LIVE_MAX_OPEN, yalnız DEMO, ≤0.03 lot, spread/ATR, kill-switch.
+LIVE_MAX_ORDERS_PER_DAY = 0       # UTC günü başına gönderilen emir; 0 → sınır yok
 MAX_SPREAD_ATR = 0.15             # spread/ATR bunu aşarsa giriş sürtünmesi RR'yi yer → atla
 DEVIATION_POINTS = 30             # slippage toleransı
 ALLOW_REAL_ACCOUNT = False        # True yapılmadıkça gerçek (live) hesapta emir gitmez
@@ -166,7 +169,7 @@ def send_order(mt5, sit_symbol: str, mt5_symbol: str, dec: dict, atr: float | No
         return done("skipped", "bu sembolde zaten açık decider pozisyonu")
     if len(poss) >= LIVE_MAX_OPEN:
         return done("skipped", f"eşzamanlı üst sınır ({LIVE_MAX_OPEN})")
-    if _today_order_count() >= LIVE_MAX_ORDERS_PER_DAY:
+    if LIVE_MAX_ORDERS_PER_DAY > 0 and _today_order_count() >= LIVE_MAX_ORDERS_PER_DAY:
         return done("skipped", f"günlük emir sınırı ({LIVE_MAX_ORDERS_PER_DAY})")
     info = mt5.symbol_info(mt5_symbol)
     tick = mt5.symbol_info_tick(mt5_symbol)
