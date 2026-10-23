@@ -17,7 +17,7 @@ yfinance>=0.2.40
 supabase>=2.0.0
 aiohttp>=3.9.0
 openai>=1.12.0
-redis>=5.0.0
+redis>=5.0.1
 websockets>=12.0
 feedparser==6.0.11
 ta==0.11.0

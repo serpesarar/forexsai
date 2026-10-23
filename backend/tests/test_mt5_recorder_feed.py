@@ -108,3 +108,35 @@ def test_bos_okumada_sahiplik_alinmaz(monkeypatch):
     asyncio.run(feed._cycle(EmptyDB()))
     assert feed._state["symbols"]["USOIL.FOREX"]["seeded"] is False
     assert hub.recorder_feed_owns("USOIL.FOREX") is False
+
+
+@pytest.mark.parametrize('response_kind', ['dict', 'object'])
+def test_recorder_reads_existing_rest_and_sdk_response_formats(response_kind):
+    """The production REST client returns dictionaries, not SDK objects."""
+    from types import SimpleNamespace
+    row = {'candle_time': '2026-09-28T12:10:00+00:00', 'open': 98, 'high': 99,
+           'low': 97, 'close': 98.5, 'volume': 1}
+
+    class DB:
+        def table(self, *a): return self
+        def select(self, *a): return self
+        def eq(self, *a): return self
+        def order(self, *a, **kw): return self
+        def range(self, *a): return self
+        def execute(self):
+            return {'data': [row]} if response_kind == 'dict' else SimpleNamespace(data=[row])
+
+    bars = feed._fetch(DB(), 'USOIL.FOREX', '1m', None, 10)
+    assert len(bars) == 1 and bars[0]['close'] == 98.5
+
+
+def test_database_error_cannot_masquerade_as_empty_recorder_data():
+    class DB:
+        def table(self, *a): return self
+        def select(self, *a): return self
+        def eq(self, *a): return self
+        def order(self, *a, **kw): return self
+        def range(self, *a): return self
+        def execute(self): return {'data': [], 'error': 'permission denied'}
+    with pytest.raises(RuntimeError, match='database read failed'):
+        feed._fetch(DB(), 'USOIL.FOREX', '1m', None, 10)

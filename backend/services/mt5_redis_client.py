@@ -3,6 +3,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
+from contextlib import suppress
 from typing import Any, Dict, Optional
 
 import redis.asyncio as redis
@@ -131,6 +133,7 @@ def _normalize_tick_timestamp(ts):
 _listener_running = False
 _listener_client: Optional[redis.Redis] = None
 _listener_pubsub = None
+_listener_task: Optional[asyncio.Task] = None
 
 # ── Heartbeat / reconnect settings ────────────────────────────────────────────
 _HEARTBEAT_INTERVAL = 30        # seconds between keepalive pings
@@ -153,6 +156,9 @@ _diag = {
     "last_heartbeat": None,
     "listener_started_at": None,
     "last_reconnect": None,
+    "connected": False,
+    "stream_reader_active": False,
+    "last_error": None,
 }
 
 
@@ -244,7 +250,7 @@ async def _handle_tick(payload: Dict[str, Any]) -> None:
         source="mt5_redis",
     )
     _diag["ticks_received"] += 1
-    _diag["last_tick_time"] = asyncio.get_event_loop().time()
+    _diag["last_tick_time"] = time.time()
     _diag["last_tick_symbol"] = symbol
     _diag["last_tick_price"] = price
     _diag["last_tick_payload"] = {k: v for k, v in payload.items() if k != "candles"}  # sample
@@ -286,229 +292,184 @@ async def _handle_bar(payload: Dict[str, Any]) -> None:
     _normalize_candle_times(candle)
     await ingest_candle(symbol, timeframe, candle, source="mt5_redis")
     _diag["bars_received"] += 1
-    _diag["last_bar_time"] = asyncio.get_event_loop().time()
+    _diag["last_bar_time"] = time.time()
     _diag["last_bar_symbol"] = f"{symbol}/{timeframe}"
 
 
 async def _close_connections() -> None:
     global _listener_client, _listener_pubsub
+    # Detach globals before awaiting, so a later generation cannot be closed here.
+    client, pubsub = _listener_client, _listener_pubsub
+    _listener_client = _listener_pubsub = None
+    if pubsub is not None:
+        with suppress(Exception):
+            await pubsub.aclose()
+    if client is not None:
+        with suppress(Exception):
+            await client.aclose(close_connection_pool=True)
 
-    if _listener_pubsub is not None:
-        try:
-            await _listener_pubsub.close()
-        except Exception:
-            pass
-        _listener_pubsub = None
 
-    if _listener_client is not None:
+async def _read_bar_streams(client: redis.Redis) -> None:
+    """One reader per connection generation; never reference the global client."""
+    streams = {"mt5:bar:5m": "$", "mt5:bar:1h": "$", "mt5:bar:1d": "$", "mt5:bar:1m": "$"}
+    while _listener_running:
         try:
-            await _listener_client.close()
-        except Exception:
-            pass
-        _listener_client = None
+            result = await client.xread(streams, count=50, block=1000)
+        except redis.ResponseError as exc:
+            # Missing streams are valid for XREAD. Only an actual wrong-type
+            # optional key warrants dropping it; connection failures reconnect.
+            if "WRONGTYPE" in str(exc).upper() and "mt5:bar:1m" in streams:
+                del streams["mt5:bar:1m"]
+                logger.warning("[MT5Redis] Ignoring wrong-type optional 1m stream")
+                continue
+            raise
+        for stream_name, messages in result or []:
+            for msg_id, msg_data in messages:
+                try:
+                    payload = _decode_payload(msg_data.get("payload"))
+                    if payload:
+                        payload.setdefault("timeframe", stream_name.split(":")[-1])
+                        await _handle_bar(payload)
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:
+                    logger.warning("[MT5Redis] Bar ingestion failed (%s)", type(exc).__name__)
+                finally:
+                    streams[stream_name] = msg_id
 
 
 async def start_mt5_redis_listener() -> None:
-    global _listener_running, _listener_client, _listener_pubsub
-
-    if not _source_mode_enabled():
-        logger.info("[MT5Redis] Listener disabled for market_data_source=%s", settings.market_data_source)
+    global _listener_running, _listener_client, _listener_pubsub, _listener_task
+    if not _source_mode_enabled() or _listener_running:
         return
-    if _listener_running:
-        logger.warning("[MT5Redis] Listener already running")
-        return
-
     redis_url = get_redis_url()
     if not redis_url:
-        logger.warning("[MT5Redis] No Redis URL configured; listener not started")
+        logger.warning("[MT5Redis] No Redis URL configured")
         return
-
-    tick_channel = settings.mt5_redis_tick_channel
     _listener_running = True
-    import time as _time
-    _diag["listener_started_at"] = _time.time()
-
-    while _listener_running:
-        stream_task = None
-        try:
-            _listener_client = redis.from_url(
-                redis_url,
-                decode_responses=True,
-                socket_connect_timeout=5,
-                socket_timeout=5,
-                retry_on_timeout=True,
-            )
-            await _listener_client.ping()
-            _listener_pubsub = _listener_client.pubsub()
-            await _listener_pubsub.subscribe(tick_channel)
-            logger.info("[MT5Redis] Listening pubsub tick=%s, streams mt5:bar:*", tick_channel)
-
-            async def _stream_loop():
-                # Start reading from current end of streams.
-                # mt5:bar:1m is optional — it may not exist in all MT5 bridge configs.
-                # We probe for it; if Redis rejects it we silently drop it and continue.
-                core_streams = {
-                    "mt5:bar:5m": "$",
-                    "mt5:bar:1h": "$",
-                    "mt5:bar:1d": "$",
-                }
-                optional_streams = {"mt5:bar:1m": "$"}
-                streams: Dict[str, str] = {**core_streams, **optional_streams}
-                optional_probed = False  # have we verified optional streams exist?
-
+    _listener_task = asyncio.current_task()
+    _diag["listener_started_at"] = time.time()
+    backoff = 2
+    try:
+        while _listener_running:
+            stream_task = None
+            try:
+                # Pub/sub + blocking stream read + heartbeat; leave one spare.
+                client = redis.from_url(
+                    redis_url, decode_responses=True, max_connections=4,
+                    socket_connect_timeout=5, socket_timeout=5,
+                    client_name="forexsai-mt5-feed",
+                )
+                _listener_client = client
+                await client.ping()
+                pubsub = client.pubsub()
+                _listener_pubsub = pubsub
+                await pubsub.subscribe(settings.mt5_redis_tick_channel)
+                _diag.update(connected=True, last_error=None, stream_reader_active=True,
+                             last_heartbeat=time.time())
+                stream_task = asyncio.create_task(_read_bar_streams(client), name="mt5-bar-reader")
+                last_heartbeat = last_tick_seen = time.monotonic()
                 while _listener_running:
-                    try:
-                        result = await _listener_client.xread(streams, count=50, block=1000)
-                        optional_probed = True  # xread succeeded → all current streams are valid
-                        if result:
-                            for stream_name, messages in result:
-                                for msg_id, msg_data in messages:
-                                    try:
-                                        payload_str = msg_data.get("payload")
-                                        if payload_str:
-                                            payload = _decode_payload(payload_str)
-                                            if payload:
-                                                # Derive timeframe from stream name if not present
-                                                tf = stream_name.split(":")[-1]
-                                                if not payload.get("timeframe"):
-                                                    payload["timeframe"] = tf
-                                                await _handle_bar(payload)
-                                    except Exception as msg_err:
-                                        logger.warning(
-                                            "[MT5Redis] Error handling message from %s: %s",
-                                            stream_name, msg_err,
-                                        )
-                                    finally:
-                                        # Always advance offset so we don't reprocess this message
-                                        streams[stream_name] = msg_id
-                    except asyncio.CancelledError:
-                        break
-                    except Exception as e:
-                        err_str = str(e)
-                        logger.error("[MT5Redis] Stream read error: %s", err_str)
-                        # If optional streams are causing the failure, drop them and retry
-                        if not optional_probed:
-                            dropped = [k for k in optional_streams if k in streams]
-                            if dropped:
-                                for k in dropped:
-                                    del streams[k]
-                                logger.warning(
-                                    "[MT5Redis] Dropped optional streams %s (may not exist yet)", dropped
-                                )
-                                continue  # retry immediately without sleep
-                        await asyncio.sleep(2)
-
-            stream_task = asyncio.create_task(_stream_loop())
-
-            import time as _time
-            _last_heartbeat = _time.time()
-            _last_tick_seen = _time.time()
-
-            while _listener_running:
-                if stream_task.done():
-                    logger.warning("[MT5Redis] Stream task exited unexpectedly, reconnecting...")
-                    break
-
-                # ── Periodic keepalive PING ──────────────────────────────────
-                now = _time.time()
-                if now - _last_heartbeat > _HEARTBEAT_INTERVAL:
-                    try:
-                        await _listener_client.ping()
-                        _last_heartbeat = now
-                        _diag["last_heartbeat"] = now
-                    except Exception as ping_err:
-                        logger.warning("[MT5Redis] Heartbeat PING failed: %s — forcing reconnect", ping_err)
-                        break  # → outer while will reconnect
-
-                # ── No-tick watchdog ─────────────────────────────────────────
-                if now - _last_tick_seen > _NO_TICK_RECONNECT_THRESHOLD:
-                    logger.warning(
-                        "[MT5Redis] No ticks for %ds — forcing reconnect (threshold=%ds)",
-                        int(now - _last_tick_seen), _NO_TICK_RECONNECT_THRESHOLD,
-                    )
-                    _diag["reconnect_count"] = _diag.get("reconnect_count", 0) + 1
-                    _diag["last_reconnect"] = now
-                    break  # → outer while will reconnect
-
-                message = await _listener_pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
-                if not message:
-                    await asyncio.sleep(0.05)
-                    continue
-
-                payload = _decode_payload(message.get("data"))
-                if not payload:
-                    continue
-
-                channel = message.get("channel")
-                if channel == tick_channel:
-                    await _handle_tick(payload)
-                    _last_tick_seen = _time.time()  # reset watchdog
-                    
-        except asyncio.CancelledError:
-            if stream_task:
-                stream_task.cancel()
-            raise
-        except Exception as exc:
-            logger.error("[MT5Redis] Listener error: %s", exc)
-            await asyncio.sleep(2)
-        finally:
-            if stream_task:
-                stream_task.cancel()
-            await _close_connections()
+                    if stream_task.done():
+                        await stream_task  # Propagate failures to the reconnect boundary.
+                        raise RuntimeError("stream_reader_stopped")
+                    now = time.monotonic()
+                    if now - last_heartbeat > _HEARTBEAT_INTERVAL:
+                        await client.ping()
+                        last_heartbeat = now
+                        _diag["last_heartbeat"] = time.time()
+                    if now - last_tick_seen > _NO_TICK_RECONNECT_THRESHOLD:
+                        raise TimeoutError("tick_watchdog")
+                    message = await pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+                    if not message:
+                        await asyncio.sleep(0.05)
+                        continue
+                    payload = _decode_payload(message.get("data"))
+                    if payload and message.get("channel") == settings.mt5_redis_tick_channel:
+                        await _handle_tick(payload)
+                        last_tick_seen = time.monotonic()
+                        backoff = 2
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                # Error messages may contain connection strings; expose types only.
+                _diag["last_error"] = type(exc).__name__
+                logger.warning("[MT5Redis] Reconnecting after %s", type(exc).__name__)
+            finally:
+                _diag.update(connected=False, stream_reader_active=False)
+                if stream_task is not None:
+                    stream_task.cancel()
+                    # Join BEFORE creating another client. Otherwise orphan readers
+                    # can fill the replacement client's pool on every reconnect.
+                    with suppress(asyncio.CancelledError, Exception):
+                        await stream_task
+                await _close_connections()
+            if _listener_running:
+                _diag["reconnect_count"] += 1
+                _diag["last_reconnect"] = time.time()
+                await asyncio.sleep(backoff)
+                backoff = min(backoff * 2, 30)
+    finally:
+        _listener_running = False
+        _listener_task = None
+        _diag.update(connected=False, stream_reader_active=False)
 
 
 async def get_mt5_redis_diagnostics() -> Dict[str, Any]:
-    """Return diagnostic info about the MT5 Redis listener."""
-    import time as _time
-
+    """Bounded, credential-free diagnostics; timestamps are UTC epoch seconds."""
     redis_url = get_redis_url()
+    now = time.time()
+    tick_age = now - _diag["last_tick_time"] if _diag["last_tick_time"] is not None else None
+    bar_age = now - _diag["last_bar_time"] if _diag["last_bar_time"] is not None else None
     result: Dict[str, Any] = {
         "source_mode_enabled": _source_mode_enabled(),
-        "market_data_source": (settings.market_data_source or "mt5_redis").strip().lower(),
+        "market_data_source": settings.market_data_source,
         "listener_running": _listener_running,
+        "listener_connected": _diag["connected"],
+        "stream_reader_active": _diag["stream_reader_active"],
+        "feed_healthy": bool(_diag["connected"] and _diag["stream_reader_active"]
+                             and tick_age is not None and tick_age < _NO_TICK_RECONNECT_THRESHOLD),
+        "last_tick_age_seconds": round(tick_age, 1) if tick_age is not None else None,
+        "last_bar_age_seconds": round(bar_age, 1) if bar_age is not None else None,
         "redis_url_configured": bool(redis_url),
-        "redis_url_prefix": (redis_url or "")[:30] + "..." if redis_url else None,
         "tick_channel": settings.mt5_redis_tick_channel,
         "bar_streams": ["mt5:bar:5m", "mt5:bar:1h", "mt5:bar:1d"],
-        "counters": dict(_diag),
+        "counters": {k: v for k, v in _diag.items() if k not in {"last_tick_payload", "errors"}},
     }
-
-    # Probe Redis keys and streams
+    probe = None
     if redis_url:
         try:
-            probe = redis.from_url(redis_url, decode_responses=True, socket_connect_timeout=3)
+            probe = redis.from_url(redis_url, decode_responses=True, max_connections=1,
+                                   socket_connect_timeout=3, socket_timeout=3,
+                                   client_name="forexsai-mt5-diagnostics")
             await probe.ping()
             result["redis_ping"] = "ok"
-
-            # Check if streams exist
-            for stream in ["mt5:bar:5m", "mt5:bar:1h", "mt5:bar:1d", "mt5:bar:1m"]:
+            for stream in [*result["bar_streams"], "mt5:bar:1m"]:
                 try:
                     info = await probe.xinfo_stream(stream)
                     result[f"stream_{stream}"] = {
                         "length": info.get("length", 0),
-                        "first_entry": str(info.get("first-entry")) if info.get("first-entry") else None,
-                        "last_entry": str(info.get("last-entry")) if info.get("last-entry") else None,
+                        "last_generated_id": info.get("last-generated-id"),
                     }
-                except Exception:
+                except redis.ResponseError:
                     result[f"stream_{stream}"] = "not_found"
-
-            # Check pubsub channels
-            channels = await probe.pubsub_channels()
-            result["active_pubsub_channels"] = [c if isinstance(c, str) else c.decode() for c in channels]
-
-            # Check pubsub subscribers for tick channel
             numsub = await probe.pubsub_numsub(settings.mt5_redis_tick_channel)
-            result["tick_channel_subscribers"] = numsub.get(settings.mt5_redis_tick_channel, 0) if isinstance(numsub, dict) else str(numsub)
-
-            await probe.close()
-        except Exception as e:
-            result["redis_probe_error"] = str(e)
-
+            result["tick_channel_subscribers"] = dict(numsub).get(settings.mt5_redis_tick_channel, 0)
+        except Exception as exc:
+            result["redis_probe_error"] = type(exc).__name__
+        finally:
+            if probe is not None:
+                with suppress(Exception):
+                    await probe.aclose(close_connection_pool=True)
     return result
 
 
 async def stop_mt5_redis_listener() -> None:
     global _listener_running
-
     _listener_running = False
-    await _close_connections()
+    task = _listener_task
+    if task is not None and task is not asyncio.current_task():
+        if not task.cancelling():
+            task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
