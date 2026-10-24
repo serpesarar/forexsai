@@ -3419,16 +3419,5 @@
     "source": "session",
     "created_at": "2026-10-20T02:51:40.224731+00:00",
     "updated_at": "2026-10-20T02:51:40.224733+00:00"
-  },
-  {
-    "id": "bl_74a0f2c3fa",
-    "title": "Railway olayından sonra gizli anahtarları yenile ve 2FA aç",
-    "detail": "Railway içindeki sağlayıcı anahtarları, GitHub token, Supabase yetkili erişimi ve Redis parolası tüm tüketicilerle koordine edilmeli; kullanıcı credential ve MFA adımlarını tamamlamalı. Kullanım kayıtları ve iptal teyidi doğrulanacak.",
-    "category": "infrastructure",
-    "priority": "critical",
-    "status": "pending",
-    "source": "session",
-    "created_at": "2026-10-23T18:21:26.020843+00:00",
-    "updated_at": "2026-10-23T18:21:26.020961+00:00"
   }
 ]
