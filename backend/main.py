@@ -28,7 +28,8 @@ for env_path in env_paths:
 from config import settings
 
 import json
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from services.admin_auth import require_admin
 from fastapi.middleware.cors import CORSMiddleware
 
 from utils.json_response import NumpySafeJSONResponse, NumpySafeEncoder
@@ -38,6 +39,7 @@ logger = logging.getLogger(__name__)
 _APP_START_TIME = time.time()
 _conn_logger_task = None
 _mt5_redis_task = None
+_mt5_recorder_task = None
 
 
 async def _connection_stats_logger():
@@ -64,7 +66,7 @@ async def _connection_stats_logger():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """FastAPI lifespan: startup + shutdown in one place."""
-    global _conn_logger_task, _mt5_redis_task
+    global _conn_logger_task, _mt5_redis_task, _mt5_recorder_task
 
     # ── STARTUP (non-blocking, fast) ─────────────────────────────
     # 1. Redis (optional)
@@ -133,7 +135,7 @@ async def lifespan(app: FastAPI):
     #      broker barları Supabase indicator_snapshots'tan (varsayılan USOIL).
     try:
         from services.mt5_recorder_feed import start_mt5_recorder_feed
-        asyncio.create_task(start_mt5_recorder_feed())
+        _mt5_recorder_task = asyncio.create_task(start_mt5_recorder_feed())
         print("MT5 recorder feed task started")
     except Exception as e:
         print(f"Failed to start MT5 recorder feed: {e}")
@@ -410,8 +412,19 @@ async def lifespan(app: FastAPI):
     if _conn_logger_task:
         _conn_logger_task.cancel()
 
-    if _mt5_redis_task:
-        _mt5_redis_task.cancel()
+    try:
+        from services.mt5_redis_client import stop_mt5_redis_listener
+        await stop_mt5_redis_listener()
+        print("MT5 Redis listener stopped")
+    except Exception as e:
+        print(f"Error stopping MT5 Redis listener: {e}")
+
+    if _mt5_recorder_task:
+        _mt5_recorder_task.cancel()
+        try:
+            await _mt5_recorder_task
+        except asyncio.CancelledError:
+            pass
 
     try:
         from services.data_hub import stop_data_hub
@@ -419,13 +432,6 @@ async def lifespan(app: FastAPI):
         print("DataHub stopped")
     except Exception as e:
         print(f"Error stopping DataHub: {e}")
-
-    try:
-        from services.mt5_redis_client import stop_mt5_redis_listener
-        await stop_mt5_redis_listener()
-        print("MT5 Redis listener stopped")
-    except Exception as e:
-        print(f"Error stopping MT5 Redis listener: {e}")
 
     try:
         from services.background_scheduler import stop_scheduler
@@ -469,32 +475,28 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS - allow all origins for production
+# Browser origins are explicit; authorization remains enforced on the server.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=[origin.strip() for origin in os.getenv(
+        "CORS_ALLOWED_ORIGINS",
+        "https://www.forexsai.com,https://forexsai.com,https://forexsai-production.up.railway.app,http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001",
+    ).split(",") if origin.strip() and origin.strip() != "*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Global exception handler to catch serialization errors and return JSON
 from fastapi import Request
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse
 import traceback as tb_module
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     import logging
     logging.getLogger("global").error(f"Unhandled exception on {request.url.path}: {exc}\n{tb_module.format_exc()}")
-    return PlainTextResponse(
-        content=f'{{"error": "{str(exc)[:200]}", "path": "{request.url.path}"}}',
-        status_code=500,
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Content-Type": "application/json"
-        }
-    )
+    return JSONResponse(status_code=500, content={"error": "Internal server error"})
 
 # Panel response cache middleware (caches panel API responses for WS broadcast)
 try:
@@ -514,7 +516,8 @@ async def root():
 @app.get("/api/version")
 async def version_check():
     """Returns the deployed git commit hash for debugging."""
-    return {"version": "529a989-nan-fix", "deployed_at": "2026-03-03T20:50:00Z"}
+    return {"version": os.getenv("RAILWAY_GIT_COMMIT_SHA", "local"),
+            "deployment_id": os.getenv("RAILWAY_DEPLOYMENT_ID")}
 
 
 @app.get("/api/health")
@@ -532,34 +535,30 @@ async def health_liveness():
 async def health_readiness():
     """Readiness probe — checks DB connectivity with a 2s timeout.
     Returns 503 if DB is unreachable so load balancer stops sending traffic."""
-    checks = {"db": False, "db_latency_ms": None, "degraded": False}
+    checks = {"db": False, "db_latency_ms": None, "degraded": False,
+              "routers": ROUTERS_LOADED}
 
     try:
-        from database.supabase_client import get_auth_error, get_supabase_client, is_auth_failed
-        client = get_supabase_client()
-        auth_failed = is_auth_failed()
-        auth_failed = auth_failed if isinstance(auth_failed, bool) else False
-        if client:
-            start = time.time()
-            result = client.table("prediction_logs").select("id").limit(1).execute()
-            latency = (time.time() - start) * 1000
-            checks["db"] = result.get("error") is None
-            checks["db_latency_ms"] = round(latency, 1)
-            if auth_failed:
-                checks["degraded"] = True
-                auth_error = get_auth_error()
-                if auth_error is not None:
-                    checks["db_auth_error"] = str(auth_error)[:200]
-                checks["db"] = False
-        elif auth_failed:
-            checks["degraded"] = True
-            auth_error = get_auth_error()
-            if auth_error is not None:
-                checks["db_auth_error"] = str(auth_error)[:200]
-    except Exception as e:
-        checks["db_error"] = str(e)[:100]
+        from database.supabase_client import get_supabase_client, is_auth_failed
 
-    all_ok = checks["db"] or checks["degraded"]
+        def probe_db():
+            client = get_supabase_client()
+            if client is None:
+                return False
+            result = client.table("prediction_logs").select("id").limit(1).execute()
+            return result.get("error") is None and not is_auth_failed()
+
+        start = time.monotonic()
+        checks["db"] = await asyncio.wait_for(asyncio.to_thread(probe_db), timeout=2.0)
+        latency = (time.monotonic() - start) * 1000
+        checks["db_latency_ms"] = round(latency, 1)
+        checks["degraded"] = is_auth_failed() is True
+    except asyncio.TimeoutError:
+        checks["db_error"] = "timeout"
+    except Exception:
+        checks["db_error"] = "unavailable"
+
+    all_ok = checks["db"] and checks["routers"]
     status_code = 200 if all_ok else 503
 
     from fastapi.responses import JSONResponse
@@ -567,14 +566,14 @@ async def health_readiness():
         status_code=status_code,
         content={
             "ok": all_ok,
-            "status": "degraded_ready" if checks["degraded"] else ("ready" if all_ok else "not_ready"),
+            "status": "ready" if all_ok else "not_ready",
             "checks": checks,
             "uptime_seconds": round(time.time() - _APP_START_TIME, 1),
         },
     )
 
 
-@app.get("/api/stats/connections")
+@app.get("/api/stats/connections", dependencies=[Depends(require_admin)])
 async def connection_stats():
     """Supabase connection pool observability endpoint."""
     try:
@@ -588,15 +587,16 @@ async def connection_stats():
 
 ROUTERS_LOADED = False
 IMPORT_ERROR = None
+router_errors = []
 
 try:
     from routers import clear_trend
     app.include_router(clear_trend.router)
 except Exception as e:
+    router_errors.append(f"clear_trend: {e}")
     print(f"ERROR loading clear_trend router: {e}", file=sys.stderr)
 
 # Try to import routers with error handling
-router_errors = []
 router_module_names = [
     "patterns_stub",
     "nasdaq",
@@ -670,7 +670,7 @@ if router_errors:
 else:
     ROUTERS_LOADED = True
 
-@app.get("/api/debug")
+@app.get("/api/debug", dependencies=[Depends(require_admin)])
 async def debug_info():
     from config import settings
     
@@ -702,7 +702,7 @@ async def debug_info():
     }
 
 
-@app.get("/api/debug/ml-model/{symbol}")
+@app.get("/api/debug/ml-model/{symbol}", dependencies=[Depends(require_admin)])
 async def debug_ml_model(symbol: str):
     """Debug ML model loading and prediction for a symbol."""
     from pathlib import Path
@@ -911,7 +911,7 @@ async def datahub_status():
         return {"error": str(e)}
 
 
-@app.post("/api/datahub/reseed")
+@app.post("/api/datahub/reseed", dependencies=[Depends(require_admin)])
 async def datahub_reseed():
     """Force DataHub to do a full re-seed (fetch full candle history instead of delta)."""
     try:
@@ -921,7 +921,7 @@ async def datahub_reseed():
         return {"error": str(e)}
 
 
-@app.post("/api/datahub/purge-stale-cache")
+@app.post("/api/datahub/purge-stale-cache", dependencies=[Depends(require_admin)])
 async def datahub_purge_stale_cache(
     symbol: str | None = None,
     max_age_hours: float = 96,
@@ -945,7 +945,7 @@ async def datahub_purge_stale_cache(
         return {"error": str(e)}
 
 
-@app.post("/api/datahub/clear-symbol/{symbol_path:path}")
+@app.post("/api/datahub/clear-symbol/{symbol_path:path}", dependencies=[Depends(require_admin)])
 async def datahub_clear_symbol(symbol_path: str):
     """Remove ALL candle_cache rows for a specific symbol and force re-seed.
 
@@ -967,12 +967,15 @@ async def datahub_clear_symbol(symbol_path: str):
         return {"error": str(e)}
 
 
-@app.get("/api/mt5-redis/diagnostics")
+@app.get("/api/mt5-redis/diagnostics", dependencies=[Depends(require_admin)])
 async def mt5_redis_diagnostics():
     """Diagnostic endpoint to check MT5 Redis listener status, stream existence, and counters."""
     try:
         from services.mt5_redis_client import get_mt5_redis_diagnostics
-        return await get_mt5_redis_diagnostics()
+        from services.mt5_recorder_feed import get_feed_status
+        result = await get_mt5_redis_diagnostics()
+        result["recorder_feed"] = get_feed_status()
+        return result
     except Exception as e:
         return {"error": str(e)}
 

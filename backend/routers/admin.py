@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import logging
 
 from database.supabase_client import get_supabase_client, is_db_available
+from services.admin_auth import require_admin
 
 router = APIRouter(prefix="/api/admin", tags=["Admin & Feedback"])
 logger = logging.getLogger(__name__)
@@ -56,7 +57,7 @@ async def submit_report(report: FeedbackReport):
         # Gerçek senaryoda tabloyu oluşturmak gerekir.
         return {"success": False, "error": str(e)}
 
-@router.get("/reports")
+@router.get("/reports", dependencies=[Depends(require_admin)])
 async def get_reports(limit: int = 50, status: str = "pending"):
     """
     Admin paneli için raporları listeler.
@@ -76,7 +77,7 @@ async def get_reports(limit: int = 50, status: str = "pending"):
         logger.error(f"Failed to fetch reports: {e}")
         return []
 
-@router.get("/metrics")
+@router.get("/metrics", dependencies=[Depends(require_admin)])
 async def get_admin_metrics():
     """
     Admin paneli istatistikleri.

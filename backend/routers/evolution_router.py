@@ -10,15 +10,16 @@ import asyncio
 import logging
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
 from services import evolution_service as evo
 from services import evolution_remote as remote
+from services.admin_auth import require_admin
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/evolution", tags=["evolution"])
+router = APIRouter(prefix="/api/evolution", tags=["evolution"], dependencies=[Depends(require_admin)])
 
 
 # ── Request modelleri ────────────────────────────────────────────────────

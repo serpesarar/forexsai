@@ -58,10 +58,10 @@ def get_redis() -> Optional[Any]:
         # Test connection
         _redis_client.ping()
         _redis_available = True
-        logger.info(f"Redis connected: {redis_url[:30]}...")
+        logger.info("Redis connected")
         return _redis_client
     except Exception as e:
-        logger.warning(f"Redis connection failed: {e} — using in-memory fallback")
+        logger.warning("Redis connection failed (%s) — using in-memory fallback", type(e).__name__)
         _redis_client = None
         _redis_available = False
         return None

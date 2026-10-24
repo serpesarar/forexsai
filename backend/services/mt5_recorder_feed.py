@@ -20,6 +20,7 @@ import os
 import time
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+from utils.safe_supabase import safe_get_data, safe_get_error
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,9 @@ def _fetch(db, symbol: str, tf: str, since_iso: Optional[str], n: int) -> List[D
         if since_iso:
             q = q.gte("candle_time", since_iso)
         res = q.order("candle_time", desc=True).range(start, start + min(PAGE, n - len(rows)) - 1).execute()
-        batch = getattr(res, "data", None) or []
+        if safe_get_error(res):
+            raise RuntimeError("MT5 recorder database read failed")
+        batch = safe_get_data(res) or []
         rows.extend(batch)
         if len(batch) < PAGE:
             break
@@ -136,6 +139,7 @@ async def _cycle(db) -> None:
         if lp:
             await hub.ingest_live_price(symbol, lp[0], timestamp=lp[1], source=hub.MT5_RECORDER_SOURCE)
             st["price"], st["price_ts"] = lp
+            st["price_stale"] = False
         else:
             st["price_stale"] = True
         st["checked_at"] = now_s
@@ -157,15 +161,19 @@ async def start_mt5_recorder_feed() -> None:
         return
     _state.update(running=True, started_at=time.time())
     logger.info("[recorder-feed] başladı: %s (her %.0fs)", feed_symbols(), feed_interval())
-    while True:
-        try:
-            await _cycle(db)
-            _state["cycles"] += 1
-        except Exception as exc:                       # fail-open: DataHub yedeği sürer
-            _state["errors"] += 1
-            _state["last_error"] = str(exc)[:300]
-            logger.warning("[recorder-feed] tur hatası: %s", exc)
-        await asyncio.sleep(feed_interval())
+    try:
+        while True:
+            try:
+                await _cycle(db)
+                _state["cycles"] += 1
+            except Exception as exc:                       # fail-open: DataHub yedeği sürer
+                _state["errors"] += 1
+                _state["last_error"] = str(exc)[:300]
+                logger.warning("[recorder-feed] tur hatası: %s", exc)
+            await asyncio.sleep(feed_interval())
+    finally:
+        _state["running"] = False
+
 
 
 def get_feed_status() -> Dict[str, Any]:
