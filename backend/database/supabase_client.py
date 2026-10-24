@@ -23,7 +23,9 @@ _initialized: bool = False
 
 
 def _resolve_supabase_key() -> Optional[str]:
-    return os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_KEY")
+    return (os.environ.get("SUPABASE_SECRET_KEY")
+            or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+            or os.environ.get("SUPABASE_KEY"))
 
 # ── Retry config ──────────────────────────────────────────────────────────────
 MAX_RETRIES = 3
@@ -80,10 +82,13 @@ class SupabaseRestClient:
         self.key = key
         self.headers = {
             "apikey": key,
-            "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
             "Prefer": "return=representation"
         }
+        # New Supabase API keys are opaque, not JWTs. Sending them as Bearer
+        # tokens can fail JWT validation; legacy JWT keys keep their old header.
+        if not key.startswith(("sb_secret_", "sb_publishable_")):
+            self.headers["Authorization"] = f"Bearer {key}"
         # Persistent client — reuses TCP connections (keepalive)
         # 2026-05-19: bumped max_connections 5 → 16. With multiple analysis
         # panels loading concurrently (each runs _fetch_prediction_logs_window
