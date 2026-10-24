@@ -1,12 +1,13 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { buildApiUrl } from "./api/base";
+import { authenticatedFetch } from "./api/authenticatedFetch";
 
 export async function fetcher<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
 
   try {
-    const response = await fetch(buildApiUrl(endpoint), {
+    const response = await authenticatedFetch(buildApiUrl(endpoint), {
       headers: { "Content-Type": "application/json" },
       ...options,
       signal: controller.signal,
