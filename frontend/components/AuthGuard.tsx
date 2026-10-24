@@ -66,14 +66,15 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      const authed = await checkAuth();
+      await checkAuth();
       setIsChecking(false);
-      if (!authed) {
-        router.push("/welcome");
-      }
     };
     check();
   }, []);
+
+  useEffect(() => {
+    if (!isChecking && !isAuthenticated) router.replace("/welcome");
+  }, [isChecking, isAuthenticated, router]);
 
   if (isChecking) {
     return (
