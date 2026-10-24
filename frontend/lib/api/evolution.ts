@@ -4,6 +4,7 @@
  */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getApiBase } from "./base";
+import { authenticatedFetch } from "./authenticatedFetch";
 
 const API = getApiBase();
 
@@ -349,13 +350,13 @@ export interface Lesson {
 // ── fetch yardımcıları ───────────────────────────────────────────────────
 
 async function getJson<T>(path: string): Promise<T> {
-  const res = await fetch(`${API}${path}`);
+  const res = await authenticatedFetch(`${API}${path}`);
   if (!res.ok) throw new Error(`${path} → HTTP ${res.status}`);
   return res.json();
 }
 
 async function sendJson<T>(path: string, method: string, body?: unknown): Promise<T> {
-  const res = await fetch(`${API}${path}`, {
+  const res = await authenticatedFetch(`${API}${path}`, {
     method,
     headers: { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -872,8 +873,8 @@ export function useBotSymbolHistory(symbol: string | null, days = 30) {
 
 /**
  * CSV indirme bağlantısı — giriş/çıkış/TP-SL/net $/R + HANGİ KURALA göre
- * açıldığı tek dosyada. Auth gerekmez (panelin geri kalanıyla aynı erişim
- * seviyesi); doğrudan `<a href>` olarak kullanılır, blob/fetch gerekmez.
+ * açıldığı tek dosyada. Download through authenticatedFetch so the Bearer
+ * token stays in the request header, never in a query string.
  * `symbol` boş → tüm semboller.
  */
 export function botTradesExportUrl(opts: { symbol?: string | null; start?: string; end?: string }): string {
@@ -883,6 +884,22 @@ export function botTradesExportUrl(opts: { symbol?: string | null; start?: strin
   if (opts.end) params.set("end", opts.end);
   const qs = params.toString();
   return `${API}/api/evolution/remote/bot-trades-export.csv${qs ? `?${qs}` : ""}`;
+}
+
+export async function downloadBotTrades(opts: { symbol?: string | null; start?: string; end?: string }): Promise<void> {
+  const response = await authenticatedFetch(botTradesExportUrl(opts));
+  if (!response.ok) throw new Error(`CSV indirilemedi (HTTP ${response.status})`);
+  const url = URL.createObjectURL(await response.blob());
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `bot-islemleri-${opts.start ?? "tum"}-${opts.end ?? "bugun"}.csv`;
+  document.body.appendChild(anchor);
+  try {
+    anchor.click();
+  } finally {
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 }
 
 export interface BotVsDecider {
