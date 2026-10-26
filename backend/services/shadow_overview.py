@@ -53,6 +53,13 @@ MIN_N_FOR_VERDICT = 30
 #: Gölge kapıların insan-okur künyesi. `flag` = gerçekten bloklamaya geçiren
 #: env değişkeni; `enabled_flag` = kapının hiç çalışıp çalışmadığı.
 SHADOW_GATES: Dict[str, Dict[str, str]] = {
+    "pulse1_swing_high_gate": {
+        "label": "XAU PULSE1 Swing High",
+        "flag": "PULSE1_SWING_HIGH_GATE_BLOCK",
+        "enabled_flag": "PULSE1_SWING_HIGH_GATE_ENABLED",
+        "note": "Issue #17: BUY in transition/unknown with M30 swing-high "
+                "distance < 2.0 ATR. Default shadow; winner impact unvalidated.",
+    },
     "entry_score_gate": {
         "label": "Giriş Skoru",
         "flag": "ENTRY_SCORE_GATE_BLOCK",
@@ -163,6 +170,14 @@ def _flag_on(name: str, default: str = "0") -> bool:
     return str(os.getenv(name, default)).strip().lower() in ("1", "true", "yes", "on")
 
 
+def _gate_blocking(gate_id: str, meta: dict) -> bool:
+    """Match the new gate's strict opt-in without changing older flag semantics."""
+    if gate_id == "pulse1_swing_high_gate":
+        return os.getenv(meta["flag"], "0") == "1"
+    default = "1" if gate_id in ("vix_regime_gate", "time_quality_gate") else "0"
+    return _flag_on(meta["flag"], default)
+
+
 def _fetch_paged(table: str, columns: str, since_col: str, since: str,
                  extra: Optional[List[str]] = None,
                  max_rows: int = _MAX_ROWS) -> List[dict]:
@@ -255,8 +270,7 @@ def get_shadow_gate_report(days: int = 30) -> Dict[str, Any]:
     for gate_id, meta in SHADOW_GATES.items():
         blocked = by_gate.get(gate_id, [])
         metrics = summarize_for_panel(aggregate_outcomes(blocked))
-        blocking_live = _flag_on(meta["flag"], "1" if gate_id == "vix_regime_gate"
-                                 or gate_id == "time_quality_gate" else "0")
+        blocking_live = _gate_blocking(gate_id, meta)
         gates.append({
             "id": gate_id,
             "label": meta["label"],
@@ -509,9 +523,8 @@ def get_shadow_flags() -> Dict[str, Any]:
     """Gölge/blok bayraklarının canlı durumu — "ne gölgede, ne canlıda"."""
     items = []
     for gate_id, meta in SHADOW_GATES.items():
-        block_default = "1" if gate_id in ("vix_regime_gate", "time_quality_gate") else "0"
         enabled = _flag_on(meta["enabled_flag"], "1")
-        blocking = _flag_on(meta["flag"], block_default)
+        blocking = _gate_blocking(gate_id, meta)
         items.append({
             "id": gate_id, "label": meta["label"],
             "enabled_flag": meta["enabled_flag"], "block_flag": meta["flag"],
