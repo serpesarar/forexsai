@@ -46,7 +46,8 @@ def _pos(ticket, magic=52890989, sym="XAUUSD", t=0, typ=0):
                                  sl=98.5, volume=0.02, profit=-1.0)
 
 
-def test_manage_cuts_only_decider_xau_buy_once():
+def test_manage_cuts_only_decider_xau_buy_once(monkeypatch):
+    monkeypatch.setitem(dec.pr.DEFAULTS, "DECIDER_EARLY_CUT_LIVE", True)
     dec._karar_verildi.clear()
     ps = [_pos(1), _pos(2, magic=52890969), _pos(3, sym="NAS100"), _pos(4, typ=1)]
     m = FakeMT5(ps, close_px=99.0, now=6 * 60)
@@ -61,3 +62,10 @@ def test_manage_keeps_when_above_threshold():
     m = FakeMT5([_pos(7)], close_px=99.6, now=6 * 60)
     dec.manage(m, Log(), lambda s: s)
     assert m.sent == [] and 7 in dec._karar_verildi
+
+
+def test_manage_shadow_default_never_sends():
+    dec._karar_verildi.clear()
+    m = FakeMT5([_pos(9)], close_px=99.0, now=6 * 60)    # R=-0,67 → canlıda kesilirdi
+    dec.manage(m, Log(), lambda s: s)
+    assert m.sent == [] and 9 in dec._karar_verildi

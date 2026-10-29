@@ -191,7 +191,11 @@ DEFAULTS: dict[str, object] = {
     # ── 2026-10-21 — DECIDER XAU ERKEN KESME (kullanıcı kararı, defter DX-04, B) ──
     # decider_early_cut.py: decider (magic 52890989) XAUUSD BUY pozisyonu ilk kez ≥5 dk
     # yaşındayken son kapalı 1m kapanışında R ≤ −0,5 → piyasadan kapat (tek karar).
+    # 2026-10-29 GÖLGE (kullanıcı kararı, defter DX-06): ileri dönemde (≥10-21) gerçek icra
+    # 206 pozisyonda kural −3,6R; plato gerçek icrada 25 hücrenin 13'ünde + (yazı-tura).
+    # Değerlendirme sürer, "kes" kararı yalnız [GÖLGE] satırı olarak loglanır, emir gitmez.
     "DECIDER_EARLY_CUT_ENABLED": True,
+    "DECIDER_EARLY_CUT_LIVE": False,         # False → yalnız gölge kaydı
     "DECIDER_EARLY_CUT_MAGIC": 52890989,
     "DECIDER_EARLY_CUT_SYMBOLS": ("XAUUSD",),
     "DECIDER_EARLY_CUT_MIN": 5,

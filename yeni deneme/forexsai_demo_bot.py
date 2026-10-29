@@ -2580,7 +2580,8 @@ def main():
                "USOIL_SESSION_GATE_ENABLED", "USOIL_SESSION_GATE_BLOCK",
                "USOIL_SESSION_START_UTC", "SHADOW_LOCK_ENABLED",
                "SHADOW_LOCK_SYMBOLS", "SHADOW_LOCK_L_R", "SHADOW_LOCK_P",
-               "SHADOW_LOCK_FRAC"):
+               "SHADOW_LOCK_FRAC", "DECIDER_EARLY_CUT_ENABLED",
+               "DECIDER_EARLY_CUT_LIVE"):
         _from = "config" if hasattr(config, _n) else "varsayılan(faz)"
         log.info("  ayar %-30s = %-8s (%s)", _n, pr.flag(config, _n), _from)
     log.info("=" * 64)

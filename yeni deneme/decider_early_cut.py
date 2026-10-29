@@ -12,6 +12,9 @@ SELL'e TAŞINMIYOR (n=82 tutarsız) → yalnız BUY. Etki küçük: kural decide
 
 Neden botta: decider döngüsü 20 dk'da bir döner, 5. dakikayı yakalayamaz; botun ana döngüsü ~1 dk.
 Bot trade_manager'ı decider magic'ine DOKUNMAZ (ayrı magic tasarımı) — bu modül yalnız bu kuralı uygular.
+
+2026-10-29 GÖLGE (DX-06, research/decider_xau_sl_20261029/SONUC.md): ileri dönemin gerçek icrasında
+kural −3,6R; DECIDER_EARLY_CUT_LIVE=False iken "kes" yalnız [GÖLGE] satırı olarak loglanır.
 """
 from __future__ import annotations
 
@@ -73,6 +76,7 @@ def manage(mt5, log, resolve_symbol: Callable[[str], Optional[str]]) -> None:
     cut_r = float(pr.flag(config, "DECIDER_EARLY_CUT_R"))
     min_age = float(pr.flag(config, "DECIDER_EARLY_CUT_MIN"))
     max_late = float(pr.flag(config, "DECIDER_EARLY_CUT_MAX_LATE_MIN"))
+    live = bool(pr.flag(config, "DECIDER_EARLY_CUT_LIVE"))
     for pos in (mt5.positions_get() or []):
         try:
             if pos.magic != magic or pos.symbol not in syms or pos.ticket in _karar_verildi:
@@ -90,8 +94,11 @@ def manage(mt5, log, resolve_symbol: Callable[[str], Optional[str]]) -> None:
             if verdict == "bekle":
                 continue
             _karar_verildi.add(pos.ticket)
-            if verdict == "kes":
+            if verdict == "kes" and live:
                 _close(mt5, pos, log, f"{age_min:.1f} dk'da R={r:+.2f} ≤ {cut_r:+.2f}")
+            elif verdict == "kes":
+                log.info("[ERKEN-KES] [GÖLGE] %s ticket=%s %.1f dk'da R=%+.2f ≤ %+.2f → kesilirdi, "
+                         "dokunulmadı", pos.symbol, pos.ticket, age_min, r, cut_r)
             elif verdict == "tut":
                 log.info("[ERKEN-KES] %s ticket=%s %.1f dk'da R=%+.2f > %+.2f → tutuluyor", pos.symbol,
                          pos.ticket, age_min, r, cut_r)
