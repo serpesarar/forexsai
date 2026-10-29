@@ -33,6 +33,14 @@ anda], backend/ → panel backend, remote_agent/ → ajan kendini yeniler —
 start_agent.bat döngüsü yeni kodla kaldırır). Ana bilgisayardan push etmek
 YETERLİ; kutuya dokunmak gerekmez.
 
+CANLILIK DENETİMİ (2026-10-29, WATCHDOG_ENABLED=True default): ayrı iş
+parçacığı 2 dk'da bir bot (forexsai_demo_bot.py + demo_bot.log tazeliği) ve
+decider (run_decider.py + memory/decider_heartbeat.json) süreçlerine bakar;
+süreç yoksa ya da dosya eşikten uzun sessizse ERTELEMEDEN yeniden başlatır
+(geri çekilmeli: 15→30→60→120 dk). Sonuç kalp atışında bot_alive /
+bot_log_age_s / bot_last_restart olarak panele gider. remote_agent/WATCHDOG_OFF
+dosyası varken yalnız raporlar.
+
 HAFTALIK İŞLER: agent_config.WEEKLY_JOBS — her hafta belirlenen gün/saatte
 kendi kendine koşar, sonuçlar komut kaydı olarak panele düşer.
 
@@ -99,6 +107,19 @@ LESSONS_END = "<!-- PANEL-LESSONS END -->"
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _iso_dt(ts: str | None) -> datetime | None:
+    try:
+        return datetime.fromisoformat(ts)
+    except Exception:
+        return None
+
+
+def _iso_age_s(ts: str | None) -> float | None:
+    """ISO zaman damgasının şimdiden yaşı (sn); boş/bozuksa None."""
+    dt = _iso_dt(ts)
+    return (datetime.now(timezone.utc) - dt).total_seconds() if dt else None
 
 
 def load_state() -> dict:
@@ -535,13 +556,15 @@ def push_heartbeat(client, extra: dict | None = None) -> None:
     meta = {
         "mt5": HAS_MT5,
         "open_positions": open_position_count(),
-        "agent_version": "1.1",
+        "agent_version": "1.2",
         # Panel "ajan çevrimiçi ama işlem verisi bayat" durumunun SEBEBİNİ
         # görebilsin diye trade senkron sağlığı da taşınır.
         "trade_sync_ok": TRADE_SYNC["ok"],
         "trade_sync_last_push": TRADE_SYNC["last_push_at"],
         "trade_sync_error": TRADE_SYNC["last_error"],
         "trade_sync_fail_streak": TRADE_SYNC["fail_streak"],
+        # 1.2 (2026-10-29): ajan çevrimiçi ≠ bot çalışıyor — süreç canlılığı ayrı.
+        **_watchdog_meta(),
         **(extra or {}),
     }
     client.table("agent_heartbeat").upsert(
@@ -800,17 +823,48 @@ def _process_targets() -> dict:
     return targets
 
 
+def _ps_cmdline_filter(match: str) -> str:
+    """Komut satırında `match` geçen süreçler — bu sorguyu koşturan kabuğun kendisi hariç."""
+    return f"$_.CommandLine -like '*{match}*' -and $_.CommandLine -notlike '*Win32_Process*'"
+
+
 def _kill_by_cmdline(match: str) -> str:
     """Komut satırında `match` geçen python süreçlerini öldür (Windows/Mac)."""
     if sys.platform == "win32":
         ps = ("Get-CimInstance Win32_Process | "
-              f"Where-Object {{ $_.CommandLine -like '*{match}*' -and $_.CommandLine -notlike '*Win32_Process*' }} | "
+              f"Where-Object {{ {_ps_cmdline_filter(match)} }} | "
               "ForEach-Object { Stop-Process -Id $_.ProcessId -Force; $_.ProcessId }")
         r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
                            capture_output=True, text=True, timeout=60)
         return (r.stdout or r.stderr or "").strip()
     r = subprocess.run(["pkill", "-f", match], capture_output=True, text=True)
     return f"pkill rc={r.returncode}"
+
+
+def _pids_by_cmdline(match: str) -> list[int] | None:
+    """Komut satırında `match` geçen PYTHON süreçlerinin PID'leri; sorgu başarısızsa None.
+
+    _kill_by_cmdline ile aynı eşleme, ama yalnız python* adlı süreçler sayılır —
+    `remote.py sh "... forexsai_demo_bot.py ..."` gibi bir kabuk komutu ölü botu
+    'canlı' göstermesin. None = BİLİNMİYOR (boş liste = süreç gerçekten yok).
+    """
+    try:
+        if sys.platform == "win32":
+            ps = ("Get-CimInstance Win32_Process | "
+                  f"Where-Object {{ $_.Name -like 'python*' -and {_ps_cmdline_filter(match)} }} | "
+                  "ForEach-Object { $_.ProcessId }")
+            r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
+                               capture_output=True, text=True, timeout=60)
+            if r.returncode != 0:
+                return None
+        else:
+            r = subprocess.run(["pgrep", "-f", match], capture_output=True, text=True, timeout=30)
+            if r.returncode not in (0, 1):      # pgrep: 1 = eşleşme yok
+                return None
+        return [int(x) for x in r.stdout.split() if x.isdigit()]
+    except Exception as e:
+        log.warning("süreç sorgusu başarısız (%s): %s", match, e)
+        return None
 
 
 def _start_bat(rel_bat: str) -> str:
@@ -823,9 +877,49 @@ def _start_bat(rel_bat: str) -> str:
     return f"(windows-dışı: {rel_bat} elle başlatılmalı)"
 
 
-def restart_target(name: str, force: bool = False) -> tuple[str, int]:
+#: Öldür+başlat ve canlılık denetiminin gözle+karar ver adımı bu kilidin altında koşar —
+#: denetim iş parçacığı, oto-güncellemenin kill→start arasındaki 3 sn'lik boşlukta
+#: "süreç yok" görüp ikinci bir restart atmasın. RLock: denetim kilidi tutarken
+#: restart_target'ı çağırır.
+RESTART_LOCK = threading.RLock()
+#: Son restart'lar + denetim serisi; agent_state.json'dan AYRI dosya (ana döngü o
+#: dosyayı kendi kopyasıyla yazar, iki iş parçacığı aynı dosyayı yazmasın).
+WATCHDOG_STATE_FILE = Path(__file__).parent / "watchdog_state.json"
+
+
+def _load_wd() -> dict:
+    with RESTART_LOCK:          # yazan da kilitli → yarım yazılmış dosya okunmaz
+        try:
+            return json.loads(WATCHDOG_STATE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+
+
+def _update_wd(fn) -> dict:
+    """watchdog_state.json'ı kilit altında oku → fn(d) → yaz."""
+    with RESTART_LOCK:
+        d = _load_wd()
+        fn(d)
+        try:
+            WATCHDOG_STATE_FILE.write_text(json.dumps(d, indent=2), encoding="utf-8")
+        except Exception as e:
+            log.warning("watchdog_state yazılamadı: %s", e)
+        return d
+
+
+def _record_restart(name: str, why: str) -> None:
+    def _set(d: dict) -> None:
+        d.setdefault("restarts", {})[name] = {"at": now_iso(), "why": why}
+    _update_wd(_set)
+
+
+def restart_target(name: str, force: bool = False, why: str = "") -> tuple[str, int]:
     """Bir süreci yeniden başlat. 'agent' → kendini kapatır (start_agent.bat
-    döngüsü yeni kodla kaldırır). Bot güvenli-bekler (pozisyon açıkken ertelenir)."""
+    döngüsü yeni kodla kaldırır). Bot güvenli-bekler (pozisyon açıkken ertelenir).
+
+    rc: 0 tamam · 3 ertelendi (açık pozisyon) · 4 eski süreç öldürülemedi →
+    İKİNCİ kopya başlatılmadı (iki bot = çift emir; canlılık denetimi sonra yeniden dener).
+    """
     t = _process_targets().get(name)
     if not t:
         return f"[ajan] bilinmeyen hedef: {name}", 2
@@ -835,9 +929,15 @@ def restart_target(name: str, force: bool = False) -> tuple[str, int]:
         return "[ajan] kendini kapatıyor — 30 sn içinde yeni kodla geri gelir", 0
     if t.get("safe_wait") and not force and open_position_count() > 0:
         return f"[ajan] {name}: açık pozisyon var — yeniden başlatma ERTELENDİ", 3
-    killed = _kill_by_cmdline(t["match"])
-    time.sleep(3)
-    started = _start_bat(t["bat"])
+    with RESTART_LOCK:
+        killed = _kill_by_cmdline(t["match"])
+        time.sleep(3)
+        left = _pids_by_cmdline(t["match"])
+        if left:
+            log.error("[ajan] %s öldürülemedi (PID %s) — ikinci kopya BAŞLATILMADI", name, left)
+            return f"[ajan] {name}: kill[{killed}] sonrası hâlâ PID {left} — ikinci kopya başlatılmadı", 4
+        started = _start_bat(t["bat"])
+        _record_restart(name, why or "elle/oto-güncelleme")
     return f"[ajan] {name}: kill[{killed or 'süreç yoktu'}] → {started}", 0
 
 
@@ -883,6 +983,20 @@ def flush_pending_restarts(client) -> None:
     pend = st.get(PENDING_RESTART_KEY) or {}
     if not pend:
         return
+    # Borçtan SONRA süreç zaten yeniden başladıysa (ör. canlılık denetimi ölü botu
+    # kaldırdı) yeni kodla çalışıyordur → borç ödenmiş sayılır; sağlıklı süreç bir
+    # daha öldürülmez.
+    restarts = _load_wd().get("restarts") or {}
+    for target, info in list(pend.items()):
+        borc_at = _iso_dt(info.get("since"))
+        restart_at = _iso_dt((restarts.get(target) or {}).get("at"))
+        if borc_at and restart_at and restart_at > borc_at:
+            pend.pop(target)
+            log.info("[oto] %s borcu kapandı — süreç borçtan sonra zaten yeniden başlamış", target)
+    if not pend:
+        st[PENDING_RESTART_KEY] = pend
+        save_state(st, own_pending=True)
+        return
     if open_position_count() > 0:
         return                                  # hâlâ uygun değil
     done = []
@@ -922,6 +1036,171 @@ def flush_pending_restarts(client) -> None:
             }).execute()
         except Exception:
             pass
+
+
+# ── Canlılık denetimi (watchdog) ─────────────────────────────────────────
+# 2026-10-29 bulgusu (defter §1 E83): bot 10-21 04:25 UTC'de hata/kapanış satırı
+# yazmadan durdu, 10-29 14:57'ye kadar kalkmadı. Ajan süreçleri yalnız main
+# değişince yeniden başlatıyordu; kalp atışı (mt5/trade_sync) botu hiç ölçmüyordu
+# → 8 gün kimse görmedi. Bu sırada decider 112 XAU işlemi açtı; bot içindeki
+# decider_early_cut hiç uygulanmadı. Artık ayrı bir iş parçacığı birkaç dakikada
+# bir süreç + tazelik dosyasına bakar ve ölü/asılı süreci ERTELEMEDEN yeniden
+# başlatır: ölü bot pozisyon yönetemez, "pozisyon kapanınca" beklemek tam o
+# boşluğu yeniden açar (decider pozisyonları hesabı nadiren düzleştirir).
+
+WATCHDOG_ENABLED = getattr(cfg, "WATCHDOG_ENABLED", True)
+WATCHDOG_SECONDS = int(getattr(cfg, "WATCHDOG_SECONDS", 120))
+#: Bu dosya varsa denetim yalnız RAPORLAR, restart atmaz (botu bilerek durdururken):
+#:   remote.py sh "type nul > remote_agent\WATCHDOG_OFF"   ·   kaldır: del remote_agent\WATCHDOG_OFF
+WATCHDOG_OFF_FILE = Path(__file__).parent / "WATCHDOG_OFF"
+#: İki denetim restart'ı arası taban bekleme; üst üste her restart'ta ikiye katlanır
+#: (çökme döngüsünde 2 dk'da bir pencere yığılmasın): 15 → 30 → 60 → 120 dk.
+WATCHDOG_COOLDOWN_SEC = int(getattr(cfg, "WATCHDOG_COOLDOWN_SEC", 900))
+WATCHDOG_COOLDOWN_MAX_SEC = int(getattr(cfg, "WATCHDOG_COOLDOWN_MAX_SEC", 7200))
+
+_REPO = Path(getattr(cfg, "REPO_ROOT", "."))
+#: hedef → tazelik dosyası + sessizlik eşiği (süreç eşlemesi DEFAULT_PROCESS_TARGETS'tan).
+WATCHDOG_SPECS = {
+    # bot her döngüde (~60 sn, hafta sonu dahil) '─── tarama @' yazar → 10 dk sessizlik = ölü/asılı
+    "bot": {"file": Path(getattr(cfg, "BOT_LOG_FILE", _REPO / "yeni deneme" / "demo_bot.log")),
+            "stale_after_s": int(getattr(cfg, "BOT_LOG_STALE_SEC", 600))},
+    # decider her döngü başında kalp atışı yazar (20 dk kadans + Opus çağrıları ≤5 dk×deneme).
+    # journal yaşı canlılık DEĞİL — olay-tetikli, hafta sonu günlerce yazmaz → yalnız raporlanır.
+    "decider": {"file": Path(getattr(cfg, "DECIDER_HEARTBEAT_FILE",
+                                     _REPO / "claude_decider" / "memory" / "decider_heartbeat.json")),
+                "stale_after_s": int(getattr(cfg, "DECIDER_STALE_SEC", 10800))},
+}
+WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider")))
+
+#: Son denetimin gözlemi — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
+WATCHDOG: dict = {}
+
+
+def liveness_verdict(proc_alive: bool | None, age_s: float | None, stale_after_s: float,
+                     since_restart_s: float | None, cooldown_s: float) -> tuple[str, str]:
+    """SAF karar → (eylem, sebep); eylem ∈ ok | restart | cooldown | unknown.
+
+    proc_alive None = süreç sorgusu başarısız; age_s None = tazelik dosyası yok.
+    Süreç yoksa ya da dosya eşikten uzun süredir yazılmıyorsa süreç ölü/asılıdır.
+    Süreç var ama dosya yoksa (kalp atışı yazmayan eski sürüm) karar verilemez → ok.
+    Son restart'tan beri cooldown_s dolmadıysa yeni restart atılmaz (açılış payı + geri çekilme).
+    """
+    if proc_alive is False:
+        reason = "süreç yok"
+    elif age_s is not None and age_s > stale_after_s:
+        reason = f"{age_s / 60:.0f} dk sessiz" + (" (süreç var → asılı)" if proc_alive else "")
+    elif proc_alive is None and age_s is None:
+        return "unknown", "süreç sorgusu ve tazelik dosyası okunamadı"
+    else:
+        return "ok", ""
+    if since_restart_s is not None and since_restart_s < cooldown_s:
+        return "cooldown", f"{reason} — son restart {since_restart_s / 60:.0f} dk önce, bekleniyor"
+    return "restart", reason
+
+
+def watchdog_cooldown_s(streak: int, base: float = WATCHDOG_COOLDOWN_SEC,
+                        cap: float = WATCHDOG_COOLDOWN_MAX_SEC) -> float:
+    """Üst üste `streak` denetim restart'ından sonra beklenecek süre (sn)."""
+    return min(cap, base * 2 ** max(streak - 1, 0))
+
+
+def _file_age_s(path: Path) -> float | None:
+    """Dosyanın son yazılmasından bu yana sn; yoksa None. Kutuda doğrulandı (10-29):
+    bot log'u sürekli açık tutsa da mtime her satırda tazeleniyor."""
+    try:
+        return max(0.0, time.time() - path.stat().st_mtime)
+    except OSError:
+        return None
+
+
+def _watchdog_restart(client, name: str, reason: str, streak: int) -> None:
+    log.warning("[watchdog] %s ÖLÜ/ASILI (%s) → ertelemeden yeniden başlatılıyor", name, reason)
+    out, rc = restart_target(name, force=True, why=f"watchdog: {reason}")
+
+    def _bump(d: dict) -> None:
+        d.setdefault("streak", {})[name] = streak + 1
+        d.setdefault("attempts", {})[name] = now_iso()   # rc≠0'da da geri çekilme işlesin
+    _update_wd(_bump)
+    log.warning("[watchdog] %s restart → rc=%s %s", name, rc, out[:200])
+    if client is None:
+        return
+    try:
+        client.table("evolution_commands").insert({
+            "host": HOST, "kind": "run_analysis", "requested_by": "watchdog",
+            "analysis_id": "watchdog_restart",
+            "analysis_name": f"Canlılık denetimi: {name} yeniden başlatıldı ({reason})",
+            "payload": {"target": name, "reason": reason, "streak": streak + 1},
+            "status": "done" if rc == 0 else "failed",
+            "started_at": now_iso(), "finished_at": now_iso(), "return_code": rc,
+            "output": out,
+        }).execute()
+    except Exception as e:
+        log.warning("[watchdog] panel izi yazılamadı: %s", e)
+
+
+def watchdog_tick(client=None) -> dict:
+    """Her hedefi gözle → liveness_verdict → gerekiyorsa ertelemeden yeniden başlat.
+
+    Gözlem + eylem RESTART_LOCK altında: oto-güncellemenin kill→start boşluğunu
+    "süreç yok" diye okuyup ikinci restart atmaz. WATCHDOG_OFF varken yalnız raporlar.
+    """
+    global WATCHDOG
+    off = (not WATCHDOG_ENABLED) or WATCHDOG_OFF_FILE.exists()
+    snap: dict = {"checked_at": now_iso(), "off": off}
+    targets = _process_targets()
+    with RESTART_LOCK:
+        wd = _load_wd()
+        for name in WATCHDOG_WATCH:
+            spec, t = WATCHDOG_SPECS.get(name), targets.get(name) or {}
+            if not spec or "match" not in t:
+                continue
+            pids = _pids_by_cmdline(t["match"])
+            alive = None if pids is None else bool(pids)
+            age = _file_age_s(spec["file"])
+            last = (wd.get("restarts") or {}).get(name) or {}
+            since = [s for s in (_iso_age_s(last.get("at")),
+                                 _iso_age_s((wd.get("attempts") or {}).get(name))) if s is not None]
+            streak = int((wd.get("streak") or {}).get(name, 0))
+            action, reason = liveness_verdict(alive, age, spec["stale_after_s"],
+                                              min(since) if since else None,
+                                              watchdog_cooldown_s(streak))
+            snap[name] = {"alive": {"ok": True, "unknown": None}.get(action, False),
+                          "proc": alive, "age_s": age, "action": action, "reason": reason,
+                          "last_restart": last.get("at"), "last_restart_why": last.get("why")}
+            changed = (WATCHDOG.get(name) or {}).get("action") != action
+            if action == "ok":
+                if streak:
+                    _update_wd(lambda d, n=name: d.setdefault("streak", {}).update({n: 0}))
+                    log.info("[watchdog] %s yeniden sağlıklı", name)
+            elif action == "restart" and not off:
+                _watchdog_restart(client, name, reason, streak)
+            elif changed:       # cooldown / unknown / OFF iken restart: her turda değil, değişince yaz
+                log.warning("[watchdog] %s: %s%s", name, reason or action,
+                            " — WATCHDOG_OFF: yeniden başlatılmıyor" if action == "restart" else "")
+    WATCHDOG = snap
+    return snap
+
+
+def _watchdog_meta() -> dict:
+    """Kalp atışına süreç canlılığı: denetimin son kararı + TAZE dosya yaşları."""
+    def _age(p) -> int | None:
+        a = _file_age_s(Path(p)) if p else None
+        return round(a) if a is not None else None
+
+    bot, dec = WATCHDOG.get("bot") or {}, WATCHDOG.get("decider") or {}
+    return {
+        "bot_alive": bot.get("alive"),
+        "bot_log_age_s": _age(WATCHDOG_SPECS["bot"]["file"]),
+        "bot_last_restart": bot.get("last_restart"),
+        "bot_last_restart_why": bot.get("last_restart_why"),
+        "decider_alive": dec.get("alive"),
+        "decider_hb_age_s": _age(WATCHDOG_SPECS["decider"]["file"]),
+        "decider_journal_age_s": _age(getattr(cfg, "DECIDER_JOURNAL", None)),
+        "decider_last_restart": dec.get("last_restart"),
+        "decider_last_restart_why": dec.get("last_restart_why"),
+        "watchdog_off": WATCHDOG.get("off"),
+        "watchdog_checked_at": WATCHDOG.get("checked_at"),
+    }
 
 
 # ── Oto-güncelleme: push et → kutu kendini günceller ─────────────────────
@@ -1091,6 +1370,28 @@ def _heartbeat_thread() -> None:
         time.sleep(60)
 
 
+def _watchdog_thread() -> None:
+    """Canlılık denetimini AYRI iş parçacığında koştur (WATCHDOG_SECONDS'da bir).
+
+    Ana döngü uzun komutlarda bloklanır (claude_task ≤1 sa; restart_bot açık
+    pozisyon beklerken ≤2 sa) — kalp atışı 07-20'de aynı sebeple ayrılmıştı.
+    Supabase yalnız panel izi için; bağlanamasa da denetim çalışır.
+    """
+    client = None
+    while True:
+        try:
+            if client is None:
+                client = supa()
+        except Exception as e:
+            log.warning("[watchdog] Supabase bağlantısı yok (denetim yine de koşar): %s", e)
+        try:
+            watchdog_tick(client)
+        except Exception as e:
+            log.warning("canlılık denetimi hatası (devam): %s", e)
+            client = None
+        time.sleep(WATCHDOG_SECONDS)
+
+
 def reconcile_stale_commands(client) -> None:
     """Başlangıçta yarım kalmış 'running' komutları 'failed' işaretle.
 
@@ -1129,6 +1430,7 @@ def main() -> None:
         backfill_trade_entries(client, state)
         save_state(state)
     threading.Thread(target=_heartbeat_thread, daemon=True, name="heartbeat").start()
+    threading.Thread(target=_watchdog_thread, daemon=True, name="watchdog").start()
     last_push = 0.0
     last_trade_push = 0.0
     last_update = time.time()  # açılışta pull zaten taze (start_agent döngüsü)

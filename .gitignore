@@ -27,6 +27,7 @@ claude_decider/vix_live.json
 claude_decider/memory/journal.jsonl
 claude_decider/memory/LESSONS_AUTO.md
 claude_decider/memory/candidate_history.json
+claude_decider/memory/decider_heartbeat.json
 
 # Local research documents — never commit
 day_structure_research.md

@@ -389,3 +389,254 @@ def test_paid_restart_not_resurrected(agent, tmp_path, monkeypatch):
     agent.save_state(state)                          # eski kopya borcu geri getirmemeli
     disk = json.loads((tmp_path / "agent_state.json").read_text())
     assert disk[agent.PENDING_RESTART_KEY] == {}
+
+
+# ── 2026-10-29: canlılık denetimi (bot 10-21→29 sessizce 8 gün ölüydü, E83) ──
+
+MIN = 60.0
+
+
+@pytest.mark.parametrize("proc, age, since, expected", [
+    (False, 30.0, None, "restart"),            # süreç yok → ölü
+    (True, 30.0, None, "ok"),                  # süreç var + log taze
+    (True, 11 * MIN, None, "restart"),         # süreç var ama 11 dk sessiz → asılı
+    (True, 600.0, None, "ok"),                 # eşiğin TAM kendisi henüz sessizlik değil
+    (None, 11 * MIN, None, "restart"),         # süreç sorgusu patladı ama log ölü
+    (None, 30.0, None, "ok"),                  # sorgu patladı, log taze → canlı
+    (True, None, None, "ok"),                  # kalp atışı yazmayan eski sürüm → karar yok
+    (False, None, None, "restart"),            # süreç yok, dosya da yok
+    (None, None, None, "unknown"),             # hiçbir şey okunamadı → dokunma
+    (False, 30.0, 5 * MIN, "cooldown"),        # 5 dk önce restart edildi → açılış payı
+    (True, 20 * MIN, 5 * MIN, "cooldown"),
+    (False, 30.0, 16 * MIN, "restart"),        # bekleme doldu → tekrar dene
+])
+def test_liveness_verdict(agent, proc, age, since, expected):
+    action, reason = agent.liveness_verdict(proc, age, 600, since, 15 * MIN)
+    assert action == expected
+    assert (reason == "") == (expected == "ok")
+
+
+def test_liveness_verdict_reason_names_hang(agent):
+    _, reason = agent.liveness_verdict(True, 12 * MIN, 600, None, 900)
+    assert "asılı" in reason
+    _, reason = agent.liveness_verdict(False, 30.0, 600, None, 900)
+    assert reason == "süreç yok"
+
+
+@pytest.mark.parametrize("streak, expected_min", [(0, 15), (1, 15), (2, 30), (3, 60), (4, 120), (9, 120)])
+def test_watchdog_cooldown_backs_off_and_caps(agent, streak, expected_min):
+    assert agent.watchdog_cooldown_s(streak, 900, 7200) == expected_min * MIN
+
+
+class FakeInsertClient:
+    """`.table(x).insert(row).execute()` (panel izi) + heartbeat upsert'ünü sahteler."""
+
+    def __init__(self):
+        self.inserted: list[dict] = []
+        self.upserted: list[dict] = []
+
+    def table(self, name):
+        self._t = name
+        return self
+
+    def insert(self, row):
+        self.inserted.append(row)
+        return self
+
+    def upsert(self, row):
+        self.upserted.append(row)
+        return self
+
+    def execute(self):
+        return self
+
+
+@pytest.fixture
+def box(agent, tmp_path, monkeypatch):
+    """Sahte kutu: bot/decider süreç tablosu + tazelik dosyaları + kill/start kaydı."""
+    import os
+    import time as _time
+
+    bot_log = tmp_path / "demo_bot.log"
+    dec_hb = tmp_path / "decider_heartbeat.json"
+    bot_log.write_text("x", encoding="utf-8")
+    dec_hb.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(agent, "WATCHDOG_SPECS", {
+        "bot": {"file": bot_log, "stale_after_s": 600},
+        "decider": {"file": dec_hb, "stale_after_s": 10800},
+    })
+    monkeypatch.setattr(agent, "WATCHDOG_STATE_FILE", tmp_path / "watchdog_state.json")
+    monkeypatch.setattr(agent, "WATCHDOG_OFF_FILE", tmp_path / "WATCHDOG_OFF")
+    monkeypatch.setattr(agent, "STATE_FILE", tmp_path / "agent_state.json")
+    monkeypatch.setattr(agent.time, "sleep", lambda s: None)
+
+    procs = {"forexsai_demo_bot.py": [111], "run_decider.py": [222]}
+    calls = {"kill": [], "start": []}
+
+    def _kill(match):
+        calls["kill"].append(match)
+        if not getattr(box_state, "unkillable", False):
+            procs[match] = []
+        return "ok"
+
+    def _start(bat):
+        calls["start"].append(bat)
+        match = "forexsai_demo_bot.py" if "trade_bot" in bat else "run_decider.py"
+        procs[match] = [999]
+        return f"başlatıldı: {bat}"
+
+    box_state = types.SimpleNamespace(procs=procs, calls=calls, bot_log=bot_log, dec_hb=dec_hb)
+    monkeypatch.setattr(agent, "_pids_by_cmdline", lambda m: list(procs[m]) if procs[m] is not None else None)
+    monkeypatch.setattr(agent, "_kill_by_cmdline", _kill)
+    monkeypatch.setattr(agent, "_start_bat", _start)
+
+    def age(path, seconds):
+        t = _time.time() - seconds
+        os.utime(path, (t, t))
+    box_state.age = age
+    return box_state
+
+
+def test_healthy_bot_not_touched_and_heartbeat_reports_alive(agent, box):
+    box.age(box.bot_log, 40)
+    snap = agent.watchdog_tick(FakeInsertClient())
+    assert snap["bot"]["action"] == "ok" and snap["bot"]["alive"] is True
+    assert box.calls["kill"] == [] and box.calls["start"] == []
+
+    client = FakeInsertClient()
+    agent.push_heartbeat(client)
+    meta = client.upserted[0]["meta"]
+    assert meta["bot_alive"] is True
+    assert meta["bot_log_age_s"] is not None and meta["bot_log_age_s"] < 120
+    assert "bot_last_restart" in meta and meta["agent_version"] == "1.2"
+
+
+def test_dead_bot_restarted_without_deferral_even_with_open_positions(agent, box):
+    """10-21 vakası: süreç yok. Açık pozisyon ERTELEME sebebi olmamalı."""
+    agent.mt5.positions_get = lambda: ("pos1", "pos2")
+    box.procs["forexsai_demo_bot.py"] = []
+    box.age(box.bot_log, 3 * 86400)
+    client = FakeInsertClient()
+
+    snap = agent.watchdog_tick(client)
+
+    assert snap["bot"]["action"] == "restart" and snap["bot"]["alive"] is False
+    assert box.calls["start"] == [r"calistir\2_oto_trade_bot.bat"]
+    assert box.procs["forexsai_demo_bot.py"] == [999]
+    trace = [r for r in client.inserted if r.get("requested_by") == "watchdog"]
+    assert trace and trace[0]["payload"]["target"] == "bot" and trace[0]["return_code"] == 0
+    wd = agent._load_wd()
+    assert wd["restarts"]["bot"]["why"].startswith("watchdog: süreç yok")
+    assert wd["streak"]["bot"] == 1
+
+
+def test_hung_bot_with_silent_log_is_restarted(agent, box):
+    """Süreç var ama log 15 dk sessiz (ör. konsol QuickEdit donması) → asılı → restart."""
+    box.age(box.bot_log, 15 * MIN)
+    snap = agent.watchdog_tick(FakeInsertClient())
+    assert snap["bot"]["action"] == "restart"
+    assert box.calls["kill"] == ["forexsai_demo_bot.py"]
+    assert len(box.calls["start"]) == 1
+
+
+def test_no_restart_storm_within_cooldown(agent, box):
+    box.procs["forexsai_demo_bot.py"] = []
+    agent.watchdog_tick(FakeInsertClient())
+    box.procs["forexsai_demo_bot.py"] = []          # yeni bot da hemen çöktü
+    snap = agent.watchdog_tick(FakeInsertClient())
+    assert snap["bot"]["action"] == "cooldown"
+    assert len(box.calls["start"]) == 1, "15 dk dolmadan ikinci restart atılmamalı"
+
+
+def test_streak_resets_once_healthy(agent, box):
+    box.procs["forexsai_demo_bot.py"] = []
+    agent.watchdog_tick(FakeInsertClient())
+    box.age(box.bot_log, 10)
+    agent.watchdog_tick(FakeInsertClient())
+    assert agent._load_wd()["streak"]["bot"] == 0
+
+
+def test_watchdog_off_file_only_reports(agent, box):
+    agent.WATCHDOG_OFF_FILE.write_text("", encoding="utf-8")
+    box.procs["forexsai_demo_bot.py"] = []
+    snap = agent.watchdog_tick(FakeInsertClient())
+    assert snap["off"] is True and snap["bot"]["alive"] is False
+    assert box.calls["start"] == []
+
+
+def test_unknown_process_state_never_kills(agent, box):
+    box.procs["forexsai_demo_bot.py"] = None        # PowerShell sorgusu patladı
+    box.procs["run_decider.py"] = None
+    box.bot_log.unlink()
+    box.dec_hb.unlink()
+    snap = agent.watchdog_tick(FakeInsertClient())
+    assert snap["bot"]["action"] == "unknown" and snap["bot"]["alive"] is None
+    assert box.calls["kill"] == []
+
+
+def test_dead_decider_restarted(agent, box):
+    box.procs["run_decider.py"] = []
+    box.age(box.bot_log, 30)
+    agent.watchdog_tick(FakeInsertClient())
+    assert box.calls["start"] == [r"calistir\3_claude_decider.bat"]
+
+
+def test_unkillable_process_blocks_second_instance(agent, box, monkeypatch):
+    """Öldürülemeyen asılı bot varken ikinci kopya başlatılmaz (iki bot = çift emir)."""
+    monkeypatch.setattr(agent, "_kill_by_cmdline", lambda m: "erişim reddedildi")
+    out, rc = agent.restart_target("bot", force=True, why="test")
+    assert rc == 4 and box.calls["start"] == []
+    assert "restarts" not in agent._load_wd()
+
+
+def test_watchdog_restart_pays_pending_debt_without_second_kill(agent, box, monkeypatch):
+    """Borç yazılmışken denetim ölü botu kaldırdıysa borç kapanır; sağlıklı bot ikinci kez öldürülmez."""
+    agent.mt5.positions_get = lambda: ("pos1",)
+    st = {agent.PENDING_RESTART_KEY: {"bot": {"since": "2026-10-21T00:00:00+00:00", "commits": "3"}}}
+    agent.save_state(st, own_pending=True)
+    box.procs["forexsai_demo_bot.py"] = []
+    agent.watchdog_tick(FakeInsertClient())          # ölü bot → restart (borçtan SONRA)
+    n_start = len(box.calls["start"])
+
+    agent.flush_pending_restarts(None)
+
+    assert agent.load_state()[agent.PENDING_RESTART_KEY] == {}
+    assert len(box.calls["start"]) == n_start, "borç ödemesi ikinci restart atmamalı"
+
+
+def test_older_restart_does_not_pay_newer_debt(agent, box):
+    agent._record_restart("bot", "eski")
+    st = {agent.PENDING_RESTART_KEY: {"bot": {"since": "2099-01-01T00:00:00+00:00", "commits": "1"}}}
+    agent.save_state(st, own_pending=True)
+    agent.mt5.positions_get = lambda: ("pos1",)     # pozisyon açık → borç beklemeli
+    agent.flush_pending_restarts(None)
+    assert "bot" in agent.load_state()[agent.PENDING_RESTART_KEY]
+
+
+def test_pids_by_cmdline_distinguishes_none_from_empty(agent, monkeypatch):
+    res = types.SimpleNamespace(returncode=1, stdout="")
+    monkeypatch.setattr(agent.subprocess, "run", lambda *a, **k: res)
+    monkeypatch.setattr(agent.sys, "platform", "darwin")
+    assert agent._pids_by_cmdline("forexsai_demo_bot.py") == []          # pgrep: eşleşme yok
+    res.returncode, res.stdout = 0, "123\n456\n"
+    assert agent._pids_by_cmdline("forexsai_demo_bot.py") == [123, 456]
+    res.returncode = 2
+    assert agent._pids_by_cmdline("forexsai_demo_bot.py") is None        # sorgu hatası
+
+    def _boom(*a, **k):
+        raise OSError("powershell yok")
+    monkeypatch.setattr(agent.subprocess, "run", _boom)
+    assert agent._pids_by_cmdline("x") is None
+
+
+def test_pids_by_cmdline_windows_counts_only_python(agent, monkeypatch):
+    seen = {}
+
+    def _run(argv, **k):
+        seen["ps"] = argv[-1]
+        return types.SimpleNamespace(returncode=0, stdout="15680\r\n")
+    monkeypatch.setattr(agent.subprocess, "run", _run)
+    monkeypatch.setattr(agent.sys, "platform", "win32")
+    assert agent._pids_by_cmdline("forexsai_demo_bot.py") == [15680]
+    assert "$_.Name -like 'python*'" in seen["ps"]
+    assert agent._ps_cmdline_filter("forexsai_demo_bot.py") in seen["ps"]

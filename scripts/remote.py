@@ -14,7 +14,7 @@ Kullanım:
   python3 scripts/remote.py restart decider                    # süreç yenile
   python3 scripts/remote.py status                             # son komutlar
   python3 scripts/remote.py watch <id>                         # tekrar izle
-  python3 scripts/remote.py health                             # ajan kalp atışı
+  python3 scripts/remote.py health                             # ajan kalp atışı + bot/decider canlılığı
 
 Bayraklar: --no-wait (kuyruğa bırak, bekleme) · --host <ad> · --json
 
@@ -216,6 +216,42 @@ def cmd_health(client, a) -> None:
         meta = r.get("meta") or {}
         extra = " ".join(f"{k}={v}" for k, v in meta.items()) if isinstance(meta, dict) else ""
         print(f"{mark} {r.get('host'):<10} {ts[:19]}  ({age})  {extra}")
+        if isinstance(meta, dict):
+            for line in _process_lines(meta):
+                print(f"    {line}")
+
+
+def _fmt_age(sec) -> str:
+    if sec is None:
+        return "?"
+    sec = float(sec)
+    if sec < 120:
+        return f"{sec:.0f} sn"
+    return f"{sec / 60:.0f} dk" if sec < 7200 else f"{sec / 3600:.1f} sa"
+
+
+def _process_lines(meta: dict) -> list[str]:
+    """Ajan ≥1.2 süreç canlılığı. Ajan çevrimiçi ≠ bot çalışıyor (2026-10-21→29: bot
+    8 gün ölüyken kalp atışı yeşildi) — bu yüzden ayrı satır, ayrı renk."""
+    if "bot_alive" not in meta:
+        return ["(ajan <1.2: süreç canlılığı bildirilmiyor)"]
+    marks = {True: "🟢 canlı", False: "🔴 ÖLÜ/ASILI", None: "⚪ bilinmiyor"}
+    lines = []
+    for name, age_key, age_label in (("bot", "bot_log_age_s", "log"),
+                                     ("decider", "decider_hb_age_s", "kalp atışı")):
+        parts = [marks.get(meta.get(f"{name}_alive"), "⚪ bilinmiyor")]
+        for label, key in ((age_label, age_key),) + ((("journal", "decider_journal_age_s"),)
+                                                      if name == "decider" else ()):
+            sec = meta.get(key)
+            parts.append(f"{label} {_fmt_age(sec)} önce" if sec is not None else f"{label} yok")
+        last = meta.get(f"{name}_last_restart")
+        why = meta.get(f"{name}_last_restart_why")
+        parts.append(f"son restart {last[:16].replace('T', ' ')}" + (f" ({why})" if why else "")
+                     if last else "son restart —")
+        lines.append(f"{name:<8}: " + " · ".join(parts))
+    if meta.get("watchdog_off"):
+        lines.append("⚠ canlılık denetimi KAPALI (WATCHDOG_OFF) — yalnız raporluyor, restart atmıyor")
+    return lines
 
 
 def main() -> None:

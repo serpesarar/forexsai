@@ -43,6 +43,10 @@ BARS_N = 120
 # "sınırda fırsat" Opus'a gider; prompt gevşediği için orada daha CESUR açar (2026-07-02).
 CONSULT_REV = 1.6
 FREE_SYMBOL = "XAUUSD"   # serbest-zekâ modu (kanıt-tablosu yok; edge yok, çıplak muhakeme)
+# Canlılık kalp atışı (2026-10-29): kutudaki evolution_agent bu dosyanın yaşına bakar;
+# süreç yoksa ya da ~3 saattir tazelenmediyse decider'ı yeniden başlatır (bot 10-21→29
+# kimse fark etmeden 8 gün ölü kaldı). Journal yaşı bunun yerine geçmez — olay-tetikli.
+HEARTBEAT_FILE = HERE / "memory" / "decider_heartbeat.json"
 
 # ── REJİM-FLİP NÖBETÇİSİ (2026-07-27 denetimi) ───────────────────────────────
 # PLAYBOOK/REGIME.md ">15pp düşerse izle" kuralını YAZIYORDU ama hiçbir kod hesaplamıyordu —
@@ -672,6 +676,16 @@ def preflight() -> list[str]:
     return problems
 
 
+def _beat(shadow: bool) -> None:
+    """Döngü başı kalp atışı — yazılamazsa sessiz geç (karar döngüsü bunun için durmaz)."""
+    try:
+        HEARTBEAT_FILE.write_text(json.dumps({
+            "ts": datetime.now(timezone.utc).isoformat(), "pid": os.getpid(),
+            "mode": "shadow" if shadow else "live"}), encoding="utf-8")
+    except Exception as e:
+        print("  kalp atışı yazılamadı (devam):", e)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true")
@@ -692,6 +706,7 @@ def main():
           f"cadence={CADENCE_SEC}s | semboller={list(ALLOW)} | tablo={len(_TABLES)} hücre")
     try:
         while True:
+            _beat(shadow)
             # 1) açık kararları grade et (MT5 5m ile TP/SL tarama)
             try:
                 ch, rows = outcomes.resolve_journal(fetch_bars_after_mt5)
