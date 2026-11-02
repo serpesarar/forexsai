@@ -46,6 +46,13 @@ devre dışı kaldı — tekrarlarsa ilk bakılacak yer burasıdır.*
 beri yeniden başlamadı). `save_state` artık `pending_restarts`'ı diskten korur (afd54638); doğrulama:
 `remote.py sh "type remote_agent\\agent_state.json"` içinde borç görünmeli.*
 
+### Kutu sağlığı — süreç canlı ≠ sistem çalışıyor
+`remote.py health` ajan ≥1.3'te gerçek ölçümü gösterir: `mt5` artık terminal bağlantısıdır (eskiden yalnız
+kütüphane importuydu), `mt5_tick_age_s`, `claude_logged_in`, `decider_llm_err_streak`, `health_issues`.
+Denetim yalnız ölçer ve uyarır, restart atmaz (`health_tick`): sorun panelde "MT5 Kutusu" kartına ve komut
+akışına düşer. *2026-11-02: demo hesabı `Invalid account` ile düşmüş, Claude CLI oturumu kapanmıştı; süreçler
+canlı, kalp atışı yeşildi.* Bu iki arızanın çaresi kutuda kullanıcı girişidir.
+
 ### Kutunun `config.py`'si gitignore'da
 `yeni deneme/config.py` (şifre içerir) push edilemez → yeni ayarlar koda
 `getattr(config, "AD", varsayılan)` ile yazılır. Yani **varsayılan koddadır**,

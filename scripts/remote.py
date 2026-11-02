@@ -249,6 +249,13 @@ def _process_lines(meta: dict) -> list[str]:
         parts.append(f"son restart {last[:16].replace('T', ' ')}" + (f" ({why})" if why else "")
                      if last else "son restart —")
         lines.append(f"{name:<8}: " + " · ".join(parts))
+    if "health_ok" in meta:
+        tick = meta.get("mt5_tick_age_s")
+        lines.append(f"mt5     : {'🟢 bağlı' if meta.get('mt5') else '🔴 BAĞLI DEĞİL'}"
+                     f" · hesap {meta.get('mt5_login') or '?'} @ {meta.get('mt5_server') or '?'}"
+                     f" · son tick {_fmt_age(tick)} önce")
+        for issue in meta.get("health_issues") or []:
+            lines.append(f"🔴 SORUN : {issue.get('message')}")
     if meta.get("watchdog_off"):
         lines.append("⚠ canlılık denetimi KAPALI (WATCHDOG_OFF) — yalnız raporluyor, restart atmıyor")
     return lines

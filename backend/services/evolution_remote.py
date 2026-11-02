@@ -204,6 +204,15 @@ def get_remote_status(host: str = DEFAULT_HOST) -> Dict[str, Any]:
         "reported": meta.get("trade_sync_ok") is not None,
     }
 
+    # Süreçler canlı ve kalp atışı yeşilken de sistem durmuş olabilir (2026-11-02:
+    # MT5 hesabı düşmüş + Claude CLI oturumu kapalı). Ajan 1.3'ten itibaren ölçer.
+    health = {
+        "ok": meta.get("health_ok"),
+        "issues": meta.get("health_issues") or [],
+        "checked_at": meta.get("health_checked_at"),
+        "reported": meta.get("health_ok") is not None,
+    }
+
     return {
         "host": host,
         "online": online,
@@ -211,6 +220,7 @@ def get_remote_status(host: str = DEFAULT_HOST) -> Dict[str, Any]:
         "last_seen_ago_s": last_seen_ago_s,
         "meta": meta,
         "trade_sync": trade_sync,
+        "health": health,
         "pending_commands": pending,
         "running_commands": running,
         "recent_commands": commands,

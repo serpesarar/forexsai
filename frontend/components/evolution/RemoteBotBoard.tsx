@@ -880,6 +880,7 @@ export default function RemoteBotBoard({ days }: { days: number }) {
 
   const online = status?.online ?? false;
   const openPositions = status?.meta?.open_positions;
+  const healthIssues = online ? status?.health?.issues ?? [] : [];
 
   const send = (kind: "sync_lessons" | "git_pull" | "restart_bot", label: string, payload?: Record<string, unknown>) =>
     command.mutate(
@@ -937,6 +938,17 @@ export default function RemoteBotBoard({ days }: { days: number }) {
                 ? "Evrim Ajanı henüz hiç bağlanmadı. Kurulum: MT5 kutusunda remote_agent/README.md — 5 dakika, tek seferlik."
                 : `Ajan son ${timeAgo(status.last_seen)} görüldü. Kutuda start_agent.bat çalışıyor mu?`}
             </p>
+          )}
+
+          {healthIssues.length > 0 && (
+            <div className="mb-4 rounded-xl border border-rose-400/30 bg-rose-400/[0.08] p-3 text-[11px] leading-relaxed text-rose-200">
+              <p className="mb-1 font-semibold">Kutu çevrimiçi ama sistem sağlıklı değil:</p>
+              <ul className="list-disc space-y-0.5 pl-4">
+                {healthIssues.map((issue) => (
+                  <li key={issue.code}>{issue.message}</li>
+                ))}
+              </ul>
+            </div>
           )}
 
           <div className="space-y-2 text-[12px] text-slate-400">
@@ -1024,8 +1036,9 @@ export default function RemoteBotBoard({ days }: { days: number }) {
                   </p>
                 ) : (
                   <p className="mt-1 text-slate-400">
-                    Ajanın MT5 okuması sağlıklı — demek ki bot bu sürede gerçekten
-                    pozisyon kapatmadı (açık pozisyon bekliyor olabilir).
+                    {status.health?.ok === false
+                      ? "Kutu sağlık denetimi sorun bildiriyor — sebep büyük olasılıkla MT5 Kutusu kartındaki uyarıda."
+                      : "Ajanın MT5 okuması sağlıklı — demek ki bot bu sürede gerçekten pozisyon kapatmadı (açık pozisyon bekliyor olabilir)."}
                   </p>
                 )
               ) : (

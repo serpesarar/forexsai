@@ -22,6 +22,7 @@ import importlib.util
 import json
 import sys
 import types
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -508,7 +509,7 @@ def test_healthy_bot_not_touched_and_heartbeat_reports_alive(agent, box):
     meta = client.upserted[0]["meta"]
     assert meta["bot_alive"] is True
     assert meta["bot_log_age_s"] is not None and meta["bot_log_age_s"] < 120
-    assert "bot_last_restart" in meta and meta["agent_version"] == "1.2"
+    assert "bot_last_restart" in meta and meta["agent_version"] == "1.3"
 
 
 def test_dead_bot_restarted_without_deferral_even_with_open_positions(agent, box):
@@ -640,3 +641,156 @@ def test_pids_by_cmdline_windows_counts_only_python(agent, monkeypatch):
     assert agent._pids_by_cmdline("forexsai_demo_bot.py") == [15680]
     assert "$_.Name -like 'python*'" in seen["ps"]
     assert agent._ps_cmdline_filter("forexsai_demo_bot.py") in seen["ps"]
+
+
+# ── Sağlık denetimi (2026-11-02: hesap düştü + CLI logout, kalp atışı yeşildi) ──
+
+@pytest.mark.parametrize("iso,expected", [
+    ("2026-11-02T18:00", True),     # Pazartesi seans
+    ("2026-11-02T21:00", False),    # günlük boşluk
+    ("2026-11-02T23:45", True),     # boşluk bitti
+    ("2026-11-06T20:00", True),     # Cuma kapanış öncesi
+    ("2026-11-06T21:00", False),    # Cuma kapanış sonrası
+    ("2026-11-07T12:00", False),    # Cumartesi
+    ("2026-11-08T12:00", False),    # Pazar açılış öncesi
+    ("2026-11-08T23:45", True),     # Pazar açılış sonrası
+])
+def test_market_expected_open(agent, iso, expected):
+    assert agent.market_expected_open(datetime.fromisoformat(iso)) is expected
+
+
+def _codes(issues):
+    return [i["code"] for i in issues]
+
+
+def test_health_issues_reports_each_failure(agent):
+    assert _codes(agent.health_issues(False, 9999, True, False, 71)) == [
+        "mt5_disconnected", "claude_logged_out", "decider_llm_failing"]
+    assert _codes(agent.health_issues(True, 1300, True, True, 0)) == ["mt5_ticks_stale"]
+
+
+def test_health_issues_quiet_when_healthy_closed_or_unmeasured(agent):
+    assert agent.health_issues(True, 5, True, True, 0) == []
+    assert agent.health_issues(True, 99999, False, True, 0) == []       # hafta sonu
+    assert agent.health_issues(None, None, True, None, 0) == []         # ölçülemedi
+    assert agent.health_issues(True, 5, True, True, 4) == []            # tekil hatalar
+
+
+def test_tick_age_ignores_broker_clock_and_grows_when_frozen(agent, monkeypatch):
+    term = types.SimpleNamespace(connected=True)
+    tick = types.SimpleNamespace(time=1_000_000_000, time_msc=1)    # saat anlamsız olabilir
+    agent.mt5.terminal_info = lambda: term
+    agent.mt5.account_info = lambda: types.SimpleNamespace(login=7, server="S")
+    agent.mt5.symbol_info_tick = lambda sym: tick
+    clock = {"now": 1000.0}
+    monkeypatch.setattr(agent.time, "time", lambda: clock["now"])
+    assert agent.mt5_health()["mt5_tick_age_s"] == 0
+    clock["now"] = 1500.0
+    measured = agent.mt5_health()
+    assert measured["mt5_tick_age_s"] == 500 and measured["mt5_connected"] is True
+    tick = types.SimpleNamespace(time=1_000_000_000, time_msc=2)
+    assert agent.mt5_health()["mt5_tick_age_s"] == 0
+
+
+def test_lost_ipc_counts_as_disconnected(agent):
+    agent.mt5.terminal_info = lambda: None
+    agent.mt5.account_info = lambda: None
+    agent.mt5.symbol_info_tick = lambda sym: None
+    measured = agent.mt5_health()
+    assert measured["mt5_connected"] is False and measured["mt5_error"]
+
+
+def test_claude_auth_parses_and_caches(agent, monkeypatch):
+    calls = []
+
+    def run(*a, **k):
+        calls.append(a)
+        return types.SimpleNamespace(stdout=json.dumps({"loggedIn": False}))
+    monkeypatch.setattr(agent.subprocess, "run", run)
+    assert agent.claude_logged_in() is False
+    assert agent.claude_logged_in() is False
+    assert len(calls) == 1
+
+
+def test_claude_auth_unreadable_is_unknown_not_failure(agent, monkeypatch):
+    monkeypatch.setattr(agent.subprocess, "run",
+                        lambda *a, **k: types.SimpleNamespace(stdout="not json"))
+    assert agent.claude_logged_in() is None
+
+
+def test_llm_error_streak_counts_only_latest_run(agent, tmp_path):
+    bad = {"decision": {"action": "WAIT", "reason": "claude exit 1 | stderr: "}}
+    good = {"decision": {"action": "OPEN", "reason": "kanıt"}}
+    journal = tmp_path / "journal.jsonl"
+    lines = [bad, good, bad, {"outcome": 1}, bad, bad]
+    journal.write_text("\n".join(json.dumps(x) for x in lines) + "\nbozuk{\n", encoding="utf-8")
+    assert agent.decider_llm_error_streak(journal) == 3
+    assert agent.decider_llm_error_streak(tmp_path / "yok.jsonl") == 0
+    assert agent.decider_llm_error_streak(None) == 0
+
+
+def test_llm_error_streak_drops_truncated_first_line(agent, tmp_path, monkeypatch):
+    monkeypatch.setattr(agent, "DECIDER_JOURNAL_TAIL_BYTES", 120)
+    journal = tmp_path / "journal.jsonl"
+    row = json.dumps({"decision": {"reason": "claude exit 1"}, "pad": "x" * 30})
+    journal.write_text("\n".join([row] * 10) + "\n", encoding="utf-8")
+    assert 0 < agent.decider_llm_error_streak(journal) <= 2
+
+
+@pytest.fixture
+def health_box(agent, tmp_path, monkeypatch):
+    state = types.SimpleNamespace(connected=False)
+    monkeypatch.setattr(agent, "WATCHDOG_STATE_FILE", tmp_path / "wd.json")
+    monkeypatch.setattr(agent, "mt5_health", lambda: {"mt5_connected": state.connected,
+                                                      "mt5_tick_age_s": 1})
+    monkeypatch.setattr(agent, "claude_logged_in", lambda: True)
+    monkeypatch.setattr(agent, "decider_llm_error_streak", lambda p: 0)
+    return state
+
+
+def _alerts(client):
+    return [r for r in client.inserted if r.get("requested_by") == "health"]
+
+
+def test_health_tick_alerts_once_after_two_rounds_then_on_recovery(agent, health_box):
+    client = FakeInsertClient()
+    first = agent.health_tick(client)               # tek tur: kısa kopuş olabilir
+    assert first["health_ok"] is True and _alerts(client) == []
+
+    second = agent.health_tick(client)
+    assert second["health_ok"] is False
+    assert [i["code"] for i in second["health_issues"]] == ["mt5_disconnected"]
+    assert [a["status"] for a in _alerts(client)] == ["failed"]
+
+    agent.health_tick(client)                       # aynı sorun: yeni uyarı yok
+    assert len(_alerts(client)) == 1
+
+    health_box.connected = True
+    assert agent.health_tick(client)["health_ok"] is True
+    assert [a["status"] for a in _alerts(client)] == ["failed", "done"]
+
+
+def test_health_alert_not_repeated_after_agent_restart(agent, health_box):
+    client = FakeInsertClient()
+    agent.health_tick(client)
+    agent.health_tick(client)
+    agent.HEALTH = {}                               # ajan yeniden başladı
+    agent.health_tick(client)
+    agent.health_tick(client)
+    assert len(_alerts(client)) == 1
+
+
+def test_heartbeat_mt5_field_is_real_connection_not_import(agent, health_box):
+    agent.health_tick(None)
+    client = FakeInsertClient()
+    agent.push_heartbeat(client)
+    meta = client.upserted[0]["meta"]
+    assert meta["mt5"] is False and "health_ok" in meta and "raw_codes" not in meta
+
+
+def test_health_tick_never_restarts_anything(agent, health_box, monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("sağlık denetimi restart atmamalı")
+    monkeypatch.setattr(agent, "restart_target", boom)
+    agent.health_tick(FakeInsertClient())
+    agent.health_tick(FakeInsertClient())

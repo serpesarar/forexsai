@@ -262,9 +262,18 @@ export interface RemoteCommandSummary {
   return_code: number | null;
 }
 
+/** Kutunun gerçek sağlığı (MT5 bağlantısı, tick, Claude oturumu) — ajan ≥1.3. */
+export interface RemoteHealth {
+  ok: boolean | null;
+  issues: { code: string; message: string }[];
+  checked_at: string | null;
+  reported: boolean;
+}
+
 export interface RemoteStatus {
   /** İşlem senkron sağlığı — 'çevrimiçi' ile aynı şey değildir. */
   trade_sync?: TradeSyncHealth;
+  health?: RemoteHealth;
   host: string;
   online: boolean;
   last_seen: string | null;

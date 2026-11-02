@@ -554,9 +554,11 @@ def push_journal(client, state: dict) -> int:
 
 def push_heartbeat(client, extra: dict | None = None) -> None:
     meta = {
-        "mt5": HAS_MT5,
+        # 1.3: eskiden HAS_MT5'ti (yalnız kütüphane importu) — terminal hesabı düşmüşken
+        # bile True yazıyordu. Artık gerçek bağlantı; ölçüm yoksa None.
+        "mt5": HEALTH.get("mt5_connected"),
         "open_positions": open_position_count(),
-        "agent_version": "1.2",
+        "agent_version": "1.3",
         # Panel "ajan çevrimiçi ama işlem verisi bayat" durumunun SEBEBİNİ
         # görebilsin diye trade senkron sağlığı da taşınır.
         "trade_sync_ok": TRADE_SYNC["ok"],
@@ -565,6 +567,7 @@ def push_heartbeat(client, extra: dict | None = None) -> None:
         "trade_sync_fail_streak": TRADE_SYNC["fail_streak"],
         # 1.2 (2026-10-29): ajan çevrimiçi ≠ bot çalışıyor — süreç canlılığı ayrı.
         **_watchdog_meta(),
+        **_health_meta(),
         **(extra or {}),
     }
     client.table("agent_heartbeat").upsert(
@@ -1203,6 +1206,206 @@ def _watchdog_meta() -> dict:
     }
 
 
+# ── Sağlık denetimi: süreç canlı ≠ sistem çalışıyor ──────────────────────
+# 2026-11-02 bulgusu: demo hesabı 15:28 UTC'de "Invalid account" ile düştü, kutudaki
+# Claude CLI oturumu da kapanmıştı (decider'ın tüm kararları `claude exit 1` → sahte
+# WAIT). Süreçler canlı, kalp atışı yeşil, mt5=True: panelde hiçbir iz yoktu. Bu
+# denetim yalnız ÖLÇER ve UYARIR — restart atmaz, çünkü ikisinin de çaresi kullanıcı
+# girişidir ve restart yalnız gürültü üretir.
+
+HEALTH_ENABLED = getattr(cfg, "HEALTH_ENABLED", True)
+#: Tick yaşı bu sembollerin EN TAZESİNE bakar: biri tatilde olsa da alarm çalmaz.
+HEALTH_SYMBOLS = tuple(getattr(cfg, "HEALTH_SYMBOLS", ("NAS100", "GER40", "XAUUSD", "SpotCrude")))
+MT5_TICK_STALE_SEC = int(getattr(cfg, "MT5_TICK_STALE_SEC", 1200))
+CLAUDE_AUTH_TTL_SEC = int(getattr(cfg, "CLAUDE_AUTH_TTL_SEC", 600))
+CLAUDE_AUTH_TIMEOUT_SEC = int(getattr(cfg, "CLAUDE_AUTH_TIMEOUT_SEC", 30))
+#: Tekil `claude exit` normal (10-29/30'da aralıklı görüldü); üst üste bu kadarı arıza.
+DECIDER_LLM_ERR_STREAK = int(getattr(cfg, "DECIDER_LLM_ERR_STREAK", 5))
+DECIDER_JOURNAL_TAIL_BYTES = int(getattr(cfg, "DECIDER_JOURNAL_TAIL_BYTES", 512 * 1024))
+#: Günlük bakım boşluğu dahil, tick beklenmeyen UTC aralığı (dakika): 20:30–23:30.
+MARKET_BREAK_START_MIN = 20 * 60 + 30
+MARKET_BREAK_END_MIN = 23 * 60 + 30
+#: Hata `claude exit` biçiminde: decide.py'nin WAIT sebebine yazdığı önek.
+DECIDER_LLM_ERROR_MARK = "claude exit"
+
+#: Son ölçüm — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
+HEALTH: dict = {}
+#: symbol → (son görülen tick damgası, yerel saatte değiştiği an). Broker saat
+#: farkından bağımsızdır: tick'in saatine değil, DEĞİŞTİĞİ ana bakılır.
+_TICK_SEEN: dict = {}
+_CLAUDE_AUTH_CACHE: dict = {"at": None, "value": None}
+
+
+def market_expected_open(now: datetime) -> bool:
+    """SAF: bu UTC anında en az bir sembolden tick beklenir mi (hafta sonu + günlük boşluk hariç)."""
+    minute = now.hour * 60 + now.minute
+    in_break = MARKET_BREAK_START_MIN <= minute < MARKET_BREAK_END_MIN
+    wd = now.weekday()
+    if wd == 5:
+        return False
+    if wd == 6:
+        return minute >= MARKET_BREAK_END_MIN
+    if wd == 4 and minute >= MARKET_BREAK_START_MIN:
+        return False
+    return not in_break
+
+
+def health_issues(mt5_connected: bool | None, tick_age_s: float | None, market_open: bool,
+                  claude_logged_in: bool | None, llm_err_streak: int) -> list[dict]:
+    """SAF karar → sorun listesi. None = ölçülemedi; ölçülemeyen şey için alarm üretilmez."""
+    issues = []
+    if mt5_connected is False:
+        issues.append({"code": "mt5_disconnected",
+                       "message": "MT5 terminali sunucuya bağlı değil — hesap girişini kontrol et"})
+    elif market_open and tick_age_s is not None and tick_age_s > MT5_TICK_STALE_SEC:
+        issues.append({"code": "mt5_ticks_stale",
+                       "message": f"Piyasa açıkken {tick_age_s / 60:.0f} dk'dır yeni tick yok"})
+    if claude_logged_in is False:
+        issues.append({"code": "claude_logged_out",
+                       "message": "Kutuda Claude CLI oturumu kapalı — decider karar üretemez "
+                                  "(kutuda: claude auth login)"})
+    if llm_err_streak >= DECIDER_LLM_ERR_STREAK:
+        issues.append({"code": "decider_llm_failing",
+                       "message": f"Decider'ın son {llm_err_streak} kararı LLM hatası (sahte WAIT)"})
+    return issues
+
+
+def mt5_health() -> dict:
+    """Terminalin gerçek bağlantısı + hesap + son tick yaşı. Salt okuma."""
+    if not HAS_MT5:
+        return {"mt5_connected": None, "mt5_tick_age_s": None}
+    try:
+        term = mt5.terminal_info()
+        account = mt5.account_info()
+        now_s = time.time()
+        for sym in HEALTH_SYMBOLS:
+            tick = mt5.symbol_info_tick(sym)
+            if tick is None:
+                continue
+            stamp = getattr(tick, "time_msc", None) or tick.time
+            if (_TICK_SEEN.get(sym) or (None,))[0] != stamp:
+                _TICK_SEEN[sym] = (stamp, now_s)
+        changed = [seen_at for _, seen_at in _TICK_SEEN.values()]
+        return {
+            # terminal_info None = ajanın IPC'si de kopuk: MT5 okunamıyor, sorun sayılır.
+            "mt5_connected": bool(term and term.connected),
+            "mt5_login": getattr(account, "login", None),
+            "mt5_server": getattr(account, "server", None),
+            "mt5_tick_age_s": round(now_s - max(changed)) if changed else None,
+            "mt5_error": None if term else str(mt5.last_error()),
+        }
+    except Exception as e:
+        log.warning("[sağlık] MT5 ölçülemedi: %s", e)
+        return {"mt5_connected": None, "mt5_tick_age_s": None, "mt5_error": str(e)}
+
+
+def claude_logged_in() -> bool | None:
+    """`claude auth status` (JSON) → loggedIn; ölçülemezse None. Sonuç TTL boyunca önbellekte."""
+    now_s = time.time()
+    at = _CLAUDE_AUTH_CACHE["at"]
+    if at is not None and now_s - at < CLAUDE_AUTH_TTL_SEC:
+        return _CLAUDE_AUTH_CACHE["value"]
+    value = None
+    try:
+        proc = subprocess.run(
+            [_resolve_claude_bin(), "auth", "status"], capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=CLAUDE_AUTH_TIMEOUT_SEC,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        logged_in = json.loads(proc.stdout).get("loggedIn")
+        value = logged_in if isinstance(logged_in, bool) else None
+    except Exception as e:
+        log.warning("[sağlık] claude auth status okunamadı: %s", e)
+    _CLAUDE_AUTH_CACHE.update(at=now_s, value=value)
+    return value
+
+
+def decider_llm_error_streak(path: Path | str | None) -> int:
+    """Journal kuyruğunda, en yeniden geriye, üst üste LLM hatasıyla biten karar sayısı."""
+    if not path:
+        return 0
+    try:
+        with open(path, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            f.seek(max(0, size - DECIDER_JOURNAL_TAIL_BYTES))
+            raw = f.read()
+    except OSError:
+        return 0
+    lines = raw.decode("utf-8", errors="replace").splitlines()
+    if size > DECIDER_JOURNAL_TAIL_BYTES:
+        lines = lines[1:]   # ilk satır kesik başlar
+    streak = 0
+    for line in reversed(lines):
+        try:
+            decision = json.loads(line).get("decision")
+        except (ValueError, AttributeError):
+            continue
+        if not isinstance(decision, dict):
+            continue
+        if DECIDER_LLM_ERROR_MARK not in str(decision.get("reason") or ""):
+            break
+        streak += 1
+    return streak
+
+
+def _health_alert(client, code: str, message: str, opened: bool) -> None:
+    """Sorun açılınca/kapanınca panelin komut akışına tek satır iz bırak (watchdog gibi)."""
+    log.warning("[sağlık] %s %s: %s", "SORUN" if opened else "düzeldi", code, message)
+    if client is None:
+        return
+    try:
+        client.table("evolution_commands").insert({
+            "host": HOST, "kind": "run_analysis", "requested_by": "health",
+            "analysis_id": "health_alert",
+            "analysis_name": f"Sağlık denetimi: {message}" if opened else f"Sağlık denetimi: düzeldi ({code})",
+            "payload": {"code": code, "opened": opened},
+            "status": "failed" if opened else "done",
+            "started_at": now_iso(), "finished_at": now_iso(),
+            "return_code": 1 if opened else 0, "output": message,
+        }).execute()
+    except Exception as e:
+        log.warning("[sağlık] panel izi yazılamadı: %s", e)
+
+
+def health_tick(client=None) -> dict:
+    """Ölç → karar ver → yalnız DEĞİŞİMDE uyar. Sorun ancak iki tur üst üste görülürse açılır
+    (terminal erişim noktası değiştirirken 1-2 sn kopuyor); uyarı durumu diskte tutulur ki
+    ajan her yeniden başlamada aynı sorunu yeniden bildirmesin."""
+    global HEALTH
+    if not HEALTH_ENABLED:
+        return {}
+    measured = mt5_health()
+    logged_in = claude_logged_in()
+    streak = decider_llm_error_streak(getattr(cfg, "DECIDER_JOURNAL", None))
+    raw = health_issues(measured.get("mt5_connected"), measured.get("mt5_tick_age_s"),
+                        market_expected_open(datetime.now(timezone.utc)), logged_in, streak)
+    # Zaten bildirilmiş sorun yeniden doğrulama beklemez: yoksa ajan yeniden başlayınca
+    # ilk turda sorun "düzeldi" görünüp ikinci turda yeniden açılırdı.
+    alerted = set(_load_wd().get("health_alerted") or ())
+    known = set(HEALTH.get("raw_codes") or ()) | alerted
+    confirmed = [i for i in raw if i["code"] in known]
+
+    current = {i["code"] for i in confirmed}
+    if current != alerted:
+        for issue in confirmed:
+            if issue["code"] not in alerted:
+                _health_alert(client, issue["code"], issue["message"], True)
+        for code in alerted - current:
+            _health_alert(client, code, code, False)
+        _update_wd(lambda d: d.update(health_alerted=sorted(current)))
+
+    HEALTH = {**measured, "claude_logged_in": logged_in, "decider_llm_err_streak": streak,
+              "health_issues": confirmed, "health_ok": not confirmed,
+              "health_checked_at": now_iso(), "raw_codes": sorted(i["code"] for i in raw)}
+    return HEALTH
+
+
+def _health_meta() -> dict:
+    """Kalp atışına son sağlık ölçümü (iç takip alanı hariç)."""
+    return {k: v for k, v in HEALTH.items() if k != "raw_codes"}
+
+
 # ── Oto-güncelleme: push et → kutu kendini günceller ─────────────────────
 
 AUTO_UPDATE_ENABLED = getattr(cfg, "AUTO_UPDATE_ENABLED", True)
@@ -1389,6 +1592,10 @@ def _watchdog_thread() -> None:
         except Exception as e:
             log.warning("canlılık denetimi hatası (devam): %s", e)
             client = None
+        try:
+            health_tick(client)
+        except Exception as e:
+            log.warning("sağlık denetimi hatası (devam): %s", e)
         time.sleep(WATCHDOG_SECONDS)
 
 
