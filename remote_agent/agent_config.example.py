@@ -18,7 +18,8 @@ DECIDER_JOURNAL = REPO_ROOT + r"\claude_decider\memory\journal.jsonl"
 FINGERPRINT_JOURNAL = REPO_ROOT + r"\yeni deneme\entry_fingerprints.jsonl"
 
 # ── MT5 (data_recorder ile aynı; boş bırakılırsa çalışan terminale bağlanır) ─
-MT5_TERMINAL_PATH = None        # ör: r"C:\Program Files\MetaTrader 5\terminal64.exe"
+# Kutuda iki terminal açık (Pepperstone = bot, MetaTrader 5 = DBG izleme): yol ZORUNLU, boş bırakma.
+MT5_TERMINAL_PATH = r"C:\Program Files\Pepperstone MetaTrader 5\terminal64.exe"
 MT5_ACCOUNT = None
 MT5_PASSWORD = None
 MT5_SERVER = None

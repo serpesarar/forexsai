@@ -42,6 +42,7 @@ bot_log_age_s / bot_last_restart olarak panele gider. remote_agent/WATCHDOG_OFF
 dosyası varken yalnız raporlar. DBG klon gölge koşucusu da izlenir (2026-11-03;
 11-02'de sessizce durmuştu); bilerek durdurmak için önce
 calistir/dbg_klon/DBG_KLON_DURDUR dosyası yazılır, yoksa denetim geri kaldırır.
+DBG canlı izleyici de aynı biçimde izlenir (DBG_IZLEYICI_DURDUR).
 
 HAFTALIK İŞLER: agent_config.WEEKLY_JOBS — her hafta belirlenen gün/saatte
 kendi kendine koşar, sonuçlar komut kaydı olarak panele düşer.
@@ -168,7 +169,22 @@ def mt5_connect() -> bool:
     ok = mt5.initialize(path, **kw) if path else mt5.initialize(**kw)
     if not ok:
         log.warning("mt5.initialize başarısız: %s", mt5.last_error())
-    return bool(ok)
+        return False
+    if _is_foreign_terminal():
+        return False
+    return True
+
+
+def _is_foreign_terminal() -> bool:
+    """Kutuda ikinci terminal var (DBG 303733, salt-okuma izleme). Ona takılırsak başkasının
+    işlemleri bot_trades'e yazılır; MT5_TERMINAL_PATH boşken bağlantı terminal seçimi bize ait değil."""
+    acc = mt5.account_info()
+    if acc is None or not str(getattr(acc, "server", "")).upper().startswith("DBG"):
+        return False
+    log.error("MT5 yanlış terminale bağlandı (%s) — bağlantı kapatıldı; agent_config.MT5_TERMINAL_PATH "
+              "Pepperstone terminalini göstermeli", acc.server)
+    mt5.shutdown()
+    return True
 
 
 def open_position_count() -> int:
@@ -819,6 +835,7 @@ DEFAULT_PROCESS_TARGETS = {
                 "safe_wait": True},
     "backend": {"match": "uvicorn", "bat": r"calistir\18_panel_backend.bat"},
     "dbg_klon": {"match": "dbg_klon_runner.py", "bat": r"calistir\19_dbg_klon_golge.bat"},
+    "dbg_izleyici": {"match": "dbg_izleyici.py", "bat": r"calistir\23_dbg_izleyici.bat"},
     "agent":   {"self": True},
 }
 
@@ -1080,8 +1097,13 @@ WATCHDOG_SPECS = {
     "dbg_klon": {"file": _REPO / "calistir" / "dbg_klon" / "dbg_klon_log.jsonl",
                  "stale_after_s": int(getattr(cfg, "DBG_KLON_STALE_SEC", 900)),
                  "off_file": _REPO / "calistir" / "dbg_klon" / "DBG_KLON_DURDUR"},
+    # DBG 303733 canlı izleyici (salt-okuma, ayrı terminal). 5 dk'da bir nabız; log OneDrive dışında.
+    "dbg_izleyici": {"file": Path(os.environ.get("LOCALAPPDATA") or (_REPO / "calistir" / "dbg_izleyici"))
+                     / "dbg_izleyici" / "dbg_izleyici_log.jsonl",
+                     "stale_after_s": int(getattr(cfg, "DBG_IZLEYICI_STALE_SEC", 900)),
+                     "off_file": _REPO / "calistir" / "dbg_izleyici" / "DBG_IZLEYICI_DURDUR"},
 }
-WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider", "dbg_klon")))
+WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider", "dbg_klon", "dbg_izleyici")))
 
 #: Son denetimin gözlemi — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
 WATCHDOG: dict = {}
@@ -1203,7 +1225,7 @@ def _watchdog_meta() -> dict:
         a = _file_age_s(Path(p)) if p else None
         return round(a) if a is not None else None
 
-    bot, dec, klon = (WATCHDOG.get(n) or {} for n in ("bot", "decider", "dbg_klon"))
+    bot, dec, klon, iz = (WATCHDOG.get(n) or {} for n in ("bot", "decider", "dbg_klon", "dbg_izleyici"))
     return {
         "bot_alive": bot.get("alive"),
         "bot_log_age_s": _age(WATCHDOG_SPECS["bot"]["file"]),
@@ -1219,6 +1241,11 @@ def _watchdog_meta() -> dict:
         "dbg_klon_log_age_s": _age((WATCHDOG_SPECS.get("dbg_klon") or {}).get("file")),
         "dbg_klon_last_restart": klon.get("last_restart"),
         "dbg_klon_last_restart_why": klon.get("last_restart_why"),
+        "dbg_izleyici_alive": iz.get("alive"),
+        "dbg_izleyici_stopped": iz.get("action") == "stopped",
+        "dbg_izleyici_log_age_s": _age((WATCHDOG_SPECS.get("dbg_izleyici") or {}).get("file")),
+        "dbg_izleyici_last_restart": iz.get("last_restart"),
+        "dbg_izleyici_last_restart_why": iz.get("last_restart_why"),
         "watchdog_off": WATCHDOG.get("off"),
         "watchdog_checked_at": WATCHDOG.get("checked_at"),
     }
@@ -1457,6 +1484,7 @@ AUTO_RESTART_MAP = [
     ("backend/", "backend"),
     ("remote_agent/", "agent"),
     ("calistir/dbg_klon/", "dbg_klon"),
+    ("calistir/dbg_izleyici/", "dbg_izleyici"),
 ]
 
 

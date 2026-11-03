@@ -62,6 +62,7 @@ def agent(monkeypatch):
     fake_mt5.last_error = lambda: (0, "ok")
     fake_mt5.shutdown = lambda: None
     fake_mt5.initialize = lambda *a, **k: True
+    fake_mt5.account_info = lambda: None
     fake_mt5.positions_get = lambda: ()
     monkeypatch.setitem(sys.modules, "MetaTrader5", fake_mt5)
 
@@ -879,3 +880,24 @@ def test_health_tick_never_restarts_anything(agent, health_box, monkeypatch):
     monkeypatch.setattr(agent, "restart_target", boom)
     agent.health_tick(FakeInsertClient())
     agent.health_tick(FakeInsertClient())
+
+
+def test_dbg_izleyici_is_watched_by_default_and_bat_exists(agent):
+    assert "dbg_izleyici" in agent.WATCHDOG_WATCH
+    target = agent.DEFAULT_PROCESS_TARGETS["dbg_izleyici"]
+    assert (REPO / target["bat"].replace("\\", "/")).exists()
+    assert not target.get("safe_wait")
+    assert ("calistir/dbg_izleyici/", "dbg_izleyici") in agent.AUTO_RESTART_MAP
+
+
+@pytest.mark.parametrize("server,expected", [("Pepperstone-Demo", True), ("DBGMarkets-Live", False)])
+def test_mt5_connect_refuses_dbg_terminal(agent, monkeypatch, server, expected):
+    """İkinci terminale takılırsa başkasının işlemleri bot_trades'e yazılırdı."""
+    calls = []
+    fake = types.SimpleNamespace(initialize=lambda *a, **k: True, last_error=lambda: (1, "ok"),
+                                 account_info=lambda: types.SimpleNamespace(server=server),
+                                 shutdown=lambda: calls.append("shutdown"))
+    monkeypatch.setattr(agent, "mt5", fake, raising=False)
+    monkeypatch.setattr(agent, "HAS_MT5", True)
+    assert agent.mt5_connect() is expected
+    assert calls == ([] if expected else ["shutdown"])
