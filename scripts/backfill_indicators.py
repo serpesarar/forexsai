@@ -13,8 +13,11 @@ Varsayılan kuru koşudur: mevcut satırları yeniden hesaplayıp kıyaslar, hi�
 ⚠️ --since broker DST geçişinden ÖNCEYE gitmemeli: MT5 geçmiş barları kendi
 döneminin sunucu saatinde tutar, tek offset o barları yanlış damgalar.
 
-    python scripts/backfill_indicators.py --since 2026-11-02T00:00
-    python scripts/backfill_indicators.py --since 2026-11-02T00:00 --apply
+Kutunun seçmeli checkout'unda scripts/ yok: `git show HEAD:scripts/backfill_indicators.py`
+ile repo kökünün bir alt klasörüne (ör. _tmp_bf/) çıkarıp oradan çalıştır, sonra sil.
+
+    python _tmp_bf/backfill_indicators.py --since 2026-11-02T00:00
+    python _tmp_bf/backfill_indicators.py --since 2026-11-02T00:00 --apply
 """
 from __future__ import annotations
 
