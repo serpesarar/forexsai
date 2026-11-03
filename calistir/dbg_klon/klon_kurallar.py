@@ -12,6 +12,10 @@ Kurallar (tersine mühendislikle ölçüldü, bkz. ../RAPOR.md §3 ve §13):
   * Lot: round(taban × çarpan^(n−1)) lot adımına; TP: lot-ağırlıklı ortalama ± tp_usd.
   * Orijinal botta stop yok. Bu klona iki emniyet kesicisi eklendi (varsayılan kapalı
     geri testte, AÇIK canlı pakette): seviye tavanı ve sepet başına zarar tavanı.
+  * C3-v2 ayrıntıları (research/dbg_xau_ilk_ayrisma_20261030/RAPOR.md §0, §6). Varsayılan
+    KAPALI, böylece ikinci turun geri testleri aynen yeniden üretilir; koşucu açar:
+    incl_end (pencere bitiş barı dahil), strict_step (ters mesafe > adım),
+    step0_no_body (adımı 0 olan 6–10. seviyelerde gövde koşulu yok; kanıtı zayıf).
 """
 from __future__ import annotations
 
@@ -49,11 +53,14 @@ class KlonAyar:
     schedule: dict[int, tuple[tuple[int, int], ...]] = field(default_factory=lambda: dict(SCHEDULE_C3))
     max_levels: int = 0            # 0 = sınırsız; tavanda yeni ekleme yapılmaz (sepet TP'yi bekler)
     max_basket_loss: float = 0.0   # hesap para birimi; 0 = kapalı; yüzen zarar bunu aşınca sepet kapatılır
+    incl_end: bool = False         # pencere bitiş barı dahil (a:00 ≤ saat:dakika ≤ b:00)
+    strict_step: bool = False      # ekleme eşiği kesin: ters mesafe > adım (False: ≥)
+    step0_no_body: bool = False    # adımı 0 olan seviyelerde gövde koşulu aranmaz
 
     def __hash__(self) -> int:  # dict alanı yüzünden elle
         return hash((self.tf_min, self.base_lot, self.mult, self.tp_usd, self.lot_step, self.min_lot,
                      self.step_table, tuple(sorted(self.schedule.items())), self.max_levels,
-                     self.max_basket_loss))
+                     self.max_basket_loss, self.incl_end, self.strict_step, self.step0_no_body))
 
 
 def step_for_level(level: int, table: tuple[tuple[int, float], ...] = STEP_TABLE) -> float:
@@ -71,16 +78,18 @@ def lot_for_level(ayar: KlonAyar, level: int) -> float:
     return max(ayar.min_lot, round(n * ayar.lot_step, 8))
 
 
-def in_window_utc(dow: int, hour: int, schedule: dict[int, tuple[tuple[int, int], ...]]) -> bool:
-    """UTC gün/saat taze giriş penceresinde mi?"""
+def in_window_utc(dow: int, hour: int, schedule: dict[int, tuple[tuple[int, int], ...]],
+                  minute: int = 0, incl_end: bool = False) -> bool:
+    """UTC gün/saat taze giriş penceresinde mi? incl_end: bitiş saatinin :00 dakikası da dahil."""
+    mins = hour * 60 + minute
     for a, b in schedule.get(dow, ()):
-        if a <= hour < b:
+        if (a * 60 <= mins <= b * 60) if incl_end else (a <= hour < b):
             return True
     return False
 
 
-def in_window_dt(utc: datetime, schedule: dict[int, tuple[tuple[int, int], ...]]) -> bool:
-    return in_window_utc(utc.weekday(), utc.hour, schedule)
+def in_window_dt(utc: datetime, schedule: dict[int, tuple[tuple[int, int], ...]], incl_end: bool = False) -> bool:
+    return in_window_utc(utc.weekday(), utc.hour, schedule, utc.minute, incl_end)
 
 
 def decide_side(side: str, body_prev: float, level: int, last_px: float, px_now: float,
@@ -103,15 +112,18 @@ def decide_side(side: str, body_prev: float, level: int, last_px: float, px_now:
     with_bar = body_prev * sg > 0
     if level == 0:
         return FRESH if (with_bar and in_win) else NONE
-    if with_bar:
+    need = step_for_level(level + 1, ayar.step_table)
+    if with_bar and not (ayar.step0_no_body and need == 0):
         return NONE
     if ayar.max_levels and level >= ayar.max_levels:
         return NONE
     adverse = (last_px - px_now) * sg
-    need = step_for_level(level + 1, ayar.step_table)
-    if adverse > 0 and adverse > need - EPS:
-        return ADD
-    return NONE
+    if ayar.strict_step:
+        # fiyatlar 0,01 basamaklı; kayan nokta artığı eşitliği bozmasın diye 2 haneye yuvarlanır
+        ok = round(adverse, 2) > need + EPS
+    else:
+        ok = adverse > need - EPS
+    return ADD if adverse > 0 and ok else NONE
 
 
 def basket_tp(side: str, lots: list[float], pxs: list[float], ayar: KlonAyar) -> float:

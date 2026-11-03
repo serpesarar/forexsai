@@ -69,7 +69,7 @@ class KlonYonetici:
         out: list[Eylem] = []
         if self.durduruldu:
             return out
-        win = in_window_dt(utc, self.ayar.schedule) and taze_izinli
+        win = in_window_dt(utc, self.ayar.schedule, self.ayar.incl_end) and taze_izinli
         for s in (BUY, SELL):
             b = self.sepet[s]
             px = ask if s == BUY else bid

@@ -10,6 +10,17 @@ DBG 303733 hesabındaki botun C3 kurallarının (M3, taban × 1,1, TP ortalama �
 >
 > Ayrıntı: `research/dbg_xau_tersine_20261029/RAPOR.md` §13–§18. Gölge çalıştırmanın amacı para kazanmak değil, icra mekaniğini (bar açılışı dolumu, spread, TP dolumu) ölçmek.
 
+## Kural sürümü: C3-v2-2026-10-30
+
+Koşucu, üçüncü turda kabul edilen üç ayrıntıyla çalışır (`research/dbg_xau_ilk_ayrisma_20261030/RAPOR.md` §0, §6):
+- Pencere bitiş barı dahil (06:00, 12:00, 15:00, 17:00 UTC barlarında da taze giriş).
+- Ekleme eşiği kesin: ters mesafe > adım; tam eşitlikte ekleme yok.
+- Adımı 0 olan 6–10. seviyelerde gövde koşulu yok (kanıtı zayıf).
+
+`KlonAyar` varsayılanları bunları kapalı tutar, böylece ikinci turun geri testleri (`klon_motor.py`) aynen yeniden üretilir. Bu üç ayarla kapalı döngü ölçümü `motor_v2.py`'de yapıldı (F1 0,840 / 0,885), `klon_motor.py`'de değil.
+
+**2026-11-03 düzeltmesi:** ilk sürümde `jlog(kind, **kw)` Eylem'in `kind` alanıyla çakışıyordu; 2026-10-30 → 11-02 arasındaki 71 sanal olay log'a yazılamadı ve durum dosyası güncellenmedi. O koşunun kaydı `dbg_klon_log_v1_hatali.jsonl` olarak arşivlidir, kıyasta kullanılmamalı.
+
 ## Dosyalar
 
 | dosya | iş |
@@ -17,13 +28,13 @@ DBG 303733 hesabındaki botun C3 kurallarının (M3, taban × 1,1, TP ortalama �
 | `klon_kurallar.py` | Saf karar çekirdeği: adım tablosu, lot, UTC pencereleri, `decide_side`. Geri test motoru (`../klon_motor.py`) da bunu kullanır. |
 | `klon_yonetici.py` | Olay güdümlü sepet yöneticisi. `on_bar` taze giriş/ekleme yapar, `on_tick` kesici ve TP'yi işler. MT5'ten bağımsızdır. |
 | `dbg_klon_runner.py` | MT5 koşucusu. Varsayılan GÖLGE: sanal dolum + JSONL log, `order_send` hiç çağrılmaz. |
-| `test_klon_paket.py` | 6 test: tersine mühendislik kurallarıyla eşitlik, kesiciler, UTC penceresi, **yönetici = geri test motoru** (Haziran 2026, olay olay aynı), gölgede sıfır emir. |
+| `test_klon_paket.py` (research kopyasında) | 23 test: tersine mühendislik kurallarıyla eşitlik, kesiciler, UTC penceresi, **yönetici = geri test motoru** (Haziran 2026, olay olay aynı), gölgede sıfır emir. |
 
 Testleri çalıştırma (proje kökünden):
 ```bash
 DBG_M1_CLEAN=<m1_clean.parquet yolu> .venv/bin/python -m pytest research/dbg_xau_tersine_20261029/paket_klon/test_klon_paket.py -q
 ```
-Son koşu: `6 passed`.
+Son koşu: `23 passed, 1 skipped` (atlanan eşdeğerlik testi fiyat verisi ister).
 
 ## Emniyet bayrakları (varsayılanlar 10k $ demo için)
 

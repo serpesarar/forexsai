@@ -36,6 +36,7 @@ from klon_kurallar import BUY, SELL, KlonAyar  # noqa: E402
 from klon_yonetici import ADD, FRESH, Eylem, KlonYonetici  # noqa: E402
 
 MAGIC = 52896686            # bot 52890969(+n), decider 52890989 — çakışmaz
+KURAL_SURUMU = "C3-v2-2026-10-30"   # research/dbg_xau_ilk_ayrisma_20261030/DONDURULMUS_KURAL.json
 COMMENT_PREFIX = "DBGK"
 LOG_FILE = HERE / "dbg_klon_log.jsonl"
 STATE_FILE = HERE / "dbg_klon_state.json"
@@ -47,8 +48,9 @@ DEVIATION_PTS = 30
 log = logging.getLogger("dbg_klon")
 
 
-def jlog(kind: str, **kw: object) -> None:
-    rec = {"ts_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "olay": kind, **kw}
+def jlog(olay: str, /, **kw: object) -> None:
+    """Konumsal-yalnız: Eylem alanları (kind dahil) kw olarak gelir, parametre adıyla çakışmamalı."""
+    rec = {"ts_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "olay": olay, **kw}
     with LOG_FILE.open("a", encoding="utf-8") as f:
         f.write(json.dumps(rec, ensure_ascii=False, default=str) + "\n")
 
@@ -189,7 +191,7 @@ def main() -> None:
     args = parse()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     ayar = KlonAyar(base_lot=args.taban, mult=args.carpan, tp_usd=args.tp, max_levels=args.max_seviye,
-                    max_basket_loss=args.max_sepet_zarar)
+                    max_basket_loss=args.max_sepet_zarar, incl_end=True, strict_step=True, step0_no_body=True)
     mt = MT5Adapter(args.terminal, args.sembol)
     canli = bool(args.canli)
     if canli and (args.demo_onayi != "EVET" or not mt.is_demo()):
@@ -203,7 +205,7 @@ def main() -> None:
             ps = sorted(mt.positions(s), key=lambda p: p.time_msc)
             yon.yukle({**yon.durum(), s: ({"lots": [p.volume for p in ps], "pxs": [p.price_open for p in ps]}
                                          if ps else None)})
-    jlog("baslangic", mod="CANLI" if canli else "GOLGE", sembol=mt.symbol, contract=mt.contract,
+    jlog("baslangic", mod="CANLI" if canli else "GOLGE", kural=KURAL_SURUMU, sembol=mt.symbol, contract=mt.contract,
          ayar={k: v for k, v in asdict(ayar).items() if k != "schedule"}, hesap=mt.account(), durum=yon.durum())
     log.info("DBG klon %s başladı (%s, magic %d)", "CANLI" if canli else "GÖLGE", mt.symbol, MAGIC)
     hb = 0.0
