@@ -509,7 +509,7 @@ def test_healthy_bot_not_touched_and_heartbeat_reports_alive(agent, box):
     meta = client.upserted[0]["meta"]
     assert meta["bot_alive"] is True
     assert meta["bot_log_age_s"] is not None and meta["bot_log_age_s"] < 120
-    assert "bot_last_restart" in meta and meta["agent_version"] == "1.3"
+    assert "bot_last_restart" in meta and meta["agent_version"] == "1.4"
 
 
 def test_dead_bot_restarted_without_deferral_even_with_open_positions(agent, box):
@@ -676,6 +676,27 @@ def test_health_issues_quiet_when_healthy_closed_or_unmeasured(agent):
     assert agent.health_issues(True, 5, True, True, 4) == []            # tekil hatalar
 
 
+def test_health_issues_bot_log_and_recorder(agent):
+    stale = agent.WATCHDOG_SPECS["bot"]["stale_after_s"]
+    assert _codes(agent.health_issues(True, 5, True, True, 0, stale + 1, False)) == [
+        "bot_log_silent", "recorder_down"]
+    assert agent.health_issues(True, 5, True, True, 0, stale, True) == []
+    assert agent.health_issues(True, 5, True, True, 0, None, None) == []  # ölçülemedi
+
+
+def test_process_health_measures_log_age_and_recorder(agent, tmp_path, monkeypatch):
+    log_file = tmp_path / "demo_bot.log"
+    log_file.write_text("x", encoding="utf-8")
+    monkeypatch.setitem(agent.WATCHDOG_SPECS["bot"], "file", log_file)
+    monkeypatch.setattr(agent, "_pids_by_cmdline", lambda m: [])
+    measured = agent.process_health()
+    assert measured["recorder_alive"] is False and measured["bot_log_age_s"] < 60
+
+    log_file.unlink()
+    monkeypatch.setattr(agent, "_pids_by_cmdline", lambda m: None)
+    assert agent.process_health() == {"bot_log_age_s": None, "recorder_alive": None}
+
+
 def test_tick_age_ignores_broker_clock_and_grows_when_frozen(agent, monkeypatch):
     term = types.SimpleNamespace(connected=True)
     tick = types.SimpleNamespace(time=1_000_000_000, time_msc=1)    # saat anlamsız olabilir
@@ -743,6 +764,7 @@ def health_box(agent, tmp_path, monkeypatch):
     monkeypatch.setattr(agent, "WATCHDOG_STATE_FILE", tmp_path / "wd.json")
     monkeypatch.setattr(agent, "mt5_health", lambda: {"mt5_connected": state.connected,
                                                       "mt5_tick_age_s": 1})
+    monkeypatch.setattr(agent, "process_health", lambda: {"bot_log_age_s": 1, "recorder_alive": True})
     monkeypatch.setattr(agent, "claude_logged_in", lambda: True)
     monkeypatch.setattr(agent, "decider_llm_error_streak", lambda p: 0)
     return state

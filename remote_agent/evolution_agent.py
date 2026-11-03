@@ -558,7 +558,7 @@ def push_heartbeat(client, extra: dict | None = None) -> None:
         # bile True yazıyordu. Artık gerçek bağlantı; ölçüm yoksa None.
         "mt5": HEALTH.get("mt5_connected"),
         "open_positions": open_position_count(),
-        "agent_version": "1.3",
+        "agent_version": "1.4",
         # Panel "ajan çevrimiçi ama işlem verisi bayat" durumunun SEBEBİNİ
         # görebilsin diye trade senkron sağlığı da taşınır.
         "trade_sync_ok": TRADE_SYNC["ok"],
@@ -1227,6 +1227,8 @@ MARKET_BREAK_START_MIN = 20 * 60 + 30
 MARKET_BREAK_END_MIN = 23 * 60 + 30
 #: Hata `claude exit` biçiminde: decide.py'nin WAIT sebebine yazdığı önek.
 DECIDER_LLM_ERROR_MARK = "claude exit"
+#: Veri kaydedici izleyicinin kapsamında değil: ölürse mumlar sessizce durur.
+RECORDER_MATCH = getattr(cfg, "RECORDER_MATCH", "data_recorder.py")
 
 #: Son ölçüm — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
 HEALTH: dict = {}
@@ -1251,7 +1253,8 @@ def market_expected_open(now: datetime) -> bool:
 
 
 def health_issues(mt5_connected: bool | None, tick_age_s: float | None, market_open: bool,
-                  claude_logged_in: bool | None, llm_err_streak: int) -> list[dict]:
+                  claude_logged_in: bool | None, llm_err_streak: int,
+                  bot_log_age_s: float | None = None, recorder_alive: bool | None = None) -> list[dict]:
     """SAF karar → sorun listesi. None = ölçülemedi; ölçülemeyen şey için alarm üretilmez."""
     issues = []
     if mt5_connected is False:
@@ -1267,7 +1270,23 @@ def health_issues(mt5_connected: bool | None, tick_age_s: float | None, market_o
     if llm_err_streak >= DECIDER_LLM_ERR_STREAK:
         issues.append({"code": "decider_llm_failing",
                        "message": f"Decider'ın son {llm_err_streak} kararı LLM hatası (sahte WAIT)"})
+    if bot_log_age_s is not None and bot_log_age_s > WATCHDOG_SPECS["bot"]["stale_after_s"]:
+        issues.append({"code": "bot_log_silent",
+                       "message": f"demo_bot.log {bot_log_age_s / 60:.0f} dk'dır yazılmıyor — "
+                                  "bot asılı ya da log dosyası bozuk (izleyici botu yeniden başlatır)"})
+    if recorder_alive is False:
+        issues.append({"code": "recorder_down",
+                       "message": "Veri kaydedici çalışmıyor — mumlar güncellenmiyor "
+                                  "(kutuda: calistir\\1_veri_kaydedici.bat)"})
     return issues
+
+
+def process_health() -> dict:
+    """Bot logunun yaşı + kaydedici süreci. None = ölçülemedi. Salt okuma."""
+    pids = _pids_by_cmdline(RECORDER_MATCH)
+    age = _file_age_s(WATCHDOG_SPECS["bot"]["file"])
+    return {"bot_log_age_s": None if age is None else round(age),
+            "recorder_alive": None if pids is None else bool(pids)}
 
 
 def mt5_health() -> dict:
@@ -1375,11 +1394,12 @@ def health_tick(client=None) -> dict:
     global HEALTH
     if not HEALTH_ENABLED:
         return {}
-    measured = mt5_health()
+    measured = {**mt5_health(), **process_health()}
     logged_in = claude_logged_in()
     streak = decider_llm_error_streak(getattr(cfg, "DECIDER_JOURNAL", None))
     raw = health_issues(measured.get("mt5_connected"), measured.get("mt5_tick_age_s"),
-                        market_expected_open(datetime.now(timezone.utc)), logged_in, streak)
+                        market_expected_open(datetime.now(timezone.utc)), logged_in, streak,
+                        measured.get("bot_log_age_s"), measured.get("recorder_alive"))
     # Zaten bildirilmiş sorun yeniden doğrulama beklemez: yoksa ajan yeniden başlayınca
     # ilk turda sorun "düzeldi" görünüp ikinci turda yeniden açılırdı.
     alerted = set(_load_wd().get("health_alerted") or ())

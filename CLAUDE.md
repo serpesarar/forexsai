@@ -52,6 +52,11 @@ kütüphane importuydu), `mt5_tick_age_s`, `claude_logged_in`, `decider_llm_err_
 Denetim yalnız ölçer ve uyarır, restart atmaz (`health_tick`): sorun panelde "MT5 Kutusu" kartına ve komut
 akışına düşer. *2026-11-02: demo hesabı `Invalid account` ile düşmüş, Claude CLI oturumu kapanmıştı; süreçler
 canlı, kalp atışı yeşildi.* Bu iki arızanın çaresi kutuda kullanıcı girişidir.
+Ajan ≥1.4 ayrıca `bot_log_silent` (demo_bot.log > 10 dk yazılmıyor) ve `recorder_down` (`data_recorder.py` yok)
+üretir; kaydedici izleyicinin kapsamında değildir, ölürse kendiliğinden geri gelmez.
+*2026-11-03: `demo_bot.log`a ekleme `OSError 22` veriyordu (kod değil, dosya; nedeni belirsiz, klasör OneDrive'da).
+Bot çalışıyordu ama log yazamadığı için izleyici onu ~15 dk'da bir "asılı" diye öldürdü. Çare: botu durdur, dosyayı
+yeniden adlandır, botu başlat. Teşhis: `open('demo_bot.log','a')` ile tek karakter yazıp flush et.*
 
 ### Kutunun `config.py`'si gitignore'da
 `yeni deneme/config.py` (şifre içerir) push edilemez → yeni ayarlar koda
