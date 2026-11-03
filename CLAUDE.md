@@ -36,7 +36,7 @@ kutudaki Claude'a "canlı süreçlere izinsiz dokunma, MT5'te elle emir açma" d
 ### Kod dağıtımı — push YETERLİ
 Ajan 10 dk'da bir `git fetch`; `main` gerideyse pull + değişen klasöre göre
 ilgili süreci yeniden başlatır (`yeni deneme/`→bot, `claude_decider/`→decider,
-`backend/`→backend, `remote_agent/`→ajan). **Bu yüzden `main`'e push et** —
+`backend/`→backend, `remote_agent/`→ajan, `calistir/dbg_klon/`→DBG klon gölge koşucusu). **Bu yüzden `main`'e push et** —
 feature branch'te bırakırsan kutu görmez.
 Bot restart'ı açık pozisyon varken ertelenir; erteleme artık **borç** olarak
 yazılır ve pozisyon kapanınca ödenir (72 saat sonra zorla). *2026-07-23'te bu

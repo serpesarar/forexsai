@@ -482,7 +482,8 @@ def box(agent, tmp_path, monkeypatch):
 
     def _start(bat):
         calls["start"].append(bat)
-        match = "forexsai_demo_bot.py" if "trade_bot" in bat else "run_decider.py"
+        match = ("forexsai_demo_bot.py" if "trade_bot" in bat
+                 else "dbg_klon_runner.py" if "dbg_klon" in bat else "run_decider.py")
         procs[match] = [999]
         return f"başlatıldı: {bat}"
 
@@ -509,7 +510,7 @@ def test_healthy_bot_not_touched_and_heartbeat_reports_alive(agent, box):
     meta = client.upserted[0]["meta"]
     assert meta["bot_alive"] is True
     assert meta["bot_log_age_s"] is not None and meta["bot_log_age_s"] < 120
-    assert "bot_last_restart" in meta and meta["agent_version"] == "1.4"
+    assert "bot_last_restart" in meta and meta["agent_version"] == "1.5"
 
 
 def test_dead_bot_restarted_without_deferral_even_with_open_positions(agent, box):
@@ -529,6 +530,68 @@ def test_dead_bot_restarted_without_deferral_even_with_open_positions(agent, box
     wd = agent._load_wd()
     assert wd["restarts"]["bot"]["why"].startswith("watchdog: süreç yok")
     assert wd["streak"]["bot"] == 1
+
+
+@pytest.fixture
+def klon(agent, box, tmp_path, monkeypatch):
+    """DBG klon koşucusu izlenen hedeflere eklenmiş kutu."""
+    log_file, stop = tmp_path / "dbg_klon_log.jsonl", tmp_path / "DBG_KLON_DURDUR"
+    log_file.write_text("x", encoding="utf-8")
+    agent.WATCHDOG_SPECS["dbg_klon"] = {"file": log_file, "stale_after_s": 900, "off_file": stop}
+    monkeypatch.setattr(agent, "WATCHDOG_WATCH", ("dbg_klon",))
+    box.procs["dbg_klon_runner.py"] = [333]
+    box.klon_log, box.klon_stop = log_file, stop
+    return box
+
+
+def test_dbg_klon_is_watched_by_default_and_bat_exists(agent):
+    assert "dbg_klon" in agent.WATCHDOG_WATCH
+    target = agent.DEFAULT_PROCESS_TARGETS["dbg_klon"]
+    assert (REPO / target["bat"].replace("\\", "/")).exists()
+    assert not target.get("safe_wait")      # gölge: açık pozisyon beklemez
+    assert ("calistir/dbg_klon/", "dbg_klon") in agent.AUTO_RESTART_MAP
+
+
+def test_dead_dbg_klon_restarted_and_reported(agent, klon):
+    """11-02 vakası: koşucu sessizce durdu, kimse fark etmedi."""
+    klon.procs["dbg_klon_runner.py"] = []
+    client = FakeInsertClient()
+
+    snap = agent.watchdog_tick(client)
+
+    assert snap["dbg_klon"]["action"] == "restart"
+    assert klon.calls["start"] == [r"calistir\19_dbg_klon_golge.bat"]
+    assert [r["payload"]["target"] for r in client.inserted if r.get("requested_by") == "watchdog"] == ["dbg_klon"]
+    assert snap["dbg_klon"]["alive"] is False
+    agent.watchdog_tick(FakeInsertClient())     # sonraki tur: geri geldi, restart izi görünür
+    client = FakeInsertClient()
+    agent.push_heartbeat(client)
+    meta = client.upserted[0]["meta"]
+    assert meta["dbg_klon_alive"] is True and meta["dbg_klon_last_restart"]
+
+
+def test_dbg_klon_heartbeat_gap_is_not_a_hang_but_15_min_silence_is(agent, klon):
+    klon.age(klon.klon_log, 301)            # kutuda ölçülen en uzun nabız boşluğu
+    assert agent.watchdog_tick(FakeInsertClient())["dbg_klon"]["action"] == "ok"
+    assert klon.calls["start"] == []
+
+    klon.age(klon.klon_log, 901)
+    assert agent.watchdog_tick(FakeInsertClient())["dbg_klon"]["action"] == "restart"
+    assert klon.calls["kill"] == ["dbg_klon_runner.py"]
+
+
+def test_dbg_klon_stop_file_prevents_restart(agent, klon):
+    """Toplam kesici ya da kullanıcı durdurduysa denetim geri kaldırmamalı."""
+    klon.procs["dbg_klon_runner.py"] = []
+    klon.klon_stop.write_text("toplam_kesici", encoding="utf-8")
+
+    snap = agent.watchdog_tick(FakeInsertClient())
+
+    assert snap["dbg_klon"]["action"] == "stopped" and snap["dbg_klon"]["alive"] is None
+    assert klon.calls["kill"] == [] and klon.calls["start"] == []
+    client = FakeInsertClient()
+    agent.push_heartbeat(client)
+    assert client.upserted[0]["meta"]["dbg_klon_stopped"] is True
 
 
 def test_hung_bot_with_silent_log_is_restarted(agent, box):

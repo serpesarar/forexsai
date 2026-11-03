@@ -1,4 +1,5 @@
 dbg_klon_log*.jsonl
 dbg_klon_state*.json
 DBG_KLON_OFF
+DBG_KLON_DURDUR
 __pycache__/

@@ -39,7 +39,9 @@ decider (run_decider.py + memory/decider_heartbeat.json) süreçlerine bakar;
 süreç yoksa ya da dosya eşikten uzun sessizse ERTELEMEDEN yeniden başlatır
 (geri çekilmeli: 15→30→60→120 dk). Sonuç kalp atışında bot_alive /
 bot_log_age_s / bot_last_restart olarak panele gider. remote_agent/WATCHDOG_OFF
-dosyası varken yalnız raporlar.
+dosyası varken yalnız raporlar. DBG klon gölge koşucusu da izlenir (2026-11-03;
+11-02'de sessizce durmuştu); bilerek durdurmak için önce
+calistir/dbg_klon/DBG_KLON_DURDUR dosyası yazılır, yoksa denetim geri kaldırır.
 
 HAFTALIK İŞLER: agent_config.WEEKLY_JOBS — her hafta belirlenen gün/saatte
 kendi kendine koşar, sonuçlar komut kaydı olarak panele düşer.
@@ -558,7 +560,7 @@ def push_heartbeat(client, extra: dict | None = None) -> None:
         # bile True yazıyordu. Artık gerçek bağlantı; ölçüm yoksa None.
         "mt5": HEALTH.get("mt5_connected"),
         "open_positions": open_position_count(),
-        "agent_version": "1.4",
+        "agent_version": "1.5",
         # Panel "ajan çevrimiçi ama işlem verisi bayat" durumunun SEBEBİNİ
         # görebilsin diye trade senkron sağlığı da taşınır.
         "trade_sync_ok": TRADE_SYNC["ok"],
@@ -816,6 +818,7 @@ DEFAULT_PROCESS_TARGETS = {
     "bot":     {"match": "forexsai_demo_bot.py", "bat": r"calistir\2_oto_trade_bot.bat",
                 "safe_wait": True},
     "backend": {"match": "uvicorn", "bat": r"calistir\18_panel_backend.bat"},
+    "dbg_klon": {"match": "dbg_klon_runner.py", "bat": r"calistir\19_dbg_klon_golge.bat"},
     "agent":   {"self": True},
 }
 
@@ -1072,8 +1075,13 @@ WATCHDOG_SPECS = {
     "decider": {"file": Path(getattr(cfg, "DECIDER_HEARTBEAT_FILE",
                                      _REPO / "claude_decider" / "memory" / "decider_heartbeat.json")),
                 "stale_after_s": int(getattr(cfg, "DECIDER_STALE_SEC", 10800))},
+    # koşucu 5 dk'da bir nabız yazar; kutuda ölçüldü (10-30→11-02, hafta sonu dahil): en uzun boşluk
+    # 301 sn → 15 dk sessizlik = asılı. off_file: bilerek durduruldu (kullanıcı ya da toplam kesici).
+    "dbg_klon": {"file": _REPO / "calistir" / "dbg_klon" / "dbg_klon_log.jsonl",
+                 "stale_after_s": int(getattr(cfg, "DBG_KLON_STALE_SEC", 900)),
+                 "off_file": _REPO / "calistir" / "dbg_klon" / "DBG_KLON_DURDUR"},
 }
-WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider")))
+WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider", "dbg_klon")))
 
 #: Son denetimin gözlemi — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
 WATCHDOG: dict = {}
@@ -1157,6 +1165,11 @@ def watchdog_tick(client=None) -> dict:
             spec, t = WATCHDOG_SPECS.get(name), targets.get(name) or {}
             if not spec or "match" not in t:
                 continue
+            if spec.get("off_file") and spec["off_file"].exists():
+                if (WATCHDOG.get(name) or {}).get("action") != "stopped":
+                    log.info("[watchdog] %s bilerek durduruldu (%s) — izlenmiyor", name, spec["off_file"].name)
+                snap[name] = {"alive": None, "action": "stopped", "reason": spec["off_file"].name}
+                continue
             pids = _pids_by_cmdline(t["match"])
             alive = None if pids is None else bool(pids)
             age = _file_age_s(spec["file"])
@@ -1190,7 +1203,7 @@ def _watchdog_meta() -> dict:
         a = _file_age_s(Path(p)) if p else None
         return round(a) if a is not None else None
 
-    bot, dec = WATCHDOG.get("bot") or {}, WATCHDOG.get("decider") or {}
+    bot, dec, klon = (WATCHDOG.get(n) or {} for n in ("bot", "decider", "dbg_klon"))
     return {
         "bot_alive": bot.get("alive"),
         "bot_log_age_s": _age(WATCHDOG_SPECS["bot"]["file"]),
@@ -1201,6 +1214,11 @@ def _watchdog_meta() -> dict:
         "decider_journal_age_s": _age(getattr(cfg, "DECIDER_JOURNAL", None)),
         "decider_last_restart": dec.get("last_restart"),
         "decider_last_restart_why": dec.get("last_restart_why"),
+        "dbg_klon_alive": klon.get("alive"),
+        "dbg_klon_stopped": klon.get("action") == "stopped",
+        "dbg_klon_log_age_s": _age((WATCHDOG_SPECS.get("dbg_klon") or {}).get("file")),
+        "dbg_klon_last_restart": klon.get("last_restart"),
+        "dbg_klon_last_restart_why": klon.get("last_restart_why"),
         "watchdog_off": WATCHDOG.get("off"),
         "watchdog_checked_at": WATCHDOG.get("checked_at"),
     }
@@ -1438,6 +1456,7 @@ AUTO_RESTART_MAP = [
     ("yeni deneme/", "bot"),
     ("backend/", "backend"),
     ("remote_agent/", "agent"),
+    ("calistir/dbg_klon/", "dbg_klon"),
 ]
 
 

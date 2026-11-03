@@ -21,6 +21,18 @@ Koşucu, üçüncü turda kabul edilen üç ayrıntıyla çalışır (`research/
 
 **2026-11-03 düzeltmesi:** ilk sürümde `jlog(kind, **kw)` Eylem'in `kind` alanıyla çakışıyordu; 2026-10-30 → 11-02 arasındaki 71 sanal olay log'a yazılamadı ve durum dosyası güncellenmedi. O koşunun kaydı `dbg_klon_log_v1_hatali.jsonl` olarak arşivlidir, kıyasta kullanılmamalı.
 
+## Canlılık denetimi (2026-11-03)
+
+Ajan koşucuyu 2 dk'da bir denetler (`remote_agent/evolution_agent.py`, hedef `dbg_klon`): süreç yoksa ya da `dbg_klon_log.jsonl` 15 dk sessizse yeniden başlatır ve panele iz bırakır. Eşik ölçüme dayanır: 10-30 → 11-02 koşusunda, hafta sonu dahil, en uzun nabız boşluğu 301 sn.
+
+Bu klasördeki bir değişiklik push edilince koşucu da kendiliğinden yeniden başlar. Durum: `python3 scripts/remote.py health`.
+
+**Bilerek durdurmak:** süreci öldürmek yetmez, denetim 2 dk içinde geri kaldırır. Önce `DBG_KLON_DURDUR` dosyasını yazın:
+```bat
+type nul > calistir\dbg_klon\DBG_KLON_DURDUR
+```
+Toplam zarar kesicisi tetiklenince koşucu bu dosyayı kendisi yazar. Yeniden başlatmak için dosyayı silin. `DBG_KLON_OFF` farklıdır: yalnız yeni taze girişi keser, süreç çalışmaya devam eder.
+
 ## Dosyalar
 
 | dosya | iş |

@@ -41,6 +41,7 @@ COMMENT_PREFIX = "DBGK"
 LOG_FILE = HERE / "dbg_klon_log.jsonl"
 STATE_FILE = HERE / "dbg_klon_state.json"
 OFF_FILE = HERE / "DBG_KLON_OFF"
+STOP_FILE = HERE / "DBG_KLON_DURDUR"   # varken ajanın canlılık denetimi koşucuyu geri kaldırmaz
 POLL_S = 0.5
 HEARTBEAT_S = 300
 DEVIATION_PTS = 30
@@ -246,6 +247,7 @@ def main() -> None:
                 save_state(yon, last_bar, sanal)
             if yon.durduruldu:
                 jlog("durdu", neden="toplam_kesici", durum=yon.durum())
+                STOP_FILE.write_text(f"toplam_kesici {datetime.now(timezone.utc).isoformat(timespec='seconds')}\n")
                 log.error("toplam zarar kesicisi tetiklendi — koşucu durdu")
                 return
             if time.time() - hb > HEARTBEAT_S:

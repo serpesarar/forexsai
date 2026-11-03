@@ -238,8 +238,11 @@ def _process_lines(meta: dict) -> list[str]:
     marks = {True: "🟢 canlı", False: "🔴 ÖLÜ/ASILI", None: "⚪ bilinmiyor"}
     lines = []
     for name, age_key, age_label in (("bot", "bot_log_age_s", "log"),
-                                     ("decider", "decider_hb_age_s", "kalp atışı")):
+                                     ("decider", "decider_hb_age_s", "kalp atışı"),
+                                     ("dbg_klon", "dbg_klon_log_age_s", "log")):
         parts = [marks.get(meta.get(f"{name}_alive"), "⚪ bilinmiyor")]
+        if meta.get(f"{name}_stopped"):
+            parts = ["⏸ bilerek durduruldu"]
         for label, key in ((age_label, age_key),) + ((("journal", "decider_journal_age_s"),)
                                                       if name == "decider" else ()):
             sec = meta.get(key)
@@ -288,7 +291,7 @@ def main() -> None:
     p = sub.add_parser("pull"); p.set_defaults(fn=cmd_pull)
 
     p = sub.add_parser("restart", help="süreç yenile")
-    p.add_argument("target", choices=["decider", "bot", "backend", "agent"])
+    p.add_argument("target", choices=["decider", "bot", "backend", "dbg_klon", "agent"])
     p.add_argument("--force", action="store_true", help="bot: açık pozisyon beklemeden")
     p.set_defaults(fn=cmd_restart)
 
