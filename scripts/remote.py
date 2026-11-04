@@ -291,7 +291,7 @@ def main() -> None:
     p = sub.add_parser("pull"); p.set_defaults(fn=cmd_pull)
 
     p = sub.add_parser("restart", help="süreç yenile")
-    p.add_argument("target", choices=["decider", "bot", "backend", "dbg_klon", "agent"])
+    p.add_argument("target", choices=["decider", "bot", "backend", "dbg_klon", "recorder", "agent"])
     p.add_argument("--force", action="store_true", help="bot: açık pozisyon beklemeden")
     p.set_defaults(fn=cmd_restart)
 

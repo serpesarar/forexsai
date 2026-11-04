@@ -22,6 +22,7 @@ import logging
 from datetime import datetime, timezone
 
 import config
+from broker_time import rule_matches_measured, rule_offset_sec
 from indicators import compute_all
 
 try:
@@ -42,6 +43,7 @@ log = logging.getLogger("recorder")
 TF_MAP = {"1m": mt5.TIMEFRAME_M1, "5m": mt5.TIMEFRAME_M5, "15m": mt5.TIMEFRAME_M15,
           "30m": mt5.TIMEFRAME_M30, "1h": mt5.TIMEFRAME_H1}
 HIST_BARS = 320           # steady-state pencere (ema200 + pay)
+CACHE_SOURCE = "mt5_box"  # candle_cache.source: gün-içi barların tek yazarı
 CC_CHUNK = 1000           # candle_cache upsert batch boyutu
 
 
@@ -152,16 +154,47 @@ def detect_server_offset() -> int | None:
     return int(winner)
 
 
+def _history_rule_trusted() -> bool:
+    """Canlı ölçüm dönem kuralıyla uyuşuyor mu (broker_time.py)?"""
+    return rule_matches_measured(_SERVER_OFFSET_SEC, time.time())
+
+
 def _iso(epoch: int) -> str:
-    """Broker sunucu epoch'unu GERÇEK UTC ISO damgasına çevir."""
-    return datetime.fromtimestamp(epoch - _SERVER_OFFSET_SEC, tz=timezone.utc).isoformat()
+    """Broker sunucu epoch'unu GERÇEK UTC ISO damgasına çevir.
+
+    2026-11-04: tek offset yalnız yakın barlar için doğrudur. Açılış backfill'i
+    11-02/11-03'te geçmişi +2 ile yazıp 11-01 öncesi ~106 bin satırı 60 dk geç
+    damgaladı. Geçmiş bar kendi döneminin kuralıyla çevrilir; kural canlı ölçüme
+    uymuyorsa ölçülen offset kullanılır ve derin backfill yapılmaz (record).
+    """
+    offset = rule_offset_sec(epoch) if _history_rule_trusted() else _SERVER_OFFSET_SEC
+    return datetime.fromtimestamp(epoch - offset, tz=timezone.utc).isoformat()
+
+
+_source_column_known: bool | None = None
+
+
+def _source_column_available(client) -> bool:
+    """candle_cache.source var mı? Migration 20261104 uygulanınca kendiliğinden kullanılır."""
+    global _source_column_known
+    if _source_column_known is None:
+        try:
+            client.table("candle_cache").select("source").limit(1).execute()
+            _source_column_known = True
+        except Exception:
+            _source_column_known = False
+            log.warning("candle_cache.source kolonu yok, etiketsiz yazılıyor")
+    return _source_column_known
 
 
 def record(client, fx_symbol: str, mt5_symbol: str, tf_name: str, tf_const,
            last_seen: dict) -> None:
     key = (fx_symbol, tf_name)
-    count = (config.RECORDER_BACKFILL_BARS.get(tf_name, HIST_BARS)  # ilk koşu: derin backfill
-             if key not in last_seen else HIST_BARS)                # sonra: küçük pencere
+    deep = key not in last_seen and _history_rule_trusted()         # ilk koşu: derin backfill
+    if key not in last_seen and not deep:
+        log.error("%s %s: offset %+d dk dönem kuralına uymuyor, derin backfill ATLANDI "
+                  "(broker_time.py gözden geçirilmeli)", fx_symbol, tf_name, _SERVER_OFFSET_SEC // 60)
+    count = config.RECORDER_BACKFILL_BARS.get(tf_name, HIST_BARS) if deep else HIST_BARS
     rates = mt5.copy_rates_from_pos(mt5_symbol, tf_const, 1, count)  # 1 = forming'i atla
     if rates is None or len(rates) < 30:
         return
@@ -179,6 +212,9 @@ def record(client, fx_symbol: str, mt5_symbol: str, tf_name: str, tf_const,
     cc_rows = [{"symbol": fx_symbol, "timeframe": tf_name, "candle_time": _iso(t[i]),
                 "open": o[i], "high": h[i], "low": l[i], "close": c[i],
                 "volume": v[i], "fetched_at": now} for i in new_idx]
+    if _source_column_available(client):
+        for row in cc_rows:
+            row["source"] = CACHE_SOURCE
     for j in range(0, len(cc_rows), CC_CHUNK):
         try:
             client.table("candle_cache").upsert(

@@ -622,6 +622,13 @@ Sen düşün:
    2026-05 toplu 1m doldurması 315.730 barı 3 saat kaydırmış, fakeout
    dedektörlerinin eğitim etiketlerini bozmuştu.
 
+10. **Besleme kilidi (2026-11-04):** gün-içi `candle_cache`'in tek yazarı kutu kaydedicisidir
+   (`data_recorder.py`). DataHub dört sembolde `mt5_recorder_feed` ile `indicator_snapshots`'tan
+   beslenir. Yahoo yedeği bellekte çalışabilir ama kalıcı tabloya yazamaz (`_may_persist`,
+   yalnız `eod`), `persist_candles` >3 ondalıklı fiyatı reddeder. Kaydedici geçmişi bar başına
+   dönem offset'iyle yazar (`broker_time.py`: sunucu = New York + 7). Denetim: `/api/datahub/status`
+   → `candle_integrity`. Ölürse panel fiyatı donar; ajan canlılık denetimi yeniden başlatır.
+
 ---
 
 ## 📋 Commit ve PR Standartları

@@ -1299,6 +1299,13 @@ async def log_prediction(
             factors["time_quality"] = time_quality_tier(symbol)[0]
         except Exception:
             pass
+        # Fiyat kaynağı epoch etiketi (2026-11-04): mt5_recorder = broker; upstream_poll =
+        # Yahoo. Eski satırlarda alan yok: bu tarih öncesi XAU/DAX/NDX karneleri Yahoo.
+        try:
+            from services.data_hub import get_price_source
+            factors["price_source"] = get_price_source(symbol)
+        except Exception:
+            pass
         # Geometri epoch etiketi: lifecycle ATR merdivenini bu etiketten tanır;
         # analizler de eski (static_pips) / yeni (atr_ladder_v1) dönemi ayırır.
         factors["target_type"] = geometry_type

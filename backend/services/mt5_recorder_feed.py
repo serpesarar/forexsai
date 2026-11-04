@@ -9,7 +9,11 @@ Kutudaki `yeni deneme/data_recorder.py` broker barlarını dakikada bir
 `indicator_snapshots`'a yazıyor; bu servis onları okuyup `mt5_recorder` kaynağıyla
 DataHub'a alır → hybrid mod MT5'i taze görür, Yahoo atlanır.
 
-Kapsam: MT5_RECORDER_FEED_SYMBOLS (varsayılan yalnız USOIL.FOREX).
+2026-11-04: kapsam dört sembole genişletildi. Yedek NDX/DAX/XAU'da da başka enstrüman
+(^NDX, ^GDAXI, GC=F) üretiyordu: XAU giriş fiyatı broker'dan +9…+56$, DAX −20 puan
+(analyst_reports/candle_cache_karisik_besleme_2026-11-04.md). Eski
+MT5_RECORDER_FEED_SYMBOLS artık okunmaz, Railway'de kalmış bir değer kapsamı daraltamasın;
+sembol çıkarmak için MT5_RECORDER_FEED_EXCLUDE.
 Hata olursa fail-open: besleme durur, DataHub'ın mevcut yedeği devam eder.
 """
 from __future__ import annotations
@@ -25,9 +29,10 @@ from utils.safe_supabase import safe_get_data, safe_get_error
 logger = logging.getLogger(__name__)
 
 TABLE = "indicator_snapshots"
+FEED_SYMBOLS = ("NDX.INDX", "XAUUSD", "GDAXI.INDX", "USOIL.FOREX")
 TF_MS = {"1m": 60_000, "5m": 300_000, "1h": 3_600_000}
 # İlk turda geçmişi değiştirmek için çekilecek bar sayısı (≈2g 1m, ≈5g 5m, ≈6h 1h)
-INITIAL_BARS = {"1m": 3000, "5m": 1500, "1h": 1000}
+INITIAL_BARS = {"1m": 3000, "5m": 1500, "1h": 2400}
 PAGE = 1000
 OVERLAP_BARS = 3            # geç güncellenen son barları da yakala
 MAX_PRICE_AGE_SEC = 600     # en yeni 1m bar bundan eskiyse fiyat verme (kaydedici durmuş)
@@ -41,8 +46,8 @@ def feed_enabled() -> bool:
 
 
 def feed_symbols() -> List[str]:
-    raw = os.getenv("MT5_RECORDER_FEED_SYMBOLS", "USOIL.FOREX")
-    return [s.strip() for s in raw.split(",") if s.strip()]
+    excluded = {s.strip() for s in os.getenv("MT5_RECORDER_FEED_EXCLUDE", "").split(",")}
+    return [s for s in FEED_SYMBOLS if s not in excluded]
 
 
 def feed_interval() -> float:

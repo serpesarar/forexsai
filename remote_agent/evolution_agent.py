@@ -836,6 +836,7 @@ DEFAULT_PROCESS_TARGETS = {
     "backend": {"match": "uvicorn", "bat": r"calistir\18_panel_backend.bat"},
     "dbg_klon": {"match": "dbg_klon_runner.py", "bat": r"calistir\19_dbg_klon_golge.bat"},
     "dbg_izleyici": {"match": "dbg_izleyici.py", "bat": r"calistir\23_dbg_izleyici.bat"},
+    "recorder": {"match": "data_recorder.py", "bat": r"calistir\1_veri_kaydedici.bat"},
     "agent":   {"self": True},
 }
 
@@ -1092,6 +1093,10 @@ WATCHDOG_SPECS = {
     "decider": {"file": Path(getattr(cfg, "DECIDER_HEARTBEAT_FILE",
                                      _REPO / "claude_decider" / "memory" / "decider_heartbeat.json")),
                 "stale_after_s": int(getattr(cfg, "DECIDER_STALE_SEC", 10800))},
+    # 2026-11-04: panelin dört sembolü de kaydediciye bağlı, ölürse fiyatlar donar. Her
+    # döngüde (~60 sn, hafta sonu dahil) satır yazar → 10 dk sessizlik = ölü/asılı.
+    "recorder": {"file": _REPO / "yeni deneme" / "data_recorder.log",
+                 "stale_after_s": int(getattr(cfg, "RECORDER_LOG_STALE_SEC", 600))},
     # koşucu 5 dk'da bir nabız yazar; kutuda ölçüldü (10-30→11-02, hafta sonu dahil): en uzun boşluk
     # 301 sn → 15 dk sessizlik = asılı. off_file: bilerek durduruldu (kullanıcı ya da toplam kesici).
     "dbg_klon": {"file": _REPO / "calistir" / "dbg_klon" / "dbg_klon_log.jsonl",
@@ -1103,7 +1108,7 @@ WATCHDOG_SPECS = {
                      "stale_after_s": int(getattr(cfg, "DBG_IZLEYICI_STALE_SEC", 900)),
                      "off_file": _REPO / "calistir" / "dbg_izleyici" / "DBG_IZLEYICI_DURDUR"},
 }
-WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider", "dbg_klon", "dbg_izleyici")))
+WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider", "dbg_klon", "dbg_izleyici", "recorder")))
 
 #: Son denetimin gözlemi — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
 WATCHDOG: dict = {}
@@ -1272,7 +1277,7 @@ MARKET_BREAK_START_MIN = 20 * 60 + 30
 MARKET_BREAK_END_MIN = 23 * 60 + 30
 #: Hata `claude exit` biçiminde: decide.py'nin WAIT sebebine yazdığı önek.
 DECIDER_LLM_ERROR_MARK = "claude exit"
-#: Veri kaydedici izleyicinin kapsamında değil: ölürse mumlar sessizce durur.
+#: Veri kaydedici süreç eşlemesi (canlılık denetimi WATCHDOG_SPECS["recorder"]).
 RECORDER_MATCH = getattr(cfg, "RECORDER_MATCH", "data_recorder.py")
 
 #: Son ölçüm — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
@@ -1480,6 +1485,8 @@ AUTO_UPDATE_INTERVAL = int(getattr(cfg, "AUTO_UPDATE_INTERVAL_SECONDS", 600))
 # kapatınca kalan restart'ları yeni ajan değil bu tur yapmış olmalıyız).
 AUTO_RESTART_MAP = [
     ("claude_decider/", "decider"),
+    ("yeni deneme/data_recorder.py", "recorder"),
+    ("yeni deneme/broker_time.py", "recorder"),
     ("yeni deneme/", "bot"),
     ("backend/", "backend"),
     ("remote_agent/", "agent"),

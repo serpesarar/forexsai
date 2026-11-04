@@ -55,6 +55,21 @@ def _is_future_epoch(epoch_s: float, now_s: float) -> bool:
     return epoch_s > now_s + _FUTURE_TOLERANCE_S
 
 
+#: Yabancı seri koruması (2026-11-04). Broker fiyatları en fazla 3 ondalıktır; Yahoo
+#: float32 barları 29290.773438 gibi gelir. Gün-içi tabloda böyle satır, yazan yol
+#: ne olursa olsun reddedilir.
+_MAX_BROKER_DECIMALS_SCALE = 1000
+_FOREIGN_PRICE_TOLERANCE = 1e-6
+_EOD_TIMEFRAME = "eod"
+
+
+def _is_foreign_price(candle: Dict, timeframe: str) -> bool:
+    if timeframe == _EOD_TIMEFRAME:
+        return False
+    scaled = float(candle.get("close") or 0) * _MAX_BROKER_DECIMALS_SCALE
+    return abs(scaled - round(scaled)) > _FOREIGN_PRICE_TOLERANCE
+
+
 def _get_db():
     """Get Supabase client, returns None if unavailable."""
     try:
@@ -68,9 +83,25 @@ def _get_db():
 # PERSIST: Save candles from DataHub → Supabase
 # ═══════════════════════════════════════════════════════════════
 
-def persist_candles(symbol: str, timeframe: str, candles: List[Dict]) -> int:
+#: candle_cache.source kolonu var mı (migration 20261104_candle_cache_source.sql)?
+#: Yoksa yazımlar kolonsuz sürer; ilk doğrulamadan sonra süreç boyunca önbellekte.
+_source_column_known: Optional[bool] = None
+
+
+def _source_column_available(db) -> bool:
+    global _source_column_known
+    if _source_column_known is None:
+        result = db.table("candle_cache").select("source").limit(1).execute()
+        _source_column_known = not safe_get_error(result)
+        if not _source_column_known:
+            logger.warning("candle_cache.source kolonu yok; migration 20261104 uygulanınca devreye girer")
+    return _source_column_known
+
+
+def persist_candles(symbol: str, timeframe: str, candles: List[Dict], source: str) -> int:
     """
     Save candles to Supabase. Uses upsert to avoid duplicates.
+    `source` kolon varsa candle_cache.source'a yazılır; fetched_at her yazımda güncellenir.
     Returns number of candles persisted.
     """
     db = _get_db()
@@ -80,8 +111,14 @@ def persist_candles(symbol: str, timeframe: str, candles: List[Dict]) -> int:
     rows = []
     skipped_misaligned = 0
     skipped_future = 0
-    now_s = datetime.now(timezone.utc).timestamp()
+    skipped_foreign = 0
+    now = datetime.now(timezone.utc)
+    now_s = now.timestamp()
+    fetched_at = now.isoformat()
     for c in candles:
+        if _is_foreign_price(c, timeframe):
+            skipped_foreign += 1
+            continue
         # Determine candle time from either timestamp (ms) or date string
         candle_time = None
         if c.get("timestamp") and c["timestamp"] > 0:
@@ -114,10 +151,22 @@ def persist_candles(symbol: str, timeframe: str, candles: List[Dict]) -> int:
             "low": c.get("low", 0),
             "close": c.get("close", 0),
             "volume": c.get("volume", 0),
+            "fetched_at": fetched_at,
         })
+
+    if skipped_foreign:
+        logger.error(
+            "persist_candles: %s/%s — %d bar yabancı seri izi taşıyor (>3 ondalık, kaynak=%s), "
+            "yazılmadı. Bkz. candle_cache_karisik_besleme_2026-11-04.md",
+            symbol, timeframe, skipped_foreign, source,
+        )
 
     if not rows:
         return 0
+
+    if _source_column_available(db):
+        for row in rows:
+            row["source"] = source
 
     # Batch upsert in chunks of 500 to avoid payload limits
     persisted = 0

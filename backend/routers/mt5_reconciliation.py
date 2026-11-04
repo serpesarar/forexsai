@@ -208,7 +208,7 @@ async def upload_1m_bars(
                     "volume": float(b.get("v") or 0),
                 })
 
-            n = persist_candles(canonical, "1m", candles_in)
+            n = persist_candles(canonical, "1m", candles_in, source="mt5_upload")
             total_persisted += n
             per_symbol_report[mt5_sym] = {
                 "canonical": canonical,

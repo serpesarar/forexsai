@@ -132,13 +132,21 @@ async def lifespan(app: FastAPI):
         print(f"Failed to start MT5 Redis listener: {e}")
 
     # 2.55 MT5 kutu kaydedicisi beslemesi (2026-09-30): Redis köprüsü ölü →
-    #      broker barları Supabase indicator_snapshots'tan (varsayılan USOIL).
+    #      broker barları Supabase indicator_snapshots'tan (dört sembol, 2026-11-04).
     try:
         from services.mt5_recorder_feed import start_mt5_recorder_feed
         _mt5_recorder_task = asyncio.create_task(start_mt5_recorder_feed())
         print("MT5 recorder feed task started")
     except Exception as e:
         print(f"Failed to start MT5 recorder feed: {e}")
+
+    # 2.56 candle_cache bütünlük denetimi (2026-11-04): Yahoo izi / saat kayması alarmı
+    try:
+        from services.candle_integrity import start_candle_integrity_loop
+        _candle_integrity_task = asyncio.create_task(start_candle_integrity_loop())
+        print("Candle integrity task started")
+    except Exception as e:
+        print(f"Failed to start candle integrity task: {e}")
 
     # 2.6 Macro data service (DXY/VIX/US10Y from Yahoo, hourly refresh)
     try:

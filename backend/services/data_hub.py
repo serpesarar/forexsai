@@ -874,8 +874,23 @@ _persist_counts: Dict[str, int] = {}         # "symbol:tf" → candle count at l
 PERSIST_INTERVAL = 900                       # 15 minutes between Supabase writes
 
 
-def _persist_async(symbol: str, timeframe: str, candles: List[Dict]):
+#: Gün-içi candle_cache'e yazabilen kaynaklar. Kutu kaydedicisi tek yazardır
+#: (data_recorder.py), besleme de onun yazdığını geri okur. 2026-11-04: Yahoo
+#: yedeği (upstream_poll, dynamic_fallback) ^NDX/^GDAXI/GC=F/CL=F barlarını broker
+#: satırlarının üstüne yazıyordu. Yedek bellekte çalışabilir, kalıcı tabloya giremez.
+_INTRADAY_PERSIST_SOURCES = {"mt5_redis"}
+_EOD_TIMEFRAME = "eod"          # kaydedici günlük bar yazmaz, tek kaynak yukarıdan
+_EOD_CACHE_SOURCE = "upstream_eod"
+
+
+def _may_persist(timeframe: str, source: str) -> bool:
+    return timeframe == _EOD_TIMEFRAME or source in _INTRADAY_PERSIST_SOURCES
+
+
+def _persist_async(symbol: str, timeframe: str, candles: List[Dict], source: str):
     """Persist candles to Supabase — throttled to every 15 min & delta-only."""
+    if not _may_persist(timeframe, source):
+        return
     key = f"{symbol}:{timeframe}"
     now = time.time()
 
@@ -891,7 +906,8 @@ def _persist_async(symbol: str, timeframe: str, candles: List[Dict]):
 
     try:
         from services.candle_cache_store import persist_candles
-        persisted = persist_candles(symbol, timeframe, candles)
+        cache_source = _EOD_CACHE_SOURCE if timeframe == _EOD_TIMEFRAME else source
+        persisted = persist_candles(symbol, timeframe, candles, source=cache_source)
         _persist_timestamps[key] = now
         _persist_counts[key] = count
     except Exception as e:
@@ -1045,7 +1061,7 @@ async def _pump_cycle():
                         _candles_5m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                         _rebuild_derived(symbol)
                     _mark_fetched(f"5m:{symbol}")
-                    _persist_async(symbol, "5m", merged if is_seed else candles)
+                    _persist_async(symbol, "5m", merged if is_seed else candles, "upstream_poll")
                     await _fire_candle_close_events(symbol, "5m", merged)
                     d15 = (_candles_15m.get(symbol) or {}).get("candles", [])
                     if d15:
@@ -1066,7 +1082,7 @@ async def _pump_cycle():
                     _candles_30m[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                     _rebuild_derived(symbol)
                 _mark_fetched(f"30m:{symbol}")
-                _persist_async(symbol, "30m", merged if is_seed else candles)
+                _persist_async(symbol, "30m", merged if is_seed else candles, "upstream_poll")
                 logger.info(f"[DataHub] {symbol}: fetched {len(candles)} 30m candles → 1h={len(_candles_1h.get(symbol, {}).get('candles', []))}, 4h={len(_candles_4h.get(symbol, {}).get('candles', []))}")
                 await _fire_candle_close_events(symbol, "30m", merged)
                 d1h = (_candles_1h.get(symbol) or {}).get("candles", [])
@@ -1097,7 +1113,7 @@ async def _pump_cycle():
                             _candles_1h[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                             _rebuild_derived(symbol)
                         _mark_fetched(f"1h:{symbol}")
-                        _persist_async(symbol, "1h", merged if is_seed else candles)
+                        _persist_async(symbol, "1h", merged if is_seed else candles, "upstream_poll")
                         await _fire_candle_close_events(symbol, "1h", merged)
                         d4h = (_candles_4h.get(symbol) or {}).get("candles", [])
                         if d4h:
@@ -1114,7 +1130,7 @@ async def _pump_cycle():
                     merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_EOD)
                     _candles_eod[symbol] = {"candles": merged, "timestamp": now_ts, "source": "upstream_poll"}
                 _mark_fetched(f"eod:{symbol}")
-                _persist_async(symbol, "eod", merged if is_seed else candles)
+                _persist_async(symbol, "eod", merged if is_seed else candles, "upstream_poll")
 
         if not is_seeded and _has_required_seed_data(symbol):
             has_5m = len((_candles_5m.get(symbol) or {}).get("candles", []))
@@ -1331,6 +1347,11 @@ def stop_data_hub():
 # ═══════════════════════════════════════════════════════════════
 # PUBLIC READ API (used by all services - 0 API calls)
 # ═══════════════════════════════════════════════════════════════
+def get_price_source(symbol: str) -> Optional[str]:
+    """Hub'daki canlı fiyatın kaynağı (factors.price_source epoch etiketi için)."""
+    return (_prices.get(_canonical_symbol(symbol)) or {}).get("source")
+
+
 def get_price(symbol: str) -> Optional[float]:
     """Get latest cached price for a symbol. Returns None if not yet fetched."""
     symbol = _canonical_symbol(symbol)
@@ -1593,6 +1614,11 @@ def get_hub_status() -> Dict[str, Any]:
         status["mt5_recorder_feed"] = get_feed_status()
     except Exception:
         status["mt5_recorder_feed"] = {"available": False}
+    try:
+        from services.candle_integrity import get_integrity_status
+        status["candle_integrity"] = get_integrity_status()
+    except Exception:
+        status["candle_integrity"] = {"available": False}
     return status
 
 
@@ -1805,7 +1831,7 @@ async def ingest_candles(
             _rebuild_derived(canonical_symbol)
 
     _last_fetch[f"{tf}:{canonical_symbol}"] = now_ts
-    _persist_async(canonical_symbol, tf, merged if len(normalized_candles) > 1 else normalized_candles)
+    _persist_async(canonical_symbol, tf, merged if len(normalized_candles) > 1 else normalized_candles, source)
     return len(normalized_candles)
 
 

@@ -31,11 +31,20 @@ def test_latest_price_taze_ve_bayat():
     assert feed.latest_price([], now) is None
 
 
-def test_varsayilan_kapsam_yalniz_usoil(monkeypatch):
-    monkeypatch.delenv("MT5_RECORDER_FEED_SYMBOLS", raising=False)
-    assert feed.feed_symbols() == ["USOIL.FOREX"]
-    monkeypatch.setenv("MT5_RECORDER_FEED_SYMBOLS", "USOIL.FOREX, XAUUSD")
-    assert feed.feed_symbols() == ["USOIL.FOREX", "XAUUSD"]
+def test_varsayilan_kapsam_dort_sembol(monkeypatch):
+    monkeypatch.delenv("MT5_RECORDER_FEED_EXCLUDE", raising=False)
+    assert set(feed.feed_symbols()) == set(hub.TRACKED_SYMBOLS)
+
+
+def test_eski_env_kapsami_daraltamaz(monkeypatch):
+    monkeypatch.delenv("MT5_RECORDER_FEED_EXCLUDE", raising=False)
+    monkeypatch.setenv("MT5_RECORDER_FEED_SYMBOLS", "USOIL.FOREX")
+    assert set(feed.feed_symbols()) == set(hub.TRACKED_SYMBOLS)
+
+
+def test_exclude_sembol_cikarir(monkeypatch):
+    monkeypatch.setenv("MT5_RECORDER_FEED_EXCLUDE", "XAUUSD, GDAXI.INDX")
+    assert feed.feed_symbols() == ["NDX.INDX", "USOIL.FOREX"]
 
 
 def test_mt5_fiyati_yahoo_zaman_damgasini_ezer():
