@@ -149,10 +149,22 @@ export interface LiveTa {
   trend?: string;
 }
 
+/** Doğrulanmış çekirdek verdikti — backend meta_analysis_engine (6 model füzyonu).
+ *  Bu, shadow_trade_tracker'ın `meta` kaynağıyla SIZINTISIZ ölçtüğü ile AYNI
+ *  motordur; panel artık kendi istemci-taraflı tahminini göstermez. */
+export interface LiveCore {
+  dir: LiveDir;
+  conf: number;
+  strength?: string;
+  combo?: string;
+  agreement?: number;
+}
+
 export interface NeuralLive {
   price?: { value: number; text: string; changePct: number; up: boolean };
   regime?: { raw: string };
   votes?: Partial<Record<string, LiveVote>>;
+  core?: LiveCore;
   vix?: { value: number; changeText: string };
   macroTiles?: { label: string; value: string; change: string; up: boolean }[];
   news?: LiveNews[];
@@ -179,6 +191,7 @@ async function fetchAll(code: string): Promise<Omit<NeuralLive, "loading">> {
   const [
     cached, regime, emel, pulse, pulseMl, pulseV3, smc, gauges, markers, activeRes,
     ohlcv, history, patternsRes, patternOhlcv, recentRuns, whaleRes, oilRes,
+    mlPred, metaRes,
   ] = await Promise.all([
     get(`/api/data/cached/${enc}`),
     get(`/api/panel/regime/${enc}`),
@@ -197,9 +210,14 @@ async function fetchAll(code: string): Promise<Omit<NeuralLive, "loading">> {
     get(`/api/bias-test/recent-runs?limit=8`),
     get(`/api/whale/dashboard`),
     isOil ? get(`/api/panel/oil-baltic-intelligence`) : Promise.resolve(null),
+    get(`/api/prediction/${enc}?strategy=balanced`),
+    // min_confidence=40 → shadow_trade_tracker'ın `meta` kaynağıyla BİREBİR aynı
+    // eşik (get_meta_signal varsayılanı). Router varsayılanı 45 olduğu için
+    // açıkça geçiliyor; aksi hâlde gösterilen ile karnesi tutulan ayrışırdı.
+    get(`/api/meta/analyze/${enc}?risk_profile=balanced&min_confidence=40`),
   ]);
 
-  const out: Omit<NeuralLive, "loading"> = { sourcesOk: 0, sourcesTotal: isOil ? 12 : 11 };
+  const out: Omit<NeuralLive, "loading"> = { sourcesOk: 0, sourcesTotal: isOil ? 14 : 13 };
 
   // price + TA snapshot
   const snap = (cached as any)?.data?.ta_snapshot ?? (cached as any)?.data ?? cached;
@@ -235,9 +253,12 @@ async function fetchAll(code: string): Promise<Omit<NeuralLive, "loading">> {
     out.sourcesOk++;
   }
 
-  // votes
+  // votes — 6 model. `ml` daha önce BURADA EKSİKTİ: canlı veri hiç gelmediği
+  // için panel demo sabitine (BUY %82) düşüyor, o sabit de çekirdek verdiktine
+  // karışıyordu. Artık gerçek ML tahmini çekiliyor.
   const voteSrc: [string, any][] = [
-    ["emel", emel], ["pulse1", pulse], ["pulse2", pulseMl], ["pulse3", pulseV3], ["smc", smc],
+    ["ml", mlPred], ["emel", emel], ["pulse1", pulse],
+    ["pulse2", pulseMl], ["pulse3", pulseV3], ["smc", smc],
   ];
   const votes: Partial<Record<string, LiveVote>> = {};
   let anyVote = false;
@@ -251,6 +272,26 @@ async function fetchAll(code: string): Promise<Omit<NeuralLive, "loading">> {
   if (anyVote) {
     out.votes = votes;
     out.sourcesOk++;
+  }
+
+  // çekirdek verdikti — backend meta motoru (shadow tracker'ın ölçtüğü motorun
+  // TA KENDİSİ). Gelmezse `core` boş kalır ve panel HOLD gösterir; istemci
+  // tarafında ensemble UYDURULMAZ.
+  const metaData = (metaRes as any)?.data;
+  if (metaData && (metaRes as any)?.success !== false) {
+    const dir = normDir(metaData.direction);
+    if (dir) {
+      out.core = {
+        dir,
+        conf: Math.round(Number(metaData.confidence) || 0),
+        strength: typeof metaData.strength === "string" ? metaData.strength : undefined,
+        combo: typeof metaData.source_combo === "string" ? metaData.source_combo : undefined,
+        agreement: Number.isFinite(Number(metaData.agreement_ratio))
+          ? Number(metaData.agreement_ratio)
+          : undefined,
+      };
+      out.sourcesOk++;
+    }
   }
 
   // macro gauges → VIX + tiles

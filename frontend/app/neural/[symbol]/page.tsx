@@ -250,24 +250,39 @@ export default function NeuralSymbolPage() {
     );
   }, [live.regime, demo.regime.comment, L]);
 
+  // Canlı oy geldiğinde yönü/güveni ez. Demo notu yalnız yön AYNI kaldıysa
+  // korunur — aksi hâlde "HOLD" rozetinin altında "güçlü stratejik onay" gibi
+  // çelişkili bir açıklama kalıyordu.
   const votes: ModelVote[] = demo.votes.map((v) => {
     const lv = live.votes?.[v.id];
-    return lv ? { ...v, dir: lv.dir as Dir, conf: lv.conf } : v;
+    if (!lv) return v;
+    const note =
+      lv.dir === v.dir
+        ? v.note
+        : lv.dir === "HOLD"
+        ? L("Model şu an net bir yön görmüyor — teyit bekliyor.",
+            "The model sees no clear direction right now — awaiting confirmation.")
+        : lv.dir === "BUY"
+        ? L("Model canlı veride yukarı yönü destekliyor.",
+            "On live data the model backs the upside.")
+        : L("Model canlı veride aşağı yönü destekliyor.",
+            "On live data the model backs the downside.");
+    return { ...v, dir: lv.dir as Dir, conf: lv.conf, note };
   });
 
-  // client-side ensemble from votes (until meta endpoint is wired)
+  // Çekirdek verdikti = backend meta motoru (/api/meta/analyze). Bu, gölge
+  // izleyicinin `meta` kaynağıyla SIZINTISIZ doğruladığı motorun TA KENDİSİ —
+  // yani ekranda gösterilen ile karnesi tutulan şey aynı.
+  //
+  // Daha önce burada istemci tarafında bir "ensemble" uyduruluyordu; ML oyu
+  // canlıya hiç bağlı olmadığı için demo sabiti (BUY %82) tek oy olarak kalıp
+  // diğer 5 model HOLD iken "BUY %96" üretiyordu. Artık uydurma yok: canlı
+  // verdikt yoksa HOLD gösterilir.
   const verdict = useMemo(() => {
-    if (!live.votes) return demo.verdict;
-    let buy = 0, sell = 0, n = 0;
-    for (const v of votes) {
-      if (v.dir === "BUY") { buy += Math.max(v.conf, 40); n++; }
-      if (v.dir === "SELL") { sell += Math.max(v.conf, 40); n++; }
-    }
-    if (!n) return { dir: "HOLD" as Dir, confidence: 50 };
-    const dir: Dir = buy === sell ? "HOLD" : buy > sell ? "BUY" : "SELL";
-    const confidence = Math.min(96, Math.round((Math.max(buy, sell) / (buy + sell)) * 100));
-    return { dir, confidence };
-  }, [live.votes, votes, demo.verdict]);
+    if (live.core) return { dir: live.core.dir as Dir, confidence: live.core.conf };
+    if (live.loading) return demo.verdict;      // ilk yüklemede iskelet
+    return { dir: "HOLD" as Dir, confidence: 0 };
+  }, [live.core, live.loading, demo.verdict]);
 
   const vix = live.vix
     ? { ...demo.vix, value: live.vix.value, change: live.vix.changeText }
