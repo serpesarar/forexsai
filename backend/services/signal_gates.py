@@ -35,6 +35,10 @@ Env bayrakları:
   DEBATE_BIAS_GATE_BLOCK=0   → 1 ise GERÇEKTEN bloklar (default GÖLGE: sadece log)
   DEBATE_BIAS_VALID_MIN=240  → tartışma kararının geçerlilik penceresi (dakika)
 
+Issue #17 (unvalidated winner impact):
+  PULSE1_SWING_HIGH_GATE_ENABLED=1 → evaluate XAU PULSE1 BUY swing-high proximity
+  PULSE1_SWING_HIGH_GATE_BLOCK=0   → default SHADOW; only literal 1 enables blocking
+
 2026-07-28 eki (Pulse NDX denetimi — pulse_ndx_denetimi_2026-07-28.md):
   MT5 botunun canlı-kanıtlı ön-giriş filtreleri Pulse'a GÖLGE modda taşındı.
   TREND_ALIGN_GATE_ENABLED=1   → 1h EMA50 hizası (bot 30g/332: hizalı %63.3 vs karşıt %43.4)
@@ -1079,6 +1083,43 @@ async def calendar_gate(symbol: str) -> Tuple[bool, Optional[str]]:
     return True, None
 
 
+async def pulse1_swing_high_gate(
+    symbol: str, direction: str, model_type: str,
+) -> Tuple[bool, Optional[str]]:
+    """Evaluate issue #17 using snapshot regimes, independent of router regimes.
+
+    Default shadow verdicts flow through prediction_logger into factors and can
+    be joined to resolved outcomes. Never infer unknown from absent features.
+    """
+    from services.pulse1_swing_high_filter import (
+        DISTANCE_FIELD, SWING_HIGH_GATE, filter_inputs, is_candidate, would_block,
+    )
+
+    if not _flag("PULSE1_SWING_HIGH_GATE_ENABLED") or not is_candidate(
+        symbol, direction, model_type
+    ):
+        return True, None
+    try:
+        from services.signal_feature_snapshot import build_signal_feature_snapshot
+
+        snapshot = await build_signal_feature_snapshot(symbol)
+        if not would_block(symbol, direction, model_type, snapshot):
+            return True, None
+        regime, distance = filter_inputs(snapshot)
+        reason = (
+            f"PULSE1 BUY swing-high filter (issue #17): regime={regime}, "
+            f"{DISTANCE_FIELD}={distance:.3f} < 2.0 ATR"
+        )
+        if os.getenv("PULSE1_SWING_HIGH_GATE_BLOCK", "0") == "1":
+            logger.info("%s BLOCK %s: %s", SWING_HIGH_GATE, symbol, reason)
+            return False, reason
+        _shadow_verdict(SWING_HIGH_GATE, symbol, direction, reason)
+        logger.info("%s SHADOW %s: %s", SWING_HIGH_GATE, symbol, reason)
+    except Exception as exc:
+        logger.warning("PULSE1 swing-high gate skipped (fail-open): %s", exc)
+    return True, None
+
+
 # ─── Birleşik uygulayıcı ─────────────────────────────────────────────────────
 
 async def apply_signal_gates(
@@ -1225,5 +1266,12 @@ async def _apply_signal_gates_inner(
         if not allowed:
             notes.append(reason or "Tartışma-bias kapısı")
             return "HOLD", notes
+
+    # Issue #17: shared by the panel and prediction_logger safety net. Keep
+    # existing gates first so shadow outcomes describe surviving candidates.
+    allowed, reason = await pulse1_swing_high_gate(symbol, direction, model_type)
+    if not allowed:
+        notes.append(reason or "PULSE1 BUY swing-high filter (issue #17)")
+        return "HOLD", notes
 
     return direction, notes
