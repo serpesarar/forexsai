@@ -56,11 +56,12 @@ class KlonAyar:
     incl_end: bool = False         # pencere bitiş barı dahil (a:00 ≤ saat:dakika ≤ b:00)
     strict_step: bool = False      # ekleme eşiği kesin: ters mesafe > adım (False: ≥)
     step0_no_body: bool = False    # adımı 0 olan seviyelerde gövde koşulu aranmaz
+    px_digits: int = 2             # kesin eşikte fiyat basamağı (altın 2, Nasdaq/DAX 1, petrol 3)
 
     def __hash__(self) -> int:  # dict alanı yüzünden elle
         return hash((self.tf_min, self.base_lot, self.mult, self.tp_usd, self.lot_step, self.min_lot,
                      self.step_table, tuple(sorted(self.schedule.items())), self.max_levels,
-                     self.max_basket_loss, self.incl_end, self.strict_step, self.step0_no_body))
+                     self.max_basket_loss, self.incl_end, self.strict_step, self.step0_no_body, self.px_digits))
 
 
 def step_for_level(level: int, table: tuple[tuple[int, float], ...] = STEP_TABLE) -> float:
@@ -119,8 +120,8 @@ def decide_side(side: str, body_prev: float, level: int, last_px: float, px_now:
         return NONE
     adverse = (last_px - px_now) * sg
     if ayar.strict_step:
-        # fiyatlar 0,01 basamaklı; kayan nokta artığı eşitliği bozmasın diye 2 haneye yuvarlanır
-        ok = round(adverse, 2) > need + EPS
+        # kayan nokta artığı eşitliği bozmasın diye sembolün fiyat basamağına yuvarlanır
+        ok = round(adverse, ayar.px_digits) > need + EPS
     else:
         ok = adverse > need - EPS
     return ADD if adverse > 0 and ok else NONE

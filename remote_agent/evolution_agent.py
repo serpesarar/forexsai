@@ -837,6 +837,7 @@ DEFAULT_PROCESS_TARGETS = {
     "backend": {"match": "uvicorn", "bat": r"calistir\18_panel_backend.bat", "only_if_running": True},
     "dbg_klon": {"match": "dbg_klon_runner.py", "bat": r"calistir\19_dbg_klon_golge.bat"},
     "dbg_izleyici": {"match": "dbg_izleyici.py", "bat": r"calistir\23_dbg_izleyici.bat"},
+    "klon_coklu": {"match": "klon_coklu.py", "bat": r"calistir\24_klon_coklu_golge.bat"},
     "recorder": {"match": "data_recorder.py", "bat": r"calistir\1_veri_kaydedici.bat"},
     "agent":   {"self": True},
 }
@@ -1085,6 +1086,7 @@ WATCHDOG_COOLDOWN_MAX_SEC = int(getattr(cfg, "WATCHDOG_COOLDOWN_MAX_SEC", 7200))
 
 _REPO = Path(getattr(cfg, "REPO_ROOT", "."))
 #: hedef → tazelik dosyası + sessizlik eşiği (süreç eşlemesi DEFAULT_PROCESS_TARGETS'tan).
+_KLON_COKLU_VERI = Path(os.environ.get("LOCALAPPDATA") or (_REPO / "calistir" / "klon_coklu")) / "klon_coklu"
 WATCHDOG_SPECS = {
     # bot her döngüde (~60 sn, hafta sonu dahil) '─── tarama @' yazar → 10 dk sessizlik = ölü/asılı
     "bot": {"file": Path(getattr(cfg, "BOT_LOG_FILE", _REPO / "yeni deneme" / "demo_bot.log")),
@@ -1108,8 +1110,12 @@ WATCHDOG_SPECS = {
                      / "dbg_izleyici" / "dbg_izleyici_log.jsonl",
                      "stale_after_s": int(getattr(cfg, "DBG_IZLEYICI_STALE_SEC", 900)),
                      "off_file": _REPO / "calistir" / "dbg_izleyici" / "DBG_IZLEYICI_DURDUR"},
+    # Çok sembollü sanal ızgara deneyi (emir yok). 5 dk'da bir nabız; veri OneDrive dışında.
+    "klon_coklu": {"file": _KLON_COKLU_VERI / "klon_coklu_log.jsonl",
+                   "stale_after_s": int(getattr(cfg, "KLON_COKLU_STALE_SEC", 900)),
+                   "off_file": _REPO / "calistir" / "klon_coklu" / "KLON_COKLU_DURDUR"},
 }
-WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider", "dbg_klon", "dbg_izleyici", "recorder")))
+WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider", "dbg_klon", "dbg_izleyici", "klon_coklu", "recorder")))
 
 #: Son denetimin gözlemi — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
 WATCHDOG: dict = {}
@@ -1225,6 +1231,15 @@ def watchdog_tick(client=None) -> dict:
     return snap
 
 
+def _klon_coklu_net() -> dict | None:
+    """Sanal deneyin sembol başına yüzen dahil neti (panelde/health'te tek bakışta)."""
+    try:
+        d = json.loads((_KLON_COKLU_VERI / "ozet.json").read_text(encoding="utf-8"))
+        return {ad: {v: x["net"] for v, x in o.items()} for ad, o in d["semboller"].items()}
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
+
+
 def _watchdog_meta() -> dict:
     """Kalp atışına süreç canlılığı: denetimin son kararı + TAZE dosya yaşları."""
     def _age(p) -> int | None:
@@ -1252,6 +1267,10 @@ def _watchdog_meta() -> dict:
         "dbg_izleyici_log_age_s": _age((WATCHDOG_SPECS.get("dbg_izleyici") or {}).get("file")),
         "dbg_izleyici_last_restart": iz.get("last_restart"),
         "dbg_izleyici_last_restart_why": iz.get("last_restart_why"),
+        "klon_coklu_alive": (WATCHDOG.get("klon_coklu") or {}).get("alive"),
+        "klon_coklu_stopped": (WATCHDOG.get("klon_coklu") or {}).get("action") == "stopped",
+        "klon_coklu_log_age_s": _age((WATCHDOG_SPECS.get("klon_coklu") or {}).get("file")),
+        "klon_coklu_net": _klon_coklu_net(),
         "watchdog_off": WATCHDOG.get("off"),
         "watchdog_checked_at": WATCHDOG.get("checked_at"),
     }
@@ -1493,6 +1512,7 @@ AUTO_RESTART_MAP = [
     ("remote_agent/", "agent"),
     ("calistir/dbg_klon/", "dbg_klon"),
     ("calistir/dbg_izleyici/", "dbg_izleyici"),
+    ("calistir/klon_coklu/", "klon_coklu"),
 ]
 
 

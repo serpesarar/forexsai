@@ -912,3 +912,18 @@ def test_mt5_connect_refuses_dbg_terminal(agent, monkeypatch, server, expected):
 ])
 def test_oto_guncelleme_kapali_backendi_acmaz(agent, target, pids, skip):
     assert agent.should_skip_auto_restart(target, agent.DEFAULT_PROCESS_TARGETS, lambda _m: pids) is skip
+
+
+def test_klon_coklu_is_watched_by_default_and_bat_exists(agent):
+    assert "klon_coklu" in agent.WATCHDOG_WATCH
+    target = agent.DEFAULT_PROCESS_TARGETS["klon_coklu"]
+    assert (REPO / target["bat"].replace("\\", "/")).exists()
+    assert not target.get("safe_wait")
+    assert ("calistir/klon_coklu/", "klon_coklu") in agent.AUTO_RESTART_MAP
+
+
+def test_klon_coklu_net_reads_summary_and_survives_missing_file(agent, tmp_path, monkeypatch):
+    monkeypatch.setattr(agent, "_KLON_COKLU_VERI", tmp_path)
+    assert agent._klon_coklu_net() is None
+    (tmp_path / "ozet.json").write_text(json.dumps({"semboller": {"NAS100": {"A": {"net": 12.5}, "B": {"net": -3.0}}}}), encoding="utf-8")
+    assert agent._klon_coklu_net() == {"NAS100": {"A": 12.5, "B": -3.0}}
