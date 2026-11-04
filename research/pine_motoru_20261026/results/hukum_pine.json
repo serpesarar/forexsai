@@ -1,0 +1,134 @@
+{
+ "kapsama": {
+  "scripts": 32741,
+  "uygulanan": 23361,
+  "oran": 0.7135,
+  "boost_agirlikli_oran": 0.7267,
+  "ndx_durum": {
+   "ok": 27552,
+   "unsupported": 3254,
+   "timeout": 995,
+   "runtime_error": 888,
+   "parse_error": 49,
+   "transpile_error": 3
+  },
+  "hata_siniflari": {
+   "request.security başka sembol": 2064,
+   "geçiş chart ": 941,
+   "PineError": 315,
+   "bar ": 304,
+   "geçiş chart D": 201,
+   "TypeError": 175,
+   "IndexError": 113,
+   "bilinmeyen ad footprint": 111,
+   "ZoneInfoNotFoundError": 65,
+   "alt TF S verisi yok": 57,
+   "bilinmeyen fonksiyon syminfo.ticker": 56,
+   "ValueError": 44,
+   "çok fazla geçiş": 41,
+   "renko": 40,
+   "bilinmeyen fonksiyon offset_fn": 35
+  },
+  "populerlige_gore": {
+   "en az popüler %25": 0.663,
+   "2. çeyrek": 0.725,
+   "3. çeyrek": 0.748,
+   "en popüler %25": 0.717
+  },
+  "lookahead_on": 1380
+ },
+ "hukum": {
+  "NDX": {
+   "durum_sayisi": 303438,
+   "script_durumlu": 22099,
+   "secilen": 500,
+   "kanitli": 2,
+   "bos_beklenti": 1.25,
+   "bos_q99": 4,
+   "kanitli_p": 0.355,
+   "dogr": "12/21",
+   "kasa": "10/24",
+   "kasa_simetri_p": 0.0243,
+   "kesif_esik_ustu_ufuk": 1,
+   "olculebilir_ufuk": 5,
+   "esikler": [
+    5.45,
+    5.38,
+    4.98,
+    4.67,
+    3.39,
+    NaN
+   ],
+   "kanitli_lookahead": 0
+  },
+  "DAX": {
+   "durum_sayisi": 303510,
+   "script_durumlu": 22102,
+   "secilen": 500,
+   "kanitli": 0,
+   "bos_beklenti": 1.25,
+   "bos_q99": 4,
+   "kanitli_p": 1.0,
+   "dogr": "16/15",
+   "kasa": "10/14",
+   "kasa_simetri_p": 0.5413,
+   "kesif_esik_ustu_ufuk": 1,
+   "olculebilir_ufuk": 5,
+   "esikler": [
+    5.44,
+    5.45,
+    5.15,
+    4.19,
+    1.18,
+    NaN
+   ],
+   "kanitli_lookahead": 0
+  },
+  "XAU": {
+   "durum_sayisi": 292261,
+   "script_durumlu": 21576,
+   "secilen": 500,
+   "kanitli": 2,
+   "bos_beklenti": 1.25,
+   "bos_q99": 4,
+   "kanitli_p": 0.355,
+   "dogr": "22/8",
+   "kasa": "12/12",
+   "kasa_simetri_p": 1.0,
+   "kesif_esik_ustu_ufuk": 3,
+   "olculebilir_ufuk": 5,
+   "esikler": [
+    6.02,
+    5.57,
+    5.38,
+    4.72,
+    3.41,
+    NaN
+   ],
+   "kanitli_lookahead": 0
+  },
+  "USOIL": {
+   "durum_sayisi": 293251,
+   "script_durumlu": 21612,
+   "secilen": 500,
+   "kanitli": 2,
+   "bos_beklenti": 1.25,
+   "bos_q99": 4,
+   "kanitli_p": 0.355,
+   "dogr": "23/4",
+   "kasa": "28/6",
+   "kasa_simetri_p": 0.0002,
+   "kesif_esik_ustu_ufuk": 0,
+   "olculebilir_ufuk": 5,
+   "esikler": [
+    5.38,
+    5.2,
+    5.19,
+    4.47,
+    3.33,
+    NaN
+   ],
+   "kanitli_lookahead": 0
+  }
+ }
+}

@@ -1,0 +1,68 @@
+{
+ "pencere": [
+  "full_15m_DAX",
+  "full_15m_NDX",
+  "full_15m_XAU",
+  "full_1d_DAX",
+  "full_1d_NDX",
+  "full_1d_USOIL",
+  "full_1d_XAU",
+  "full_1h_DAX",
+  "full_1h_NDX",
+  "full_1h_USOIL",
+  "full_1h_XAU",
+  "full_4h_DAX",
+  "full_4h_NDX",
+  "full_4h_USOIL",
+  "full_4h_XAU"
+ ],
+ "aday": 43631,
+ "tum": {
+  "ayni_yon": 21,
+  "ters_yon": 24,
+  "binom_p_ayni_fazla": 0.7242578350987401,
+  "ornek": [
+   [
+    "full_15m_DAX",
+    "full_15m_NDX",
+    "SELL",
+    1,
+    1
+   ],
+   [
+    "full_15m_DAX",
+    "full_1h_DAX",
+    "SELL",
+    11,
+    13
+   ],
+   [
+    "full_15m_NDX",
+    "full_1h_USOIL",
+    "BUY",
+    12,
+    14
+   ],
+   [
+    "full_15m_XAU",
+    "full_4h_NDX",
+    "BUY",
+    11,
+    10
+   ],
+   [
+    "full_1d_DAX",
+    "full_4h_DAX",
+    "BUY",
+    3,
+    5
+   ]
+  ]
+ },
+ "kanitli": {
+  "ayni_yon": 0,
+  "ters_yon": 0,
+  "binom_p_ayni_fazla": NaN,
+  "ornek": []
+ }
+}

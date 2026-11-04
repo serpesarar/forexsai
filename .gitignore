@@ -71,3 +71,6 @@ research/usoil_breakout_gate_2026-08-11/data/
 yeni deneme/caprev_state.json
 yeni deneme/caprev_state.tmp
 backend/data/candle_history/
+
+# Pine motoru — indirilen TradingView kaynakları ve çalıştırma çıktıları (büyük, yeniden üretilebilir)
+research/pine_motoru_20261026/data/
