@@ -21,9 +21,13 @@ def main() -> None:
     print("olaylar:", dict(collections.Counter(r["olay"] for r in R)))
     # ekleme -> TP güncelleme gecikmesi (yoklama çözünürlüğü 0,5 sn)
     giris = {r["ticket"]: r for r in R if r["olay"] == "giris"}
-    lag = [r["goruldu_msc"] - g["time_msc"] for r in R if r["olay"] == "tp_degisti" and (g := giris.get(r["ticket"]))]
+    ilk_tp: dict[int, dict] = {}
+    for r in R:                       # yalnız bacağın İLK TP değişikliği: sonrakiler başka eklemelerin sonucu
+        if r["olay"] == "tp_degisti" and r["ticket"] in giris:
+            ilk_tp.setdefault(r["ticket"], r)
+    lag = [r["goruldu_msc"] - giris[t]["time_msc"] for t, r in ilk_tp.items()]
     if lag:
-        print(f"yeni bacakta ilk TP görülme: medyan {statistics.median(lag) / 1000:.2f} sn, max {max(lag) / 1000:.1f} sn (n={len(lag)})")
+        print(f"yeni bacakta İLK TP değişikliği: medyan {statistics.median(lag) / 1000:.2f} sn, max {max(lag) / 1000:.1f} sn (n={len(lag)})")
     gs = [r["bar_sn"] for r in R if r["olay"] == "giris"]
     if gs:
         print(f"giriş bar içi saniye: medyan {statistics.median(gs):.2f}, >=20 sn: {sum(x >= 20 for x in gs)}/{len(gs)}")
