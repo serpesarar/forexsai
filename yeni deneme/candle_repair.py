@@ -11,8 +11,12 @@ o parça değiştirilmez. Tekrar çalıştırmak güvenlidir.
 Varsayılan kuru koşudur. Önce kaynak doğrulanır: MT5'ten kurulan seri son günlerde
 indicator_snapshots ile uyuşmuyorsa yazmadan çıkılır.
 
+Kuru koşu silinecek satırları DELETE_PLAN_FILE'a döker (inceleme için). Silme ayrı
+karardır: --apply yalnız günceller/ekler, --apply --delete silmeyi de yapar.
+
     python candle_repair.py
     python candle_repair.py --apply
+    python candle_repair.py --apply --delete
 """
 from __future__ import annotations
 
@@ -32,6 +36,7 @@ mt5 = dr.mt5
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 BACKUP_FILE = Path(__file__).parent / "candle_repair_backup_2026-11-04.jsonl"
+DELETE_PLAN_FILE = Path(__file__).parent / "candle_repair_delete_plan_2026-11-04.jsonl"
 SOURCE = "mt5_repair"
 MAX_BARS = 99999
 PAGE_SIZE = 1000
@@ -120,7 +125,10 @@ def backup(rows: list, action: str) -> None:
             fh.write(json.dumps({"action": action, **row}) + "\n")
 
 
-def apply_changes(client, fx: str, tf: str, updates: list, deletes: list, inserts: list) -> None:
+def apply_changes(client, fx: str, tf: str, updates: list, deletes: list, inserts: list,
+                  allow_delete: bool) -> None:
+    if not allow_delete:
+        deletes = []
     backup([row for row, _, _ in updates], "update")
     backup(deletes, "delete")
     now = datetime.now(timezone.utc).isoformat()
@@ -139,7 +147,8 @@ def apply_changes(client, fx: str, tf: str, updates: list, deletes: list, insert
                                             on_conflict="symbol,timeframe,candle_time").execute()
 
 
-def process(client, fx: str, mt5_symbol: str, tf: str, until: datetime, apply: bool) -> dict:
+def process(client, fx: str, mt5_symbol: str, tf: str, until: datetime, apply: bool,
+            allow_delete: bool) -> dict:
     truth = load_truth(mt5_symbol, TIMEFRAMES[tf], until)
     if not truth:
         print(f"  {fx} {tf}: MT5 barı yok, atlandı")
@@ -153,14 +162,18 @@ def process(client, fx: str, mt5_symbol: str, tf: str, until: datetime, apply: b
     print(f"  {fx:12s} {tf:3s} mt5={len(truth):6d} tablo={len(existing):6d} güncelle={len(updates):6d} "
           f"sil={len(deletes):5d} ekle={len(inserts):5d} derinlik-öncesi={untouched_old:5d} "
           f"derinlik={depth_start:%Y-%m-%d} sil/ay={dict(sorted(by_month.items()))}", flush=True)
+    with DELETE_PLAN_FILE.open("a", encoding="utf-8") as fh:
+        for row in deletes:
+            fh.write(json.dumps(row) + "\n")
     if apply:
-        apply_changes(client, fx, tf, updates, deletes, inserts)
+        apply_changes(client, fx, tf, updates, deletes, inserts, allow_delete)
     return {"updates": len(updates), "deletes": len(deletes), "inserts": len(inserts)}
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--apply", action="store_true")
+    ap.add_argument("--delete", action="store_true", help="--apply ile: hayalet satırları da sil")
     ap.add_argument("--tfs", default=",".join(TIMEFRAMES))
     ap.add_argument("--symbols", default=",".join(config.RECORDER_SYMBOLS))
     args = ap.parse_args()
@@ -170,6 +183,7 @@ def main() -> int:
     if not ok:
         print("mt5.initialize başarısız:", mt5.last_error())
         return 1
+    DELETE_PLAN_FILE.unlink(missing_ok=True)
     try:
         offset = dr.detect_server_offset()
         now = datetime.now(timezone.utc)
@@ -189,7 +203,7 @@ def main() -> int:
         totals: Counter = Counter()
         for fx in symbols:
             for tf in args.tfs.split(","):
-                totals.update(process(client, fx, config.RECORDER_SYMBOLS[fx], tf, until, args.apply))
+                totals.update(process(client, fx, config.RECORDER_SYMBOLS[fx], tf, until, args.apply, args.delete))
         print("TOPLAM", dict(totals))
     finally:
         mt5.shutdown()
