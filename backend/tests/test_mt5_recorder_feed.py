@@ -149,3 +149,17 @@ def test_database_error_cannot_masquerade_as_empty_recorder_data():
         def execute(self): return {'data': [], 'error': 'permission denied'}
     with pytest.raises(RuntimeError, match='database read failed'):
         feed._fetch(DB(), 'USOIL.FOREX', '1m', None, 10)
+
+
+def test_yukleme_sirasinda_sahiplik_ve_gec_yahoo_reddi(monkeypatch):
+    sym = "GDAXI.INDX"
+    monkeypatch.setitem(feed._state, "running", True)
+    monkeypatch.setitem(feed._state, "symbols", {sym: {"seeded": False, "seeding": True}})
+    assert hub.recorder_feed_owns(sym) is True
+    broker = [{"timestamp": 1793700000000, "open": 24000.0, "high": 24001.0, "low": 23999.0,
+               "close": 24000.5, "volume": 10}]
+    assert hub.replace_candles(sym, "1m", broker, hub.MT5_RECORDER_SOURCE)
+    late = [{"timestamp": 1793700060000, "open": 23980.0, "high": 23981.0, "low": 23979.0,
+             "close": 23980.5, "volume": 2000000}]
+    assert asyncio.run(hub.ingest_candles(sym, "1m", late, source="dynamic_fallback")) == 0
+    assert [c["close"] for c in hub.get_candles(sym, "1m", 10)] == [24000.5]

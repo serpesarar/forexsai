@@ -372,7 +372,9 @@ def recorder_feed_owns(symbol: str) -> bool:
     if not feed_state.get("running"):
         return False
     st = (feed_state.get("symbols") or {}).get(_canonical_symbol(symbol))
-    return bool(st and st.get("seeded"))
+    # "seeding": ilk yükleme sürerken de sahip. 2026-11-04: pompa o aralıkta Yahoo
+    # barlarını yeni yüklenen broker serisine karıştırdı (DAX 1m 3.639 bar, 3.000 yerine).
+    return bool(st and (st.get("seeded") or st.get("seeding")))
 
 
 def _mt5_price_is_fresh(symbol: str) -> bool:
@@ -879,6 +881,7 @@ PERSIST_INTERVAL = 900                       # 15 minutes between Supabase write
 #: yedeği (upstream_poll, dynamic_fallback) ^NDX/^GDAXI/GC=F/CL=F barlarını broker
 #: satırlarının üstüne yazıyordu. Yedek bellekte çalışabilir, kalıcı tabloya giremez.
 _INTRADAY_PERSIST_SOURCES = {"mt5_redis"}
+_FALLBACK_SOURCES = {"upstream_poll", "dynamic_fallback"}
 _EOD_TIMEFRAME = "eod"          # kaydedici günlük bar yazmaz, tek kaynak yukarıdan
 _EOD_CACHE_SOURCE = "upstream_eod"
 
@@ -1054,7 +1057,7 @@ async def _pump_cycle():
                     fetch_limit = FULL_SEED_LIMIT_5M if is_seed else DELTA_LIMIT_5M
                     candles = await _fetch_candles_from_api(symbol, "5m", limit=fetch_limit)
 
-                if candles:
+                if candles and not recorder_feed_owns(symbol):
                     with _lock:
                         existing = (_candles_5m.get(symbol) or {}).get("candles", [])
                         merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_5M, interval_ms=300_000)
@@ -1106,7 +1109,7 @@ async def _pump_cycle():
                 else:
                     fetch_limit = FULL_SEED_LIMIT_1H if is_seed else DELTA_LIMIT_1H
                     candles = await _fetch_candles_from_api(symbol, "1h", limit=fetch_limit)
-                    if candles:
+                    if candles and not recorder_feed_owns(symbol):
                         with _lock:
                             existing = (_candles_1h.get(symbol) or {}).get("candles", [])
                             merged = _merge_candles(existing, candles, FULL_SEED_LIMIT_1H, interval_ms=3_600_000)
@@ -1788,6 +1791,10 @@ async def ingest_candles(
     # 15m and 4h are derived-only — never ingested directly
     if store is None or tf in {"15m", "4h", "20m"}:
         logger.debug("[DataHub] Derived-only timeframe %s skipped for %s", timeframe, canonical_symbol)
+        return 0
+
+    # Sahiplik Yahoo isteği yoldayken alınmış olabilir: geç gelen yanıt seriye girmesin
+    if source in _FALLBACK_SOURCES and recorder_feed_owns(canonical_symbol):
         return 0
 
     normalized_candles = [

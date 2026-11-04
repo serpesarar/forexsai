@@ -115,6 +115,7 @@ async def _cycle(db) -> None:
     for symbol in feed_symbols():
         st = _state["symbols"].setdefault(symbol, {"seeded": False, "last_ts": {}, "bars": {}})
         c1m: List[Dict[str, Any]] = []
+        st["seeding"] = not st["seeded"]      # Yahoo yedeği yükleme bitene dek serinin dışında
         for tf, ms in TF_MS.items():
             if not st["seeded"]:
                 candles = await asyncio.to_thread(_fetch, db, symbol, tf, None, INITIAL_BARS[tf])
@@ -135,6 +136,7 @@ async def _cycle(db) -> None:
         got = all(st["bars"].get(tf) for tf in TF_MS)
         if not st["seeded"]:
             st["seeded"] = got
+            st["seeding"] = False
             if not got:
                 st["empty_reads"] = st.get("empty_reads", 0) + 1
                 logger.warning("[recorder-feed] %s: %s tablosundan veri okunamadı "
