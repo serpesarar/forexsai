@@ -786,5 +786,18 @@
   "needs_backend": false,
   "est_runtime": "~2.5 saat tüm semboller (NDX 1m ≈ 86 dk); tek TF dakikalar",
   "learn_targets": []
+ },
+ {
+  "id": "time_machine_kalibrasyon",
+  "name": "Zaman Makinesi kalibrasyonu (TM-01/TM-01b)",
+  "kind": "script",
+  "command": "cd research/zaman_makinesi_20261104 && python3 kalibrasyon.py && python3 aralik.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "NDX/XAU/USOIL 5m arşivde 4.680 sızıntısız karar: araç olasılıklarının Brier'i sabit tabana karşı + kova kalibrasyonu; ufuk-sonu %90/%50 fiyat aralığı kapsaması (saat-koşulsuz kıyasla). Sonuç backend/data/time_machine_calibration.json'a (panel karnesi).",
+  "output": "research/zaman_makinesi_20261104/sonuc*.json",
+  "needs_backend": false,
+  "est_runtime": "~3 dk",
+  "learn_targets": []
  }
 ]

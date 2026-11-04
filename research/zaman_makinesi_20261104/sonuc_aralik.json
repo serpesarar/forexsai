@@ -1,0 +1,38 @@
+{
+ "NDX": {
+  "n": 920,
+  "kapsama90_%": 90.32608695652173,
+  "kapsama50_%": 61.84782608695652,
+  "saatsiz_kapsama90_%": 90.76086956521739,
+  "saatsiz_kapsama50_%": 66.08695652173913,
+  "genislik90_medyan_%": 1.0277903591102606,
+  "saatsiz_genislik90_medyan_%": 1.1851024162658792
+ },
+ "XAUUSD": {
+  "n": 706,
+  "kapsama90_%": 90.22662889518413,
+  "kapsama50_%": 59.490084985835686,
+  "saatsiz_kapsama90_%": 90.08498583569406,
+  "saatsiz_kapsama50_%": 61.47308781869688,
+  "genislik90_medyan_%": 1.3720456564076993,
+  "saatsiz_genislik90_medyan_%": 1.4072404828429654
+ },
+ "USOIL": {
+  "n": 707,
+  "kapsama90_%": 90.52333804809052,
+  "kapsama50_%": 56.85997171145686,
+  "saatsiz_kapsama90_%": 90.80622347949081,
+  "saatsiz_kapsama50_%": 59.4059405940594,
+  "genislik90_medyan_%": 2.2616589701965397,
+  "saatsiz_genislik90_medyan_%": 2.088292117058787
+ },
+ "tum": {
+  "n": 2333,
+  "kapsama90_%": 90.35576510930133,
+  "kapsama50_%": 59.622803257608226,
+  "saatsiz_kapsama90_%": 90.57008144020574,
+  "saatsiz_kapsama50_%": 62.66609515645092,
+  "genislik90_medyan_%": 1.3816270661753687,
+  "saatsiz_genislik90_medyan_%": 1.4564213349234605
+ }
+}

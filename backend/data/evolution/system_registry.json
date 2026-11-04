@@ -1096,5 +1096,12 @@
       "require_admin"
     ],
     "status_hint": "Anonymous requests return 401; non-operators return 403; existing verified operators retain access through Bearer headers."
+  },
+  {
+    "id": "time_machine_service",
+    "name": "Zaman Makinesi (day-trader-skill trader-timemachine uyarlaması)",
+    "file": "backend/services/time_machine_service.py",
+    "category": "analysis",
+    "purpose": "Bir işlem planının (yön, ATR stop, R hedef, ufuk) olasılıklarını son 60 seansın aynı gün-saatindeki 5m mumlarından Monte Carlo ile + aynı planın geçmiş seanslardaki gerçek sonucunu verir (MIT, Jake Schincariol). API /api/time-machine/{symbol}, panel /mum-eslestirme. TM-01: olasılık meyli tabanı geçmiyor (X), %90 fiyat aralığı kalibre (A)."
   }
 ]

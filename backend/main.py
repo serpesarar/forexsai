@@ -658,6 +658,7 @@ router_module_names = [
     "fakeout_router",
     "shadow_tracker_router",
     "candle_similarity_router",
+    "time_machine_router",
 ]
 
 for module_name in router_module_names:

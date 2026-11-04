@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { ArrowLeft } from "lucide-react";
 
 import CandleSimilarityPanel from "@/components/CandleSimilarityPanel";
+import TimeMachinePanel from "@/components/TimeMachinePanel";
 
 function Inner() {
   const sp = useSearchParams();
@@ -22,6 +23,7 @@ function Inner() {
           Fiyat düzeyi ve hareketin büyüklüğü fark etmez; yalnız şekil önemlidir.
         </p>
         <CandleSimilarityPanel initialSymbol={symbol} />
+        <TimeMachinePanel initialSymbol={symbol} />
       </div>
     </main>
   );
