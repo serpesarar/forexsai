@@ -1,0 +1,37 @@
+BUY n=595
+Hücre | EV_R | WR | P(EV>0) gün-boot | spread×1.5 EV_R | +1dk gecikme EV_R | journal-ATR tabanı EV_R
+  orijinal             +0.003 | 0.610 | 0.54 | -0.008 | -0.008 | +0.003
+  ATR tp1.0/sl0.75     +0.036 | 0.444 | 0.78 | -0.007 | -0.008 | +0.005
+  ATR tp1.25/sl0.75    +0.072 | 0.402 | 0.88 | +0.036 | +0.013 | +0.018
+  ATR tp1.5/sl0.75     +0.075 | 0.358 | 0.87 | +0.035 | +0.013 | +0.004
+  ATR tp1.25/sl1.0     +0.041 | 0.462 | 0.80 | +0.034 | +0.018 | +0.056
+  ATR tp1.25/sl1.5     +0.018 | 0.555 | 0.66 | +0.006 | +0.008 | +0.009
+
+Sıra-bağımlı (önceki pozisyon kapanmadan yeni karar alınmaz):
+  orijinal             n=471 EV_R=+0.035 WR=0.626 P(EV>0)=0.86 H1=+0.056 H2=+0.013 | $ /0.01lot ort=+0.271
+  ATR tp1.0/sl0.75     n=552 EV_R=+0.050 WR=0.449 P(EV>0)=0.87 H1=+0.014 H2=+0.085 | $ /0.01lot ort=+0.242
+  ATR tp1.25/sl0.75    n=527 EV_R=+0.089 WR=0.408 P(EV>0)=0.96 H1=+0.054 H2=+0.124 | $ /0.01lot ort=+0.415
+  ATR tp1.5/sl0.75     n=516 EV_R=+0.083 WR=0.360 P(EV>0)=0.93 H1=+0.047 H2=+0.119 | $ /0.01lot ort=+0.388
+  ATR tp1.25/sl1.0     n=496 EV_R=+0.049 WR=0.466 P(EV>0)=0.87 H1=+0.061 H2=+0.037 | $ /0.01lot ort=+0.425
+  ATR tp1.25/sl1.5     n=436 EV_R=+0.028 WR=0.560 P(EV>0)=0.72 H1=+0.051 H2=+0.005 | $ /0.01lot ort=+0.477
+
+Haftalık EV_R (n) — aday tp1.25/sl0.75 ve orijinal:
+  2026-W27: n=  6 orij +0.167 | tp1.25/sl0.75 -0.556 | tp1.25/sl1.0 -0.625
+  2026-W29: n=  1 orij -1.000 | tp1.25/sl0.75 -1.000 | tp1.25/sl1.0 -1.000
+  2026-W30: n=  4 orij +0.050 | tp1.25/sl0.75 +0.333 | tp1.25/sl1.0 +0.125
+  2026-W31: n=160 orij -0.073 | tp1.25/sl0.75 -0.083 | tp1.25/sl1.0 -0.030
+  2026-W34: n= 58 orij +0.178 | tp1.25/sl0.75 +0.471 | tp1.25/sl1.0 +0.319
+  2026-W35: n= 49 orij +0.054 | tp1.25/sl0.75 +0.034 | tp1.25/sl1.0 +0.010
+  2026-W36: n= 64 orij +0.198 | tp1.25/sl0.75 +0.167 | tp1.25/sl1.0 +0.195
+  2026-W37: n= 55 orij -0.121 | tp1.25/sl0.75 +0.164 | tp1.25/sl1.0 +0.023
+  2026-W41: n=132 orij -0.041 | tp1.25/sl0.75 +0.111 | tp1.25/sl1.0 +0.040
+  2026-W42: n= 66 orij -0.002 | tp1.25/sl0.75 -0.061 | tp1.25/sl1.0 -0.068
+  orijinal: pozitif hafta oranı 50% | tek-hafta-dışarıda EV aralığı [-0.020, +0.031]
+  ATR tp1.25/sl0.75: pozitif hafta oranı 60% | tek-hafta-dışarıda EV aralığı [+0.029, +0.129]
+  ATR tp1.25/sl1.0: pozitif hafta oranı 60% | tek-hafta-dışarıda EV aralığı [+0.011, +0.067]
+
+Model epoku (tp1.25/sl0.75 | orijinal):
+  claude-opus-5        n=217 +0.057 | -0.009
+  claude-sonnet-5      n=175 +0.143 | +0.048
+  claude-sonnet-5-5    n=192 +0.045 | -0.024
+  opus                 n= 11 -0.273 | +0.018

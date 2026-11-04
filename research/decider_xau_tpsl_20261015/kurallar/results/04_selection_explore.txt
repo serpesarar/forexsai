@@ -1,0 +1,56 @@
+=== (i) size_factor ↔ R (BUY, n=595)
+  G1_tp1.0_sl1.5: Spearman +0.034 [%95 -0.052,+0.114]
+  G2_tp1.25_sl0.75: Spearman -0.043 [%95 -0.116,+0.033]
+  G3_tp3.0_sl1.5_t120: Spearman -0.033 [%95 -0.112,+0.055]
+=== (ii) lot kademesine göre EV (BUY)
+  G1_tp1.0_sl1.5: lot 0.01: n=304 EV -0.024 | lot 0.02: n=198 EV +0.023 | lot 0.03: n=93 EV +0.022
+  G2_tp1.25_sl0.75: lot 0.01: n=304 EV +0.088 | lot 0.02: n=198 EV +0.094 | lot 0.03: n=93 EV -0.082
+  G3_tp3.0_sl1.5_t120: lot 0.01: n=304 EV -0.014 | lot 0.02: n=198 EV -0.070 | lot 0.03: n=93 EV -0.085
+  size_factor çeyrekleri (G1/G2): (0.099, 0.15]: n=296 -0.015/+0.108 | (0.15, 0.18]: n=8 -0.375/-0.667 | (0.18, 0.25]: n=198 +0.023/+0.094 | (0.25, 0.5]: n=93 +0.022/-0.082
+  $ toplamı gerçek lot vs sabit 0,01 lot (G1): +245.2$ vs +85.3$
+
+=== (iii) OPEN BUY vs aynı günlerdeki OPEN-olmayan danışmalar (C3, BUY simüle, extremity ≥1,6)
+  ortak gün 22 | OPEN BUY n=289 | OPEN-olmayan n=187 (sahte WAIT 143, gerçek WAIT 44)
+  G1_tp1.0_sl1.5: OPEN +0.078 vs OPEN-olmayan +0.016 → fark +0.062 [%95 -0.119,+0.222] P(>0) 0.74
+  G2_tp1.25_sl0.75: OPEN +0.107 vs OPEN-olmayan +0.062 → fark +0.045 [%95 -0.236,+0.298] P(>0) 0.59
+  G3_tp3.0_sl1.5_t120: OPEN +0.070 vs OPEN-olmayan +0.062 → fark +0.008 [%95 -0.285,+0.272] P(>0) 0.51
+  aylara göre (G1/G2) OPEN vs OPEN-olmayan:
+    07: OPEN n=50 -0.100/-0.200 | OPEN-olmayan n=22 +0.091/+0.470
+    08: OPEN n=92 +0.123/+0.188 | OPEN-olmayan n=122 +0.019/-0.052
+    09: OPEN n=94 +0.082/+0.106 | OPEN-olmayan n=39 -0.060/+0.231
+    10: OPEN n=53 +0.164/+0.258 | OPEN-olmayan n=4 +0.250/-0.333
+=== (iv) gerçek WAIT (model seçti) vs sahte WAIT (CLI hatası, seçim yok) — BUY simüle
+  G1_tp1.0_sl1.5: gerçek WAIT n=226 -0.065 | sahte WAIT n=750 -0.125 | dönemler gerçek 07-01→10-09, sahte 07-02→10-13
+  G2_tp1.25_sl0.75: gerçek WAIT n=226 -0.031 | sahte WAIT n=750 -0.136 | dönemler gerçek 07-01→10-09, sahte 07-02→10-13
+  G3_tp3.0_sl1.5_t120: gerçek WAIT n=226 -0.068 | sahte WAIT n=750 -0.133 | dönemler gerçek 07-01→10-09, sahte 07-02→10-13
+=== (v) yön seçimi: decider SELL açtığında aynı an BUY olsaydı (C3 BUY simüle) vs SELL'in kendi R'si
+  G1_tp1.0_sl1.5: n=43 SELL -0.031 | aynı an BUY-cf -0.109
+  G2_tp1.25_sl0.75: n=43 SELL +0.054 | aynı an BUY-cf -0.194
+  G3_tp3.0_sl1.5_t120: n=43 SELL -0.114 | aynı an BUY-cf +0.132
+
+##### KEŞİF (ön-kayıt sonrası; verdikt almaz)
+R1 (güç tetik) ay kırılımı — G1/G2: güç vs dip
+  06: güç n=0 +nan/+nan | dip n=6 -0.444/-0.556
+  07: güç n=67 +0.119/+0.154 | dip n=98 -0.150/-0.238
+  08: güç n=47 +0.064/+0.362 | dip n=64 +0.172/+0.167
+  09: güç n=61 +0.011/+0.180 | dip n=54 +0.111/+0.136
+  10: güç n=96 -0.028/+0.028 | dip n=102 -0.093/+0.052
+R1 × D2 (G1/G2):
+  güç=False D2-blok=False: n=228 +0.012/-0.003
+  güç=False D2-blok=True: n=90 -0.111/+0.007
+  güç=True D2-blok=False: n=247 +0.026/+0.134
+  güç=True D2-blok=True: n=24 +0.111/+0.333
+R1 icra edilen (Ekim demo) vs gölge (G1/G2):
+  güç=False icra=False: n=292 -0.027/-0.021
+  güç=False icra=True: n=32 -0.062/+0.083
+  güç=True icra=False: n=235 +0.014/+0.112
+  güç=True icra=True: n=36 +0.157/+0.407
+R2 (D2) 09-14 SONRASI (D2 için örneklem-dışı) n=198 gün 9:
+  G1_tp1.0_sl1.5: D2-temiz n=156 -0.055 | D2-blok n=42 -0.087
+  G2_tp1.25_sl0.75: D2-temiz n=156 +0.013 | D2-blok n=42 +0.143
+  G3_tp3.0_sl1.5_t120: D2-temiz n=156 -0.097 | D2-blok n=42 +0.056
+  ÖNCESİ G1_tp1.0_sl1.5: D2-temiz n=319 +0.055 | D2-blok n=72 -0.051
+  ÖNCESİ G2_tp1.25_sl0.75: D2-temiz n=319 +0.095 | D2-blok n=72 +0.037
+R1 C3 OPEN-olmayanlarda aylara göre (G2): 07: güç n=124 -0.051 dip -0.051 | 08: güç n=72 -0.148 dip -0.018 | 09: güç n=222 -0.087 dip -0.165 | 10: güç n=64 -0.167 dip -0.205
+R7 C3 OPEN-olmayanlarda aylara göre (G2): 07: yakın n=49 +0.096 uzak -0.088 | 08: yakın n=39 -0.179 uzak -0.052 | 09: yakın n=108 +0.111 uzak -0.199 | 10: yakın n=28 -0.333 uzak -0.139
+R7 decider BUY aylara göre (G2): 06: yakın n=0 +nan uzak -0.556 | 07: yakın n=11 -0.030 uzak -0.082 | 08: yakın n=30 +0.244 uzak +0.251 | 09: yakın n=33 +0.212 uzak +0.138 | 10: yakın n=42 +0.206 uzak -0.004

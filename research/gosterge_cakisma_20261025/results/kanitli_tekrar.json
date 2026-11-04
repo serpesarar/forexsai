@@ -1,0 +1,180 @@
+[
+ {
+  "sym": "NDX",
+  "tf": "5m",
+  "h": 8,
+  "combo": "T:RANGEFILT:dir+ & R:HMA21:slope+ & S:SMA200:px-",
+  "dir": "BUY",
+  "komsu_ufuk": "1/2",
+  "komsu_ufuk_z": [
+   1.82,
+   1.21
+  ],
+  "ayni_sembol_diger_tf": "7+/1-/36",
+  "diger_sembol": "16+/13-/102"
+ },
+ {
+  "sym": "NDX",
+  "tf": "4h",
+  "h": 2,
+  "combo": "T:PVO:expand_dir+ & S:PIVOT:r1s1+ & R:ROOFING:dir+",
+  "dir": "BUY",
+  "komsu_ufuk": "1/2",
+  "komsu_ufuk_z": [
+   1.87,
+   0.97
+  ],
+  "ayni_sembol_diger_tf": "1+/2-/24",
+  "diger_sembol": "0+/4-/30"
+ },
+ {
+  "sym": "DAX",
+  "tf": "15m",
+  "h": 2,
+  "combo": "T:BOP14:zero+ & S:RANGEFILT:dir- & S:TWAP:px-",
+  "dir": "SELL",
+  "komsu_ufuk": "1/2",
+  "komsu_ufuk_z": [
+   1.14,
+   1.65
+  ],
+  "ayni_sembol_diger_tf": "0+/7-/24",
+  "diger_sembol": "8+/8-/114"
+ },
+ {
+  "sym": "DAX",
+  "tf": "15m",
+  "h": 2,
+  "combo": "T:UTBOT:dir+ & R:BOP14:zero+ & S:TWAP:px-",
+  "dir": "SELL",
+  "komsu_ufuk": "1/2",
+  "komsu_ufuk_z": [
+   1.57,
+   1.7
+  ],
+  "ayni_sembol_diger_tf": "1+/9-/24",
+  "diger_sembol": "18+/7-/114"
+ },
+ {
+  "sym": "DAX",
+  "tf": "30m",
+  "h": 1,
+  "combo": "T:UTBOT:dir- & R:KAMA10:px+ & R:WMA20:slope-",
+  "dir": "SELL",
+  "komsu_ufuk": "0/1",
+  "komsu_ufuk_z": [
+   1.22
+  ],
+  "ayni_sembol_diger_tf": "2+/3-/24",
+  "diger_sembol": "5+/11-/114"
+ },
+ {
+  "sym": "DAX",
+  "tf": "4h",
+  "h": 4,
+  "combo": "T:DEMA20:px+ & S:SMA50:slope- & S:RANGEFILT:dir-",
+  "dir": "BUY",
+  "komsu_ufuk": "1/2",
+  "komsu_ufuk_z": [
+   1.9,
+   1.52
+  ],
+  "ayni_sembol_diger_tf": "4+/2-/24",
+  "diger_sembol": "8+/1-/114"
+ },
+ {
+  "sym": "XAU",
+  "tf": "30m",
+  "h": 1,
+  "combo": "T:SWINGLEG:leg+ & R:ROUNDNUM:near+ & S:TSI:zero+",
+  "dir": "SELL",
+  "komsu_ufuk": "0/1",
+  "komsu_ufuk_z": [
+   1.15
+  ],
+  "ayni_sembol_diger_tf": "1+/1-/30",
+  "diger_sembol": "3+/8-/108"
+ },
+ {
+  "sym": "USOIL",
+  "tf": "15m",
+  "h": 8,
+  "combo": "T:CHANDELIER:dir- & S:SWINGLEG:leg+ & S:STRUCT5:trend-",
+  "dir": "BUY",
+  "komsu_ufuk": "2/2",
+  "komsu_ufuk_z": [
+   2.45,
+   2.75
+  ],
+  "ayni_sembol_diger_tf": "1+/4-/30",
+  "diger_sembol": "14+/3-/108"
+ },
+ {
+  "sym": "USOIL",
+  "tf": "30m",
+  "h": 16,
+  "combo": "T:COPPOCK:zero- & R:TSI:sig- & S:BOP14:zero-",
+  "dir": "BUY",
+  "komsu_ufuk": "1/2",
+  "komsu_ufuk_z": [
+   1.98,
+   0.3
+  ],
+  "ayni_sembol_diger_tf": "2+/0-/30",
+  "diger_sembol": "11+/8-/108"
+ },
+ {
+  "sym": "USOIL",
+  "tf": "1h",
+  "h": 1,
+  "combo": "T:ZLEMA20:px+ & S:HALFTREND:dir+ & R:KALMAN:px+",
+  "dir": "BUY",
+  "komsu_ufuk": "0/1",
+  "komsu_ufuk_z": [
+   1.58
+  ],
+  "ayni_sembol_diger_tf": "0+/2-/30",
+  "diger_sembol": "9+/7-/108"
+ },
+ {
+  "sym": "USOIL",
+  "tf": "1h",
+  "h": 1,
+  "combo": "T:WILLR14:zone+ & S:QQE:trend+ & R:WAVETREND:cross-",
+  "dir": "BUY",
+  "komsu_ufuk": "0/1",
+  "komsu_ufuk_z": [
+   0.61
+  ],
+  "ayni_sembol_diger_tf": "2+/2-/30",
+  "diger_sembol": "13+/9-/108"
+ },
+ {
+  "sym": "USOIL",
+  "tf": "1h",
+  "h": 2,
+  "combo": "T:TEMA20:px+ & S:LRCH100:slope- & S:SSMOOTH10:slope-",
+  "dir": "BUY",
+  "komsu_ufuk": "1/2",
+  "komsu_ufuk_z": [
+   0.65,
+   2.34
+  ],
+  "ayni_sembol_diger_tf": "1+/0-/30",
+  "diger_sembol": "14+/2-/108"
+ },
+ {
+  "sym": "USOIL",
+  "tf": "4h",
+  "h": 4,
+  "combo": "T:ZLEMA20:px- & R:ORDERBLOCK:retest+ & S:STC:dir+",
+  "dir": "SELL",
+  "komsu_ufuk": "1/2",
+  "komsu_ufuk_z": [
+   2.05,
+   0.54
+  ],
+  "ayni_sembol_diger_tf": "1+/2-/30",
+  "diger_sembol": "13+/4-/108"
+ }
+]

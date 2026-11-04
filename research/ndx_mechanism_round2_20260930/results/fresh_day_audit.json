@@ -1,0 +1,10 @@
+{
+  "offset_seconds": 10800,
+  "point": 0.1,
+  "digits": 1,
+  "start": "2026-09-29T00:00:00+00:00",
+  "end": "2026-10-01T00:00:00+00:00",
+  "rows": 2759,
+  "sha256": "8b0738a607142e696d63615c7d22f94400237db469b06226b9ba15b23696e288",
+  "purpose": "Rules frozen before the new Sep30 day. MT5 read-only; no orders/files/config on box."
+}

@@ -1,0 +1,4 @@
+FOMC  n=  95 ortR +0.137 vs +0.078 CI_fark [-0.353, 0.491] | P3 0.147 vs 0.069 CI_fark [0.01, 0.151] | yarı farkı ortR +0.064/+0.056 P3 +0.076/+0.082 | rastgele BUY n=1083 ortR +0.109 vs +0.035 P3 0.113 vs 0.060
+CPI   n=  91 ortR +0.385 vs +0.071 CI_fark [-0.126, 0.797] | P3 0.132 vs 0.069 CI_fark [-0.006, 0.136] | yarı farkı ortR +0.531/+0.102 P3 +0.069/+0.056 | rastgele BUY n=1579 ortR +0.070 vs +0.035 P3 0.078 vs 0.061
+NFP   n=  69 ortR -0.085 vs +0.082 CI_fark [-0.603, 0.324] | P3 0.101 vs 0.070 CI_fark [-0.032, 0.103] | yarı farkı ortR +0.417/-0.435 P3 +0.174/-0.035 | rastgele BUY n=1558 ortR -0.053 vs +0.040 P3 0.074 vs 0.061
+JH    n=  14 ortR +0.862 vs +0.076 CI_fark [-0.422, 2.203] | P3 0.214 vs 0.070 CI_fark [-0.067, 0.389] | yarı farkı ortR -0.339/+2.290 P3 +0.059/+0.259 | rastgele BUY n=125 ortR +0.504 vs +0.035 P3 0.176 vs 0.061

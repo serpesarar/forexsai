@@ -1,0 +1,22 @@
+F2 yıl bazında ortR(bayraklı) − ortR(bayraksız), taban tek-poz:
+  2008:+0.48(n75) 2009:+0.23(n82) 2010:+0.42(n69) 2011:+0.45(n73) 2012:+0.12(n73) 2013:+0.19(n74) 2014:+0.18(n74) 2015:-0.06(n52) 2016:+0.90(n68) 2017:-0.35(n76) 2018:-0.04(n69) 2019:+0.22(n76) 2020:+0.27(n71) 2021:-0.21(n75) 2022:+0.11(n56) 2023:+0.06(n65) 2024:+0.19(n80) 2025:+0.48(n66) 2026:-0.23(n22)
+  pozitif yıl: 2008-16 8/9, 2017-26 6/10
+F10 yıl bazında ortR(bayraklı) − ortR(bayraksız), taban tek-poz:
+  2008:-0.03(n192) 2009:+0.42(n212) 2010:+0.08(n145) 2011:+0.26(n97) 2012:-0.17(n43) 2013:+nan(n0) 2014:-0.16(n6) 2015:+0.11(n28) 2016:+0.45(n37) 2017:+nan(n0) 2018:-0.08(n45) 2019:-0.18(n13) 2020:-0.42(n166) 2021:-0.32(n69) 2022:+0.52(n169) 2023:+0.42(n33) 2024:+0.14(n23) 2025:+0.07(n54) 2026:-0.11(n24)
+  pozitif yıl: 2008-16 5/8, 2017-26 4/9
+F7 yıl bazında ortR(bayraklı) − ortR(bayraksız), taban tek-poz:
+  2008:+nan(n0) 2009:-0.06(n22) 2010:-0.42(n21) 2011:-0.06(n32) 2012:+nan(n0) 2013:+nan(n0) 2014:+nan(n0) 2015:+nan(n0) 2016:-0.54(n6) 2017:-0.82(n3) 2018:+nan(n0) 2019:-0.16(n7) 2020:+0.73(n24) 2021:+nan(n0) 2022:-1.14(n4) 2023:-1.09(n3) 2024:-0.11(n30) 2025:-0.11(n44) 2026:-0.84(n7)
+  pozitif yıl: 2008-16 0/4, 2017-26 1/8
+F1 yıl bazında ortR(bayraklı) − ortR(bayraksız), taban tek-poz:
+  2008:+0.29(n94) 2009:-0.37(n96) 2010:+0.14(n91) 2011:+0.07(n100) 2012:-0.34(n91) 2013:-0.18(n87) 2014:+0.06(n75) 2015:+0.36(n74) 2016:+0.46(n73) 2017:-0.21(n85) 2018:-0.09(n100) 2019:-0.09(n95) 2020:+0.12(n88) 2021:-0.01(n78) 2022:+0.28(n83) 2023:-0.03(n93) 2024:+0.10(n94) 2025:+0.10(n86) 2026:+0.39(n39)
+  pozitif yıl: 2008-16 6/9, 2017-26 5/10
+[dogrulama] F1: R in/out +0.092/+0.116 | haftalık sürüklenme W in/out +0.139/+0.320 | fazla in/out -0.046/-0.204
+[dogrulama] F9: R in/out +0.113/+0.110 | haftalık sürüklenme W in/out +0.373/+0.237 | fazla in/out -0.260/-0.128
+[dogrulama] F3: R in/out +0.082/+0.133 | haftalık sürüklenme W in/out +0.322/+0.246 | fazla in/out -0.240/-0.113
+[dogrulama] F6: R in/out +0.236/+0.072 | haftalık sürüklenme W in/out +0.588/+0.183 | fazla in/out -0.353/-0.111
+[kesif] F1: R in/out +0.135/+0.079 | haftalık sürüklenme W in/out +0.087/+0.262 | fazla in/out +0.048/-0.183
+[kesif] F9: R in/out +0.140/+0.070 | haftalık sürüklenme W in/out +0.371/+0.150 | fazla in/out -0.231/-0.080
+[kesif] F3: R in/out +0.099/+0.087 | haftalık sürüklenme W in/out +0.264/+0.185 | fazla in/out -0.165/-0.098
+[kesif] F6: R in/out -0.007/+0.119 | haftalık sürüklenme W in/out +0.479/+0.149 | fazla in/out -0.486/-0.030
+[dogrulama] kural ham ortR +0.111, aynı-hafta tüm-bar BUY ortR (olay ağırlıklı) +0.279, fazla -0.169
+[kesif] kural ham ortR +0.092, aynı-hafta tüm-bar BUY ortR (olay ağırlıklı) +0.220, fazla -0.128

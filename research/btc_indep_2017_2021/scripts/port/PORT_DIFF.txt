@@ -1,0 +1,372 @@
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_5y_20261021/scripts/02_build_binance.py
++++ port/build_spot.py
+@@ -21,7 +21,7 @@
+ 
+ COLS = ["open_time", "open", "high", "low", "close", "volume", "close_time",
+         "quote_volume", "trades", "taker_buy_base", "taker_buy_quote", "ignore"]
+-START = pd.Timestamp("2021-06-01", tz="UTC")
++START = pd.Timestamp("2017-08-01", tz="UTC")
+ TFS = {"5m": "5min", "15m": "15min", "1h": "1h", "4h": "4h", "1d": "1D"}
+ FULL = {"5m": 5, "15m": 15, "1h": 60, "4h": 240, "1d": 1440}
+ 
+@@ -56,7 +56,7 @@
+ 
+ def main() -> None:
+     raw, out = Path(sys.argv[1]), Path(sys.argv[2])
+-    files = sorted((raw / "monthly").glob("*.zip")) + sorted((raw / "daily").glob("*.zip"))
++    files = sorted((raw / "spot_klines").glob("*.zip"))
+     parts, units = [], {}
+     for f in files:
+         df, u = read_zip(f)
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/scripts/02_build_futures.py
++++ port/build_futures.py
+@@ -13,8 +13,8 @@
+ 
+ KCOLS = ["open_time", "open", "high", "low", "close", "volume", "close_time", "quote_volume", "trades",
+          "taker_buy_base", "taker_buy_quote", "ignore"]
+-START = pd.Timestamp("2021-06-01", tz="UTC")
+-END = pd.Timestamp("2026-10-21", tz="UTC")
++START = pd.Timestamp("2020-01-01", tz="UTC")
++END = pd.Timestamp("2021-06-01", tz="UTC")
+ 
+ 
+ def read_csv_zip(path: Path, names: list[str]) -> tuple[pd.DataFrame, bool]:
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_5y_20261021/scripts/04_macro_yf.py
++++ port/macro_yf.py
+@@ -19,7 +19,7 @@
+ import yfinance as yf
+ 
+ TICKERS = {"^VIX": "vix", "DX-Y.NYB": "dxy", "^TNX": "us10y", "QQQ": "qqq", "^NDX": "ndx"}
+-START, END = "2021-05-01", "2026-10-21"
++START, END = "2017-01-01", "2021-07-01"
+ 
+ 
+ def main() -> None:
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_5y_20261021/fam_trend/lib_trend.py
++++ port/lib_trend.py
+@@ -10,8 +10,8 @@
+ import pandas as pd
+ 
+ ROOT = Path(__file__).resolve().parent
+-DATA = ROOT.parent / "data"
+-CACHE = ROOT / "cache"
++DATA = Path("/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021/data")
++CACHE = Path("/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021/cache")
+ CACHE.mkdir(exist_ok=True)
+ 
+ SPREAD_BASE = 0.000185      # gidiş-dönüş, fiyat oranı
+@@ -35,9 +35,8 @@
+ 
+ 
+ SPLITS = {
+-    "DISC": (m("2021-06-01"), m("2024-01-01")),
+-    "OOS": (m("2024-01-11"), m("2025-07-01")),
+-    "BLIND": (m("2025-07-01"), m("2026-10-21")),
++    "A": (m("2017-08-17"), m("2020-01-11")),
++    "PERP": (m("2020-01-11"), m("2021-06-01")),
+ }
+ 
+ 
+@@ -75,7 +74,7 @@
+             self.mn.append(np.minimum(a, np.concatenate([a[s:], np.full(s, np.inf)])))
+             self.mx.append(np.maximum(b, np.concatenate([b[s:], np.full(s, -np.inf)])))
+         # rollover anları: 17:00 New York → UTC dakika
+-        days = pd.date_range("2021-05-20", "2026-12-01", freq="D")
++        days = pd.date_range("2017-08-01", "2021-07-01", freq="D")
+         ro = pd.DatetimeIndex([pd.Timestamp(f"{x.date()} 17:00", tz="America/New_York") for x in days])
+         self.RO = tmin(pd.Series(ro.tz_convert("UTC")))
+ 
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/strateji/lib_st.py
++++ port/lib_st.py
+@@ -13,12 +13,11 @@
+ import pandas as pd
+ 
+ ROOT = Path("/Users/melihcanodacioglu/Desktop/panel/research")
+-sys.path.insert(0, str(ROOT / "btc_5y_20261021" / "fam_trend"))
+-sys.path.insert(0, str(ROOT / "btc_scalp_20261021" / "feasibility"))
++sys.path.insert(0, str(Path(__file__).resolve().parent))
+ import lib_trend as lt  # noqa: E402
+ 
+ HERE = Path(__file__).resolve().parent
+-RES = HERE / "results"
++RES = Path("/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021/results")
+ RES.mkdir(exist_ok=True)
+ 
+ SPREAD = {"base": 0.000185, "stress": 0.0002775}
+@@ -28,16 +27,16 @@
+ SLIP_BP, SLIP_HOT_BP = 1.0, 5.0
+ LIMIT_THROUGH_BP = 1.0
+ MAX_DELAY = 10
+-T0M = int(pd.Timestamp("2021-06-01", tz="UTC").value // 60_000_000_000)
++HOT_THR = 29.298164936615546  # dondurulmuş: orijinal DISC p99 |1m log getiri| (bp)
++T0M = int(pd.Timestamp("2017-08-17", tz="UTC").value // 60_000_000_000)
+ 
+ 
+ def em(ts: str) -> int:
+     return lt.m(ts)
+ 
+ 
+-SPLITS = {"DISC": (em("2021-06-01"), em("2024-01-01")),
+-          "OOS": (em("2024-01-11"), em("2025-07-01")),
+-          "BLIND": (em("2025-07-01"), em("2026-10-21"))}
++SPLITS = {"A": (em("2017-08-17"), em("2020-01-11")),
++          "PERP": (em("2020-01-11"), em("2021-06-01"))}
+ 
+ 
+ def split_of(t: np.ndarray) -> np.ndarray:
+@@ -55,9 +54,7 @@
+         self.N = m.N
+         lc = np.log(self.C)
+         ar = np.abs(np.diff(lc, prepend=np.nan)) * 1e4
+-        a, b = SPLITS["DISC"]
+-        msk = (self.T >= a) & (self.T < b)
+-        self.hot_thr = float(np.nanpercentile(ar[msk], 99))
++        self.hot_thr = float(HOT_THR)
+         self.hot = ar > self.hot_thr
+         self.RO = m.RO
+ 
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/strateji/sleeves.py
++++ port/sleeves.py
+@@ -18,8 +18,8 @@
+ import lib_st as L
+ 
+ lt = L.lt
+-R5 = Path("/Users/melihcanodacioglu/Desktop/panel/research/btc_5y_20261021")
+-RS = Path("/Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021")
++R5 = Path("/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021")
++RS = Path("/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021")
+ DAYM = 1440
+ 
+ 
+@@ -135,7 +135,7 @@
+ 
+ def qb_events() -> pd.DataFrame:
+     ro = rollovers_utc_day()
+-    d0, d1 = L.em("2021-06-01") // DAYM, L.em("2026-10-21") // DAYM
++    d0, d1 = L.em("2017-08-17") // DAYM, L.em("2021-06-01") // DAYM
+     days = np.arange(d0, d1)
+     r = ro.reindex(days).to_numpy()
+     ok = np.isfinite(r)
+@@ -184,7 +184,7 @@
+     t10 = pd.DatetimeIndex([pd.Timestamp(d.year, d.month, d.day, 10, 0, tz="America/New_York").tz_convert("UTC")
+                             for d in mq["date"]])
+     dec = lt.tmin(pd.Series(t10))
+-    keep = (dec > L.T0M + 30 * DAYM) & (dec < L.em("2026-10-20 12:00"))
++    keep = (dec > L.T0M + 30 * DAYM) & (dec < L.em("2021-05-31 12:00"))
+     dec, gz = dec[keep], gz[keep]
+     dv = dvol_known(dec)
+     ok = np.isfinite(dv) & np.isfinite(gz) & (np.abs(gz) > 0.5)
+@@ -248,7 +248,7 @@
+ @lru_cache(None)
+ def scalp_grid():
+     """OF ailesinin geçerlilik maskesi (entry_ok), rollover tavanı hcap, ATR5m(bp) — dense indeks."""
+-    sys.path.insert(0, str(RS / "fam_orderflow"))
++    sys.path.insert(0, str(Path(__file__).resolve().parent))
+     import ofl  # noqa: E402
+     df = ofl.load_frame()
+     g = ofl.build_grid(df)
+@@ -277,7 +277,7 @@
+ 
+ 
+ def of02_events() -> pd.DataFrame:
+-    z = np.load(RS / "fam_orderflow" / "results" / "events.npz")
++    z = np.load(RS / "cache" / "events.npz")
+     t, dflow = z["OF02_W15_th5__t"], z["OF02_W15_th5__d"]
+     return _scalp(t + 1, -np.sign(dflow).astype(np.int64), 1.0, 15)
+ 
+@@ -288,12 +288,12 @@
+ 
+ @lru_cache(None)
+ def dv_valid():
+-    z = np.load(RS / "fam_turev" / "cache" / "out_H60.npz")
++    z = np.load(RS / "cache" / "out_H60.npz")
+     return z["valid"]
+ 
+ 
+ def dv04c_events() -> pd.DataFrame:
+-    S = pickle.load(open(RS / "fam_turev" / "cache" / "signals.pkl", "rb"))
++    S = pickle.load(open(RS / "cache" / "signals.pkl", "rb"))
+     t = [s for s in S if s["hid"] == "DV04c-U" and s["par"] == "b3.0"][0]["t"]
+     e = np.asarray(t, np.int64) + 1
+     v = dv_valid()
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/feasibility/lib.py
++++ port/lib.py
+@@ -12,11 +12,11 @@
+ import numpy as np
+ import pandas as pd
+ 
+-DATA = "/Users/melihcanodacioglu/Desktop/panel/research/btc_5y_20261021/data"
+-OUT = "/Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/feasibility/out"
++DATA = "/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021/data"
++OUT = "/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021/cache"
+ 
+-T0 = pd.Timestamp("2021-06-01", tz="UTC")
+-T_END = pd.Timestamp("2026-10-21", tz="UTC")
++T0 = pd.Timestamp("2017-08-17", tz="UTC")
++T_END = pd.Timestamp("2021-06-01", tz="UTC")
+ N = int((T_END - T0) / pd.Timedelta(minutes=1))
+ LMAX = 1440  # en uzun izleme ufku (dk)
+ KLEV = 11    # 2^10 = 1024; ikili sıçrama toplamı 2047 >= LMAX
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/fam_orderflow/ofl.py
++++ port/ofl.py
+@@ -13,11 +13,11 @@
+ import pandas as pd
+ 
+ HERE = os.path.dirname(os.path.abspath(__file__))
+-sys.path.insert(0, os.path.join(HERE, "..", "feasibility"))
++sys.path.insert(0, HERE)
+ import lib  # noqa: E402
+ 
+-DATA = os.path.join(HERE, "..", "data")
+-RES = os.path.join(HERE, "results")
++DATA = "/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021/data"
++RES = "/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021/cache"
+ N = lib.N
+ T0 = lib.T0
+ LW = 60          # izleme penceresi (dk)
+@@ -26,9 +26,8 @@
+ ZMIN = 14400     # min 10 gün
+ 
+ SEG = {
+-    "DISC": (lib.tmin("2021-06-01"), lib.tmin("2024-01-01")),
+-    "OOS": (lib.tmin("2024-01-11"), lib.tmin("2025-07-01")),
+-    "BLIND": (lib.tmin("2025-07-01"), lib.tmin("2026-10-21")),
++    "A": (lib.tmin("2017-08-17"), lib.tmin("2020-01-11")),
++    "PERP": (lib.tmin("2020-01-11"), lib.tmin("2021-06-01")),
+ }
+ SL_RULES = {"S1": (19.0, 1.1), "S2": (28.0, 2.0)}
+ RHOS = [1.0, 1.5, 2.0]
+@@ -71,7 +70,7 @@
+ def rollover_cap() -> tuple[np.ndarray, np.ndarray]:
+     """Her m için: fc_next(m) = m'den büyük ilk zorunlu kapanış dakikası (RO−2); blocked(m) = m ∈ [RO−2, RO+3)."""
+     ny = ZoneInfo("America/New_York")
+-    days = pd.date_range("2021-05-31", "2026-10-22", freq="D")
++    days = pd.date_range("2017-08-15", "2021-06-02", freq="D")
+     ros = []
+     for d in days:
+         ro = pd.Timestamp(d.year, d.month, d.day, 17, 0, tzinfo=ny).tz_convert("UTC")
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/fam_orderflow/01_build.py
++++ port/of_build.py
+@@ -24,7 +24,7 @@
+ print(f"özellikler {time.time()-t0:.0f}s; geçerli giriş {entry_ok.sum():,}")
+ 
+ # ---------------- önek testi: cut sonrası veriyi boz, cut'a kadar özellikler aynı kalmalı
+-cut = ofl.lib.tmin("2023-06-15 12:00")
++cut = ofl.lib.tmin("2020-09-15 12:00")
+ df2 = df.copy()
+ rng = np.random.default_rng(3)
+ for c in ["spot_open", "spot_high", "spot_low", "spot_close", "perp_open", "perp_high", "perp_low", "perp_close"]:
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/fam_turev/scripts/common.py
++++ port/common.py
+@@ -6,21 +6,21 @@
+ import numpy as np
+ import pandas as pd
+ 
+-ROOT = Path("/Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021")
++ROOT = Path("/Users/melihcanodacioglu/Desktop/panel/research/btc_indep_2017_2021")
+ DATA = ROOT / "data"
+-FAM = ROOT / "fam_turev"
+-CACHE = FAM / "cache"
+-OUT = FAM / "out"
++FAM = ROOT
++CACHE = ROOT / "cache"
++OUT = ROOT / "cache"
+ 
+-T0 = pd.Timestamp("2021-06-01", tz="UTC")
+-T_END = pd.Timestamp("2026-10-21", tz="UTC")
++T0 = pd.Timestamp("2017-08-17", tz="UTC")
++T_END = pd.Timestamp("2021-06-01", tz="UTC")
+ N = int((T_END - T0) / pd.Timedelta(minutes=1))  # 2.833.920
+ 
+ SEG = {
+-    "DISC": ("2021-06-01", "2024-01-01"),
+-    "OOS": ("2024-01-11", "2025-07-01"),
+-    "BLIND": ("2025-07-01", "2026-10-21"),
+-}
++    "DISC": ("2017-08-17", "2020-01-11"),
++    "OOS": ("2020-01-11", "2021-06-01"),
++    "BLIND": ("2021-06-01", "2021-06-01"),
++}  # etiket adları korunur (kod 0/1/2 kullanır); anlamı: A / PERP / boş
+ HS = (15, 35, 60)
+ RS = (1.0, 1.5, 2.0)
+ SL_MIN_BP = 19.0
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/strateji/00_selftest.py
++++ port/selftest.py
+@@ -8,7 +8,7 @@
+ 
+ t0 = time.time()
+ E = SV.engine()
+-print(f"motor {time.time()-t0:.0f}s; sıcak dakika eşiği (DISC p99 |1m|) {E.hot_thr:.2f} bp")
++print(f"motor {time.time()-t0:.0f}s; sıcak dakika eşiği (dondurulmuş, orijinal DISC p99 |1m|) {E.hot_thr:.2f} bp")
+ ev = SV.core_events()
+ mine = E.simulate(ev.ent, ev.dir, ev.sl_d, ev.tp_d, ev.end, ev.sig, mode="base", slip=False)
+ ref = E.m1.simulate(ev.dec.to_numpy(), ev.dir.to_numpy(), ev.sl_d.to_numpy(), ev.tp_d.to_numpy(), ev.end.to_numpy(), ev.sig.to_numpy())
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/strateji/01_events.py
++++ port/events.py
+@@ -58,10 +58,10 @@
+         continue
+     for sset, m0 in (("tüm", np.ones(len(df), bool)), ("tek-poz", df.single.to_numpy())):
+         r = {"kol": name, "set": sset}
+-        for sp_ in ("DISC", "OOS", "BLIND"):
++        for sp_ in ("A", "PERP"):
+             m = m0 & (df.split == sp_).to_numpy()
+             r[f"{sp_}_n"] = int(m.sum()); r[f"{sp_}_R"] = round(float(df.R[m].mean()), 3) if m.any() else np.nan
+-        m = m0 & df.split.isin(["OOS", "BLIND"]).to_numpy()
++        m = m0 & df.split.isin(["A", "PERP"]).to_numpy()
+         r["POST_n"] = int(m.sum()); r["POST_R"] = round(float(df.R[m].mean()), 3)
+         r["POST_bp"] = round(float(df.bp[m].mean()), 2)
+         r["TAM_n"] = int(m0.sum()); r["TAM_R"] = round(float(df.R[m0].mean()), 3)
+--- /Users/melihcanodacioglu/Desktop/panel/research/btc_scalp_20261021/strateji/03_portfolio.py
++++ port/portfolio.py
+@@ -95,7 +95,7 @@
+ 
+ 
+ # ───────────────────────── kart ─────────────────────────
+-WIN = {"DISC": ["DISC"], "POST": ["OOS", "BLIND"], "TAM": ["DISC", "OOS", "BLIND"]}
++WIN = {"IND": ["A", "PERP"], "PERP": ["PERP"], "A": ["A"]}
+ 
+ 
+ def card(df, win="POST", glob_single=False):
+@@ -161,8 +161,8 @@
+         else:
+             tp = np.empty((NPL, n), np.int64)
+             for y in np.unique(yrs):
+-                d0 = max(L.em(f"{y}-01-01"), L.em("2021-06-01")) // DAYM
+-                d1 = min(L.em(f"{y + 1}-01-01"), L.em("2026-10-20")) // DAYM
++                d0 = max(L.em(f"{y}-01-01"), L.em("2017-08-17")) // DAYM
++                d1 = min(L.em(f"{y + 1}-01-01"), L.em("2021-05-31")) // DAYM
+                 mk = yrs == y
+                 tp[:, mk] = rng.integers(d0, d1, size=(NPL, int(mk.sum()))) * DAYM + mod[mk][None, :]
+         sel = need
+@@ -219,7 +219,7 @@
+ for unit, names, glob in [(k, [k], False) for k in NAMES] + [(p, v, True) for p, v in PORT.items()]:
+     for veto in (False, True):
+         df = pd.concat([SETS[k + ("+V" if veto else "")] for k in names], ignore_index=True)
+-        for win in ("DISC", "POST", "TAM"):
++        for win in ("IND", "PERP", "A"):
+             c = card(df, win, glob_single=glob)
+             if not veto:
+                 pp, pmean, _ = plac_pct(names, win)
+@@ -238,11 +238,11 @@
+ print(tab[cols].to_string())
+ 
+ # ───────────────────────── korelasyon + katkı (POST) ─────────────────────────
+-a, b = L.SPLITS["OOS"][0] // DAYM, L.SPLITS["BLIND"][1] // DAYM
++a, b = L.SPLITS["A"][0] // DAYM, L.SPLITS["PERP"][1] // DAYM
+ days = np.arange(a, b)
+ M = pd.DataFrame(index=days)
+ for k in NAMES:
+-    d = SETS[k][SETS[k].split.isin(["OOS", "BLIND"])]
++    d = SETS[k][SETS[k].split.isin(["A", "PERP"])]
+     M[k] = pd.Series(d.R.to_numpy()).groupby(d.ent_t.to_numpy() // DAYM).sum().reindex(days).fillna(0).to_numpy()
+ corr = M.corr().round(3)
+ corr.to_csv(L.RES / "corr_post.csv")
+@@ -260,7 +260,7 @@
+ for k in NAMES:
+     df = TR[k]
+     for v in ("V1", "V2", "V3"):
+-        for win in ("DISC", "POST"):
++        for win in ("IND",):
+             m = df[v].to_numpy() & df.split.isin(WIN[win]).to_numpy()
+             vrows.append({"kol": k, "veto": v, "dönem": win, "silinen_n(tüm olay)": int(m.sum()),
+                           "silinenlerin_ortR": round(float(df.R[m].mean()), 3) if m.any() else np.nan})

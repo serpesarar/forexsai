@@ -1,0 +1,5 @@
+__pycache__/
+results/*.pkl
+results/run.log
+results/fresh_day.json
+results/autopsy.log

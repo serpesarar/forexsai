@@ -1,0 +1,2256 @@
+{
+ "15m": [
+  {
+   "ay": "2022-11",
+   "sinif": "ikisi_kis",
+   "gun": 17,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:45",
+   "us_kayma_dk": -45
+  },
+  {
+   "ay": "2022-12",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2023-01",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2023-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2023-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 10,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-03",
+   "sinif": "ikisi_kis",
+   "gun": 8,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2023-03",
+   "sinif": "ikisi_yaz",
+   "gun": 5,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-04",
+   "sinif": "ikisi_yaz",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2023-05",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2023-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-07",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-08",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2023-09",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-10",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2023-11",
+   "sinif": "NYyaz_BERkis",
+   "gun": 3,
+   "xetra_tepe_UTC": "08:15",
+   "xetra_kayma_dk": 15,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2023-11",
+   "sinif": "ikisi_kis",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2023-12",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2024-01",
+   "sinif": "ikisi_kis",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-02",
+   "sinif": "ikisi_kis",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:45",
+   "us_kayma_dk": -45
+  },
+  {
+   "ay": "2024-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 14,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-03",
+   "sinif": "ikisi_kis",
+   "gun": 6,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-04",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-05",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-06",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2024-08",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2024-09",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-10",
+   "sinif": "NYyaz_BERkis",
+   "gun": 4,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2024-10",
+   "sinif": "ikisi_yaz",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-11",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-12",
+   "sinif": "ikisi_kis",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2025-01",
+   "sinif": "ikisi_kis",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:45",
+   "us_kayma_dk": -45
+  },
+  {
+   "ay": "2025-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2025-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 15,
+   "xetra_tepe_UTC": "08:15",
+   "xetra_kayma_dk": 15,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2025-03",
+   "sinif": "ikisi_kis",
+   "gun": 5,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -90
+  },
+  {
+   "ay": "2025-04",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-05",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-06",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:45",
+   "us_kayma_dk": 15
+  },
+  {
+   "ay": "2025-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-08",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2025-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-10",
+   "sinif": "NYyaz_BERkis",
+   "gun": 5,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-10",
+   "sinif": "ikisi_yaz",
+   "gun": 18,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-11",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:45",
+   "us_kayma_dk": -45
+  },
+  {
+   "ay": "2025-12",
+   "sinif": "ikisi_kis",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2026-01",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2026-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2026-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 15,
+   "xetra_tepe_UTC": "08:45",
+   "xetra_kayma_dk": 45,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-03",
+   "sinif": "ikisi_kis",
+   "gun": 5,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2026-04",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:45",
+   "us_kayma_dk": 15
+  },
+  {
+   "ay": "2026-05",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "15:30",
+   "us_kayma_dk": 120
+  },
+  {
+   "ay": "2026-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:45",
+   "us_kayma_dk": 15
+  },
+  {
+   "ay": "2026-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-08",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  }
+ ],
+ "30m": [
+  {
+   "ay": "2021-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 8,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-03",
+   "sinif": "ikisi_yaz",
+   "gun": 3,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-04",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2021-05",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2021-07",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-08",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-10",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-11",
+   "sinif": "NYyaz_BERkis",
+   "gun": 5,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-11",
+   "sinif": "ikisi_kis",
+   "gun": 17,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2021-12",
+   "sinif": "ikisi_kis",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2022-01",
+   "sinif": "ikisi_kis",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2022-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2022-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 10,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-03",
+   "sinif": "ikisi_kis",
+   "gun": 9,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "15:30",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2022-03",
+   "sinif": "ikisi_yaz",
+   "gun": 4,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-04",
+   "sinif": "ikisi_yaz",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-05",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2022-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2022-07",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-08",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-10",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-11",
+   "sinif": "NYyaz_BERkis",
+   "gun": 4,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2022-11",
+   "sinif": "ikisi_kis",
+   "gun": 18,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2022-12",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2023-01",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2023-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2023-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 10,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2023-03",
+   "sinif": "ikisi_kis",
+   "gun": 8,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2023-03",
+   "sinif": "ikisi_yaz",
+   "gun": 5,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-04",
+   "sinif": "ikisi_yaz",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2023-05",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2023-07",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-08",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-09",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-10",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2023-11",
+   "sinif": "NYyaz_BERkis",
+   "gun": 3,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2023-11",
+   "sinif": "ikisi_kis",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2023-12",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-01",
+   "sinif": "ikisi_kis",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "12:30",
+   "us_kayma_dk": -120
+  },
+  {
+   "ay": "2024-02",
+   "sinif": "ikisi_kis",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2024-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 14,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2024-03",
+   "sinif": "ikisi_kis",
+   "gun": 6,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2024-04",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-05",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-06",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2024-08",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2024-09",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-10",
+   "sinif": "NYyaz_BERkis",
+   "gun": 4,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-10",
+   "sinif": "ikisi_yaz",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-11",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2024-12",
+   "sinif": "ikisi_kis",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2025-01",
+   "sinif": "ikisi_kis",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2025-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2025-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 15,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-03",
+   "sinif": "ikisi_kis",
+   "gun": 5,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "12:30",
+   "us_kayma_dk": -120
+  },
+  {
+   "ay": "2025-04",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-05",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2025-06",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-08",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2025-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-10",
+   "sinif": "NYyaz_BERkis",
+   "gun": 5,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-10",
+   "sinif": "ikisi_yaz",
+   "gun": 18,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-11",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2025-12",
+   "sinif": "ikisi_kis",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-01",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2026-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": -30
+  },
+  {
+   "ay": "2026-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 15,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:30",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2026-03",
+   "sinif": "ikisi_kis",
+   "gun": 5,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2026-04",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-05",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 30
+  },
+  {
+   "ay": "2026-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-08",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:30",
+   "us_kayma_dk": 0
+  }
+ ],
+ "1h": [
+  {
+   "ay": "2019-01",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2019-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2019-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 15,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "16:00",
+   "us_kayma_dk": 180
+  },
+  {
+   "ay": "2019-03",
+   "sinif": "ikisi_kis",
+   "gun": 6,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2019-04",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2019-05",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2019-06",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2019-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2019-08",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2019-09",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "15:00",
+   "us_kayma_dk": 120
+  },
+  {
+   "ay": "2019-10",
+   "sinif": "NYyaz_BERkis",
+   "gun": 4,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2019-10",
+   "sinif": "ikisi_yaz",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2019-11",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2019-12",
+   "sinif": "ikisi_kis",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2020-01",
+   "sinif": "ikisi_kis",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2020-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2020-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 15,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "16:00",
+   "us_kayma_dk": 180
+  },
+  {
+   "ay": "2020-03",
+   "sinif": "ikisi_kis",
+   "gun": 5,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2020-04",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2020-05",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2020-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2020-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2020-08",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2020-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2020-10",
+   "sinif": "NYyaz_BERkis",
+   "gun": 5,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2020-10",
+   "sinif": "ikisi_yaz",
+   "gun": 17,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "15:00",
+   "us_kayma_dk": 120
+  },
+  {
+   "ay": "2020-11",
+   "sinif": "ikisi_kis",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2020-12",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "15:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2021-01",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2021-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 10,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "15:00",
+   "us_kayma_dk": 120
+  },
+  {
+   "ay": "2021-03",
+   "sinif": "ikisi_kis",
+   "gun": 10,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-03",
+   "sinif": "ikisi_yaz",
+   "gun": 3,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "16:00",
+   "us_kayma_dk": 180
+  },
+  {
+   "ay": "2021-04",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2021-05",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2021-07",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-08",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2021-10",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2021-11",
+   "sinif": "NYyaz_BERkis",
+   "gun": 5,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2021-11",
+   "sinif": "ikisi_kis",
+   "gun": 17,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2021-12",
+   "sinif": "ikisi_kis",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-01",
+   "sinif": "ikisi_kis",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2022-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 10,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "16:00",
+   "us_kayma_dk": 180
+  },
+  {
+   "ay": "2022-03",
+   "sinif": "ikisi_kis",
+   "gun": 9,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-03",
+   "sinif": "ikisi_yaz",
+   "gun": 4,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-04",
+   "sinif": "ikisi_yaz",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2022-05",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "15:00",
+   "us_kayma_dk": 120
+  },
+  {
+   "ay": "2022-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-07",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-08",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-10",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2022-11",
+   "sinif": "NYyaz_BERkis",
+   "gun": 4,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2022-11",
+   "sinif": "ikisi_kis",
+   "gun": 18,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2022-12",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2023-01",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 10,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2023-03",
+   "sinif": "ikisi_kis",
+   "gun": 8,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-03",
+   "sinif": "ikisi_yaz",
+   "gun": 5,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2023-04",
+   "sinif": "ikisi_yaz",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2023-05",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2023-07",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-08",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2023-09",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2023-10",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2023-11",
+   "sinif": "NYyaz_BERkis",
+   "gun": 3,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2023-11",
+   "sinif": "ikisi_kis",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2023-12",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-01",
+   "sinif": "ikisi_kis",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "12:00",
+   "us_kayma_dk": -120
+  },
+  {
+   "ay": "2024-02",
+   "sinif": "ikisi_kis",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 14,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2024-03",
+   "sinif": "ikisi_kis",
+   "gun": 6,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-04",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "12:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2024-05",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-06",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2024-08",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2024-09",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2024-10",
+   "sinif": "NYyaz_BERkis",
+   "gun": 4,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2024-10",
+   "sinif": "ikisi_yaz",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-11",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2024-12",
+   "sinif": "ikisi_kis",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2025-01",
+   "sinif": "ikisi_kis",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2025-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2025-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 15,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-03",
+   "sinif": "ikisi_kis",
+   "gun": 5,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-04",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2025-05",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2025-06",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-08",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2025-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2025-10",
+   "sinif": "NYyaz_BERkis",
+   "gun": 5,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-10",
+   "sinif": "ikisi_yaz",
+   "gun": 18,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-11",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2025-12",
+   "sinif": "ikisi_kis",
+   "gun": 19,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-01",
+   "sinif": "ikisi_kis",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-02",
+   "sinif": "ikisi_kis",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": -60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-03",
+   "sinif": "NYyaz_BERkis",
+   "gun": 15,
+   "xetra_tepe_UTC": "09:00",
+   "xetra_kayma_dk": 60,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2026-03",
+   "sinif": "ikisi_kis",
+   "gun": 5,
+   "xetra_tepe_UTC": "08:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": -60
+  },
+  {
+   "ay": "2026-04",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-05",
+   "sinif": "ikisi_yaz",
+   "gun": 20,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2026-06",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  },
+  {
+   "ay": "2026-07",
+   "sinif": "ikisi_yaz",
+   "gun": 23,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-08",
+   "sinif": "ikisi_yaz",
+   "gun": 21,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "13:00",
+   "us_kayma_dk": 0
+  },
+  {
+   "ay": "2026-09",
+   "sinif": "ikisi_yaz",
+   "gun": 22,
+   "xetra_tepe_UTC": "07:00",
+   "xetra_kayma_dk": 0,
+   "us_tepe_UTC": "14:00",
+   "us_kayma_dk": 60
+  }
+ ],
+ "gun_15m": [
+  {
+   "sinif": "NYyaz_BERkis",
+   "mean": 0.17391304347826086,
+   "size": 69
+  },
+  {
+   "sinif": "ikisi_kis",
+   "mean": 0.8347826086956521,
+   "size": 345
+  },
+  {
+   "sinif": "ikisi_yaz",
+   "mean": 0.1022530329289428,
+   "size": 577
+  }
+ ],
+ "gun_1h": [
+  {
+   "sinif": "NYyaz_BERkis",
+   "mean": 0.17266187050359713,
+   "size": 139
+  },
+  {
+   "sinif": "ikisi_kis",
+   "mean": 0.7870090634441088,
+   "size": 662
+  },
+  {
+   "sinif": "ikisi_yaz",
+   "mean": 0.09991532599491956,
+   "size": 1181
+  }
+ ]
+}

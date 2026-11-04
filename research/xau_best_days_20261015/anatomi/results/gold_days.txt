@@ -1,0 +1,28 @@
+altının en iyi  20 günü (ret1): o günlerde giriş R   69.4 (toplamın %24, n=23, ortR +3.02); bu günler hariç ortR +0.0607
+altının en iyi  50 günü (ret1): o günlerde giriş R  154.2 (toplamın %53, n=62, ortR +2.49); bu günler hariç ortR +0.0378
+altının en iyi 100 günü (ret1): o günlerde giriş R  269.5 (toplamın %93, n=127, ortR +2.12); bu günler hariç ortR +0.0059
+altının en iyi  47 günü (ret1): o günlerde giriş R  142.4 (toplamın %49, n=57, ortR +2.50); bu günler hariç ortR +0.0411
+altının en kötü 50 günü (ret1): giriş R -4.0 (n=4, ortR -1.00)
+altının en iyi  20 günü (ret_atr): o günlerde giriş R   79.3 (toplamın %27, n=24, ortR +3.31); bu günler hariç ortR +0.0580
+altının en iyi  50 günü (ret_atr): o günlerde giriş R  190.4 (toplamın %66, n=62, ortR +3.07); bu günler hariç ortR +0.0278
+altının en iyi 100 günü (ret_atr): o günlerde giriş R  335.7 (toplamın %116, n=126, ortR +2.66); bu günler hariç ortR -0.0128
+altının en iyi  47 günü (ret_atr): o günlerde giriş R  178.2 (toplamın %61, n=59, ortR +3.02); bu günler hariç ortR +0.0312
+altının en kötü 50 günü (ret_atr): giriş R -7.0 (n=7, ortR -1.00)
+Giriş günü altın getirisi (ATR_D1) dilimine göre gün R: 
+               size  mean     sum
+q                                
+(-99.0, -1.0]    37 -1.16  -43.00
+(-1.0, -0.5]    113 -1.20 -136.00
+(-0.5, 0.0]     603 -1.00 -604.96
+(0.0, 0.5]     1271 -0.38 -487.37
+(0.5, 1.0]      704  1.00  703.54
+(1.0, 2.0]      271  2.68  725.26
+(2.0, 99.0]      36  3.53  127.08
+top30 rep_xa_atrH1_over_D1: med 0.128 vs 0.172 AUC 0.235 p 0.0000
+top30 rep_xa_atrH1_pct500: med 0.164 vs 0.439 AUC 0.270 p 0.0000
+top30 rep_xa_bbw_pct120: med 0.092 vs 0.242 AUC 0.351 p 0.0057
+top30 rep_xa_dist_52wh_atr: med -2.133 vs -5.815 AUC 0.662 p 0.0031
+top30 rep_xa_brk_density24: med 1.000 vs 1.000 AUC 0.497 p 0.9545
+top30 rep_xa_dist_ath_pct: med -0.083 vs -0.134 AUC 0.642 p 0.0073
+top30 rep_xa_hour_sig: med 7.500 vs 12.000 AUC 0.344 p 0.0031
+top30 rep_xa_ema50_slope10: med 0.878 vs 0.176 AUC 0.634 p 0.0142

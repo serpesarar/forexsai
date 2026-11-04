@@ -1,0 +1,46 @@
+POST-HOC KEŞİF — verdikt DEĞİL. P1 = gün-kaydırma plasebosu (aynı yıl, aynı UTC saati, aynı tutma), 200 tekrar.
+
+=== R0B_G1  (tp=None, sl=1.5, hold=20) n=12403 ortR=+0.102
+  çağ: 2008-15: n=5098 ortR +0.081 P1 +0.024 fark +0.057 yüzdelik 0.89 | 2016-26: n=7305 ortR +0.117 P1 +0.057 fark +0.060 yüzdelik 0.92
+  yıl (fark = kural − P1): 2008:+0.13 2009:+0.10 2010:+0.12 2011:+0.01 2012:-0.00 2013:+0.00 2014:+0.06 2015:+0.00 2016:+0.23 2017:-0.02 2018:+0.04 2019:-0.03 2020:+0.21 2021:+0.10 2022:+0.00 2023:-0.10 2024:-0.10 2025:+0.14 2026:+0.20
+  fark>0 olan yıl: 14/19; yıllık farkların medyanı +0.036
+  tek-poz: n=3664 (3.80/hafta) ortR +0.079 vs tek-poz P1 +0.030 (n≈3107) yüzdelik 0.98
+  en iyi 5 gün hariç: ortR +0.077 (n=12347); en iyi 5 günün payı toplam R'nin %25'i
+  en iyi 20 gün hariç: ortR +0.029 (n=12179); en iyi 20 günün payı toplam R'nin %72'i
+  spread B (Duka gerçek ask−bid, medyan $0.36): ortR +0.048 vs P1(B) -0.010 fark +0.058 yüzdelik 0.97
+
+=== R4B_G3  (tp=None, sl=1.5, hold=12) n=865 ortR=+0.122
+  çağ: 2008-15: n=302 ortR +0.095 P1 +0.016 fark +0.079 yüzdelik 0.81 | 2016-26: n=563 ortR +0.137 P1 +0.053 fark +0.084 yüzdelik 0.89
+  yıl (fark = kural − P1): 2009:+0.09 2010:-0.02 2011:-0.00 2012:+0.52 2016:+0.34 2017:+0.15 2018:+0.06 2019:+0.14 2020:+0.08 2022:+0.06 2023:+0.13 2024:+0.16 2025:-0.04
+  fark>0 olan yıl: 10/13; yıllık farkların medyanı +0.087
+  tek-poz: n=865 (0.90/hafta) ortR +0.122 vs tek-poz P1 +0.027 (n≈672) yüzdelik 0.96
+  en iyi 5 gün hariç: ortR +0.073 (n=860); en iyi 5 günün payı toplam R'nin %41'i
+  en iyi 20 gün hariç: ortR -0.030 (n=845); en iyi 20 günün payı toplam R'nin %124'i
+  spread B (Duka gerçek ask−bid, medyan $0.37): ortR +0.075 vs P1(B) -0.011 fark +0.086 yüzdelik 0.97
+
+=== R3B_G1  (tp=None, sl=1.5, hold=NY16) n=1087 ortR=+0.070
+  çağ: 2008-15: n=316 ortR +0.014 P1 +0.056 fark -0.042 yüzdelik 0.28 | 2016-26: n=792 ortR +0.093 P1 +0.007 fark +0.086 yüzdelik 0.95
+  yıl (fark = kural − P1): 2009:-0.06 2010:+0.14 2011:-0.01 2012:-0.24 2016:+0.03 2017:+0.14 2018:+0.12 2019:-0.05 2020:+0.12 2021:-0.01 2022:+0.08 2023:+0.14 2024:+0.08 2025:+0.17 2026:+0.02
+  fark>0 olan yıl: 10/15; yıllık farkların medyanı +0.081
+  tek-poz: n=1087 (1.13/hafta) ortR +0.070 vs tek-poz P1 +0.021 (n≈809) yüzdelik 0.88
+  en iyi 5 gün hariç: ortR +0.040 (n=1082); en iyi 5 günün payı toplam R'nin %42'i
+  en iyi 20 gün hariç: ortR -0.020 (n=1067); en iyi 20 günün payı toplam R'nin %128'i
+  spread B (Duka gerçek ask−bid, medyan $0.39): ortR +0.022 vs P1(B) -0.024 fark +0.046 yüzdelik 0.92
+
+=== R5B_G1  (tp=2.0, sl=1.5, hold=24) n=1369 ortR=+0.078
+  çağ: 2008-15: n=452 ortR -0.019 P1 +0.039 fark -0.058 yüzdelik 0.12 | 2016-26: n=917 ortR +0.125 P1 +0.055 fark +0.070 yüzdelik 0.96
+  yıl (fark = kural − P1): 2009:-0.03 2010:-0.07 2011:-0.05 2012:-0.11 2016:+0.24 2017:+0.16 2018:-0.04 2019:+0.04 2020:+0.08 2021:-0.08 2022:-0.25 2023:-0.18 2024:+0.11 2025:+0.18 2026:+0.27
+  fark>0 olan yıl: 7/15; yıllık farkların medyanı -0.032
+  tek-poz: n=807 (0.84/hafta) ortR +0.072 vs tek-poz P1 +0.046 (n≈670) yüzdelik 0.76
+  en iyi 5 gün hariç: ortR +0.057 (n=1343); en iyi 5 günün payı toplam R'nin %28'i
+  en iyi 20 gün hariç: ortR +0.007 (n=1287); en iyi 20 günün payı toplam R'nin %92'i
+  spread B (Duka gerçek ask−bid, medyan $0.40): ortR +0.055 vs P1(B) +0.031 fark +0.024 yüzdelik 0.76
+
+=== R1B_G1  (tp=2.0, sl=1.5, hold=24) n=2706 ortR=+0.039
+  çağ: 2008-15: n=823 ortR -0.018 P1 -0.010 fark -0.008 yüzdelik 0.43 | 2016-26: n=1883 ortR +0.063 P1 +0.017 fark +0.046 yüzdelik 0.88
+  yıl (fark = kural − P1): 2009:+0.10 2010:-0.02 2011:-0.01 2012:-0.08 2016:+0.34 2017:+0.17 2018:-0.16 2019:+0.13 2020:+0.06 2021:-0.17 2022:-0.18 2023:-0.13 2024:-0.12 2025:+0.13 2026:+0.11
+  fark>0 olan yıl: 7/15; yıllık farkların medyanı -0.010
+  tek-poz: n=1554 (1.61/hafta) ortR +0.039 vs tek-poz P1 +0.007 (n≈1192) yüzdelik 0.85
+  en iyi 5 gün hariç: ortR +0.018 (n=2662); en iyi 5 günün payı toplam R'nin %54'i
+  en iyi 20 gün hariç: ortR -0.029 (n=2555); en iyi 20 günün payı toplam R'nin %170'i
+  spread B (Duka gerçek ask−bid, medyan $0.39): ortR -0.000 vs P1(B) -0.033 fark +0.033 yüzdelik 0.83

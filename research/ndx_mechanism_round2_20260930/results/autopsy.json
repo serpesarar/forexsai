@@ -1,0 +1,695 @@
+{
+  "actual_bot": {
+    "input_decisions": 317,
+    "n": 316,
+    "excluded_stale_or_missing": 1,
+    "days": 46,
+    "usd": 27835.239999999998,
+    "median_price_error": 4.900000000001455,
+    "descriptive": {
+      "h1_aligned": {
+        "yes_n": 229,
+        "no_n": 85,
+        "yes_days": 41,
+        "yes_mean": 8.446724890829675,
+        "no_mean": 8.054117647058785,
+        "yes_sum": 1934.2999999999956,
+        "no_sum": 684.5999999999967,
+        "yes_wr": 0.5982532751091703,
+        "no_wr": 0.611764705882353,
+        "unknown_n": 2
+      },
+      "m15_aligned": {
+        "yes_n": 172,
+        "no_n": 143,
+        "yes_days": 42,
+        "yes_mean": 4.988372093023256,
+        "no_mean": 12.87342657342652,
+        "yes_sum": 858.0,
+        "no_sum": 1840.8999999999924,
+        "yes_wr": 0.5697674418604651,
+        "no_wr": 0.6433566433566433,
+        "unknown_n": 1
+      },
+      "m5_body_aligned": {
+        "yes_n": 107,
+        "no_n": 209,
+        "yes_days": 31,
+        "yes_mean": 8.990654205607443,
+        "no_mean": 7.78421052631577,
+        "yes_sum": 961.9999999999964,
+        "no_sum": 1626.899999999996,
+        "yes_wr": 0.6261682242990654,
+        "no_wr": 0.5885167464114832,
+        "unknown_n": 0
+      },
+      "coherent_h1_m15": {
+        "yes_n": 148,
+        "no_n": 166,
+        "yes_days": 38,
+        "yes_mean": 4.471621621621641,
+        "no_mean": 11.789759036144515,
+        "yes_sum": 661.8000000000029,
+        "no_sum": 1957.0999999999894,
+        "yes_wr": 0.5675675675675675,
+        "no_wr": 0.6325301204819277,
+        "unknown_n": 2
+      },
+      "persistent_path_aligned": {
+        "yes_n": 20,
+        "no_n": 257,
+        "yes_days": 10,
+        "yes_mean": 13.729999999999745,
+        "no_mean": 10.902723735408554,
+        "yes_sum": 274.5999999999949,
+        "no_sum": 2801.999999999998,
+        "yes_wr": 0.65,
+        "no_wr": 0.6108949416342413,
+        "unknown_n": 39
+      },
+      "room_in_4h_range": {
+        "yes_n": 140,
+        "no_n": 137,
+        "yes_days": 37,
+        "yes_mean": 18.975,
+        "no_mean": 3.066423357664183,
+        "yes_sum": 2656.5,
+        "no_sum": 420.0999999999931,
+        "yes_wr": 0.6571428571428571,
+        "no_wr": 0.5693430656934306,
+        "unknown_n": 39
+      },
+      "stress_sell": {
+        "yes_n": 99,
+        "no_n": 217,
+        "yes_days": 10,
+        "yes_mean": -7.262626262626299,
+        "no_mean": 15.2437788018433,
+        "yes_sum": -719.0000000000036,
+        "no_sum": 3307.899999999996,
+        "yes_wr": 0.5353535353535354,
+        "no_wr": 0.631336405529954,
+        "unknown_n": 0
+      }
+    }
+  },
+  "by_magic": {
+    "0": {
+      "n": 2,
+      "days": 1,
+      "usd": 733.2,
+      "mean_points": 75.85000000000036,
+      "wr": 1.0,
+      "descriptive": {
+        "h1_aligned": {
+          "yes_n": 1,
+          "no_n": 1,
+          "yes_days": 1,
+          "yes_mean": 23.200000000000728,
+          "no_mean": 128.5,
+          "yes_sum": 23.200000000000728,
+          "no_sum": 128.5,
+          "yes_wr": 1.0,
+          "no_wr": 1.0,
+          "unknown_n": 0
+        },
+        "m15_aligned": {
+          "yes_n": 1,
+          "no_n": 1,
+          "yes_days": 1,
+          "yes_mean": 23.200000000000728,
+          "no_mean": 128.5,
+          "yes_sum": 23.200000000000728,
+          "no_sum": 128.5,
+          "yes_wr": 1.0,
+          "no_wr": 1.0,
+          "unknown_n": 0
+        },
+        "m5_body_aligned": {
+          "yes_n": 0,
+          "no_n": 2,
+          "yes_days": 0,
+          "yes_mean": 0.0,
+          "no_mean": 75.85000000000036,
+          "yes_sum": 0.0,
+          "no_sum": 151.70000000000073,
+          "yes_wr": 0.0,
+          "no_wr": 1.0,
+          "unknown_n": 0
+        },
+        "coherent_h1_m15": {
+          "yes_n": 1,
+          "no_n": 1,
+          "yes_days": 1,
+          "yes_mean": 23.200000000000728,
+          "no_mean": 128.5,
+          "yes_sum": 23.200000000000728,
+          "no_sum": 128.5,
+          "yes_wr": 1.0,
+          "no_wr": 1.0,
+          "unknown_n": 0
+        },
+        "persistent_path_aligned": {
+          "yes_n": 0,
+          "no_n": 2,
+          "yes_days": 0,
+          "yes_mean": 0.0,
+          "no_mean": 75.85000000000036,
+          "yes_sum": 0.0,
+          "no_sum": 151.70000000000073,
+          "yes_wr": 0.0,
+          "no_wr": 1.0,
+          "unknown_n": 0
+        },
+        "room_in_4h_range": {
+          "yes_n": 2,
+          "no_n": 0,
+          "yes_days": 1,
+          "yes_mean": 75.85000000000036,
+          "no_mean": 0.0,
+          "yes_sum": 151.70000000000073,
+          "no_sum": 0.0,
+          "yes_wr": 1.0,
+          "no_wr": 0.0,
+          "unknown_n": 0
+        },
+        "stress_sell": {
+          "yes_n": 1,
+          "no_n": 1,
+          "yes_days": 1,
+          "yes_mean": 23.200000000000728,
+          "no_mean": 128.5,
+          "yes_sum": 23.200000000000728,
+          "no_sum": 128.5,
+          "yes_wr": 1.0,
+          "no_wr": 1.0,
+          "unknown_n": 0
+        }
+      }
+    },
+    "52890969": {
+      "n": 21,
+      "days": 10,
+      "usd": 381.85,
+      "mean_points": 3.8714285714283636,
+      "wr": 0.42857142857142855,
+      "descriptive": {
+        "h1_aligned": {
+          "yes_n": 19,
+          "no_n": 2,
+          "yes_days": 8,
+          "yes_mean": 4.805263157894698,
+          "no_mean": -5.000000000001819,
+          "yes_sum": 91.29999999999927,
+          "no_sum": -10.000000000003638,
+          "yes_wr": 0.42105263157894735,
+          "no_wr": 0.5,
+          "unknown_n": 0
+        },
+        "m15_aligned": {
+          "yes_n": 17,
+          "no_n": 4,
+          "yes_days": 7,
+          "yes_mean": 5.135294117647016,
+          "no_mean": -1.5000000000009095,
+          "yes_sum": 87.29999999999927,
+          "no_sum": -6.000000000003638,
+          "yes_wr": 0.35294117647058826,
+          "no_wr": 0.75,
+          "unknown_n": 0
+        },
+        "m5_body_aligned": {
+          "yes_n": 3,
+          "no_n": 18,
+          "yes_days": 2,
+          "yes_mean": 40.5,
+          "no_mean": -2.233333333333576,
+          "yes_sum": 121.5,
+          "no_sum": -40.200000000004366,
+          "yes_wr": 1.0,
+          "no_wr": 0.3333333333333333,
+          "unknown_n": 0
+        },
+        "coherent_h1_m15": {
+          "yes_n": 16,
+          "no_n": 5,
+          "yes_days": 6,
+          "yes_mean": 7.9812500000000455,
+          "no_mean": -9.280000000001019,
+          "yes_sum": 127.70000000000073,
+          "no_sum": -46.40000000000509,
+          "yes_wr": 0.375,
+          "no_wr": 0.6,
+          "unknown_n": 0
+        },
+        "persistent_path_aligned": {
+          "yes_n": 1,
+          "no_n": 20,
+          "yes_days": 1,
+          "yes_mean": -33.29999999999927,
+          "no_mean": 5.7299999999997455,
+          "yes_sum": -33.29999999999927,
+          "no_sum": 114.5999999999949,
+          "yes_wr": 0.0,
+          "no_wr": 0.45,
+          "unknown_n": 0
+        },
+        "room_in_4h_range": {
+          "yes_n": 13,
+          "no_n": 8,
+          "yes_days": 6,
+          "yes_mean": 22.061538461538404,
+          "no_mean": -25.687500000000455,
+          "yes_sum": 286.7999999999993,
+          "no_sum": -205.50000000000364,
+          "yes_wr": 0.6153846153846154,
+          "no_wr": 0.125,
+          "unknown_n": 0
+        },
+        "stress_sell": {
+          "yes_n": 0,
+          "no_n": 21,
+          "yes_days": 0,
+          "yes_mean": 0.0,
+          "no_mean": 3.8714285714283636,
+          "yes_sum": 0.0,
+          "no_sum": 81.29999999999563,
+          "yes_wr": 0.0,
+          "no_wr": 0.42857142857142855,
+          "unknown_n": 0
+        }
+      }
+    },
+    "52890970": {
+      "n": 28,
+      "days": 15,
+      "usd": 178.64999999999998,
+      "mean_points": -1.6142857142857403,
+      "wr": 0.5714285714285714,
+      "descriptive": {
+        "h1_aligned": {
+          "yes_n": 14,
+          "no_n": 14,
+          "yes_days": 8,
+          "yes_mean": 25.564285714285557,
+          "no_mean": -28.792857142857038,
+          "yes_sum": 357.8999999999978,
+          "no_sum": -403.09999999999854,
+          "yes_wr": 0.7142857142857143,
+          "no_wr": 0.42857142857142855,
+          "unknown_n": 0
+        },
+        "m15_aligned": {
+          "yes_n": 1,
+          "no_n": 27,
+          "yes_days": 1,
+          "yes_mean": -110.5,
+          "no_mean": 2.4185185185184914,
+          "yes_sum": -110.5,
+          "no_sum": 65.29999999999927,
+          "yes_wr": 0.0,
+          "no_wr": 0.5925925925925926,
+          "unknown_n": 0
+        },
+        "m5_body_aligned": {
+          "yes_n": 3,
+          "no_n": 25,
+          "yes_days": 3,
+          "yes_mean": -46.80000000000049,
+          "no_mean": 3.808000000000029,
+          "yes_sum": -140.40000000000146,
+          "no_sum": 95.20000000000073,
+          "yes_wr": 0.3333333333333333,
+          "no_wr": 0.6,
+          "unknown_n": 0
+        },
+        "coherent_h1_m15": {
+          "yes_n": 1,
+          "no_n": 27,
+          "yes_days": 1,
+          "yes_mean": -110.5,
+          "no_mean": 2.4185185185184914,
+          "yes_sum": -110.5,
+          "no_sum": 65.29999999999927,
+          "yes_wr": 0.0,
+          "no_wr": 0.5925925925925926,
+          "unknown_n": 0
+        },
+        "persistent_path_aligned": {
+          "yes_n": 0,
+          "no_n": 23,
+          "yes_days": 0,
+          "yes_mean": 0.0,
+          "no_mean": 5.44782608695649,
+          "yes_sum": 0.0,
+          "no_sum": 125.29999999999927,
+          "yes_wr": 0.0,
+          "no_wr": 0.6086956521739131,
+          "unknown_n": 5
+        },
+        "room_in_4h_range": {
+          "yes_n": 22,
+          "no_n": 1,
+          "yes_days": 14,
+          "yes_mean": 10.695454545454512,
+          "no_mean": -110.0,
+          "yes_sum": 235.29999999999927,
+          "no_sum": -110.0,
+          "yes_wr": 0.6363636363636364,
+          "no_wr": 0.0,
+          "unknown_n": 5
+        },
+        "stress_sell": {
+          "yes_n": 8,
+          "no_n": 20,
+          "yes_days": 4,
+          "yes_mean": -15.150000000000091,
+          "no_mean": 3.8,
+          "yes_sum": -121.20000000000073,
+          "no_sum": 76.0,
+          "yes_wr": 0.5,
+          "no_wr": 0.6,
+          "unknown_n": 0
+        }
+      }
+    },
+    "52890971": {
+      "n": 218,
+      "days": 32,
+      "usd": 1390.3900000000003,
+      "mean_points": 1.5619266055045788,
+      "wr": 0.573394495412844,
+      "descriptive": {
+        "h1_aligned": {
+          "yes_n": 150,
+          "no_n": 66,
+          "yes_days": 26,
+          "yes_mean": -4.1866666666666665,
+          "no_mean": 15.12878787878785,
+          "yes_sum": -628.0,
+          "no_sum": 998.4999999999982,
+          "yes_wr": 0.54,
+          "no_wr": 0.6515151515151515,
+          "unknown_n": 2
+        },
+        "m15_aligned": {
+          "yes_n": 115,
+          "no_n": 102,
+          "yes_days": 29,
+          "yes_mean": -5.864347826086938,
+          "no_mean": 11.02843137254898,
+          "yes_sum": -674.3999999999978,
+          "no_sum": 1124.899999999996,
+          "yes_wr": 0.5304347826086957,
+          "no_wr": 0.6274509803921569,
+          "unknown_n": 1
+        },
+        "m5_body_aligned": {
+          "yes_n": 75,
+          "no_n": 143,
+          "yes_days": 22,
+          "yes_mean": 0.3799999999999515,
+          "no_mean": 2.1818181818181945,
+          "yes_sum": 28.499999999996362,
+          "no_sum": 312.0000000000018,
+          "yes_wr": 0.5733333333333334,
+          "no_wr": 0.5734265734265734,
+          "unknown_n": 0
+        },
+        "coherent_h1_m15": {
+          "yes_n": 93,
+          "no_n": 123,
+          "yes_days": 23,
+          "yes_mean": -8.927956989247265,
+          "no_mean": 9.76260162601621,
+          "yes_sum": -830.2999999999956,
+          "no_sum": 1200.7999999999938,
+          "yes_wr": 0.5161290322580645,
+          "no_wr": 0.6178861788617886,
+          "unknown_n": 2
+        },
+        "persistent_path_aligned": {
+          "yes_n": 16,
+          "no_n": 168,
+          "yes_days": 7,
+          "yes_mean": 16.087499999999864,
+          "no_mean": 2.3827380952381016,
+          "yes_sum": 257.3999999999978,
+          "no_sum": 400.3000000000011,
+          "yes_wr": 0.6875,
+          "no_wr": 0.5714285714285714,
+          "unknown_n": 34
+        },
+        "room_in_4h_range": {
+          "yes_n": 92,
+          "no_n": 92,
+          "yes_days": 27,
+          "yes_mean": 14.068478260869558,
+          "no_mean": -6.919565217391308,
+          "yes_sum": 1294.2999999999993,
+          "no_sum": -636.6000000000004,
+          "yes_wr": 0.6304347826086957,
+          "no_wr": 0.532608695652174,
+          "unknown_n": 34
+        },
+        "stress_sell": {
+          "yes_n": 90,
+          "no_n": 128,
+          "yes_days": 9,
+          "yes_mean": -6.90000000000004,
+          "no_mean": 7.511718750000014,
+          "yes_sum": -621.0000000000036,
+          "no_sum": 961.5000000000018,
+          "yes_wr": 0.5333333333333333,
+          "no_wr": 0.6015625,
+          "unknown_n": 0
+        }
+      }
+    },
+    "52890973": {
+      "n": 29,
+      "days": 12,
+      "usd": 9217.83,
+      "mean_points": 34.59310344827589,
+      "wr": 0.7586206896551724,
+      "descriptive": {
+        "h1_aligned": {
+          "yes_n": 28,
+          "no_n": 1,
+          "yes_days": 11,
+          "yes_mean": 32.94642857142857,
+          "no_mean": 80.70000000000073,
+          "yes_sum": 922.5,
+          "no_sum": 80.70000000000073,
+          "yes_wr": 0.75,
+          "no_wr": 1.0,
+          "unknown_n": 0
+        },
+        "m15_aligned": {
+          "yes_n": 29,
+          "no_n": 0,
+          "yes_days": 12,
+          "yes_mean": 34.59310344827589,
+          "no_mean": 0.0,
+          "yes_sum": 1003.2000000000007,
+          "no_sum": 0.0,
+          "yes_wr": 0.7586206896551724,
+          "no_wr": 0.0,
+          "unknown_n": 0
+        },
+        "m5_body_aligned": {
+          "yes_n": 22,
+          "no_n": 7,
+          "yes_days": 7,
+          "yes_mean": 37.3363636363637,
+          "no_mean": 25.97142857142847,
+          "yes_sum": 821.4000000000015,
+          "no_sum": 181.79999999999927,
+          "yes_wr": 0.7727272727272727,
+          "no_wr": 0.7142857142857143,
+          "unknown_n": 0
+        },
+        "coherent_h1_m15": {
+          "yes_n": 28,
+          "no_n": 1,
+          "yes_days": 11,
+          "yes_mean": 32.94642857142857,
+          "no_mean": 80.70000000000073,
+          "yes_sum": 922.5,
+          "no_sum": 80.70000000000073,
+          "yes_wr": 0.75,
+          "no_wr": 1.0,
+          "unknown_n": 0
+        },
+        "persistent_path_aligned": {
+          "yes_n": 2,
+          "no_n": 27,
+          "yes_days": 1,
+          "yes_mean": -14.700000000000728,
+          "no_mean": 38.244444444444525,
+          "yes_sum": -29.400000000001455,
+          "no_sum": 1032.6000000000022,
+          "yes_wr": 0.5,
+          "no_wr": 0.7777777777777778,
+          "unknown_n": 0
+        },
+        "room_in_4h_range": {
+          "yes_n": 2,
+          "no_n": 27,
+          "yes_days": 2,
+          "yes_mean": 80.35000000000036,
+          "no_mean": 31.203703703703702,
+          "yes_sum": 160.70000000000073,
+          "no_sum": 842.5,
+          "yes_wr": 1.0,
+          "no_wr": 0.7407407407407407,
+          "unknown_n": 0
+        },
+        "stress_sell": {
+          "yes_n": 0,
+          "no_n": 29,
+          "yes_days": 0,
+          "yes_mean": 0.0,
+          "no_mean": 34.59310344827589,
+          "yes_sum": 0.0,
+          "no_sum": 1003.2000000000007,
+          "yes_wr": 0.0,
+          "no_wr": 0.7586206896551724,
+          "unknown_n": 0
+        }
+      }
+    },
+    "52890975": {
+      "n": 18,
+      "days": 10,
+      "usd": 15933.32,
+      "mean_points": 58.744444444444326,
+      "wr": 0.8888888888888888,
+      "descriptive": {
+        "h1_aligned": {
+          "yes_n": 17,
+          "no_n": 1,
+          "yes_days": 9,
+          "yes_mean": 68.67058823529399,
+          "no_mean": -110.0,
+          "yes_sum": 1167.3999999999978,
+          "no_sum": -110.0,
+          "yes_wr": 0.9411764705882353,
+          "no_wr": 0.0,
+          "unknown_n": 0
+        },
+        "m15_aligned": {
+          "yes_n": 9,
+          "no_n": 9,
+          "yes_days": 6,
+          "yes_mean": 58.79999999999968,
+          "no_mean": 58.68888888888897,
+          "yes_sum": 529.1999999999971,
+          "no_sum": 528.2000000000007,
+          "yes_wr": 0.8888888888888888,
+          "no_wr": 0.8888888888888888,
+          "unknown_n": 0
+        },
+        "m5_body_aligned": {
+          "yes_n": 4,
+          "no_n": 14,
+          "yes_days": 3,
+          "yes_mean": 32.75,
+          "no_mean": 66.17142857142842,
+          "yes_sum": 131.0,
+          "no_sum": 926.3999999999978,
+          "yes_wr": 0.75,
+          "no_wr": 0.9285714285714286,
+          "unknown_n": 0
+        },
+        "coherent_h1_m15": {
+          "yes_n": 9,
+          "no_n": 9,
+          "yes_days": 6,
+          "yes_mean": 58.79999999999968,
+          "no_mean": 58.68888888888897,
+          "yes_sum": 529.1999999999971,
+          "no_sum": 528.2000000000007,
+          "yes_wr": 0.8888888888888888,
+          "no_wr": 0.8888888888888888,
+          "unknown_n": 0
+        },
+        "persistent_path_aligned": {
+          "yes_n": 1,
+          "no_n": 17,
+          "yes_days": 1,
+          "yes_mean": 79.89999999999782,
+          "no_mean": 57.5,
+          "yes_sum": 79.89999999999782,
+          "no_sum": 977.5,
+          "yes_wr": 1.0,
+          "no_wr": 0.8823529411764706,
+          "unknown_n": 0
+        },
+        "room_in_4h_range": {
+          "yes_n": 9,
+          "no_n": 9,
+          "yes_days": 7,
+          "yes_mean": 58.63333333333341,
+          "no_mean": 58.855555555555235,
+          "yes_sum": 527.7000000000007,
+          "no_sum": 529.6999999999971,
+          "yes_wr": 0.8888888888888888,
+          "no_wr": 0.8888888888888888,
+          "unknown_n": 0
+        },
+        "stress_sell": {
+          "yes_n": 0,
+          "no_n": 18,
+          "yes_days": 0,
+          "yes_mean": 0.0,
+          "no_mean": 58.744444444444326,
+          "yes_sum": 0.0,
+          "no_sum": 1057.3999999999978,
+          "yes_wr": 0.0,
+          "no_wr": 0.8888888888888888,
+          "unknown_n": 0
+        }
+      }
+    }
+  },
+  "variance_occupancy": {
+    "(False, 'breakout')": {
+      "n": 16,
+      "EV": -0.062236692044989425,
+      "sum_R": -0.9957870727198308,
+      "h1_alignment": 0.375,
+      "m15_alignment": 0.4375,
+      "vr120": 1.0062927417363414,
+      "ER60": 0.16202006020249293
+    },
+    "(False, 'fade')": {
+      "n": 37,
+      "EV": -0.3409059852651764,
+      "sum_R": -12.613521454811528,
+      "h1_alignment": 0.5405405405405406,
+      "m15_alignment": 0.5135135135135135,
+      "vr120": 0.9262463553888065,
+      "ER60": 0.13986671471096732
+    },
+    "(True, 'breakout')": {
+      "n": 11,
+      "EV": 0.6032063723388205,
+      "sum_R": 6.635270095727025,
+      "h1_alignment": 0.45454545454545453,
+      "m15_alignment": 0.2727272727272727,
+      "vr120": 1.0626349619224316,
+      "ER60": 0.1439053621970269
+    },
+    "(True, 'fade')": {
+      "n": 8,
+      "EV": -0.14499632197507084,
+      "sum_R": -1.1599705758005667,
+      "h1_alignment": 0.5,
+      "m15_alignment": 0.5,
+      "vr120": 0.8805514545621604,
+      "ER60": 0.10934390077967596
+    }
+  },
+  "variance_occupancy_note": "This table intersects two different sequential subsets; occupancy.json uses all raw opportunities and is the authoritative occupancy analysis."
+}

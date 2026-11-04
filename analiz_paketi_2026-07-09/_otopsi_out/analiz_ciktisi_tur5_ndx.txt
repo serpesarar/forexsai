@@ -1,0 +1,133 @@
+=== NDX GENEL (çözümlü 103) ===
+                           n      pnl
+strat  direction outcome             
+CHREV  BUY       SL        5  -2750.0
+                 TP        5   2000.0
+       SELL      SL        1   -550.0
+                 TP        1    400.0
+MOM/SR BUY       SL        3   -557.0
+                 TP        4   1004.0
+VIXREG BUY       TP        2    800.0
+       SELL      SL       32 -17624.0
+                 TP       50  19901.0
+
+==============================================================================================================
+NDX SELL SL İŞLEMLERİ — 33 adet, toplam -18174$
+#  tarih (UTC)      strat      giriş  kayıp$ skor kapı? MFE/R flip  etiketler
+1  07-01 16:33      VIXREG   29870.8    -550    8     -  0.35   TP  TEMİZ-KAYIP
+2  07-01 17:46      VIXREG   29899.8    -550    8     -  0.11   TP  TEMİZ-KAYIP
+3  07-02 03:03      VIXREG   29712.5    -550    6  BLOK  0.11   TP  KÖTÜ-SAAT,HACİM-PATLAMASI
+4  07-02 03:37      VIXREG   29815.5    -550    5  BLOK  0.55   SL  KÖTÜ-SAAT,BIÇAK
+5  07-02 10:14      VIXREG   29588.8    -550    8     -  0.13   TP  TEMİZ-KAYIP
+6  07-02 11:32      VIXREG   29716.3    -550    4  BLOK  0.43   TP  KARŞI-TREND(2/3),BIÇAK,1H-KARŞI-MOM
+7  07-02 14:52      VIXREG   29819.3    -550    4  BLOK  0.45   TP  KARŞI-TREND(2/3),BIÇAK,1H-KARŞI-MOM
+8  07-02 16:29      VIXREG   29836.3    -550    7     -  0.73   TP  CHOP
+9  07-02 18:06      VIXREG   29420.2    -550    7     -  0.56   SL  KÖTÜ-SAAT
+10 07-02 20:39      VIXREG   29130.3    -550    7     -  0.49   SL  CHOP
+11 07-02 22:27      VIXREG   29131.5    -556    7     -  0.05   TP  KÖTÜ-SAAT
+12 07-02 22:50      VIXREG   29252.8    -566    3  BLOK  0.16   TP  KÖTÜ-SAAT,KARŞI-TREND(2/3),BIÇAK,CHOP
+13 07-03 04:01      VIXREG   29299.3    -550    6  BLOK  0.03   TP  KÖTÜ-SAAT
+14 07-03 04:05      VIXREG   29409.7    -550    3  BLOK  0.13   TP  KÖTÜ-SAAT,KARŞI-TREND(2/3),BIÇAK,1H-KARŞI-MOM
+15 07-07 17:36      VIXREG   29031.1    -550    8     -  0.51   TP  TEMİZ-KAYIP
+16 07-07 18:52      VIXREG   29138.1    -552    5  BLOK  0.24   TP  KÖTÜ-SAAT,BIÇAK,1H-KARŞI-MOM
+17 07-07 22:17      VIXREG   29066.1    -550    7     -  0.28   SL  KÖTÜ-SAAT
+18 07-08 02:54      VIXREG   29085.0    -550    8     -  0.46   TP  TEMİZ-KAYIP
+19 07-08 03:16      VIXREG   29193.4    -550    2  BLOK  0.31   SL  KÖTÜ-SAAT,KARŞI-TREND(2/3),BIÇAK,HACİM-PATLAMASI,1H-KARŞI-MOM
+20 07-08 09:46      VIXREG   29054.0    -550    8     -  0.05   SL  TEMİZ-KAYIP
+21 07-08 11:40      VIXREG   28747.4    -550    8     -  0.14   SL  TEMİZ-KAYIP
+22 07-08 12:15      VIXREG   28684.3    -556    8     -  0.03   TP  TEMİZ-KAYIP
+23 07-08 13:32      VIXREG   28795.3    -550    6  BLOK  0.49   TP  BIÇAK,1H-KARŞI-MOM
+24 07-08 15:06      VIXREG   28903.5    -550    4  BLOK  0.11   TP  KARŞI-TREND(2/3),BIÇAK,1H-KARŞI-MOM
+25 07-08 16:30      VIXREG   28980.4    -550    2  BLOK -0.09   SL  KARŞI-TREND(3/3),BIÇAK,CHOP,1H-KARŞI-MOM
+26 07-08 18:25      VIXREG   28821.2    -550    7     -  0.17   TP  KÖTÜ-SAAT
+27 07-08 19:06      VIXREG   28912.0    -542    8     -  0.17   TP  TEMİZ-KAYIP
+28 07-08 19:45      VIXREG   29084.2    -550    3  BLOK -0.01   TP  KARŞI-TREND(3/3),BIÇAK,1H-KARŞI-MOM
+29 07-08 20:58      VIXREG   29105.8    -550    5  BLOK  0.08   TP  KARŞI-TREND(3/3)
+30 07-09 17:24      VIXREG   29440.5    -550    7     - -0.17   TP  TEMİZ-KAYIP
+31 07-09 17:54      VIXREG   29516.8    -547    3  BLOK -0.07   TP  KARŞI-TREND(3/3),BIÇAK,CHOP
+32 07-09 18:00      CHREV    29575.7    -550    2  BLOK  0.23    ?  KÖTÜ-SAAT,KARŞI-TREND(3/3),BIÇAK,CHOP
+33 07-09 18:07      VIXREG   29614.1    -555    2  BLOK  0.12    ?  KÖTÜ-SAAT,KARŞI-TREND(3/3),BIÇAK,CHOP
+
+SELL SL etiket dağılımı:
+  BIÇAK                14 işlem     -7720$
+  KÖTÜ-SAAT            13 işlem     -7178$
+  TEMİZ-KAYIP          10 işlem     -5498$
+  1H-KARŞI-MOM          9 işlem     -4952$
+  CHOP                  7 işlem     -3868$
+  KARŞI-TREND(2/3)      6 işlem     -3316$
+  KARŞI-TREND(3/3)      6 işlem     -3302$
+  HACİM-PATLAMASI       2 işlem     -1100$
+  skor<7 kapısı yakalar: 17/33 (-9370$)
+  flip TP olurdu: 23/33
+
+==============================================================================================================
+NDX BUY SL İŞLEMLERİ — 8 adet, toplam -3307$
+#  tarih (UTC)      strat      giriş  kayıp$ skor kapı? MFE/R flip  etiketler
+1  07-01 18:20      CHREV    30056.4    -550    7     -  0.38   TP  KÖTÜ-SAAT
+2  07-01 19:42      CHREV    29948.2    -550    2  BLOK  0.33   TP  KARŞI-TREND(3/3),BIÇAK,CHOP,1H-KARŞI-MOM
+3  07-07 04:14      CHREV    29573.2    -550    1  BLOK  0.11   TP  KÖTÜ-SAAT,KARŞI-TREND(3/3),BIÇAK,CHOP,1H-KARŞI-MOM
+4  07-07 06:28      CHREV    29463.2    -550    3  BLOK  0.08   SL  KARŞI-TREND(3/3),BIÇAK,1H-KARŞI-MOM
+5  07-07 08:51      CHREV    29443.8    -550    6  BLOK  0.58   TP  KARŞI-TREND(2/3)
+6  07-08 19:31      MOM/SR   29077.0    -202    8     -  0.08   SL  TEMİZ-KAYIP
+7  07-09 17:15      MOM/SR   29503.7    -166    4  BLOK -0.05   SL  KARŞI-TREND(2/3),BIÇAK,1H-KARŞI-MOM
+8  07-09 17:18      MOM/SR   29468.1    -188    5  BLOK  0.75   TP  KARŞI-TREND(2/3),BIÇAK
+
+BUY SL etiket dağılımı:
+  BIÇAK                 5 işlem     -2005$
+  1H-KARŞI-MOM          4 işlem     -1816$
+  KARŞI-TREND(3/3)      3 işlem     -1650$
+  KARŞI-TREND(2/3)      3 işlem      -905$
+  KÖTÜ-SAAT             2 işlem     -1100$
+  CHOP                  2 işlem     -1100$
+  TEMİZ-KAYIP           1 işlem      -202$
+  skor<7 kapısı yakalar: 6/8 (-2555$)
+  flip TP olurdu: 5/8
+
+=== SL GÜN KÜMELERİ ===
+                       n     pnl
+day        direction            
+2026-07-01 BUY         2 -1100.0
+           SELL        2 -1100.0
+2026-07-02 SELL       10 -5522.0
+2026-07-03 SELL        2 -1100.0
+2026-07-07 BUY         3 -1650.0
+           SELL        3 -1652.0
+2026-07-08 BUY         1  -202.0
+           SELL       12 -6598.0
+2026-07-09 BUY         2  -355.0
+           SELL        4 -2202.0
+
+=== VIXREG SELL: 30m trend durumuna göre ===
+  30m trend AŞAĞI (hizalı): n=66 WR=61% PnL=1730
+  30m trend YUKARI (karşı): n=16 WR=62% PnL=548
+
+=== VIXREG SELL: EMA200(1m) durumuna göre ===
+  fiyat EMA200 ALTINDA (hizalı): n=58 WR=66% PnL=4078
+  fiyat EMA200 ÜSTÜNDE (karşı): n=24 WR=50% PnL=-1800
+
+=== NDX SELL: TP vs SL bağlam kontrastı (ortalamalar) ===
+  score            TP    6.53 | SL    5.64
+  trend5_s         TP    0.53 | SL    0.21
+  trend30_s        TP    0.61 | SL    0.58
+  above_ema200_s   TP    0.49 | SL    0.21
+  adx1             TP   29.25 | SL   28.80
+  run30            TP    1.68 | SL    1.29
+  mom60_s          TP    2.35 | SL    2.77
+  vol_ratio        TP    1.06 | SL    1.09
+  hour             TP   14.51 | SL   14.06
+
+=== CHREV işlemleri (mean-reversion kanal-dönüş) detay ===
+  07-01 10:19 BUY  TP       400$ skor=4 run30=-7.8 trend30=+1 adx1=38
+  07-01 16:30 BUY  TP       400$ skor=4 run30=-1.2 trend30=-1 adx1=22
+  07-01 17:33 BUY  TP       400$ skor=3 run30=-2.0 trend30=-1 adx1=18
+  07-01 18:20 BUY  SL      -550$ skor=7 run30=+4.1 trend30=+1 adx1=20
+  07-01 19:42 BUY  SL      -550$ skor=2 run30=-3.2 trend30=-1 adx1=18
+  07-02 04:05 SELL TP       400$ skor=3 run30=-5.2 trend30=+1 adx1=39
+  07-07 04:14 BUY  SL      -550$ skor=1 run30=-2.1 trend30=-1 adx1=11
+  07-07 06:28 BUY  SL      -550$ skor=3 run30=-3.8 trend30=-1 adx1=38
+  07-07 08:09 BUY  TP       400$ skor=3 run30=-5.6 trend30=-1 adx1=26
+  07-07 08:51 BUY  SL      -550$ skor=6 run30=+7.5 trend30=-1 adx1=30
+  07-07 16:35 BUY  TP       400$ skor=3 run30=-3.2 trend30=-1 adx1=24
+  07-09 18:00 SELL SL      -550$ skor=2 run30=-1.8 trend30=-1 adx1=12
+
+Bitti → _otopsi_out/ndx_sl_forensik.csv

@@ -1,0 +1,85 @@
+SL işlemleri: 67 (NDX 41, USOIL 26)
+
+=== SL GENİŞLETME — aynı giriş+TP, SL k× uzak (SL işlemleri) ===
+  SL×1.5: TP'ye döner 22 (33%) | yine SL 44 | açık 1 | (yeni riske göre EV -0.56R)
+  SL×2.0: TP'ye döner 28 (42%) | yine SL 37 | açık 2 | (yeni riske göre EV -0.45R)
+  SL×3.0: TP'ye döner 37 (55%) | yine SL 26 | açık 4 | (yeni riske göre EV -0.29R)
+
+=== SL SONRASI AYNI YÖNDE RE-ENTRY (SL fiyatından, aynı mesafeler) ===
+  re-entry: TP 37 (55%) | SL 28 | açık 2
+  TERS yön re-entry: TP 47 (70%) | SL 18 | açık 2
+
+=== DERİN RETRACE LİMİT (SL işlemleri; x·ATR geri çekilme, 120dk bekleme) ===
+  1.0·ATR: dolan 67/67 | TP 16 | SL 51 | dolanların TP% 24%
+  1.5·ATR: dolan 67/67 | TP 23 | SL 43 | dolanların TP% 34%
+  2.0·ATR: dolan 67/67 | TP 26 | SL 40 | dolanların TP% 39%
+
+=== TEMPORAL SPLIT — filtreler iki yarıda da tutuyor mu? ===
+filtre                       H1 blok  H1 ΔPnL H2 blok  H2 ΔPnL  tutarlı?
+NDX kötü saat {3,4,18,22}         14    +2974       9    +2104  ✅
+NDX 5m karşı-trend                19     +961      19    +1144  ✅
+NDX 5m&30m karşı-trend             9     +195      11    +1294  ✅
+NDX bıçak run30<-1.5              18     +416      20    +1843  ✅
+USOIL 1h karşı-mom                 5     +952       6    +1504  ✅
+USOIL adx1<20                      6     +750       8    +1620  ✅
+USOIL <12UTC                      10     +774       9    +1094  ✅
+
+=== TP ORTAK PAYDA — kazanan işlemlerin profili (koşul sağlanma yüzdesi) ===
+
+NDX (TP n=62, SL n=41):
+  5m trend hizalı (trend5_s>0)             TP'lerde %69 | SL'lerde %54  Δ+16
+  30m trend hizalı                         TP'lerde %73 | SL'lerde %73  Δ-1
+  EMA200 doğru tarafta                     TP'lerde %66 | SL'lerde %56  Δ+10
+  1m ADX ≥ 20                              TP'lerde %82 | SL'lerde %78  Δ+4
+  hacim sakin (vol_ratio<1.5)              TP'lerde %100 | SL'lerde %95  Δ+5
+  1h momentum lehte (mom60_s>-1)           TP'lerde %68 | SL'lerde %68  Δ-1
+  bıçak değil (run30>-1.5)                 TP'lerde %69 | SL'lerde %54  Δ+16
+  iyi saat (NDX:!{3,4,18,22} / OIL:≥12)    TP'lerde %87 | SL'lerde %63  Δ+24
+
+USOIL (TP n=25, SL n=26):
+  5m trend hizalı (trend5_s>0)             TP'lerde %80 | SL'lerde %65  Δ+15
+  30m trend hizalı                         TP'lerde %80 | SL'lerde %58  Δ+22
+  EMA200 doğru tarafta                     TP'lerde %80 | SL'lerde %62  Δ+18
+  1m ADX ≥ 20                              TP'lerde %80 | SL'lerde %65  Δ+15
+  hacim sakin (vol_ratio<1.5)              TP'lerde %76 | SL'lerde %73  Δ+3
+  1h momentum lehte (mom60_s>-1)           TP'lerde %92 | SL'lerde %65  Δ+27
+  bıçak değil (run30>-1.5)                 TP'lerde %52 | SL'lerde %46  Δ+6
+  iyi saat (NDX:!{3,4,18,22} / OIL:≥12)    TP'lerde %76 | SL'lerde %50  Δ+26
+
+=== GİRİŞ SKORU (0-8 koşul) → WR ===
+
+NDX:
+        n    wr     pnl
+score                  
+1       1  0.00  -550.0
+2       5  0.00 -2755.0
+3      15  0.67  1249.0
+4       9  0.56   189.0
+5      12  0.67  1012.0
+6      10  0.60   197.5
+7      17  0.53 -1216.5
+8      34  0.71  4499.0
+  skor≥6: n=61 WR=64% PnL=3480 (tümü: n=103, WR=60%, PnL=2625)
+  skor≥7: n=51 WR=65% PnL=3282 (tümü: n=103, WR=60%, PnL=2625)
+
+USOIL:
+        n    wr     pnl
+score                  
+1       2  0.00  -682.5
+2       4  0.25  -267.5
+3       4  0.75   437.0
+4       5  0.20 -1639.0
+5       5  0.20 -1128.5
+6      13  0.46  -510.0
+7       9  0.67   463.0
+8       9  0.78   688.0
+  skor≥6: n=31 WR=61% PnL=641 (tümü: n=51, WR=49%, PnL=-2640)
+  skor≥7: n=18 WR=72% PnL=1151 (tümü: n=51, WR=49%, PnL=-2640)
+
+Skor≥6 iki yarıda:
+  NDX H1: tümü n=53 WR=64% PnL=   2970 | skor≥6 n=33 WR=67% PnL=   2582
+  NDX H2: tümü n=50 WR=56% PnL=   -346 | skor≥6 n=28 WR=61% PnL=    898
+  USOIL H1: tümü n=22 WR=55% PnL=   -809 | skor≥6 n=14 WR=64% PnL=    516
+  USOIL H2: tümü n=29 WR=45% PnL=  -1830 | skor≥6 n=17 WR=59% PnL=    125
+
+Bitti.

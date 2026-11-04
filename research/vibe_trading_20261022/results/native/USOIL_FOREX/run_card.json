@@ -1,0 +1,372 @@
+{
+  "artifacts": [
+    {
+      "path": "artifacts/equity.csv",
+      "sha256": "42e3c429277cbc7e48418b7595d9062462de6816c1534f766ea9a6edfd59ee2b",
+      "size_bytes": 91872
+    },
+    {
+      "path": "artifacts/fills.jsonl",
+      "sha256": "5cdc496432b575d769c028cb8cda6493ea419fa9613488a2a26aff9ef6b7f5f8",
+      "size_bytes": 23877
+    },
+    {
+      "path": "artifacts/metrics.csv",
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6",
+      "size_bytes": 793
+    },
+    {
+      "path": "artifacts/ohlcv_USOIL.FOREX.csv",
+      "sha256": "033d8708ce6b0e028da35b422528a2bfd911ab601fd2a508bdaebbbfd1071b3e",
+      "size_bytes": 49203
+    },
+    {
+      "path": "artifacts/positions.csv",
+      "sha256": "eb6fffa632a0c7aa91620af32a80ef1e5e0459a0928f952f2a61e71b641ae2d9",
+      "size_bytes": 26555
+    },
+    {
+      "path": "artifacts/rebalance_notes.json",
+      "sha256": "e03de50fec38817006c3488605fb1335589f1adfb1ed22fbd7afc7d6848cb417",
+      "size_bytes": 28729
+    },
+    {
+      "path": "artifacts/rebalance_notes.md",
+      "sha256": "4485174bc0c6befa28468c60e934b08a11ee03f155c4f9e53440a4b2229c7cc6",
+      "size_bytes": 8409
+    },
+    {
+      "path": "artifacts/target_positions.csv",
+      "sha256": "8d63222354a6f9590a87aece4430e8c2189d76741083920d8e7a20d74622ef42",
+      "size_bytes": 24133
+    },
+    {
+      "path": "artifacts/trades.csv",
+      "sha256": "9145bb3eb6b1c64b72d65b0222e380c966106bf2fb91846ab2e603cc01f298cf",
+      "size_bytes": 6632
+    },
+    {
+      "path": "code/signal_engine.py",
+      "sha256": "739f3d1d3cd49677ea55a5818fb6e82fc0741fd6317dfedf28ca1d5aff518669",
+      "size_bytes": 9612
+    },
+    {
+      "path": "config.json",
+      "sha256": "c4d6a594d8691e52578cf4871d9d9f0ba05ee98401c7d13b1ab691fe80a93522",
+      "size_bytes": 239
+    }
+  ],
+  "backtest": {
+    "codes": [
+      "USOIL.FOREX"
+    ],
+    "end_date": "2026-10-20",
+    "initial_cash": 1000000,
+    "interval": "5m",
+    "source": "local",
+    "start_date": "2026-10-16"
+  },
+  "citations": [
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "final_value",
+      "metric": "final_value",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "total_return",
+      "metric": "total_return",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "annual_return",
+      "metric": "annual_return",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "max_drawdown",
+      "metric": "max_drawdown",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "sharpe",
+      "metric": "sharpe",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "calmar",
+      "metric": "calmar",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "sortino",
+      "metric": "sortino",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "win_rate",
+      "metric": "win_rate",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "profit_loss_ratio",
+      "metric": "profit_loss_ratio",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "profit_factor",
+      "metric": "profit_factor",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "max_consecutive_loss",
+      "metric": "max_consecutive_loss",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "avg_holding_days",
+      "metric": "avg_holding_days",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "trade_count",
+      "metric": "trade_count",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_return",
+      "metric": "benchmark_return",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "excess_return",
+      "metric": "excess_return",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "information_ratio",
+      "metric": "information_ratio",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "tracking_error",
+      "metric": "tracking_error",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_beta",
+      "metric": "benchmark_beta",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "avg_turnover",
+      "metric": "avg_turnover",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "total_turnover",
+      "metric": "total_turnover",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "unfilled_plan_rejections",
+      "metric": "unfilled_plan_rejections",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "target_change_count",
+      "metric": "target_change_count",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_executed_bars",
+      "metric": "rebalance_executed_bars",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_executed_fills",
+      "metric": "rebalance_executed_fills",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_realized_turnover",
+      "metric": "rebalance_realized_turnover",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_turnover_mean",
+      "metric": "rebalance_turnover_mean",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_turnover_max",
+      "metric": "rebalance_turnover_max",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "position_adjustment",
+      "metric": "position_adjustment",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_tolerance",
+      "metric": "rebalance_tolerance",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "dropped_target_adjustment_count",
+      "metric": "dropped_target_adjustment_count",
+      "row": 1,
+      "sha256": "be89ae53da522fd7088cd46d4742f824a95c3e8dc89a19ba8ebc5bedfdd985e6"
+    }
+  ],
+  "data_sources": [
+    "forexsai_local_broker_cache"
+  ],
+  "generated_at": "2026-10-22T19:59:45.452708Z",
+  "metrics": {
+    "annual_return": -0.7325650730605366,
+    "avg_holding_days": 5.1,
+    "avg_turnover": 0.052525,
+    "benchmark_beta": 0.0631,
+    "benchmark_return": 0.019332,
+    "calmar": -19.184,
+    "dropped_target_adjustment_count": 0,
+    "excess_return": -0.033765,
+    "final_value": 985567.2572247679,
+    "information_ratio": -7.0717,
+    "max_consecutive_loss": 8,
+    "max_drawdown": -0.0381862125855226,
+    "position_adjustment": "hold",
+    "profit_factor": 0.7911,
+    "profit_loss_ratio": 1.2855,
+    "rebalance_executed_bars": 0,
+    "rebalance_executed_fills": 0,
+    "rebalance_realized_turnover": 0.0,
+    "rebalance_tolerance": 0.0,
+    "rebalance_turnover_max": 0.5,
+    "rebalance_turnover_mean": 0.5,
+    "sharpe": -5.455719185088544,
+    "sortino": -7.4662,
+    "target_change_count": 84,
+    "total_return": -0.0144327427752321,
+    "total_turnover": 42.019644,
+    "tracking_error": 0.439262,
+    "trade_count": 42,
+    "unfilled_plan_rejections": 0,
+    "win_rate": 0.38095238095238093
+  },
+  "model_provenance": {
+    "cutoff_source": null,
+    "files": {
+      "code/signal_engine.py": {
+        "model_id": null,
+        "model_source": null,
+        "provider": null
+      },
+      "config.json": {
+        "model_id": null,
+        "model_source": null,
+        "provider": null
+      }
+    },
+    "training_cutoff": null
+  },
+  "reproducibility": {
+    "config_hash": "c4d6a594d8691e52578cf4871d9d9f0ba05ee98401c7d13b1ab691fe80a93522",
+    "strategy_hash": "739f3d1d3cd49677ea55a5818fb6e82fc0741fd6317dfedf28ca1d5aff518669"
+  },
+  "run_dir": "/Users/melihcanodacioglu/Desktop/panel/research/vibe_trading_20261022/results/native/USOIL_FOREX",
+  "schema_version": "1.0",
+  "structured_metrics": {
+    "by_exit_reason": {
+      "signal": {
+        "count": 42,
+        "total_pnl": -14432.74
+      }
+    },
+    "by_symbol": {
+      "USOIL.FOREX": {
+        "avg_pnl": -343.64,
+        "count": 42,
+        "total_pnl": -14432.74,
+        "win_rate": 0.381
+      }
+    },
+    "dropped_target_adjustments": [],
+    "unfilled_plan_rejections_by_symbol": {}
+  },
+  "tool_traces": [
+    {
+      "args_hash": "183350b8dce11630c3fc7946e491a223b265d4a337c2c69f7680e31e08e4e607",
+      "ended_at": "2026-10-22T19:59:45.452570Z",
+      "result_hash": "94ef1be78726b5db8b013e1299fd89742171caaaaa2704f1edc1420f3c067be2",
+      "started_at": "2026-10-22T19:59:45.406069Z",
+      "status": "ok",
+      "tool": "backtest"
+    }
+  ],
+  "warnings": [
+    "No strategy model provenance was recorded for config.json; writer identity is unknown.",
+    "No strategy model provenance was recorded for code/signal_engine.py; writer identity is unknown.",
+    "Training cutoff for unknown model is unknown; assume results may reflect what the model remembers."
+  ]
+}

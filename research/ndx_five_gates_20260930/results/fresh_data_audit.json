@@ -1,0 +1,16 @@
+{
+  "september_rows": 28704,
+  "september_trading_dates": 25,
+  "ny_mon_thu_dates": 18,
+  "start": "2026-08-30 22:00:00+00:00",
+  "end": "2026-09-30 00:00:00+00:00",
+  "bad_ohlc": 0,
+  "duplicates": 0,
+  "spread_points_constant": 1.0,
+  "clock_offset_seconds": [
+    10800
+  ],
+  "raw_sha256": "b85155f80e8cc7cc57567bb4177d128c6ecc5df7419f9417f8421a6a884e8a49",
+  "provider_2025_sha256": "d374f9af44370d6de5a621ab8d17794f29fc01e76171cc6066644049ffce6319",
+  "note": "MT5 per-bar historical spread values are all 10 integer points; actual tick/fill distribution not verified. 2025 source was already present in the shared workspace and was not built by this lab."
+}

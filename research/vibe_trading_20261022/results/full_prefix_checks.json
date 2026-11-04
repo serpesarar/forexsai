@@ -1,0 +1,1298 @@
+[
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "technical-basic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "technical-basic",
+    "cut": 11776,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "technical-basic",
+    "cut": 23552,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "candlestick",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "candlestick",
+    "cut": 11776,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "candlestick",
+    "cut": 23552,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "ichimoku",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "ichimoku",
+    "cut": 11776,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "ichimoku",
+    "cut": 23552,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "volatility",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "volatility",
+    "cut": 11776,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "volatility",
+    "cut": 23552,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "seasonal",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "seasonal",
+    "cut": 11776,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "seasonal",
+    "cut": 23552,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "harmonic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "harmonic",
+    "cut": 11776,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "harmonic",
+    "cut": 23552,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "elliott-wave",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "elliott-wave",
+    "cut": 11776,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "elliott-wave",
+    "cut": 23552,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "technical-basic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "technical-basic",
+    "cut": 10198,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "technical-basic",
+    "cut": 20395,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "candlestick",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "candlestick",
+    "cut": 10198,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "candlestick",
+    "cut": 20395,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "ichimoku",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "ichimoku",
+    "cut": 10198,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "ichimoku",
+    "cut": 20395,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "volatility",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "volatility",
+    "cut": 10198,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "volatility",
+    "cut": 20395,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "seasonal",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "seasonal",
+    "cut": 10198,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "seasonal",
+    "cut": 20395,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "harmonic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "harmonic",
+    "cut": 10198,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "harmonic",
+    "cut": 20395,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "elliott-wave",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "elliott-wave",
+    "cut": 10198,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "elliott-wave",
+    "cut": 20395,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "technical-basic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "technical-basic",
+    "cut": 11753,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "technical-basic",
+    "cut": 23506,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "candlestick",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "candlestick",
+    "cut": 11753,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "candlestick",
+    "cut": 23506,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "ichimoku",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "ichimoku",
+    "cut": 11753,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "ichimoku",
+    "cut": 23506,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "volatility",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "volatility",
+    "cut": 11753,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "volatility",
+    "cut": 23506,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "seasonal",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "seasonal",
+    "cut": 11753,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "seasonal",
+    "cut": 23506,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "harmonic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "harmonic",
+    "cut": 11753,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "harmonic",
+    "cut": 23506,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "elliott-wave",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "elliott-wave",
+    "cut": 11753,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "elliott-wave",
+    "cut": 23506,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "technical-basic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "technical-basic",
+    "cut": 11826,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "technical-basic",
+    "cut": 23652,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "candlestick",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "candlestick",
+    "cut": 11826,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "candlestick",
+    "cut": 23652,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "ichimoku",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "ichimoku",
+    "cut": 11826,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "ichimoku",
+    "cut": 23652,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "volatility",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "volatility",
+    "cut": 11826,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "volatility",
+    "cut": 23652,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "seasonal",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "seasonal",
+    "cut": 11826,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "seasonal",
+    "cut": 23652,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "harmonic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "harmonic",
+    "cut": 11826,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "harmonic",
+    "cut": 23652,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "elliott-wave",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "elliott-wave",
+    "cut": 11826,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "elliott-wave",
+    "cut": 23652,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "technical-basic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "technical-basic",
+    "cut": 29914,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "technical-basic",
+    "cut": 59827,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "candlestick",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "candlestick",
+    "cut": 29914,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "candlestick",
+    "cut": 59827,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "ichimoku",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "ichimoku",
+    "cut": 29914,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "ichimoku",
+    "cut": 59827,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "volatility",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "volatility",
+    "cut": 29914,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "volatility",
+    "cut": 59827,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "seasonal",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "seasonal",
+    "cut": 29914,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "seasonal",
+    "cut": 59827,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "harmonic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "harmonic",
+    "cut": 29914,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "harmonic",
+    "cut": 59827,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "elliott-wave",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "elliott-wave",
+    "cut": 29914,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "elliott-wave",
+    "cut": 59827,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "technical-basic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "technical-basic",
+    "cut": 21840,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "technical-basic",
+    "cut": 43679,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "candlestick",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "candlestick",
+    "cut": 21840,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "candlestick",
+    "cut": 43679,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "ichimoku",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "ichimoku",
+    "cut": 21840,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "ichimoku",
+    "cut": 43679,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "volatility",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "volatility",
+    "cut": 21840,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "volatility",
+    "cut": 43679,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "seasonal",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "seasonal",
+    "cut": 21840,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "seasonal",
+    "cut": 43679,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "harmonic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "harmonic",
+    "cut": 21840,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "harmonic",
+    "cut": 43679,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "elliott-wave",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "elliott-wave",
+    "cut": 21840,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "elliott-wave",
+    "cut": 43679,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "candlestick",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "candlestick",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "candlestick",
+    "cut": 60629,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "ichimoku",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "ichimoku",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "ichimoku",
+    "cut": 60629,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "volatility",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "volatility",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "volatility",
+    "cut": 60629,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "seasonal",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "seasonal",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "seasonal",
+    "cut": 60629,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "harmonic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "harmonic",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "harmonic",
+    "cut": 60629,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "elliott-wave",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "elliott-wave",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "elliott-wave",
+    "cut": 60629,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "candlestick",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "candlestick",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "candlestick",
+    "cut": 60630,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "ichimoku",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "ichimoku",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "ichimoku",
+    "cut": 60630,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "volatility",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "volatility",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "volatility",
+    "cut": 60630,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "seasonal",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "seasonal",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "seasonal",
+    "cut": 60630,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "harmonic",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "harmonic",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "harmonic",
+    "cut": 60630,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "elliott-wave",
+    "cut": 800,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "elliott-wave",
+    "cut": 30315,
+    "passed": true,
+    "mismatches": 0
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "elliott-wave",
+    "cut": 60630,
+    "passed": true,
+    "mismatches": 0
+  }
+]

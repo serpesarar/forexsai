@@ -1,0 +1,6 @@
+BUY rr0.4 LOSS n=21: SL'e kadar medyan 30 dk (≤5dk: 5%, ≤15dk: 14%) | SL öncesi lehte ≥0.25ATR 62% ≥0.5ATR 38% ≥0.75ATR 14% (medyan 0.35) | SL sonrası 240dk'da girişe dönüş 38%, orijinal TP'ye ulaşma 33% (48s: 86%)
+BUY rr0.67 LOSS n=210: SL'e kadar medyan 16 dk (≤5dk: 11%, ≤15dk: 49%) | SL öncesi lehte ≥0.25ATR 59% ≥0.5ATR 32% ≥0.75ATR 11% (medyan 0.33) | SL sonrası 240dk'da girişe dönüş 73%, orijinal TP'ye ulaşma 60% (48s: 90%)
+SELL rr0.4 LOSS n=15: SL'e kadar medyan 25 dk (≤5dk: 7%, ≤15dk: 27%) | SL öncesi lehte ≥0.25ATR 53% ≥0.5ATR 40% ≥0.75ATR 20% (medyan 0.31) | SL sonrası 240dk'da girişe dönüş 40%, orijinal TP'ye ulaşma 33% (48s: 40%)
+SELL rr0.67 LOSS n=16: SL'e kadar medyan 18 dk (≤5dk: 12%, ≤15dk: 44%) | SL öncesi lehte ≥0.25ATR 81% ≥0.5ATR 56% ≥0.75ATR 19% (medyan 0.55) | SL sonrası 240dk'da girişe dönüş 75%, orijinal TP'ye ulaşma 44% (48s: 69%)
+BUY WIN n=363: TP'ye medyan 11 dk (≤5dk 24%); TP öncesi aleyhte (ATR) medyan 0.43, ≥0.5ATR 45%, ≥0.75ATR 26%, ≥1.0ATR 16%
+SELL WIN n=49: TP'ye medyan 19 dk (≤5dk 14%); TP öncesi aleyhte (ATR) medyan 0.50, ≥0.5ATR 49%, ≥0.75ATR 31%, ≥1.0ATR 22%

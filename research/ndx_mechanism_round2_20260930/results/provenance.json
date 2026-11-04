@@ -1,0 +1,20 @@
+{
+  "research/ndx_mechanism_round2_20260930/occupancy.py": "959fdec5b2b5e565f12c60f7a74215139e3b5c635e68a62fbfdbd843d040350e",
+  "research/ndx_mechanism_round2_20260930/experiment.py": "d2595dd6c0383cdc0a3972e5de1485b6bc5fc0dc306ec1fbcf64c6d23292944c",
+  "research/ndx_mechanism_round2_20260930/make_report.py": "8174d8c2810ebe0ae02771576c6219c5b247f6d912c451cd97490aa5f546e0af",
+  "research/ndx_mechanism_round2_20260930/forward_day.py": "b86daefa0fa24bed4e42a425e0674b151a4c7b1572429761f59e69a105df79b0",
+  "research/ndx_mechanism_round2_20260930/pull_day.py": "577c9dfea08e3a2c497602a66c4296eef04e5a083b73cb1fdfb3c18d2f237b84",
+  "research/ndx_mechanism_round2_20260930/autopsy.py": "091e69aec04d9bcfd1e41f69f5ff9e9fd79dcdddb56182a6071eb14c0abdfdf2",
+  "research/ndx_mechanism_round2_20260930/verify.py": "6cd90aa47b7e6dd0e081c251347fd54f87bf72323428f3b3ae4587063e35cdaa",
+  "research/ndx_mechanism_round2_20260930/data.py": "f603c64b01850c5919be3b80ffcf3875a2d969358b6f6ab038e2cb241947f49f",
+  "research/ndx_mechanism_round2_20260930/PROTOCOL.md": "c3e187b765d1e44109fa17f5060f0e918ccffdef45ee90b3b014145cd276bafa",
+  "research/ndx_mechanism_round2_20260930/results/frozen_derivatives.json": "ce8b69ec4f828370bb77019256474e3c413f411acfadffeab918da9f837263c8",
+  "research/ndx_mechanism_round2_20260930/results/evaluation.json": "244ac210500a4ec7afc85dd8044c6b870fe3840e9c7158d16de23f6aa4ee58cc",
+  "research/ndx_mechanism_round2_20260930/results/forward_day.json": "4d5409a5531a72151d344f8af1fa688490255cb32a77d2a6a9eae3b87ef42372",
+  "research/ndx_gate_forge/data/macro_daily_patched.csv": "6193bbb991ae59fa90ee6f6e78b1ef8b0cd2eb02d5eb21a5474db89286e1d16e",
+  "nasdaq_1m_candle_cache_2026-02-10_2026-08-29/nasdaq_1m_candle_cache_TAM_2026-02-10_2026-08-29.csv": "165948148fc1a88155f2ee571e95ca108e93f347a4e3fb02bd7c80c18e93e56b",
+  "nasdaq_tam_veri_2026-08-29/1m_veri/NAS100_1m_2026-05-19_2026-08-28.csv": "265fe9190e31a0e4377cbc4fd7ab8d6e1745c730e6873fe4ee0badbd3eaf894e",
+  "research/ndx_five_gates_20260930/lab.py": "0c28e9acbdf35a60a7b57467ddda7fac66453a9478bfdbabe9e9f3487d9555d2",
+  "research/ndx_five_gates_20260930/transfer.py": "8e11dc46f42a2249499df5436748086d0f93b8d594b225972eb6eba82209aea0",
+  "research/ndx_five_gates_20260930/second_search.py": "bc000d00f2113cdafea9c04bc60aa32fade82043d7ecdc6bb1fa9da38c2faa15"
+}

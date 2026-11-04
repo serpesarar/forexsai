@@ -1,556 +1,790 @@
 [
-  {
-    "id": "trigger_error_analysis",
-    "name": "Hata Otopsisi (AI) — başarısız sinyalleri analiz et",
-    "kind": "endpoint",
-    "method": "POST",
-    "path": "/api/learning/trigger-error-analysis",
-    "category": "error_analysis",
-    "what_it_does": "Stopped (SL vurmuş) tahminleri Claude Haiku ile analiz eder: ne yanlış gitti, fake-move mu, hangi faktörler suçluydu. error_analysis + learning_feedback kayıtları üretir.",
-    "output": "Supabase error_analysis tablosu",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": [
-      "bias_debate",
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "ai_ops_run",
-    "name": "AI-Ops Döngüsü — başarısızlık kümeleri + iyileştirme önerileri",
-    "kind": "endpoint",
-    "method": "POST",
-    "path": "/api/ai-ops/run",
-    "category": "error_analysis",
-    "what_it_does": "Failure tagger → kümeleme → DeepSeek iyileştirme önerileri → counterfactual simülasyon → auto-triage hattını ŞİMDİ çalıştırır. Onay bekleyen öneriler improvement_proposals'a düşer.",
-    "output": "failure_analyses + improvement_proposals tabloları",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": [
-      "bias_debate"
-    ]
-  },
-  {
-    "id": "generate_insights",
-    "name": "Öğrenme İçgörüleri Üret (faktör korelasyonları)",
-    "kind": "endpoint",
-    "method": "POST",
-    "path": "/api/learning/generate-insights",
-    "category": "performance",
-    "what_it_does": "Hangi faktörlerin doğru/yanlış tahminle korele olduğunu analiz edip learning_insights tablosuna uyarı/öneri yazar.",
-    "output": "learning_insights tablosu",
-    "needs_backend": true,
-    "est_runtime": "seconds",
-    "learn_targets": [
-      "bias_debate",
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "pattern_mining_run",
-    "name": "Pattern Mining — kural madenciliğini şimdi çalıştır",
-    "kind": "endpoint",
-    "method": "POST",
-    "path": "/api/ai-ops/pattern-mining/run",
-    "category": "pattern_mining",
-    "what_it_does": "Son 60 günün resolved sinyallerinden decision-tree ile 'RSI<X + ADX>Y + regime=Z → WR %W' kuralları çıkarır (kazanan ≥%75 / toksik ≤%35). pattern_matcher bunları runtime'da okur.",
-    "output": "backend/data/pattern_rules.json + chart_pattern_rules.json + pattern_mining_runs",
-    "needs_backend": true,
-    "est_runtime": "long",
-    "learn_targets": [
-      "bias_debate"
-    ]
-  },
-  {
-    "id": "bias_fill_outcomes",
-    "name": "Bias Notlama — dünkü tahminlere not ver",
-    "kind": "endpoint",
-    "method": "POST",
-    "path": "/api/bias-test/fill-outcomes",
-    "category": "performance",
-    "what_it_does": "Kapanmış günlerin bias tahminlerini gerçek seans yönüyle karşılaştırıp was_correct doldurur. Ajan tartışmasının karnesi buradan beslenir.",
-    "output": "bias_test_log tablosu",
-    "needs_backend": true,
-    "est_runtime": "seconds",
-    "learn_targets": [
-      "bias_debate"
-    ]
-  },
-  {
-    "id": "check_all_pending",
-    "name": "Bekleyen Sinyal Sonuçlarını Çöz",
-    "kind": "endpoint",
-    "method": "POST",
-    "path": "/api/learning/check-all-pending",
-    "category": "performance",
-    "what_it_does": "Hâlâ active görünen tüm sinyallerin TP/SL/expire sonuçlarını toplu kontrol edip çözer — performans panellerinin verisini tazeler.",
-    "output": "prediction_logs status güncellemeleri",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": []
-  },
-  {
-    "id": "decider_outcomes",
-    "name": "Claude Decider — kararları notla (WIN/LOSS çöz)",
-    "kind": "script",
-    "command": "python3 outcomes.py",
-    "cwd": "claude_decider",
-    "category": "performance",
-    "what_it_does": "Shadow journal'daki açık kararları 5m barlarla WIN/LOSS/EXPIRE'a çözer (aynı-bar = konservatif LOSS), 6 çıkış politikası grade'i üretir, WR/EV özetini basar. Diğer tüm decider raporlarının önkoşulu.",
-    "output": "claude_decider/memory/journal.jsonl + stdout özet",
-    "needs_backend": false,
-    "est_runtime": "minutes",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "decider_post_mortem",
-    "name": "Claude Decider — SL Otopsisi (kayıpların ortak paydası)",
-    "kind": "script",
-    "command": "python3 post_mortem.py",
-    "cwd": "claude_decider",
-    "category": "error_analysis",
-    "what_it_does": "Kaybedenleri kazananlardan AYIRAN koşulu bulur: forensik snapshot'lardan WIN vs LOSS dağılımlarını kıyaslar, permütasyon/FDR-korumalı ayırıcılar + stop-avı analizi raporlar. En kritik 'neden yanlış yaptı' aracı.",
-    "output": "stdout tablo (--write ile LESSONS.md'ye aday)",
-    "needs_backend": false,
-    "est_runtime": "seconds",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "decider_distill",
-    "name": "Claude Decider — Ders Damıtma (kanıt-kapılı öğrenme)",
-    "kind": "script",
-    "command": "python3 distill_journal.py",
-    "cwd": "claude_decider",
-    "category": "pattern_mining",
-    "what_it_does": "Journal'daki grade edilmiş kararları kanıt-kapısıyla (min örnek + placebo p<0.05) tarar; geçen desenleri LESSONS.md'ye ✅ ders olarak terfi ettirir — decider bir SONRAKI kararda otomatik uygular.",
-    "output": "claude_decider/memory/LESSONS.md AUTO bölümü",
-    "needs_backend": false,
-    "est_runtime": "seconds",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "decider_calibration",
-    "name": "Claude Decider — Kanıt Kalibrasyonu",
-    "kind": "script",
-    "command": "python3 calibration.py",
-    "cwd": "claude_decider",
-    "category": "calibration",
-    "what_it_does": "'Bu kurulum %85 kazanır' denilen kanıt hücrelerinde canlı gerçekleşen WR'ı ölçer (reliability diagram + ECE); şişik hücreleri tespit eder — evidence tazelemenin tetikleyicisi.",
-    "output": "stdout rapor",
-    "needs_backend": false,
-    "est_runtime": "seconds",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "decider_refresh_evidence",
-    "name": "Claude Decider — Evidence Tazele (canlı WR blend)",
-    "kind": "script",
-    "command": "python3 refresh_evidence.py",
-    "cwd": "claude_decider",
-    "category": "calibration",
-    "what_it_does": "Decider'ın kendi canlı journal WR'ını araştırma-kökenli evidence_tables.json ile Bayesyen blend eder (dry-run; '--apply' argümanıyla yedekli yazar). Kanıt hafızasının kendini güncelleme mekanizması.",
-    "output": "stdout diff (--apply ile evidence_tables.json)",
-    "needs_backend": false,
-    "est_runtime": "seconds",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "decider_analyze_missed",
-    "name": "Claude Decider — Kaçırılan Fırsat Analizi",
-    "kind": "script",
-    "command": "python3 analyze_missed.py",
-    "cwd": "claude_decider",
-    "category": "error_analysis",
-    "what_it_does": "Decider'ın AÇMADIĞI (WAIT) kararların counterfactual sonuçlarını inceler: filtre fazla korumacı mı, kazanan-WAIT'i ayıran yeni filtre adayı var mı (placebo kapılı).",
-    "output": "stdout rapor",
-    "needs_backend": false,
-    "est_runtime": "seconds",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "decider_exit_compare",
-    "name": "Claude Decider — Çıkış Politikası Kıyası",
-    "kind": "script",
-    "command": "python3 exit_compare.py",
-    "cwd": "claude_decider",
-    "category": "backtest",
-    "what_it_does": "6 çıkış politikasını (sabit ATR çarpanları, trailing, breakeven, time-stop) sembol başına ortalama R ile kıyaslar; en kârlı çıkışı gösterir (son bulgu: XAU time_2h +0.85R vs sabit +0.34R).",
-    "output": "stdout tablo",
-    "needs_backend": false,
-    "est_runtime": "seconds",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "decider_baseline_compare",
-    "name": "Claude Decider — Opus Değer Katıyor mu? (vs naive gate)",
-    "kind": "script",
-    "command": "python3 baseline_compare.py",
-    "cwd": "claude_decider",
-    "category": "performance",
-    "what_it_does": "LLM beyninin değerini ölçer: Opus'un açtıkları atladıklarından daha mı iyi (permütasyon p), 'her gate ateşlemesinde aç' naive kuralını geçiyor mu, sizing monoton mu.",
-    "output": "stdout verdict",
-    "needs_backend": false,
-    "est_runtime": "seconds",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "indicator_discrimination",
-    "name": "Gösterge Ayrıştırma — WIN vs LOSS AUC (tüm modeller)",
-    "kind": "script",
-    "command": "python3 research/indicator_discrimination.py",
-    "category": "error_analysis",
-    "what_it_does": "Her sembol+yön için tüm model sinyallerini havuzlar, her sayısal göstergenin WIN-vs-LOSS AUC'sini + kazanan aralığını basar. 2026-06 bulgusu: endekslerde M15 mean-reversion filtreleri WR'ı 25-37→77-83'e çıkardı.",
-    "output": "stdout rapor",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": [
-      "bias_debate",
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "live_lifecycle_monitor",
-    "name": "Canlı Sağlık Monitörü — lifecycle/geometri/feed doğrulama",
-    "kind": "script",
-    "command": "python3 research/live_lifecycle_monitor.py",
-    "category": "error_analysis",
-    "what_it_does": "4 kontrol: TP/SL geçtiği halde active kalan sinyal var mı, DB geometrisi kanonik hesapla uyuşuyor mu, MCI dağılımı, fiyat feed'i taze mi. Hiçbir şey yazmaz — güvenli.",
-    "output": "stdout rapor",
-    "needs_backend": true,
-    "est_runtime": "seconds",
-    "learn_targets": []
-  },
-  {
-    "id": "win_rate_decay",
-    "name": "Win-Rate Decay — model bozulmasının öncü göstergeleri",
-    "kind": "script",
-    "command": "python3 xauusdegitim/win_rate_decay_analyzer.py",
-    "category": "error_analysis",
-    "what_it_does": "Rolling win-rate'i pencerelerde hesaplar ve hangi feature kaymalarının WR düşüşünden ÖNCE geldiğini korelasyonla bulur — model bozulmasını erken yakalama aracı.",
-    "output": "stdout korelasyon raporu",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": [
-      "bias_debate"
-    ]
-  },
-  {
-    "id": "programmatic_failure_tagger",
-    "name": "Programatik Hata Etiketleyici (AI'sız root-cause)",
-    "kind": "script",
-    "command": "python3 xauusdegitim/programmatic_failure_analyzer.py --dry-run",
-    "category": "error_analysis",
-    "what_it_does": "AI kredisi harcamadan resolved sinyallere kural-tabanlı başarısızlık etiketi atar (rsi_overbought, near_resistance, against_trend, fake_move...). --dry-run varsayılan; kaldırırsan failure_analyses'a yazar.",
-    "output": "stdout (yazma modunda failure_analyses)",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": [
-      "bias_debate"
-    ]
-  },
-  {
-    "id": "verify_panels_honest",
-    "name": "Panel Dürüstlük Regresyonu — WR şişmesi kontrolü",
-    "kind": "script",
-    "command": "python3 signal_performance_research/verify_panels_honest.py",
-    "category": "performance",
-    "what_it_does": "3 performans panelinin kod yollarını doğrudan çalıştırıp 1m-düzeltilmiş dürüst WR bandında sonuç verdiklerini doğrular — şişik 5m rakamlarına geri kayma regresyon testi.",
-    "output": "stdout pass/fail",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": []
-  },
-  {
-    "id": "rebuild_combo_stats",
-    "name": "Meta Combo Stats — dürüst yeniden inşa",
-    "kind": "script",
-    "command": "python3 signal_performance_research/rebuild_combo_stats.py",
-    "category": "data_repair",
-    "what_it_does": "Meta-Intelligence Engine'in beslendiği meta_combination_stats tablosunu 1m ground-truth düzeltmeleriyle DÜRÜST is_win üzerinden yeniden yazar; önce/sonra diff basar.",
-    "output": "meta_combination_stats tablosu + stdout diff",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": []
-  },
-  {
-    "id": "pattern_miner_direct",
-    "name": "Pattern Miner (doğrudan, parametreli)",
-    "kind": "script",
-    "command": "python3 backend/research/pattern_miner.py --days 60 --min-samples 20",
-    "category": "pattern_mining",
-    "what_it_does": "Endpoint sarmalayıcısı yerine doğrudan çalıştırma — --days/--min-samples ile oynayarak daha derin/agresif kural madenciliği yapılabilir.",
-    "output": "backend/data/pattern_rules.json + pattern_report.md",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": [
-      "bias_debate"
-    ]
-  },
-  {
-    "id": "train_entry_quality",
-    "name": "Entry-Quality Model Eğitimi (P(SL) sınıflandırıcı)",
-    "kind": "script",
-    "command": "python3 research/train_entry_quality_model.py --symbol XAUUSD --days 180",
-    "cwd": "backend",
-    "category": "calibration",
-    "what_it_does": "Sinyal anındaki feature'lardan P(SL_hit) tahmin eden per-symbol LightGBM eğitir; precision≥0.75 blok eşiği otomatik seçilir. extra_args ile sembol değiştir: --symbol NDX.INDX",
-    "output": "backend/models/entry_quality_<symbol>.joblib",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": []
-  },
-  {
-    "id": "train_stage4",
-    "name": "Stage 4 Meta Model Retrain (bias feature'ları dahil)",
-    "kind": "script",
-    "command": "python3 -m scripts.train_stage4 --days 90",
-    "cwd": "backend",
-    "category": "calibration",
-    "what_it_does": "Precision Veto Stage 4 için her sembole ayrı LightGBM eğitir. NOT: MiroShark bias feature'larının vetoya işlemesi bu retraine bağlı (backlog'daki unutulan iş).",
-    "output": "backend/models/stage4_per_symbol/",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": []
-  },
-  {
-    "id": "offline_backtest",
-    "name": "Offline Kombinatoryal Backtest + Ağırlık Optimizasyonu",
-    "kind": "script",
-    "command": "python3 backend/scripts/run_offline_backtest.py --days 60",
-    "category": "backtest",
-    "what_it_does": "prediction_logs üzerinde model kombinasyon permütasyonlarını backtester'dan geçirir; --optimize-weights extra_args'ıyla Optuna ensemble ağırlık kalibrasyonu da yapar.",
-    "output": "Supabase istatistik tabloları + stdout",
-    "needs_backend": true,
-    "est_runtime": "long",
-    "learn_targets": []
-  },
-  {
-    "id": "consensus_combos",
-    "name": "Model Konsensüs Madencisi — hangi birliktelik güvenilir",
-    "kind": "script",
-    "command": "python3 scripts/analyze_consensus_model_combos.py --lookback-days 365",
-    "category": "pattern_mining",
-    "what_it_does": "Aynı 5dk pencerede birden fazla modelin aynı yönde sinyal verdiği olayları bulur, 2-4'lü kombinasyonların hedef-vurma oranlarını çıkarır.",
-    "output": "consensus_model_analysis.json + stdout",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": [
-      "bias_debate",
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "decider_indicator_scan",
-    "name": "Gösterge Olay Taraması — yeni edge keşfi (29 gösterge)",
-    "kind": "script",
-    "command": "python3 indicator_event_scan.py",
-    "cwd": "claude_decider",
-    "category": "pattern_mining",
-    "what_it_does": "indicator_snapshots'taki 29 göstergenin olaylarını (kesişim/eşik) tarar; her olayın scalp ayırt gücünü placebo + IS/OOS + dedup ile dürüst ölçer. Yeni edge keşif aracı, hiçbir tabloya yazmaz.",
-    "output": "stdout batarya raporu",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "decider_batch_eval",
-    "name": "Fable vs Opus Toplu A/B (LLM karar kalitesi)",
-    "kind": "script",
-    "command": "python3 batch_eval.py --report",
-    "cwd": "claude_decider",
-    "category": "performance",
-    "what_it_does": "Biriken journal kararlarını sızıntısız toplu LLM değerlendirmesiyle A/B'ler; kümülatif Fable-vs-Opus skorbordu üretir. --report geçmiş skorları gösterir; --model=... --write yeni tur koşar (Claude Pro CLI login gerekir).",
-    "output": "stdout skorbord",
-    "needs_backend": false,
-    "est_runtime": "minutes",
-    "learn_targets": []
-  },
-  {
-    "id": "price_action_miner",
-    "name": "Price Action Miner — model-bağımsız grafik örüntüleri",
-    "kind": "script",
-    "command": "python3 backend/research/price_action_miner.py --days 60",
-    "category": "pattern_mining",
-    "what_it_does": "Model çıktısına bakmadan ham OHLCV'den 3 katmanlı örüntü keşfi: SMC yapısı, trend-ladder, generic olaylar (S/R dokunuş, breakout, mum formasyonu); her örüntünün devam/dönüş istatistiğini çıkarır.",
-    "output": "backend/data/chart_pattern_rules.json + chart_pattern_report.md",
-    "needs_backend": true,
-    "est_runtime": "long",
-    "learn_targets": [
-      "bias_debate"
-    ]
-  },
-  {
-    "id": "sl_forensics_bot",
-    "name": "Bot SL Otopsisi (stop dar mı, yön mü yanlış?)",
-    "kind": "script",
-    "command": "python3 sl_forensics.py --days 7",
-    "cwd": "yeni deneme",
-    "category": "error_analysis",
-    "what_it_does": "Gerçek bot işlemlerindeki her SL'i sınıflandırır: stop_too_tight / direction_wrong / chop; sembol/scope/seans kırılımlı özet.",
-    "output": "sl_postmortem.jsonl + stdout",
-    "needs_backend": false,
-    "est_runtime": "minutes",
-    "runnable_here": false,
-    "run_note": "MT5'li Windows kutusunda çalışır (entry_fingerprints.jsonl + MT5 deal geçmişi gerekli)",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "sl_indicator_join",
-    "name": "Bot SL × Gösterge JOIN Analizi",
-    "kind": "script",
-    "command": "python3 sl_indicator_analysis.py --days 14",
-    "cwd": "yeni deneme",
-    "category": "error_analysis",
-    "what_it_does": "MT5 deal'lerini fill anındaki indicator_snapshots ile join edip WIN-vs-LOSS AUC sıralaması + tek-gösterge filtre önerileri üretir.",
-    "output": "stdout AUC raporu",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "runnable_here": false,
-    "run_note": "MT5'li Windows kutusunda çalışır",
-    "learn_targets": [
-      "claude_decider"
-    ]
-  },
-  {
-    "id": "mt5_pull_1m",
-    "name": "Eksik 1m Bar Kurtarma (MT5 → backend)",
-    "kind": "script",
-    "command": "python3 research/mt5_pull_missing_1m.py",
-    "category": "data_repair",
-    "what_it_does": "MT5 köprüsü 1m stream yayınlamadığı için donan candle_cache 1m verisini MT5 terminalinden çekip backend'e yükler — dürüst replay'lerin veri önkoşulu.",
-    "output": "candle_cache + yedek JSON",
-    "needs_backend": true,
-    "est_runtime": "minutes",
-    "runnable_here": false,
-    "run_note": "MT5'li Windows kutusunda çalışır",
-    "learn_targets": []
-  },
-  {
-    "id": "check_bridge_flow",
-    "name": "MT5→Redis→DataHub Akış Teşhisi",
-    "kind": "script",
-    "command": "python3 scripts/check_bridge_flow.py",
-    "category": "other",
-    "what_it_does": "Verinin MT5 köprüsünden Redis'e ve DataHub'a doğru aktığını uçtan uca kontrol eder — 'feed donmuş mu' hızlı teşhisi.",
-    "output": "stdout teşhis",
-    "needs_backend": true,
-    "est_runtime": "seconds",
-    "learn_targets": []
-  },
-  {
-    "id": "fakeout_mining",
-    "name": "Sahte Kırılım Madenciliği — fakeout kurallarını yeniden öğren",
-    "kind": "endpoint",
-    "method": "POST",
-    "path": "/api/fakeout/mine?symbol=NDX.INDX",
-    "category": "pattern_mining",
-    "what_it_does": "candle_cache 5m+1m verisinden S/R/kanal kırılımlarını tespit edip GERÇEK/SAHTE etiketler ve ortak koşulları (hacim, RSI, penetrasyon, gövde, yaklaşma hızı...) OOS doğrulamayla madenler. Çıktı: fakeout_rules.json (runtime fakeout_gate + panel + decider okur) ve fakeout_report.md."
-  },
-  {
-    "id": "box_usoil_v3_oos",
-    "name": "USOIL v3 filtre denetimi — islem + bar bazli dis-orneklem",
-    "kind": "script",
-    "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_v3_oos.py --spread 0.03\"",
-    "category": "validation",
-    "what_it_does": "Botun gercek USOIL:BUY momentum kosullarini bar-bar uygulayip binlerce sizintisiz hipotetik giris uretir; F1 (ATR14/ATR60) ve F2 (4s dalga konumu) filtrelerini islem-bazli ve bar-bazli olarak ic/dis orneklemde olcer. 2026-08-20: F1 gurultu, F2 gercek ama zaten canli kapi.",
-    "output": "stdout tablo",
-    "needs_backend": false,
-    "est_runtime": "minutes",
-    "learn_targets": []
-  },
-  {
-    "id": "box_usoil_pos_tp",
-    "name": "USOIL konum kapisi esigi + TP izgarasi",
-    "kind": "script",
-    "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_pos_tp.py\"",
-    "category": "validation",
-    "what_it_does": "4s dalga konumu esigini bant bant (kumulatif + marjinal) ve TP/RR izgarasini derin orneklemde olcer. Konum ucurumu 0.85'te; TP uc urunu RR 1.0.",
-    "output": "stdout tablo",
-    "needs_backend": false,
-    "est_runtime": "minutes",
-    "learn_targets": []
-  },
-  {
-    "id": "box_usoil_tp_stability",
-    "name": "USOIL TP mesafesi — go_live_gate kararlilik sinamasi",
-    "kind": "script",
-    "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_tp_stability.py\"",
-    "category": "validation",
-    "what_it_does": "Her RR icin kronolojik iki yari, bootstrap P(EV>0), surtunme x1.5 ve 'ayni anda tek pozisyon' kisiti. USOIL_BUY_TP_RR karari bu ciktiya dayanir.",
-    "output": "stdout tablo",
-    "needs_backend": false,
-    "est_runtime": "minutes",
-    "learn_targets": []
-  },
-  {
-    "id": "box_usoil_posgate_hole",
-    "name": "Konum kapisi canli delik denetimi",
-    "kind": "script",
-    "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_posgate_hole.py\"",
-    "category": "validation",
-    "what_it_does": "POS_BUY_MAX=0.60 kapisinin canlida gercekten uygulanip uygulanmadigini olcer: kapi tarihinden sonraki her USOIL MOM/SR BUY islemin giris konumunu yeniden hesaplar. 2026-08-20: delik yok.",
-    "output": "stdout liste",
-    "needs_backend": false,
-    "est_runtime": "seconds",
-    "learn_targets": []
-  },
-  {
-    "id": "candle_similarity_karne",
-    "name": "Mum Benzerlik Tarayıcısı — geriye-dönük isabet karnesi",
-    "kind": "script",
-    "command": "python3 backend/scripts/build_candle_history.py && python3 backend/scripts/candle_similarity_backtest.py",
-    "cwd": ".",
-    "category": "validation",
-    "what_it_does": "4 sembol × 5 TF × n∈{50,100}, arşivin son %30'unda 200 sızıntısız sorgu: eşleşme çoğunluk yönü vs rastgele komşu vs hep-çoğunluk; büyüklükte eşleşme vs aynı-saat tipik hareket korelasyonu. Çıktı backend/data/candle_similarity_reliability.json (panel her sonucun yanında gösterir). 2026-10-20: 38/40 hücre 'tabandan farksız' ya da altında; saatin tipik hareketi büyüklükte eşleşmeden iyi.",
-    "output": "backend/data/candle_similarity_reliability.json",
-    "needs_backend": false,
-    "est_runtime": "~3 dk",
-    "learn_targets": []
-  },
-  {
-    "id": "xau_swing_xs01",
-    "name": "XAU günlük swing bağımsız dönem (XS-01) + gölge sadakati",
-    "kind": "script",
-    "command": "cd research/xau_swing_oos_20261020 && python3 xs_test.py && python3 parite.py",
-    "cwd": ".",
-    "category": "validation",
-    "what_it_does": "Golden Donchian kuralını değiştirmeden Dukascopy 2008-01→2021-04'te sınar (54 işlem, +0,39R vs her gün BUY +0,15, P %98, iki yarı +) ve yeni deneme/xau_swing_shadow.py'nin araştırma koduyla 86/86 aynı işlemi ürettiğini doğrular.",
-    "output": "research/xau_swing_oos_20261020/sonuc.json",
-    "needs_backend": false,
-    "est_runtime": "~1 dk",
-    "learn_targets": []
-  },
-  {
-    "id": "sqz_ileri_kart_20261020",
-    "name": "NDX sıkışma filtresi (B14) — ileri dönem kartı",
-    "kind": "script",
-    "command": "python3 research/sikisma_derin_20261020/ileri_kart.py",
-    "cwd": ".",
-    "category": "backtest",
-    "what_it_does": "2026-08-28 sonrası gerçek bot NDX işlemlerinde (DECIDER/MANUEL hariç) ATR14/ATR100<1,00 filtresini ön-kayıtlı 5 ölçütle (hacim ≥150, P(Δ<0) ≥%95, saat-içi, engel kazancı, yarılar) yeniden ölçer; emir/ayar değiştirmez. Derin sınama (IO-22): kullanılamaz, GÖLGE.",
-    "output": "backend/data/evolution/go_live_cards/sqz_filter_ndx.json",
-    "needs_backend": false,
-    "est_runtime": "seconds",
-    "learn_targets": []
-  }
+ {
+  "id": "trigger_error_analysis",
+  "name": "Hata Otopsisi (AI) — başarısız sinyalleri analiz et",
+  "kind": "endpoint",
+  "method": "POST",
+  "path": "/api/learning/trigger-error-analysis",
+  "category": "error_analysis",
+  "what_it_does": "Stopped (SL vurmuş) tahminleri Claude Haiku ile analiz eder: ne yanlış gitti, fake-move mu, hangi faktörler suçluydu. error_analysis + learning_feedback kayıtları üretir.",
+  "output": "Supabase error_analysis tablosu",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": [
+   "bias_debate",
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "ai_ops_run",
+  "name": "AI-Ops Döngüsü — başarısızlık kümeleri + iyileştirme önerileri",
+  "kind": "endpoint",
+  "method": "POST",
+  "path": "/api/ai-ops/run",
+  "category": "error_analysis",
+  "what_it_does": "Failure tagger → kümeleme → DeepSeek iyileştirme önerileri → counterfactual simülasyon → auto-triage hattını ŞİMDİ çalıştırır. Onay bekleyen öneriler improvement_proposals'a düşer.",
+  "output": "failure_analyses + improvement_proposals tabloları",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": [
+   "bias_debate"
+  ]
+ },
+ {
+  "id": "generate_insights",
+  "name": "Öğrenme İçgörüleri Üret (faktör korelasyonları)",
+  "kind": "endpoint",
+  "method": "POST",
+  "path": "/api/learning/generate-insights",
+  "category": "performance",
+  "what_it_does": "Hangi faktörlerin doğru/yanlış tahminle korele olduğunu analiz edip learning_insights tablosuna uyarı/öneri yazar.",
+  "output": "learning_insights tablosu",
+  "needs_backend": true,
+  "est_runtime": "seconds",
+  "learn_targets": [
+   "bias_debate",
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "pattern_mining_run",
+  "name": "Pattern Mining — kural madenciliğini şimdi çalıştır",
+  "kind": "endpoint",
+  "method": "POST",
+  "path": "/api/ai-ops/pattern-mining/run",
+  "category": "pattern_mining",
+  "what_it_does": "Son 60 günün resolved sinyallerinden decision-tree ile 'RSI<X + ADX>Y + regime=Z → WR %W' kuralları çıkarır (kazanan ≥%75 / toksik ≤%35). pattern_matcher bunları runtime'da okur.",
+  "output": "backend/data/pattern_rules.json + chart_pattern_rules.json + pattern_mining_runs",
+  "needs_backend": true,
+  "est_runtime": "long",
+  "learn_targets": [
+   "bias_debate"
+  ]
+ },
+ {
+  "id": "bias_fill_outcomes",
+  "name": "Bias Notlama — dünkü tahminlere not ver",
+  "kind": "endpoint",
+  "method": "POST",
+  "path": "/api/bias-test/fill-outcomes",
+  "category": "performance",
+  "what_it_does": "Kapanmış günlerin bias tahminlerini gerçek seans yönüyle karşılaştırıp was_correct doldurur. Ajan tartışmasının karnesi buradan beslenir.",
+  "output": "bias_test_log tablosu",
+  "needs_backend": true,
+  "est_runtime": "seconds",
+  "learn_targets": [
+   "bias_debate"
+  ]
+ },
+ {
+  "id": "check_all_pending",
+  "name": "Bekleyen Sinyal Sonuçlarını Çöz",
+  "kind": "endpoint",
+  "method": "POST",
+  "path": "/api/learning/check-all-pending",
+  "category": "performance",
+  "what_it_does": "Hâlâ active görünen tüm sinyallerin TP/SL/expire sonuçlarını toplu kontrol edip çözer — performans panellerinin verisini tazeler.",
+  "output": "prediction_logs status güncellemeleri",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "decider_outcomes",
+  "name": "Claude Decider — kararları notla (WIN/LOSS çöz)",
+  "kind": "script",
+  "command": "python3 outcomes.py",
+  "cwd": "claude_decider",
+  "category": "performance",
+  "what_it_does": "Shadow journal'daki açık kararları 5m barlarla WIN/LOSS/EXPIRE'a çözer (aynı-bar = konservatif LOSS), 6 çıkış politikası grade'i üretir, WR/EV özetini basar. Diğer tüm decider raporlarının önkoşulu.",
+  "output": "claude_decider/memory/journal.jsonl + stdout özet",
+  "needs_backend": false,
+  "est_runtime": "minutes",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "decider_post_mortem",
+  "name": "Claude Decider — SL Otopsisi (kayıpların ortak paydası)",
+  "kind": "script",
+  "command": "python3 post_mortem.py",
+  "cwd": "claude_decider",
+  "category": "error_analysis",
+  "what_it_does": "Kaybedenleri kazananlardan AYIRAN koşulu bulur: forensik snapshot'lardan WIN vs LOSS dağılımlarını kıyaslar, permütasyon/FDR-korumalı ayırıcılar + stop-avı analizi raporlar. En kritik 'neden yanlış yaptı' aracı.",
+  "output": "stdout tablo (--write ile LESSONS.md'ye aday)",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "decider_distill",
+  "name": "Claude Decider — Ders Damıtma (kanıt-kapılı öğrenme)",
+  "kind": "script",
+  "command": "python3 distill_journal.py",
+  "cwd": "claude_decider",
+  "category": "pattern_mining",
+  "what_it_does": "Journal'daki grade edilmiş kararları kanıt-kapısıyla (min örnek + placebo p<0.05) tarar; geçen desenleri LESSONS.md'ye ✅ ders olarak terfi ettirir — decider bir SONRAKI kararda otomatik uygular.",
+  "output": "claude_decider/memory/LESSONS.md AUTO bölümü",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "decider_calibration",
+  "name": "Claude Decider — Kanıt Kalibrasyonu",
+  "kind": "script",
+  "command": "python3 calibration.py",
+  "cwd": "claude_decider",
+  "category": "calibration",
+  "what_it_does": "'Bu kurulum %85 kazanır' denilen kanıt hücrelerinde canlı gerçekleşen WR'ı ölçer (reliability diagram + ECE); şişik hücreleri tespit eder — evidence tazelemenin tetikleyicisi.",
+  "output": "stdout rapor",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "decider_refresh_evidence",
+  "name": "Claude Decider — Evidence Tazele (canlı WR blend)",
+  "kind": "script",
+  "command": "python3 refresh_evidence.py",
+  "cwd": "claude_decider",
+  "category": "calibration",
+  "what_it_does": "Decider'ın kendi canlı journal WR'ını araştırma-kökenli evidence_tables.json ile Bayesyen blend eder (dry-run; '--apply' argümanıyla yedekli yazar). Kanıt hafızasının kendini güncelleme mekanizması.",
+  "output": "stdout diff (--apply ile evidence_tables.json)",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "decider_analyze_missed",
+  "name": "Claude Decider — Kaçırılan Fırsat Analizi",
+  "kind": "script",
+  "command": "python3 analyze_missed.py",
+  "cwd": "claude_decider",
+  "category": "error_analysis",
+  "what_it_does": "Decider'ın AÇMADIĞI (WAIT) kararların counterfactual sonuçlarını inceler: filtre fazla korumacı mı, kazanan-WAIT'i ayıran yeni filtre adayı var mı (placebo kapılı).",
+  "output": "stdout rapor",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "decider_exit_compare",
+  "name": "Claude Decider — Çıkış Politikası Kıyası",
+  "kind": "script",
+  "command": "python3 exit_compare.py",
+  "cwd": "claude_decider",
+  "category": "backtest",
+  "what_it_does": "6 çıkış politikasını (sabit ATR çarpanları, trailing, breakeven, time-stop) sembol başına ortalama R ile kıyaslar; en kârlı çıkışı gösterir (son bulgu: XAU time_2h +0.85R vs sabit +0.34R).",
+  "output": "stdout tablo",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "decider_baseline_compare",
+  "name": "Claude Decider — Opus Değer Katıyor mu? (vs naive gate)",
+  "kind": "script",
+  "command": "python3 baseline_compare.py",
+  "cwd": "claude_decider",
+  "category": "performance",
+  "what_it_does": "LLM beyninin değerini ölçer: Opus'un açtıkları atladıklarından daha mı iyi (permütasyon p), 'her gate ateşlemesinde aç' naive kuralını geçiyor mu, sizing monoton mu.",
+  "output": "stdout verdict",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "indicator_discrimination",
+  "name": "Gösterge Ayrıştırma — WIN vs LOSS AUC (tüm modeller)",
+  "kind": "script",
+  "command": "python3 research/indicator_discrimination.py",
+  "category": "error_analysis",
+  "what_it_does": "Her sembol+yön için tüm model sinyallerini havuzlar, her sayısal göstergenin WIN-vs-LOSS AUC'sini + kazanan aralığını basar. 2026-06 bulgusu: endekslerde M15 mean-reversion filtreleri WR'ı 25-37→77-83'e çıkardı.",
+  "output": "stdout rapor",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": [
+   "bias_debate",
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "live_lifecycle_monitor",
+  "name": "Canlı Sağlık Monitörü — lifecycle/geometri/feed doğrulama",
+  "kind": "script",
+  "command": "python3 research/live_lifecycle_monitor.py",
+  "category": "error_analysis",
+  "what_it_does": "4 kontrol: TP/SL geçtiği halde active kalan sinyal var mı, DB geometrisi kanonik hesapla uyuşuyor mu, MCI dağılımı, fiyat feed'i taze mi. Hiçbir şey yazmaz — güvenli.",
+  "output": "stdout rapor",
+  "needs_backend": true,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "win_rate_decay",
+  "name": "Win-Rate Decay — model bozulmasının öncü göstergeleri",
+  "kind": "script",
+  "command": "python3 xauusdegitim/win_rate_decay_analyzer.py",
+  "category": "error_analysis",
+  "what_it_does": "Rolling win-rate'i pencerelerde hesaplar ve hangi feature kaymalarının WR düşüşünden ÖNCE geldiğini korelasyonla bulur — model bozulmasını erken yakalama aracı.",
+  "output": "stdout korelasyon raporu",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": [
+   "bias_debate"
+  ]
+ },
+ {
+  "id": "programmatic_failure_tagger",
+  "name": "Programatik Hata Etiketleyici (AI'sız root-cause)",
+  "kind": "script",
+  "command": "python3 xauusdegitim/programmatic_failure_analyzer.py --dry-run",
+  "category": "error_analysis",
+  "what_it_does": "AI kredisi harcamadan resolved sinyallere kural-tabanlı başarısızlık etiketi atar (rsi_overbought, near_resistance, against_trend, fake_move...). --dry-run varsayılan; kaldırırsan failure_analyses'a yazar.",
+  "output": "stdout (yazma modunda failure_analyses)",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": [
+   "bias_debate"
+  ]
+ },
+ {
+  "id": "verify_panels_honest",
+  "name": "Panel Dürüstlük Regresyonu — WR şişmesi kontrolü",
+  "kind": "script",
+  "command": "python3 signal_performance_research/verify_panels_honest.py",
+  "category": "performance",
+  "what_it_does": "3 performans panelinin kod yollarını doğrudan çalıştırıp 1m-düzeltilmiş dürüst WR bandında sonuç verdiklerini doğrular — şişik 5m rakamlarına geri kayma regresyon testi.",
+  "output": "stdout pass/fail",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "rebuild_combo_stats",
+  "name": "Meta Combo Stats — dürüst yeniden inşa",
+  "kind": "script",
+  "command": "python3 signal_performance_research/rebuild_combo_stats.py",
+  "category": "data_repair",
+  "what_it_does": "Meta-Intelligence Engine'in beslendiği meta_combination_stats tablosunu 1m ground-truth düzeltmeleriyle DÜRÜST is_win üzerinden yeniden yazar; önce/sonra diff basar.",
+  "output": "meta_combination_stats tablosu + stdout diff",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "pattern_miner_direct",
+  "name": "Pattern Miner (doğrudan, parametreli)",
+  "kind": "script",
+  "command": "python3 backend/research/pattern_miner.py --days 60 --min-samples 20",
+  "category": "pattern_mining",
+  "what_it_does": "Endpoint sarmalayıcısı yerine doğrudan çalıştırma — --days/--min-samples ile oynayarak daha derin/agresif kural madenciliği yapılabilir.",
+  "output": "backend/data/pattern_rules.json + pattern_report.md",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": [
+   "bias_debate"
+  ]
+ },
+ {
+  "id": "train_entry_quality",
+  "name": "Entry-Quality Model Eğitimi (P(SL) sınıflandırıcı)",
+  "kind": "script",
+  "command": "python3 research/train_entry_quality_model.py --symbol XAUUSD --days 180",
+  "cwd": "backend",
+  "category": "calibration",
+  "what_it_does": "Sinyal anındaki feature'lardan P(SL_hit) tahmin eden per-symbol LightGBM eğitir; precision≥0.75 blok eşiği otomatik seçilir. extra_args ile sembol değiştir: --symbol NDX.INDX",
+  "output": "backend/models/entry_quality_<symbol>.joblib",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "train_stage4",
+  "name": "Stage 4 Meta Model Retrain (bias feature'ları dahil)",
+  "kind": "script",
+  "command": "python3 -m scripts.train_stage4 --days 90",
+  "cwd": "backend",
+  "category": "calibration",
+  "what_it_does": "Precision Veto Stage 4 için her sembole ayrı LightGBM eğitir. NOT: MiroShark bias feature'larının vetoya işlemesi bu retraine bağlı (backlog'daki unutulan iş).",
+  "output": "backend/models/stage4_per_symbol/",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "offline_backtest",
+  "name": "Offline Kombinatoryal Backtest + Ağırlık Optimizasyonu",
+  "kind": "script",
+  "command": "python3 backend/scripts/run_offline_backtest.py --days 60",
+  "category": "backtest",
+  "what_it_does": "prediction_logs üzerinde model kombinasyon permütasyonlarını backtester'dan geçirir; --optimize-weights extra_args'ıyla Optuna ensemble ağırlık kalibrasyonu da yapar.",
+  "output": "Supabase istatistik tabloları + stdout",
+  "needs_backend": true,
+  "est_runtime": "long",
+  "learn_targets": []
+ },
+ {
+  "id": "consensus_combos",
+  "name": "Model Konsensüs Madencisi — hangi birliktelik güvenilir",
+  "kind": "script",
+  "command": "python3 scripts/analyze_consensus_model_combos.py --lookback-days 365",
+  "category": "pattern_mining",
+  "what_it_does": "Aynı 5dk pencerede birden fazla modelin aynı yönde sinyal verdiği olayları bulur, 2-4'lü kombinasyonların hedef-vurma oranlarını çıkarır.",
+  "output": "consensus_model_analysis.json + stdout",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": [
+   "bias_debate",
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "decider_indicator_scan",
+  "name": "Gösterge Olay Taraması — yeni edge keşfi (29 gösterge)",
+  "kind": "script",
+  "command": "python3 indicator_event_scan.py",
+  "cwd": "claude_decider",
+  "category": "pattern_mining",
+  "what_it_does": "indicator_snapshots'taki 29 göstergenin olaylarını (kesişim/eşik) tarar; her olayın scalp ayırt gücünü placebo + IS/OOS + dedup ile dürüst ölçer. Yeni edge keşif aracı, hiçbir tabloya yazmaz.",
+  "output": "stdout batarya raporu",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "decider_batch_eval",
+  "name": "Fable vs Opus Toplu A/B (LLM karar kalitesi)",
+  "kind": "script",
+  "command": "python3 batch_eval.py --report",
+  "cwd": "claude_decider",
+  "category": "performance",
+  "what_it_does": "Biriken journal kararlarını sızıntısız toplu LLM değerlendirmesiyle A/B'ler; kümülatif Fable-vs-Opus skorbordu üretir. --report geçmiş skorları gösterir; --model=... --write yeni tur koşar (Claude Pro CLI login gerekir).",
+  "output": "stdout skorbord",
+  "needs_backend": false,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "price_action_miner",
+  "name": "Price Action Miner — model-bağımsız grafik örüntüleri",
+  "kind": "script",
+  "command": "python3 backend/research/price_action_miner.py --days 60",
+  "category": "pattern_mining",
+  "what_it_does": "Model çıktısına bakmadan ham OHLCV'den 3 katmanlı örüntü keşfi: SMC yapısı, trend-ladder, generic olaylar (S/R dokunuş, breakout, mum formasyonu); her örüntünün devam/dönüş istatistiğini çıkarır.",
+  "output": "backend/data/chart_pattern_rules.json + chart_pattern_report.md",
+  "needs_backend": true,
+  "est_runtime": "long",
+  "learn_targets": [
+   "bias_debate"
+  ]
+ },
+ {
+  "id": "sl_forensics_bot",
+  "name": "Bot SL Otopsisi (stop dar mı, yön mü yanlış?)",
+  "kind": "script",
+  "command": "python3 sl_forensics.py --days 7",
+  "cwd": "yeni deneme",
+  "category": "error_analysis",
+  "what_it_does": "Gerçek bot işlemlerindeki her SL'i sınıflandırır: stop_too_tight / direction_wrong / chop; sembol/scope/seans kırılımlı özet.",
+  "output": "sl_postmortem.jsonl + stdout",
+  "needs_backend": false,
+  "est_runtime": "minutes",
+  "runnable_here": false,
+  "run_note": "MT5'li Windows kutusunda çalışır (entry_fingerprints.jsonl + MT5 deal geçmişi gerekli)",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "sl_indicator_join",
+  "name": "Bot SL × Gösterge JOIN Analizi",
+  "kind": "script",
+  "command": "python3 sl_indicator_analysis.py --days 14",
+  "cwd": "yeni deneme",
+  "category": "error_analysis",
+  "what_it_does": "MT5 deal'lerini fill anındaki indicator_snapshots ile join edip WIN-vs-LOSS AUC sıralaması + tek-gösterge filtre önerileri üretir.",
+  "output": "stdout AUC raporu",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "runnable_here": false,
+  "run_note": "MT5'li Windows kutusunda çalışır",
+  "learn_targets": [
+   "claude_decider"
+  ]
+ },
+ {
+  "id": "mt5_pull_1m",
+  "name": "Eksik 1m Bar Kurtarma (MT5 → backend)",
+  "kind": "script",
+  "command": "python3 research/mt5_pull_missing_1m.py",
+  "category": "data_repair",
+  "what_it_does": "MT5 köprüsü 1m stream yayınlamadığı için donan candle_cache 1m verisini MT5 terminalinden çekip backend'e yükler — dürüst replay'lerin veri önkoşulu.",
+  "output": "candle_cache + yedek JSON",
+  "needs_backend": true,
+  "est_runtime": "minutes",
+  "runnable_here": false,
+  "run_note": "MT5'li Windows kutusunda çalışır",
+  "learn_targets": []
+ },
+ {
+  "id": "check_bridge_flow",
+  "name": "MT5→Redis→DataHub Akış Teşhisi",
+  "kind": "script",
+  "command": "python3 scripts/check_bridge_flow.py",
+  "category": "other",
+  "what_it_does": "Verinin MT5 köprüsünden Redis'e ve DataHub'a doğru aktığını uçtan uca kontrol eder — 'feed donmuş mu' hızlı teşhisi.",
+  "output": "stdout teşhis",
+  "needs_backend": true,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "fakeout_mining",
+  "name": "Sahte Kırılım Madenciliği — fakeout kurallarını yeniden öğren",
+  "kind": "endpoint",
+  "method": "POST",
+  "path": "/api/fakeout/mine?symbol=NDX.INDX",
+  "category": "pattern_mining",
+  "what_it_does": "candle_cache 5m+1m verisinden S/R/kanal kırılımlarını tespit edip GERÇEK/SAHTE etiketler ve ortak koşulları (hacim, RSI, penetrasyon, gövde, yaklaşma hızı...) OOS doğrulamayla madenler. Çıktı: fakeout_rules.json (runtime fakeout_gate + panel + decider okur) ve fakeout_report.md."
+ },
+ {
+  "id": "box_usoil_v3_oos",
+  "name": "USOIL v3 filtre denetimi — islem + bar bazli dis-orneklem",
+  "kind": "script",
+  "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_v3_oos.py --spread 0.03\"",
+  "category": "validation",
+  "what_it_does": "Botun gercek USOIL:BUY momentum kosullarini bar-bar uygulayip binlerce sizintisiz hipotetik giris uretir; F1 (ATR14/ATR60) ve F2 (4s dalga konumu) filtrelerini islem-bazli ve bar-bazli olarak ic/dis orneklemde olcer. 2026-08-20: F1 gurultu, F2 gercek ama zaten canli kapi.",
+  "output": "stdout tablo",
+  "needs_backend": false,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "box_usoil_pos_tp",
+  "name": "USOIL konum kapisi esigi + TP izgarasi",
+  "kind": "script",
+  "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_pos_tp.py\"",
+  "category": "validation",
+  "what_it_does": "4s dalga konumu esigini bant bant (kumulatif + marjinal) ve TP/RR izgarasini derin orneklemde olcer. Konum ucurumu 0.85'te; TP uc urunu RR 1.0.",
+  "output": "stdout tablo",
+  "needs_backend": false,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "box_usoil_tp_stability",
+  "name": "USOIL TP mesafesi — go_live_gate kararlilik sinamasi",
+  "kind": "script",
+  "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_tp_stability.py\"",
+  "category": "validation",
+  "what_it_does": "Her RR icin kronolojik iki yari, bootstrap P(EV>0), surtunme x1.5 ve 'ayni anda tek pozisyon' kisiti. USOIL_BUY_TP_RR karari bu ciktiya dayanir.",
+  "output": "stdout tablo",
+  "needs_backend": false,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "box_usoil_posgate_hole",
+  "name": "Konum kapisi canli delik denetimi",
+  "kind": "script",
+  "command": "python3 scripts/remote.py sh \"python backend/research/box_usoil_posgate_hole.py\"",
+  "category": "validation",
+  "what_it_does": "POS_BUY_MAX=0.60 kapisinin canlida gercekten uygulanip uygulanmadigini olcer: kapi tarihinden sonraki her USOIL MOM/SR BUY islemin giris konumunu yeniden hesaplar. 2026-08-20: delik yok.",
+  "output": "stdout liste",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "ndx_five_gates_20260930",
+  "name": "Nasdaq — beş aday kapı araştırması (offline, 2025/2026 OOS)",
+  "kind": "script",
+  "command": "python3 research/ndx_five_gates_20260930/lab.py summary",
+  "cwd": ".",
+  "category": "backtest",
+  "what_it_does": "432 + 1620 değerlendirmelik offline Nasdaq araştırmasının donmuş sonuçlarını özetler. İlk ve ikinci beşli, 2025 bağımsız sağlayıcı, Temmuz/Ağustos ve yeni Eylül MT5 denetimi; hiçbir emir/ayar değişikliği yapmaz. Beş kanıtlı kâr kapısı bulunamadı; tek-pozisyon portföyü gölge hipotezidir.",
+  "output": "research/ndx_five_gates_20260930/RAPOR.md + results/second_final.json",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "ndx_gate_forge_20260930",
+  "name": "Nasdaq — Kapı Dökümhanesi (gün-düzeyi rejim kapıları, 10 yıl + 5 dönem 1m)",
+  "kind": "script",
+  "command": "python3 final_candidates.py",
+  "cwd": "research/ndx_gate_forge",
+  "category": "backtest",
+  "what_it_does": "Dört aday kapıyı (K1 Pazartesi SELL yok, K3 ay sonu dengeleme, K5 stres-dönüş SELL yok, K6 200g+%10 BUY yok) genel 1m (2025 Dukascopy + 2026 cache/MT5 + Eylül), 30m/15m işlem düzeyi, bot kapı evreni, botun gerçek NAS100 kararları ve VIXREG-vekil portföyünde ölçer. Emir/ayar değiştirmez. Yan çıktılar: momcont.py (REFLEX mom_cont sızıntı kanıtı), scan.py (plasebolu 780 hücre taraması), walkforward.py (çağlar arası geçerlilik).",
+  "output": "research/ndx_gate_forge/RAPOR.md + results/final_candidates.json",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "ndx_mechanism_round2_20260930",
+  "name": "Nasdaq — ortak mekanizmadan beş türev (offline, retrospektif + yeni gün)",
+  "kind": "script",
+  "command": "python3 research/ndx_mechanism_round2_20260930/experiment.py summary",
+  "cwd": ".",
+  "category": "backtest",
+  "what_it_does": "Başarılı/kaybeden bot kararlarından türetilen 20 tanımı, beş aileyi, ana ve elenen fırsatları, 1/3/5m aktarımı, maliyetleri ve portföy doluluk plasebosunu ölçer. Yeni 30 Eylül günü donmuş kurallarla ayrıca sınandı. Hiçbiri doğrulanmış LIVE kapısı değil; emir/ayar değiştirmez.",
+  "output": "research/ndx_mechanism_round2_20260930/RAPOR.md + results/evaluation.json + results/forward_day.json",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "ndx_synthesis_20261002",
+  "name": "Nasdaq — iki rapor sentezi, CAPREV M1 icra denetimi",
+  "kind": "script",
+  "command": "python3 research/ndx_synthesis_20261002/make_report.py",
+  "cwd": ".",
+  "category": "backtest",
+  "what_it_does": "Beş yeni varyasyon ve diğer raporun CAPREV/CHASE adaylarını 22 sabit tanım, 924 dönem-TF-maliyet hücresiyle karşılaştırır. Gerçek spreadli ve cache spread varsayımlı verileri ayırır; yeni 1 Ekim günü, tek pozisyon, kapanmış mum ve stop dolumu denetimleri. CAPREV 11 olayla araştırma adayı; hiçbiri LIVE değil. Kayıtlı sonuçlardan rapor üretir, emir/ayar değiştirmez.",
+  "output": "research/ndx_synthesis_20261002/NIHAI_RAPOR.md + results/aggregate.json",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "ndx_pattern_motifs_20261002",
+  "name": "NAS100 Mum Dizisi Atlası — mum mum tekrar eden diziler + şablon araması",
+  "kind": "script",
+  "command": "python3 research/ndx_pattern_motifs/run_seq.py && python3 research/ndx_pattern_motifs/shape_template.py",
+  "cwd": ".",
+  "category": "pattern_mining",
+  "what_it_does": "NASDAQ M1/M5/M15/M30'da (M15/M30 3 yıl broker, M1/M5 ~21 ay) her mumun tepe/dip/kapanışı ±% pay içinde kalan, 3–100 mumluk ardışık dizileri birebir (her mum) ve kısmi (mumların ≥%90/%80/%70'i) eşleşmeyle tarar; tekrar sayısını mum yönleri karıştırılmış plaseboyla kıyaslar ve dizilere mum/şekil adı verir. --template ile kullanıcının seçtiği bölgeyi (MT5 sunucu saati) tüm TF'lerde mum mum, ölçeksiz ve çizgi düzeyinde arar. 2026-10-02 sonucu: birebir en uzun tekrar 6–9 mum, kısmi %70'te 50 mum (M1'de 75), gerçek/plasebo medyan 1,0, örnek FOMC flaş-V alanı hiç tekrar etmiyor. Emir/ayar değiştirmez.",
+  "output": "research/ndx_pattern_motifs/RAPOR.md + results/seq_scan.json, seq_templates.json, shape_templates.json",
+  "needs_backend": false,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "ndx_caprev_paths_20261002",
+  "name": "Nasdaq — CAPREV çıkışları, sermaye kullanımı ve v2 gece/açılış denetimi",
+  "kind": "script",
+  "command": "python3 research/ndx_caprev_paths_20261002/make_report.py",
+  "cwd": ".",
+  "category": "backtest",
+  "what_it_does": "Diğer ajanın nihai v1/v2 raporlarını önceki sentezle karşılaştırır; beş ana varyasyon, çıkış/VIX birleşimleri, tek-pozisyon beşli araştırma portföyü ve açılış/gece kombinasyonlarını 22 tanım/1424 retrospektif hücrede ölçer. +1R tam hedef/artmış VIX portföy katkısı +9,40R ama yalnız7 etkilenen gün ve sıfırı içeren güven aralığı. İki bacak risk toplamı ile tek pozisyon ve H1 09:00 vekili ayrılır. Kayıtlı sonuçlardan rapor üretir; bot, süreç veya emir değiştirmez.",
+  "output": "research/ndx_caprev_paths_20261002/NIHAI_RAPOR.md + results/aggregate.json + results/overnight.json",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "wti_transfer_20261002",
+  "name": "WTI — Nasdaq aktarımı ve petrol için beş varyasyon ailesi",
+  "kind": "script",
+  "command": "python3 research/wti_transfer_20261002/make_report.py",
+  "cwd": ".",
+  "category": "backtest",
+  "what_it_does": "Nasdaq 1620 tanımını, 87 seçilmiş/mechanizma/kapı kontrolünü, CAPREV çıkış-gece-sermaye testlerini ve 20 petrol varyasyonunu 30.714 dönem hücresinde ölçer. M1/M3/M5/M15 ve çok yıllı native karşılaştırmaları; MT5/cache fiyat tabanı karışması yüzünden 28 Ağustos sonrası cache sonuçlarını kanıttan dışlar. EIA ve OVX örnekleri küçük, hiçbir LIVE sonucu yok. Yerel kayıtlı çıktılardan rapor üretir; emir veya süreç değiştirmez.",
+  "output": "research/wti_transfer_20261002/NIHAI_RAPOR.md + results/aggregate.json + results/verification.json",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "islem_otopsi",
+  "name": "İşlem Otopsisi — bot SL/TP neden-sonuç, hacim, kırılma, plasebo",
+  "kind": "script",
+  "command": "python3 -m scripts.islem_otopsi --days 14",
+  "cwd": ".",
+  "category": "error_analysis",
+  "what_it_does": "bot_trades (gerçek MT5 kapanışları) + indicator_snapshots broker 1m mumlarıyla her işlemi giriş öncesi / ilk 15 dk / tüm yol / çıkış sonrası 240 dk ailelerinde ~70 özellikle çözer. Saat eksenini fiyat eşleştirmesiyle doğrular (MISALIGNED → durur), işlem başına kural tabanlı ana neden + Türkçe kart üretir, SL↔TP'yi her özellikte AUC/permütasyon/BH-q ve dönem tutarlılığıyla kıyaslar, mevsimsel-düzeltilmiş tick hacmi profilini, erken-çıkış bedelini, aynı saat/yön/geometride rastgele giriş plasebosunu ve kalibre edilmiş SL/TP geometri karşı-olgusunu raporlar. Skill: /islem-otopsi. Salt-okuma; emir/kapı/süreç değiştirmez.",
+  "output": "output/islem_otopsi/<tarih>_<sembol>/rapor.md + ozet.json + islemler.csv + ozellik_kiyas.csv + grafikler/",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "mum_eslestirme_fizibilite",
+  "name": "Mum Eşleştirme — fizibilite (5 yılda kaç mum birebir eşleşebilir?)",
+  "kind": "script",
+  "command": "python3 research/mum_eslestirme_20261012/fizibilite_4_nedensel.py && python3 research/mum_eslestirme_20261012/ozet_v2.py",
+  "cwd": ".",
+  "category": "pattern_mining",
+  "what_it_does": "Kullanıcının 'son X mumu her mum ±%0,01–0,02 payla 5 yıllık geçmişte eşleştir' tanımının fizibilitesi: 4 sembol × 15 TF hücresinde %/ATR payı, huni, %80 kısmi eşleşme sayımı, kNN göreli kontrastı ve log-zaman piramidi. Yalnız eşleşme SAYAR, gelecekteki fiyata bakmaz (ön-kayıt temiz). v0.2 (Codex incelemesi sonrası): aday yalnız sonucu karar anında kapanmışsa sayılır, mumlar ortak pencere-sonu ATR'siyle ölçeklenir, 4h/1d kapasitesi ölçülür. Bulgu: 0,2 ATR'de medyan sorgu 5m–1h 2 mum, 4h/1d çoğunlukla 1; 1d'de 33 mum bağlam + 20 bar ufukla ≤ ~24 bağımsız olay. Tasarım: docs/MUM_ESLESTIRME_ALGORITMASI.md.",
+  "output": "research/mum_eslestirme_20261012/results/ (v0.2: fizibilite_4_nedensel.csv, ozet_v2.csv; v0.1: fizibilite_1–3, ozet.csv)",
+  "needs_backend": false,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "mum_eslestirme_kaldirma_testi",
+  "name": "Mum Eşleştirme — ileri sonuç testi (eşleşme kaldırma kuralları önce/sonra)",
+  "kind": "script",
+  "command": "python3 research/mum_eslestirme_20261012/kaldirma_testi.py && python3 research/mum_eslestirme_20261012/kaldirma_ozet.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "Mum eşleştirmesinin (İkiz-ATR, İkiz-%0,02, ham 7 mum kNN, piramit-33 kNN) bulduğu geçmiş benzerlerin ileri yön/büyüklük/±1 ATR hedef tahminlerini 4 sembol × 6 TF × 3 ufukta, 5 eşleşme-kaldırma varyantıyla (hiçbiri / sorgunun kuyruğu / olay kopyaları / katı bağımsızlık / mesafe kabul sınırı) ölçer. Kütüphane kayan 5 y, komşunun sonucu karar anında kapanmış; tabanlar hep-çoğunluk, saat medyanı ve aynı havuzdan rastgele komşu; hücre başına gün-blok bootstrap; çoklu-TF uyum analizi. Her hücrenin son 7 ayı dokunulmaz. 2026-10-12 sonucu: eşleşme = rastgele komşu, hiçbir hücrede yön tabanı anlamlı geçilmedi (ME-02).",
+  "output": "research/mum_eslestirme_20261012/results/kaldirma_*.csv + RAPOR_KALDIRMA_TESTI.md",
+  "needs_backend": false,
+  "est_runtime": "minutes",
+  "learn_targets": []
+ },
+ {
+  "id": "mum_eslestirme_baglam_testi",
+  "name": "Mum Eşleştirme — bağlam (VIX/stres/saat/oynaklık) ve çapraz-sembol kombinasyon testi",
+  "kind": "script",
+  "command": "python3 research/mum_eslestirme_20261012/baglam_testi.py baglam && python3 research/mum_eslestirme_20261012/baglam_testi.py capraz && python3 research/mum_eslestirme_20261012/baglam_ozet.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "Ön-kayıtlı (PROTOCOL_BAGLAM.md) test: şekil eşleştirmesine bağlam (VIX ≥ 18,4 önceki gün, stres, VIX×stres/CAPREV, saat, oynaklık rejimi) ve çapraz-sembol ortak şekil (12 sıralı çift) eklenince yön/büyüklük/hedef tahmini bağlamın kendi tabanını ve saatin tipik hareketini geçiyor mu. ME-02 motoru, son 7 ay dokunulmaz, gün-blok bootstrap. 2026-10-13 sonucu: hiçbir kombinasyon yönde katkı vermedi; büyüklükte saatin tipik hareketi 0/69 geçildi (ME-03). Uzun sürer (~4 saat, 7 çekirdek).",
+  "output": "research/mum_eslestirme_20261012/results/baglam_*.csv, capraz_*.csv + RAPOR_BAGLAM_TESTI.md",
+  "needs_backend": false,
+  "est_runtime": "hours",
+  "learn_targets": []
+ },
+ {
+  "id": "candle_similarity_karne",
+  "name": "Mum Benzerlik Tarayıcısı — geriye-dönük isabet karnesi",
+  "kind": "script",
+  "command": "python3 backend/scripts/build_candle_history.py && python3 backend/scripts/candle_similarity_backtest.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "4 sembol × 5 TF × n∈{50,100}, arşivin son %30'unda 200 sızıntısız sorgu: eşleşme çoğunluk yönü vs rastgele komşu vs hep-çoğunluk; büyüklükte eşleşme vs aynı-saat tipik hareket korelasyonu. Çıktı backend/data/candle_similarity_reliability.json (panel her sonucun yanında gösterir). 2026-10-20: 38/40 hücre 'tabandan farksız' ya da altında; saatin tipik hareketi büyüklükte eşleşmeden iyi.",
+  "output": "backend/data/candle_similarity_reliability.json",
+  "needs_backend": false,
+  "est_runtime": "~3 dk",
+  "learn_targets": []
+ },
+ {
+  "id": "xau_swing_xs01",
+  "name": "XAU günlük swing bağımsız dönem (XS-01) + gölge sadakati",
+  "kind": "script",
+  "command": "cd research/xau_swing_oos_20261020 && python3 xs_test.py && python3 parite.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "Golden Donchian kuralını değiştirmeden Dukascopy 2008-01→2021-04'te sınar (54 işlem, +0,39R vs her gün BUY +0,15, P %98, iki yarı +) ve yeni deneme/xau_swing_shadow.py'nin araştırma koduyla 86/86 aynı işlemi ürettiğini doğrular.",
+  "output": "research/xau_swing_oos_20261020/sonuc.json",
+  "needs_backend": false,
+  "est_runtime": "~1 dk",
+  "learn_targets": []
+ },
+ {
+  "id": "sqz_ileri_kart_20261020",
+  "name": "NDX sıkışma filtresi (B14) — ileri dönem kartı",
+  "kind": "script",
+  "command": "python3 research/sikisma_derin_20261020/ileri_kart.py",
+  "cwd": ".",
+  "category": "backtest",
+  "what_it_does": "2026-08-28 sonrası gerçek bot NDX işlemlerinde (DECIDER/MANUEL hariç) ATR14/ATR100<1,00 filtresini ön-kayıtlı 5 ölçütle (hacim ≥150, P(Δ<0) ≥%95, saat-içi, engel kazancı, yarılar) yeniden ölçer; emir/ayar değiştirmez. Derin sınama (IO-22): kullanılamaz, GÖLGE.",
+  "output": "backend/data/evolution/go_live_cards/sqz_filter_ndx.json",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "btc_5y_20261021",
+  "name": "BTC — 5 yıllık kenar araştırması (Binance 1m + Pepperstone maliyet, 4 aile / 36 fikir)",
+  "kind": "script",
+  "command": "(cd fam_stres && python3 run_stres.py && python3 analyze.py) && (cd fam_trend && python3 run_trend.py) && (cd fam_mr_zaman && python3 run_timing.py && python3 run_channel.py && python3 summarize.py) && (cd fam_capraz_cikis && python3 10_regime.py && python3 20_exits.py && python3 40_summary.py)",
+  "cwd": "research/btc_5y_20261021",
+  "category": "backtest",
+  "what_it_does": "BTCUSDT 1m 2021-06→2026-10-20 üzerinde sızıntısız, ön-kayıtlı (fam_*/prereg.md) dört aile: stres dönüşü (CAPREV-BTC, şok fade; BTC-S01…S08), trend/kırılım (Golden Donchian, H4 Donchian, R0B_G1, momentum; BTC-T01…T08), ortalamaya dönüş + zaman (CHREV portu, 21–23 UTC long, saat/gün; BTC-M01…M08), çapraz varlık + çıkış mekaniği + hafta sonu (VIXREG/QQQ/DXY/US10Y, braket vs zaman, BE, koştur, swap; BTC-X01…X12). Giriş sonraki 1m açılışı ± yarım spread (Pepperstone demo ölçümü %0,0185, stres %0,028), swap rollover'da; KEŞİF/OOS/KÖR bölmesi, gün-blok bootstrap, P1 plasebo, Holm + max-z. Veri önce scripts/01_download_binance.py, 02_build_binance.py, 04_macro_yf.py ile kurulur (broker dökümleri scripts/box_* salt okuma). Proje .venv (numpy 2.4.6) önerilir. Sonuç: LIVE adayı yok; en iyi BTC-T03 (H4 Donchian20 + D1 EMA200 BUY, B, gölge adayı). Emir/ayar değiştirmez. Defter §2.11, tuzaklar E40–E50.",
+  "output": "research/btc_5y_20261021/fam_*/results/ + research_notes/BTC trader bot kenar araştırması/04…07",
+  "needs_backend": false,
+  "est_runtime": "dakikalar (aile başına saniyeler–birkaç dk)",
+  "learn_targets": []
+ },
+ {
+  "id": "btc_scalp_20261021",
+  "name": "BTC — scalping aileleri + strateji portföyü (emir akışı, türev, volatilite/yapı, ML; P-PRE gölge portföyü)",
+  "kind": "script",
+  "command": "(cd feasibility && python3 -I 00_selftest.py && python3 -I 01_hits.py && python3 -I 02_frontier.py && python3 -I 03_broker.py && python3 -I 04_leverage_mc.py && python3 -I 07_gamblers_ruin.py && python3 -I 08_tables.py) && (cd fam_orderflow && python3 -I 00_selftest.py && python3 -I 01_build.py && python3 -I 02_eval.py && python3 -I 04_posthoc.py) && (cd fam_turev/scripts && python3 -I 01_prep.py && python3 -I 02_outcomes.py && python3 -I 03_events.py && python3 -I 04_eval.py && python3 -I 06_posthoc.py) && (cd fam_volyapi && python3 -I 00_selftest.py && python3 -I 01_signal_prefix_test.py && python3 -I 02_run_cells.py && python3 -I 03_straddle_diag.py && python3 -I 04_select_card.py && python3 -I 05_tables.py) && (cd fam_ml && python3 -I 01_build.py && python3 -I 02_selftest.py && python3 -I 03_train.py && python3 -I 04_eval.py && python3 -I 05_extra.py) && (cd strateji && python3 -I 00_selftest.py && python3 -I 01_events.py && python3 -I 02_core_exec.py && python3 -I 03_portfolio.py && python3 -I 04_leverage_mc.py && python3 -I 05_extras.py)",
+  "cwd": "research/btc_scalp_20261021",
+  "category": "backtest",
+  "what_it_does": "BTCUSDT 1m 2021-06→2026-10-20 + Binance perp akışı/funding/5 dk metrics (OI, L/S; 2024-03-04 damga değişimi düzeltilmiş)/premium/bookDepth/aggTrades 1 s üzerinde sızıntısız, ön-kayıtlı (fam_*/prereg.md, strateji/prereg.md) scalp araştırması: maliyet sınırı + icra gerçekçiliği (feasibility; BTC-SC-FZ01), emir akışı (BTC-SC-OF01…07, 1.224 hücre), türev konumlanma (BTC-SC-DV00…05, 468 hücre), volatilite+yapı (BTC-SC-VS01…09, 208 hücre), çok-faktörlü LightGBM (BTC-SC-ML01…05) ve §2.11 adaylarından portföy inşası (BTC-ST01…08: Core limit-icra, tek-pozisyon kartı, P-PRE/P-ALL, veto katkısı, kaldıraç MC, QB sunucu SL'si, ileri gölge karar kuralı). Giriş sonraki 1m açılışı, SL=max(19 bp, 1,1×ATR5m), PEP 1,85 bp + SL kayması, rollover−2 dk kapanış; DISC/OOS/BLIND, P1 + dairesel plasebo, Holm + max-z. Veri önce scripts/00_list_s3.py…08_validate.py ile kurulur (btc_5y_20261021 spot 1m'ini kullanır). Proje .venv (numpy 2.4.6, LightGBM 4.3.0) önerilir. Sonuç: ön-kayıtlı LIVE/GÖLGE scalp adayı 0; P-PRE (Core+MAX10+QB+X04) POST +0,026R kart 5/6 → GÖLGE. Emir/ayar değiştirmez. Defter §2.12, tuzaklar E51–E73.",
+  "output": "research/btc_scalp_20261021/{feasibility/out,fam_orderflow/results,fam_turev/out,fam_volyapi/results,fam_ml/results,strateji/results}/ + research_notes/BTC scalping strateji araştırması/01…08",
+  "needs_backend": false,
+  "est_runtime": "dakikalar–saatler (ML eğitimi ve 1.224 hücrelik orderflow taraması en uzunları)",
+  "learn_targets": []
+ },
+ {
+  "id": "btc_indep_2017_2021",
+  "name": "BTC — P-PRE gölge portföyünün bağımsız dönem sınavı (Binance 1m 2017-08→2021-05, dondurulmuş kod)",
+  "kind": "script",
+  "command": "python3 -I -B scripts/port/selftest.py && python3 -I -B scripts/port/events.py && python3 -I -B scripts/port/portfolio.py && python3 -I -B scripts/05_sensitivity.py",
+  "cwd": "research/btc_indep_2017_2021",
+  "category": "backtest",
+  "what_it_does": "research/btc_scalp_20261021/strateji'deki dondurulmuş kolları (CORE=BTC-T03, MAX10, QB, X04 + post-hoc CAPREV-RV, OF02 θ5, DV04c-U) ve portföyleri (P-PRE, P-ALL−DV, P-ALL), önceki turlarda hiç görülmemiş 2017-08-17→2021-05-31 Binance spot 1m (+ perp 2020-01→) verisinde tek seferlik, parametre ayarsız sınar. Kod SHA256'lı birebir kopya (scripts/port/MANIFEST.txt, PORT_DIFF.txt: yalnız veri yolu/tarih sabitleri değişti); ön kayıt prereg.md. Veri önce scripts/00_list_s3.py, 01_download.py, port/build_spot.py, 02b_floor_offgrid.py (dakika-dışı damga onarımı), port/build_futures.py, port/macro_yf.py, 03_assemble.py, port/of_build.py, 04_dv04c.py ile kurulur. Sonuç: P-PRE n 2.123 +0,039R (+14,8 bp), P %99,9, kart 6/6 (TUTUYOR) — ama başabaş RT ≈10 bp, sabit 15 $'da −0,042R, X04 işaret çevirdi (−0,013R). Emir/ayar değiştirmez. Defter §2.12 BTC-IND01…09, tuzaklar E70/E72/E73.",
+  "output": "research/btc_indep_2017_2021/results/ (cards_table.csv, cost_sweep.csv, sensitivity.json) + research_notes/BTC scalping strateji araştırması/09_bagimsiz_donem_2017_2021.md",
+  "needs_backend": false,
+  "est_runtime": "seconds–dakikalar (inşa edilmiş veriyle)",
+  "learn_targets": []
+ },
+ {
+  "id": "vibe_trading_20261022",
+  "name": "Vibe-Trading — 4 CFD sembolünde nedensel hazır örnek sınaması",
+  "kind": "script",
+  "command": ".venv/bin/python research/vibe_trading_20261022/data_audit.py && .venv/bin/python research/vibe_trading_20261022/causality.py && .venv/bin/python research/vibe_trading_20261022/selftest.py && .venv/bin/python research/vibe_trading_20261022/replay.py && .venv/bin/python research/vibe_trading_20261022/finalize.py && .venv/bin/python research/vibe_trading_20261022/report.py",
+  "cwd": ".",
+  "category": "backtest",
+  "what_it_does": "HKUDS/Vibe-Trading 11cff3f commitindeki 7 hazır örneği, yerel broker 5m ve uzun 1h verisinde parametre ayarsız sınar; prefix/gelecek pertürbasyonu, UTC düzeltmesi, sonraki açılış, spread/kayma, kronolojik bölme, gün-blok kontrol ve Holm içerir. 0/54 araştırma adayı; cross-market örneği sızıntılı. LLM takımını test etmez, broker/DB/emir/ayar değiştirmez. Gerekli sabit kaynak upstream/ içinde veya source_snapshot.tar.gz üzerinden açılmalı; mevcut .venv ve yerel veri dosyaları kullanılır.",
+  "output": "research/vibe_trading_20261022/RAPOR.md + results/{summary.csv,trades.csv,causality.json,research_cards.json}",
+  "needs_backend": false,
+  "est_runtime": "~3–6 dakika (yerel veri ve sabit kaynak hazırsa)",
+  "learn_targets": []
+ },
+ {
+  "id": "indicator_atlas_20261025",
+  "name": "İndikatör Kaynak Atlası — 4 piyasa için yöntem ve kod envanteri",
+  "kind": "script",
+  "command": "python3 research/indicator_atlas_20261025/build_catalog.py && python3 research/indicator_atlas_20261025/publish_catalog.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "Yerel sabit kaynak snapshotlarından 120 yöntem ailesi, 1.480 uygulama kaydı ve 496 TradingView yayınının aranabilir kataloğunu yeniden üretir; 2.132 kaynak dosyasının SHA256 bütünlüğünü kontrol eder. Ağ erişimi veya vendor kodu çalıştırma içermez. XAUUSD/USOIL/GDAXI/NDX veri ihtiyaçlarını ve formül/zamanlama farklarını belgeler; performans testi, canlı öneri veya bot/DB/bağımlılık değişikliği yapmaz. Koleksiyon scriptleri ayrı ve ağ erişimlidir. Defter IA-01.",
+  "output": "research/indicator_atlas_20261025/{REPORT.md,FAMILIES.md,IMPLEMENTATIONS.json,TRADINGVIEW_PUBLICATIONS.md,catalog.html}",
+  "needs_backend": false,
+  "est_runtime": "seconds (yerel kaynak snapshotları hazırsa)",
+  "learn_targets": []
+ },
+ {
+  "id": "indicator_atlas_system_comparison_20261025",
+  "name": "İndikatör Atlası × ForexSAI — kullanım, formül ve model sözleşmesi kıyası",
+  "kind": "script",
+  "command": "python3 research/indicator_atlas_20261025/system_comparison/build_usage_matrix.py && .venv/bin/python research/indicator_atlas_20261025/system_comparison/audit_calculations.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "120 atlas kartının backend/bot/Decider kaynak eşleşmelerini ve kanıt satırlarını denetler; 400 sentetik OHLCV mumuyla projeye ait saf hesapları karşılaştırır; yerel model girişlerini ve taze yükleme yönlendirmesini inceler. 34 tam/kısmi bağlı kart, bot kaydedicide 10 klasik aile; Nasdaq 810 girişin 704'ü varsayılan dolduruluyor. USOIL bundle/estimator ve COT sembol uyumsuzlukları raporlandı. Yabancı atlas kodu, ağ, broker, DB ve emir çalıştırmaz; kârlılık/backtest sonucu üretmez. Yerel .venv ve güvenilen backend/models dosyaları gerekir. Defter IA-04.",
+  "output": "research/indicator_atlas_20261025/system_comparison/{REPORT_TR.md,USAGE_MATRIX.md,CALCULATION_AND_MODEL_AUDIT.json}",
+  "needs_backend": false,
+  "est_runtime": "seconds",
+  "learn_targets": []
+ },
+ {
+  "id": "gosterge_cakisma_motoru_20261025",
+  "name": "Gösterge Çakışma Motoru (GÇM) — TradingView göstergelerinin eş zamanlı tepki kombinasyonlarıyla yön tahmini",
+  "kind": "script",
+  "command": "cd research/gosterge_cakisma_20261025 && ../../.venv/bin/python run.py ALL && ../../.venv/bin/python coverage.py && ../../.venv/bin/python summarize.py && ../../.venv/bin/python rapor.py && ../../.venv/bin/python inceleme.py ALL",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "133 nedensel gösterge (55 aile, TradingView topluluk scriptlerinin %93,2'si) → 353 ikili durum; her (sembol, TF) için tek/ikili/üçlü eş zamanlı tepki kombinasyonlarının 1–32 bar ileri yönünü saat-eşli tabana karşı ölçer; tüm aramanın plasebosuyla seçim eşiği, %60/20/20 kronolojik bölme, tüm-gösterge HGB modeli, tüm TF × sembol tekrarlanma tablosu ve mum-mum HTML inceleme sayfaları. Sonuç (2026-10-25): kombinasyon kenarı tesadüf düzeyinde (GC-01 X); tüm-gösterge modeli zayıf, spread mertebesinde iz (GC-02 C). Ön kayıt PROTOCOL.md; ağ/DB/broker kullanmaz.",
+  "output": "research/gosterge_cakisma_20261025/{RAPOR.md,SONUCLAR.md,results/,inceleme/index.html}",
+  "needs_backend": false,
+  "est_runtime": "~2.5 saat tüm semboller (NDX 1m ≈ 86 dk); tek TF dakikalar",
+  "learn_targets": []
+ }
 ]

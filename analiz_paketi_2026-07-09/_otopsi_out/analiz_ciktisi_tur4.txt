@@ -1,0 +1,49 @@
+=== TERS-YÖN RE-ENTRY DETAY (SL anında ters pozisyon) ===
+  NDX RR=0.73: n=41 TP=28 (68%) SL=11 açık=2 EV=+0.23R (breakeven 58%)
+  NDX RR=1.00: n=41 TP=25 (61%) SL=14 açık=2 EV=+0.27R (breakeven 50%)
+    NDX H2: n=20 TP%=55
+    NDX H1: n=21 TP%=81
+  USOIL RR=0.37: n=26 TP=19 (73%) SL=7 açık=0 EV=+0.00R (breakeven 73%)
+  USOIL RR=1.00: n=26 TP=14 (54%) SL=12 açık=0 EV=+0.08R (breakeven 50%)
+    USOIL H2: n=13 TP%=69
+    USOIL H1: n=13 TP%=77
+
+=== NİHAİ KOMBİNE REÇETE ===
+NDX skor≥7 (gerçek sonuçlarla): n=51 WR=65% PnL=3282  [baz: n=103 WR60% PnL 2625]
+USOIL skor≥7 + RR1.0 (sim): n=18 TP=11 SL=7 EV=+0.22R  [baz: WR49% EV≈-0.32R]
+USOIL skor≥7 (gerçek): n=18 WR=72% PnL=1151  [baz: PnL -2640]
+
+=== GDAXI İŞLEM DETAYI ===
+direction                entry_time  entry_price  exit_price  profit outcome    magic    hold_min      atr  sl_dist_atr
+      BUY 2026-06-29 05:40:08+00:00      24785.1     24608.3 -504.35      SL 52890969  694.866667 7.649484    23.112671
+     SELL 2026-06-30 08:01:19+00:00      24830.8     24949.8 -678.00      SL 52890970  288.233333 5.697139    20.887677
+     SELL 2026-06-30 12:50:00+00:00      24953.4     25072.4 -678.46      SL 52890970 1329.866667 8.386128    14.190101
+      BUY 2026-07-01 04:18:15+00:00      25013.9     25080.9  381.90      TP 52890970  415.933333 4.693614    14.274715
+      BUY 2026-07-01 15:03:04+00:00      24993.3     25060.3  381.58      TP 52890970  205.766667 8.380851     7.994415
+
+=== OTHER (tp/sl dışı kapanan) ===
+Empty DataFrame
+Columns: [sym, direction, entry_time, profit, out_comment, hold_min]
+Index: []
+
+=== SKOR KAPISI MALİYETİ ===
+NDX skor<7 bloklanan: n=52 (TP 29, SL 23) bloklanan PnL=-658 → engellemek KÂRLI
+USOIL skor<7 bloklanan: n=33 (TP 12, SL 21) bloklanan PnL=-3790 → engellemek KÂRLI
+
+=== GÜN BAZLI ===
+                  n    wr      pnl
+sym   dow_name                    
+GDAXI Monday      1  0.00  -504.35
+      Tuesday     2  0.00 -1356.46
+      Wednesday   2  1.00   763.48
+NDX   Friday      3  0.33  -700.00
+      Thursday   40  0.60  1174.50
+      Tuesday    17  0.65   687.00
+      Wednesday  43  0.60  1463.50
+USOIL Friday      1  0.00  -304.00
+      Monday      3  0.33  -416.50
+      Thursday   12  0.42   668.50
+      Tuesday    19  0.68  -623.50
+      Wednesday  16  0.38 -1964.00
+
+Bitti.

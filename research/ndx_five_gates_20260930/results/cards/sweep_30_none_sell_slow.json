@@ -1,0 +1,125 @@
+{
+  "scope": "ndx_offline_sweep_30_none_sell_slow",
+  "symbol": "NDX.INDX",
+  "research_date": "2026-09-30",
+  "mode": "OFFLINE_REPLAY",
+  "status": "RED",
+  "live_authorized": false,
+  "definition": {
+    "id": "sweep_30_none_sell_slow",
+    "family": "sweep",
+    "lookback": 30,
+    "context": "none",
+    "side": "sell",
+    "geometry": "slow",
+    "metrics": {
+      "year_a": {
+        "n": 372,
+        "ev": 0.016741722984103098,
+        "total_R": 6.227920950086352,
+        "wr": 0.40591397849462363,
+        "drawdown_R": 20.20036192959718,
+        "points": 1766.8520051206797,
+        "days": 102,
+        "average_win_R": 1.2642494054538502,
+        "average_loss_R": 0.8356277795178509,
+        "empirical_breakeven_wr": 0.39794126318350004,
+        "stops": 168,
+        "targets": 71,
+        "time_exits": 114,
+        "data_gaps": 19,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.04890719608209279,
+        "baseline_ev": -0.12587035631914495,
+        "lift": 0.14261207930324804
+      },
+      "year_b": {
+        "n": 329,
+        "ev": 0.027583131787227308,
+        "total_R": 9.074850357997784,
+        "wr": 0.4194528875379939,
+        "drawdown_R": 15.77799385899058,
+        "points": 1150.297329005749,
+        "days": 97,
+        "average_win_R": 1.152311330789044,
+        "average_loss_R": 0.7850477135648707,
+        "empirical_breakeven_wr": 0.4052153966260159,
+        "stops": 125,
+        "targets": 59,
+        "time_exits": 118,
+        "data_gaps": 27,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.05549191337269432,
+        "baseline_ev": -0.14100748416295564,
+        "lift": 0.16859061595018293
+      },
+      "mt5_presep": {
+        "n": 202,
+        "ev": 0.010393706017891245,
+        "total_R": 2.0995286156140316,
+        "wr": 0.45544554455445546,
+        "drawdown_R": 14.213434994072104,
+        "points": 504.50214378339297,
+        "days": 58,
+        "average_win_R": 1.0112909763580535,
+        "average_loss_R": 0.8267203746302445,
+        "empirical_breakeven_wr": 0.449790679576444,
+        "stops": 81,
+        "targets": 29,
+        "time_exits": 92,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.010393706017891245,
+        "baseline_ev": -0.15687774729915496,
+        "lift": 0.16727145331704624
+      }
+    },
+    "eligible": false,
+    "volume": true,
+    "rank": 0.010393706017891245
+  },
+  "oos_period": [
+    "2026-09-01",
+    "2026-09-30"
+  ],
+  "metrics": {
+    "n": 59,
+    "ev": 0.003851256944770309,
+    "total_R": 0.22722415974144822,
+    "wr": 0.4406779661016949,
+    "drawdown_R": 11.260614006883225,
+    "points": -19.36936667772534,
+    "days": 17,
+    "average_win_R": 1.1135235426211583,
+    "average_loss_R": 0.8704359984366263,
+    "empirical_breakeven_wr": 0.4387367687813519,
+    "stops": 26,
+    "targets": 10,
+    "time_exits": 22,
+    "data_gaps": 1,
+    "ambiguous_bars": 0,
+    "worst_gap_ev": -0.017824363267228065
+  },
+  "bootstrap": {
+    "p_positive": 0.5034,
+    "ci95": [
+      -0.33946983521154295,
+      0.3816988785366185
+    ],
+    "effective_days": 17
+  },
+  "checks": {
+    "volume_150": false,
+    "positive_ev_day_bootstrap_90": false,
+    "both_calendar_halves": false,
+    "spread_1_5": true,
+    "honest_vs_close_entry": false,
+    "one_position": true
+  },
+  "limitations": [
+    "Replay, not actual orders or future shadow fills",
+    "MT5 per-bar spread constant 1 point; tick execution not independently measured",
+    "Under 150 final-period independent sequential decisions"
+  ],
+  "freeze_sha256": "14dd08aab5a3c78fda60859790087c3ad505e4f90f9518d2936a5159e6665766"
+}

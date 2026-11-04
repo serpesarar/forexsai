@@ -1,0 +1,1367 @@
+{
+ "benzersiz_script": 33389,
+ "tur": {
+  "indicator": 29628,
+  "strategy": 3118,
+  "library": 643
+ },
+ "yil": {
+  "2013": 1,
+  "2014": 369,
+  "2015": 356,
+  "2016": 362,
+  "2017": 535,
+  "2018": 1481,
+  "2019": 1865,
+  "2020": 2232,
+  "2021": 2328,
+  "2022": 2496,
+  "2023": 1721,
+  "2024": 1933,
+  "2025": 4091,
+  "2026": 13619
+ },
+ "siniflanmayan": 2950,
+ "aileler": [
+  {
+   "kod": "smc_structure",
+   "grup": "SMC/ICT",
+   "aile": "Piyasa yapısı (BOS/CHoCH/MSS)",
+   "script": 1546,
+   "toplam_boost": 1621743,
+   "medyan_boost": 144.0,
+   "sistemde": "K",
+   "kanit": "B NDX SMC SELL kapısı (14g 1W/28L)",
+   "en_populer": [
+    "Smart Money Concepts (SMC) [LuxAlgo] — LuxAlgo (176279, 2022)",
+    "Market Structure Break & Order Block by EmreKb — EmreKb (64104, 2022)",
+    "ICT Concepts [LuxAlgo] — LuxAlgo (31216, 2023)",
+    "Super OrderBlock / FVG / BoS Tools by makuchaku & eFe — makuchaku (28772, 2022)",
+    "ICT Killzones Toolkit [LuxAlgo] — LuxAlgo (26695, 2024)",
+    "Smart Money Structure | GainzAlgo — GainzAlgo (20663, 2026)"
+   ]
+  },
+  {
+   "kod": "order_block",
+   "grup": "SMC/ICT",
+   "aile": "Order block / breaker / mitigation",
+   "script": 674,
+   "toplam_boost": 1205055,
+   "medyan_boost": 214.5,
+   "sistemde": "K",
+   "kanit": "SMC modeliyle birlikte",
+   "en_populer": [
+    "Smart Money Concepts (SMC) [LuxAlgo] — LuxAlgo (176279, 2022)",
+    "Market Structure Break & Order Block by EmreKb — EmreKb (64104, 2022)",
+    "Order Block Finder (Experimental) — wugamlo (40866, 2020)",
+    "Order Block Detector [LuxAlgo] — LuxAlgo (40647, 2022)",
+    "ICT Concepts [LuxAlgo] — LuxAlgo (31216, 2023)",
+    "Order Blocks & Breaker Blocks [LuxAlgo] — LuxAlgo (30359, 2023)"
+   ]
+  },
+  {
+   "kod": "fvg",
+   "grup": "SMC/ICT",
+   "aile": "Fair value gap / imbalance / IFVG",
+   "script": 1176,
+   "toplam_boost": 1267802,
+   "medyan_boost": 133.5,
+   "sistemde": "K",
+   "kanit": "SMC modeliyle birlikte",
+   "en_populer": [
+    "Smart Money Concepts (SMC) [LuxAlgo] — LuxAlgo (176279, 2022)",
+    "ICT Concepts [LuxAlgo] — LuxAlgo (31216, 2023)",
+    "Super OrderBlock / FVG / BoS Tools by makuchaku & eFe — makuchaku (28772, 2022)",
+    "ICT Killzones Toolkit [LuxAlgo] — LuxAlgo (26695, 2024)",
+    "Fair Value Gap [LuxAlgo] — LuxAlgo (26363, 2022)",
+    "Smart Money Concept [TradingFinder] Major OB + FVG + Liquidity — TradingFinder (25395, 2024)"
+   ]
+  },
+  {
+   "kod": "liquidity",
+   "grup": "SMC/ICT",
+   "aile": "Likidite süpürmesi / SFP / stop hunt",
+   "script": 2200,
+   "toplam_boost": 1649647,
+   "medyan_boost": 114.5,
+   "sistemde": "K",
+   "kanit": "A NDX fakeout (OLD-17) · X FG süpürme SELL",
+   "en_populer": [
+    "Liquidity Swings [LuxAlgo] — LuxAlgo (41336, 2023)",
+    "ICT Concepts [LuxAlgo] — LuxAlgo (31216, 2023)",
+    "Buyside & Sellside Liquidity [LuxAlgo] — LuxAlgo (30719, 2023)",
+    "Super OrderBlock / FVG / BoS Tools by makuchaku & eFe — makuchaku (28772, 2022)",
+    "Smart Money Concept [TradingFinder] Major OB + FVG + Liquidity — TradingFinder (25395, 2024)",
+    "Liquidity Sweeps [LuxAlgo] — LuxAlgo (23495, 2024)"
+   ]
+  },
+  {
+   "kod": "ict_time",
+   "grup": "SMC/ICT",
+   "aile": "ICT zaman modelleri (killzone, silver bullet, PO3, CRT, macro)",
+   "script": 656,
+   "toplam_boost": 559780,
+   "medyan_boost": 112.0,
+   "sistemde": "~",
+   "kanit": "seans kapıları var; ICT zaman modelleri sınanmadı",
+   "en_populer": [
+    "ICT Killzones + Pivots [TFO] — tradeforopp (59141, 2023)",
+    "ICT Concepts [LuxAlgo] — LuxAlgo (31216, 2023)",
+    "ICT Killzones Toolkit [LuxAlgo] — LuxAlgo (26695, 2024)",
+    "ICT Turtle Soup | Flux Charts — fluxchart (18740, 2024)",
+    "ICT Silver Bullet [LuxAlgo] — LuxAlgo (15100, 2023)",
+    "Change in State of Delivery CISD [AlgoAlpha] — AlgoAlpha (10932, 2025)"
+   ]
+  },
+  {
+   "kod": "premium_discount",
+   "grup": "SMC/ICT",
+   "aile": "Premium/discount, OTE",
+   "script": 548,
+   "toplam_boost": 449104,
+   "medyan_boost": 96.0,
+   "sistemde": "K",
+   "kanit": "B OLD-28 premium_zone_buy vetosu (NDX haklı, USOIL muaf)",
+   "en_populer": [
+    "Smart Money Concepts (SMC) [LuxAlgo] — LuxAlgo (176279, 2022)",
+    "Breaker Blocks with Signals [LuxAlgo] — LuxAlgo (16791, 2023)",
+    "Fibonacci Structure Engine [WillyAlgoTrader] — WillyAlgoTrader (11911, 2026)",
+    "Predictive Ranges [LuxAlgo] — LuxAlgo (10378, 2023)",
+    "Adaptive Trend Flow [QuantAlgo] — QuantAlgo (7859, 2024)",
+    "One Shot One Kill ICT [TradingFinder] Liquidity MMXM + CISD OTE — TradingFinder (6996, 2025)"
+   ]
+  },
+  {
+   "kod": "supertrend",
+   "grup": "Trend",
+   "aile": "Supertrend ve türevleri",
+   "script": 693,
+   "toplam_boost": 900413,
+   "medyan_boost": 370,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "SuperTrend — KivancOzbilgic (84239, 2020)",
+    "Machine Learning Adaptive SuperTrend [AlgoAlpha] — AlgoAlpha (31097, 2024)",
+    "SuperTrend AI (Clustering) [LuxAlgo] — LuxAlgo (30338, 2023)",
+    "Pivot Point Supertrend — LonesomeTheBlue (29534, 2020)",
+    "SuperTrend STRATEGY — KivancOzbilgic (25557, 2020)",
+    "Profit Maximizer PMax — KivancOzbilgic (19672, 2020)"
+   ]
+  },
+  {
+   "kod": "halftrend_utbot",
+   "grup": "Trend",
+   "aile": "HalfTrend / UT Bot / SSL / Range Filter",
+   "script": 259,
+   "toplam_boost": 347489,
+   "medyan_boost": 233,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "UT Bot Alerts — QuantNomad (60939, 2020)",
+    "SSL Hybrid — Mihkel00 (17247, 2019)",
+    "VuManChu Swing Free — Jazal (16554, 2021)",
+    "Range Filter Buy and Sell 5min - guikroth version — PHVNTOM_TRADER (14897, 2022)",
+    "UT Bot  — Yo_adriiiiaan (14538, 2019)",
+    "HalfTrend [everget] — everget (13372, 2021)"
+   ]
+  },
+  {
+   "kod": "ma_adaptive",
+   "grup": "Trend",
+   "aile": "Gelişmiş/uyarlanabilir MA (Hull, KAMA, ALMA, T3, ZLEMA, JMA, VIDYA, FRAMA, McGinley)",
+   "script": 1237,
+   "toplam_boost": 900484,
+   "medyan_boost": 200,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "CM_Ultimate_MA_MTF_V2 — ChrisMoody (38838, 2014)",
+    "Hull Suite — InSilico (22604, 2019)",
+    "Zero Lag Trend Signals (MTF) [AlgoAlpha] — AlgoAlpha (17739, 2024)",
+    "Candlestick Trend Indicator v0.5 by JustUncleL — JustUncleL (15126, 2016)",
+    "Hull Suite Strategy — DashTrader (14991, 2020)",
+    "Volumatic Variable Index Dynamic Average [BigBeluga] — BigBeluga (14948, 2024)"
+   ]
+  },
+  {
+   "kod": "ma_basic_cross",
+   "grup": "Trend",
+   "aile": "MA kesişimi / şerit / EMA bulutu",
+   "script": 1068,
+   "toplam_boost": 609216,
+   "medyan_boost": 111.0,
+   "sistemde": "~",
+   "kanit": "X HK-01 EMA 10/25/50 · A− B4 EMA50 hizası",
+   "en_populer": [
+    "Madrid Moving Average Ribbon — Madrid (28342, 2015)",
+    "Scalping PullBack Tool R1 by JustUncleL — JustUncleL (21972, 2016)",
+    "Buy Sell Signal — kelfry98 (16750, 2025)",
+    "Sniper Entry/Exit with SL&TP by KhanSaab V.02 — TheKhanSaahab (12894, 2026)",
+    "Coral Trend Indicator [LazyBear] — LazyBear (11691, 2015)",
+    "Volume Order Blocks [BigBeluga] — BigBeluga (10279, 2025)"
+   ]
+  },
+  {
+   "kod": "ichimoku",
+   "grup": "Trend",
+   "aile": "Ichimoku",
+   "script": 703,
+   "toplam_boost": 285116,
+   "medyan_boost": 116,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "Ichimoku — HPotter (18940, 2014)",
+    "CM Enhanced Ichimoku Cloud V5 — ChrisMoody (15437, 2014)",
+    "Ichimoku + Daily-Candle_X + HULL-MA_X + MacD — SeaSide420 (10519, 2016)",
+    "Ichimoku Theories [LuxAlgo] — LuxAlgo (7757, 2024)",
+    "Ichimoku EMA Bands — CapnOscar (7214, 2015)",
+    "Ichimoku Oscillator — LonesomeTheBlue (6930, 2024)"
+   ]
+  },
+  {
+   "kod": "psar",
+   "grup": "Trend",
+   "aile": "Parabolic SAR",
+   "script": 226,
+   "toplam_boost": 179731,
+   "medyan_boost": 312.0,
+   "sistemde": "K",
+   "kanit": "OLD-20 momentum filtresinin üyesi",
+   "en_populer": [
+    "CM_Parabolic SAR — ChrisMoody (15890, 2014)",
+    "Parabolic SAR [everget] — everget (8724, 2019)",
+    "Parabolic SAR + EMA 200 + MACD Signals — Saleh_Toodarvari (7966, 2023)",
+    "Parabolic RSI [ChartPrime] — ChartPrime (6823, 2025)",
+    "TKP T3 Trend With Psar Barcolor — Bjorgum (6662, 2020)",
+    "Lucid SAR — casey_bowman (4596, 2019)"
+   ]
+  },
+  {
+   "kod": "adx_dmi",
+   "grup": "Trend",
+   "aile": "ADX / DMI",
+   "script": 658,
+   "toplam_boost": 330888,
+   "medyan_boost": 165.5,
+   "sistemde": "K",
+   "kanit": "C B7",
+   "en_populer": [
+    "Precision Sniper [WillyAlgoTrader] — WillyAlgoTrader (16889, 2026)",
+    "Consolidation Range with Signals (Zeiierman) — Zeiierman (7597, 2025)",
+    "SSL HYBRID Advanced — traderharikrishna (7294, 2022)",
+    "Multiple Indicators Screener — QuantNomad (6633, 2021)",
+    "ADX Di+ Di- [Gu5] — gu5tavo71 (5617, 2019)",
+    "ADX by cobra — binary_trader66 (5075, 2016)"
+   ]
+  },
+  {
+   "kod": "regression_channel",
+   "grup": "Trend",
+   "aile": "Regresyon / standart sapma kanalı",
+   "script": 783,
+   "toplam_boost": 664691,
+   "medyan_boost": 251,
+   "sistemde": "K",
+   "kanit": "B OLD-09 CHREV (canlı zayıf)",
+   "en_populer": [
+    "Linear Regression Channel — LonesomeTheBlue (17329, 2020)",
+    "Linear Regression Oscillator [ChartPrime] — ChartPrime (14486, 2024)",
+    "Linear Regression Candles — ugurvu (13046, 2021)",
+    "Support and Resistance Logistic Regression | Flux Charts — fluxchart (11715, 2025)",
+    "Linear Regression Channel — ChartPrime (11633, 2024)",
+    "Volume-Supported Linear Regression Trend — LonesomeTheBlue (9841, 2021)"
+   ]
+  },
+  {
+   "kod": "trendlines",
+   "grup": "Trend",
+   "aile": "Otomatik trend çizgisi / kırılımı",
+   "script": 514,
+   "toplam_boost": 623397,
+   "medyan_boost": 287.5,
+   "sistemde": "-",
+   "kanit": "X HK-03 (S/R dokunuş)",
+   "en_populer": [
+    "Trendlines with Breaks [LuxAlgo] — LuxAlgo (53583, 2022)",
+    "Trend Lines v2 — LonesomeTheBlue (28929, 2020)",
+    "Trendline Breakouts With Targets [ChartPrime] — ChartPrime (20110, 2023)",
+    "SuperTrend + Relative Volume (Kernel Optimized) — fluxchart (12218, 2025)",
+    "Coral Trend Indicator [LazyBear] — LazyBear (11691, 2015)",
+    "Trendline Breakout Navigator [LuxAlgo] — LuxAlgo (11460, 2025)"
+   ]
+  },
+  {
+   "kod": "donchian_turtle",
+   "grup": "Trend",
+   "aile": "Donchian / Turtle kırılımı",
+   "script": 303,
+   "toplam_boost": 235815,
+   "medyan_boost": 221,
+   "sistemde": "G",
+   "kanit": "X USOIL breakout · B XS-01 XAU günlük",
+   "en_populer": [
+    "Turtle Trade Channels Indicator TUTCI — KivancOzbilgic (20150, 2021)",
+    "ICT Turtle Soup | Flux Charts — fluxchart (18740, 2024)",
+    "[RS]Support and Resistance V0 — RicardoSantos (16473, 2015)",
+    "Fibonacci Zone — eykpunter (11503, 2017)",
+    "Support & Resistance Pro Toolkit [LuxAlgo] — LuxAlgo (8264, 2026)",
+    "Donchian Trend Ribbon — LonesomeTheBlue (7299, 2020)"
+   ]
+  },
+  {
+   "kod": "keltner",
+   "grup": "Trend",
+   "aile": "Keltner kanalı",
+   "script": 397,
+   "toplam_boost": 259831,
+   "medyan_boost": 123,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "Squeeze Momentum Indicator [LazyBear] — LazyBear (117568, 2014)",
+    "SSL Hybrid — Mihkel00 (17247, 2019)",
+    "kyle algo v1 — kylealgo (4468, 2023)",
+    "Trading Strategy based on BB/KC squeeze — LazyBear (4126, 2014)",
+    "Polynomial Regression Keltner Channel [ChartPrime] — ChartPrime (3892, 2024)",
+    "Scalping Trading System bot Crypto and Stocks — exlux (3441, 2021)"
+   ]
+  },
+  {
+   "kod": "atr_trailing",
+   "grup": "Trend",
+   "aile": "ATR trailing stop / Chandelier / volatilite stop",
+   "script": 531,
+   "toplam_boost": 694498,
+   "medyan_boost": 273,
+   "sistemde": "~",
+   "kanit": "X BE/kilit çıkışları (bellek be-lock-exit-rules-rejected)",
+   "en_populer": [
+    "SuperTrend — KivancOzbilgic (84239, 2020)",
+    "SuperTrend AI (Clustering) [LuxAlgo] — LuxAlgo (30338, 2023)",
+    "Chandelier Exit [everget] — everget (29733, 2019)",
+    "SuperTrend STRATEGY — KivancOzbilgic (25557, 2020)",
+    "Profit Maximizer PMax — KivancOzbilgic (19672, 2020)",
+    "Precision Sniper [WillyAlgoTrader] — WillyAlgoTrader (16889, 2026)"
+   ]
+  },
+  {
+   "kod": "heikin_renko",
+   "grup": "Trend",
+   "aile": "Heikin Ashi / Renko / Kagi / P&F",
+   "script": 726,
+   "toplam_boost": 496274,
+   "medyan_boost": 212.0,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "Scalping PullBack Tool R1 by JustUncleL — JustUncleL (21972, 2016)",
+    "Heikin Ashi RSI Oscillator — JayRogers (11169, 2021)",
+    "Trend Indicator A-V2 (Smoothed Heikin Ashi Cloud) — DZIV (9955, 2021)",
+    "UT Bot Strategy — QuantNomad (9014, 2019)",
+    "Renko Candles Overlay — LonesomeTheBlue (8660, 2022)",
+    "Tick Chart — LonesomeTheBlue (7972, 2021)"
+   ]
+  },
+  {
+   "kod": "rsi",
+   "grup": "Osilatör",
+   "aile": "RSI türevleri",
+   "script": 2817,
+   "toplam_boost": 1941659,
+   "medyan_boost": 157,
+   "sistemde": "K",
+   "kanit": "C IO-05 · X HK-04 · C OLD-02",
+   "en_populer": [
+    "Bollinger + RSI, Double Strategy (by ChartArt) v1.1 — ChartArt (49083, 2016)",
+    "Divergence for Many Indicators v4 — LonesomeTheBlue (30445, 2020)",
+    "CM RSI-2 Strategy Lower Indicator — ChrisMoody (24640, 2014)",
+    "CM_Ultimate RSI Multi Time Frame — ChrisMoody (22451, 2014)",
+    "RSI Divergence — Shizaru (19992, 2016)",
+    "Precision Sniper [WillyAlgoTrader] — WillyAlgoTrader (16889, 2026)"
+   ]
+  },
+  {
+   "kod": "stoch",
+   "grup": "Osilatör",
+   "aile": "Stochastic / Stoch RSI",
+   "script": 1275,
+   "toplam_boost": 747778,
+   "medyan_boost": 160,
+   "sistemde": "K",
+   "kanit": "OLD-20 filtre üyesi · X BTC-T06",
+   "en_populer": [
+    "Divergence for Many Indicators v4 — LonesomeTheBlue (30445, 2020)",
+    "CM Stochastic Multi-TimeFrame — ChrisMoody (23066, 2014)",
+    "VDUB_BINARY_PRO_3_V2  FINAL + Strategy — vdubus (18359, 2015)",
+    "Buy&Sell Strategy depends on AO+Stoch+RSI+ATR by SerdarYILMAZ — SerdarYILMAZ (14407, 2019)",
+    "Stochastic OTT — KivancOzbilgic (12999, 2021)",
+    "MACD_VXI — vdubus (11659, 2015)"
+   ]
+  },
+  {
+   "kod": "macd",
+   "grup": "Osilatör",
+   "aile": "MACD türevleri",
+   "script": 1427,
+   "toplam_boost": 1030307,
+   "medyan_boost": 176,
+   "sistemde": "K",
+   "kanit": "X OLD-12",
+   "en_populer": [
+    "MacD Custom Indicator-Multiple Time Frame+All Available Options! — ChrisMoody (82550, 2014)",
+    "MACD + SMA 200 Strategy (by ChartArt) — ChartArt (31833, 2015)",
+    "Divergence for Many Indicators v4 — LonesomeTheBlue (30445, 2020)",
+    "MACD 4C — vkno422 (20575, 2015)",
+    "CM MACD Custom Indicator - Multiple Time Frame - V2 — ChrisMoody (18077, 2021)",
+    "Precision Sniper [WillyAlgoTrader] — WillyAlgoTrader (16889, 2026)"
+   ]
+  },
+  {
+   "kod": "wavetrend_cipher",
+   "grup": "Osilatör",
+   "aile": "WaveTrend / Market Cipher / VuManChu",
+   "script": 212,
+   "toplam_boost": 264794,
+   "medyan_boost": 205.0,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "Indicator: WaveTrend Oscillator [WT] — LazyBear (61320, 2014)",
+    "VuManChu Cipher B + Divergences — vumanchu (24839, 2019)",
+    "WaveTrend with Crosses [LazyBear] — lonestar108 (23695, 2016)",
+    "VuManChu Swing Free — Jazal (16554, 2021)",
+    "VuManChu Cipher A — vumanchu (10559, 2019)",
+    "Market Cipher B  Free version with Buy and sell — falconCoin (7387, 2019)"
+   ]
+  },
+  {
+   "kod": "qqe",
+   "grup": "Osilatör",
+   "aile": "QQE",
+   "script": 64,
+   "toplam_boost": 131081,
+   "medyan_boost": 630.5,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "QQE signals — colinmck (16872, 2020)",
+    "QQE MOD — Mihkel00 (14000, 2020)",
+    "Quantitative Qualitative Estimation QQE — KivancOzbilgic (13075, 2021)",
+    "Momentum-based ZigZag (incl. QQE) NON-REPAINTING — Peter_O (12533, 2021)",
+    "SSL HYBRID Advanced — traderharikrishna (7294, 2022)",
+    "Range Filter [DW] — DonovanWall (6295, 2018)"
+   ]
+  },
+  {
+   "kod": "cci",
+   "grup": "Osilatör",
+   "aile": "CCI",
+   "script": 241,
+   "toplam_boost": 221617,
+   "medyan_boost": 223,
+   "sistemde": "-",
+   "kanit": "sınanmadı (yalnız araştırma endpoint'i)",
+   "en_populer": [
+    "Divergence for Many Indicators v4 — LonesomeTheBlue (30445, 2020)",
+    "Indicator: CCI coded OBV — LazyBear (9235, 2014)",
+    "BEST Supertrend CCI — Daveatt (8765, 2020)",
+    "SSL HYBRID Advanced — traderharikrishna (7294, 2022)",
+    "Price Divergence Detector V3 revised by JustUncleL — JustUncleL (7129, 2016)",
+    "Trend Lines for RSI, CCI, Momentum, OBV — LonesomeTheBlue (7117, 2020)"
+   ]
+  },
+  {
+   "kod": "fisher_schaff",
+   "grup": "Osilatör",
+   "aile": "Fisher Transform / Schaff Trend Cycle",
+   "script": 225,
+   "toplam_boost": 134209,
+   "medyan_boost": 204,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "Opening Range with Breakouts & Targets [LuxAlgo] — LuxAlgo (21062, 2024)",
+    "STC Indicator - A Better MACD [SHK] — shayankm (7613, 2018)",
+    "Price Divergence Detector V3 revised by JustUncleL — JustUncleL (7129, 2016)",
+    "Inverse Fisher Transform COMBO STO+RSI+CCIv2  by KIVANÇ fr3762 — KivancOzbilgic (6402, 2018)",
+    "Schaff Trend Cycle — everget (4828, 2018)",
+    "Indicator: Schaff Trend Cycle (STC) — LazyBear (3588, 2014)"
+   ]
+  },
+  {
+   "kod": "other_osc",
+   "grup": "Osilatör",
+   "aile": "Diğer klasik osilatörler (TSI, TRIX, KST, CMO, AO, UO, Williams %R, Aroon, Vortex, Coppock)",
+   "script": 544,
+   "toplam_boost": 402085,
+   "medyan_boost": 207.5,
+   "sistemde": "M",
+   "kanit": "Williams %R yalnız ML girdisi; diğerleri sınanmadı",
+   "en_populer": [
+    "Madrid Moving Average Ribbon — Madrid (28342, 2015)",
+    "MACD 4C — vkno422 (20575, 2015)",
+    "Buy&Sell Strategy depends on AO+Stoch+RSI+ATR by SerdarYILMAZ — SerdarYILMAZ (14407, 2019)",
+    "Bollinger Awesome Alert R1 by JustUncleL — JustUncleL (12937, 2017)",
+    "Divergence Indicator (any oscillator) — yatrader2 (12242, 2020)",
+    "Scalping Line Indicator — KivancOzbilgic (8654, 2020)"
+   ]
+  },
+  {
+   "kod": "divergence",
+   "grup": "Osilatör",
+   "aile": "Diverjans tarayıcıları",
+   "script": 1484,
+   "toplam_boost": 1105275,
+   "medyan_boost": 197.0,
+   "sistemde": "K",
+   "kanit": "X HK-04 (giriş) · C IO-05 (veto)",
+   "en_populer": [
+    "MACD + SMA 200 Strategy (by ChartArt) — ChartArt (31833, 2015)",
+    "Divergence for Many Indicators v4 — LonesomeTheBlue (30445, 2020)",
+    "VuManChu Cipher B + Divergences — vumanchu (24839, 2019)",
+    "RSI Divergence — Shizaru (19992, 2016)",
+    "Divergence for many indicator v3 — LonesomeTheBlue (17536, 2020)",
+    "Indicator: OBV Oscillator — LazyBear (15501, 2014)"
+   ]
+  },
+  {
+   "kod": "squeeze",
+   "grup": "Osilatör",
+   "aile": "Squeeze / TTM sıkışma",
+   "script": 473,
+   "toplam_boost": 347112,
+   "medyan_boost": 130,
+   "sistemde": "~",
+   "kanit": "C/X B14 + IO-22",
+   "en_populer": [
+    "Squeeze Momentum Indicator [LazyBear] — LazyBear (117568, 2014)",
+    "Bollinger Awesome Alert R1 by JustUncleL — JustUncleL (12937, 2017)",
+    "SSL HYBRID Advanced — traderharikrishna (7294, 2022)",
+    "TTM Squeeze Pro — Beardy_Fred (6896, 2021)",
+    "Squeeze Momentum Indicator [LazyBear] Version2 by KıvanÇ fr3762 — KivancOzbilgic (6659, 2018)",
+    "Smart Breakout Targets [WillyAlgoTrader] — WillyAlgoTrader (6371, 2026)"
+   ]
+  },
+  {
+   "kod": "momentum_roc",
+   "grup": "Osilatör",
+   "aile": "Momentum / ROC / hız",
+   "script": 4206,
+   "toplam_boost": 2124393,
+   "medyan_boost": 86.5,
+   "sistemde": "K",
+   "kanit": "A OLD-20 momentum-devam (uzak hedef)",
+   "en_populer": [
+    "Squeeze Momentum Indicator [LazyBear] — LazyBear (117568, 2014)",
+    "MACD + SMA 200 Strategy (by ChartArt) — ChartArt (31833, 2015)",
+    "Divergence for Many Indicators v4 — LonesomeTheBlue (30445, 2020)",
+    "Linear Regression Channel — LonesomeTheBlue (17329, 2020)",
+    "Precision Sniper [WillyAlgoTrader] — WillyAlgoTrader (16889, 2026)",
+    "Supply & Demand (MTF) | Flux Charts — fluxchart (16582, 2024)"
+   ]
+  },
+  {
+   "kod": "bollinger",
+   "grup": "Oynaklık",
+   "aile": "Bollinger türevleri",
+   "script": 1464,
+   "toplam_boost": 926352,
+   "medyan_boost": 140.0,
+   "sistemde": "K",
+   "kanit": "C MK-07 XAU BB sıkışma",
+   "en_populer": [
+    "Squeeze Momentum Indicator [LazyBear] — LazyBear (117568, 2014)",
+    "Bollinger + RSI, Double Strategy (by ChartArt) v1.1 — ChartArt (49083, 2016)",
+    "Fibonacci Bollinger Bands — Rashad (32959, 2016)",
+    "QQE MOD — Mihkel00 (14000, 2020)",
+    "Fibonacci levels — raymond_red_reddington (13538, 2017)",
+    "Bollinger Awesome Alert R1 by JustUncleL — JustUncleL (12937, 2017)"
+   ]
+  },
+  {
+   "kod": "atr_vol",
+   "grup": "Oynaklık",
+   "aile": "ATR / oynaklık ölçüleri",
+   "script": 4599,
+   "toplam_boost": 2872973,
+   "medyan_boost": 109,
+   "sistemde": "K",
+   "kanit": "risk ölçeği · X M8",
+   "en_populer": [
+    "Squeeze Momentum Indicator [LazyBear] — LazyBear (117568, 2014)",
+    "SuperTrend — KivancOzbilgic (84239, 2020)",
+    "Smart Money Breakout Channels [AlgoAlpha] — AlgoAlpha (32073, 2025)",
+    "Machine Learning Adaptive SuperTrend [AlgoAlpha] — AlgoAlpha (31097, 2024)",
+    "Chandelier Exit [everget] — everget (29733, 2019)",
+    "Pivot Point Supertrend — LonesomeTheBlue (29534, 2020)"
+   ]
+  },
+  {
+   "kod": "zscore_meanrev",
+   "grup": "Oynaklık",
+   "aile": "Z-skoru / ortalamaya dönüş / sapma bantları",
+   "script": 1341,
+   "toplam_boost": 751759,
+   "medyan_boost": 127,
+   "sistemde": "~",
+   "kanit": "B OLD-09 CHREV z · X OLD-15 vwap_rev",
+   "en_populer": [
+    "Fibonacci Bollinger Bands — Rashad (32959, 2016)",
+    "Volume Profile Free Ultra SLI (100 Levels Value Area VWAP) - RRB — RagingRocketBull (20960, 2019)",
+    "Linear Regression Oscillator [ChartPrime] — ChartPrime (14486, 2024)",
+    "VWAP Stdev Bands v2 Mod — TheYangGuizi (14310, 2016)",
+    "Deviation Trend Profile [BigBeluga] — BigBeluga (12686, 2025)",
+    "Moving Average Shift [ChartPrime] — ChartPrime (9925, 2025)"
+   ]
+  },
+  {
+   "kod": "vix_regime",
+   "grup": "Oynaklık",
+   "aile": "VIX / oynaklık rejimi / risk-on-off",
+   "script": 456,
+   "toplam_boost": 224820,
+   "medyan_boost": 59.0,
+   "sistemde": "K",
+   "kanit": "A OLD-10 VIXREG",
+   "en_populer": [
+    "CM_Williams_Vix_Fix  Finds Market Bottoms — ChrisMoody (66018, 2014)",
+    "CM_RSI Plus EMA — ChrisMoody (15763, 2014)",
+    "CM_Williams_Vix_Fix_V3_Ultimate_Filtered_Alerts — ChrisMoody (15206, 2015)",
+    "CM_Williams_Vix_Fix_V3_Upper_Text Plots — ChrisMoody (8257, 2015)",
+    "Vix FIX / StochRSI Strategy — timj (5632, 2016)",
+    "Smart Trader, Episode 06, Isotropic Trend Lines — ata_sabanci (5545, 2026)"
+   ]
+  },
+  {
+   "kod": "regime_entropy",
+   "grup": "İstatistik",
+   "aile": "Rejim / entropi / Hurst / fraktal boyut / choppiness",
+   "script": 1384,
+   "toplam_boost": 442280,
+   "medyan_boost": 53.5,
+   "sistemde": "~",
+   "kanit": "rejim servisi ADX tabanlı; entropi/Hurst sınanmadı",
+   "en_populer": [
+    "Self-Aware Trend System [WillyAlgoTrader] — WillyAlgoTrader (19137, 2026)",
+    "CM EMA Trend Bars — ChrisMoody (13176, 2014)",
+    "Momentum-based ZigZag (incl. QQE) NON-REPAINTING — Peter_O (12533, 2021)",
+    "Wyckoff [theUltimator5] — TheUltimator5 (7672, 2026)",
+    "ICT Seek & Destroy Profile [TFO] — tradeforopp (6496, 2023)",
+    "Grid Bot Simulator — xxattaxx (5819, 2021)"
+   ]
+  },
+  {
+   "kod": "stats_prob",
+   "grup": "İstatistik",
+   "aile": "Olasılık / dağılım / persentil / Monte Carlo",
+   "script": 3006,
+   "toplam_boost": 1937759,
+   "medyan_boost": 110.5,
+   "sistemde": "~",
+   "kanit": "sınanmadı (yöntem olarak defterin kendisi)",
+   "en_populer": [
+    "CM_Williams_Vix_Fix  Finds Market Bottoms — ChrisMoody (66018, 2014)",
+    "Order Block Finder (Experimental) — wugamlo (40866, 2020)",
+    "Smart Money Breakout Channels [AlgoAlpha] — AlgoAlpha (32073, 2025)",
+    "Breakout Probability (Expo) — Zeiierman (31943, 2022)",
+    "Smart Money Structure | GainzAlgo — GainzAlgo (20663, 2026)",
+    "Indicator: Weis Wave Volume [LazyBear] — LazyBear (19110, 2014)"
+   ]
+  },
+  {
+   "kod": "vwap",
+   "grup": "Hacim",
+   "aile": "VWAP (seans / çapalı / bant)",
+   "script": 1454,
+   "toplam_boost": 576251,
+   "medyan_boost": 73.5,
+   "sistemde": "K",
+   "kanit": "B CHREV vwap tetiği zehirli · X BTC-SC-VS06/07",
+   "en_populer": [
+    "Volume Profile Free Ultra SLI (100 Levels Value Area VWAP) - RRB — RagingRocketBull (20960, 2019)",
+    "Precision Sniper [WillyAlgoTrader] — WillyAlgoTrader (16889, 2026)",
+    "Dynamic Swing Anchored VWAP (Zeiierman) — Zeiierman (15926, 2025)",
+    "VWAP Stdev Bands v2 Mod — TheYangGuizi (14310, 2016)",
+    "Volume Profile Free Pro (25 Levels Value Area VWAP) by RRB — RagingRocketBull (7437, 2019)",
+    "VWAP Volume Profile [BigBeluga] — BigBeluga (6972, 2025)"
+   ]
+  },
+  {
+   "kod": "volume_profile",
+   "grup": "Hacim",
+   "aile": "Hacim profili / POC / VAH-VAL / Market Profile / TPO",
+   "script": 865,
+   "toplam_boost": 972321,
+   "medyan_boost": 194,
+   "sistemde": "B",
+   "kanit": "X HK-02 değer alanı %80",
+   "en_populer": [
+    "Volume Profile / Fixed Range — LonesomeTheBlue (26299, 2021)",
+    "Volume Profile — kv4coins (25381, 2020)",
+    "Market sessions and Volume profile - By Leviathan — LeviathanCapital (23851, 2022)",
+    "Volume Profile, Pivot Anchored by DGT — dgtrd (22226, 2022)",
+    "Volume Profile Free Ultra SLI (100 Levels Value Area VWAP) - RRB — RagingRocketBull (20960, 2019)",
+    "Volume Profile and Volume Indicator by DGT — dgtrd (20005, 2022)"
+   ]
+  },
+  {
+   "kod": "orderflow_delta",
+   "grup": "Hacim",
+   "aile": "Delta / CVD / footprint / emir akışı",
+   "script": 1230,
+   "toplam_boost": 887360,
+   "medyan_boost": 115.0,
+   "sistemde": "~",
+   "kanit": "sentetik CVD (petrol bağlamı); gerçek tick-delta yok",
+   "en_populer": [
+    "Smart Money Concept [TradingFinder] Major OB + FVG + Liquidity — TradingFinder (25395, 2024)",
+    "Price Action - Support & Resistance by DGT — dgtrd (22923, 2021)",
+    "Volume Delta Candles [LuxAlgo] — LuxAlgo (18272, 2024)",
+    "CM_Williams_Vix_Fix_V3_Ultimate_Filtered_Alerts — ChrisMoody (15206, 2015)",
+    "Smart Money Concepts Probability (Expo) — Zeiierman (15035, 2023)",
+    "Market Structure Break & OB Probability Toolkit [LuxAlgo] — LuxAlgo (12299, 2026)"
+   ]
+  },
+  {
+   "kod": "volume_classic",
+   "grup": "Hacim",
+   "aile": "OBV / MFI / CMF / ADL / PVT / Klinger / Force",
+   "script": 712,
+   "toplam_boost": 537427,
+   "medyan_boost": 196.0,
+   "sistemde": "K",
+   "kanit": "OBV rebound filtresi, MFI ML; diğerleri sınanmadı",
+   "en_populer": [
+    "Divergence for Many Indicators v4 — LonesomeTheBlue (30445, 2020)",
+    "Volume Flow Indicator [LazyBear] — LazyBear (27208, 2014)",
+    "Money Flow Profile [LuxAlgo] — LuxAlgo (15945, 2024)",
+    "Indicator: OBV Oscillator — LazyBear (15501, 2014)",
+    "Divergence Indicator (any oscillator) — yatrader2 (12242, 2020)",
+    "Volume Accumulation Percentage Indicator [LazyBear] — LazyBear (10807, 2015)"
+   ]
+  },
+  {
+   "kod": "relative_volume",
+   "grup": "Hacim",
+   "aile": "Göreli hacim / hacim patlaması / klimaks",
+   "script": 450,
+   "toplam_boost": 210473,
+   "medyan_boost": 81.0,
+   "sistemde": "K",
+   "kanit": "X IO-03 · X SY H2/H3",
+   "en_populer": [
+    "SuperTrend + Relative Volume (Kernel Optimized) — fluxchart (12218, 2025)",
+    "Smart Money Volume Activity [AlgoAlpha] — AlgoAlpha (11765, 2025)",
+    "Volume Suite - By Leviathan (CVD, Volume Delta, Relative Volume) — LeviathanCapital (8088, 2023)",
+    "Open Interest Suite [Aggregated] - By Leviathan — LeviathanCapital (7593, 2023)",
+    "Volumatic Support/Resistance Levels [BigBeluga] — BigBeluga (7026, 2025)",
+    "Indicators: Better Volume Indicator & InstrumentVolume — LazyBear (6907, 2014)"
+   ]
+  },
+  {
+   "kod": "pivot_points",
+   "grup": "Seviye",
+   "aile": "Pivot noktaları (klasik/Camarilla/Fib/Woodie)",
+   "script": 647,
+   "toplam_boost": 1225664,
+   "medyan_boost": 407,
+   "sistemde": "~",
+   "kanit": "EMEL pivot'u 20-bar; günlük pivot sınanmadı",
+   "en_populer": [
+    "Support and Resistance Levels with Breaks [LuxAlgo] — LuxAlgo (66714, 2020)",
+    "Trendlines with Breaks [LuxAlgo] — LuxAlgo (53583, 2022)",
+    "Support Resistance Channels — LonesomeTheBlue (48117, 2021)",
+    "Support and Resistance (High Volume Boxes) [ChartPrime] — ChartPrime (45184, 2024)",
+    "Divergence for Many Indicators v4 — LonesomeTheBlue (30445, 2020)",
+    "Pivot Point Supertrend — LonesomeTheBlue (29534, 2020)"
+   ]
+  },
+  {
+   "kod": "prior_levels_orb",
+   "grup": "Seviye",
+   "aile": "Önceki gün/hafta uçları, açılış aralığı (ORB), initial balance",
+   "script": 1120,
+   "toplam_boost": 436535,
+   "medyan_boost": 61.5,
+   "sistemde": "~",
+   "kanit": "X FG açılış aralığı −0,89R · GF-02 önceki gün uçları",
+   "en_populer": [
+    "Opening Range with Breakouts & Targets [LuxAlgo] — LuxAlgo (21062, 2024)",
+    "ORB Algo | Flux Charts — fluxchart (16883, 2024)",
+    "ORB - Opening Range Breakout — zzzcrypto123 (11854, 2020)",
+    "Ultimate Opening Range Breakout [LuxAlgo] — LuxAlgo (10179, 2026)",
+    "Opening Range Breakout with 2 Profit Targets. — ChrisMoody (10129, 2014)",
+    "Initial Balance Breakout Signals [LuxAlgo] — LuxAlgo (7747, 2025)"
+   ]
+  },
+  {
+   "kod": "sr_zones",
+   "grup": "Seviye",
+   "aile": "Destek/direnç / arz-talep bölgeleri",
+   "script": 3570,
+   "toplam_boost": 3576516,
+   "medyan_boost": 162.0,
+   "sistemde": "K",
+   "kanit": "X OLD-05 · X HK-03",
+   "en_populer": [
+    "Support and Resistance Levels with Breaks [LuxAlgo] — LuxAlgo (66714, 2020)",
+    "Support Resistance Channels — LonesomeTheBlue (48117, 2021)",
+    "Support and Resistance (High Volume Boxes) [ChartPrime] — ChartPrime (45184, 2024)",
+    "CM_Ultimate_MA_MTF_V2 — ChrisMoody (38838, 2014)",
+    "Fibonacci Bollinger Bands — Rashad (32959, 2016)",
+    "AlphaTrend — KivancOzbilgic (29538, 2022)"
+   ]
+  },
+  {
+   "kod": "fibonacci",
+   "grup": "Seviye",
+   "aile": "Fibonacci (oto fib, golden pocket, uzatma)",
+   "script": 1688,
+   "toplam_boost": 1342415,
+   "medyan_boost": 167.0,
+   "sistemde": "B",
+   "kanit": "sınanmadı (bağlam-only)",
+   "en_populer": [
+    "Market Structure Break & Order Block by EmreKb — EmreKb (64104, 2022)",
+    "Fibonacci Bollinger Bands — Rashad (32959, 2016)",
+    "Elliott Wave [LuxAlgo] — LuxAlgo (17789, 2023)",
+    "Fibonacci Extension / Retracement / Pivot Points by DGT — dgtrd (17513, 2021)",
+    "DTFX Algo Zones [LuxAlgo] — LuxAlgo (15259, 2024)",
+    "Fibonacci Confluence Toolkit [LuxAlgo] — LuxAlgo (14895, 2024)"
+   ]
+  },
+  {
+   "kod": "gann_round",
+   "grup": "Seviye",
+   "aile": "Gann / yuvarlak sayı / psikolojik seviye",
+   "script": 388,
+   "toplam_boost": 209193,
+   "medyan_boost": 165.0,
+   "sistemde": "-",
+   "kanit": "GF-02 yuvarlak sayı hücresi elendi",
+   "en_populer": [
+    "CM Gann Swing High Low V2 — ChrisMoody (10624, 2014)",
+    "Elliott Wave Oscillator Signals by DGT — dgtrd (9564, 2020)",
+    "UCS_Murrey's Math Oscillator_V2 — UDAY_C_Santhakumar (6637, 2015)",
+    "Gann Box (Zeiierman) — Zeiierman (5195, 2024)",
+    "Gann High Low — KivancOzbilgic (5074, 2019)",
+    "Momentum adjusted Moving Average by DGT — dgtrd (4920, 2020)"
+   ]
+  },
+  {
+   "kod": "sessions",
+   "grup": "Zaman",
+   "aile": "Seans kutuları / seans uçları / zaman filtresi",
+   "script": 3120,
+   "toplam_boost": 1237136,
+   "medyan_boost": 52.0,
+   "sistemde": "K",
+   "kanit": "A B2 · B B3 · B B6",
+   "en_populer": [
+    "ICT Killzones + Pivots [TFO] — tradeforopp (59141, 2023)",
+    "Sessions [LuxAlgo] — LuxAlgo (43299, 2022)",
+    "Market sessions and Volume profile - By Leviathan — LeviathanCapital (23851, 2022)",
+    "Opening Range with Breakouts & Targets [LuxAlgo] — LuxAlgo (21062, 2024)",
+    "FX Market Sessions — boitoki (17292, 2019)",
+    "ORB Algo | Flux Charts — fluxchart (16883, 2024)"
+   ]
+  },
+  {
+   "kod": "seasonality_time",
+   "grup": "Zaman",
+   "aile": "Mevsimsellik / gün-saat istatistiği / döngü zamanlaması",
+   "script": 1351,
+   "toplam_boost": 529326,
+   "medyan_boost": 85,
+   "sistemde": "K",
+   "kanit": "B B6 TQ (saat/gün) · E35/E17 uyarıları",
+   "en_populer": [
+    "Reversal Signals [LuxAlgo] — LuxAlgo (16981, 2023)",
+    "RSI cyclic smoothed v2 — StockMarketCycles (15714, 2020)",
+    "Day Trading Booster by DGT — dgtrd (12246, 2022)",
+    "Elliott Wave Oscillator Signals by DGT — dgtrd (9564, 2020)",
+    "Ehlers Instantaneous Trend [LazyBear] — LazyBear (9327, 2015)",
+    "AMD Po3 with Live Edge Stats [WillyAlgoTrader] — WillyAlgoTrader (9287, 2026)"
+   ]
+  },
+  {
+   "kod": "harmonic",
+   "grup": "Formasyon",
+   "aile": "Harmonik formasyonlar",
+   "script": 266,
+   "toplam_boost": 231210,
+   "medyan_boost": 192.5,
+   "sistemde": "K",
+   "kanit": "X formasyon SELL %22,6",
+   "en_populer": [
+    "Opening Range with Breakouts & Targets [LuxAlgo] — LuxAlgo (21062, 2024)",
+    "Harmonic Pattern Detection, Prediction, and Backtesting Tool — reees (10228, 2022)",
+    "Harmonic Pattern Detection [LuxAlgo] — LuxAlgo (7778, 2021)",
+    " Hull Butterfly Oscillator [LuxAlgo] — LuxAlgo (6995, 2022)",
+    "NR4 & NR7 with Breakouts [LuxAlgo] — LuxAlgo (6420, 2025)",
+    "Three Drive Pattern Detector [LuxAlgo] — LuxAlgo (5708, 2024)"
+   ]
+  },
+  {
+   "kod": "chart_patterns",
+   "grup": "Formasyon",
+   "aile": "Klasik grafik formasyonları (H&S, çift tepe, takoz, üçgen, bayrak)",
+   "script": 556,
+   "toplam_boost": 410603,
+   "medyan_boost": 97.5,
+   "sistemde": "K",
+   "kanit": "X formasyon SELL · BUY ≈%50",
+   "en_populer": [
+    "Nadaraya-Watson Envelope [LuxAlgo] — LuxAlgo (35269, 2021)",
+    "Auto Chart Patterns [Trendoscope®] — Trendoscope (23107, 2024)",
+    "RSI Divergence — Shizaru (19992, 2016)",
+    "CM Gann Swing High Low V2 — ChrisMoody (10624, 2014)",
+    "2B Reversal Pattern (Expo) — Zeiierman (9817, 2023)",
+    "Cup Finder — LonesomeTheBlue (9695, 2021)"
+   ]
+  },
+  {
+   "kod": "candlestick",
+   "grup": "Formasyon",
+   "aile": "Mum formasyonları (engulfing, pin bar, inside bar…)",
+   "script": 567,
+   "toplam_boost": 399146,
+   "medyan_boost": 183,
+   "sistemde": "K",
+   "kanit": "X MK-01/02/05",
+   "en_populer": [
+    "CM_Price-Action-Bars-Price Patterns That Work! — ChrisMoody (28089, 2015)",
+    "Swing Highs/Lows & Candle Patterns [LuxAlgo] — LuxAlgo (20637, 2020)",
+    "Fibonacci Confluence Toolkit [LuxAlgo] — LuxAlgo (14895, 2024)",
+    "Fibonacci Structure Engine [WillyAlgoTrader] — WillyAlgoTrader (11911, 2026)",
+    "Reversal Candlestick Structure [LuxAlgo] — LuxAlgo (8834, 2024)",
+    "Candlestick Reversal System — LonesomeTheBlue (7844, 2020)"
+   ]
+  },
+  {
+   "kod": "elliott_wyckoff",
+   "grup": "Formasyon",
+   "aile": "Elliott dalgası / Wyckoff",
+   "script": 290,
+   "toplam_boost": 248337,
+   "medyan_boost": 203.5,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "Elliott Wave [LuxAlgo] — LuxAlgo (17789, 2023)",
+    "Elliot Wave Oscillator — koryu (16412, 2016)",
+    "3rd Wave — LonesomeTheBlue (10528, 2021)",
+    "2B Reversal Pattern (Expo) — Zeiierman (9817, 2023)",
+    "Elliott Wave Oscillator Signals by DGT — dgtrd (9564, 2020)",
+    "Wyckoff [theUltimator5] — TheUltimator5 (7672, 2026)"
+   ]
+  },
+  {
+   "kod": "zigzag_swing",
+   "grup": "Formasyon",
+   "aile": "ZigZag / swing / fraktal noktaları",
+   "script": 2755,
+   "toplam_boost": 2701831,
+   "medyan_boost": 197,
+   "sistemde": "K",
+   "kanit": "X HK-03 · fakeout fraktal S/R",
+   "en_populer": [
+    "Smart Money Concepts (SMC) [LuxAlgo] — LuxAlgo (176279, 2022)",
+    "Market Structure Break & Order Block by EmreKb — EmreKb (64104, 2022)",
+    "Liquidity Swings [LuxAlgo] — LuxAlgo (41336, 2023)",
+    "Order Blocks & Breaker Blocks [LuxAlgo] — LuxAlgo (30359, 2023)",
+    "Super OrderBlock / FVG / BoS Tools by makuchaku & eFe — makuchaku (28772, 2022)",
+    "Volume-based Support & Resistance Zones — tommyf1001 (27131, 2021)"
+   ]
+  },
+  {
+   "kod": "ml_classification",
+   "grup": "ML/İstatistik",
+   "aile": "Makine öğrenmesi (kNN, Lorentzian, sinir ağı, SVM, lojistik)",
+   "script": 580,
+   "toplam_boost": 569741,
+   "medyan_boost": 143.0,
+   "sistemde": "~",
+   "kanit": "X OLD-13 analog-kNN · X ME-02/03 · X BTC-SC-ML01",
+   "en_populer": [
+    "Machine Learning: Lorentzian Classification — jdehorty (37246, 2023)",
+    "Machine Learning Adaptive SuperTrend [AlgoAlpha] — AlgoAlpha (31097, 2024)",
+    "SuperTrend AI (Clustering) [LuxAlgo] — LuxAlgo (30338, 2023)",
+    "Support and Resistance Logistic Regression | Flux Charts — fluxchart (11715, 2025)",
+    "Flawless Victory Strategy - 15min BTC Machine Learning Strategy — Trebor_Namor (11061, 2021)",
+    "Volume SuperTrend AI (Expo) — Zeiierman (9181, 2023)"
+   ]
+  },
+  {
+   "kod": "kernel_regression",
+   "grup": "ML/İstatistik",
+   "aile": "Kernel regresyon / Nadaraya-Watson / Gaussian",
+   "script": 166,
+   "toplam_boost": 221461,
+   "medyan_boost": 230.5,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "Nadaraya-Watson Envelope [LuxAlgo] — LuxAlgo (35269, 2021)",
+    "RSI (Kernel Optimized) | Flux Charts — fluxchart (13930, 2024)",
+    "SuperTrend + Relative Volume (Kernel Optimized) — fluxchart (12218, 2025)",
+    "Gaussian Channel [DW] — DonovanWall (9815, 2018)",
+    "Nadaraya-Watson Smoothers [LuxAlgo] — LuxAlgo (9496, 2021)",
+    "Multi Kernel Regression [ChartPrime] — ChartPrime (8984, 2023)"
+   ]
+  },
+  {
+   "kod": "ehlers_dsp",
+   "grup": "ML/İstatistik",
+   "aile": "Ehlers / sinyal işleme (SuperSmoother, MESA, Hilbert, Roofing)",
+   "script": 631,
+   "toplam_boost": 362625,
+   "medyan_boost": 185,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "CM_Laguerre PPO PercentileRank Mkt Tops & Bottoms — ChrisMoody (15942, 2014)",
+    "Boom Hunter Pro — veryfid (10912, 2021)",
+    "FREE INDICATOR: Laguerre RSI — TheLark (10315, 2014)",
+    "Gaussian Channel [DW] — DonovanWall (9815, 2018)",
+    "Ehlers Instantaneous Trend [LazyBear] — LazyBear (9327, 2015)",
+    "Mean Reversion Channel - (fareid's MRI Variant) — fareidzulkifli (9027, 2020)"
+   ]
+  },
+  {
+   "kod": "kalman",
+   "grup": "ML/İstatistik",
+   "aile": "Kalman filtresi",
+   "script": 143,
+   "toplam_boost": 80914,
+   "medyan_boost": 162,
+   "sistemde": "-",
+   "kanit": "sınanmadı",
+   "en_populer": [
+    "Kalman Trend Levels [BigBeluga] — BigBeluga (7224, 2024)",
+    "Kalman Volume Filter [ChartPrime] — ChartPrime (3675, 2024)",
+    "Bollinger Bands MTF & Kalman Filter | Flux Charts — fluxchart (3623, 2025)",
+    "Adaptive Kalman filter - Trend Strength Oscillator (Zeiierman) — Zeiierman (3408, 2024)",
+    "Range Filtered Trend Signals [AlgoAlpha] — AlgoAlpha (3370, 2025)",
+    "Kalman Filtered ROC & Stochastic with MA Smoothing — profitprotrading (2884, 2023)"
+   ]
+  },
+  {
+   "kod": "intermarket",
+   "grup": "Çapraz piyasa",
+   "aile": "Korelasyon / güç sepeti / DXY / intermarket / SMT",
+   "script": 727,
+   "toplam_boost": 240618,
+   "medyan_boost": 95,
+   "sistemde": "M",
+   "kanit": "X XAU makro yön yok · A OLD-10 VIX→NDX",
+   "en_populer": [
+    "SMT Divergences [LuxAlgo] — LuxAlgo (10836, 2023)",
+    "The Echo Forecast [LuxAlgo] — LuxAlgo (8131, 2021)",
+    "Triangular Momentum Oscillator & Real Time Divergences [LuxAlgo] — LuxAlgo (5797, 2020)",
+    "SMT Divergence ICT 01 [TradingFinder] Smart Money Technique — TradingFinder (5140, 2024)",
+    "MMXM ICT [TradingFinder] Market Maker Model PO3 CHoCH/CSID + FVG — TradingFinder (4846, 2025)",
+    "Market Structure Volume Distribution [LuxAlgo] — LuxAlgo (4538, 2024)"
+   ]
+  },
+  {
+   "kod": "sentiment_cot",
+   "grup": "Çapraz piyasa",
+   "aile": "COT / duyarlılık / put-call / genişlik",
+   "script": 474,
+   "toplam_boost": 334780,
+   "medyan_boost": 126.0,
+   "sistemde": "B",
+   "kanit": "COT bağlam (DAX/USOIL yanlış eşleme)",
+   "en_populer": [
+    "Money Flow Profile [LuxAlgo] — LuxAlgo (15945, 2024)",
+    "Market Sentiment Technicals [LuxAlgo] — LuxAlgo (12403, 2024)",
+    "DecisionPoint Volume Swenlin Trading Oscillator [LazyBear] — LazyBear (10095, 2015)",
+    "Liquidity Sentiment Profile [LuxAlgo] — LuxAlgo (8848, 2023)",
+    "Volume Sentiment Breakout Channels [AlgoAlpha] — AlgoAlpha (8550, 2025)",
+    "Indicators: Volume-Weighted MACD Histogram & Sentiment Zone Osc — LazyBear (8001, 2014)"
+   ]
+  },
+  {
+   "kod": "all_in_one",
+   "grup": "Meta",
+   "aile": "Hepsi-bir-arada AL/SAT sinyal / confluence / dashboard / screener",
+   "script": 2633,
+   "toplam_boost": 1608144,
+   "medyan_boost": 75,
+   "sistemde": "~",
+   "kanit": "meta füzyon motoru (6 model) benzer fikir",
+   "en_populer": [
+    "Smart Money Concepts (SMC) [LuxAlgo] — LuxAlgo (176279, 2022)",
+    "ICT Concepts [LuxAlgo] — LuxAlgo (31216, 2023)",
+    "AlphaTrend — KivancOzbilgic (29538, 2022)",
+    "ICT Turtle Soup | Flux Charts — fluxchart (18740, 2024)",
+    "PMax Explorer STRATEGY & SCREENER — KivancOzbilgic (17210, 2020)",
+    "Precision Sniper [WillyAlgoTrader] — WillyAlgoTrader (16889, 2026)"
+   ]
+  },
+  {
+   "kod": "fakeout",
+   "grup": "Meta",
+   "aile": "Sahte kırılım / tuzak / başarısız kırılım",
+   "script": 282,
+   "toplam_boost": 233256,
+   "medyan_boost": 125.5,
+   "sistemde": "K",
+   "kanit": "A OLD-17 (yalnız NDX) · B CK-04",
+   "en_populer": [
+    "Bjorgum Key Levels — Bjorgum (24088, 2021)",
+    "Support and Resistance Power Channel [ChartPrime] — ChartPrime (22799, 2025)",
+    "CM EMA Trend Bars — ChrisMoody (13176, 2014)",
+    "Higher order Orderblocks + Breakerblocks + Range + Alerts — pmk07 (10055, 2021)",
+    "2B Reversal Pattern (Expo) — Zeiierman (9817, 2023)",
+    "False Breakout (Expo) — Zeiierman (9222, 2022)"
+   ]
+  },
+  {
+   "kod": "risk_tools",
+   "grup": "Meta",
+   "aile": "Pozisyon büyüklüğü / risk / TP-SL hedef hesaplayıcı",
+   "script": 1150,
+   "toplam_boost": 987768,
+   "medyan_boost": 176.0,
+   "sistemde": "R",
+   "kanit": "ATR merdiveni / bot geometrisi",
+   "en_populer": [
+    "AlphaTrend — KivancOzbilgic (29538, 2022)",
+    "Optimized Trend Tracker — KivancOzbilgic (22441, 2020)",
+    "Opening Range with Breakouts & Targets [LuxAlgo] — LuxAlgo (21062, 2024)",
+    "Trendline Breakouts With Targets [ChartPrime] — ChartPrime (20110, 2023)",
+    "Profit Maximizer PMax — KivancOzbilgic (19672, 2020)",
+    "ORB Algo | Flux Charts — fluxchart (16883, 2024)"
+   ]
+  },
+  {
+   "kod": "ma_general",
+   "grup": "Trend",
+   "aile": "Genel / çoklu MA araçları (MTF MA, Sling Shot, ActionZone, TMA bant)",
+   "script": 3029,
+   "toplam_boost": 1387138,
+   "medyan_boost": 101,
+   "sistemde": "K",
+   "kanit": "A− B4 EMA50 · X HK-01",
+   "en_populer": [
+    "Ultimate Moving Average-Multi-TimeFrame-7 MA Types — ChrisMoody (36555, 2014)",
+    "MACD + SMA 200 Strategy (by ChartArt) — ChartArt (31833, 2015)",
+    "CM Sling Shot System — ChrisMoody (29937, 2014)",
+    "Madrid Moving Average Ribbon — Madrid (28342, 2015)",
+    "TonyUX EMA Scalper - Buy / Sell — tux (20989, 2015)",
+    "CM_RSI Plus EMA — ChrisMoody (15763, 2014)"
+   ]
+  },
+  {
+   "kod": "reversal_detect",
+   "grup": "Formasyon",
+   "aile": "N-bar dönüş / tepe-dip / dönüş sinyali dedektörleri",
+   "script": 824,
+   "toplam_boost": 553121,
+   "medyan_boost": 177.0,
+   "sistemde": "~",
+   "kanit": "rebound filtresi · X OLD-15 dönüş aileleri · B CAPREV 'korku döner'",
+   "en_populer": [
+    "Pivot Points High Low & Missed Reversal Levels [LuxAlgo] — LuxAlgo (24056, 2022)",
+    "Reversal Signals [LuxAlgo] — LuxAlgo (16981, 2023)",
+    "Three Bar Reversal Pattern [LuxAlgo] — LuxAlgo (11335, 2024)",
+    "2B Reversal Pattern (Expo) — Zeiierman (9817, 2023)",
+    "Reversal Probability Zone & Levels [LuxAlgo] — LuxAlgo (9788, 2025)",
+    "Market Shift Levels [ChartPrime] — ChartPrime (9454, 2025)"
+   ]
+  },
+  {
+   "kod": "range_consolidation",
+   "grup": "Seviye",
+   "aile": "Aralık / konsolidasyon / Darvas kutusu tespiti",
+   "script": 1325,
+   "toplam_boost": 873227,
+   "medyan_boost": 119,
+   "sistemde": "~",
+   "kanit": "X MK-07 R1 48-bar kırılım · B14 sıkışma",
+   "en_populer": [
+    "Supply and Demand Visible Range [LuxAlgo] — LuxAlgo (26307, 2023)",
+    "Volume Profile / Fixed Range — LonesomeTheBlue (26299, 2021)",
+    "Opening Range with Breakouts & Targets [LuxAlgo] — LuxAlgo (21062, 2024)",
+    "ORB Algo | Flux Charts — fluxchart (16883, 2024)",
+    "Range Detector [LuxAlgo] — LuxAlgo (15457, 2023)",
+    "Range Filter Buy and Sell 5min - guikroth version — PHVNTOM_TRADER (14897, 2022)"
+   ]
+  },
+  {
+   "kod": "buy_sell_pressure",
+   "grup": "Hacim",
+   "aile": "Alım-satım baskısı / balina / emir defteri tahmini",
+   "script": 365,
+   "toplam_boost": 247587,
+   "medyan_boost": 111,
+   "sistemde": "~",
+   "kanit": "Whale tracker (COT tabanlı, bağlam); gerçek defter verisi yok",
+   "en_populer": [
+    "Volume Orderbook (Expo) — Zeiierman (13698, 2023)",
+    "Liquidity Price Depth Chart [LuxAlgo] — LuxAlgo (11522, 2023)",
+    "Volume-Trend Order Block Engine [BigBeluga] — BigBeluga (8776, 2026)",
+    "Volume Suite - By Leviathan (CVD, Volume Delta, Relative Volume) — LeviathanCapital (8088, 2023)",
+    "BUY & SELL VOLUME TO PRICE PRESSURE by @XeL_Arjona — xel_arjona (7882, 2015)",
+    "Institutional OrderBlock Pressure — RickSimpson (6861, 2021)"
+   ]
+  },
+  {
+   "kod": "daily_bias",
+   "grup": "Meta",
+   "aile": "Günlük bias / yön önyargısı modelleri",
+   "script": 200,
+   "toplam_boost": 64782,
+   "medyan_boost": 58.0,
+   "sistemde": "B",
+   "kanit": "X OLD-18 tartışma-bias (temiz ölçüm %42,6)",
+   "en_populer": [
+    "TTrades Daily Bias [TFO] — tradeforopp (8563, 2024)",
+    "Momentum Bias Index [AlgoAlpha] — AlgoAlpha (4650, 2024)",
+    "cd_indiCATor_Cx — cdikici71 (4225, 2025)",
+    "Synapse Trail Pro [WillyAlgoTrader] — WillyAlgoTrader (3657, 2026)",
+    "RSI direction bias - JD — Duyck (3512, 2020)",
+    "Bias And Sentiment Strength (BASS) Indicator by mattzab — mattzab (2961, 2020)"
+   ]
+  },
+  {
+   "kod": "htf_overlay",
+   "grup": "Zaman",
+   "aile": "Üst zaman dilimi mum katmanı / MTF mum",
+   "script": 1013,
+   "toplam_boost": 650620,
+   "medyan_boost": 106,
+   "sistemde": "~",
+   "kanit": "Pulse3 5m+1H+4H MTF; mum katmanı yok",
+   "en_populer": [
+    "Divergence for many indicator v3 — LonesomeTheBlue (17536, 2020)",
+    "Support Resistance Channels/Zones Multi Time Frame — LonesomeTheBlue (15150, 2022)",
+    "Pivot Points High Low Multi Time Frame — LonesomeTheBlue (14274, 2022)",
+    "Trend Type Indicator by BobRivera990 — BobRivera990 (13366, 2021)",
+    "Hourly Trading System (Zeiierman) — Zeiierman (11177, 2024)",
+    "Support Resistance MTF — LonesomeTheBlue (11010, 2020)"
+   ]
+  },
+  {
+   "kod": "automation_tools",
+   "grup": "Araç",
+   "aile": "Alarm / bot köprüsü / backtest çatısı / strateji kurucu (gösterge değil)",
+   "script": 1360,
+   "toplam_boost": 968259,
+   "medyan_boost": 161.5,
+   "sistemde": "-",
+   "kanit": "kapsam dışı (araç)",
+   "en_populer": [
+    "UT Bot Alerts — QuantNomad (60939, 2020)",
+    "DIY Custom Strategy Builder  [ZP] - v1 — zpayab (26375, 2023)",
+    "CM_Williams_Vix_Fix_V3_Ultimate_Filtered_Alerts — ChrisMoody (15206, 2015)",
+    "3Commas Bot — Bjorgum (15171, 2021)",
+    "UT Bot  — Yo_adriiiiaan (14538, 2019)",
+    "Bollinger Awesome Alert R1 by JustUncleL — JustUncleL (12937, 2017)"
+   ]
+  },
+  {
+   "kod": "econ_calendar",
+   "grup": "Zaman",
+   "aile": "Ekonomik takvim / haber olayı göstergeleri",
+   "script": 148,
+   "toplam_boost": 61421,
+   "medyan_boost": 33.0,
+   "sistemde": "K",
+   "kanit": "C CALENDAR_GATE ±30 dk (K6)",
+   "en_populer": [
+    "Live Economic Calendar by toodegrees — toodegrees (9508, 2024)",
+    "Smart Money Index (SMI) — HPotter (4997, 2014)",
+    "Weekly Opening Gap (cryptonnnite) — cryptonnnite (4831, 2023)",
+    "VWAP Bands - Event Based [LuxAlgo] — LuxAlgo (4730, 2022)",
+    "BEST RSI Divergences Screener — Daveatt (3349, 2020)",
+    "Economic Calendar Events: FOMC, CPI, and more — jdehorty (3260, 2022)"
+   ]
+  },
+  {
+   "kod": "trend_followers_other",
+   "grup": "Trend",
+   "aile": "Diğer trend takipçileri (G-Channel, Trend Levels, Trend Trigger…)",
+   "script": 1723,
+   "toplam_boost": 1505779,
+   "medyan_boost": 203,
+   "sistemde": "~",
+   "kanit": "EMA/ADX/kanal ailesiyle örtüşür; özel formüller sınanmadı",
+   "en_populer": [
+    "Trend Lines v2 — LonesomeTheBlue (28929, 2020)",
+    "Optimized Trend Tracker — KivancOzbilgic (22441, 2020)",
+    "Self-Aware Trend System [WillyAlgoTrader] — WillyAlgoTrader (19137, 2026)",
+    "Zero Lag Trend Signals (MTF) [AlgoAlpha] — AlgoAlpha (17739, 2024)",
+    "Trend Direction Helper (ZigZag and S/R and HH/LL labels) — Daveatt (16789, 2019)",
+    "Adaptive Trend Finder (log) — Julien_Exe (16430, 2023)"
+   ]
+  }
+ ],
+ "siniflanmayan_en_populer": [
+  "Price Action Smart Money Concepts [BigBeluga] (26114)",
+  "Bjorgum SuperScript (12135)",
+  "Indicator: ElliotWave Oscillator [EWO] (11537)",
+  "ICT Immediate Rebalance Toolkit [LuxAlgo] (8945)",
+  "Smart Money Volume Index [AlgoAlpha] (8261)",
+  "Technical Ratings (7037)",
+  "_CM_Ultimate_MA_MTF_V4 (6937)",
+  "Isolated Peak and Bottom (Tuncer ŞENGÖZ)  by KıvanÇ fr3762 (6923)",
+  "Super Guppy R1.0 by JustUncleL (6450)",
+  "CM_OldSchool_Projected_high_Low (5996)",
+  "RedK Volume-Accelerated Directional Energy Ratio (RedK VADER) (5968)",
+  "Entry points (5806)",
+  "ICT Master Suite [Trading IQ] (5098)",
+  "Volume Bar Breakout and Breakdown  Indicator (4970)",
+  "Pip collector [LazyBear] (4850)",
+  "Volume composition / Flowly Indicators (4845)",
+  "Realtime Delta Volume Action [LucF] (4705)",
+  "Indicator Panel (4678)",
+  "Neglected Volume by DGT (4664)",
+  "RedK Slow_Smooth Average (RSS_WMA) (4509)",
+  "Historical Price Projection [LuxAlgo] (4442)",
+  "Industry Group Strength (4355)",
+  "Technical Analyst by DGT (4159)",
+  "CM Pivot Bands V1 (4065)",
+  "Bubbles Volume [BigBeluga] (3909)",
+  "Monthly Returns in PineScript Strategies (3889)",
+  "Grab Trading System (3666)",
+  "Easy System 420 (3637)",
+  "TMO Scalper (3606)",
+  "Max Gain (3604)",
+  "INTRADAY INTENSITY INDEX IIIX by KIVANÇ fr3762 (3562)",
+  "Elder Impulse System (3532)",
+  "Elephant Bar by Oliver Velez (3318)",
+  "Volume Bull/Bear Activity [ZC] (3304)",
+  "Volume Surprise [LuxAlgo] (3257)",
+  "[STRATEGY][RS]Spot/Binary Scalper V0 (3247)",
+  "Godmode Oscillator, fresh bread generator, free to use! (3188)",
+  "Mutanabby_AI | Fresh Algo V24 (3175)",
+  "Price Heat Meter [ChartPrime] (3160)",
+  "Smart Trader, Concentric Candles & Aristotelian Cycloids (3156)",
+  "The Ultimate Buy and Sell Indicator: Unholy Grail Edition (3131)",
+  "On-Chain Signals [LuxAlgo] (3065)",
+  "Found $13K Profit-Simple Strategy-Highlights Days Of The Week (3040)",
+  "Speedometer Toolbox (2977)",
+  "Strategy Designer (2950)",
+  "Red and Green Ignored Bar by Oliver Velez (2870)",
+  "Financials on Chart (2849)",
+  "Resampling Reverse Engineering Bands [DW] (2821)",
+  "FBMA (2727)",
+  "Open Interest Delta - By Leviathan (2714)",
+  "Asset Rotation System [InvestorUnknown] (2713)",
+  "A2MK Mavilim by KıvanÇ fr3762 (2690)",
+  "Solar System in 3D [Astro Tool w/ Zodiac] (2680)",
+  "Diluted Earnings Per Share Signal [AstrideUnicorn] (2676)",
+  "Realtime Volume Analysis Toolbar (2610)",
+  "Setup 123 Scalper (2587)",
+  "HHLL Strategy (2585)",
+  "Smart Volume (2542)",
+  "Volume by Time [LuxAlgo] (2510)",
+  "Volume Speed [By MUQWISHI] (2479)"
+ ]
+}

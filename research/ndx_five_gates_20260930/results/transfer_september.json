@@ -1,0 +1,1037 @@
+[
+  {
+    "spec": "exhaustion_60_none_buy",
+    "timeframe": 1,
+    "period": "september",
+    "stats": {
+      "n": 84,
+      "ev": -0.12531635495504384,
+      "total_R": -10.526573816223683,
+      "wr": 0.42857142857142855,
+      "drawdown_R": 15.321447943513423,
+      "points": -479.19401223809837,
+      "days": 17,
+      "average_win_R": 0.9219830001056146,
+      "average_loss_R": 0.930169400426081,
+      "empirical_breakeven_wr": 0.5022099694166949,
+      "stops": 41,
+      "targets": 16,
+      "time_exits": 27,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": -0.12531635495504384
+    },
+    "bootstrap": {
+      "p_positive": 0.1442,
+      "ci95": [
+        -0.31709504854480763,
+        0.12134078694045632
+      ],
+      "effective_days": 17
+    },
+    "halves": {
+      "_a": {
+        "n": 53,
+        "ev": -0.2742864291650915,
+        "total_R": -14.537180745749849,
+        "wr": 0.37735849056603776,
+        "drawdown_R": 15.321447943513423,
+        "points": -620.5044123414773,
+        "days": 9,
+        "average_win_R": 0.7738657664370096,
+        "average_loss_R": 0.9379530023278138,
+        "empirical_breakeven_wr": 0.547927747634524,
+        "stops": 28,
+        "targets": 7,
+        "time_exits": 18,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.2742864291650915
+      },
+      "_b": {
+        "n": 31,
+        "ev": 0.12937441708148917,
+        "total_R": 4.010606929526165,
+        "wr": 0.5161290322580645,
+        "drawdown_R": 7.068226686571218,
+        "points": 141.31040010337892,
+        "days": 8,
+        "average_win_R": 1.1071295421913705,
+        "average_loss_R": 0.9135643830357177,
+        "empirical_breakeven_wr": 0.4521042853796129,
+        "stops": 13,
+        "targets": 9,
+        "time_exits": 9,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.12937441708148917
+      }
+    }
+  },
+  {
+    "spec": "sweep_60_quiet_buy",
+    "timeframe": 1,
+    "period": "september",
+    "stats": {
+      "n": 28,
+      "ev": -0.09309863291577762,
+      "total_R": -2.6067617216417736,
+      "wr": 0.4642857142857143,
+      "drawdown_R": 8.790723742503857,
+      "points": -55.59109864997299,
+      "days": 15,
+      "average_win_R": 0.7446171324667913,
+      "average_loss_R": 0.819118962914004,
+      "empirical_breakeven_wr": 0.5238217403394626,
+      "stops": 11,
+      "targets": 4,
+      "time_exits": 13,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": -0.09309863291577762
+    },
+    "bootstrap": {
+      "p_positive": 0.3199,
+      "ci95": [
+        -0.5533758013824839,
+        0.35966522271759854
+      ],
+      "effective_days": 15
+    },
+    "halves": {
+      "_a": {
+        "n": 15,
+        "ev": -0.5191255811593165,
+        "total_R": -7.786883717389748,
+        "wr": 0.3333333333333333,
+        "drawdown_R": 7.83720400201625,
+        "points": -346.19009561535495,
+        "days": 8,
+        "average_win_R": 0.25353441053561376,
+        "average_loss_R": 0.9054555770067818,
+        "empirical_breakeven_wr": 0.7812453832554447,
+        "stops": 9,
+        "targets": 0,
+        "time_exits": 6,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.5191255811593165
+      },
+      "_b": {
+        "n": 13,
+        "ev": 0.3984709227498444,
+        "total_R": 5.180121995747977,
+        "wr": 0.6153846153846154,
+        "drawdown_R": 1.2255203276821742,
+        "points": 290.59899696538196,
+        "days": 7,
+        "average_win_R": 1.0515438336737772,
+        "average_loss_R": 0.6464457347284485,
+        "empirical_breakeven_wr": 0.3807124300161284,
+        "stops": 2,
+        "targets": 4,
+        "time_exits": 7,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.3984709227498444
+      }
+    }
+  },
+  {
+    "spec": "failed_break_60_h1_both",
+    "timeframe": 1,
+    "period": "september",
+    "stats": {
+      "n": 56,
+      "ev": -0.01573172771943726,
+      "total_R": -0.8809767522884866,
+      "wr": 0.5,
+      "drawdown_R": 9.241752569523932,
+      "points": -50.68878812341791,
+      "days": 16,
+      "average_win_R": 0.877229832861251,
+      "average_loss_R": 0.9086932883001256,
+      "empirical_breakeven_wr": 0.5088087373599862,
+      "stops": 23,
+      "targets": 12,
+      "time_exits": 21,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": -0.01573172771943726
+    },
+    "bootstrap": {
+      "p_positive": 0.4487,
+      "ci95": [
+        -0.23925977686365982,
+        0.22076623837649145
+      ],
+      "effective_days": 16
+    },
+    "halves": {
+      "_a": {
+        "n": 28,
+        "ev": -0.27147598709887744,
+        "total_R": -7.601327638768568,
+        "wr": 0.42857142857142855,
+        "drawdown_R": 9.241752569523932,
+        "points": -471.8248305535126,
+        "days": 8,
+        "average_win_R": 0.6308564647640573,
+        "average_loss_R": 0.9482253259960784,
+        "empirical_breakeven_wr": 0.6004915841247358,
+        "stops": 14,
+        "targets": 2,
+        "time_exits": 12,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.27147598709887744
+      },
+      "_b": {
+        "n": 28,
+        "ev": 0.24001253166000286,
+        "total_R": 6.72035088648008,
+        "wr": 0.5714285714285714,
+        "drawdown_R": 3.8532593653031295,
+        "points": 421.1360424300947,
+        "days": 8,
+        "average_win_R": 1.0620098589341462,
+        "average_loss_R": 0.8559839047055218,
+        "empirical_breakeven_wr": 0.44629128672512974,
+        "stops": 9,
+        "targets": 10,
+        "time_exits": 9,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.24001253166000286
+      }
+    }
+  },
+  {
+    "spec": "efficient_pullback_30_efficiency_both",
+    "timeframe": 1,
+    "period": "september",
+    "stats": {
+      "n": 39,
+      "ev": 0.11600270839410286,
+      "total_R": 4.5241056273700115,
+      "wr": 0.5128205128205128,
+      "drawdown_R": 5.635356923167219,
+      "points": 255.85056641127085,
+      "days": 16,
+      "average_win_R": 0.9760868248577523,
+      "average_loss_R": 0.7893489931465808,
+      "empirical_breakeven_wr": 0.4471128234153927,
+      "stops": 13,
+      "targets": 10,
+      "time_exits": 16,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": 0.11600270839410286
+    },
+    "bootstrap": {
+      "p_positive": 0.7187,
+      "ci95": [
+        -0.26568462774056206,
+        0.47803164660847514
+      ],
+      "effective_days": 16
+    },
+    "halves": {
+      "_a": {
+        "n": 22,
+        "ev": 0.14205284524067985,
+        "total_R": 3.125162595294957,
+        "wr": 0.5454545454545454,
+        "drawdown_R": 5.635356923167219,
+        "points": 223.2488788492592,
+        "days": 9,
+        "average_win_R": 0.9464902186655152,
+        "average_loss_R": 0.8232720028691226,
+        "empirical_breakeven_wr": 0.4651879178182635,
+        "stops": 7,
+        "targets": 5,
+        "time_exits": 10,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.14205284524067985
+      },
+      "_b": {
+        "n": 17,
+        "ev": 0.08229076659265025,
+        "total_R": 1.3989430320750542,
+        "wr": 0.47058823529411764,
+        "drawdown_R": 2.80585184973701,
+        "points": 32.60168756201165,
+        "days": 7,
+        "average_win_R": 1.0204817341461079,
+        "average_loss_R": 0.7516567601215344,
+        "empirical_breakeven_wr": 0.4241523800498254,
+        "stops": 6,
+        "targets": 5,
+        "time_exits": 6,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.08229076659265025
+      }
+    }
+  },
+  {
+    "spec": "midpoint_reclaim_30_quiet_sell",
+    "timeframe": 1,
+    "period": "september",
+    "stats": {
+      "n": 43,
+      "ev": 0.16819199232274873,
+      "total_R": 7.232255669878196,
+      "wr": 0.6046511627906976,
+      "drawdown_R": 4.364107056889713,
+      "points": 372.3055745609636,
+      "days": 17,
+      "average_win_R": 0.7932753022637561,
+      "average_loss_R": 0.7878177758223215,
+      "empirical_breakeven_wr": 0.49827412866545434,
+      "stops": 10,
+      "targets": 8,
+      "time_exits": 25,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": 0.16819199232274873
+    },
+    "bootstrap": {
+      "p_positive": 0.8674,
+      "ci95": [
+        -0.11574013996001511,
+        0.4614087273314131
+      ],
+      "effective_days": 17
+    },
+    "halves": {
+      "_a": {
+        "n": 21,
+        "ev": 0.3312719233170441,
+        "total_R": 6.956710389657926,
+        "wr": 0.6666666666666666,
+        "drawdown_R": 2.8377586154979415,
+        "points": 324.43630531181043,
+        "days": 9,
+        "average_win_R": 0.899500204213685,
+        "average_loss_R": 0.805184638476238,
+        "empirical_breakeven_wr": 0.47233636289373554,
+        "stops": 5,
+        "targets": 6,
+        "time_exits": 10,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.3312719233170441
+      },
+      "_b": {
+        "n": 22,
+        "ev": 0.012524785464557679,
+        "total_R": 0.2755452802202689,
+        "wr": 0.5454545454545454,
+        "drawdown_R": 2.8473672194996653,
+        "points": 47.86926924915315,
+        "days": 8,
+        "average_win_R": 0.6693462499888391,
+        "average_loss_R": 0.77566097196458,
+        "empirical_breakeven_wr": 0.5367869171726423,
+        "stops": 5,
+        "targets": 2,
+        "time_exits": 15,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.012524785464557679
+      }
+    }
+  },
+  {
+    "spec": "exhaustion_60_none_buy",
+    "timeframe": 3,
+    "period": "september",
+    "stats": {
+      "n": 17,
+      "ev": -0.007764891485487509,
+      "total_R": -0.13200315525328765,
+      "wr": 0.47058823529411764,
+      "drawdown_R": 4.498436993377328,
+      "points": 29.900839095986157,
+      "days": 13,
+      "average_win_R": 1.0066180612840319,
+      "average_loss_R": 0.9094386272806158,
+      "empirical_breakeven_wr": 0.4746407727434685,
+      "stops": 8,
+      "targets": 4,
+      "time_exits": 5,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": -0.007764891485487509
+    },
+    "bootstrap": {
+      "p_positive": 0.4753,
+      "ci95": [
+        -0.5235960963569192,
+        0.5866531071029195
+      ],
+      "effective_days": 13
+    },
+    "halves": {
+      "_a": {
+        "n": 9,
+        "ev": -0.33363766878471135,
+        "total_R": -3.0027390190624024,
+        "wr": 0.3333333333333333,
+        "drawdown_R": 4.498436993377328,
+        "points": -120.86618863828699,
+        "days": 7,
+        "average_win_R": 0.7218260025965152,
+        "average_loss_R": 0.8613695044753246,
+        "empirical_breakeven_wr": 0.5440702052448654,
+        "stops": 5,
+        "targets": 1,
+        "time_exits": 3,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.33363766878471135
+      },
+      "_b": {
+        "n": 8,
+        "ev": 0.35884198297613945,
+        "total_R": 2.8707358638091156,
+        "wr": 0.625,
+        "drawdown_R": 3.016730618673594,
+        "points": 150.76702773427314,
+        "days": 6,
+        "average_win_R": 1.1774932964965419,
+        "average_loss_R": 1.005576872891198,
+        "empirical_breakeven_wr": 0.46062508067398505,
+        "stops": 3,
+        "targets": 3,
+        "time_exits": 2,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.35884198297613945
+      }
+    }
+  },
+  {
+    "spec": "sweep_60_quiet_buy",
+    "timeframe": 3,
+    "period": "september",
+    "stats": {
+      "n": 20,
+      "ev": 0.16800763261957785,
+      "total_R": 3.360152652391557,
+      "wr": 0.5,
+      "drawdown_R": 2.5560487358252337,
+      "points": 194.72050476936784,
+      "days": 13,
+      "average_win_R": 1.0807349120497098,
+      "average_loss_R": 0.7447196468105541,
+      "empirical_breakeven_wr": 0.40796394695002725,
+      "stops": 6,
+      "targets": 6,
+      "time_exits": 8,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": 0.16800763261957785
+    },
+    "bootstrap": {
+      "p_positive": 0.7444,
+      "ci95": [
+        -0.33331399571162923,
+        0.6302433995140176
+      ],
+      "effective_days": 13
+    },
+    "halves": {
+      "_a": {
+        "n": 12,
+        "ev": 0.05790961509692533,
+        "total_R": 0.694915381163104,
+        "wr": 0.5,
+        "drawdown_R": 2.0078400280066844,
+        "points": 43.53994599284124,
+        "days": 7,
+        "average_win_R": 0.8644400518336336,
+        "average_loss_R": 0.7486208216397828,
+        "empirical_breakeven_wr": 0.4640995476058953,
+        "stops": 4,
+        "targets": 3,
+        "time_exits": 5,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.05790961509692533
+      },
+      "_b": {
+        "n": 8,
+        "ev": 0.3331546589035566,
+        "total_R": 2.665237271228453,
+        "wr": 0.5,
+        "drawdown_R": 1.615115976024957,
+        "points": 151.1805587765266,
+        "days": 6,
+        "average_win_R": 1.4051772023738238,
+        "average_loss_R": 0.7388678845667107,
+        "empirical_breakeven_wr": 0.344613967806547,
+        "stops": 2,
+        "targets": 3,
+        "time_exits": 3,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.3331546589035566
+      }
+    }
+  },
+  {
+    "spec": "failed_break_60_h1_both",
+    "timeframe": 3,
+    "period": "september",
+    "stats": {
+      "n": 47,
+      "ev": 0.1021920339235119,
+      "total_R": 4.803025594405059,
+      "wr": 0.5319148936170213,
+      "drawdown_R": 7.40868492614897,
+      "points": 237.21811913327838,
+      "days": 16,
+      "average_win_R": 1.025572476153664,
+      "average_loss_R": 0.9471039231562063,
+      "empirical_breakeven_wr": 0.4801111441732386,
+      "stops": 20,
+      "targets": 13,
+      "time_exits": 14,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": 0.1021920339235119
+    },
+    "bootstrap": {
+      "p_positive": 0.7911,
+      "ci95": [
+        -0.14217949163464272,
+        0.4133357714114447
+      ],
+      "effective_days": 16
+    },
+    "halves": {
+      "_a": {
+        "n": 28,
+        "ev": -0.13294441385287079,
+        "total_R": -3.722443587880382,
+        "wr": 0.42857142857142855,
+        "drawdown_R": 7.40868492614897,
+        "points": -156.32607167661627,
+        "days": 8,
+        "average_win_R": 0.964183343589931,
+        "average_loss_R": 0.955790231934972,
+        "empirical_breakeven_wr": 0.49781426375811855,
+        "stops": 15,
+        "targets": 6,
+        "time_exits": 7,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.13294441385287079
+      },
+      "_b": {
+        "n": 19,
+        "ev": 0.4487089043308128,
+        "total_R": 8.525469182285443,
+        "wr": 0.6842105263157895,
+        "drawdown_R": 2.006148389675137,
+        "points": 393.54419080989464,
+        "days": 8,
+        "average_win_R": 1.0822393677509559,
+        "average_loss_R": 0.9239404330794971,
+        "empirical_breakeven_wr": 0.4605471716428579,
+        "stops": 5,
+        "targets": 7,
+        "time_exits": 7,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.4487089043308128
+      }
+    }
+  },
+  {
+    "spec": "efficient_pullback_30_efficiency_both",
+    "timeframe": 3,
+    "period": "september",
+    "stats": {
+      "n": 51,
+      "ev": 0.1520974738912041,
+      "total_R": 7.756971168451408,
+      "wr": 0.5294117647058824,
+      "drawdown_R": 11.606485932683547,
+      "points": 141.2964333060154,
+      "days": 16,
+      "average_win_R": 1.0275484942923054,
+      "average_loss_R": 0.8327849240600348,
+      "empirical_breakeven_wr": 0.4476535850211279,
+      "stops": 18,
+      "targets": 15,
+      "time_exits": 18,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": 0.1520974738912041
+    },
+    "bootstrap": {
+      "p_positive": 0.7564,
+      "ci95": [
+        -0.24784356485982822,
+        0.5699149916846479
+      ],
+      "effective_days": 16
+    },
+    "halves": {
+      "_a": {
+        "n": 30,
+        "ev": -0.11640679496343206,
+        "total_R": -3.492203848902962,
+        "wr": 0.43333333333333335,
+        "drawdown_R": 11.606485932683547,
+        "points": -421.7840466705384,
+        "days": 9,
+        "average_win_R": 0.8353778315555902,
+        "average_loss_R": 0.8442420975956256,
+        "empirical_breakeven_wr": 0.5026387713929171,
+        "stops": 13,
+        "targets": 5,
+        "time_exits": 12,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.11640679496343206
+      },
+      "_b": {
+        "n": 21,
+        "ev": 0.5356750008263985,
+        "total_R": 11.24917501735437,
+        "wr": 0.6666666666666666,
+        "drawdown_R": 3.0080875894758368,
+        "points": 563.0804799765538,
+        "days": 7,
+        "average_win_R": 1.205992681119255,
+        "average_loss_R": 0.8049603597593141,
+        "empirical_breakeven_wr": 0.4002879944961984,
+        "stops": 5,
+        "targets": 10,
+        "time_exits": 6,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.5356750008263985
+      }
+    }
+  },
+  {
+    "spec": "midpoint_reclaim_30_quiet_sell",
+    "timeframe": 3,
+    "period": "september",
+    "stats": {
+      "n": 33,
+      "ev": 0.08923884581455839,
+      "total_R": 2.944881911880427,
+      "wr": 0.48484848484848486,
+      "drawdown_R": 3.581337007865084,
+      "points": 190.7472993010524,
+      "days": 17,
+      "average_win_R": 0.9534027495394242,
+      "average_loss_R": 0.7240918871029625,
+      "empirical_breakeven_wr": 0.43165079117765703,
+      "stops": 11,
+      "targets": 7,
+      "time_exits": 15,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": 0.08923884581455839
+    },
+    "bootstrap": {
+      "p_positive": 0.691,
+      "ci95": [
+        -0.2402664259617392,
+        0.43539840823596815
+      ],
+      "effective_days": 17
+    },
+    "halves": {
+      "_a": {
+        "n": 17,
+        "ev": 0.18715810296689175,
+        "total_R": 3.1816877504371597,
+        "wr": 0.5294117647058824,
+        "drawdown_R": 3.1280000710354976,
+        "points": 148.47918459845096,
+        "days": 9,
+        "average_win_R": 1.0449143932337932,
+        "average_loss_R": 0.7778177235833723,
+        "empirical_breakeven_wr": 0.4267317815969518,
+        "stops": 6,
+        "targets": 5,
+        "time_exits": 6,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.18715810296689175
+      },
+      "_b": {
+        "n": 16,
+        "ev": -0.014800364909795846,
+        "total_R": -0.23680583855673354,
+        "wr": 0.4375,
+        "drawdown_R": 3.581337007865084,
+        "points": 42.26811470260145,
+        "days": 8,
+        "average_win_R": 0.8357449219323784,
+        "average_loss_R": 0.6763355880092647,
+        "empirical_breakeven_wr": 0.4472880799418326,
+        "stops": 5,
+        "targets": 2,
+        "time_exits": 9,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.014800364909795846
+      }
+    }
+  },
+  {
+    "spec": "exhaustion_60_none_buy",
+    "timeframe": 5,
+    "period": "september",
+    "stats": {
+      "n": 7,
+      "ev": -0.36410771781636836,
+      "total_R": -2.5487540247145786,
+      "wr": 0.2857142857142857,
+      "drawdown_R": 2.792746502290371,
+      "points": -203.5463382497619,
+      "days": 5,
+      "average_win_R": 0.8694041648910984,
+      "average_loss_R": 0.8575124708993551,
+      "empirical_breakeven_wr": 0.4965569577172148,
+      "stops": 4,
+      "targets": 1,
+      "time_exits": 2,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": -0.36410771781636836
+    },
+    "bootstrap": {
+      "p_positive": 0.163,
+      "ci95": [
+        -0.912215853889573,
+        0.575173692719673
+      ],
+      "effective_days": 5
+    },
+    "halves": {
+      "_a": {
+        "n": 4,
+        "ev": -0.5096154162776949,
+        "total_R": -2.0384616651107796,
+        "wr": 0.25,
+        "drawdown_R": 2.282454142686572,
+        "points": -100.23183691200393,
+        "days": 3,
+        "average_win_R": 0.24399247757579234,
+        "average_loss_R": 0.7608180475621906,
+        "empirical_breakeven_wr": 0.7571756351355031,
+        "stops": 2,
+        "targets": 0,
+        "time_exits": 2,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.5096154162776949
+      },
+      "_b": {
+        "n": 3,
+        "ev": -0.17009745320126637,
+        "total_R": -0.5102923596037992,
+        "wr": 0.3333333333333333,
+        "drawdown_R": 2.005108211810204,
+        "points": -103.31450133775797,
+        "days": 2,
+        "average_win_R": 1.4948158522064046,
+        "average_loss_R": 1.002554105905102,
+        "empirical_breakeven_wr": 0.4014439681428803,
+        "stops": 2,
+        "targets": 1,
+        "time_exits": 0,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.17009745320126637
+      }
+    }
+  },
+  {
+    "spec": "sweep_60_quiet_buy",
+    "timeframe": 5,
+    "period": "september",
+    "stats": {
+      "n": 18,
+      "ev": -0.21618973583665185,
+      "total_R": -3.8914152450597332,
+      "wr": 0.3333333333333333,
+      "drawdown_R": 7.762533005415242,
+      "points": -143.13498786286436,
+      "days": 10,
+      "average_win_R": 0.9337051530260827,
+      "average_loss_R": 0.7911371802680193,
+      "empirical_breakeven_wr": 0.45867217252089726,
+      "stops": 8,
+      "targets": 2,
+      "time_exits": 8,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": -0.21618973583665185
+    },
+    "bootstrap": {
+      "p_positive": 0.163,
+      "ci95": [
+        -0.6550029469754387,
+        0.27775899241498114
+      ],
+      "effective_days": 10
+    },
+    "halves": {
+      "_a": {
+        "n": 12,
+        "ev": -0.5351814535977797,
+        "total_R": -6.422177443173356,
+        "wr": 0.16666666666666666,
+        "drawdown_R": 6.422177443173356,
+        "points": -301.42129473989553,
+        "days": 5,
+        "average_win_R": 0.8655565789004934,
+        "average_loss_R": 0.8153290600974344,
+        "empirical_breakeven_wr": 0.48505920996713303,
+        "stops": 7,
+        "targets": 1,
+        "time_exits": 4,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.5351814535977797
+      },
+      "_b": {
+        "n": 6,
+        "ev": 0.4217936996856038,
+        "total_R": 2.530762198113623,
+        "wr": 0.6666666666666666,
+        "drawdown_R": 1.3403555622418861,
+        "points": 158.28630687703117,
+        "days": 5,
+        "average_win_R": 0.9677794400888772,
+        "average_loss_R": 0.6701777811209431,
+        "empirical_breakeven_wr": 0.40915463019598247,
+        "stops": 1,
+        "targets": 1,
+        "time_exits": 4,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.4217936996856038
+      }
+    }
+  },
+  {
+    "spec": "failed_break_60_h1_both",
+    "timeframe": 5,
+    "period": "september",
+    "stats": {
+      "n": 37,
+      "ev": -0.05308074786260061,
+      "total_R": -1.9639876709162225,
+      "wr": 0.43243243243243246,
+      "drawdown_R": 7.161498046528277,
+      "points": -141.33734681650822,
+      "days": 17,
+      "average_win_R": 1.0012294681665639,
+      "average_loss_R": 0.8563647219800594,
+      "empirical_breakeven_wr": 0.4610074291373968,
+      "stops": 15,
+      "targets": 8,
+      "time_exits": 14,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": -0.05308074786260061
+    },
+    "bootstrap": {
+      "p_positive": 0.3777,
+      "ci95": [
+        -0.3751338654901071,
+        0.2876944861053709
+      ],
+      "effective_days": 17
+    },
+    "halves": {
+      "_a": {
+        "n": 21,
+        "ev": -0.34102371650134655,
+        "total_R": -7.161498046528277,
+        "wr": 0.2857142857142857,
+        "drawdown_R": 7.161498046528277,
+        "points": -367.5922038364806,
+        "days": 9,
+        "average_win_R": 1.0011706729377476,
+        "average_loss_R": 0.8779014722769841,
+        "empirical_breakeven_wr": 0.4671994497458008,
+        "stops": 12,
+        "targets": 3,
+        "time_exits": 6,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.34102371650134655
+      },
+      "_b": {
+        "n": 16,
+        "ev": 0.3248443984757535,
+        "total_R": 5.197510375612056,
+        "wr": 0.625,
+        "drawdown_R": 2.5991368567248747,
+        "points": 226.2548570199724,
+        "days": 8,
+        "average_win_R": 1.0012647453038537,
+        "average_loss_R": 0.8025228462377467,
+        "empirical_breakeven_wr": 0.4449098386090313,
+        "stops": 3,
+        "targets": 5,
+        "time_exits": 8,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.3248443984757535
+      }
+    }
+  },
+  {
+    "spec": "efficient_pullback_30_efficiency_both",
+    "timeframe": 5,
+    "period": "september",
+    "stats": {
+      "n": 56,
+      "ev": 0.23582959268505066,
+      "total_R": 13.206457190362837,
+      "wr": 0.5357142857142857,
+      "drawdown_R": 4.379315522236576,
+      "points": 538.7751039510113,
+      "days": 17,
+      "average_win_R": 1.198206896102461,
+      "average_loss_R": 0.8746057574119612,
+      "empirical_breakeven_wr": 0.4219415372291753,
+      "stops": 21,
+      "targets": 19,
+      "time_exits": 15,
+      "data_gaps": 1,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": 0.22057449064423545
+    },
+    "bootstrap": {
+      "p_positive": 0.9284,
+      "ci95": [
+        -0.08876658844441893,
+        0.5083713366122966
+      ],
+      "effective_days": 17
+    },
+    "halves": {
+      "_a": {
+        "n": 30,
+        "ev": 0.24003011032584506,
+        "total_R": 7.200903309775352,
+        "wr": 0.5666666666666667,
+        "drawdown_R": 3.02756582153995,
+        "points": 318.19608940109174,
+        "days": 9,
+        "average_win_R": 1.1406638321079925,
+        "average_loss_R": 0.9377216796969633,
+        "empirical_breakeven_wr": 0.4511779332423305,
+        "stops": 12,
+        "targets": 10,
+        "time_exits": 7,
+        "data_gaps": 1,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.21155391984965669
+      },
+      "_b": {
+        "n": 26,
+        "ev": 0.2309828415610571,
+        "total_R": 6.005553880587485,
+        "wr": 0.5,
+        "drawdown_R": 4.379315522236574,
+        "points": 220.57901454991952,
+        "days": 8,
+        "average_win_R": 1.2734555182490734,
+        "average_loss_R": 0.811489835126959,
+        "empirical_breakeven_wr": 0.38921395892365235,
+        "stops": 9,
+        "targets": 9,
+        "time_exits": 8,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.2309828415610571
+      }
+    }
+  },
+  {
+    "spec": "midpoint_reclaim_30_quiet_sell",
+    "timeframe": 5,
+    "period": "september",
+    "stats": {
+      "n": 31,
+      "ev": 0.22391237812329212,
+      "total_R": 6.941283721822056,
+      "wr": 0.5483870967741935,
+      "drawdown_R": 3.062606525411473,
+      "points": 324.4880998239387,
+      "days": 16,
+      "average_win_R": 0.8960649047138872,
+      "average_loss_R": 0.5922728327367162,
+      "empirical_breakeven_wr": 0.39794249506246443,
+      "stops": 6,
+      "targets": 7,
+      "time_exits": 18,
+      "data_gaps": 0,
+      "ambiguous_bars": 0,
+      "worst_gap_ev": 0.22391237812329212
+    },
+    "bootstrap": {
+      "p_positive": 0.89,
+      "ci95": [
+        -0.11848831373053202,
+        0.6222776198942852
+      ],
+      "effective_days": 16
+    },
+    "halves": {
+      "_a": {
+        "n": 16,
+        "ev": 0.5194016422976112,
+        "total_R": 8.31042627676178,
+        "wr": 0.625,
+        "drawdown_R": 1.6534017348930954,
+        "points": 374.9547234131787,
+        "days": 9,
+        "average_win_R": 1.1369174733935667,
+        "average_loss_R": 0.509791409528981,
+        "empirical_breakeven_wr": 0.30958198793718344,
+        "stops": 2,
+        "targets": 6,
+        "time_exits": 8,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.5194016422976112
+      },
+      "_b": {
+        "n": 15,
+        "ev": -0.09127617032931487,
+        "total_R": -1.3691425549397231,
+        "wr": 0.4666666666666667,
+        "drawdown_R": 3.062606525411473,
+        "points": -50.466623589240044,
+        "days": 7,
+        "average_win_R": 0.5519898066000596,
+        "average_loss_R": 0.6541339001425175,
+        "empirical_breakeven_wr": 0.5423439540121147,
+        "stops": 4,
+        "targets": 1,
+        "time_exits": 10,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.09127617032931487
+      }
+    }
+  }
+]

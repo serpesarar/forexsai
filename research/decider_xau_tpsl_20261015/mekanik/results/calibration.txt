@@ -1,0 +1,8 @@
+ortak tam saat n=1626
+  Duka ts+-2h: |Δclose| medyan 9.718$  Δ-getiri korelasyonu 0.041
+  Duka ts+-1h: |Δclose| medyan 6.825$  Δ-getiri korelasyonu 0.041
+  Duka ts+0h: |Δclose| medyan 0.295$  Δ-getiri korelasyonu 0.970
+  Duka ts+1h: |Δclose| medyan 6.635$  Δ-getiri korelasyonu 0.062
+  Duka ts+2h: |Δclose| medyan 9.705$  Δ-getiri korelasyonu 0.035
+  close farkı (duka−broker) medyan -0.295$, high -0.305, low -0.195
+  H1 aralık oranı duka/broker medyan 0.994

@@ -1,0 +1,55 @@
+{
+ "price": 83028.15,
+ "concurrency": {
+  "P-CORE": {
+   "maks_e\u015fzamanl\u0131_poz": 1,
+   "maks_nominal/\u00f6zs_@%0,5risk": 0.36,
+   "medyan_nominal_a\u00e7\u0131kken": 0.21
+  },
+  "P-PRE": {
+   "maks_e\u015fzamanl\u0131_poz": 3,
+   "maks_nominal/\u00f6zs_@%0,5risk": 2.27,
+   "medyan_nominal_a\u00e7\u0131kken": 0.28
+  },
+  "P-ALL-DV": {
+   "maks_e\u015fzamanl\u0131_poz": 3,
+   "maks_nominal/\u00f6zs_@%0,5risk": 3.23,
+   "medyan_nominal_a\u00e7\u0131kken": 0.29
+  },
+  "P-ALL": {
+   "maks_e\u015fzamanl\u0131_poz": 3,
+   "maks_nominal/\u00f6zs_@%0,5risk": 3.23,
+   "medyan_nominal_a\u00e7\u0131kken": 0.3
+  }
+ },
+ "detect": {
+  "P-CORE": {
+   "ortR": 0.1097,
+   "sd": 1.386,
+   "n_2\u03c3": 639,
+   "y\u0131l_2\u03c3": 18.5,
+   "i\u015flem/y\u0131l": 35.0
+  },
+  "P-PRE": {
+   "ortR": 0.0263,
+   "sd": 0.601,
+   "n_2\u03c3": 2089,
+   "y\u0131l_2\u03c3": 3.7,
+   "i\u015flem/y\u0131l": 566.0
+  },
+  "P-ALL-DV": {
+   "ortR": 0.0381,
+   "sd": 0.63,
+   "n_2\u03c3": 1090,
+   "y\u0131l_2\u03c3": 1.8,
+   "i\u015flem/y\u0131l": 602.0
+  },
+  "P-ALL": {
+   "ortR": 0.0535,
+   "sd": 0.701,
+   "n_2\u03c3": 686,
+   "y\u0131l_2\u03c3": 1.1,
+   "i\u015flem/y\u0131l": 644.0
+  }
+ }
+}

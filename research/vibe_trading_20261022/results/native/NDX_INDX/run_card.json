@@ -1,0 +1,376 @@
+{
+  "artifacts": [
+    {
+      "path": "artifacts/equity.csv",
+      "sha256": "4ae8852332687c1b343f4b600ae840425b5342f13cebe4b8de9c07afdc91ee8d",
+      "size_bytes": 90121
+    },
+    {
+      "path": "artifacts/fills.jsonl",
+      "sha256": "8250f6e7b193c152eb3583f53d973d02b0e94542412b1e7798f0d653445cf0b5",
+      "size_bytes": 19442
+    },
+    {
+      "path": "artifacts/metrics.csv",
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c",
+      "size_bytes": 793
+    },
+    {
+      "path": "artifacts/ohlcv_NDX.INDX.csv",
+      "sha256": "4e5300dd4f27bdbb90db5d476df014d92e3c6c9c32ea153b0bd8fd128491ff24",
+      "size_bytes": 51885
+    },
+    {
+      "path": "artifacts/positions.csv",
+      "sha256": "1157bf585a6e4856ce1f2c1171b56cac5cb0aca39d862d751e5400047d9cc241",
+      "size_bytes": 26443
+    },
+    {
+      "path": "artifacts/rebalance_notes.json",
+      "sha256": "8156161ab313af7aae4ccbd2c258f28ae1bc9c60687d013eed59660c53185c51",
+      "size_bytes": 22593
+    },
+    {
+      "path": "artifacts/rebalance_notes.md",
+      "sha256": "fceea29e49410ff22cc84cf16fd8f7ff0f1668c10c4ec99613ae027c98750720",
+      "size_bytes": 6361
+    },
+    {
+      "path": "artifacts/target_positions.csv",
+      "sha256": "871ed1d1f1755bfdf1ba58c0aed92bc3c65b577e581edd65004d2bc1cc5f849b",
+      "size_bytes": 24119
+    },
+    {
+      "path": "artifacts/trades.csv",
+      "sha256": "2668cfa735384a94798d0d867b183dcc75b5313ab216d71b41674dde7e83a0da",
+      "size_bytes": 5049
+    },
+    {
+      "path": "code/signal_engine.py",
+      "sha256": "739f3d1d3cd49677ea55a5818fb6e82fc0741fd6317dfedf28ca1d5aff518669",
+      "size_bytes": 9612
+    },
+    {
+      "path": "config.json",
+      "sha256": "955b92a69076f30acc21d85afd7d6c0496c4e50ea5d0f0e2c6e88187b5c6ce91",
+      "size_bytes": 236
+    }
+  ],
+  "backtest": {
+    "codes": [
+      "NDX.INDX"
+    ],
+    "end_date": "2026-10-20",
+    "initial_cash": 1000000,
+    "interval": "5m",
+    "source": "local",
+    "start_date": "2026-10-16"
+  },
+  "citations": [
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "final_value",
+      "metric": "final_value",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "total_return",
+      "metric": "total_return",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "annual_return",
+      "metric": "annual_return",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "max_drawdown",
+      "metric": "max_drawdown",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "sharpe",
+      "metric": "sharpe",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "calmar",
+      "metric": "calmar",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "sortino",
+      "metric": "sortino",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "win_rate",
+      "metric": "win_rate",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "profit_loss_ratio",
+      "metric": "profit_loss_ratio",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "profit_factor",
+      "metric": "profit_factor",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "max_consecutive_loss",
+      "metric": "max_consecutive_loss",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "avg_holding_days",
+      "metric": "avg_holding_days",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "trade_count",
+      "metric": "trade_count",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_return",
+      "metric": "benchmark_return",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "excess_return",
+      "metric": "excess_return",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "information_ratio",
+      "metric": "information_ratio",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "tracking_error",
+      "metric": "tracking_error",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_beta",
+      "metric": "benchmark_beta",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "avg_turnover",
+      "metric": "avg_turnover",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "total_turnover",
+      "metric": "total_turnover",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "unfilled_plan_rejections",
+      "metric": "unfilled_plan_rejections",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "target_change_count",
+      "metric": "target_change_count",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_executed_bars",
+      "metric": "rebalance_executed_bars",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_executed_fills",
+      "metric": "rebalance_executed_fills",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_realized_turnover",
+      "metric": "rebalance_realized_turnover",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_turnover_mean",
+      "metric": "rebalance_turnover_mean",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_turnover_max",
+      "metric": "rebalance_turnover_max",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "position_adjustment",
+      "metric": "position_adjustment",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_tolerance",
+      "metric": "rebalance_tolerance",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "dropped_target_adjustment_count",
+      "metric": "dropped_target_adjustment_count",
+      "row": 1,
+      "sha256": "a1694df020e28d16c17aa534ee9a6a098351723b7fb668ff06f6147d0988083c"
+    }
+  ],
+  "data_sources": [
+    "forexsai_local_broker_cache"
+  ],
+  "generated_at": "2026-10-22T19:59:45.236879Z",
+  "metrics": {
+    "annual_return": 0.10010632679583686,
+    "avg_holding_days": 5.7,
+    "avg_turnover": 0.042503,
+    "benchmark_beta": -0.1486,
+    "benchmark_return": -0.010809,
+    "calmar": 7.2633,
+    "dropped_target_adjustment_count": 0,
+    "excess_return": 0.011861,
+    "final_value": 1001052.2158438129,
+    "information_ratio": 3.5727,
+    "max_consecutive_loss": 7,
+    "max_drawdown": -0.01378256679980393,
+    "position_adjustment": "hold",
+    "profit_factor": 1.0436,
+    "profit_loss_ratio": 1.4909,
+    "rebalance_executed_bars": 0,
+    "rebalance_executed_fills": 0,
+    "rebalance_realized_turnover": 0.0,
+    "rebalance_tolerance": 0.0,
+    "rebalance_turnover_max": 0.5,
+    "rebalance_turnover_mean": 0.5,
+    "sharpe": 0.8614703442285275,
+    "sortino": 1.1915,
+    "target_change_count": 67,
+    "total_return": 0.001052215843812876,
+    "total_turnover": 34.002754,
+    "tracking_error": 0.296689,
+    "trade_count": 34,
+    "unfilled_plan_rejections": 0,
+    "win_rate": 0.4117647058823529
+  },
+  "model_provenance": {
+    "cutoff_source": null,
+    "files": {
+      "code/signal_engine.py": {
+        "model_id": null,
+        "model_source": null,
+        "provider": null
+      },
+      "config.json": {
+        "model_id": null,
+        "model_source": null,
+        "provider": null
+      }
+    },
+    "training_cutoff": null
+  },
+  "reproducibility": {
+    "config_hash": "955b92a69076f30acc21d85afd7d6c0496c4e50ea5d0f0e2c6e88187b5c6ce91",
+    "strategy_hash": "739f3d1d3cd49677ea55a5818fb6e82fc0741fd6317dfedf28ca1d5aff518669"
+  },
+  "run_dir": "/Users/melihcanodacioglu/Desktop/panel/research/vibe_trading_20261022/results/native/NDX_INDX",
+  "schema_version": "1.0",
+  "structured_metrics": {
+    "by_exit_reason": {
+      "end_of_backtest": {
+        "count": 1,
+        "total_pnl": 516.25
+      },
+      "signal": {
+        "count": 33,
+        "total_pnl": 535.97
+      }
+    },
+    "by_symbol": {
+      "NDX.INDX": {
+        "avg_pnl": 30.95,
+        "count": 34,
+        "total_pnl": 1052.22,
+        "win_rate": 0.4118
+      }
+    },
+    "dropped_target_adjustments": [],
+    "unfilled_plan_rejections_by_symbol": {}
+  },
+  "tool_traces": [
+    {
+      "args_hash": "db2f4584e69d85a56c78e2e53fd009a65374fd634aad4155cc30d3f324455c30",
+      "ended_at": "2026-10-22T19:59:45.236723Z",
+      "result_hash": "edcf6f11f42ff9fd33f4d2a05f64700958f3f8fa544d567d0bb4ba30327b2952",
+      "started_at": "2026-10-22T19:59:45.186768Z",
+      "status": "ok",
+      "tool": "backtest"
+    }
+  ],
+  "warnings": [
+    "No strategy model provenance was recorded for config.json; writer identity is unknown.",
+    "No strategy model provenance was recorded for code/signal_engine.py; writer identity is unknown.",
+    "Training cutoff for unknown model is unknown; assume results may reflect what the model remembers."
+  ]
+}

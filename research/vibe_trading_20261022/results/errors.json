@@ -1,0 +1,16 @@
+[
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "technical-basic",
+    "status": "unsupported",
+    "reason": "missing historical volume"
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "technical-basic",
+    "status": "unsupported",
+    "reason": "missing historical volume"
+  }
+]

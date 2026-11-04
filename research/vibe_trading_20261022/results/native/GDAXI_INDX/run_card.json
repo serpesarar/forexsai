@@ -1,0 +1,422 @@
+{
+  "artifacts": [
+    {
+      "path": "artifacts/equity.csv",
+      "sha256": "b867b60d604b27881c565f7d05281ea836c8c0ea7df06ddac0225ff3bebf48af",
+      "size_bytes": 91858
+    },
+    {
+      "path": "artifacts/fills.jsonl",
+      "sha256": "402a6799a4429e37d0f622fce4912da30f3b52328beae512f648aa4c982b7e85",
+      "size_bytes": 21736
+    },
+    {
+      "path": "artifacts/metrics.csv",
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84",
+      "size_bytes": 974
+    },
+    {
+      "path": "artifacts/ohlcv_GDAXI.INDX.csv",
+      "sha256": "58441c6ff13ea7ea790acba83b3718866479cb6c3417b5e90a877361d3c7e7b9",
+      "size_bytes": 51285
+    },
+    {
+      "path": "artifacts/positions.csv",
+      "sha256": "9369bb95d64286d401abc9ff185d716f40d2f827d5cabf4d7aa05c6b736469d2",
+      "size_bytes": 26577
+    },
+    {
+      "path": "artifacts/rebalance_notes.json",
+      "sha256": "80cfb7ab1d18e3ff1b9ef4d5d4fb9d00766bd16a28cae45281ead26b006d5fe2",
+      "size_bytes": 25889
+    },
+    {
+      "path": "artifacts/rebalance_notes.md",
+      "sha256": "3c349b86a06370626bd60e34fe285b2c0c98d66ed5460ad64d79e9c14a33d337",
+      "size_bytes": 7487
+    },
+    {
+      "path": "artifacts/risk_xray.json",
+      "sha256": "3cea8e5c97313cb2afc32307d1c4967eedf28489f05efd80b2e3aeb2d7869f04",
+      "size_bytes": 1307
+    },
+    {
+      "path": "artifacts/risk_xray.md",
+      "sha256": "475ed7f9d3f08a4cceeee90ccb117ffe084860b7f819d48501e6859c447ed7fc",
+      "size_bytes": 296
+    },
+    {
+      "path": "artifacts/target_positions.csv",
+      "sha256": "366c05ee43d9589e64c73c18cce4a9b5da6b2b4f33d2925127ae5729c886837c",
+      "size_bytes": 24124
+    },
+    {
+      "path": "artifacts/trades.csv",
+      "sha256": "34c54f2e1c069a916fc8456ed7749c36debcab892ce3d5e55dcf1167df3987f6",
+      "size_bytes": 5781
+    },
+    {
+      "path": "code/signal_engine.py",
+      "sha256": "739f3d1d3cd49677ea55a5818fb6e82fc0741fd6317dfedf28ca1d5aff518669",
+      "size_bytes": 9612
+    },
+    {
+      "path": "config.json",
+      "sha256": "2453adcffdf469a8896c5e11870de99b3feae1c5df8b4348042c93f8a6f71558",
+      "size_bytes": 238
+    }
+  ],
+  "backtest": {
+    "codes": [
+      "GDAXI.INDX"
+    ],
+    "end_date": "2026-10-21",
+    "initial_cash": 1000000,
+    "interval": "5m",
+    "source": "local",
+    "start_date": "2026-10-16"
+  },
+  "citations": [
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "final_value",
+      "metric": "final_value",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "total_return",
+      "metric": "total_return",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "annual_return",
+      "metric": "annual_return",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "max_drawdown",
+      "metric": "max_drawdown",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "sharpe",
+      "metric": "sharpe",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "calmar",
+      "metric": "calmar",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "sortino",
+      "metric": "sortino",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "win_rate",
+      "metric": "win_rate",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "profit_loss_ratio",
+      "metric": "profit_loss_ratio",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "profit_factor",
+      "metric": "profit_factor",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "max_consecutive_loss",
+      "metric": "max_consecutive_loss",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "avg_holding_days",
+      "metric": "avg_holding_days",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "trade_count",
+      "metric": "trade_count",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_return",
+      "metric": "benchmark_return",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "excess_return",
+      "metric": "excess_return",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "information_ratio",
+      "metric": "information_ratio",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "tracking_error",
+      "metric": "tracking_error",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "benchmark_beta",
+      "metric": "benchmark_beta",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "avg_turnover",
+      "metric": "avg_turnover",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "total_turnover",
+      "metric": "total_turnover",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "unfilled_plan_rejections",
+      "metric": "unfilled_plan_rejections",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "target_change_count",
+      "metric": "target_change_count",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_executed_bars",
+      "metric": "rebalance_executed_bars",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_executed_fills",
+      "metric": "rebalance_executed_fills",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_realized_turnover",
+      "metric": "rebalance_realized_turnover",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_turnover_mean",
+      "metric": "rebalance_turnover_mean",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_turnover_max",
+      "metric": "rebalance_turnover_max",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "position_adjustment",
+      "metric": "position_adjustment",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "rebalance_tolerance",
+      "metric": "rebalance_tolerance",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "dropped_target_adjustment_count",
+      "metric": "dropped_target_adjustment_count",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_hhi",
+      "metric": "risk_xray_hhi",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_effective_n",
+      "metric": "risk_xray_effective_n",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_annualized_vol",
+      "metric": "risk_xray_annualized_vol",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_max_drawdown",
+      "metric": "risk_xray_max_drawdown",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    },
+    {
+      "artifact_id": "artifacts/metrics.csv",
+      "column": "risk_xray_avg_invested",
+      "metric": "risk_xray_avg_invested",
+      "row": 1,
+      "sha256": "a4d4be8869c48c397b71088936c509ed52675e76822764b78c01bb0d1e384c84"
+    }
+  ],
+  "data_sources": [
+    "forexsai_local_broker_cache"
+  ],
+  "generated_at": "2026-10-22T19:59:45.309306Z",
+  "metrics": {
+    "annual_return": 0.021938175592141063,
+    "avg_holding_days": 5.7,
+    "avg_turnover": 0.047497,
+    "benchmark_beta": -0.0279,
+    "benchmark_return": -0.002165,
+    "calmar": 3.957,
+    "dropped_target_adjustment_count": 0,
+    "excess_return": 0.002404,
+    "final_value": 1000239.2371267688,
+    "information_ratio": 1.1689,
+    "max_consecutive_loss": 6,
+    "max_drawdown": -0.005544200886372325,
+    "position_adjustment": "hold",
+    "profit_factor": 1.0141,
+    "profit_loss_ratio": 1.9501,
+    "rebalance_executed_bars": 0,
+    "rebalance_executed_fills": 0,
+    "rebalance_realized_turnover": 0.0,
+    "rebalance_tolerance": 0.0,
+    "rebalance_turnover_max": 0.5,
+    "rebalance_turnover_mean": 0.5,
+    "risk_xray_annualized_vol": 0.15616165414052774,
+    "risk_xray_avg_invested": 0.012631749316206397,
+    "risk_xray_effective_n": 1.0,
+    "risk_xray_hhi": 1.0,
+    "risk_xray_max_drawdown": -0.024985514234942757,
+    "sharpe": 0.3118110359671866,
+    "sortino": 0.4229,
+    "target_change_count": 76,
+    "total_return": 0.0002392371267687654,
+    "total_turnover": 37.997702,
+    "tracking_error": 0.179113,
+    "trade_count": 38,
+    "unfilled_plan_rejections": 0,
+    "win_rate": 0.34210526315789475
+  },
+  "model_provenance": {
+    "cutoff_source": null,
+    "files": {
+      "code/signal_engine.py": {
+        "model_id": null,
+        "model_source": null,
+        "provider": null
+      },
+      "config.json": {
+        "model_id": null,
+        "model_source": null,
+        "provider": null
+      }
+    },
+    "training_cutoff": null
+  },
+  "reproducibility": {
+    "config_hash": "2453adcffdf469a8896c5e11870de99b3feae1c5df8b4348042c93f8a6f71558",
+    "strategy_hash": "739f3d1d3cd49677ea55a5818fb6e82fc0741fd6317dfedf28ca1d5aff518669"
+  },
+  "run_dir": "/Users/melihcanodacioglu/Desktop/panel/research/vibe_trading_20261022/results/native/GDAXI_INDX",
+  "schema_version": "1.0",
+  "structured_metrics": {
+    "by_exit_reason": {
+      "signal": {
+        "count": 38,
+        "total_pnl": 239.24
+      }
+    },
+    "by_symbol": {
+      "GDAXI.INDX": {
+        "avg_pnl": 6.3,
+        "count": 38,
+        "total_pnl": 239.24,
+        "win_rate": 0.3421
+      }
+    },
+    "dropped_target_adjustments": [],
+    "unfilled_plan_rejections_by_symbol": {}
+  },
+  "tool_traces": [
+    {
+      "args_hash": "289f81bed7dd0e04547c8bf8994a68417e7619e0e1f130f80713e98cfd9b1392",
+      "ended_at": "2026-10-22T19:59:45.309149Z",
+      "result_hash": "496385a1b1d820d24bdad088dbe09688a29b01d5e1edd2488f6e12278680f4ad",
+      "started_at": "2026-10-22T19:59:45.261097Z",
+      "status": "ok",
+      "tool": "backtest"
+    }
+  ],
+  "warnings": [
+    "No strategy model provenance was recorded for config.json; writer identity is unknown.",
+    "No strategy model provenance was recorded for code/signal_engine.py; writer identity is unknown.",
+    "Training cutoff for unknown model is unknown; assume results may reflect what the model remembers."
+  ]
+}

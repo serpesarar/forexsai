@@ -1,0 +1,108 @@
+=== YÖN KIRILIMI ===
+                  n   wr     pnl  avg_win  avg_loss
+sym   direction                                    
+GDAXI BUY         3  0.7   259.1    381.7    -504.4
+      SELL        2  0.0 -1356.5      NaN    -678.2
+NDX   BUY        19  0.6   497.5    345.9    -413.4
+      SELL       84  0.6  2127.5    398.1    -550.7
+USOIL BUY        26  0.6  -998.5    193.8    -355.0
+      SELL       25  0.4 -1641.0    232.0    -264.1
+
+=== MAGIC KIRILIMI (hangi bot) ===
+                           n    wr      pnl
+sym   magic    direction                   
+GDAXI 52890969 BUY         1  0.00  -504.35
+      52890970 BUY         2  1.00   763.48
+               SELL        2  0.00 -1356.46
+NDX   52890969 BUY         7  0.57   447.50
+      52890970 BUY        10  0.50  -750.00
+               SELL        2  0.50  -150.00
+      52890971 BUY         2  1.00   800.00
+               SELL       82  0.61  2277.50
+USOIL 52890969 BUY        26  0.58  -998.50
+               SELL       22  0.41  -943.50
+      52890970 SELL        3  0.33  -697.50
+
+=== GERÇEK TP/SL GEOMETRİSİ (ATR cinsinden çıkış mesafesi) ===
+               count    25%    50%    75%
+sym   outcome                            
+GDAXI SL         3.0  17.54  20.89  22.00
+      TP         2.0   9.56  11.13  12.70
+NDX   SL        41.0   3.88   4.66   6.28
+      TP        62.0   2.40   3.04   4.89
+USOIL SL        26.0   3.32   7.58  11.46
+      TP        25.0   2.19   3.21   9.14
+
+Magic bazlı medyan mesafe (ATR):
+sym    magic     outcome
+GDAXI  52890969  SL         23.11
+       52890970  SL         17.54
+                 TP         11.13
+NDX    52890969  SL          1.13
+                 TP          1.54
+       52890970  SL          7.56
+                 TP          3.98
+       52890971  SL          4.81
+                 TP          3.07
+USOIL  52890969  SL          6.86
+                 TP          3.01
+       52890970  SL         33.04
+                 TP          9.14
+
+=== RR SENARYOSU — aynı giriş, aynı SL, TP = k×risk (tüm TP+SL işlemleri yeniden simüle) ===
+  NDX  RR= 0.5: n=103 WR=62% (TP 64/SL 39/açık 0) EV=-0.068R  breakeven WR=67%
+  USOIL  RR= 0.5: n=51 WR=61% (TP 31/SL 20/açık 0) EV=-0.088R  breakeven WR=67%
+  NDX  RR=0.75: n=103 WR=50% (TP 52/SL 51/açık 0) EV=-0.117R  breakeven WR=57%
+  USOIL  RR=0.75: n=51 WR=47% (TP 24/SL 26/açık 1) EV=-0.157R  breakeven WR=57%
+  NDX  RR= 1.0: n=103 WR=45% (TP 46/SL 57/açık 0) EV=-0.107R  breakeven WR=50%
+  USOIL  RR= 1.0: n=51 WR=45% (TP 23/SL 27/açık 1) EV=-0.078R  breakeven WR=50%
+  NDX  RR= 1.5: n=103 WR=36% (TP 37/SL 65/açık 1) EV=-0.092R  breakeven WR=40%
+  USOIL  RR= 1.5: n=51 WR=39% (TP 20/SL 30/açık 1) EV=+0.000R  breakeven WR=40%
+  NDX  RR= 2.0: n=103 WR=27% (TP 28/SL 72/açık 3) EV=-0.155R  breakeven WR=33%
+  USOIL  RR= 2.0: n=51 WR=31% (TP 16/SL 33/açık 2) EV=-0.020R  breakeven WR=33%
+
+=== SAAT BLOĞU WHAT-IF ===
+NDX Asya 03-04 UTC blok                      blok= 10 SLkurt=  6 TPkayb=  4 ΔPnL=   +1696 kalanPnL=    4322 WR 60→62
+NDX 18 UTC blok                              blok= 10 SLkurt=  6 TPkayb=  4 ΔPnL=   +1710 kalanPnL=    4334 WR 60→62
+NDX 22 UTC blok                              blok=  3 SLkurt=  3 TPkayb=  0 ΔPnL=   +1672 kalanPnL=    4296 WR 60→62
+NDX {3,4,18,22} blok                         blok= 23 SLkurt= 15 TPkayb=  8 ΔPnL=   +5078 kalanPnL=    7702 WR 60→68
+USOIL <12 UTC blok (NY öncesi)               blok= 19 SLkurt= 13 TPkayb=  6 ΔPnL=   +1868 kalanPnL=    -772 WR 49→59
+USOIL 10-11 UTC blok                         blok=  7 SLkurt=  4 TPkayb=  3 ΔPnL=    +487 kalanPnL=   -2152 WR 49→50
+
+=== KOMBİNE FİLTRELER ===
+NDX: 5m-karşı-trend | EMA200-karşı | kötü saat blok= 52 SLkurt= 27 TPkayb= 25 ΔPnL=   +4316 kalanPnL=    6942 WR 60→73
+NDX: 5m-karşı-trend & EMA200-karşı (AND)     blok= 36 SLkurt= 17 TPkayb= 19 ΔPnL=   +1006 kalanPnL=    3630 WR 60→64
+NDX: (5m&30m karşı-trend) | kötü saat        blok= 40 SLkurt= 22 TPkayb= 18 ΔPnL=   +4911 kalanPnL=    7536 WR 60→70
+USOIL: 1h-karşı-mom | adx1<20 | 30m-karşı-trend blok= 31 SLkurt= 19 TPkayb= 12 ΔPnL=   +3223 kalanPnL=     584 WR 49→65
+USOIL: 1h-karşı-mom | adx1<20                blok= 22 SLkurt= 15 TPkayb=  7 ΔPnL=   +3408 kalanPnL=     769 WR 49→62
+
+=== GİRİŞ ÖNCESİ KOŞU — sinyal gecikmesi kanıtı (yön-işaretli, ATR) ===
+NDX: TP run5=+0.43 run15=+0.68 run30=+1.11 | SL run5=+0.03 run15=-0.00 run30=+1.06
+USOIL: TP run5=-0.59 run15=-1.70 run30=-0.68 | SL run5=-1.42 run15=-1.95 run30=-1.95
+NDX: run30 > 1.0 ATR (geç kovalamaca) blok   blok= 57 SLkurt= 21 TPkayb= 36 ΔPnL=   -2624 kalanPnL=       2 WR 60→57
+NDX: run30 > 1.5 ATR (geç kovalamaca) blok   blok= 53 SLkurt= 20 TPkayb= 33 ΔPnL=   -1974 kalanPnL=     652 WR 60→58
+NDX: run30 > 2.0 ATR (geç kovalamaca) blok   blok= 53 SLkurt= 20 TPkayb= 33 ΔPnL=   -1974 kalanPnL=     652 WR 60→58
+NDX: run30 < -1.0 ATR (bıçak yakalama) blok  blok= 40 SLkurt= 19 TPkayb= 21 ΔPnL=   +1461 kalanPnL=    4086 WR 60→65
+NDX: run30 < -1.5 ATR (bıçak yakalama) blok  blok= 38 SLkurt= 19 TPkayb= 19 ΔPnL=   +2258 kalanPnL=    4884 WR 60→66
+USOIL: run30 > 1.0 ATR (geç kovalamaca) blok blok= 11 SLkurt=  3 TPkayb=  8 ΔPnL=    -902 kalanPnL=   -3541 WR 49→42
+USOIL: run30 > 1.5 ATR (geç kovalamaca) blok blok=  9 SLkurt=  2 TPkayb=  7 ΔPnL=   -1152 kalanPnL=   -3792 WR 49→43
+USOIL: run30 > 2.0 ATR (geç kovalamaca) blok blok=  6 SLkurt=  1 TPkayb=  5 ΔPnL=    -875 kalanPnL=   -3514 WR 49→44
+USOIL: run30 < -1.0 ATR (bıçak yakalama) blok blok= 30 SLkurt= 16 TPkayb= 14 ΔPnL=   +2178 kalanPnL=    -461 WR 49→52
+USOIL: run30 < -1.5 ATR (bıçak yakalama) blok blok= 26 SLkurt= 14 TPkayb= 12 ΔPnL=   +2012 kalanPnL=    -628 WR 49→52
+
+=== NDX SELL vs BUY ayrı ===
+
+NDX SELL: n=84 WR=61% PnL=2128
+  SELL: 5m karşı-trend blok                  blok= 25 SLkurt= 13 TPkayb= 12 ΔPnL=   +2350 kalanPnL=    4478 WR 61→66
+  SELL: run30>1.5 blok                       blok= 48 SLkurt= 17 TPkayb= 31 ΔPnL=   -2924 kalanPnL=    -797 WR 61→56
+  SELL: kötü saat blok                       blok= 21 SLkurt= 13 TPkayb=  8 ΔPnL=   +3978 kalanPnL=    6105 WR 61→68
+
+NDX BUY: n=19 WR=58% PnL=498
+  BUY: 5m karşı-trend blok                   blok= 13 SLkurt=  6 TPkayb=  7 ΔPnL=    -245 kalanPnL=     252 WR 58→67
+  BUY: run30>1.5 blok                        blok=  5 SLkurt=  3 TPkayb=  2 ΔPnL=    +951 kalanPnL=    1448 WR 58→64
+  BUY: kötü saat blok                        blok=  2 SLkurt=  2 TPkayb=  0 ΔPnL=   +1100 kalanPnL=    1598 WR 58→65
+
+=== NİHAİ REÇETE SİMÜLASYONU ===
+USOIL filtre+RR1.0: n=29 TP=16 SL=13 açık=0 EV=+0.103R (eski: WR49% RR0.37 EV≈-0.32R)
+
+Bitti.

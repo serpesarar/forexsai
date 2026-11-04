@@ -1,0 +1,66 @@
+[
+  {
+    "example": "technical-basic",
+    "status": "performance: unmodified default; long XAU/OIL missing volume"
+  },
+  {
+    "example": "candlestick",
+    "status": "performance: unmodified default"
+  },
+  {
+    "example": "ichimoku",
+    "status": "performance: unmodified default; target=0 closes position"
+  },
+  {
+    "example": "volatility",
+    "status": "performance: unmodified default"
+  },
+  {
+    "example": "seasonal",
+    "status": "performance: unmodified default; UTC calendar"
+  },
+  {
+    "example": "harmonic",
+    "status": "performance: built-in fallback; right-confirmation audited"
+  },
+  {
+    "example": "elliott-wave",
+    "status": "performance: right-confirmation audited"
+  },
+  {
+    "example": "cross-market-strategy",
+    "status": "REJECTED: future-dependent weights; unrecognized CFD symbols route to a_share"
+  },
+  {
+    "example": "minute-analysis",
+    "status": "analysis-only: no SignalEngine"
+  },
+  {
+    "example": "event-driven",
+    "status": "unsupported: no point-in-time historical event_score"
+  },
+  {
+    "example": "fundamental-filter",
+    "status": "unsupported: CFD symbols lack stock PE/PB/ROE statements"
+  },
+  {
+    "example": "options-strategy",
+    "status": "unsupported: no historical options chain/contract/fills"
+  },
+  {
+    "example": "pair-trading",
+    "status": "not scored: no preregistered pair/hedge; default does not evaluate all 4 symbols"
+  },
+  {
+    "example": "multi-factor",
+    "status": "not scored: cross-sectional allocation; default top_n=5 >= universe=4; not a single-symbol directional engine"
+  },
+  {
+    "example": "smc",
+    "status": "not executed: optional smartmoneyconcepts missing; retrospective BOS/FVG assignment needs separate PIT audit"
+  },
+  {
+    "example": "chanlun",
+    "status": "not executed: optional czsc missing; separate incremental detector dependency"
+  }
+]

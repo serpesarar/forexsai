@@ -1,0 +1,72 @@
+{
+ "T1_prefix": [
+  {
+   "cut": 538515,
+   "mismatch": 0,
+   "cols": ""
+  },
+  {
+   "cut": 552287,
+   "mismatch": 0,
+   "cols": ""
+  },
+  {
+   "cut": 1514558,
+   "mismatch": 0,
+   "cols": ""
+  },
+  {
+   "cut": 1753509,
+   "mismatch": 0,
+   "cols": ""
+  },
+  {
+   "cut": 2298649,
+   "mismatch": 0,
+   "cols": ""
+  }
+ ],
+ "T2_entrybar_perturb": [
+  {
+   "cut": 538515,
+   "mismatch_upto_cut": 0,
+   "cols": "",
+   "changed_after_cut_cells": 202408
+  },
+  {
+   "cut": 552287,
+   "mismatch_upto_cut": 0,
+   "cols": "",
+   "changed_after_cut_cells": 202451
+  },
+  {
+   "cut": 1514558,
+   "mismatch_upto_cut": 0,
+   "cols": "",
+   "changed_after_cut_cells": 206219
+  }
+ ],
+ "T3": {
+  "metrics_eff_gt_ts": 0,
+  "funding_time_gt_close": 0,
+  "bd_snap_age_neg": 0,
+  "bd_snap_age_gt_60_nonnull_share": 0.005421818541102077
+ },
+ "T4_label_loop_mismatch": {
+  "L_tp1_h30": 0,
+  "L_tp1_h60": 2,
+  "L_tp1.5_h30": 0,
+  "L_tp1.5_h60": 0,
+  "S_tp1_h30": 0,
+  "S_tp1_h60": 0,
+  "S_tp1.5_h30": 0,
+  "S_tp1.5_h60": 0
+ },
+ "T4_note": "L_tp1_h60 2/3000 uyu\u015fmazl\u0131k, d\u00f6ng\u00fc float32 s_bp okudu\u011fu i\u00e7in (tam e\u015fitlik s\u0131n\u0131r\u0131nda yuvarlama). float64 s ile 21.631 kararda 0 uyu\u015fmazl\u0131k (L_tp1_h60, her 25. ge\u00e7erli karar). Motor do\u011fru; T4 GE\u00c7T\u0130.",
+ "T4_float64_recheck": {
+  "cell": "L_tp1_h60",
+  "n": 21631,
+  "mismatch": 0
+ },
+ "verdict": "T1-T4 GE\u00c7T\u0130"
+}

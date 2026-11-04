@@ -1,0 +1,31 @@
+ctx,rep,hücre,başarılı,tutarlı_kötü,binom_p,başarılı_semboller,KARAR,test
+oyn,P33,69,0,18,1.0,,yok,B1_yön
+oyn,R7,69,0,27,1.0,,yok,B1_yön
+saat,P33,69,0,20,1.0,,yok,B1_yön
+saat,R7,69,0,23,1.0,,yok,B1_yön
+stres,P33,69,0,24,1.0,,yok,B1_yön
+stres,R7,69,0,29,1.0,,yok,B1_yön
+vix,P33,69,0,25,1.0,,yok,B1_yön
+vix,R7,69,0,27,1.0,,yok,B1_yön
+vix_stres,P33,69,1,21,0.825691533077709,OIL,yok,B1_yön
+vix_stres,R7,69,0,27,1.0,,yok,B1_yön
+yok,P33,69,0,24,1.0,,yok,B1_yön
+yok,R7,69,0,27,1.0,,yok,B1_yön
+oyn,P33,69,17,18,1.0047103276199351e-12,"DAX,NDX,OIL,XAU",KATKI VAR,B1_büyüklük
+oyn,R7,69,15,20,1.4718332605022488e-10,"DAX,NDX,OIL,XAU",KATKI VAR,B1_büyüklük
+saat,P33,69,0,38,1.0,,yok,B1_büyüklük
+saat,R7,69,0,39,1.0,,yok,B1_büyüklük
+stres,P33,69,25,12,1.2646760529656836e-22,"DAX,NDX,OIL,XAU",KATKI VAR,B1_büyüklük
+stres,R7,69,20,18,3.234330514167174e-16,"DAX,NDX,OIL,XAU",KATKI VAR,B1_büyüklük
+vix,P33,69,24,12,2.748012979410917e-21,"DAX,NDX,OIL,XAU",KATKI VAR,B1_büyüklük
+vix,R7,69,19,18,5.068348212640795e-15,"DAX,NDX,OIL,XAU",KATKI VAR,B1_büyüklük
+vix_stres,P33,69,24,12,2.748012979410917e-21,"DAX,NDX,OIL,XAU",KATKI VAR,B1_büyüklük
+vix_stres,R7,69,17,18,1.0047103276199351e-12,"DAX,NDX,OIL,XAU",KATKI VAR,B1_büyüklük
+yok,P33,69,0,50,1.0,,yok,B1_büyüklük
+yok,R7,69,0,53,1.0,,yok,B1_büyüklük
+oyn,,69,0,1,1.0,,yok,B2
+saat,,69,0,6,1.0,,yok,B2
+stres,,69,0,1,1.0,,yok,B2
+vix,,69,0,1,1.0,,yok,B2
+vix_stres,,69,0,8,1.0,,yok,B2
+yok,,69,0,0,1.0,,yok,B2

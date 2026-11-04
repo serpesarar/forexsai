@@ -1,0 +1,17 @@
+symbol,dataset,epoch,start,end,long_net_bp,short_net_bp,warning
+NDX.INDX,recent_5m,development,2026-06-16 21:15:00+00:00,2026-08-31 23:59:00+00:00,-200.70940392767585,199.51153613235155,continuous hold includes unmeasured swap; not like-for-like exposure
+NDX.INDX,recent_5m,test,2026-09-01 00:00:00+00:00,2026-10-20 15:12:00+00:00,37.889204632261325,-39.1114370397536,continuous hold includes unmeasured swap; not like-for-like exposure
+NDX.INDX,long_1h,development,2016-05-29 23:00:00+00:00,2023-12-29 22:00:00+00:00,27259.636685866197,-27267.611874169248,continuous hold includes unmeasured swap; not like-for-like exposure
+NDX.INDX,long_1h,test,2024-01-02 00:00:00+00:00,2026-07-14 23:00:00+00:00,7565.086683223022,-7567.225542735599,continuous hold includes unmeasured swap; not like-for-like exposure
+GDAXI.INDX,recent_5m,development,2026-06-17 00:30:00+00:00,2026-08-31 19:58:00+00:00,574.4698008225138,-575.9212966696228,continuous hold includes unmeasured swap; not like-for-like exposure
+GDAXI.INDX,recent_5m,test,2026-09-01 00:15:00+00:00,2026-10-21 02:13:00+00:00,-303.5443366090556,302.17204022353184,continuous hold includes unmeasured swap; not like-for-like exposure
+GDAXI.INDX,long_1h,development,2019-01-02 07:00:00+00:00,2023-12-29 20:00:00+00:00,5961.672175180257,-5965.101105830135,continuous hold includes unmeasured swap; not like-for-like exposure
+GDAXI.INDX,long_1h,test,2024-01-01 23:00:00+00:00,2026-10-02 04:00:00+00:00,4920.717302598611,-4922.864915169303,continuous hold includes unmeasured swap; not like-for-like exposure
+XAUUSD,recent_5m,development,2026-06-16 21:16:00+00:00,2026-08-31 23:59:00+00:00,259.18269995229866,-260.56537639909675,continuous hold includes unmeasured swap; not like-for-like exposure
+XAUUSD,recent_5m,test,2026-09-01 00:00:00+00:00,2026-10-20 14:29:00+00:00,-672.795513199181,671.4478557647165,continuous hold includes unmeasured swap; not like-for-like exposure
+XAUUSD,long_1h,development,2016-05-31 10:00:00+00:00,2023-12-29 21:00:00+00:00,7030.162412993043,-7035.116545978485,continuous hold includes unmeasured swap; not like-for-like exposure
+XAUUSD,long_1h,test,2024-01-01 23:00:00+00:00,2026-09-02 23:00:00+00:00,11243.60415536088,-11246.511357469573,continuous hold includes unmeasured swap; not like-for-like exposure
+USOIL.FOREX,recent_5m,development,2026-06-16 21:15:00+00:00,2026-08-31 23:59:00+00:00,1248.5600010355033,-1257.8795448956064,continuous hold includes unmeasured swap; not like-for-like exposure
+USOIL.FOREX,recent_5m,test,2026-09-01 00:00:00+00:00,2026-10-20 23:35:00+00:00,1442.045572182796,-1450.3272409390502,continuous hold includes unmeasured swap; not like-for-like exposure
+USOIL.FOREX,long_1h,development,2016-05-31 07:00:00+00:00,2023-12-29 21:00:00+00:00,4286.259541984733,-4300.723182000805,continuous hold includes unmeasured swap; not like-for-like exposure
+USOIL.FOREX,long_1h,test,2024-01-01 23:00:00+00:00,2026-09-02 23:00:00+00:00,2670.06523793457,-2680.1204016801194,continuous hold includes unmeasured swap; not like-for-like exposure

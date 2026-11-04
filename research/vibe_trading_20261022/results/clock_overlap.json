@@ -1,0 +1,198 @@
+[
+  {
+    "symbol": "NDX.INDX",
+    "shift_min": -180,
+    "n": 412,
+    "median_abs_diff": 90.34999999999854,
+    "corr": 0.8983574522367797
+  },
+  {
+    "symbol": "NDX.INDX",
+    "shift_min": -120,
+    "n": 415,
+    "median_abs_diff": 70.79999999999927,
+    "corr": 0.9186378093290246
+  },
+  {
+    "symbol": "NDX.INDX",
+    "shift_min": -60,
+    "n": 418,
+    "median_abs_diff": 59.150000000001455,
+    "corr": 0.9397720317746728
+  },
+  {
+    "symbol": "NDX.INDX",
+    "shift_min": 0,
+    "n": 421,
+    "median_abs_diff": 0.0,
+    "corr": 0.9709994162008047
+  },
+  {
+    "symbol": "NDX.INDX",
+    "shift_min": 60,
+    "n": 423,
+    "median_abs_diff": 51.30000000000291,
+    "corr": 0.961486018818028
+  },
+  {
+    "symbol": "NDX.INDX",
+    "shift_min": 120,
+    "n": 425,
+    "median_abs_diff": 57.5,
+    "corr": 0.9553483222977363
+  },
+  {
+    "symbol": "NDX.INDX",
+    "shift_min": 180,
+    "n": 435,
+    "median_abs_diff": 18.0,
+    "corr": 0.9527197889769146
+  },
+  {
+    "symbol": "GDAXI.INDX",
+    "shift_min": -180,
+    "n": 1114,
+    "median_abs_diff": 49.850000000000364,
+    "corr": 0.9855928377600529
+  },
+  {
+    "symbol": "GDAXI.INDX",
+    "shift_min": -120,
+    "n": 1144,
+    "median_abs_diff": 41.0,
+    "corr": 0.9899214810667027
+  },
+  {
+    "symbol": "GDAXI.INDX",
+    "shift_min": -60,
+    "n": 1195,
+    "median_abs_diff": 28.0,
+    "corr": 0.9942512988230294
+  },
+  {
+    "symbol": "GDAXI.INDX",
+    "shift_min": 0,
+    "n": 1223,
+    "median_abs_diff": 0.0,
+    "corr": 0.9983237820653813
+  },
+  {
+    "symbol": "GDAXI.INDX",
+    "shift_min": 60,
+    "n": 1250,
+    "median_abs_diff": 26.700000000000728,
+    "corr": 0.9954538788251905
+  },
+  {
+    "symbol": "GDAXI.INDX",
+    "shift_min": 120,
+    "n": 1269,
+    "median_abs_diff": 36.55078125,
+    "corr": 0.9922826817750704
+  },
+  {
+    "symbol": "GDAXI.INDX",
+    "shift_min": 180,
+    "n": 1243,
+    "median_abs_diff": 35.10000000000218,
+    "corr": 0.9892709886232418
+  },
+  {
+    "symbol": "XAUUSD",
+    "shift_min": -180,
+    "n": 1075,
+    "median_abs_diff": 12.490000000000691,
+    "corr": 0.9919237366307635
+  },
+  {
+    "symbol": "XAUUSD",
+    "shift_min": -120,
+    "n": 1083,
+    "median_abs_diff": 9.970000000000255,
+    "corr": 0.994469345667254
+  },
+  {
+    "symbol": "XAUUSD",
+    "shift_min": -60,
+    "n": 1096,
+    "median_abs_diff": 7.315000000000282,
+    "corr": 0.9965934348531741
+  },
+  {
+    "symbol": "XAUUSD",
+    "shift_min": 0,
+    "n": 1102,
+    "median_abs_diff": 0.0,
+    "corr": 0.9986500286011017
+  },
+  {
+    "symbol": "XAUUSD",
+    "shift_min": 60,
+    "n": 1108,
+    "median_abs_diff": 6.920000000000073,
+    "corr": 0.9971161332729989
+  },
+  {
+    "symbol": "XAUUSD",
+    "shift_min": 120,
+    "n": 1124,
+    "median_abs_diff": 8.990000000000009,
+    "corr": 0.9958796189520639
+  },
+  {
+    "symbol": "XAUUSD",
+    "shift_min": 180,
+    "n": 1119,
+    "median_abs_diff": 8.290000000000873,
+    "corr": 0.9946215380972815
+  },
+  {
+    "symbol": "USOIL.FOREX",
+    "shift_min": -180,
+    "n": 1096,
+    "median_abs_diff": 0.5869971008300467,
+    "corr": 0.990142904229239
+  },
+  {
+    "symbol": "USOIL.FOREX",
+    "shift_min": -120,
+    "n": 1107,
+    "median_abs_diff": 0.5180000000000007,
+    "corr": 0.9929731168855295
+  },
+  {
+    "symbol": "USOIL.FOREX",
+    "shift_min": -60,
+    "n": 1118,
+    "median_abs_diff": 0.46350213623044567,
+    "corr": 0.9953964534998253
+  },
+  {
+    "symbol": "USOIL.FOREX",
+    "shift_min": 0,
+    "n": 1129,
+    "median_abs_diff": 0.3790018310547083,
+    "corr": 0.998369547746137
+  },
+  {
+    "symbol": "USOIL.FOREX",
+    "shift_min": 60,
+    "n": 1136,
+    "median_abs_diff": 0.43650137329099437,
+    "corr": 0.9959812280882934
+  },
+  {
+    "symbol": "USOIL.FOREX",
+    "shift_min": 120,
+    "n": 1136,
+    "median_abs_diff": 0.4509992370605431,
+    "corr": 0.9940793713760714
+  },
+  {
+    "symbol": "USOIL.FOREX",
+    "shift_min": 180,
+    "n": 1152,
+    "median_abs_diff": 0.45399832153320574,
+    "corr": 0.9921460064087778
+  }
+]

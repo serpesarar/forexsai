@@ -1,0 +1,32 @@
+=== NDX 1m (T+1dk + 1,5p) ===
+1m S1_NIGHT                n= 63 ortR=+0.0157 ΣR=+0.99 R(sp3)=+0.0116 bp_net=-2.00 wr=0.48 P=0.63
+1m S2_CTO                  n= 64 ortR=+0.0210 ΣR=+1.34 R(sp3)=+0.0169 bp_net=+1.39 wr=0.53 P=0.92
+1m S3_EU                   n= 64 ortR=-0.0072 ΣR=-0.46 R(sp3)=-0.0113 bp_net=-1.98 wr=0.52 P=0.40
+1m S4_OD                   n= 64 ortR=-0.0033 ΣR=-0.21 R(sp3)=-0.0074 bp_net=-1.24 wr=0.48 P=0.41
+1m S5_EU_dn05              n= 21 ortR=+0.0193 ΣR=+0.41 R(sp3)=+0.0153 bp_net=+1.28 wr=0.57 P=0.70
+1m S6_EU_dn10              n= 12 ortR=+0.0162 ΣR=+0.19 R(sp3)=+0.0126 bp_net=-0.79 wr=0.58 P=0.63
+1m S7_NIGHT_dn05           n= 21 ortR=-0.0333 ΣR=-0.70 R(sp3)=-0.0373 bp_net=-6.00 wr=0.38 P=0.14
+1m S8_NIGHT_dn10           n= 12 ortR=+0.0893 ΣR=+1.07 R(sp3)=+0.0857 bp_net=+10.36 wr=0.42 P=1.00
+1m S9_EU_vix               n=  6 ortR=+0.0045 ΣR=+0.03 R(sp3)=+0.0009 bp_net=+1.68 wr=0.67 P=1.00
+1m S10_EU_dn05vix          n=  4 ortR=+0.0058 ΣR=+0.02 R(sp3)=+0.0022 bp_net=+2.13 wr=0.75 P=1.00
+1m INTRA                   n= 64 ortR=+0.0184 ΣR=+1.18 R(sp3)=+0.0143 bp_net=-2.77 wr=0.47 P=0.61
+1m HOLD                    n= 64 ortR=+0.0441 ΣR=+2.82 R(sp3)=+0.0400 bp_net=-0.79 wr=0.47 P=0.70
+=== NDX 30m birebir ===
+30m S1_NIGHT               n= 65 ortR=+0.0116 ΣR=+0.76 R(sp3)=+0.0075 bp_net=-1.95 wr=0.51 P=0.63
+30m S2_CTO                 n= 65 ortR=+0.0304 ΣR=+1.98 R(sp3)=+0.0263 bp_net=+2.54 wr=0.52 P=1.00
+30m S3_EU                  n= 65 ortR=-0.0081 ΣR=-0.52 R(sp3)=-0.0122 bp_net=-1.98 wr=0.51 P=0.38
+30m S4_OD                  n= 65 ortR=+0.0071 ΣR=+0.46 R(sp3)=+0.0030 bp_net=+0.28 wr=0.42 P=0.63
+30m S5_EU_dn05             n= 22 ortR=+0.0403 ΣR=+0.89 R(sp3)=+0.0363 bp_net=+2.33 wr=0.64 P=0.74
+30m S6_EU_dn10             n= 13 ortR=+0.0547 ΣR=+0.71 R(sp3)=+0.0510 bp_net=+2.44 wr=0.69 P=0.74
+30m S7_NIGHT_dn05          n= 22 ortR=+0.0399 ΣR=+0.88 R(sp3)=+0.0358 bp_net=+0.67 wr=0.45 P=0.85
+30m S8_NIGHT_dn10          n= 13 ortR=+0.2064 ΣR=+2.68 R(sp3)=+0.2026 bp_net=+20.11 wr=0.54 P=1.00
+30m S9_EU_vix              n=  6 ortR=+0.0168 ΣR=+0.10 R(sp3)=+0.0132 bp_net=+3.18 wr=0.67 P=1.00
+30m S10_EU_dn05vix         n=  4 ortR=+0.0066 ΣR=+0.03 R(sp3)=+0.0030 bp_net=+1.81 wr=0.75 P=1.00
+30m INTRA                  n= 65 ortR=+0.0062 ΣR=+0.41 R(sp3)=+0.0021 bp_net=-3.92 wr=0.42 P=0.55
+30m HOLD                   n= 65 ortR=+0.0411 ΣR=+2.67 R(sp3)=+0.0370 bp_net=-0.83 wr=0.48 P=0.70
+=== DAX ===
+DX_EU                      n= 67 ortR=-0.0605 ΣR=-4.06 R(sp3)=-0.0679 bp_net=-3.16 wr=0.48 P=0.15
+DX_PRE                     n= 67 ortR=-0.0166 ΣR=-1.11 R(sp3)=-0.0239 bp_net=-1.10 wr=0.54 P=0.36
+DX_EU_dn05                 n= 14 ortR=-0.1213 ΣR=-1.70 R(sp3)=-0.1287 bp_net=-8.66 wr=0.50 P=0.05
+DX_EU_dn10                 n=  7 ortR=-0.0553 ΣR=-0.39 R(sp3)=-0.0626 bp_net=-6.31 wr=0.43 P=0.23
+DX_NIGHT                   n= 67 ortR=+0.0011 ΣR=+0.07 R(sp3)=-0.0063 bp_net=+1.44 wr=0.49 P=0.52

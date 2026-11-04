@@ -1,0 +1,5 @@
+results/bars.pkl
+results/duka_2025.npz
+results/fresh_chunks/
+results/fresh_mt5_september.json
+__pycache__/

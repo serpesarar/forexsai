@@ -1,0 +1,102 @@
+oy                     -60     0    60    n  modele_uyum
+sinif        donem                                      
+NYyaz_BERkis 2019/20  0.75  0.25  0.00   20         0.25
+             2020/21  0.60  0.40  0.00   15         0.40
+             2021/22  0.53  0.47  0.00   15         0.47
+             2022/23  0.60  0.40  0.00   15         0.40
+             2023/24  0.21  0.79  0.00   19         0.79
+             2024/25  0.35  0.65  0.00   20         0.65
+             2025/26  0.45  0.50  0.05   20         0.50
+ikisi_kis    2018/19  1.00  0.00  0.00   48         1.00
+             2019/20  0.98  0.02  0.00   87         0.98
+             2020/21  0.97  0.01  0.02   93         0.97
+             2021/22  1.00  0.00  0.00   88         1.00
+             2022/23  1.00  0.00  0.00   89         1.00
+             2023/24  1.00  0.00  0.00   87         1.00
+             2024/25  1.00  0.00  0.00   85         1.00
+             2025/26  1.00  0.00  0.00   85         1.00
+ikisi_yaz    2018/19  0.92  0.08  0.00   37         0.08
+             2019/20  0.59  0.40  0.01  151         0.40
+             2020/21  0.36  0.64  0.00  151         0.64
+             2021/22  0.38  0.62  0.00  154         0.62
+             2022/23  0.20  0.80  0.01  153         0.80
+             2023/24  0.24  0.76  0.00  148         0.76
+             2024/25  0.30  0.69  0.01  147         0.69
+             2025/26  0.29  0.71  0.00  148         0.71
+             2026/27  0.03  0.97  0.00   67         0.97
+
+Modele uymayan güçlü günler (marj≥0,7): 73 / 1942
+      date  be_dst  ny_dst  oy  marj  beklenen        sinif   donem
+2019-05-14    True    True -60  1.41         0    ikisi_yaz 2018/19
+2019-05-15    True    True -60  0.76         0    ikisi_yaz 2018/19
+2019-05-17    True    True -60  1.39         0    ikisi_yaz 2018/19
+2019-05-23    True    True -60  0.91         0    ikisi_yaz 2018/19
+2019-05-29    True    True -60  0.90         0    ikisi_yaz 2018/19
+2019-05-30    True    True -60  1.06         0    ikisi_yaz 2018/19
+2019-06-04    True    True -60  0.74         0    ikisi_yaz 2018/19
+2019-06-05    True    True -60  1.02         0    ikisi_yaz 2018/19
+2019-06-06    True    True -60  0.88         0    ikisi_yaz 2018/19
+2019-06-07    True    True -60  0.83         0    ikisi_yaz 2018/19
+2019-06-10    True    True -60  1.47         0    ikisi_yaz 2018/19
+2019-06-11    True    True -60  1.02         0    ikisi_yaz 2018/19
+2019-06-14    True    True -60  1.03         0    ikisi_yaz 2018/19
+2019-06-24    True    True -60  0.78         0    ikisi_yaz 2018/19
+2019-06-28    True    True -60  0.80         0    ikisi_yaz 2018/19
+2019-07-04    True    True -60  0.80         0    ikisi_yaz 2019/20
+2019-07-12    True    True -60  1.26         0    ikisi_yaz 2019/20
+2019-07-26    True    True -60  0.99         0    ikisi_yaz 2019/20
+2019-07-31    True    True -60  1.45         0    ikisi_yaz 2019/20
+2019-08-05    True    True -60  0.75         0    ikisi_yaz 2019/20
+2019-08-13    True    True -60  1.04         0    ikisi_yaz 2019/20
+2019-08-15    True    True -60  0.74         0    ikisi_yaz 2019/20
+2019-08-16    True    True -60  0.72         0    ikisi_yaz 2019/20
+2019-08-19    True    True -60  0.93         0    ikisi_yaz 2019/20
+2019-08-27    True    True -60  0.91         0    ikisi_yaz 2019/20
+2019-09-03    True    True -60  0.90         0    ikisi_yaz 2019/20
+2019-09-04    True    True -60  1.07         0    ikisi_yaz 2019/20
+2019-10-03    True    True -60  1.01         0    ikisi_yaz 2019/20
+2019-10-10    True    True -60  0.98         0    ikisi_yaz 2019/20
+2019-10-14    True    True -60  1.36         0    ikisi_yaz 2019/20
+2019-10-15    True    True -60  1.30         0    ikisi_yaz 2019/20
+2020-03-09   False    True -60  1.07         0 NYyaz_BERkis 2019/20
+2020-03-16   False    True -60  0.70         0 NYyaz_BERkis 2019/20
+2020-04-14    True    True -60  1.70         0    ikisi_yaz 2019/20
+2020-04-16    True    True -60  1.00         0    ikisi_yaz 2019/20
+2020-04-17    True    True -60  1.00         0    ikisi_yaz 2019/20
+2020-04-20    True    True -60  0.78         0    ikisi_yaz 2019/20
+2020-05-04    True    True -60  0.88         0    ikisi_yaz 2019/20
+2020-05-05    True    True -60  0.70         0    ikisi_yaz 2019/20
+2020-06-12    True    True -60  0.71         0    ikisi_yaz 2019/20
+2020-06-15    True    True -60  0.83         0    ikisi_yaz 2019/20
+2020-06-19    True    True -60  0.92         0    ikisi_yaz 2019/20
+2020-06-29    True    True -60  0.82         0    ikisi_yaz 2019/20
+2020-07-10    True    True -60  0.82         0    ikisi_yaz 2020/21
+2020-07-23    True    True -60  0.99         0    ikisi_yaz 2020/21
+2020-08-12    True    True -60  0.88         0    ikisi_yaz 2020/21
+2020-09-07    True    True -60  0.84         0    ikisi_yaz 2020/21
+2020-09-17    True    True -60  1.52         0    ikisi_yaz 2020/21
+2020-10-26   False    True -60  1.06         0 NYyaz_BERkis 2020/21
+2020-10-29   False    True -60  0.84         0 NYyaz_BERkis 2020/21
+2021-03-18   False    True -60  0.84         0 NYyaz_BERkis 2020/21
+2021-06-17    True    True -60  1.07         0    ikisi_yaz 2020/21
+2021-06-21    True    True -60  0.97         0    ikisi_yaz 2020/21
+2021-08-09    True    True -60  0.74         0    ikisi_yaz 2021/22
+2021-09-20    True    True -60  0.70         0    ikisi_yaz 2021/22
+2021-10-11    True    True -60  0.72         0    ikisi_yaz 2021/22
+2022-03-15   False    True -60  1.21         0 NYyaz_BERkis 2021/22
+2022-03-17   False    True -60  1.07         0 NYyaz_BERkis 2021/22
+2022-04-25    True    True -60  0.93         0    ikisi_yaz 2021/22
+2022-05-13    True    True -60  0.74         0    ikisi_yaz 2021/22
+2022-08-25    True    True -60  0.83         0    ikisi_yaz 2022/23
+2022-09-21    True    True -60  1.32         0    ikisi_yaz 2022/23
+2022-10-27    True    True  60  1.25         0    ikisi_yaz 2022/23
+2023-08-11    True    True -60  1.64         0    ikisi_yaz 2023/24
+2024-04-19    True    True -60  0.98         0    ikisi_yaz 2023/24
+2024-06-17    True    True -60  0.98         0    ikisi_yaz 2023/24
+2024-07-29    True    True -60  0.70         0    ikisi_yaz 2024/25
+2024-08-02    True    True -60  0.86         0    ikisi_yaz 2024/25
+2024-08-14    True    True -60  0.75         0    ikisi_yaz 2024/25
+2025-03-19   False    True -60  0.87         0 NYyaz_BERkis 2024/25
+2025-08-28    True    True -60  1.09         0    ikisi_yaz 2025/26
+2026-03-24   False    True  60  1.07         0 NYyaz_BERkis 2025/26
+2026-06-18    True    True -60  0.97         0    ikisi_yaz 2025/26

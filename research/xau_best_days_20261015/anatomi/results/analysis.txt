@@ -1,0 +1,303 @@
+=== 1. YOĞUNLAŞMA ===
+TÜM OLAY (örtüşmeli, sinyal UTC günü) — eski %72 hesabı: n=12403 gün=3418 toplamR=1268.1 ortR=+0.1022
+   en iyi  5 gün: pay % 24.8 (314.7R) | hariç ortR +0.0772 (n=12347)
+   en iyi 10 gün: pay % 43.7 (554.0R) | hariç ortR +0.0581 (n=12294)
+   en iyi 20 gün: pay % 72.0 (912.7R) | hariç ortR +0.0292 (n=12179)
+   en iyi 30 gün: pay % 97.4 (1235.0R) | hariç ortR +0.0027 (n=12075)
+   en iyi 50 gün: pay %142.6 (1808.3R) | hariç ortR -0.0455 (n=11883)
+   en kötü 20 gün: -173.2R | hariç ortR +0.1179
+   en kötü 50 gün: -390.2R | hariç ortR +0.1382
+TEK-POZİSYON (giriş UTC günü) — bu çalışmanın tanımı: n=3664 gün=3047 toplamR=290.5 ortR=+0.0793
+   en iyi  5 gün: pay % 20.1 (58.3R) | hariç ortR +0.0635 (n=3659)
+   en iyi 10 gün: pay % 35.6 (103.5R) | hariç ortR +0.0512 (n=3653)
+   en iyi 20 gün: pay % 61.6 (178.9R) | hariç ortR +0.0306 (n=3641)
+   en iyi 30 gün: pay % 85.1 (247.1R) | hariç ortR +0.0120 (n=3629)
+   en iyi 50 gün: pay %127.1 (369.4R) | hariç ortR -0.0219 (n=3607)
+   en kötü 20 gün: -60.7R | hariç ortR +0.0975
+   en kötü 50 gün: -121.8R | hariç ortR +0.1166
+TEK-POZİSYON (giriş NY-17 işlem günü): n=3664 gün=3027 toplamR=290.5 ortR=+0.0793
+   en iyi  5 gün: pay % 20.1 (58.3R) | hariç ortR +0.0635 (n=3659)
+   en iyi 10 gün: pay % 35.6 (103.5R) | hariç ortR +0.0512 (n=3653)
+   en iyi 20 gün: pay % 61.3 (178.1R) | hariç ortR +0.0309 (n=3642)
+   en iyi 30 gün: pay % 84.5 (245.6R) | hariç ortR +0.0124 (n=3629)
+   en iyi 50 gün: pay %126.3 (367.0R) | hariç ortR -0.0212 (n=3606)
+   en kötü 20 gün: -61.2R | hariç ortR +0.0976
+   en kötü 50 gün: -122.8R | hariç ortR +0.1169
+İşlem düzeyi: en iyi 20 işlem 180.9R (%62); R≥5 işlem sayısı 71 toplam 479.9R
+Gün başına işlem: top20 günlerde 1.15, tüm günler 1.20
+UTC ilk-20 ile NY-17 ilk-20 örtüşmesi (aynı işlem): 17/20
+Günlük R: ort +0.095 medyan -1.00 sd 1.86 çarpıklık 1.74; p99=6.60 p1=-2.00
+
+=== 2. KÜMELENME ===
+top20: 19 ayrık epizod (≤14 gün aralık), 18 ayrı ay; yıllar: 2008:2 2010:1 2011:2 2012:2 2015:1 2016:1 2018:1 2019:2 2020:2 2022:1 2023:2 2024:1 2025:2
+   çok-günlü epizodlar: 2019-06-19,2019-07-02
+   rastgele 20 işlem günü → epizod sayısı medyan 19 (%5 18); gözlenen 19; P(sim ≤ gözlenen)=0.546
+top50: 49 ayrık epizod (≤14 gün aralık), 46 ayrı ay; yıllar: 2008:4 2009:2 2010:3 2011:3 2012:3 2013:2 2014:1 2015:1 2016:6 2018:1 2019:4 2020:2 2021:1 2022:2 2023:3 2024:6 2025:4 2026:2
+   çok-günlü epizodlar: 2019-06-19,2019-07-02
+   rastgele 50 işlem günü → epizod sayısı medyan 45 (%5 42); gözlenen 49; P(sim ≤ gözlenen)=0.995
+yıl | işlem günü | top50 | beklenen:
+      gun  top50  beklenen
+y                         
+2008  175      4       2.9
+2009  178      2       2.9
+2010  185      3       3.0
+2011  177      3       2.9
+2012  169      3       2.8
+2013  154      2       2.5
+2014  158      1       2.6
+2015  148      1       2.4
+2016  155      6       2.5
+2017  168      0       2.8
+2018  153      1       2.5
+2019  161      4       2.6
+2020  174      2       2.9
+2021  167      1       2.7
+2022  158      2       2.6
+2023  160      3       2.6
+2024  171      6       2.8
+2025  170      4       2.8
+2026   66      2       1.1
+   top50 yıl dağılımı ki-kare p=0.440
+   günlük R Spearman otokor lag1: -0.042 (p=0.020)
+   günlük R Spearman otokor lag2: +0.002 (p=0.923)
+   günlük R Spearman otokor lag3: -0.030 (p=0.100)
+   günlük R Spearman otokor lag5: +0.008 (p=0.672)
+   iş-günü takvimi (0 dolgulu) Spearman lag1: -0.065 (p=0.000)
+   iş-günü takvimi (0 dolgulu) Spearman lag5: +0.011 (p=0.442)
+   P(sonraki 5 işlem gününde top-%10 gün | bugün top-%10) = 0.384 vs koşulsuz 0.427
+   haftalık R otokor lag1 -0.021; aylık lag1 +0.066
+   en iyi 10 ay: 2020-07:20.0, 2023-10:19.9, 2012-11:18.3, 2011-08:17.4, 2009-05:15.8, 2016-02:15.5, 2010-10:14.6, 2023-03:14.2, 2026-01:14.2, 2025-01:13.4 | toplamın %56'i (222 ay)
+
+=== 3. ÖZELLİKLER (temsilci işlem / gün) — grup vs 'diğer işlem günleri' ===
+                   özellik     tür  top20_med  diğer_med  d_top20  AUC_top20  p_top20  d_top50  AUC_top50  p_top50  worst20_med  d_worst20  AUC_worst20  p_worst20
+      rep_xa_atrH1_over_D1 EX-ANTE      0.125      0.171   -0.893      0.219    0.000   -0.724      0.271    0.000        0.170     -0.032        0.502      0.977
+       rep_xa_atrH1_pct500 EX-ANTE      0.237      0.438   -0.630      0.316    0.004   -0.723      0.286    0.000        0.445     -0.064        0.483      0.791
+         rep_xa_bbw_pct120 EX-ANTE      0.096      0.242   -0.482      0.350    0.020   -0.465      0.358    0.001        0.383      0.163        0.546      0.475
+           rep_xa_hour_sig EX-ANTE      9.500     12.000   -0.125      0.442    0.371   -0.418      0.368    0.001       10.500     -0.256        0.401      0.124
+         rep_xa_bbw_pct500 EX-ANTE      0.186      0.250   -0.340      0.395    0.104   -0.424      0.372    0.002        0.367      0.299        0.584      0.195
+      rep_xa_dist_52wh_atr EX-ANTE     -2.235     -5.813    0.513      0.663    0.014    0.343      0.623    0.003       -5.910      0.333        0.591      0.162
+      rep_xa_ema50_slope10 EX-ANTE      0.844      0.177    0.336      0.600    0.134    0.374      0.601    0.017        0.707      0.102        0.545      0.485
+         rep_xa_body_ratio EX-ANTE      0.330      0.542   -0.414      0.365    0.037   -0.311      0.407    0.024        0.652      0.017        0.533      0.614
+                     is_ny EX-ANTE      0.000      0.000   -0.209      0.449    0.351   -0.336      0.418    0.018        0.000     -0.418        0.398      0.063
+              rep_xa_ret20 EX-ANTE      0.031      0.006    0.357      0.605    0.105    0.275      0.579    0.056        0.008      0.021        0.505      0.940
+          rep_xa_rng20_atr EX-ANTE      4.151      3.642    0.088      0.545    0.486    0.243      0.577    0.061        4.033      0.321        0.606      0.103
+       rep_xa_dist_ath_pct EX-ANTE     -0.095     -0.134    0.249      0.581    0.212    0.207      0.574    0.072       -0.102      0.301        0.599      0.127
+       rep_xa_intraday_atr EX-ANTE      0.258      0.260   -0.035      0.462    0.560   -0.203      0.435    0.115        0.261      0.070        0.545      0.491
+           rep_xa_body_atr EX-ANTE      0.446      0.813   -0.285      0.402    0.131   -0.193      0.436    0.120        1.031     -0.035        0.540      0.541
+       rep_xa_dist_ath_atr EX-ANTE     -8.166     -9.920    0.195      0.557    0.376    0.175      0.563    0.131       -6.893      0.137        0.582      0.207
+          rep_xa_level_age EX-ANTE     16.000     10.000    0.359      0.592    0.156    0.218      0.555    0.181        5.000     -0.533        0.360      0.030
+      rep_xa_pen_close_atr EX-ANTE     -0.222      0.014   -0.113      0.446    0.407   -0.149      0.451    0.231        0.039     -0.180        0.481      0.769
+      rep_xa_vol_ratio_100 EX-ANTE      1.441      1.463   -0.094      0.440    0.358   -0.125      0.455    0.269        1.447     -0.168        0.471      0.654
+                   is_asia EX-ANTE      0.000      0.000    0.220      0.548    0.327    0.199      0.543    0.163        0.000     -0.008        0.498      0.973
+     rep_xa_w1_above_ema20 EX-ANTE      1.000      1.000    0.175      0.543    0.436    0.177      0.543    0.215        1.000      0.074        0.518      0.742
+                    is_ldn EX-ANTE      0.000      0.000    0.014      0.503    0.949    0.164      0.539    0.249        1.000      0.438        0.604      0.051
+    rep_xa_d1_above_ema200 EX-ANTE      1.000      1.000    0.220      0.553    0.327    0.158      0.538    0.267        1.000      0.221        0.553      0.325
+                    is_mon EX-ANTE      0.000      0.000   -0.195      0.463    0.384   -0.197      0.463    0.167        0.000     -0.197        0.463      0.380
+             rep_xa_spread EX-ANTE      0.343      0.360   -0.084      0.527    0.680   -0.083      0.533    0.420        0.365     -0.067        0.556      0.390
+               rep_xa_ret5 EX-ANTE      0.003      0.003    0.157      0.512    0.857    0.125      0.532    0.436        0.001      0.138        0.521      0.751
+     rep_xa_d1_above_ema50 EX-ANTE      1.000      1.000    0.144      0.536    0.520    0.125      0.531    0.379        1.000      0.146        0.536      0.516
+       rep_xa_ema50_gt_200 EX-ANTE      1.000      1.000    0.211      0.550    0.346    0.107      0.526    0.453        1.000      0.422        0.601      0.060
+     rep_xa_w1_above_ema50 EX-ANTE      1.000      1.000    0.206      0.549    0.358    0.101      0.524    0.477        1.000      0.101        0.524      0.651
+rep_xa_bars_since_prev_brk EX-ANTE     22.000     23.000   -0.031      0.515    0.819   -0.001      0.522    0.588        8.000     -0.457        0.342      0.015
+              rep_xa_atrD1 EX-ANTE     19.482     20.671   -0.009      0.489    0.869    0.045      0.518    0.660       20.675     -0.171        0.491      0.895
+      rep_xa_atrD1p_pct252 EX-ANTE      0.524      0.448    0.385      0.607    0.108    0.076      0.517    0.686        0.437     -0.070        0.484      0.810
+      rep_xa_brk_density24 EX-ANTE      1.000      1.000   -0.071      0.491    0.881   -0.117      0.487    0.733        3.000      0.355        0.621      0.050
+                    is_fri EX-ANTE      0.000      0.000   -0.125      0.475    0.576    0.051      0.510    0.720        0.000     -0.124        0.475      0.581
+        rep_xa_shock24_atr EX-ANTE      1.631      1.873   -0.385      0.390    0.090   -0.026      0.490    0.811        2.048      0.009        0.541      0.530
+       rep_xa_pen_high_atr EX-ANTE      0.344      0.492   -0.124      0.455    0.488   -0.063      0.492    0.849        0.399     -0.274        0.430      0.283
+      rep_xa_bar_range_atr EX-ANTE      1.640      1.740   -0.168      0.474    0.692   -0.023      0.506    0.878        1.802      0.013        0.546      0.478
+            rep_xa_gap_atr EX-ANTE     -0.000      0.000   -0.182      0.444    0.386   -0.143      0.504    0.933       -0.000     -0.140        0.415      0.187
+     rep_xa_vol_ratio_hour EX-ANTE      1.105      1.117   -0.025      0.511    0.864   -0.026      0.500    0.999        1.170     -0.027        0.528      0.662
+              rep_xp_mfe_R EX-POST      9.508      1.019    5.541      0.997    0.000    4.541      0.994    0.000        0.192     -0.775        0.212      0.000
+             rep_xp_R_day0 EX-POST      7.528     -0.369    4.243      0.935    0.000    3.895      0.957    0.000       -1.000     -0.746        0.166      0.000
+        rep_xp_day_ret_atr EX-POST      1.342      0.280    2.077      0.911    0.000    1.911      0.919    0.000        0.210     -0.396        0.405      0.141
+           rep_xp_day_ret1 EX-POST      0.020      0.004    2.048      0.886    0.000    1.800      0.894    0.000        0.003     -0.338        0.410      0.163
+      rep_xp_day_range_atr EX-POST      1.705      0.918    1.741      0.827    0.000    1.475      0.838    0.000        1.066      0.193        0.591      0.160
+              rep_xp_mae_R EX-POST     -0.417     -1.033    0.839      0.795    0.000    0.900      0.817    0.000       -1.200     -0.401        0.320      0.005
+         rep_xp_vol_expand EX-POST      1.976      1.120    0.861      0.840    0.000    0.632      0.794    0.000        1.372      0.283        0.603      0.111
+               rep_xp_held EX-POST     20.000      9.000    1.038      0.786    0.000    0.955      0.766    0.000        3.000     -0.898        0.223      0.000
+         rep_xp_giveback_R EX-POST      1.163      1.209    0.101      0.496    0.948   -0.355      0.364    0.001        1.192     -0.003        0.538      0.559
+   rep_xp_exit_at_maxclose EX-POST      0.000      0.000    0.561      0.616    0.012    0.593      0.622    0.000        0.000      0.449        0.592      0.046
+           rep_xp_day_fwd1 EX-POST      0.003      0.000    0.462      0.591    0.159    0.446      0.611    0.007        0.000     -0.186        0.455      0.486
+           rep_xp_day_fwd3 EX-POST      0.008      0.001    0.493      0.609    0.091    0.320      0.592    0.026       -0.004     -0.283        0.388      0.083
+           rep_xp_day_fwd5 EX-POST      0.013      0.002    0.332      0.586    0.185    0.163      0.542    0.309       -0.008     -0.255        0.408      0.154
+                      n_tr EX-POST      1.000      1.000   -0.096      0.484    0.710   -0.122      0.479    0.438        3.000      4.567        0.996      0.000
+    rep_xp_atrD1p_pct_full EX-POST      0.388      0.498   -0.113      0.466    0.600   -0.073      0.479    0.613        0.526     -0.015        0.497      0.963
+           rep_xp_post20_R EX-POST     -1.276      0.023   -0.461      0.378    0.060   -0.041      0.502    0.959       -1.212     -0.256        0.428      0.263
+(özellik sayısı 54; Bonferroni α=0.05/54=0.0009)
+
+rep_xa_session dağılımı (sütun %):
+col_0           diğer  top20  top21_50  worst20
+rep_xa_session                                 
+Asya            0.253   0.35     0.333     0.25
+Londra          0.342   0.35     0.467     0.55
+NY              0.405   0.30     0.200     0.20
+
+rep_weekday dağılımı (sütun %):
+col_0        diğer  top20  top21_50  worst20
+rep_weekday                                 
+0            0.175   0.10     0.100     0.10
+1            0.203   0.40     0.267     0.15
+2            0.201   0.30     0.233     0.25
+3            0.180   0.05     0.133     0.35
+4            0.200   0.15     0.267     0.15
+6            0.042   0.00     0.000     0.00
+
+rep_ent_hour dağılımı (sütun %):
+col_0         diğer  top20  top21_50  worst20
+rep_ent_hour                                 
+0             0.042   0.05     0.000     0.00
+1             0.025   0.05     0.100     0.10
+2             0.042   0.00     0.033     0.00
+3             0.016   0.00     0.000     0.00
+4             0.016   0.00     0.067     0.00
+5             0.011   0.05     0.067     0.10
+6             0.022   0.00     0.000     0.00
+7             0.030   0.15     0.067     0.00
+8             0.045   0.10     0.100     0.05
+9             0.032   0.05     0.067     0.10
+10            0.040   0.10     0.067     0.05
+11            0.044   0.05     0.033     0.10
+12            0.063   0.05     0.067     0.05
+13            0.119   0.00     0.133     0.20
+14            0.131   0.05     0.067     0.05
+15            0.092   0.10     0.000     0.00
+16            0.068   0.00     0.000     0.00
+17            0.033   0.00     0.000     0.00
+18            0.025   0.00     0.100     0.00
+19            0.030   0.10     0.033     0.05
+20            0.018   0.00     0.000     0.00
+21            0.006   0.00     0.000     0.10
+22            0.003   0.05     0.000     0.05
+23            0.048   0.05     0.000     0.00
+
+=== 3b. EX-ANTE özellikler: işlem düzeyi (tek-poz n=3664), beşli dilim ortR + iki-yarı işaret tutarlılığı ===
+               özellik  k     Q1     Q2     Q3     Q4     Q5  Q5-Q1  Q5-Q1_08-16  Q5-Q1_17-26  AUC(R≥5)  rho(R)  P(R≥5)_Q1  P(R≥5)_Q5  tutarlı
+      xa_atrH1_over_D1  5  0.107  0.081  0.121  0.002  0.079 -0.028        0.002       -0.060     0.313   0.088      0.040      0.007    False
+       xa_atrH1_pct500  5  0.140  0.076  0.086  0.040  0.043 -0.097       -0.091       -0.103     0.323   0.081      0.043      0.007     True
+         xa_bbw_pct120  5  0.114  0.068  0.080  0.130 -0.006 -0.120       -0.157       -0.092     0.386   0.021      0.029      0.011     True
+           xa_hour_sig  5  0.228  0.055  0.015  0.078  0.020 -0.208       -0.222       -0.202     0.391   0.036      0.027      0.015     True
+         xa_bbw_pct500  5  0.096  0.154  0.080  0.058 -0.002 -0.098       -0.226        0.016     0.391   0.004      0.029      0.012    False
+       xa_intraday_atr  5  0.060  0.126  0.095  0.094  0.015 -0.045       -0.069       -0.020     0.426   0.018      0.023      0.008     True
+         xa_body_ratio  5  0.122  0.079  0.015  0.059  0.122  0.000       -0.085        0.062     0.426   0.013      0.027      0.010    False
+          xa_rng20_atr  5  0.100  0.152  0.013  0.138 -0.007 -0.107       -0.242        0.031     0.562  -0.072      0.018      0.022    False
+      xa_pen_close_atr  5  0.024  0.183  0.052 -0.056  0.193  0.168        0.133        0.202     0.439   0.022      0.027      0.020     True
+          xa_level_age  5 -0.015 -0.002  0.122  0.098  0.194  0.209        0.078        0.310     0.556   0.025      0.019      0.029     True
+           xa_body_atr  5  0.125  0.080 -0.001  0.064  0.128  0.004       -0.081        0.081     0.452   0.023      0.026      0.020    False
+xa_bars_since_prev_brk  5 -0.039  0.043  0.104  0.225  0.063  0.102        0.104        0.101     0.544   0.031      0.011      0.011     True
+      xa_brk_density24  5  0.118  0.191  0.147  0.046 -0.106 -0.224       -0.334       -0.328     0.458  -0.054      0.019      0.011     True
+               xa_ret5  5  0.047 -0.001  0.120  0.183  0.037 -0.010        0.027       -0.078     0.538   0.000      0.016      0.020    False
+              xa_atrD1  5  0.048  0.136  0.086  0.036  0.085  0.037       -0.281        0.156     0.462   0.008      0.021      0.014    False
+      xa_dist_52wh_atr  5  0.056 -0.004  0.001  0.116  0.199  0.144        0.141        0.106     0.532   0.019      0.021      0.029     True
+       xa_ema50_gt_200  2  0.069  0.085    NaN    NaN    NaN  0.016        0.064       -0.074     0.473   0.004      0.022      0.018    False
+     xa_w1_above_ema50  2  0.047  0.096    NaN    NaN    NaN  0.049        0.093       -0.027     0.473   0.022      0.022      0.018    False
+      xa_bar_range_atr  5  0.069  0.079  0.044  0.152  0.052 -0.016        0.108       -0.132     0.526   0.015      0.012      0.016    False
+     xa_d1_above_ema50  2  0.050  0.100    NaN    NaN    NaN  0.051        0.015        0.082     0.475   0.017      0.022      0.018     True
+            xa_gap_atr  5  0.026  0.049  0.067  0.103  0.137  0.111        0.106        0.139     0.520   0.029      0.012      0.018     True
+    xa_d1_above_ema200  2  0.048  0.096    NaN    NaN    NaN  0.048        0.099       -0.035     0.483   0.015      0.021      0.018    False
+     xa_vol_ratio_hour  5  0.102  0.093  0.077  0.085  0.029 -0.073       -0.188        0.013     0.485   0.001      0.016      0.015    False
+              xa_ret20  5  0.090 -0.001  0.024  0.113  0.160  0.070        0.149       -0.063     0.514   0.018      0.022      0.026    False
+     xa_w1_above_ema20  2  0.056  0.094    NaN    NaN    NaN  0.037        0.060        0.002     0.486   0.010      0.021      0.019     True
+      xa_ema50_slope10  5  0.091  0.005  0.021  0.059  0.193  0.102        0.210        0.015     0.513   0.021      0.024      0.025     True
+       xa_dist_ath_atr  5  0.012  0.051  0.076  0.027  0.223  0.211        0.154        0.253     0.487   0.022      0.021      0.023     True
+        xa_shock24_atr  5  0.078  0.171  0.076  0.034  0.037 -0.040       -0.194        0.100     0.510  -0.030      0.018      0.023    False
+             xa_spread  5 -0.056  0.038  0.114  0.136  0.164  0.219        0.246        0.212     0.493   0.039      0.015      0.014     True
+      xa_atrD1p_pct252  5  0.178  0.089  0.035 -0.015  0.069 -0.109       -0.137       -0.091     0.496  -0.021      0.023      0.020     True
+       xa_dist_ath_pct  5  0.016  0.059  0.051  0.022  0.248  0.232        0.151        0.329     0.502   0.019      0.018      0.026     True
+       xa_pen_high_atr  5  0.148 -0.005 -0.015  0.094  0.174  0.026        0.209       -0.154     0.502   0.022      0.026      0.019    False
+      xa_vol_ratio_100  5  0.084  0.078  0.066  0.106  0.060 -0.023       -0.042       -0.029     0.499   0.040      0.014      0.014     True
+R≥5 işlem: 71 (%1.9), toplam 479.9R
+
+=== 4. MEKANİZMA ===
+top20: temsilci işlem R ort 8.90; giriş günü sonuna kadar biriken 6.54R, sonrası 2.37R; R'nin giriş günü SONRASI payı (toplam) %27; TIME çıkış %100; tutma medyan 20 bar; MFE ort 10.32, geri-verme ort 1.41; çıkış=max kapanış %45; çıkış sonrası 20 bar ort -1.15R (>0: %30); vol genişleme (işlem içi TR / giriş ATR) medyan 1.98
+top50: temsilci işlem R ort 7.29; giriş günü sonuna kadar biriken 5.65R, sonrası 1.64R; R'nin giriş günü SONRASI payı (toplam) %23; TIME çıkış %100; tutma medyan 20 bar; MFE ort 8.30, geri-verme ort 1.01; çıkış=max kapanış %46; çıkış sonrası 20 bar ort -0.10R (>0: %50); vol genişleme (işlem içi TR / giriş ATR) medyan 1.77
+diğer: temsilci işlem R ort 0.12; giriş günü sonuna kadar biriken 0.08R, sonrası 0.04R; R'nin giriş günü SONRASI payı (toplam) %36; TIME çıkış %45; tutma medyan 9 bar; MFE ort 1.45, geri-verme ort 1.33; çıkış=max kapanış %22; çıkış sonrası 20 bar ort +0.00R (>0: %50); vol genişleme (işlem içi TR / giriş ATR) medyan 1.11
+worst20: temsilci işlem R ort -1.02; giriş günü sonuna kadar biriken -0.95R, sonrası -0.06R; R'nin giriş günü SONRASI payı (toplam) %6; TIME çıkış %0; tutma medyan 3 bar; MFE ort 0.31, geri-verme ort 1.33; çıkış=max kapanış %40; çıkış sonrası 20 bar ort -0.64R (>0: %40); vol genişleme (işlem içi TR / giriş ATR) medyan 1.37
+R≥5 (n=71): çıkış hareketi / ATR_D1 medyan 1.35; ATR_H1/ATR_D1 medyan 0.139; vol genişleme medyan 1.71
+0<R<5 (n=1232): çıkış hareketi / ATR_D1 medyan 0.38; ATR_H1/ATR_D1 medyan 0.180; vol genişleme medyan 0.96
+R≤0 (n=2361): çıkış hareketi / ATR_D1 medyan -0.24; ATR_H1/ATR_D1 medyan 0.167; vol genişleme medyan 1.32
+                                                       bayrak  top20 %  top50 %  diğer %  worst20 %  top20 R payı
+                                            sıkışma→genişleme     0.65     0.48    0.159       0.20         0.654
+                                    sıkışma (ex-ante bbw≤%20)     0.70     0.62    0.442       0.40         0.696
+                                 vol genişleme ≥1.5 (ex-post)     0.90     0.78    0.289       0.45         0.916
+       güçlü trend devamı (c>EMA50>EMA200, 52wH'ye ≤1 ATR_D1)     0.30     0.30    0.121       0.25         0.285
+                                     ATH'de/yakın (≤1 ATR_D1)     0.15     0.22    0.093       0.25         0.137
+boşluk/şok (|gap|≥0.5 ATR_D1 veya 24s içinde ≥3 ATR_H1 gövde)     0.05     0.08    0.151       0.10         0.043
+           çok-günlü bacak (R'nin >%50'si giriş günü sonrası)     0.25     0.18    0.092       0.00         0.219
+                ilk kırılım (önceki 20-tepeden ≥20 bar sonra)     0.70     0.68    0.599       0.35         0.713
+                      yüksek vol rejimi (ATR_D1 % ≥ 252g p80)     0.30     0.22    0.180       0.00         0.307
+                       giriş günü altın ≥ +2 ATR_D1 (ex-post)     0.20     0.16    0.009       0.00         0.244
+Öncelikli tekil sınıflama (sıkışma→genişleme > şok > trend devamı > diğer) top50:
+                   size    sum
+mech                          
+diğer                18  128.9
+sıkışma→genişleme    24  187.5
+trend devamı          6   39.6
+şok/gap               2   13.3
+aynı sınıflama diğer günler:
+                   size   mean
+mech                          
+diğer              1867  0.102
+sıkışma→genişleme   472 -0.671
+trend devamı        278  0.213
+şok/gap             360  0.134
+
+=== 5. ALTININ EN BÜYÜK GÜNLERİ ===
+Altının en iyi 50 günü (ret1): o gün giriş 100%, o gün açık pozisyon 100%; giriş olan günlerde giriş R ort 3.08 (medyan 2.37); toplam giriş R 154.2; açık işlemlerin toplam R 188.9
+       gün  ret1  o gün giriş  giriş R  açık poz. var  o gün açık işlemlerin R
+2008-09-17 0.110         True   15.629           True                   15.629
+2008-11-21 0.074         True    4.069           True                    6.652
+2026-01-28 0.066         True   -1.000           True                    4.244
+2026-02-06 0.055         True    0.434           True                    0.434
+2009-01-23 0.051         True    6.071           True                    5.071
+2008-11-04 0.051         True    3.764           True                    3.764
+2013-09-18 0.047         True    5.881           True                    5.881
+2020-03-23 0.045         True    5.201           True                    5.201
+2026-06-11 0.043         True    1.203           True                    1.203
+2012-06-01 0.041         True    3.925           True                    2.925
+2026-03-31 0.040         True    2.053           True                    2.053
+2020-03-24 0.040         True    1.155           True                    6.355
+2008-12-10 0.038         True    3.610           True                    6.166
+2016-06-24 0.038         True    4.637           True                    4.637
+2026-01-22 0.038         True    2.307           True                    2.307
+Altının en iyi 50 günü (ret_atr): o gün giriş 98%, o gün açık pozisyon 100%; giriş olan günlerde giriş R ort 3.89 (medyan 3.75); toplam giriş R 190.4; açık işlemlerin toplam R 233.2
+       gün  ret_atr  o gün giriş  giriş R  açık poz. var  o gün açık işlemlerin R
+2008-09-17    3.689         True   15.629           True                   15.629
+2026-01-28    3.331         True   -1.000           True                    4.244
+2014-06-19    3.188         True    3.068           True                    9.162
+2023-10-13    2.943         True   11.374           True                   11.374
+2020-07-27    2.896         True    2.755           True                    2.755
+2016-06-24    2.571         True    4.637           True                    4.637
+2023-03-17    2.544         True    8.953           True                    8.953
+2020-01-07    2.541         True    1.184           True                    1.184
+2016-02-11    2.523         True    0.453           True                    6.743
+2013-09-18    2.360         True    5.881           True                    5.881
+2011-08-08    2.352         True    2.222           True                    2.222
+2019-01-25    2.344         True    4.329           True                    4.329
+2012-06-01    2.333         True    3.925           True                    2.925
+2014-11-07    2.302         True    5.116           True                    4.116
+2016-06-03    2.281         True    1.287           True                    1.287
+top20 kural günlerinden altının en iyi 50 (%getiri) gününe giren: 5/20; en iyi 1% (47) : 4/20; ATR-getiri top50: 6/20; ilk %10: 14/20; medyan sıra 172/4753
+top50 kural günleri: altın top50'de 9/50, ilk %10'da 36/50
+       gün         R  altın %getiri sırası  altın ATR-getiri sırası  ertesi gün % sırası
+2008-09-17 15.629062                   1.0                      1.0               4268.0
+2023-10-13 11.374133                  30.0                      4.0               3885.0
+2012-11-06 10.931206                 324.0                     99.0               1660.0
+2012-11-23 10.383913                 540.0                    195.0               2518.0
+2016-09-06  9.946491                 261.0                     72.0               3333.0
+2020-07-21  9.906853                 389.0                    119.0                349.0
+2022-02-23  9.192498                1076.0                    943.0               3035.0
+2011-08-18  9.128220                 129.0                    359.0                370.0
+2023-03-17  8.953203                  24.0                      7.0               3686.0
+2024-03-20  8.017763                 124.0                     45.0               4193.0
+2011-08-02  7.913156                 116.0                     44.0               1618.0
+2020-02-18  7.826016                 631.0                    210.0               1179.0
+2019-07-02  7.678842                  32.0                     16.0               4100.0
+2015-05-13  7.677761                 214.0                    137.0               1159.0
+2025-05-05  7.606029                  50.0                    213.0                155.0
+2025-04-15  7.555333                 496.0                    899.0                 44.0
+2018-10-10  7.462323                1655.0                   1442.0                100.0
+2008-02-19  7.436287                  76.0                    134.0                403.0
+2019-06-19  7.312551                 729.0                    465.0                 81.0
+2010-01-04  7.014375                 115.0                    106.0               2976.0
+Spearman(gün R, altın giriş-günü ATR-getirisi) = 0.601; (gün R, ertesi gün getirisi) = 0.129

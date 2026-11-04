@@ -1,0 +1,26 @@
+{
+ "window_utc": [
+  "2026-10-05 21:49:00+00:00",
+  "2026-10-21 00:00:00+00:00"
+ ],
+ "minutes": 21731,
+ "common_minutes": 21503,
+ "range_bp": {
+  "binance_med": 3.0634028201575667,
+  "binance_p90": 8.799462864141029,
+  "broker_med": 7.311934892490099,
+  "broker_p90": 13.620777767026254,
+  "ratio_med_of_ratios": 2.3056978667622468,
+  "corr": 0.9188950520794781,
+  "broker_range_lt_spread_share": 0.010184625401106822
+ },
+ "open_gap_bp": {
+  "binance_med": 0.0,
+  "binance_p99": 0.014793907500143533,
+  "broker_med": 0.05946461198003128,
+  "broker_p99": 3.8255216503252365
+ },
+ "entries": 19996,
+ "entry_days": 16,
+ "spread_used_med_usd": 15.0
+}

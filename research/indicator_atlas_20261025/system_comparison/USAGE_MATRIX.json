@@ -1,0 +1,1845 @@
+{
+  "summary": {
+    "atlas_cards": 120,
+    "overall_counts": {
+      "placeholder_only": 2,
+      "not_found_in_audited_paths": 73,
+      "related_not_equivalent": 5,
+      "alias_not_separately_counted": 2,
+      "connected_calculation_or_context": 34,
+      "smoothing_helper": 1,
+      "research_only": 1,
+      "shadow_only_match": 1,
+      "unavailable_feed": 1
+    },
+    "connected_by_component": {
+      "backend": 32,
+      "bot": 9,
+      "decider": 9
+    },
+    "recorder_distinct_families": 10,
+    "legacy_core_families_including_williams_r": 12,
+    "scope": "Checked-out source and local artifacts only. Partial card matches count once, aliases do not inflate counts; live deployment/config not verified."
+  },
+  "rows": [
+    {
+      "id": "FAM-001",
+      "name": "Ichimoku Kinkō Hyō / 一目均衡表",
+      "backend": "placeholder_only",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 1077,
+          "matched_text": "elif \"ichimoku\" in feat.lower()"
+        }
+      ],
+      "notes": [
+        "No Ichimoku computation found in audited production paths; feature name defaulted, not a cloud implementation."
+      ],
+      "overall": "placeholder_only"
+    },
+    {
+      "id": "FAM-002",
+      "name": "Heikin Ashi / 平均足",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-003",
+      "name": "Renko / 練行足",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-004",
+      "name": "Kagi / 鉤足",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-005",
+      "name": "Point & Figure",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-006",
+      "name": "Line Break",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-007",
+      "name": "KDJ / 随机指标",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-008",
+      "name": "BBI / 多空指标",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-009",
+      "name": "BIAS / 乖离率 / Kairi",
+      "backend": "related_not_equivalent",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/xauusd_v2_service.py",
+          "line": 187,
+          "matched_text": "dist_ema{n}_atr"
+        }
+      ],
+      "notes": [
+        "ATR-normalized EMA displacement is not the percentage BIAS formula."
+      ],
+      "overall": "related_not_equivalent"
+    },
+    {
+      "id": "FAM-010",
+      "name": "PSY / 心理线",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-011",
+      "name": "BRAR / 人气意愿指标",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-012",
+      "name": "CR / 能量指标",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-013",
+      "name": "VR / 成交量比率",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-014",
+      "name": "DFMA / DMA indicator",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-015",
+      "name": "EXPMA",
+      "backend": "alias_not_separately_counted",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 736,
+          "matched_text": "ema_20 ="
+        }
+      ],
+      "notes": [
+        "EXPMA duplicates the EMA family at this taxonomy level; no separately named EXPMA implementation counted."
+      ],
+      "overall": "alias_not_separately_counted"
+    },
+    {
+      "id": "FAM-016",
+      "name": "TAQ",
+      "backend": "not_found_in_audited_paths",
+      "bot": "alias_not_separately_counted",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "bot",
+          "path": "yeni deneme/forexsai_demo_bot.py",
+          "line": 2357,
+          "matched_text": "donch_high_now ="
+        }
+      ],
+      "notes": [
+        "TAQ is a Donchian-type alias; no separate TAQ implementation counted."
+      ],
+      "overall": "alias_not_separately_counted"
+    },
+    {
+      "id": "FAM-017",
+      "name": "KTN",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-018",
+      "name": "XSII / 薛斯通道 II",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-019",
+      "name": "Chanlun / 缠论 / CZSC",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-020",
+      "name": "SMA",
+      "backend": "decision_calculation",
+      "bot": "recorder_only",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 739,
+          "matched_text": "sma_20 ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 143,
+          "matched_text": "\"sma20\":"
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-021",
+      "name": "EMA",
+      "backend": "decision_calculation",
+      "bot": "decision_calculation",
+      "decider": "context_calculation",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 736,
+          "matched_text": "ema_20 ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 131,
+          "matched_text": "ema20 ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/entry_gate.py",
+          "line": 84,
+          "matched_text": "ema200 ="
+        },
+        {
+          "component": "decider",
+          "path": "claude_decider/free_context.py",
+          "line": 57,
+          "matched_text": "ema20 = _ema"
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop.",
+        "Direct local EMA checks, conditional on relevant gate/scope flags.",
+        "EMA context is supplied to the decision prompt."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-022",
+      "name": "Wilder RMA / SMMA",
+      "backend": "smoothing_helper",
+      "bot": "smoothing_helper",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 705,
+          "matched_text": "alpha = 1.0 / period"
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 20,
+          "matched_text": "def _rma"
+        }
+      ],
+      "notes": [
+        "Internal Wilder smoothing, not an extra independent directional signal.",
+        "Internal Wilder smoothing, not an extra independent directional signal."
+      ],
+      "overall": "smoothing_helper"
+    },
+    {
+      "id": "FAM-023",
+      "name": "WMA / LWMA",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-024",
+      "name": "DEMA / TEMA",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-025",
+      "name": "Tillson T3",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-026",
+      "name": "Hull Moving Average",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-027",
+      "name": "ALMA",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-028",
+      "name": "KAMA",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-029",
+      "name": "VIDYA",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-030",
+      "name": "FRAMA",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-031",
+      "name": "MAMA / FAMA",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-032",
+      "name": "McGinley Dynamic",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-033",
+      "name": "ZLEMA",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-034",
+      "name": "Jurik Moving Average / RSX variants",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-035",
+      "name": "Ehlers Super Smoother",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-036",
+      "name": "Ehlers Ultimate Smoother",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-037",
+      "name": "Ehlers Roofing Filter",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-038",
+      "name": "Ehlers Cyber Cycle",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-039",
+      "name": "Laguerre Filter / Laguerre RSI",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-040",
+      "name": "Fisher / Inverse Fisher",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-041",
+      "name": "Hilbert dominant cycle / sine / phasor",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-042",
+      "name": "Kalman Filter",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-043",
+      "name": "Moving Median / Hampel Filter",
+      "backend": "related_not_equivalent",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/technical_indicators.py",
+          "line": 15,
+          "matched_text": "def rolling_mad"
+        }
+      ],
+      "notes": [
+        "MAD outlier cleaning is related to robust statistics, not proof of a moving-median/Hampel indicator."
+      ],
+      "overall": "related_not_equivalent"
+    },
+    {
+      "id": "FAM-044",
+      "name": "Gaussian / Butterworth filters",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-045",
+      "name": "RSI",
+      "backend": "decision_calculation",
+      "bot": "shadow_or_disabled",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 743,
+          "matched_text": "rsi_14 ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 143,
+          "matched_text": "\"rsi14\":"
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/forexsai_demo_bot.py",
+          "line": 1325,
+          "matched_text": "r = pr.rsi"
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop.",
+        "SELL RSI check is in the shadow measurement branch; also recorded by compute_all."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-046",
+      "name": "Stochastic",
+      "backend": "decision_calculation",
+      "bot": "recorder_only",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 750,
+          "matched_text": "stoch_k, stoch_d ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 135,
+          "matched_text": "stoch_k, stoch_d ="
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-047",
+      "name": "Stochastic RSI",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-048",
+      "name": "Stochastic Momentum Index",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-049",
+      "name": "Connors RSI",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-050",
+      "name": "QQE / QQE MOD",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-051",
+      "name": "WaveTrend",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-052",
+      "name": "MACD / PPO / APO",
+      "backend": "decision_calculation",
+      "bot": "recorder_only",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 749,
+          "matched_text": "macd_line, macd_signal, macd_hist ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 136,
+          "matched_text": "macd, macd_sig, macd_hist ="
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-053",
+      "name": "ROC / Momentum",
+      "backend": "decision_calculation",
+      "bot": "decision_calculation",
+      "decider": "context_calculation",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 757,
+          "matched_text": "momentum_3 ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/entry_gate.py",
+          "line": 99,
+          "matched_text": "last - c[-61]"
+        },
+        {
+          "component": "decider",
+          "path": "claude_decider/free_context.py",
+          "line": 64,
+          "matched_text": "chg = (w[-1]"
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "Local directional return/stretch checks; not an independent ML forecast.",
+        "100-bar return in decision context."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-054",
+      "name": "CCI",
+      "backend": "research_only",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/permutation_batch_service.py",
+          "line": 316,
+          "matched_text": "df[\"cci_20\"]"
+        }
+      ],
+      "notes": [
+        "CCI is calculated by permutation research batch, not established in the main live direction engine."
+      ],
+      "overall": "research_only"
+    },
+    {
+      "id": "FAM-055",
+      "name": "CMO",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-056",
+      "name": "TSI / SMI Ergodic",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-057",
+      "name": "Schaff Trend Cycle",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-058",
+      "name": "Coppock / KST / Special K",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-059",
+      "name": "Ultimate Oscillator",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-060",
+      "name": "DeMarker",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-061",
+      "name": "ADX / DMI",
+      "backend": "decision_calculation",
+      "bot": "decision_calculation",
+      "decider": "context_calculation",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 728,
+          "matched_text": "adx_val ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 134,
+          "matched_text": "adx14, pdi, mdi ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/entry_gate.py",
+          "line": 89,
+          "matched_text": "adx1, _, _ ="
+        },
+        {
+          "component": "decider",
+          "path": "claude_decider/free_context.py",
+          "line": 61,
+          "matched_text": "adx = _adx"
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop.",
+        "Local ADX gate; channel-reversion also calls adx_from_bars.",
+        "ADX context; not proof it independently chooses direction."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-062",
+      "name": "Aroon",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-063",
+      "name": "Vortex",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-064",
+      "name": "Choppiness / VHF",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-065",
+      "name": "Efficiency Ratio",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-066",
+      "name": "Trend Strength / CTI / RCI",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-067",
+      "name": "Hurst Exponent",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-068",
+      "name": "Entropy",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-069",
+      "name": "Bollinger Bands / %B / Width",
+      "backend": "decision_calculation",
+      "bot": "recorder_only",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 751,
+          "matched_text": "boll_upper, boll_lower"
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 137,
+          "matched_text": "bb_up, bb_mid, bb_lo"
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-070",
+      "name": "Keltner / STARC",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-071",
+      "name": "Donchian / Price Channel",
+      "backend": "not_found_in_audited_paths",
+      "bot": "shadow_or_disabled",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "bot",
+          "path": "yeni deneme/forexsai_demo_bot.py",
+          "line": 2357,
+          "matched_text": "donch_high_now ="
+        }
+      ],
+      "notes": [
+        "Donchian+EMA200 USOIL scope defaults to shadow; XAU swing shadow also uses a rolling high breakout."
+      ],
+      "overall": "shadow_only_match"
+    },
+    {
+      "id": "FAM-072",
+      "name": "Squeeze / TTM-style squeeze",
+      "backend": "not_found_in_audited_paths",
+      "bot": "related_not_equivalent",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "bot",
+          "path": "yeni deneme/phase_rules.py",
+          "line": 545,
+          "matched_text": "def squeeze_ratio"
+        }
+      ],
+      "notes": [
+        "ATR14/ATR100 compression is not the Bollinger-inside-Keltner TTM/LazyBear squeeze."
+      ],
+      "overall": "related_not_equivalent"
+    },
+    {
+      "id": "FAM-073",
+      "name": "ATR / NATR / ADR",
+      "backend": "decision_calculation",
+      "bot": "decision_calculation",
+      "decider": "context_calculation",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 746,
+          "matched_text": "atr_14 ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 133,
+          "matched_text": "atr14 ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/forexsai_demo_bot.py",
+          "line": 526,
+          "matched_text": "def _atr_distances"
+        },
+        {
+          "component": "decider",
+          "path": "claude_decider/free_context.py",
+          "line": 84,
+          "matched_text": "atr5 = _atr"
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop.",
+        "ATR supports risk geometry and filters; several smoothing variants coexist.",
+        "ATR for context and geometry."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-074",
+      "name": "Historical / Realized Volatility",
+      "backend": "decision_calculation",
+      "bot": "decision_calculation",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 761,
+          "matched_text": "vol_20 ="
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/caprev_live.py",
+          "line": 79,
+          "matched_text": "dvol = math.sqrt"
+        }
+      ],
+      "notes": [
+        "Connected to EMEL/Pulse via _compute_technical_indicators; model input use depends on artifact contract. Multiple periods do not count as new families.",
+        "CAPREV daily return volatility, not the recorder ATR percentage."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-075",
+      "name": "Rogers-Satchell range volatility",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-076",
+      "name": "Ulcer Index / drawdown",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-077",
+      "name": "Supertrend",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-078",
+      "name": "Chandelier Exit",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-079",
+      "name": "Parabolic SAR",
+      "backend": "decision_calculation",
+      "bot": "recorder_only",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/xauusd_v2_service.py",
+          "line": 223,
+          "matched_text": "sar = _parabolic_sar"
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 138,
+          "matched_text": "sar = _sar"
+        }
+      ],
+      "notes": [
+        "Gold v2 calculates SAR; legacy psar model columns alone are fallback values.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-080",
+      "name": "HalfTrend",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-081",
+      "name": "UT Bot",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-082",
+      "name": "Chande Kroll / NRTR",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-083",
+      "name": "OBV / PVT / ADL",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/rebound_filter_service.py",
+          "line": 281,
+          "matched_text": "obv = calculate_obv"
+        }
+      ],
+      "notes": [
+        "OBV only: this does not establish PVT or ADL. Legacy ML OBV inputs are placeholders."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-084",
+      "name": "CMF / Chaikin Oscillator",
+      "backend": "placeholder_only",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 1063,
+          "matched_text": "elif \"cmf\" in feat.lower()"
+        }
+      ],
+      "notes": [
+        "CMF feature defaults to zero; no actual Chaikin/CMF production computation found in scope."
+      ],
+      "overall": "placeholder_only"
+    },
+    {
+      "id": "FAM-085",
+      "name": "MFI / Force / Ease of Movement",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 753,
+          "matched_text": "mfi_val ="
+        }
+      ],
+      "notes": [
+        "MFI only in main prediction path; Force Index appears in research batch calculations."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-086",
+      "name": "Klinger / VFI / FVE",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-087",
+      "name": "VWAP / Anchored VWAP",
+      "backend": "decision_calculation",
+      "bot": "decision_calculation",
+      "decider": "context_calculation",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/oil_analysis_service.py",
+          "line": 255,
+          "matched_text": "def calculate_nymex_vwap"
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/indicators.py",
+          "line": 163,
+          "matched_text": "out[\"vwap_z\"]"
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/channel_filter.py",
+          "line": 132,
+          "matched_text": "def is_mean_reversion"
+        },
+        {
+          "component": "decider",
+          "path": "claude_decider/free_context.py",
+          "line": 60,
+          "matched_text": "vz = vwap_zscore"
+        }
+      ],
+      "notes": [
+        "OHLCV/tick-volume weighted benchmark; not a claim of centralized market volume.",
+        "compute_all is called by data_recorder, not directly by the main order-entry loop.",
+        "VWAP z-score can qualify local channel-reversion entries.",
+        "VWAP z-score in decision/evidence context."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-088",
+      "name": "VWMA / EVWMA",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-089",
+      "name": "RVOL / Volume at Time",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "context_calculation",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/routers/emel_pulse.py",
+          "line": 2736,
+          "matched_text": "vol_last / vol_avg"
+        },
+        {
+          "component": "decider",
+          "path": "claude_decider/forensics.py",
+          "line": 123,
+          "matched_text": "vol_ratio ="
+        }
+      ],
+      "notes": [
+        "Relative volume only; clock-time-matched RVOL is not established.",
+        "Relative volume is passed in forensics and entry-quality logic; default entry-quality blocking is shadow."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-090",
+      "name": "Volume Profile / POC / VAH / VAL",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/oil_analysis_service.py",
+          "line": 279,
+          "matched_text": "def calculate_volume_profile"
+        }
+      ],
+      "notes": [
+        "OHLCV histogram approximation; no exchange price-level tape."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-091",
+      "name": "TPO / Market Profile",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-092",
+      "name": "Delta / Cumulative Delta",
+      "backend": "proxy_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/oil_analysis_service.py",
+          "line": 328,
+          "matched_text": "def calculate_synthetic_cvd"
+        }
+      ],
+      "notes": [
+        "Synthetic signed candle volume, not actual aggressor-classified CVD."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-093",
+      "name": "Footprint / Imbalance / Absorption",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-094",
+      "name": "DOM / Order-book imbalance",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-095",
+      "name": "Opening Range / Initial Balance",
+      "backend": "context_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/price_projection_service.py",
+          "line": 239,
+          "matched_text": "def compute_orb"
+        }
+      ],
+      "notes": [
+        "Projection snapshot enters debate prompt; no standalone ORB edge inferred."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-096",
+      "name": "Pivot Points / CPR / Camarilla",
+      "backend": "context_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/mtf_analysis_service.py",
+          "line": 722,
+          "matched_text": "def _calculate_pivot_points"
+        }
+      ],
+      "notes": [
+        "Fibonacci/classic/Camarilla levels; CPR not separately established."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-097",
+      "name": "Fractals / Zigzag / Swing pivots",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "context_calculation",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/order_block_detector_v2.py",
+          "line": 207,
+          "matched_text": "class SwingDetector"
+        },
+        {
+          "component": "decider",
+          "path": "claude_decider/free_context.py",
+          "line": 39,
+          "matched_text": "def _pivots"
+        }
+      ],
+      "notes": [
+        "Confirmed swings in canonical SMC and regime/rebound paths; not every fractal/Zigzag variant.",
+        "Fractal support/resistance computed from known bars."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-098",
+      "name": "BOS / CHoCH",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/order_block_detector_v2.py",
+          "line": 663,
+          "matched_text": "class MarketStructureAnalyzer"
+        }
+      ],
+      "notes": [
+        "Canonical BOS/CHoCH rules; does not establish equivalence to a specific TradingView author."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-099",
+      "name": "Order Blocks",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/order_block_service.py",
+          "line": 440,
+          "matched_text": "async def detect("
+        }
+      ],
+      "notes": [
+        "Canonical SMC order blocks consumed by panel/service."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-100",
+      "name": "FVG / Inverse FVG",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/order_block_detector_v2.py",
+          "line": 84,
+          "matched_text": "class FVG"
+        }
+      ],
+      "notes": [
+        "FVG support; not a full inverse-FVG implementation claim."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-101",
+      "name": "Liquidity Sweeps / EQH / EQL",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/rebound_filter_service.py",
+          "line": 261,
+          "matched_text": "def _liquidity_sweep"
+        }
+      ],
+      "notes": [
+        "Sweep bonus in rebound; equal-high/low pools also exist in smc_calculator_service."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-102",
+      "name": "Previous Day/Week High-Low",
+      "backend": "not_found_in_audited_paths",
+      "bot": "decision_calculation",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "bot",
+          "path": "yeni deneme/caprev_live.py",
+          "line": 82,
+          "matched_text": "pdl = days[pd_day]"
+        }
+      ],
+      "notes": [
+        "Prior-session low in CAPREV; weekly high/low not separately established."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-103",
+      "name": "Fibonacci / Pitchfork / Regression channels",
+      "backend": "decision_calculation",
+      "bot": "decision_calculation",
+      "decider": "context_calculation",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/xauusd_v2_service.py",
+          "line": 227,
+          "matched_text": "chan = _linreg_channel"
+        },
+        {
+          "component": "bot",
+          "path": "yeni deneme/channel_filter.py",
+          "line": 25,
+          "matched_text": "def channel_zscore"
+        },
+        {
+          "component": "decider",
+          "path": "claude_decider/free_context.py",
+          "line": 59,
+          "matched_text": "cz = channel_zscore"
+        }
+      ],
+      "notes": [
+        "Regression channel plus Fibonacci in projection/SMC; Pitchfork not established.",
+        "Linear-regression channel; not Fibonacci/Pitchfork locally.",
+        "Regression-channel z-score in decision context."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-104",
+      "name": "Harmonics: Gartley / Bat / Butterfly / Crab / Shark / Cypher",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/harmonic_pattern_service.py",
+          "line": 218,
+          "matched_text": "def _detect_harmonic_patterns"
+        }
+      ],
+      "notes": [
+        "Eight named harmonic patterns and confidence adjustment; pattern counts are not win rates."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-105",
+      "name": "Elliott Wave",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-106",
+      "name": "Wyckoff / VSA / Weis Wave",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-107",
+      "name": "Gann / square-of-nine / time cycles",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-108",
+      "name": "Candlestick pattern families",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 1332,
+          "matched_text": "from services.candlestick_pattern_service import get_candlestick_adjustment"
+        }
+      ],
+      "notes": [
+        "Rule-based candle patterns; not all TA-Lib patterns implied."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-109",
+      "name": "Nadaraya-Watson envelope / smoother",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-110",
+      "name": "Lorentzian Classification / kNN",
+      "backend": "related_not_equivalent",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/cortex_memory.py",
+          "line": 271,
+          "matched_text": "Analog retrieval (kNN)"
+        }
+      ],
+      "notes": [
+        "CORTEX analog kNN is a different algorithm from Lorentzian Classification; current injection flag not runtime verified."
+      ],
+      "overall": "related_not_equivalent"
+    },
+    {
+      "id": "FAM-111",
+      "name": "Adaptive ML Supertrend",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-112",
+      "name": "COT Index / net positioning",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/ml_prediction_service.py",
+          "line": 1316,
+          "matched_text": "from services.cot_report_service import get_cot_adjustment"
+        }
+      ],
+      "notes": [
+        "Confidence adjustment is strategy/preset and data dependent; COT service can use fallback data."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-113",
+      "name": "Open Interest / price-OI regimes",
+      "backend": "context_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/cot_report_service.py",
+          "line": 462,
+          "matched_text": "oi_change_pct ="
+        }
+      ],
+      "notes": [
+        "COT open-interest context, not a full live derivatives price/OI regime engine."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-114",
+      "name": "Options IV / skew / term structure / gamma",
+      "backend": "related_not_equivalent",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/xauusd_v2_service.py",
+          "line": 258,
+          "matched_text": "for name in (\"DXY\", \"US10Y\", \"VIX\")"
+        }
+      ],
+      "notes": [
+        "Using a VIX reference does not establish an options-chain IV/skew/gamma engine."
+      ],
+      "overall": "related_not_equivalent"
+    },
+    {
+      "id": "FAM-115",
+      "name": "Intermarket ratios / rolling correlation / beta",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/xauusd_v2_service.py",
+          "line": 268,
+          "matched_text": "base_ret.rolling(60).corr"
+        }
+      ],
+      "notes": [
+        "Actual gold macro correlations; many legacy correlation feature names are fallback only."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-116",
+      "name": "Seasonality / session statistics",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/routers/deepseek_analysis.py",
+          "line": 229,
+          "matched_text": "def generate_setup_recommendation"
+        }
+      ],
+      "notes": [
+        "Seasonality enters smart-setup recommendation and oil temporal modifiers; not all calendar methods."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-117",
+      "name": "EIA inventories / crude time spreads",
+      "backend": "unavailable_feed",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/oil_analysis_service.py",
+          "line": 141,
+          "matched_text": "async def fetch_eia_inventory"
+        }
+      ],
+      "notes": [
+        "This EIA fetch returns None by design; EIA calendar context elsewhere is not an actual inventory-surprise feed."
+      ],
+      "overall": "unavailable_feed"
+    },
+    {
+      "id": "FAM-118",
+      "name": "Gold real-yield / dollar / GVZ context",
+      "backend": "decision_calculation",
+      "bot": "not_found_in_audited_paths",
+      "decider": "context_calculation",
+      "evidence": [
+        {
+          "component": "backend",
+          "path": "backend/services/xauusd_v2_service.py",
+          "line": 258,
+          "matched_text": "for name in (\"DXY\", \"US10Y\", \"VIX\")"
+        },
+        {
+          "component": "decider",
+          "path": "claude_decider/free_context.py",
+          "line": 110,
+          "matched_text": "\"macro\": {\"vix\": vix"
+        }
+      ],
+      "notes": [
+        "Partial family: dollar/nominal US10Y/VIX; no claim that real yields or GVZ are model inputs.",
+        "Raw VIX/DXY context; source explicitly rejects treating the historical macro→gold relation as directional proof."
+      ],
+      "overall": "connected_calculation_or_context"
+    },
+    {
+      "id": "FAM-119",
+      "name": "Nasdaq breadth / VXN / relative strength",
+      "backend": "not_found_in_audited_paths",
+      "bot": "not_found_in_audited_paths",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [],
+      "notes": [],
+      "overall": "not_found_in_audited_paths"
+    },
+    {
+      "id": "FAM-120",
+      "name": "DAX session / breadth / volatility context",
+      "backend": "not_found_in_audited_paths",
+      "bot": "decision_calculation",
+      "decider": "not_found_in_audited_paths",
+      "evidence": [
+        {
+          "component": "bot",
+          "path": "yeni deneme/caprev_live.py",
+          "line": 46,
+          "matched_text": "\"GDAXI.INDX\": {\"tz\": \"EU\""
+        }
+      ],
+      "notes": [
+        "DAX-specific CAPREV session profile; breadth and DAX implied-volatility are not implied."
+      ],
+      "overall": "connected_calculation_or_context"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+# fizibilite_3_piramit.py çıktısı (2026-10-12). RC = medyan mesafe / 30. komşu mesafesi (60 sorgu medyanı).
+# pyr7(33): 33 mumu 7 süper-mumla kodlayan piramit; raw33/raw7: aynı ATR normalizasyonuyla ham pencere.
+# "pyr L∞": piramit uzayında her özellik ≤ tol (√boyut-normalize ATR) birebir eşleşme — (medyan çakışmasız sayı, n≥30 bulan sorgu oranı)
+('NDX', '15m') {'pyr7(33)': 2.57, 'raw33': 1.5, 'raw7': 2.5} pyr L∞ (medyan, %n≥30): {0.3: (0.0, 0.0), 0.4: (1.0, 0.0), 0.5: (15.0, 0.23333333333333334)}
+('NDX', '1h') {'pyr7(33)': 2.31, 'raw33': 1.5, 'raw7': 2.28} pyr L∞ (medyan, %n≥30): {0.3: (0.0, 0.0), 0.4: (0.0, 0.016666666666666666), 0.5: (1.5, 0.13333333333333333)}
+('DAX', '30m') {'pyr7(33)': 2.45, 'raw33': 1.5, 'raw7': 2.41} pyr L∞ (medyan, %n≥30): {0.3: (0.0, 0.0), 0.4: (1.0, 0.016666666666666666), 0.5: (7.5, 0.26666666666666666)}
+('XAU', '30m') {'pyr7(33)': 2.49, 'raw33': 1.47, 'raw7': 2.51} pyr L∞ (medyan, %n≥30): {0.3: (0.0, 0.0), 0.4: (0.0, 0.016666666666666666), 0.5: (9.5, 0.31666666666666665)}
+('OIL', '15m') {'pyr7(33)': 2.6, 'raw33': 1.51, 'raw7': 2.51} pyr L∞ (medyan, %n≥30): {0.3: (0.0, 0.0), 0.4: (0.0, 0.0), 0.5: (5.0, 0.23333333333333334)}

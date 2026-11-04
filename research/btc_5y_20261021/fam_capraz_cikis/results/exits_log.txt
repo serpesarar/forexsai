@@ -1,0 +1,2 @@
+C02 sel X5 {'DISC': 0.0449, 'OOS': 0.0325, 'BLIND': 0.0075, 'POST': 0.0207} card 3 plc 0.89
+yazıldı exits.json

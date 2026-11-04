@@ -1,0 +1,2 @@
+decision,entry_t,exit_t,entry_ix,exit_ix,side,entry,exit,risk,R,points,reason,ambiguous,day,hour
+1790772540,1790772540,1790775120,226406,226448,1,30446.4,30526.2,110.0,0.7254545454545388,79.79999999999927,target,False,2026-09-30,8

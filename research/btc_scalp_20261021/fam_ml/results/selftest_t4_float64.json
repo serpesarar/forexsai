@@ -1,0 +1,43 @@
+{
+ "L_tp1_h30": {
+  "n": 3000,
+  "mismatch_float64": 0,
+  "mismatch_float32_input": 0
+ },
+ "L_tp1_h60": {
+  "n": 3000,
+  "mismatch_float64": 0,
+  "mismatch_float32_input": 0
+ },
+ "L_tp1.5_h30": {
+  "n": 3000,
+  "mismatch_float64": 0,
+  "mismatch_float32_input": 0
+ },
+ "L_tp1.5_h60": {
+  "n": 3000,
+  "mismatch_float64": 0,
+  "mismatch_float32_input": 0
+ },
+ "S_tp1_h30": {
+  "n": 3000,
+  "mismatch_float64": 0,
+  "mismatch_float32_input": 0
+ },
+ "S_tp1_h60": {
+  "n": 3000,
+  "mismatch_float64": 0,
+  "mismatch_float32_input": 0
+ },
+ "S_tp1.5_h30": {
+  "n": 3000,
+  "mismatch_float64": 0,
+  "mismatch_float32_input": 0
+ },
+ "S_tp1.5_h60": {
+  "n": 3000,
+  "mismatch_float64": 0,
+  "mismatch_float32_input": 0
+ },
+ "PASS_float64": true
+}

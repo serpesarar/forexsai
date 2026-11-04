@@ -17,7 +17,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import generic as G  # noqa: E402
 
-VIX_CSV = "/Users/melihcanodacioglu/Desktop/XAUUSDDATA/fundamental/vix-daily.csv"
+VIX_CSV = "/Users/melihcanodacioglu/Desktop/Trading Projeleri/XAUUSDDATA/fundamental/vix-daily.csv"
 
 
 def _daily_chg_map(kind: str) -> dict:

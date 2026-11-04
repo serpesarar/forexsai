@@ -1,0 +1,21 @@
+{
+  "actual_source": "bot archive + fresh current terminal history; neither guaranteed all accounts lifetime",
+  "symbol_counts": {
+    "NAS100": 316,
+    "SpotCrude": 154,
+    "GER40": 65
+  },
+  "oil_positions": 154,
+  "oil_fp_valid": 131,
+  "oil_initial_risk_verified": 131,
+  "fresh_archive_overlap": 57,
+  "max_overlap_net_difference": 0.0,
+  "verified_price_value_per_lot": {
+    "median": 100.00000000000003,
+    "min": 99.999999999991,
+    "max": 100.00000000002407
+  },
+  "deal_offset_seconds": 10800,
+  "partial_fill_caveat": "Archive row is closing-deal level; current history has full ins/outs, archive duplicate position audit retained",
+  "archive_duplicate_pid": 0
+}

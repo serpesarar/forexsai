@@ -1,0 +1,51 @@
+{
+  "inputs": {
+    "symbols": [
+      "GDAXI.INDX"
+    ],
+    "weights": {
+      "GDAXI.INDX": 1.0
+    },
+    "aligned_days": 800,
+    "return_observations": 799,
+    "first_date": "2026-10-16 06:45:00+00:00",
+    "last_date": "2026-10-21 02:05:00+00:00"
+  },
+  "concentration": {
+    "hhi": 1.0,
+    "effective_n": 1.0,
+    "top1_weight": 1.0,
+    "top3_weight": 1.0
+  },
+  "volatility": {
+    "daily_vol": 0.0005796660781207768,
+    "annualized_vol": 0.15616165414052774,
+    "downside_deviation_annualized": 0.1002032158428093
+  },
+  "drawdown": {
+    "max_drawdown": -0.024985514234942757,
+    "max_drawdown_start": "2026-10-16 13:40:00+00:00",
+    "max_drawdown_trough": "2026-10-20 09:10:00+00:00"
+  },
+  "tail_risk": {
+    "var_95": 0.0007433654610537573,
+    "expected_shortfall_95": 0.0011725327391681611,
+    "var_99": 0.0014439203292114294,
+    "expected_shortfall_99": 0.0017568989459787049,
+    "method": "historical simulation (non-parametric)"
+  },
+  "diversification": {
+    "diversification_ratio": null,
+    "note": "needs at least 2 assets"
+  },
+  "correlation": {
+    "avg_pairwise_abs": null,
+    "max_pair": null,
+    "beta_to_equal_weight": null,
+    "note": "needs at least 2 assets"
+  },
+  "skipped": [],
+  "warnings": [
+    "weights summed to 0.012632; renormalized to 1.0"
+  ]
+}

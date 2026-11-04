@@ -1,0 +1,203 @@
+=== İŞLEM ÖZETİ ===
+                n      pnl
+sym   outcome             
+GDAXI SL        3  -1860.8
+      TP        2    763.5
+NDX   OTHER     2    758.5
+      SL       41 -21480.5
+      TP       62  24105.5
+USOIL SL       26  -7866.5
+      TP       25   5227.0
+
+Toplam PnL: -353.3  İşlem: 161
+outcome         OTHER  SL  TP
+sym   magic                  
+GDAXI 52890969      0   1   0
+      52890970      0   2   2
+NDX   0             2   0   0
+      52890969      0   3   4
+      52890970      0   6   6
+      52890971      0  32  52
+USOIL 52890969      0  24  24
+      52890970      0   2   1
+
+=== AYRIŞTIRICI: TÜM SEMBOLLER (TP=89, SL=70) ===
+özellik           nTP  nSL   TP ort   SL ort       p
+trend5_s           89   70     0.42     0.14   0.075 *
+rsi5               89   70    44.50    48.11   0.104 
+rsi1               89   70    44.67    49.09   0.109 
+above_ema200_s     89   70     0.37     0.14   0.140 
+trend30_s          89   70     0.51     0.31   0.189 
+room_s             89   70     5.31     5.95   0.196 
+chan_pos_s         89   70     0.60     0.53   0.231 
+mom15_s            89   70    -0.11    -0.82   0.257 
+hour               89   70    14.53    13.17   0.292 
+rsi30              89   70    45.92    47.73   0.361 
+wall_s             89   70     7.90     7.01   0.362 
+mom60_s            89   70     1.58     1.26   0.426 
+vol_ratio          89   70     1.22     1.21   0.431 
+rev_vwap_s         89   70     3.18     2.37   0.476 
+adx5               89   70    29.02    28.20   0.680 
+slope_s            89   70     0.92     0.87   0.743 
+adx1               89   70    28.14    27.89   0.835 
+slope5_s           89   70     0.23     0.23   0.842 
+adx30              89   70    31.52    31.81   0.843 
+slope30_s          89   70     0.19     0.18   1.000 
+
+=== AYRIŞTIRICI: NDX (TP=62, SL=41) ===
+özellik           nTP  nSL   TP ort   SL ort       p
+trend5_s           62   41     0.39     0.07   0.109 
+adx30              62   41    32.51    33.50   0.116 
+rsi5               62   41    41.58    45.43   0.159 
+slope30_s          62   41     0.17     0.29   0.182 
+above_ema200_s     62   41     0.32     0.12   0.308 
+rsi30              62   41    40.95    43.14   0.356 
+mom15_s            62   41     0.68    -0.00   0.421 
+vol_ratio          62   41     1.06     1.07   0.459 
+wall_s             62   41     7.60     6.96   0.565 
+chan_pos_s         62   41     0.62     0.56   0.620 
+adx5               62   41    29.37    27.97   0.647 
+rsi1               62   41    43.06    46.03   0.657 
+slope5_s           62   41     0.13     0.22   0.669 
+rev_vwap_s         62   41     2.04     4.46   0.669 
+slope_s            62   41     0.68     0.99   0.713 
+room_s             62   41     5.21     4.80   0.719 
+adx1               62   41    28.45    28.77   0.752 
+mom60_s            62   41     1.35     2.23   0.806 
+trend30_s          62   41     0.45     0.46   0.951 
+hour               62   41    14.53    13.95   1.000 
+
+=== AYRIŞTIRICI: USOIL (TP=25, SL=26) ===
+özellik           nTP  nSL   TP ort   SL ort       p
+mom60_s            25   26     2.93     0.55   0.066 *
+trend30_s          25   26     0.60     0.15   0.091 *
+rev_vwap_s         25   26     6.65     0.30   0.099 *
+room_s             25   26     5.03     7.32   0.149 
+above_ema200_s     25   26     0.60     0.23   0.156 
+hour               25   26    14.92    12.50   0.157 
+slope5_s           25   26     0.53     0.31   0.178 
+rsi5               25   26    53.16    50.14   0.184 
+chan_pos_s         25   26     0.60     0.51   0.197 
+slope_s            25   26     1.86     0.99   0.224 
+rsi30              25   26    57.64    53.06   0.231 
+trend5_s           25   26     0.60     0.31   0.252 
+wall_s             25   26     9.23     7.54   0.381 
+slope30_s          25   26     0.21     0.07   0.434 
+vol_ratio          25   26     1.60     1.32   0.445 
+rsi1               25   26    49.87    51.41   0.553 
+mom15_s            25   26    -1.70    -1.95   0.591 
+adx1               25   26    26.75    25.87   0.644 
+adx5               25   26    28.93    28.68   0.799 
+adx30              25   26    29.92    30.29   0.917 
+
+=== SAAT BAZLI (UTC) — tüm işlemler ===
+             n    wr     pnl
+sym   hour                  
+NDX   3      4  0.25 -1246.5
+      4      6  0.50  -450.0
+      8      3  0.67   250.0
+      9      3  0.67   250.0
+      10     4  0.75   649.0
+      11     7  0.71   948.5
+      12     4  0.75   644.5
+      15     3  0.67   250.0
+      16    13  0.77  2363.5
+      17    17  0.65  1498.5
+      18    10  0.40 -1709.5
+      19    10  0.60   308.0
+      21     3  1.00  1200.5
+      22     3  0.00 -1671.5
+      23     4  1.00  1436.0
+USOIL 5      3  0.33   -25.5
+      8      3  0.67   185.0
+      10     3  0.33  -110.0
+      11     4  0.50  -377.0
+      12     4  0.75   368.0
+      15     3  0.67    25.5
+      16     5  0.60   700.5
+      17     4  1.00   744.0
+      18     4  0.75   -46.0
+      22     3  0.67    29.5
+      23     3  0.00 -1540.0
+
+=== FİLTRE WHAT-IF (işlem bloklansaydı: kaç SL kurtulur, kaç TP kaçar, net PnL delta) ===
+filtre                                     blok SL-kurt TP-kayb      ΔPnL WR eski WR yeni kalan PnL
+trend5_s < 0 (5m karşı-trend)                56      30      26      4269    56.0    61.2      3157
+above_ema200_s < 0 (EMA200 karşı)            58      30      28      3413    56.0    60.4      2301
+adx1 < 20 (1m trendsiz)                      34      18      16      3282    56.0    58.4      2171
+trend30_s < 0 (30m karşı-trend)              46      24      22      3129    56.0    59.3      2017
+slope30_s < 0                                44      23      21      2963    56.0    59.1      1851
+rev_vwap_s < -1.5 (VWAP karşıtı derin)       49      24      25      2522    56.0    58.2      1410
+vol_ratio > 1.5 (hacim patlaması)            18      11       7      2509    56.0    58.2      1397
+mom60_s < -1 (1h karşı-momentum)             48      24      24      2153    56.0    58.6      1041
+vol_ratio > 2.0                              10       6       4       892    56.0    57.0      -219
+adx5 < 20                                    22      11      11       507    56.0    56.9      -605
+room_s < 0.5 ATR                             24      10      14      -300    56.0    55.6     -1412
+room_s < 1.0 ATR (tavana çok yakın)          35      13      22     -1854    56.0    54.0     -2966
+rev_vwap_s > 1.0 (VWAP kovalamaca)           99      41      58     -1926    56.0    51.7     -3037
+chan_pos_s > 0.9 (kanal ucu kovalamaca)      38      14      24     -1940    56.0    53.7     -3052
+rev_vwap_s > 1.5                             94      38      56     -2171    56.0    50.8     -3282
+
+--- NDX en etkili filtreler ---
+trend5_s < 0 (5m karşı-trend)                38      19      19      2106    60.2    66.2      4730
+above_ema200_s < 0 (EMA200 karşı)            39      18      21       956    60.2    64.1      3582
+adx1 < 20 (1m trendsiz)                      20       9      11       913    60.2    61.4      3538
+room_s < 0.5 ATR                             23      10      13       258    60.2    61.3      2882
+rev_vwap_s < -1.5 (VWAP karşıtı derin)       34      14      20       108    60.2    60.9      2733
+trend30_s < 0 (30m karşı-trend)              28      11      17      -350    60.2    60.0      2275
+slope30_s < 0                                25      10      15      -440    60.2    60.3      2186
+adx5 < 20                                    11       4       7      -603    60.2    59.8      2022
+
+--- USOIL en etkili filtreler ---
+mom60_s < -1 (1h karşı-momentum)             11       9       2      2456    49.0    57.5      -183
+adx1 < 20 (1m trendsiz)                      14       9       5      2370    49.0    54.1      -270
+trend30_s < 0 (30m karşı-trend)              16      11       5      2122    49.0    57.1      -517
+above_ema200_s < 0 (EMA200 karşı)            15      10       5      1864    49.0    55.6      -776
+rev_vwap_s < -1.5 (VWAP karşıtı derin)       11       8       3      1821    49.0    55.0      -818
+trend5_s < 0 (5m karşı-trend)                14       9       5      1570    49.0    54.1     -1069
+slope30_s < 0                                16      10       6      1542    49.0    54.3     -1098
+adx5 < 20                                     9       6       3       988    49.0    52.4     -1652
+
+=== GİRİŞ-KAYDIRMA COUNTERFACTUAL — SL işlemleri aynı mesafelerle farklı yerden açılsaydı ===
+RR tahminleri (medyan TP mesafe / medyan SL mesafe): {'USOIL': 0.37, 'NDX': 0.73}
+
+SL işlemi sayısı: 67 | pessimistic intrabar (aynı barda SL öncelikli)
+  kaydırma  TP olurdu  yine SL  açık    TP%
+      -30dk         36       31     0    54%
+      -15dk         28       39     0    42%
+      -10dk         24       43     0    36%
+       -5dk         21       46     0    31%
+       -3dk         19       48     0    28%
+       -2dk         15       52     0    22%
+       -1dk         14       53     0    21%
+       +0dk         13       54     0    19%
+       +1dk         14       53     0    21%
+       +2dk         18       49     0    27%
+       +3dk         23       44     0    34%
+       +5dk         23       44     0    34%
+      +10dk         19       48     0    28%
+      +15dk         24       43     0    36%
+      +30dk         29       38     0    43%
+
+Retrace-limit girişi (orijinal girişten x·ATR geri çekilmede limit, 60dk bekleme):
+  0.3·ATR: dolan 67/67 | TP 14 | SL 53 | açık 0 | dolmayan 0 | dolanların TP% 21%
+  0.5·ATR: dolan 67/67 | TP 16 | SL 51 | açık 0 | dolmayan 0 | dolanların TP% 24%
+  0.8·ATR: dolan 67/67 | TP 15 | SL 52 | açık 0 | dolmayan 0 | dolanların TP% 22%
+
+Aynı retrace-limit TP işlemlerine uygulansa (kazananı bozma riski):
+  0.3·ATR: dolan 79/87 | TP 77 | SL 2 | dolmayan 8 | dolanların TP% 97%
+  0.5·ATR: dolan 78/87 | TP 76 | SL 2 | dolmayan 9 | dolanların TP% 97%
+
+=== SL YOL ANALİZİ (MFE: SL olmadan önce ne kadar lehe gitti) ===
+MFE/R dağılımı (SL işlemleri):
+  anlık kayıp (<0.1R)            17 (26%)  PnL    -7552
+  0.1-0.3R                       21 (32%)  PnL   -10256
+  0.3-0.6R                       18 (27%)  PnL    -8638
+  0.6-1R (dönüş kaybı)            6 (9%)  PnL    -2086
+  >1R (TP'ye yaklaşıp döndü)      4 (6%)  PnL     -640
+       count  mean   std   min   25%   50%   75%   max
+sym                                                   
+NDX     41.0  0.23  0.23 -0.17  0.08  0.16  0.43  0.75
+USOIL   25.0  0.58  0.70 -0.04  0.10  0.33  0.72  2.38
+
+Bitti. Çıktılar: /Users/melihcanodacioglu/Desktop/panel/analiz_paketi_2026-07-09/_otopsi_out

@@ -1,0 +1,97 @@
+
+=== BUY: n=595 gün=35 | test edilen hücre M=356
+  En iyi hücre (tüm örnek): yalnız süre 240dk (R=1ATR)  EV_R=+0.260  se(gün)=0.476  t=0.55 | Bonferroni z*=3.63 → GEÇMEZ | White RC p=0.344
+     yarılar: H1=+0.090 (n=298, 06-30→09-02) | H2=+0.431 (n=297, →10-14)
+  H1'de seçilen en iyi: yalnız süre 240dk (R=1ATR) H1=+0.090 → H2=+0.431 | H2'de seçilen: yalnız süre 120dk (R=1ATR) H2=+0.451 → H1=-0.027
+  Her iki yarıda >0 olan hücre: 33/356  (EV_R>0 tüm örnekte: 69)
+  Orijinal: EV_R=+0.003 t=0.10 H1=+0.005 H2=+0.002
+  İki yarıda da pozitif, min(H1,H2)'ye göre ilk 8:
+     yalnız süre 240dk (R=1ATR)                    EV=+0.260 H1=+0.090 H2=+0.431 t=0.55
+     süre240dk+sl1.0ATR                            EV=+0.109 H1=+0.087 H2=+0.130 t=0.58
+     süre240dk+sl2.0ATR                            EV=+0.074 H1=+0.072 H2=+0.076 t=0.46
+     süre240dk+sl3.0ATR                            EV=+0.067 H1=+0.075 H2=+0.059 t=0.54
+     ATR tp1.25/sl1.0                              EV=+0.041 H1=+0.042 H2=+0.040 t=0.84
+     ATR tp1.25/sl0.75                             EV=+0.072 H1=+0.029 H2=+0.116 t=1.16
+     yol: tp1.25/sl0.75 sabit                      EV=+0.072 H1=+0.029 H2=+0.116 t=1.16
+     yol: sl1.5 iz-stop d1.0 akt1.0 (TP yok)       EV=+0.030 H1=+0.032 H2=+0.027 t=0.56
+
+=== SELL: n=81 gün=12 | test edilen hücre M=356
+  En iyi hücre (tüm örnek): $ tp10/sl2  EV_R=+0.201  se(gün)=0.354  t=0.57 | Bonferroni z*=3.63 → GEÇMEZ | White RC p=0.690
+     yarılar: H1=+0.055 (n=41, 07-24→07-28) | H2=+0.350 (n=40, →10-14)
+  H1'de seçilen en iyi: $ tp8/sl2 H1=+0.128 → H2=+0.250 | H2'de seçilen: $ tp12/sl2 H2=+0.400 → H1=-0.116
+  Her iki yarıda >0 olan hücre: 5/356  (EV_R>0 tüm örnekte: 61)
+  Orijinal: EV_R=-0.054 t=-0.43 H1=-0.107 H2=-0.000
+  İki yarıda da pozitif, min(H1,H2)'ye göre ilk 8:
+     $ tp8/sl2                                     EV=+0.188 H1=+0.128 H2=+0.250 t=0.66
+     $ tp10/sl2                                    EV=+0.201 H1=+0.055 H2=+0.350 t=0.57
+     $ tp8/sl3                                     EV=+0.056 H1=+0.012 H2=+0.100 t=0.24
+     orij× tp0.75/sl2.0                            EV=+0.021 H1=+0.012 H2=+0.031 t=0.42
+     ATR tp0.5/sl0.5                               EV=+0.029 H1=+0.008 H2=+0.050 t=0.26
+
+=== BUY_rr067: n=541 gün=31 | test edilen hücre M=356
+  En iyi hücre (tüm örnek): yalnız süre 240dk (R=1ATR)  EV_R=+0.563  se(gün)=0.472  t=1.19 | Bonferroni z*=3.63 → GEÇMEZ | White RC p=0.125
+     yarılar: H1=+1.108 (n=271, 07-28→09-03) | H2=+0.017 (n=270, →10-14)
+  H1'de seçilen en iyi: yalnız süre 240dk (R=1ATR) H1=+1.108 → H2=+0.017 | H2'de seçilen: yalnız süre 120dk (R=1ATR) H2=+0.269 → H1=+0.497
+  Her iki yarıda >0 olan hücre: 47/356  (EV_R>0 tüm örnekte: 156)
+  Orijinal: EV_R=+0.018 t=0.50 H1=+0.070 H2=-0.034
+  İki yarıda da pozitif, min(H1,H2)'ye göre ilk 8:
+     yalnız süre 120dk (R=1ATR)                    EV=+0.383 H1=+0.497 H2=+0.269 t=1.62
+     $ tp10/sl2                                    EV=+0.123 H1=+0.085 H2=+0.162 t=1.02
+     ATR tp1.25/sl0.75                             EV=+0.105 H1=+0.141 H2=+0.069 t=1.73
+     yol: tp1.25/sl0.75 sabit                      EV=+0.105 H1=+0.141 H2=+0.069 t=1.73
+     ATR tp1.5/sl0.75                              EV=+0.105 H1=+0.140 H2=+0.069 t=1.53
+     yol: tp1.25/sl0.75 +BE@0.5ATR                 EV=+0.072 H1=+0.084 H2=+0.060 t=1.91
+     yol: tp1.25/sl0.75 +BE@0.75ATR                EV=+0.067 H1=+0.074 H2=+0.059 t=1.43
+     yalnız süre 60dk (R=1ATR)                     EV=+0.096 H1=+0.135 H2=+0.057 t=0.76
+
+=== BUY_exec: n=68 gün=9 | test edilen hücre M=356
+  En iyi hücre (tüm örnek): yalnız süre 120dk (R=1ATR)  EV_R=+1.110  se(gün)=0.759  t=1.46 | Bonferroni z*=3.63 → GEÇMEZ | White RC p=0.238
+     yarılar: H1=+0.292 (n=34, 10-05→10-08) | H2=+1.927 (n=34, →10-14)
+  H1'de seçilen en iyi: ATR tp4.0/sl0.5 H1=+0.324 → H2=+1.118 | H2'de seçilen: yalnız süre 240dk (R=1ATR) H2=+2.378 → H1=-0.269
+  Her iki yarıda >0 olan hücre: 84/356  (EV_R>0 tüm örnekte: 233)
+  Orijinal: EV_R=+0.103 t=1.31 H1=+0.126 H2=+0.079
+  İki yarıda da pozitif, min(H1,H2)'ye göre ilk 8:
+     ATR tp4.0/sl0.5                               EV=+0.721 H1=+0.324 H2=+1.118 t=1.13
+     ATR tp4.0/sl0.75                              EV=+0.406 H1=+0.304 H2=+0.509 t=0.84
+     yalnız süre 120dk (R=1ATR)                    EV=+1.110 H1=+0.292 H2=+1.927 t=1.46
+     ATR tp3.75/sl0.5                              EV=+0.625 H1=+0.250 H2=+1.000 t=1.04
+     ATR tp3.75/sl0.75                             EV=+0.333 H1=+0.235 H2=+0.430 t=0.73
+     süre240dk+sl1.0ATR                            EV=+0.478 H1=+0.220 H2=+0.735 t=0.82
+     yalnız süre 60dk (R=1ATR)                     EV=+0.476 H1=+0.197 H2=+0.755 t=1.05
+     ATR tp3.5/sl0.5                               EV=+0.529 H1=+0.176 H2=+0.882 t=0.94
+
+=== PLASEBO BUY: K=30 rastgele-giriş seti × n≈595 (aynı yön, aynı gün-içi saat, rastgele gün)
+  Plasebo hücre-ortalaması EV_R: medyan -0.055; EV>0 olan hücre oranı (ort.) 12.9%
+  Plasebo setlerinde ızgara-maksimumu EV_R: medyan +0.162, %90 +0.437, max +0.727 | decider sabit-hücre maksimumu +0.260 → plasebo maksimumlarının 67%'inden büyük
+  Orijinal geometri: decider +0.003 vs plasebo -0.054 (sd 0.031) → yüzdelik 93%
+  Decider − plasebo farkı en büyük 8 hücre (ve decider'ın plasebo dağılımındaki yüzdeliği):
+     $ tp10/sl2                                 decider +0.062 plasebo -0.111±0.072 yüzdelik 100%
+     ATR tp1.25/sl0.75                          decider +0.072 plasebo -0.088±0.055 yüzdelik 100%
+     ATR tp1.5/sl0.75                           decider +0.075 plasebo -0.083±0.056 yüzdelik 100%
+     yalnız süre 120dk (R=1ATR)                 decider +0.212 plasebo +0.070±0.166 yüzdelik 73%
+     $ tp8/sl2                                  decider +0.025 plasebo -0.112±0.068 yüzdelik 97%
+     yalnız süre 240dk (R=1ATR)                 decider +0.260 plasebo +0.123±0.263 yüzdelik 70%
+     orij× tp1.25/sl0.5                         decider +0.049 plasebo -0.082±0.058 yüzdelik 97%
+     ATR tp1.5/sl0.5                            decider +0.016 plasebo -0.115±0.056 yüzdelik 100%
+  yalnız süre 120dk (R=1ATR)               decider +0.212 | plasebo +0.070±0.166 | yüzdelik 73%
+  yalnız süre 240dk (R=1ATR)               decider +0.260 | plasebo +0.123±0.263 | yüzdelik 70%
+  ATR tp1.25/sl0.75                        decider +0.072 | plasebo -0.088±0.055 | yüzdelik 100%
+  ATR tp1.5/sl0.75                         decider +0.075 | plasebo -0.083±0.056 | yüzdelik 100%
+
+=== PLASEBO SELL: K=30 rastgele-giriş seti × n≈81 (aynı yön, aynı gün-içi saat, rastgele gün)
+  Plasebo hücre-ortalaması EV_R: medyan -0.003; EV>0 olan hücre oranı (ort.) 50.3%
+  Plasebo setlerinde ızgara-maksimumu EV_R: medyan +0.331, %90 +0.712, max +1.328 | decider sabit-hücre maksimumu +0.201 → plasebo maksimumlarının 20%'inden büyük
+  Orijinal geometri: decider -0.054 vs plasebo -0.015 (sd 0.099) → yüzdelik 37%
+  Decider − plasebo farkı en büyük 8 hücre (ve decider'ın plasebo dağılımındaki yüzdeliği):
+     $ tp10/sl2                                 decider +0.201 plasebo -0.041±0.219 yüzdelik 83%
+     $ tp12/sl2                                 decider +0.139 plasebo -0.098±0.214 yüzdelik 83%
+     $ tp8/sl2                                  decider +0.188 plasebo -0.031±0.213 yüzdelik 87%
+     ATR tp1.5/sl0.75                           decider +0.126 plasebo -0.032±0.156 yüzdelik 83%
+     $ tp10/sl3                                 decider +0.084 plasebo -0.045±0.194 yüzdelik 73%
+     $ tp3/sl3                                  decider +0.076 plasebo -0.052±0.133 yüzdelik 83%
+     $ tp6/sl2                                  decider +0.102 plasebo -0.025±0.198 yüzdelik 73%
+     $ tp3/sl2                                  decider +0.065 plasebo -0.062±0.146 yüzdelik 83%
+  yalnız süre 120dk (R=1ATR)               decider -0.880 | plasebo -0.028±0.419 | yüzdelik 3%
+  yalnız süre 240dk (R=1ATR)               decider -2.032 | plasebo -0.142±0.682 | yüzdelik 0%
+  ATR tp1.25/sl0.75                        decider +0.036 | plasebo -0.031±0.150 | yüzdelik 63%
+  ATR tp1.5/sl0.75                         decider +0.126 | plasebo -0.032±0.156 | yüzdelik 83%

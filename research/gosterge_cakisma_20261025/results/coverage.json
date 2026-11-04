@@ -1,0 +1,129 @@
+{
+ "indicators": 133,
+ "states": 353,
+ "families_implemented": [
+  "adx_dmi",
+  "atr_trailing",
+  "atr_vol",
+  "bollinger",
+  "candlestick",
+  "cci",
+  "chart_patterns",
+  "divergence",
+  "donchian_turtle",
+  "ehlers_dsp",
+  "fibonacci",
+  "fisher_schaff",
+  "fvg",
+  "gann_round",
+  "halftrend_utbot",
+  "heikin_renko",
+  "htf_overlay",
+  "ichimoku",
+  "kalman",
+  "keltner",
+  "kernel_regression",
+  "liquidity",
+  "ma_adaptive",
+  "ma_basic_cross",
+  "ma_general",
+  "macd",
+  "momentum_roc",
+  "order_block",
+  "orderflow_delta",
+  "other_osc",
+  "pivot_points",
+  "premium_discount",
+  "prior_levels_orb",
+  "psar",
+  "qqe",
+  "range_consolidation",
+  "regime_entropy",
+  "regression_channel",
+  "relative_volume",
+  "reversal_detect",
+  "rsi",
+  "smc_structure",
+  "squeeze",
+  "sr_zones",
+  "stats_prob",
+  "stoch",
+  "supertrend",
+  "trend_followers_other",
+  "trendlines",
+  "volume_classic",
+  "volume_profile",
+  "vwap",
+  "wavetrend_cipher",
+  "zigzag_swing",
+  "zscore_meanrev"
+ ],
+ "n_families": 55,
+ "scripts_total": 33389,
+ "scripts_classified": 30246,
+ "scripts_covered": 28194,
+ "share_scripts": 0.9322,
+ "share_boost": 0.9504,
+ "missing_families": [
+  [
+   "sessions",
+   3120
+  ],
+  [
+   "all_in_one",
+   2633
+  ],
+  [
+   "seasonality_time",
+   1351
+  ],
+  [
+   "risk_tools",
+   1150
+  ],
+  [
+   "intermarket",
+   727
+  ],
+  [
+   "ict_time",
+   656
+  ],
+  [
+   "ml_classification",
+   580
+  ],
+  [
+   "sentiment_cot",
+   474
+  ],
+  [
+   "vix_regime",
+   456
+  ],
+  [
+   "buy_sell_pressure",
+   365
+  ],
+  [
+   "elliott_wyckoff",
+   290
+  ],
+  [
+   "fakeout",
+   282
+  ],
+  [
+   "harmonic",
+   266
+  ],
+  [
+   "daily_bias",
+   200
+  ],
+  [
+   "econ_calendar",
+   148
+  ]
+ ]
+}

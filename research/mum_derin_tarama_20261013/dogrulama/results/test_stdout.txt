@@ -1,0 +1,75 @@
+
+=== N-H ===
+{'n': 150, 'n_asagi': 66, 'up_asagi': 59.0909, 'up_yukari': 50.0, 'up_kosulsuz': 54.0, 'pct_asagi': 0.1126, 'pct_yukari': 0.0445, 'pct_fark': 0.0681, 'pts_asagi': 29.603, 'pts_yukari': 12.1429, 'pts_fark': 17.4602, 'd_std': 0.0767, 'esik_pct': 0.0429}
+ boot pct: {'P': 0.7631, 'sd_boot': 0.1032, 'q05': -0.0989, 'q95': 0.2416, 'MDE80': 0.2566, 'esik': 0.0429} | verdikt %: SONUÇSUZ
+ boot up : {'P': 0.8997, 'sd_boot': 7.3406, 'q05': -2.8974, 'q95': 21.313, 'MDE80': 18.2524, 'esik': 2.7708} | verdikt up: SONUÇSUZ
+ boot pts: {'P': 0.757, 'sd_boot': 27.169, 'q05': -26.143, 'q95': 63.373, 'MDE80': 67.556}
+ işlem: {'her_gece_AL_net_ort': 18.33, 'asagi_sonrasi_AL_net_ort': 28.1, 'yukari_sonrasi_SAT_net_ort': -13.64, 'her_gece_AL_toplam': 2748.8, 'asagi_sonrasi_AL_toplam': 1854.8, 'ort_mutlak_gece_puan': 177.96}
+ plasebo: {'n': 150, 'pct_fark': 0.1606, 'up_fark': 10.0376, 'pts_fark': 48.6246, 'P': 0.8418, 'P_up': 0.8373, 'verdikt': 'SONUÇSUZ', 'ana_pct_fark_ayni_geceler': 0.0681, 'P_ana_eksi_plasebo': 0.3381, 'kapanisa_ozgu': False}
+
+=== N-X ===
+{'n': 55, 'n_asagi': 31, 'up_asagi': 64.5161, 'up_yukari': 41.6667, 'up_kosulsuz': 54.5455, 'pct_asagi': 0.1956, 'pct_yukari': -0.1021, 'pct_fark': 0.2977, 'pts_asagi': 54.829, 'pts_yukari': -30.7208, 'pts_fark': 85.5499, 'd_std': 0.3488, 'esik_pct': 0.0429}
+ boot pct: {'P': 0.8708, 'sd_boot': 0.2651, 'q05': -0.1345, 'q95': 0.7326, 'MDE80': 0.6592, 'esik': 0.0429} | verdikt %: SONUÇSUZ
+ boot up : {'P': 0.9, 'sd_boot': 17.6275, 'q05': -6.6906, 'q95': 51.7262, 'MDE80': 43.8307, 'esik': 2.7708} | verdikt up: SONUÇSUZ
+ boot pts: {'P': 0.866, 'sd_boot': 77.662, 'q05': -41.372, 'q95': 212.59, 'MDE80': 193.107}
+ işlem: {'her_gece_AL_net_ort': 16.0, 'asagi_sonrasi_AL_net_ort': 53.33, 'yukari_sonrasi_SAT_net_ort': 29.22, 'her_gece_AL_toplam': 879.9, 'asagi_sonrasi_AL_toplam': 1653.2, 'ort_mutlak_gece_puan': 198.37}
+ plasebo: {'n': 55, 'pct_fark': -0.1443, 'up_fark': -5.291, 'pts_fark': -42.4905, 'P': 0.2423, 'P_up': 0.2967, 'verdikt': 'SONUÇSUZ', 'ana_pct_fark_ayni_geceler': 0.2977, 'P_ana_eksi_plasebo': 0.892, 'kapanisa_ozgu': False}
+
+=== N-HX ===
+{'n': 205, 'n_asagi': 97, 'up_asagi': 60.8247, 'up_yukari': 48.1481, 'up_kosulsuz': 54.1463, 'pct_asagi': 0.1391, 'pct_yukari': 0.0119, 'pct_fark': 0.1272, 'pts_asagi': 37.6649, 'pts_yukari': 2.6176, 'pts_fark': 35.0474, 'd_std': 0.1451, 'esik_pct': 0.0429}
+ boot pct: {'P': 0.9056, 'sd_boot': 0.0987, 'q05': -0.0346, 'q95': 0.2925, 'MDE80': 0.2455, 'esik': 0.0429} | verdikt %: SONUÇSUZ
+ boot up : {'P': 0.9669, 'sd_boot': 6.9742, 'q05': 1.3053, 'q95': 24.148, 'MDE80': 17.3413, 'esik': 2.7708} | verdikt up: GEÇER
+ boot pts: {'P': 0.905, 'sd_boot': 27.203, 'q05': -9.447, 'q95': 80.509, 'MDE80': 67.64}
+ işlem: {'her_gece_AL_net_ort': 17.7, 'asagi_sonrasi_AL_net_ort': 36.16, 'yukari_sonrasi_SAT_net_ort': -4.12, 'her_gece_AL_toplam': 3628.7, 'asagi_sonrasi_AL_toplam': 3508.0, 'ort_mutlak_gece_puan': 183.44}
+ plasebo: {'n': 205, 'pct_fark': 0.0782, 'up_fark': 5.9155, 'pts_fark': 23.9952, 'P': 0.7375, 'P_up': 0.7779, 'verdikt': 'SONUÇSUZ', 'ana_pct_fark_ayni_geceler': 0.1272, 'P_ana_eksi_plasebo': 0.6141, 'kapanisa_ozgu': False}
+
+=== D-30 ===
+{'n': 1403, 'n_asagi': 659, 'up_asagi': 57.2079, 'up_yukari': 55.3763, 'up_kosulsuz': 56.2366, 'pct_asagi': 0.0267, 'pct_yukari': 0.0255, 'pct_fark': 0.0012, 'pts_asagi': 6.1263, 'pts_yukari': 4.5573, 'pts_fark': 1.569, 'd_std': 0.0017, 'esik_pct': 0.0388}
+ boot pct: {'P': 0.5061, 'sd_boot': 0.042, 'q05': -0.0664, 'q95': 0.0717, 'MDE80': 0.1043, 'esik': 0.0388} | verdikt %: SONUÇSUZ
+ boot up : {'P': 0.7518, 'sd_boot': 2.7112, 'q05': -2.5831, 'q95': 6.3136, 'MDE80': 6.7415, 'esik': 2.7708} | verdikt up: SONUÇSUZ
+ boot pts: {'P': 0.567, 'sd_boot': 7.905, 'q05': -11.107, 'q95': 14.723, 'MDE80': 19.656}
+ işlem: {'her_gece_AL_net_ort': 3.79, 'asagi_sonrasi_AL_net_ort': 4.63, 'yukari_sonrasi_SAT_net_ort': -6.06, 'her_gece_AL_toplam': 5323.3, 'asagi_sonrasi_AL_toplam': 3048.7, 'ort_mutlak_gece_puan': 82.71}
+ plasebo: {'n': 1401, 'pct_fark': -0.0157, 'up_fark': -1.1898, 'pts_fark': -4.9287, 'P': 0.3381, 'P_up': 0.3334, 'verdikt': 'SONUÇSUZ', 'ana_pct_fark_ayni_geceler': 0.0007, 'P_ana_eksi_plasebo': 0.5994, 'kapanisa_ozgu': False}
+
+=== D-1h ===
+{'n': 1712, 'n_asagi': 781, 'up_asagi': 54.9296, 'up_yukari': 55.5317, 'up_kosulsuz': 55.257, 'pct_asagi': 0.0157, 'pct_yukari': 0.0469, 'pct_fark': -0.0312, 'pts_asagi': 3.7393, 'pts_yukari': 7.4083, 'pts_fark': -3.669, 'd_std': -0.0372, 'esik_pct': 0.0453}
+ boot pct: {'P': 0.2397, 'sd_boot': 0.0445, 'q05': -0.1055, 'q95': 0.0408, 'MDE80': 0.1106, 'esik': 0.0453} | verdikt %: ÇÜRÜTÜLDÜ
+ boot up : {'P': 0.3999, 'sd_boot': 2.4839, 'q05': -4.6947, 'q95': 3.4303, 'MDE80': 6.1762, 'esik': 2.7708} | verdikt up: SONUÇSUZ
+ boot pts: {'P': 0.28, 'sd_boot': 6.505, 'q05': -14.677, 'q95': 6.928, 'MDE80': 16.175}
+ işlem: {'her_gece_AL_net_ort': 4.23, 'asagi_sonrasi_AL_net_ort': 2.24, 'yukari_sonrasi_SAT_net_ort': -8.91, 'her_gece_AL_toplam': 7249.57, 'asagi_sonrasi_AL_toplam': 1748.92, 'ort_mutlak_gece_puan': 82.87}
+ plasebo: {'n': 1710, 'pct_fark': -0.0427, 'up_fark': -1.3025, 'pts_fark': -7.421, 'P': 0.1499, 'P_up': 0.306, 'verdikt': 'ÇÜRÜTÜLDÜ', 'ana_pct_fark_ayni_geceler': -0.0317, 'P_ana_eksi_plasebo': 0.5828, 'kapanisa_ozgu': False}
+
+=== D-1h_2020-01_2021-03-16 ===
+{'n': 306, 'n_asagi': 145, 'up_asagi': 53.7931, 'up_yukari': 65.8385, 'up_kosulsuz': 60.1307, 'pct_asagi': -0.0243, 'pct_yukari': 0.148, 'pct_fark': -0.1723, 'pts_asagi': -3.7814, 'pts_yukari': 17.1671, 'pts_fark': -20.9485, 'd_std': -0.1337, 'esik_pct': 0.0697}
+ boot pct: {'P': 0.1747, 'sd_boot': 0.1896, 'q05': -0.484, 'q95': 0.13, 'MDE80': 0.4714, 'esik': 0.0697} | verdikt %: SONUÇSUZ
+ boot up : {'P': 0.0312, 'sd_boot': 6.5174, 'q05': -22.7402, 'q95': -1.4935, 'MDE80': 16.2056, 'esik': 2.7708} | verdikt up: ÇÜRÜTÜLDÜ
+ boot pts: {'P': 0.14, 'sd_boot': 19.459, 'q05': -53.445, 'q95': 10.023, 'MDE80': 48.386}
+ işlem: {'her_gece_AL_net_ort': 5.74, 'asagi_sonrasi_AL_net_ort': -5.28, 'yukari_sonrasi_SAT_net_ort': -18.67, 'her_gece_AL_toplam': 1756.6, 'asagi_sonrasi_AL_toplam': -765.8, 'ort_mutlak_gece_puan': 94.28}
+ plasebo: {'n': 306, 'pct_fark': -0.1898, 'up_fark': -3.6622, 'pts_fark': -21.7431, 'P': 0.0794, 'P_up': 0.2185, 'verdikt': 'ÇÜRÜTÜLDÜ', 'ana_pct_fark_ayni_geceler': -0.1723, 'P_ana_eksi_plasebo': 0.5415, 'kapanisa_ozgu': False}
+
+=== Q-pre ===
+{'n': 342, 'n_asagi': 143, 'up_asagi': 53.1469, 'up_yukari': 52.2613, 'up_kosulsuz': 52.6316, 'pct_asagi': -0.0298, 'pct_yukari': 0.0425, 'pct_fark': -0.0723, 'pts_asagi': -0.037, 'pts_yukari': 0.0428, 'pts_fark': -0.0798, 'd_std': -0.0854, 'esik_pct': 0.0429}
+ boot pct: {'P': 0.2172, 'sd_boot': 0.0924, 'q05': -0.2302, 'q95': 0.0725, 'MDE80': 0.2297, 'esik': 0.0429} | verdikt %: SONUÇSUZ
+ boot up : {'P': 0.553, 'sd_boot': 6.4354, 'q05': -9.6513, 'q95': 11.6224, 'MDE80': 16.0017, 'esik': 2.7708} | verdikt up: SONUÇSUZ
+ boot pts: {'P': 0.205, 'sd_boot': 0.097, 'q05': -0.244, 'q95': 0.072, 'MDE80': 0.24}
+ işlem: {'her_gece_AL_net_ort': -1.49, 'asagi_sonrasi_AL_net_ort': -1.54, 'yukari_sonrasi_SAT_net_ort': -1.54, 'her_gece_AL_toplam': -509.78, 'asagi_sonrasi_AL_toplam': -219.79, 'ort_mutlak_gece_puan': 0.55}
+
+=== Q-ovl ===
+{'n': 2343, 'n_asagi': 970, 'up_asagi': 57.2165, 'up_yukari': 56.8099, 'up_kosulsuz': 56.9782, 'pct_asagi': 0.0765, 'pct_yukari': 0.0361, 'pct_fark': 0.0404, 'pts_asagi': 0.207, 'pts_yukari': 0.1306, 'pts_fark': 0.0764, 'd_std': 0.0467, 'esik_pct': 0.0429}
+ boot pct: {'P': 0.8651, 'sd_boot': 0.0364, 'q05': -0.0203, 'q95': 0.1002, 'MDE80': 0.0905, 'esik': 0.0429} | verdikt %: SONUÇSUZ
+ boot up : {'P': 0.5764, 'sd_boot': 1.991, 'q05': -2.8425, 'q95': 3.7009, 'MDE80': 4.9506, 'esik': 2.7708} | verdikt up: SONUÇSUZ
+ boot pts: {'P': 0.753, 'sd_boot': 0.111, 'q05': -0.108, 'q95': 0.257, 'MDE80': 0.276}
+ işlem: {'her_gece_AL_net_ort': -1.34, 'asagi_sonrasi_AL_net_ort': -1.29, 'yukari_sonrasi_SAT_net_ort': -1.63, 'her_gece_AL_toplam': -3134.38, 'asagi_sonrasi_AL_toplam': -1254.21, 'ort_mutlak_gece_puan': 1.67}
+
+=== Q-hold ===
+{'n': 160, 'n_asagi': 68, 'up_asagi': 58.8235, 'up_yukari': 51.087, 'up_kosulsuz': 54.375, 'pct_asagi': 0.1703, 'pct_yukari': -0.0427, 'pct_fark': 0.213, 'pts_asagi': 1.1131, 'pts_yukari': -0.3103, 'pts_fark': 1.4234, 'd_std': 0.243, 'esik_pct': 0.0429}
+ boot pct: {'P': 0.9757, 'sd_boot': 0.1068, 'q05': 0.039, 'q95': 0.3888, 'MDE80': 0.2656, 'esik': 0.0429} | verdikt %: GEÇER
+ boot up : {'P': 0.8614, 'sd_boot': 7.2097, 'q05': -3.8961, 'q95': 19.6715, 'MDE80': 17.9268, 'esik': 2.7708} | verdikt up: SONUÇSUZ
+ boot pts: {'P': 0.979, 'sd_boot': 0.696, 'q05': 0.303, 'q95': 2.586, 'MDE80': 1.731}
+ işlem: {'her_gece_AL_net_ort': -1.21, 'asagi_sonrasi_AL_net_ort': -0.39, 'yukari_sonrasi_SAT_net_ort': -1.19, 'her_gece_AL_toplam': -192.86, 'asagi_sonrasi_AL_toplam': -26.31, 'ort_mutlak_gece_puan': 4.33}
+
+N-HX aylık: {'2025-12': {'n': 19, 'pct_fark': 0.1221, 'up_asagi': 54.5, 'up_yukari': 50.0}, '2026-01': {'n': 20, 'pct_fark': 0.1519, 'up_asagi': 58.3, 'up_yukari': 37.5}, '2026-02': {'n': 19, 'pct_fark': 0.3586, 'up_asagi': 75.0, 'up_yukari': 36.4}, '2026-03': {'n': 22, 'pct_fark': -0.0852, 'up_asagi': 46.2, 'up_yukari': 33.3}, '2026-04': {'n': 21, 'pct_fark': 0.2879, 'up_asagi': 100.0, 'up_yukari': 52.6}, '2026-05': {'n': 20, 'pct_fark': 0.315, 'up_asagi': 80.0, 'up_yukari': 73.3}, '2026-06': {'n': 21, 'pct_fark': 0.1321, 'up_asagi': 54.5, 'up_yukari': 50.0}, '2026-07': {'n': 22, 'pct_fark': 0.4606, 'up_asagi': 61.5, 'up_yukari': 33.3}, '2026-08': {'n': 21, 'pct_fark': 0.1064, 'up_asagi': 66.7, 'up_yukari': 44.4}, '2026-09': {'n': 20, 'pct_fark': 0.0219, 'up_asagi': 60.0, 'up_yukari': 50.0}}
+D-30 yıllık: {2021: {'n': 201, 'pct_fark': 0.0421, 'up_fark': 3.9, 'up_asagi': 60.9, 'up_yukari': 57.0}, 2022: {'n': 257, 'pct_fark': -0.0458, 'up_fark': 6.13, 'up_asagi': 57.3, 'up_yukari': 51.1}, 2023: {'n': 254, 'pct_fark': -0.0234, 'up_fark': -1.85, 'up_asagi': 54.5, 'up_yukari': 56.4}, 2024: {'n': 250, 'pct_fark': -0.0958, 'up_fark': -0.78, 'up_asagi': 56.4, 'up_yukari': 57.1}, 2025: {'n': 250, 'pct_fark': 0.076, 'up_fark': -2.03, 'up_asagi': 58.1, 'up_yukari': 60.2}, 2026: {'n': 191, 'pct_fark': 0.0947, 'up_fark': 8.65, 'up_asagi': 57.0, 'up_yukari': 48.4}}
+D-30 yarılar: {'yari1': {'n': 701, 'pct_fark': -0.020723473354809195, 'up_fark': 1.81513292433538}, 'yari2': {'n': 702, 'pct_fark': 0.022227192651634045, 'up_fark': 1.8310993920750036}}
+
+HİPOTEZ VERDİKTİ: {'N_HX': 'SONUÇSUZ', 'D_30': 'SONUÇSUZ', 'sonuc': 'SONUÇSUZ'}

@@ -1,0 +1,18 @@
+<string>:7: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+TÜM GÜNLER OPEN BUY n 471 {'G1_tp1.0_sl1.5': 0.003, 'G2_tp1.25_sl0.75': 0.077} | OPEN-olmayan n 976 {'G1_tp1.0_sl1.5': -0.111, 'G2_tp1.25_sl0.75': -0.112}
+             G1_tp1.0_sl1.5        G2_tp1.25_sl0.75       
+                      count   mean            count   mean
+m  fake_wait                                              
+07 False                199 -0.081              199 -0.060
+   True                  43 -0.031               43 -0.008
+08 False                  8  0.250                8  0.000
+   True                 122 -0.036              122 -0.096
+09 False                 18  0.019               18  0.333
+   True                 466 -0.147              466 -0.147
+10 False                  1 -1.000                1 -1.000
+   True                 119 -0.168              119 -0.178
+aynı gün OPEN vs GERÇEK WAIT: gün 15 {'G1_tp1.0_sl1.5': 0.072, 'G2_tp1.25_sl0.75': 0.032} 199 {'G1_tp1.0_sl1.5': 0.038, 'G2_tp1.25_sl0.75': 0.281} 44

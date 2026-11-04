@@ -1,0 +1,2124 @@
+{
+  "configurations_tried": 432,
+  "frozen_sha256": "0397b90cf51098e83e5c30e229162f143f6d0c7a6b69581b62b1e3ee4a064b3f",
+  "candidates": [
+    {
+      "spec": {
+        "id": "exhaustion_60_none_buy",
+        "family": "exhaustion",
+        "lookback": 60,
+        "context": "none",
+        "side": "buy",
+        "metrics": {
+          "discovery": {
+            "n": 267,
+            "ev": 0.10464399004155918,
+            "total_R": 27.9399453410963,
+            "wr": 0.5056179775280899,
+            "drawdown_R": 8.87886700134598,
+            "points": 2298.4877272204503,
+            "days": 54,
+            "stops": 107,
+            "targets": 65,
+            "time_exits": 94,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.09888310172177826
+          },
+          "discovery_a": {
+            "n": 135,
+            "ev": 0.11508389018890731,
+            "total_R": 15.536325175502487,
+            "wr": 0.5185185185185185,
+            "drawdown_R": 7.971370223816773,
+            "points": 1320.4377187541286,
+            "days": 28,
+            "stops": 51,
+            "targets": 32,
+            "time_exits": 51,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.10369013328978506
+          },
+          "discovery_b": {
+            "n": 132,
+            "ev": 0.0939668194363168,
+            "total_R": 12.403620165593818,
+            "wr": 0.49242424242424243,
+            "drawdown_R": 8.878867001345984,
+            "points": 978.0500084663217,
+            "days": 26,
+            "stops": 56,
+            "targets": 33,
+            "time_exits": 43,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.0939668194363168
+          },
+          "validation": {
+            "n": 134,
+            "ev": 0.14368359619109175,
+            "total_R": 19.253601889606294,
+            "wr": 0.5223880597014925,
+            "drawdown_R": 7.013665969507522,
+            "points": 1787.3702987808574,
+            "days": 24,
+            "stops": 54,
+            "targets": 37,
+            "time_exits": 43,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.14368359619109175
+          },
+          "validation_a": {
+            "n": 62,
+            "ev": 0.1659489967665115,
+            "total_R": 10.288837799523714,
+            "wr": 0.5483870967741935,
+            "drawdown_R": 5.399453450607165,
+            "points": 693.1115225972026,
+            "days": 12,
+            "stops": 26,
+            "targets": 18,
+            "time_exits": 18,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.1659489967665115
+          },
+          "validation_b": {
+            "n": 72,
+            "ev": 0.12451061236225808,
+            "total_R": 8.964764090082582,
+            "wr": 0.5,
+            "drawdown_R": 5.806029890367238,
+            "points": 1094.2587761836548,
+            "days": 12,
+            "stops": 28,
+            "targets": 19,
+            "time_exits": 25,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.12451061236225808
+          }
+        },
+        "eligible": true,
+        "worst_subperiod_ev": 0.0939668194363168
+      },
+      "final": {
+        "n": 177,
+        "ev": -0.1573855836346941,
+        "total_R": -27.857248303340853,
+        "wr": 0.3728813559322034,
+        "drawdown_R": 41.62942449365861,
+        "points": -2055.4293399820745,
+        "days": 33,
+        "stops": 89,
+        "targets": 33,
+        "time_exits": 55,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.1573855836346941
+      },
+      "bootstrap": {
+        "p_positive": 0.0382,
+        "ci95": [
+          -0.3193167553389303,
+          0.017629445372050485
+        ],
+        "effective_days": 33
+      },
+      "wilson95": [
+        0.3050498185990098,
+        0.4461136305188922
+      ],
+      "matched_baseline": {
+        "baseline_ev": -0.3852093706973199,
+        "baseline_wr": 0.2811098961180974,
+        "lift_ev": 0.22782378706262582,
+        "lift_bootstrap": {
+          "p_positive": 1.0,
+          "ci95": [
+            0.12069004085355434,
+            0.3414936522626842
+          ],
+          "effective_days": 33
+        },
+        "one_sided_p": 0.00019998000199980003,
+        "holm_p_five": 0.000999900009999
+      },
+      "halves": {
+        "final_a": {
+          "n": 92,
+          "ev": -0.1697084598903212,
+          "total_R": -15.613178309909552,
+          "wr": 0.3695652173913043,
+          "drawdown_R": 22.54455783399176,
+          "points": -1300.0155475758693,
+          "days": 17,
+          "stops": 49,
+          "targets": 19,
+          "time_exits": 24,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.1697084598903212
+        },
+        "final_b": {
+          "n": 85,
+          "ev": -0.14404788227566234,
+          "total_R": -12.2440699934313,
+          "wr": 0.3764705882352941,
+          "drawdown_R": 23.48866513957057,
+          "points": -755.4137924062052,
+          "days": 16,
+          "stops": 40,
+          "targets": 14,
+          "time_exits": 31,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.14404788227566234
+        }
+      },
+      "monthly": {
+        "2026-07": {
+          "n": 92,
+          "ev": -0.1697084598903212,
+          "total_R": -15.613178309909552,
+          "wr": 0.3695652173913043,
+          "drawdown_R": 22.54455783399176,
+          "points": -1300.0155475758693,
+          "days": 17,
+          "stops": 49,
+          "targets": 19,
+          "time_exits": 24,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.1697084598903212
+        },
+        "2026-08": {
+          "n": 85,
+          "ev": -0.14404788227566234,
+          "total_R": -12.2440699934313,
+          "wr": 0.3764705882352941,
+          "drawdown_R": 23.48866513957057,
+          "points": -755.4137924062052,
+          "days": 16,
+          "stops": 40,
+          "targets": 14,
+          "time_exits": 31,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.14404788227566234
+        }
+      },
+      "sides": {
+        "1": {
+          "n": 177,
+          "ev": -0.1573855836346941,
+          "total_R": -27.857248303340853,
+          "wr": 0.3728813559322034,
+          "drawdown_R": 41.62942449365861,
+          "points": -2055.4293399820745,
+          "days": 33,
+          "stops": 89,
+          "targets": 33,
+          "time_exits": 55,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.1573855836346941
+        },
+        "-1": {
+          "n": 0,
+          "ev": 0.0,
+          "total_R": 0.0,
+          "wr": 0.0,
+          "drawdown_R": 0.0,
+          "points": 0.0,
+          "days": 0
+        }
+      },
+      "stress": {
+        "spread_1_5": {
+          "n": 178,
+          "ev": -0.16485068167209593,
+          "total_R": -29.343421337633075,
+          "wr": 0.3707865168539326,
+          "drawdown_R": 42.989229088771076,
+          "points": -2139.1316010218325,
+          "days": 33,
+          "stops": 90,
+          "targets": 33,
+          "time_exits": 55,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.16485068167209593
+        },
+        "spread_3": {
+          "n": 181,
+          "ev": -0.19437563810736083,
+          "total_R": -35.18199049743231,
+          "wr": 0.36464088397790057,
+          "drawdown_R": 47.44491006443853,
+          "points": -2450.4670292858464,
+          "days": 33,
+          "stops": 94,
+          "targets": 31,
+          "time_exits": 56,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.19437563810736083
+        },
+        "slip_1": {
+          "n": 178,
+          "ev": -0.1795293766613091,
+          "total_R": -31.956229045713023,
+          "wr": 0.3707865168539326,
+          "drawdown_R": 45.149906774124766,
+          "points": -2296.2316010216455,
+          "days": 33,
+          "stops": 90,
+          "targets": 33,
+          "time_exits": 55,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.1795293766613091
+        },
+        "delay_1m": {
+          "n": 178,
+          "ev": -0.13073474073235514,
+          "total_R": -23.270783850359216,
+          "wr": 0.37640449438202245,
+          "drawdown_R": 32.1480146527514,
+          "points": -1501.3668961262956,
+          "days": 33,
+          "stops": 86,
+          "targets": 32,
+          "time_exits": 60,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.13073474073235514
+        },
+        "fixed_80_110": {
+          "n": 151,
+          "ev": -0.08990367248646265,
+          "total_R": -13.57545454545586,
+          "wr": 0.47019867549668876,
+          "drawdown_R": 21.34181818181932,
+          "points": -1493.3000000001448,
+          "days": 33,
+          "stops": 41,
+          "targets": 44,
+          "time_exits": 66,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.08990367248646265
+        },
+        "symmetric": {
+          "n": 179,
+          "ev": -0.10461226056661313,
+          "total_R": -18.72559464142375,
+          "wr": 0.441340782122905,
+          "drawdown_R": 34.53539051878821,
+          "points": -1602.2537384772622,
+          "days": 33,
+          "stops": 81,
+          "targets": 60,
+          "time_exits": 38,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.10461226056661313
+        },
+        "optimistic_close": {
+          "n": 175,
+          "ev": -0.11837626011589279,
+          "total_R": -20.71584552028124,
+          "wr": 0.38285714285714284,
+          "drawdown_R": 34.599428637605854,
+          "points": -1470.4927901029441,
+          "days": 33,
+          "stops": 85,
+          "targets": 34,
+          "time_exits": 56,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.11837626011589279
+        }
+      },
+      "timeframe_transfer": {
+        "3": {
+          "n": 41,
+          "ev": -0.27444850656904946,
+          "total_R": -11.252388769331027,
+          "wr": 0.36585365853658536,
+          "drawdown_R": 12.770044708704075,
+          "points": -672.1423369713302,
+          "days": 25,
+          "stops": 24,
+          "targets": 5,
+          "time_exits": 12,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.27444850656904946,
+          "bootstrap": {
+            "p_positive": 0.0359,
+            "ci95": [
+              -0.5595376022172002,
+              0.021348767675572568
+            ],
+            "effective_days": 25
+          }
+        },
+        "5": {
+          "n": 6,
+          "ev": -0.14639332770196387,
+          "total_R": -0.8783599662117831,
+          "wr": 0.3333333333333333,
+          "drawdown_R": 2.3252558192760375,
+          "points": -17.943980204818217,
+          "days": 6,
+          "stops": 3,
+          "targets": 1,
+          "time_exits": 2,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.14639332770196387,
+          "bootstrap": {
+            "p_positive": 0.3301,
+            "ci95": [
+              -0.889521648427127,
+              0.6876202323029178
+            ],
+            "effective_days": 6
+          }
+        }
+      },
+      "go_live_checks": {
+        "volume_150": true,
+        "positive_ev_day_bootstrap_90": false,
+        "both_calendar_halves": false,
+        "spread_1_5": false,
+        "honest_vs_close_entry": true,
+        "one_position": false
+      },
+      "bar_card_passes": false,
+      "verdict": "SHADOW",
+      "reason": "No future shadow/live fills; replay research only"
+    },
+    {
+      "spec": {
+        "id": "sweep_60_quiet_buy",
+        "family": "sweep",
+        "lookback": 60,
+        "context": "quiet",
+        "side": "buy",
+        "metrics": {
+          "discovery": {
+            "n": 80,
+            "ev": 0.07472170960365251,
+            "total_R": 5.977736768292202,
+            "wr": 0.4875,
+            "drawdown_R": 6.8675343084237275,
+            "points": 398.19132389685547,
+            "days": 41,
+            "stops": 29,
+            "targets": 18,
+            "time_exits": 33,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.07472170960365251
+          },
+          "discovery_a": {
+            "n": 52,
+            "ev": 0.09476487975454528,
+            "total_R": 4.927773747236355,
+            "wr": 0.5,
+            "drawdown_R": 6.8675343084237275,
+            "points": 296.59623690881926,
+            "days": 23,
+            "stops": 17,
+            "targets": 11,
+            "time_exits": 24,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.09476487975454528
+          },
+          "discovery_b": {
+            "n": 28,
+            "ev": 0.037498679323423136,
+            "total_R": 1.0499630210558477,
+            "wr": 0.4642857142857143,
+            "drawdown_R": 4.832074172526483,
+            "points": 101.5950869880362,
+            "days": 18,
+            "stops": 12,
+            "targets": 7,
+            "time_exits": 9,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.037498679323423136
+          },
+          "validation": {
+            "n": 41,
+            "ev": 0.17296253162399858,
+            "total_R": 7.091463796583942,
+            "wr": 0.6097560975609756,
+            "drawdown_R": 3.0092879908218713,
+            "points": 615.9486886777449,
+            "days": 19,
+            "stops": 9,
+            "targets": 6,
+            "time_exits": 25,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.12020991838357994
+          },
+          "validation_a": {
+            "n": 17,
+            "ev": 0.08989385188775911,
+            "total_R": 1.5281954820919048,
+            "wr": 0.5882352941176471,
+            "drawdown_R": 2.0088717156718516,
+            "points": 127.89531921383605,
+            "days": 8,
+            "stops": 3,
+            "targets": 1,
+            "time_exits": 12,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": -0.03733303886854464
+          },
+          "validation_b": {
+            "n": 24,
+            "ev": 0.23180284643716823,
+            "total_R": 5.563268314492038,
+            "wr": 0.625,
+            "drawdown_R": 3.0092879908218713,
+            "points": 488.0533694639089,
+            "days": 11,
+            "stops": 6,
+            "targets": 5,
+            "time_exits": 13,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.23180284643716823
+          }
+        },
+        "eligible": true,
+        "worst_subperiod_ev": 0.037498679323423136
+      },
+      "final": {
+        "n": 64,
+        "ev": -0.23643996331834272,
+        "total_R": -15.132157652373934,
+        "wr": 0.390625,
+        "drawdown_R": 15.147578416976145,
+        "points": -622.4484589898202,
+        "days": 32,
+        "stops": 26,
+        "targets": 5,
+        "time_exits": 33,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.23643996331834272
+      },
+      "bootstrap": {
+        "p_positive": 0.0064,
+        "ci95": [
+          -0.41506112321114763,
+          -0.04897805539133771
+        ],
+        "effective_days": 32
+      },
+      "wilson95": [
+        0.28055388546896454,
+        0.5130830570559759
+      ],
+      "matched_baseline": {
+        "baseline_ev": -0.36727172999374363,
+        "baseline_wr": 0.29096942204301074,
+        "lift_ev": 0.13083176667540092,
+        "lift_bootstrap": {
+          "p_positive": 0.9815,
+          "ci95": [
+            0.009131528208182613,
+            0.2424326849708252
+          ],
+          "effective_days": 32
+        },
+        "one_sided_p": 0.009099090090990901,
+        "holm_p_five": 0.027297270272972705
+      },
+      "halves": {
+        "final_a": {
+          "n": 31,
+          "ev": -0.24186167923289248,
+          "total_R": -7.497712056219667,
+          "wr": 0.3225806451612903,
+          "drawdown_R": 7.993557104432652,
+          "points": -340.83749245791114,
+          "days": 16,
+          "stops": 11,
+          "targets": 3,
+          "time_exits": 17,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.24186167923289248
+        },
+        "final_b": {
+          "n": 33,
+          "ev": -0.23134683624709898,
+          "total_R": -7.634445596154267,
+          "wr": 0.45454545454545453,
+          "drawdown_R": 8.688140480127972,
+          "points": -281.61096653190907,
+          "days": 16,
+          "stops": 15,
+          "targets": 2,
+          "time_exits": 16,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.23134683624709898
+        }
+      },
+      "monthly": {
+        "2026-07": {
+          "n": 31,
+          "ev": -0.24186167923289248,
+          "total_R": -7.497712056219667,
+          "wr": 0.3225806451612903,
+          "drawdown_R": 7.993557104432652,
+          "points": -340.83749245791114,
+          "days": 16,
+          "stops": 11,
+          "targets": 3,
+          "time_exits": 17,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.24186167923289248
+        },
+        "2026-08": {
+          "n": 33,
+          "ev": -0.23134683624709898,
+          "total_R": -7.634445596154267,
+          "wr": 0.45454545454545453,
+          "drawdown_R": 8.688140480127972,
+          "points": -281.61096653190907,
+          "days": 16,
+          "stops": 15,
+          "targets": 2,
+          "time_exits": 16,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.23134683624709898
+        }
+      },
+      "sides": {
+        "1": {
+          "n": 64,
+          "ev": -0.23643996331834272,
+          "total_R": -15.132157652373934,
+          "wr": 0.390625,
+          "drawdown_R": 15.147578416976145,
+          "points": -622.4484589898202,
+          "days": 32,
+          "stops": 26,
+          "targets": 5,
+          "time_exits": 33,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.23643996331834272
+        },
+        "-1": {
+          "n": 0,
+          "ev": 0.0,
+          "total_R": 0.0,
+          "wr": 0.0,
+          "drawdown_R": 0.0,
+          "points": 0.0,
+          "days": 0
+        }
+      },
+      "stress": {
+        "spread_1_5": {
+          "n": 65,
+          "ev": -0.2523351737889424,
+          "total_R": -16.401786296281255,
+          "wr": 0.38461538461538464,
+          "drawdown_R": 16.401786296281262,
+          "points": -693.0505108711986,
+          "days": 32,
+          "stops": 27,
+          "targets": 5,
+          "time_exits": 33,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.2523351737889424
+        },
+        "spread_3": {
+          "n": 65,
+          "ev": -0.26460688022426565,
+          "total_R": -17.19944721457727,
+          "wr": 0.36923076923076925,
+          "drawdown_R": 17.19944721457727,
+          "points": -743.9005108712008,
+          "days": 32,
+          "stops": 27,
+          "targets": 5,
+          "time_exits": 33,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.26460688022426565
+        },
+        "slip_1": {
+          "n": 65,
+          "ev": -0.2676637763884615,
+          "total_R": -17.398145465249996,
+          "wr": 0.36923076923076925,
+          "drawdown_R": 17.398145465250003,
+          "points": -754.500510871123,
+          "days": 32,
+          "stops": 27,
+          "targets": 5,
+          "time_exits": 33,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.2676637763884615
+        },
+        "delay_1m": {
+          "n": 65,
+          "ev": -0.2119485485874653,
+          "total_R": -13.776655658185245,
+          "wr": 0.4,
+          "drawdown_R": 16.317367050695065,
+          "points": -625.4536230254016,
+          "days": 32,
+          "stops": 25,
+          "targets": 6,
+          "time_exits": 34,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.2119485485874653
+        },
+        "fixed_80_110": {
+          "n": 67,
+          "ev": -0.008181818181826476,
+          "total_R": -0.5481818181823739,
+          "wr": 0.4925373134328358,
+          "drawdown_R": 3.5681818181820164,
+          "points": -60.30000000006112,
+          "days": 32,
+          "stops": 8,
+          "targets": 18,
+          "time_exits": 41,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.008181818181826476
+        },
+        "symmetric": {
+          "n": 65,
+          "ev": 0.00595567013688047,
+          "total_R": 0.38711855889723057,
+          "wr": 0.5230769230769231,
+          "drawdown_R": 4.757532524628553,
+          "points": 122.37620278605755,
+          "days": 32,
+          "stops": 21,
+          "targets": 21,
+          "time_exits": 23,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.00595567013688047
+        },
+        "optimistic_close": {
+          "n": 64,
+          "ev": -0.22315262922824264,
+          "total_R": -14.281768270607529,
+          "wr": 0.390625,
+          "drawdown_R": 14.41079986169955,
+          "points": -569.0484589897533,
+          "days": 32,
+          "stops": 26,
+          "targets": 5,
+          "time_exits": 33,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.22315262922824264
+        }
+      },
+      "timeframe_transfer": {
+        "3": {
+          "n": 51,
+          "ev": -0.008166168506454633,
+          "total_R": -0.4164745938291863,
+          "wr": 0.49019607843137253,
+          "drawdown_R": 5.84676401462562,
+          "points": 288.2078005893454,
+          "days": 27,
+          "stops": 22,
+          "targets": 9,
+          "time_exits": 20,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.008166168506454633,
+          "bootstrap": {
+            "p_positive": 0.4668,
+            "ci95": [
+              -0.28561790518298297,
+              0.25810165620512454
+            ],
+            "effective_days": 27
+          }
+        },
+        "5": {
+          "n": 38,
+          "ev": -0.1126020595728121,
+          "total_R": -4.27887826376686,
+          "wr": 0.42105263157894735,
+          "drawdown_R": 7.672032017276434,
+          "points": 403.40532245052964,
+          "days": 24,
+          "stops": 18,
+          "targets": 6,
+          "time_exits": 14,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.1126020595728121,
+          "bootstrap": {
+            "p_positive": 0.2521,
+            "ci95": [
+              -0.434714676370043,
+              0.23315747419391003
+            ],
+            "effective_days": 24
+          }
+        }
+      },
+      "go_live_checks": {
+        "volume_150": false,
+        "positive_ev_day_bootstrap_90": false,
+        "both_calendar_halves": false,
+        "spread_1_5": false,
+        "honest_vs_close_entry": true,
+        "one_position": false
+      },
+      "bar_card_passes": false,
+      "verdict": "RED",
+      "reason": "No future shadow/live fills; replay research only"
+    },
+    {
+      "spec": {
+        "id": "failed_break_60_h1_both",
+        "family": "failed_break",
+        "lookback": 60,
+        "context": "h1",
+        "side": "both",
+        "metrics": {
+          "discovery": {
+            "n": 205,
+            "ev": 0.10243319406611019,
+            "total_R": 20.99880478355259,
+            "wr": 0.5073170731707317,
+            "drawdown_R": 9.449728133263166,
+            "points": 1421.179987038704,
+            "days": 52,
+            "stops": 83,
+            "targets": 55,
+            "time_exits": 66,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.09688920708516513
+          },
+          "discovery_a": {
+            "n": 99,
+            "ev": 0.03740285713746074,
+            "total_R": 3.7028828566086136,
+            "wr": 0.48484848484848486,
+            "drawdown_R": 9.06024404303958,
+            "points": 155.38294404298358,
+            "days": 26,
+            "stops": 40,
+            "targets": 23,
+            "time_exits": 35,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.02592288409610983
+          },
+          "discovery_b": {
+            "n": 106,
+            "ev": 0.16316907478249035,
+            "total_R": 17.295921926943976,
+            "wr": 0.5283018867924528,
+            "drawdown_R": 9.449728133263164,
+            "points": 1265.7970429957204,
+            "days": 26,
+            "stops": 43,
+            "targets": 32,
+            "time_exits": 31,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.16316907478249035
+          },
+          "validation": {
+            "n": 88,
+            "ev": 0.2559053671247168,
+            "total_R": 22.519672306975078,
+            "wr": 0.5454545454545454,
+            "drawdown_R": 8.28755837236414,
+            "points": 1537.493154570293,
+            "days": 24,
+            "stops": 33,
+            "targets": 31,
+            "time_exits": 23,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.23132744504679448
+          },
+          "validation_a": {
+            "n": 44,
+            "ev": 0.036797826327444834,
+            "total_R": 1.6191043584075728,
+            "wr": 0.45454545454545453,
+            "drawdown_R": 8.28755837236414,
+            "points": -389.6055087722343,
+            "days": 12,
+            "stops": 20,
+            "targets": 13,
+            "time_exits": 10,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": -0.012358017828399782
+          },
+          "validation_b": {
+            "n": 44,
+            "ev": 0.47501290792198875,
+            "total_R": 20.900567948567506,
+            "wr": 0.6363636363636364,
+            "drawdown_R": 4.010939625137886,
+            "points": 1927.0986633425273,
+            "days": 12,
+            "stops": 13,
+            "targets": 18,
+            "time_exits": 13,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.47501290792198875
+          }
+        },
+        "eligible": true,
+        "worst_subperiod_ev": 0.036797826327444834
+      },
+      "final": {
+        "n": 123,
+        "ev": -0.21705360529207227,
+        "total_R": -26.697593450924888,
+        "wr": 0.36585365853658536,
+        "drawdown_R": 28.903911720007965,
+        "points": -1559.7906262961842,
+        "days": 33,
+        "stops": 66,
+        "targets": 22,
+        "time_exits": 35,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.21705360529207227
+      },
+      "bootstrap": {
+        "p_positive": 0.0084,
+        "ci95": [
+          -0.37544686237188074,
+          -0.04543427148868154
+        ],
+        "effective_days": 33
+      },
+      "wilson95": [
+        0.2859930738091735,
+        0.4538399147371709
+      ],
+      "matched_baseline": {
+        "baseline_ev": -0.39124089129073214,
+        "baseline_wr": 0.262234461054288,
+        "lift_ev": 0.17418728599865993,
+        "lift_bootstrap": {
+          "p_positive": 0.9988,
+          "ci95": [
+            0.06783957360087356,
+            0.2744568398496942
+          ],
+          "effective_days": 33
+        },
+        "one_sided_p": 0.0005999400059994001,
+        "holm_p_five": 0.0023997600239976003
+      },
+      "halves": {
+        "final_a": {
+          "n": 62,
+          "ev": -0.23349096807239955,
+          "total_R": -14.476440020488772,
+          "wr": 0.3548387096774194,
+          "drawdown_R": 15.25765022164531,
+          "points": -1146.557509313141,
+          "days": 17,
+          "stops": 35,
+          "targets": 11,
+          "time_exits": 16,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.23349096807239955
+        },
+        "final_b": {
+          "n": 61,
+          "ev": -0.20034677754813293,
+          "total_R": -12.22115343043611,
+          "wr": 0.3770491803278688,
+          "drawdown_R": 14.427471699519204,
+          "points": -413.23311698304315,
+          "days": 16,
+          "stops": 31,
+          "targets": 11,
+          "time_exits": 19,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.20034677754813293
+        }
+      },
+      "monthly": {
+        "2026-07": {
+          "n": 62,
+          "ev": -0.23349096807239955,
+          "total_R": -14.476440020488772,
+          "wr": 0.3548387096774194,
+          "drawdown_R": 15.25765022164531,
+          "points": -1146.557509313141,
+          "days": 17,
+          "stops": 35,
+          "targets": 11,
+          "time_exits": 16,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.23349096807239955
+        },
+        "2026-08": {
+          "n": 61,
+          "ev": -0.20034677754813293,
+          "total_R": -12.22115343043611,
+          "wr": 0.3770491803278688,
+          "drawdown_R": 14.427471699519204,
+          "points": -413.23311698304315,
+          "days": 16,
+          "stops": 31,
+          "targets": 11,
+          "time_exits": 19,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.20034677754813293
+        }
+      },
+      "sides": {
+        "1": {
+          "n": 52,
+          "ev": -0.3244617105847703,
+          "total_R": -16.872008950408055,
+          "wr": 0.34615384615384615,
+          "drawdown_R": 18.26370864274445,
+          "points": -987.684747168787,
+          "days": 21,
+          "stops": 29,
+          "targets": 6,
+          "time_exits": 17,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.3244617105847703
+        },
+        "-1": {
+          "n": 71,
+          "ev": -0.13838851409178632,
+          "total_R": -9.825584500516829,
+          "wr": 0.38028169014084506,
+          "drawdown_R": 12.467231480588598,
+          "points": -572.1058791273972,
+          "days": 23,
+          "stops": 37,
+          "targets": 16,
+          "time_exits": 18,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.13838851409178632
+        }
+      },
+      "stress": {
+        "spread_1_5": {
+          "n": 123,
+          "ev": -0.22524864746073137,
+          "total_R": -27.705583637669957,
+          "wr": 0.36585365853658536,
+          "drawdown_R": 29.85139419182781,
+          "points": -1615.3841034875804,
+          "days": 33,
+          "stops": 67,
+          "targets": 22,
+          "time_exits": 34,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.22524864746073137
+        },
+        "spread_3": {
+          "n": 123,
+          "ev": -0.23959482112367808,
+          "total_R": -29.470162998212405,
+          "wr": 0.34146341463414637,
+          "drawdown_R": 30.504914878113713,
+          "points": -1747.6693852173848,
+          "days": 33,
+          "stops": 67,
+          "targets": 21,
+          "time_exits": 35,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.23959482112367808
+        },
+        "slip_1": {
+          "n": 123,
+          "ev": -0.2394146461439478,
+          "total_R": -29.44800147570558,
+          "wr": 0.35772357723577236,
+          "drawdown_R": 31.271474467619285,
+          "points": -1722.6341034874495,
+          "days": 33,
+          "stops": 67,
+          "targets": 22,
+          "time_exits": 34,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.2394146461439478
+        },
+        "delay_1m": {
+          "n": 122,
+          "ev": -0.19292621738483604,
+          "total_R": -23.536998520949997,
+          "wr": 0.38524590163934425,
+          "drawdown_R": 24.303467702577134,
+          "points": -1446.4216192966487,
+          "days": 33,
+          "stops": 63,
+          "targets": 21,
+          "time_exits": 38,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.19292621738483604
+        },
+        "fixed_80_110": {
+          "n": 110,
+          "ev": -0.08584297520661975,
+          "total_R": -9.442727272728172,
+          "wr": 0.5,
+          "drawdown_R": 11.369090909091556,
+          "points": -1038.700000000099,
+          "days": 33,
+          "stops": 30,
+          "targets": 32,
+          "time_exits": 48,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.08584297520661975
+        },
+        "symmetric": {
+          "n": 125,
+          "ev": -0.13626511259145088,
+          "total_R": -17.03313907393136,
+          "wr": 0.44,
+          "drawdown_R": 20.92183681056363,
+          "points": -1026.3926140194962,
+          "days": 33,
+          "stops": 59,
+          "targets": 42,
+          "time_exits": 24,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.13626511259145088
+        },
+        "optimistic_close": {
+          "n": 123,
+          "ev": -0.20803314976654264,
+          "total_R": -25.588077421284744,
+          "wr": 0.37398373983739835,
+          "drawdown_R": 28.005741877766653,
+          "points": -1488.4906262960722,
+          "days": 33,
+          "stops": 66,
+          "targets": 22,
+          "time_exits": 35,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.20803314976654264
+        }
+      },
+      "timeframe_transfer": {
+        "3": {
+          "n": 107,
+          "ev": 0.058450117675963205,
+          "total_R": 6.254162591328063,
+          "wr": 0.4392523364485981,
+          "drawdown_R": 7.91247702920729,
+          "points": 530.7722512801411,
+          "days": 31,
+          "stops": 45,
+          "targets": 30,
+          "time_exits": 32,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.058450117675963205,
+          "bootstrap": {
+            "p_positive": 0.7461,
+            "ci95": [
+              -0.11801291713593562,
+              0.2352967064545564
+            ],
+            "effective_days": 31
+          }
+        },
+        "5": {
+          "n": 79,
+          "ev": 0.028496936621500418,
+          "total_R": 2.251257993098533,
+          "wr": 0.46835443037974683,
+          "drawdown_R": 10.5232124912077,
+          "points": 636.1437400637296,
+          "days": 31,
+          "stops": 34,
+          "targets": 20,
+          "time_exits": 25,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.028496936621500418,
+          "bootstrap": {
+            "p_positive": 0.5974,
+            "ci95": [
+              -0.20529279431881622,
+              0.2706089820414442
+            ],
+            "effective_days": 31
+          }
+        }
+      },
+      "go_live_checks": {
+        "volume_150": false,
+        "positive_ev_day_bootstrap_90": false,
+        "both_calendar_halves": false,
+        "spread_1_5": false,
+        "honest_vs_close_entry": true,
+        "one_position": false
+      },
+      "bar_card_passes": false,
+      "verdict": "RED",
+      "reason": "No future shadow/live fills; replay research only"
+    },
+    {
+      "spec": {
+        "id": "efficient_pullback_30_efficiency_both",
+        "family": "efficient_pullback",
+        "lookback": 30,
+        "context": "efficiency",
+        "side": "both",
+        "metrics": {
+          "discovery": {
+            "n": 129,
+            "ev": 0.11468515150089138,
+            "total_R": 14.794384543614989,
+            "wr": 0.4883720930232558,
+            "drawdown_R": 7.57934602112017,
+            "points": 842.8364612061741,
+            "days": 52,
+            "stops": 49,
+            "targets": 35,
+            "time_exits": 45,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.11468515150089138
+          },
+          "discovery_a": {
+            "n": 61,
+            "ev": 0.03368044526418488,
+            "total_R": 2.0545071611152776,
+            "wr": 0.47540983606557374,
+            "drawdown_R": 5.4618164557596245,
+            "points": 13.469697220247326,
+            "days": 27,
+            "stops": 25,
+            "targets": 15,
+            "time_exits": 21,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.03368044526418488
+          },
+          "discovery_b": {
+            "n": 68,
+            "ev": 0.18735113797793687,
+            "total_R": 12.739877382499706,
+            "wr": 0.5,
+            "drawdown_R": 7.579346021120173,
+            "points": 829.3667639859268,
+            "days": 25,
+            "stops": 24,
+            "targets": 20,
+            "time_exits": 24,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.18735113797793687
+          },
+          "validation": {
+            "n": 54,
+            "ev": 0.19571891399283287,
+            "total_R": 10.568821355612975,
+            "wr": 0.5740740740740741,
+            "drawdown_R": 3.8885899503222143,
+            "points": 1124.6569981299763,
+            "days": 24,
+            "stops": 20,
+            "targets": 15,
+            "time_exits": 18,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.17450198277590243
+          },
+          "validation_a": {
+            "n": 30,
+            "ev": 0.12161213573565176,
+            "total_R": 3.648364072069553,
+            "wr": 0.5333333333333333,
+            "drawdown_R": 3.8885899503222143,
+            "points": 405.9017878431914,
+            "days": 12,
+            "stops": 12,
+            "targets": 9,
+            "time_exits": 8,
+            "data_gaps": 1,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.08342165954517695
+          },
+          "validation_b": {
+            "n": 24,
+            "ev": 0.28835238681430925,
+            "total_R": 6.920457283543422,
+            "wr": 0.625,
+            "drawdown_R": 2.0085934027169747,
+            "points": 718.7552102867849,
+            "days": 12,
+            "stops": 8,
+            "targets": 6,
+            "time_exits": 10,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.28835238681430925
+          }
+        },
+        "eligible": true,
+        "worst_subperiod_ev": 0.03368044526418488
+      },
+      "final": {
+        "n": 83,
+        "ev": 0.03080259966784602,
+        "total_R": 2.5566157724312197,
+        "wr": 0.46987951807228917,
+        "drawdown_R": 7.054840953419011,
+        "points": -21.392742282198014,
+        "days": 31,
+        "stops": 35,
+        "targets": 21,
+        "time_exits": 27,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.03080259966784602
+      },
+      "bootstrap": {
+        "p_positive": 0.6048,
+        "ci95": [
+          -0.18023737883735078,
+          0.23310979251297964
+        ],
+        "effective_days": 31
+      },
+      "wilson95": [
+        0.36623168109196985,
+        0.5761922263440977
+      ],
+      "matched_baseline": {
+        "baseline_ev": 0.3340396272940022,
+        "baseline_wr": 0.5783326855810339,
+        "lift_ev": -0.30323702762615623,
+        "lift_bootstrap": {
+          "p_positive": 0.0003,
+          "ci95": [
+            -0.47657428446246974,
+            -0.13036581682141768
+          ],
+          "effective_days": 31
+        },
+        "one_sided_p": 0.9999000099990001,
+        "holm_p_five": 1.0
+      },
+      "halves": {
+        "final_a": {
+          "n": 44,
+          "ev": 0.0011962427015303327,
+          "total_R": 0.05263467886733464,
+          "wr": 0.45454545454545453,
+          "drawdown_R": 7.054840953419011,
+          "points": -151.31351256324706,
+          "days": 16,
+          "stops": 20,
+          "targets": 10,
+          "time_exits": 14,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.0011962427015303327
+        },
+        "final_b": {
+          "n": 39,
+          "ev": 0.06420464342471502,
+          "total_R": 2.5039810935638855,
+          "wr": 0.48717948717948717,
+          "drawdown_R": 3.807059652313562,
+          "points": 129.92077028104904,
+          "days": 15,
+          "stops": 15,
+          "targets": 11,
+          "time_exits": 13,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.06420464342471502
+        }
+      },
+      "monthly": {
+        "2026-07": {
+          "n": 44,
+          "ev": 0.0011962427015303327,
+          "total_R": 0.05263467886733464,
+          "wr": 0.45454545454545453,
+          "drawdown_R": 7.054840953419011,
+          "points": -151.31351256324706,
+          "days": 16,
+          "stops": 20,
+          "targets": 10,
+          "time_exits": 14,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.0011962427015303327
+        },
+        "2026-08": {
+          "n": 39,
+          "ev": 0.06420464342471502,
+          "total_R": 2.5039810935638855,
+          "wr": 0.48717948717948717,
+          "drawdown_R": 3.807059652313562,
+          "points": 129.92077028104904,
+          "days": 15,
+          "stops": 15,
+          "targets": 11,
+          "time_exits": 13,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.06420464342471502
+        }
+      },
+      "sides": {
+        "1": {
+          "n": 43,
+          "ev": 0.0436382062813332,
+          "total_R": 1.8764428700973275,
+          "wr": 0.4883720930232558,
+          "drawdown_R": 7.57280039058212,
+          "points": 50.35894273318627,
+          "days": 25,
+          "stops": 17,
+          "targets": 11,
+          "time_exits": 15,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.0436382062813332
+        },
+        "-1": {
+          "n": 40,
+          "ev": 0.017004322558347267,
+          "total_R": 0.6801729023338907,
+          "wr": 0.45,
+          "drawdown_R": 4.580903422915869,
+          "points": -71.75168501538428,
+          "days": 22,
+          "stops": 18,
+          "targets": 10,
+          "time_exits": 12,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.017004322558347267
+        }
+      },
+      "stress": {
+        "spread_1_5": {
+          "n": 83,
+          "ev": -0.0017394443897477926,
+          "total_R": -0.14437388434906678,
+          "wr": 0.4578313253012048,
+          "drawdown_R": 7.103652517868146,
+          "points": -187.6332421945881,
+          "days": 31,
+          "stops": 36,
+          "targets": 20,
+          "time_exits": 27,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.0017394443897477926
+        },
+        "spread_3": {
+          "n": 84,
+          "ev": -0.06955238318029078,
+          "total_R": -5.842400187144425,
+          "wr": 0.42857142857142855,
+          "drawdown_R": 10.753426029936263,
+          "points": -510.0642240250272,
+          "days": 31,
+          "stops": 40,
+          "targets": 19,
+          "time_exits": 25,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.06955238318029078
+        },
+        "slip_1": {
+          "n": 83,
+          "ev": -0.014747487273118176,
+          "total_R": -1.2240414436688085,
+          "wr": 0.4578313253012048,
+          "drawdown_R": 7.344452556026102,
+          "points": -261.3832421945008,
+          "days": 31,
+          "stops": 36,
+          "targets": 20,
+          "time_exits": 27,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.014747487273118176
+        },
+        "delay_1m": {
+          "n": 83,
+          "ev": 0.02770940994506844,
+          "total_R": 2.2998810254406807,
+          "wr": 0.4578313253012048,
+          "drawdown_R": 6.8994552111718965,
+          "points": -18.28426112602392,
+          "days": 31,
+          "stops": 33,
+          "targets": 19,
+          "time_exits": 31,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.02770940994506844
+        },
+        "fixed_80_110": {
+          "n": 85,
+          "ev": 0.005764705882344538,
+          "total_R": 0.48999999999928573,
+          "wr": 0.5647058823529412,
+          "drawdown_R": 8.35181818181832,
+          "points": 53.89999999992142,
+          "days": 31,
+          "stops": 21,
+          "targets": 35,
+          "time_exits": 29,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.005764705882344538
+        },
+        "symmetric": {
+          "n": 89,
+          "ev": -0.0360781855406212,
+          "total_R": -3.2109585131152865,
+          "wr": 0.48314606741573035,
+          "drawdown_R": 8.403948331730811,
+          "points": -433.6405363017693,
+          "days": 31,
+          "stops": 38,
+          "targets": 34,
+          "time_exits": 17,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.0360781855406212
+        },
+        "optimistic_close": {
+          "n": 83,
+          "ev": 0.07077831157164279,
+          "total_R": 5.874599860446351,
+          "wr": 0.4819277108433735,
+          "drawdown_R": 6.81616931346961,
+          "points": 161.71809633848898,
+          "days": 31,
+          "stops": 33,
+          "targets": 22,
+          "time_exits": 28,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.07077831157164279
+        }
+      },
+      "timeframe_transfer": {
+        "3": {
+          "n": 115,
+          "ev": -0.002139682403525889,
+          "total_R": -0.2460634764054772,
+          "wr": 0.4608695652173913,
+          "drawdown_R": 18.496408645824673,
+          "points": 247.23122591655556,
+          "days": 33,
+          "stops": 50,
+          "targets": 30,
+          "time_exits": 35,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.002139682403525889,
+          "bootstrap": {
+            "p_positive": 0.4816,
+            "ci95": [
+              -0.19739969416971237,
+              0.18305795214133044
+            ],
+            "effective_days": 33
+          }
+        },
+        "5": {
+          "n": 94,
+          "ev": -0.01201055882208482,
+          "total_R": -1.128992529275973,
+          "wr": 0.43617021276595747,
+          "drawdown_R": 14.493860049949513,
+          "points": 180.50079634084614,
+          "days": 30,
+          "stops": 41,
+          "targets": 24,
+          "time_exits": 29,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": -0.01201055882208482,
+          "bootstrap": {
+            "p_positive": 0.4577,
+            "ci95": [
+              -0.2190097175905554,
+              0.20397760592011432
+            ],
+            "effective_days": 30
+          }
+        }
+      },
+      "go_live_checks": {
+        "volume_150": false,
+        "positive_ev_day_bootstrap_90": false,
+        "both_calendar_halves": true,
+        "spread_1_5": false,
+        "honest_vs_close_entry": false,
+        "one_position": true
+      },
+      "bar_card_passes": false,
+      "verdict": "RED",
+      "reason": "No future shadow/live fills; replay research only"
+    },
+    {
+      "spec": {
+        "id": "midpoint_reclaim_30_quiet_sell",
+        "family": "midpoint_reclaim",
+        "lookback": 30,
+        "context": "quiet",
+        "side": "sell",
+        "metrics": {
+          "discovery": {
+            "n": 131,
+            "ev": 0.08258159082111066,
+            "total_R": 10.818188397565496,
+            "wr": 0.48091603053435117,
+            "drawdown_R": 14.8296982752824,
+            "points": 277.1104070219408,
+            "days": 52,
+            "stops": 40,
+            "targets": 29,
+            "time_exits": 62,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.08258159082111066
+          },
+          "discovery_a": {
+            "n": 76,
+            "ev": 0.025883525390328444,
+            "total_R": 1.9671479296649617,
+            "wr": 0.5,
+            "drawdown_R": 14.8296982752824,
+            "points": 75.62364499152318,
+            "days": 28,
+            "stops": 22,
+            "targets": 12,
+            "time_exits": 42,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.025883525390328444
+          },
+          "discovery_b": {
+            "n": 55,
+            "ev": 0.16092800850728253,
+            "total_R": 8.851040467900539,
+            "wr": 0.45454545454545453,
+            "drawdown_R": 6.666235432913,
+            "points": 201.4867620304176,
+            "days": 24,
+            "stops": 18,
+            "targets": 17,
+            "time_exits": 20,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.16092800850728253
+          },
+          "validation": {
+            "n": 63,
+            "ev": 0.08799508873482162,
+            "total_R": 5.543690590293762,
+            "wr": 0.4603174603174603,
+            "drawdown_R": 8.441030735433086,
+            "points": 260.21855356113883,
+            "days": 23,
+            "stops": 25,
+            "targets": 18,
+            "time_exits": 20,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.08799508873482162
+          },
+          "validation_a": {
+            "n": 35,
+            "ev": 0.04560933150627293,
+            "total_R": 1.5963266027195526,
+            "wr": 0.4,
+            "drawdown_R": 8.441030735433086,
+            "points": 83.90063183148959,
+            "days": 12,
+            "stops": 16,
+            "targets": 11,
+            "time_exits": 8,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.04560933150627293
+          },
+          "validation_b": {
+            "n": 28,
+            "ev": 0.14097728527050749,
+            "total_R": 3.9473639875742097,
+            "wr": 0.5357142857142857,
+            "drawdown_R": 4.672364715182531,
+            "points": 176.31792172964924,
+            "days": 11,
+            "stops": 9,
+            "targets": 7,
+            "time_exits": 12,
+            "data_gaps": 0,
+            "ambiguous_bars": 0,
+            "worst_gap_ev": 0.14097728527050749
+          }
+        },
+        "eligible": true,
+        "worst_subperiod_ev": 0.025883525390328444
+      },
+      "final": {
+        "n": 89,
+        "ev": 0.16966408496573185,
+        "total_R": 15.100103561950133,
+        "wr": 0.550561797752809,
+        "drawdown_R": 9.096806485876028,
+        "points": 995.9577512085525,
+        "days": 32,
+        "stops": 26,
+        "targets": 23,
+        "time_exits": 40,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.16966408496573185
+      },
+      "bootstrap": {
+        "p_positive": 0.8956,
+        "ci95": [
+          -0.09311466750900843,
+          0.441397425245419
+        ],
+        "effective_days": 32
+      },
+      "wilson95": [
+        0.4472614742822269,
+        0.6496778287888101
+      ],
+      "matched_baseline": {
+        "baseline_ev": 0.20965151336647483,
+        "baseline_wr": 0.5728766461278241,
+        "lift_ev": -0.03998742840074299,
+        "lift_bootstrap": {
+          "p_positive": 0.2292,
+          "ci95": [
+            -0.1398348901609163,
+            0.06346636870979874
+          ],
+          "effective_days": 32
+        },
+        "one_sided_p": 0.7786221377862214,
+        "holm_p_five": 1.0
+      },
+      "halves": {
+        "final_a": {
+          "n": 43,
+          "ev": 0.25501005425181694,
+          "total_R": 10.965432332828128,
+          "wr": 0.5581395348837209,
+          "drawdown_R": 2.2483109299811765,
+          "points": 767.2976052790946,
+          "days": 17,
+          "stops": 9,
+          "targets": 12,
+          "time_exits": 22,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.25501005425181694
+        },
+        "final_b": {
+          "n": 46,
+          "ev": 0.0898841571548262,
+          "total_R": 4.134671229122005,
+          "wr": 0.5434782608695652,
+          "drawdown_R": 9.096806485876026,
+          "points": 228.66014592945794,
+          "days": 15,
+          "stops": 17,
+          "targets": 11,
+          "time_exits": 18,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.0898841571548262
+        }
+      },
+      "monthly": {
+        "2026-07": {
+          "n": 43,
+          "ev": 0.25501005425181694,
+          "total_R": 10.965432332828128,
+          "wr": 0.5581395348837209,
+          "drawdown_R": 2.2483109299811765,
+          "points": 767.2976052790946,
+          "days": 17,
+          "stops": 9,
+          "targets": 12,
+          "time_exits": 22,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.25501005425181694
+        },
+        "2026-08": {
+          "n": 46,
+          "ev": 0.0898841571548262,
+          "total_R": 4.134671229122005,
+          "wr": 0.5434782608695652,
+          "drawdown_R": 9.096806485876026,
+          "points": 228.66014592945794,
+          "days": 15,
+          "stops": 17,
+          "targets": 11,
+          "time_exits": 18,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.0898841571548262
+        }
+      },
+      "sides": {
+        "1": {
+          "n": 0,
+          "ev": 0.0,
+          "total_R": 0.0,
+          "wr": 0.0,
+          "drawdown_R": 0.0,
+          "points": 0.0,
+          "days": 0
+        },
+        "-1": {
+          "n": 89,
+          "ev": 0.16966408496573185,
+          "total_R": 15.100103561950133,
+          "wr": 0.550561797752809,
+          "drawdown_R": 9.096806485876028,
+          "points": 995.9577512085525,
+          "days": 32,
+          "stops": 26,
+          "targets": 23,
+          "time_exits": 40,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.16966408496573185
+        }
+      },
+      "stress": {
+        "spread_1_5": {
+          "n": 89,
+          "ev": 0.16611209848392705,
+          "total_R": 14.783976765069507,
+          "wr": 0.5280898876404494,
+          "drawdown_R": 9.104936905715745,
+          "points": 974.9077512085423,
+          "days": 32,
+          "stops": 26,
+          "targets": 23,
+          "time_exits": 40,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.16611209848392705
+        },
+        "spread_3": {
+          "n": 89,
+          "ev": 0.07543076208683028,
+          "total_R": 6.713337825727895,
+          "wr": 0.48314606741573035,
+          "drawdown_R": 9.129328165234895,
+          "points": 580.5267692283123,
+          "days": 32,
+          "stops": 27,
+          "targets": 17,
+          "time_exits": 45,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.07543076208683028
+        },
+        "slip_1": {
+          "n": 89,
+          "ev": 0.14317744771765356,
+          "total_R": 12.742792846871167,
+          "wr": 0.5168539325842697,
+          "drawdown_R": 9.27606024262313,
+          "points": 856.6228271026121,
+          "days": 32,
+          "stops": 26,
+          "targets": 22,
+          "time_exits": 41,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.14317744771765356
+        },
+        "delay_1m": {
+          "n": 89,
+          "ev": 0.14247886923674,
+          "total_R": 12.680619362069859,
+          "wr": 0.5393258426966292,
+          "drawdown_R": 6.4531276882569895,
+          "points": 909.4286143967365,
+          "days": 32,
+          "stops": 28,
+          "targets": 22,
+          "time_exits": 39,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.14247886923674
+        },
+        "fixed_80_110": {
+          "n": 92,
+          "ev": 0.0937154150197533,
+          "total_R": 8.621818181817304,
+          "wr": 0.5978260869565217,
+          "drawdown_R": 4.9272727272727925,
+          "points": 948.3999999999032,
+          "days": 32,
+          "stops": 10,
+          "targets": 30,
+          "time_exits": 52,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.0937154150197533
+        },
+        "symmetric": {
+          "n": 93,
+          "ev": 0.1605232515278607,
+          "total_R": 14.928662392091047,
+          "wr": 0.5913978494623656,
+          "drawdown_R": 8.045940896551587,
+          "points": 1009.0453487426712,
+          "days": 32,
+          "stops": 26,
+          "targets": 40,
+          "time_exits": 27,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.1605232515278607
+        },
+        "optimistic_close": {
+          "n": 89,
+          "ev": 0.22947395016637193,
+          "total_R": 20.423181564807102,
+          "wr": 0.5730337078651685,
+          "drawdown_R": 7.995999116570662,
+          "points": 1289.0713425647991,
+          "days": 32,
+          "stops": 24,
+          "targets": 24,
+          "time_exits": 41,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.22947395016637193
+        }
+      },
+      "timeframe_transfer": {
+        "3": {
+          "n": 73,
+          "ev": 0.11107620743454064,
+          "total_R": 8.108563142721467,
+          "wr": 0.5205479452054794,
+          "drawdown_R": 5.353554985420849,
+          "points": 664.9235830471807,
+          "days": 32,
+          "stops": 21,
+          "targets": 15,
+          "time_exits": 37,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.11107620743454064,
+          "bootstrap": {
+            "p_positive": 0.8364,
+            "ci95": [
+              -0.1066552071803022,
+              0.33522444733776957
+            ],
+            "effective_days": 32
+          }
+        },
+        "5": {
+          "n": 70,
+          "ev": 0.14777927916938166,
+          "total_R": 10.344549541856717,
+          "wr": 0.5428571428571428,
+          "drawdown_R": 5.422026476619156,
+          "points": 572.859180791078,
+          "days": 31,
+          "stops": 22,
+          "targets": 16,
+          "time_exits": 32,
+          "data_gaps": 0,
+          "ambiguous_bars": 0,
+          "worst_gap_ev": 0.14777927916938166,
+          "bootstrap": {
+            "p_positive": 0.8761,
+            "ci95": [
+              -0.10594244664695275,
+              0.38736445617392373
+            ],
+            "effective_days": 31
+          }
+        }
+      },
+      "go_live_checks": {
+        "volume_150": false,
+        "positive_ev_day_bootstrap_90": false,
+        "both_calendar_halves": true,
+        "spread_1_5": true,
+        "honest_vs_close_entry": true,
+        "one_position": true
+      },
+      "bar_card_passes": false,
+      "verdict": "RED",
+      "reason": "No future shadow/live fills; replay research only"
+    }
+  ],
+  "portfolio": {
+    "n": 299,
+    "ev": 0.008604800592490332,
+    "total_R": 2.5728353771546093,
+    "wr": 0.44816053511705684,
+    "drawdown_R": 23.9100417817001,
+    "points": -24.04039320708398,
+    "days": 33,
+    "stops": 132,
+    "targets": 74,
+    "time_exits": 93,
+    "data_gaps": 0,
+    "ambiguous_bars": 0,
+    "worst_gap_ev": 0.008604800592490332,
+    "bootstrap": {
+      "p_positive": 0.5605,
+      "ci95": [
+        -0.10229504993200403,
+        0.11818983750846694
+      ],
+      "effective_days": 33
+    },
+    "priority": "discovery/validation ranking; no final optimization",
+    "contribution": {
+      "efficient_pullback_30_efficiency_both": {
+        "n": 43,
+        "ev": 0.17567517445943268,
+        "total_R": 7.554032501755605,
+        "wr": 0.5116279069767442,
+        "drawdown_R": 8.020469037699137,
+        "points": 583.0383157096803,
+        "days": 23,
+        "stops": 17,
+        "targets": 14,
+        "time_exits": 12,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.17567517445943268
+      },
+      "exhaustion_60_none_buy": {
+        "n": 114,
+        "ev": -0.1019286646381824,
+        "total_R": -11.619867768752794,
+        "wr": 0.39473684210526316,
+        "drawdown_R": 25.91166466556198,
+        "points": -1076.1956479945802,
+        "days": 33,
+        "stops": 62,
+        "targets": 26,
+        "time_exits": 26,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.1019286646381824
+      },
+      "failed_break_60_h1_both": {
+        "n": 74,
+        "ev": -0.04382713415332862,
+        "total_R": -3.243207927346318,
+        "wr": 0.43243243243243246,
+        "drawdown_R": 8.644345268918167,
+        "points": -285.27373668194923,
+        "days": 31,
+        "stops": 33,
+        "targets": 18,
+        "time_exits": 23,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.04382713415332862
+      },
+      "midpoint_reclaim_30_quiet_sell": {
+        "n": 39,
+        "ev": 0.3967743353313437,
+        "total_R": 15.474199077922405,
+        "wr": 0.6410256410256411,
+        "drawdown_R": 4.013873367656214,
+        "points": 993.9355479251462,
+        "days": 25,
+        "stops": 10,
+        "targets": 14,
+        "time_exits": 15,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": 0.3967743353313437
+      },
+      "sweep_60_quiet_buy": {
+        "n": 29,
+        "ev": -0.19283863815256172,
+        "total_R": -5.59232050642429,
+        "wr": 0.3448275862068966,
+        "drawdown_R": 6.083950062489364,
+        "points": -239.5448721653811,
+        "days": 21,
+        "stops": 10,
+        "targets": 2,
+        "time_exits": 17,
+        "data_gaps": 0,
+        "ambiguous_bars": 0,
+        "worst_gap_ev": -0.19283863815256172
+      }
+    }
+  }
+}

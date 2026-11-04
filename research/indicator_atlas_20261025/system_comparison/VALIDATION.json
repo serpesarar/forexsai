@@ -1,0 +1,13 @@
+{
+  "date": "2026-10-25",
+  "usage_matrix_rows": 120,
+  "connected_cards": 34,
+  "source_files_hash_verified": 26,
+  "all_evidence_line_matches": true,
+  "synthetic_formula_checks": "passed",
+  "local_model_contract_and_fresh_load_routing_checks": "passed",
+  "cot_normalization_checks": "passed",
+  "report_links": "passed",
+  "deployment_or_predictive_accuracy_tested": false,
+  "trading_source_modified": false
+}

@@ -1,0 +1,231 @@
+[
+  {
+    "symbol": "NDX.INDX",
+    "passed": true,
+    "bars": 800,
+    "trades": 34,
+    "fills": 68,
+    "metrics": {
+      "final_value": 1001052.2158438129,
+      "total_return": 0.001052215843812876,
+      "annual_return": 0.10010632679583686,
+      "max_drawdown": -0.01378256679980393,
+      "sharpe": 0.8614703442285275,
+      "calmar": 7.2633,
+      "sortino": 1.1915,
+      "win_rate": 0.4117647058823529,
+      "profit_loss_ratio": 1.4909,
+      "profit_factor": 1.0436,
+      "max_consecutive_loss": 7,
+      "avg_holding_days": 5.7,
+      "trade_count": 34,
+      "benchmark_return": -0.010809,
+      "excess_return": 0.011861,
+      "information_ratio": 3.5727,
+      "tracking_error": 0.296689,
+      "benchmark_beta": -0.1486,
+      "avg_turnover": 0.042503,
+      "total_turnover": 34.002754,
+      "unfilled_plan_rejections": 0,
+      "unfilled_plan_rejections_by_symbol": {},
+      "by_symbol": {
+        "NDX.INDX": {
+          "count": 34,
+          "win_rate": 0.4118,
+          "total_pnl": 1052.22,
+          "avg_pnl": 30.95
+        }
+      },
+      "by_exit_reason": {
+        "signal": {
+          "count": 33,
+          "total_pnl": 535.97
+        },
+        "end_of_backtest": {
+          "count": 1,
+          "total_pnl": 516.25
+        }
+      },
+      "target_change_count": 67,
+      "rebalance_executed_bars": 0,
+      "rebalance_executed_fills": 0,
+      "rebalance_realized_turnover": 0.0,
+      "rebalance_turnover_mean": 0.5,
+      "rebalance_turnover_max": 0.5,
+      "position_adjustment": "hold",
+      "rebalance_tolerance": 0.0,
+      "dropped_target_adjustment_count": 0,
+      "dropped_target_adjustments": []
+    }
+  },
+  {
+    "symbol": "GDAXI.INDX",
+    "passed": true,
+    "bars": 800,
+    "trades": 38,
+    "fills": 76,
+    "metrics": {
+      "final_value": 1000239.2371267688,
+      "total_return": 0.0002392371267687654,
+      "annual_return": 0.021938175592141063,
+      "max_drawdown": -0.005544200886372325,
+      "sharpe": 0.3118110359671866,
+      "calmar": 3.957,
+      "sortino": 0.4229,
+      "win_rate": 0.34210526315789475,
+      "profit_loss_ratio": 1.9501,
+      "profit_factor": 1.0141,
+      "max_consecutive_loss": 6,
+      "avg_holding_days": 5.7,
+      "trade_count": 38,
+      "benchmark_return": -0.002165,
+      "excess_return": 0.002404,
+      "information_ratio": 1.1689,
+      "tracking_error": 0.179113,
+      "benchmark_beta": -0.0279,
+      "avg_turnover": 0.047497,
+      "total_turnover": 37.997702,
+      "unfilled_plan_rejections": 0,
+      "unfilled_plan_rejections_by_symbol": {},
+      "by_symbol": {
+        "GDAXI.INDX": {
+          "count": 38,
+          "win_rate": 0.3421,
+          "total_pnl": 239.24,
+          "avg_pnl": 6.3
+        }
+      },
+      "by_exit_reason": {
+        "signal": {
+          "count": 38,
+          "total_pnl": 239.24
+        }
+      },
+      "target_change_count": 76,
+      "rebalance_executed_bars": 0,
+      "rebalance_executed_fills": 0,
+      "rebalance_realized_turnover": 0.0,
+      "rebalance_turnover_mean": 0.5,
+      "rebalance_turnover_max": 0.5,
+      "position_adjustment": "hold",
+      "rebalance_tolerance": 0.0,
+      "dropped_target_adjustment_count": 0,
+      "dropped_target_adjustments": [],
+      "risk_xray_hhi": 1.0,
+      "risk_xray_effective_n": 1.0,
+      "risk_xray_annualized_vol": 0.15616165414052774,
+      "risk_xray_max_drawdown": -0.024985514234942757,
+      "risk_xray_avg_invested": 0.012631749316206397
+    }
+  },
+  {
+    "symbol": "XAUUSD",
+    "passed": true,
+    "bars": 800,
+    "trades": 24,
+    "fills": 48,
+    "metrics": {
+      "final_value": 988148.5064888404,
+      "total_return": -0.01185149351115955,
+      "annual_return": -0.6609438163726109,
+      "max_drawdown": -0.013052311363015465,
+      "sharpe": -15.23050550144069,
+      "calmar": -50.6381,
+      "sortino": -19.7581,
+      "win_rate": 0.2916666666666667,
+      "profit_loss_ratio": 1.0788,
+      "profit_factor": 0.4442,
+      "max_consecutive_loss": 4,
+      "avg_holding_days": 6.6,
+      "trade_count": 24,
+      "benchmark_return": -0.005527,
+      "excess_return": -0.006325,
+      "information_ratio": -2.8644,
+      "tracking_error": 0.207005,
+      "benchmark_beta": -0.0673,
+      "avg_turnover": 0.030005,
+      "total_turnover": 24.003927,
+      "unfilled_plan_rejections": 0,
+      "unfilled_plan_rejections_by_symbol": {},
+      "by_symbol": {
+        "XAUUSD": {
+          "count": 24,
+          "win_rate": 0.2917,
+          "total_pnl": -11851.49,
+          "avg_pnl": -493.81
+        }
+      },
+      "by_exit_reason": {
+        "signal": {
+          "count": 24,
+          "total_pnl": -11851.49
+        }
+      },
+      "target_change_count": 48,
+      "rebalance_executed_bars": 0,
+      "rebalance_executed_fills": 0,
+      "rebalance_realized_turnover": 0.0,
+      "rebalance_turnover_mean": 0.5,
+      "rebalance_turnover_max": 0.5,
+      "position_adjustment": "hold",
+      "rebalance_tolerance": 0.0,
+      "dropped_target_adjustment_count": 0,
+      "dropped_target_adjustments": []
+    }
+  },
+  {
+    "symbol": "USOIL.FOREX",
+    "passed": true,
+    "bars": 800,
+    "trades": 42,
+    "fills": 84,
+    "metrics": {
+      "final_value": 985567.2572247679,
+      "total_return": -0.0144327427752321,
+      "annual_return": -0.7325650730605366,
+      "max_drawdown": -0.0381862125855226,
+      "sharpe": -5.455719185088544,
+      "calmar": -19.184,
+      "sortino": -7.4662,
+      "win_rate": 0.38095238095238093,
+      "profit_loss_ratio": 1.2855,
+      "profit_factor": 0.7911,
+      "max_consecutive_loss": 8,
+      "avg_holding_days": 5.1,
+      "trade_count": 42,
+      "benchmark_return": 0.019332,
+      "excess_return": -0.033765,
+      "information_ratio": -7.0717,
+      "tracking_error": 0.439262,
+      "benchmark_beta": 0.0631,
+      "avg_turnover": 0.052525,
+      "total_turnover": 42.019644,
+      "unfilled_plan_rejections": 0,
+      "unfilled_plan_rejections_by_symbol": {},
+      "by_symbol": {
+        "USOIL.FOREX": {
+          "count": 42,
+          "win_rate": 0.381,
+          "total_pnl": -14432.74,
+          "avg_pnl": -343.64
+        }
+      },
+      "by_exit_reason": {
+        "signal": {
+          "count": 42,
+          "total_pnl": -14432.74
+        }
+      },
+      "target_change_count": 84,
+      "rebalance_executed_bars": 0,
+      "rebalance_executed_fills": 0,
+      "rebalance_realized_turnover": 0.0,
+      "rebalance_turnover_mean": 0.5,
+      "rebalance_turnover_max": 0.5,
+      "position_adjustment": "hold",
+      "rebalance_tolerance": 0.0,
+      "dropped_target_adjustment_count": 0,
+      "dropped_target_adjustments": []
+    }
+  }
+]

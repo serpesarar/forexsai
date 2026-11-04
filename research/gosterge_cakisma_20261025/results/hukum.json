@@ -1,0 +1,72 @@
+{
+ "DAX": {
+  "secilen": 852,
+  "kanitli": 4,
+  "bos_beklenti": 2.13,
+  "bos_q99": 6,
+  "dogr_gecen": 50,
+  "dogr_ters": 26,
+  "dogr_simetri_p": 0.0079,
+  "dogr_bos_beklenti": 42.6,
+  "kasa_gecen": 32,
+  "kasa_ters": 36,
+  "kasa_simetri_p": 0.7163,
+  "kesif_secimden_sag": 1
+ },
+ "NDX": {
+  "secilen": 1260,
+  "kanitli": 2,
+  "bos_beklenti": 3.15,
+  "bos_q99": 8,
+  "dogr_gecen": 67,
+  "dogr_ters": 43,
+  "dogr_simetri_p": 0.0279,
+  "dogr_bos_beklenti": 63.0,
+  "kasa_gecen": 63,
+  "kasa_ters": 37,
+  "kasa_simetri_p": 0.012,
+  "kesif_secimden_sag": 7
+ },
+ "USOIL": {
+  "secilen": 1050,
+  "kanitli": 6,
+  "bos_beklenti": 2.62,
+  "bos_q99": 7,
+  "dogr_gecen": 57,
+  "dogr_ters": 45,
+  "dogr_simetri_p": 0.276,
+  "dogr_bos_beklenti": 52.5,
+  "kasa_gecen": 48,
+  "kasa_ters": 33,
+  "kasa_simetri_p": 0.1193,
+  "kesif_secimden_sag": 2
+ },
+ "XAU": {
+  "secilen": 1050,
+  "kanitli": 1,
+  "bos_beklenti": 2.62,
+  "bos_q99": 7,
+  "dogr_gecen": 64,
+  "dogr_ters": 44,
+  "dogr_simetri_p": 0.067,
+  "dogr_bos_beklenti": 52.5,
+  "kasa_gecen": 57,
+  "kasa_ters": 42,
+  "kasa_simetri_p": 0.1591,
+  "kesif_secimden_sag": 4
+ },
+ "TUMU": {
+  "secilen": 4212,
+  "kanitli": 13,
+  "bos_beklenti": 10.53,
+  "bos_q99": 19,
+  "dogr_gecen": 238,
+  "dogr_ters": 158,
+  "dogr_simetri_p": 0.0001,
+  "dogr_bos_beklenti": 210.6,
+  "kasa_gecen": 200,
+  "kasa_ters": 148,
+  "kasa_simetri_p": 0.0062,
+  "kesif_secimden_sag": 14
+ }
+}

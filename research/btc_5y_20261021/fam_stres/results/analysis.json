@@ -1,0 +1,1640 @@
+{
+ "secim": {
+  "G1": {
+   "hucre": "G1_k1.5_US_D1",
+   "KESIF_ortR": 0.3803,
+   "KESIF_n": 20,
+   "aday_sayisi": 12,
+   "KESIF_pozitif": true
+  },
+  "G2": {
+   "hucre": "G2_k1.0_UTC_H4",
+   "KESIF_ortR": 0.2945,
+   "KESIF_n": 20,
+   "aday_sayisi": 3,
+   "KESIF_pozitif": true
+  },
+  "G3": {
+   "hucre": "G3_k1.0_D1",
+   "KESIF_ortR": 0.0357,
+   "KESIF_n": 111,
+   "aday_sayisi": 6,
+   "KESIF_pozitif": true
+  },
+  "G4": {
+   "hucre": "G4_z3.5_s1.0_h4",
+   "KESIF_ortR": 0.0579,
+   "KESIF_n": 263,
+   "aday_sayisi": 8,
+   "KESIF_pozitif": true
+  }
+ },
+ "kart_onay": {
+  "G1": {
+   "hucre": "G1_k1.5_US_D1",
+   "stats": {
+    "n": 20,
+    "gun": 20,
+    "wr": 45.0,
+    "basabas_wr": 41.3,
+    "ortR": 0.0912,
+    "ci95": [
+     -0.4945,
+     0.7715
+    ],
+    "P_EV": 0.595,
+    "p_tek": 0.405,
+    "yari1": 0.1714,
+    "yari2": 0.011,
+    "toplamR": 1.82,
+    "ort_ret_bp": 16.58,
+    "stop_orani": 0.55
+   },
+   "ortR_spread_x1.5": 0.089,
+   "ortR_iyimser": 0.0955,
+   "ortR_sabit15usd": 0.091,
+   "tek_poz_n": 18,
+   "tek_poz_ortR": 0.2134,
+   "tek_poz_en_iyi5_gun_haric_toplamR": -7.4,
+   "tek_poz_toplamR": 3.84,
+   "yillar": {
+    "2024": -0.69,
+    "2025": 2.92,
+    "2026": -0.41
+   },
+   "kart": {
+    "1_hacim": false,
+    "2_beklenti": false,
+    "3_yarilar": true,
+    "4_spread_x1.5": true,
+    "5_icra": true,
+    "6_tek_poz": true
+   },
+   "kart_gecen": 4,
+   "kart_verdikt": "RED",
+   "plasebo_ort": 0.0209,
+   "plasebo_yuzdelik": 0.64,
+   "OOS": {
+    "n": 10,
+    "gun": 10,
+    "wr": 30.0,
+    "basabas_wr": 25.6,
+    "ortR": 0.1714,
+    "ci95": [
+     -1.0028,
+     1.3667
+    ],
+    "P_EV": 0.6236,
+    "p_tek": 0.3764,
+    "yari1": -0.137,
+    "yari2": 0.4798,
+    "toplamR": 1.71,
+    "ort_ret_bp": 47.33,
+    "stop_orani": 0.7
+   },
+   "KOR": {
+    "n": 10,
+    "gun": 10,
+    "wr": 60.0,
+    "basabas_wr": 59.4,
+    "ortR": 0.011,
+    "ci95": [
+     -0.5465,
+     0.587
+    ],
+    "P_EV": 0.5114,
+    "p_tek": 0.4886,
+    "yari1": 0.1039,
+    "yari2": -0.0818,
+    "toplamR": 0.11,
+    "ort_ret_bp": -14.17,
+    "stop_orani": 0.4
+   }
+  },
+  "G2": {
+   "hucre": "G2_k1.0_UTC_H4",
+   "stats": {
+    "n": 44,
+    "gun": 44,
+    "wr": 56.8,
+    "basabas_wr": 52.2,
+    "ortR": 0.0473,
+    "ci95": [
+     -0.1414,
+     0.2306
+    ],
+    "P_EV": 0.6816,
+    "p_tek": 0.3184,
+    "yari1": -0.0516,
+    "yari2": 0.1462,
+    "toplamR": 2.08,
+    "ort_ret_bp": 12.18,
+    "stop_orani": 0.136
+   },
+   "ortR_spread_x1.5": 0.0441,
+   "ortR_iyimser": 0.0537,
+   "ortR_sabit15usd": 0.0463,
+   "tek_poz_n": 44,
+   "tek_poz_ortR": 0.0473,
+   "tek_poz_en_iyi5_gun_haric_toplamR": -3.37,
+   "tek_poz_toplamR": 2.08,
+   "yillar": {
+    "2024": -0.44,
+    "2025": -1.02,
+    "2026": 3.54
+   },
+   "kart": {
+    "1_hacim": false,
+    "2_beklenti": false,
+    "3_yarilar": false,
+    "4_spread_x1.5": true,
+    "5_icra": true,
+    "6_tek_poz": true
+   },
+   "kart_gecen": 3,
+   "kart_verdikt": "RED",
+   "plasebo_ort": -0.001,
+   "plasebo_yuzdelik": 0.795,
+   "OOS": {
+    "n": 26,
+    "gun": 26,
+    "wr": 53.8,
+    "basabas_wr": 60.0,
+    "ortR": -0.0632,
+    "ci95": [
+     -0.3025,
+     0.1617
+    ],
+    "P_EV": 0.3038,
+    "p_tek": 0.6962,
+    "yari1": 0.1473,
+    "yari2": -0.2736,
+    "toplamR": -1.64,
+    "ort_ret_bp": -13.4,
+    "stop_orani": 0.192
+   },
+   "KOR": {
+    "n": 18,
+    "gun": 18,
+    "wr": 61.1,
+    "basabas_wr": 40.6,
+    "ortR": 0.2069,
+    "ci95": [
+     -0.0828,
+     0.495
+    ],
+    "P_EV": 0.9146,
+    "p_tek": 0.0854,
+    "yari1": 0.3352,
+    "yari2": 0.0787,
+    "toplamR": 3.72,
+    "ort_ret_bp": 49.12,
+    "stop_orani": 0.056
+   }
+  },
+  "G3": {
+   "hucre": "G3_k1.0_D1",
+   "stats": {
+    "n": 129,
+    "gun": 129,
+    "wr": 44.2,
+    "basabas_wr": 52.0,
+    "ortR": -0.09,
+    "ci95": [
+     -0.2108,
+     0.0297
+    ],
+    "P_EV": 0.0696,
+    "p_tek": 0.9304,
+    "yari1": -0.1268,
+    "yari2": -0.0538,
+    "toplamR": -11.61,
+    "ort_ret_bp": -24.6,
+    "stop_orani": 0.271
+   },
+   "ortR_spread_x1.5": -0.0917,
+   "ortR_iyimser": -0.0866,
+   "ortR_sabit15usd": -0.0902,
+   "tek_poz_n": 126,
+   "tek_poz_ortR": -0.0792,
+   "tek_poz_en_iyi5_gun_haric_toplamR": -17.06,
+   "tek_poz_toplamR": -9.97,
+   "yillar": {
+    "2024": -5.26,
+    "2025": -3.37,
+    "2026": -2.98
+   },
+   "kart": {
+    "1_hacim": false,
+    "2_beklenti": false,
+    "3_yarilar": false,
+    "4_spread_x1.5": false,
+    "5_icra": true,
+    "6_tek_poz": false
+   },
+   "kart_gecen": 1,
+   "kart_verdikt": "RED",
+   "plasebo_ort": 0.0086,
+   "plasebo_yuzdelik": 0.06,
+   "OOS": {
+    "n": 67,
+    "gun": 67,
+    "wr": 44.8,
+    "basabas_wr": 53.5,
+    "ortR": -0.1061,
+    "ci95": [
+     -0.2806,
+     0.0588
+    ],
+    "P_EV": 0.1108,
+    "p_tek": 0.8892,
+    "yari1": -0.13,
+    "yari2": -0.0829,
+    "toplamR": -7.11,
+    "ort_ret_bp": -24.49,
+    "stop_orani": 0.299
+   },
+   "KOR": {
+    "n": 62,
+    "gun": 62,
+    "wr": 43.5,
+    "basabas_wr": 50.2,
+    "ortR": -0.0726,
+    "ci95": [
+     -0.2506,
+     0.1048
+    ],
+    "P_EV": 0.1986,
+    "p_tek": 0.8014,
+    "yari1": -0.1123,
+    "yari2": -0.0329,
+    "toplamR": -4.5,
+    "ort_ret_bp": -24.71,
+    "stop_orani": 0.242
+   }
+  },
+  "G4": {
+   "hucre": "G4_z3.5_s1.0_h4",
+   "stats": {
+    "n": 339,
+    "gun": 264,
+    "wr": 39.2,
+    "basabas_wr": 40.2,
+    "ortR": -0.0214,
+    "ci95": [
+     -0.1566,
+     0.126
+    ],
+    "P_EV": 0.3776,
+    "p_tek": 0.6224,
+    "yari1": -0.0766,
+    "yari2": 0.0334,
+    "toplamR": -7.26,
+    "ort_ret_bp": 4.11,
+    "stop_orani": 0.543
+   },
+   "ortR_spread_x1.5": -0.0297,
+   "ortR_iyimser": -0.0056,
+   "ortR_sabit15usd": -0.0221,
+   "tek_poz_n": 339,
+   "tek_poz_ortR": -0.0214,
+   "tek_poz_en_iyi5_gun_haric_toplamR": -35.64,
+   "tek_poz_toplamR": -7.26,
+   "yillar": {
+    "2024": -11.73,
+    "2025": -9.72,
+    "2026": 14.19
+   },
+   "kart": {
+    "1_hacim": true,
+    "2_beklenti": false,
+    "3_yarilar": false,
+    "4_spread_x1.5": false,
+    "5_icra": false,
+    "6_tek_poz": false
+   },
+   "kart_gecen": 1,
+   "kart_verdikt": "SHADOW",
+   "plasebo_ort": -0.026,
+   "plasebo_yuzdelik": 0.53,
+   "OOS": {
+    "n": 181,
+    "gun": 140,
+    "wr": 37.6,
+    "basabas_wr": 41.6,
+    "ortR": -0.0922,
+    "ci95": [
+     -0.2654,
+     0.0976
+    ],
+    "P_EV": 0.1588,
+    "p_tek": 0.8412,
+    "yari1": -0.0257,
+    "yari2": -0.158,
+    "toplamR": -16.69,
+    "ort_ret_bp": -0.59,
+    "stop_orani": 0.575
+   },
+   "KOR": {
+    "n": 158,
+    "gun": 124,
+    "wr": 41.1,
+    "basabas_wr": 38.6,
+    "ortR": 0.0597,
+    "ci95": [
+     -0.158,
+     0.2946
+    ],
+    "P_EV": 0.6936,
+    "p_tek": 0.3064,
+    "yari1": -0.0599,
+    "yari2": 0.1793,
+    "toplamR": 9.43,
+    "ort_ret_bp": 9.48,
+    "stop_orani": 0.506
+   }
+  },
+  "G5": {
+   "hucre": "G5_z3.5_s1.0_h4",
+   "stats": {
+    "n": 322,
+    "gun": 251,
+    "wr": 36.3,
+    "basabas_wr": 46.8,
+    "ortR": -0.194,
+    "ci95": [
+     -0.3093,
+     -0.0787
+    ],
+    "P_EV": 0.0008,
+    "p_tek": 0.9992,
+    "yari1": -0.2044,
+    "yari2": -0.1836,
+    "toplamR": -62.46,
+    "ort_ret_bp": -12.22,
+    "stop_orani": 0.516
+   },
+   "ortR_spread_x1.5": -0.2084,
+   "ortR_iyimser": -0.1697,
+   "ortR_sabit15usd": -0.2007,
+   "tek_poz_n": 322,
+   "tek_poz_ortR": -0.194,
+   "tek_poz_en_iyi5_gun_haric_toplamR": -82.3,
+   "tek_poz_toplamR": -62.46,
+   "yillar": {
+    "2024": -34.13,
+    "2025": -15.25,
+    "2026": -13.08
+   },
+   "kart": {
+    "1_hacim": true,
+    "2_beklenti": false,
+    "3_yarilar": false,
+    "4_spread_x1.5": false,
+    "5_icra": true,
+    "6_tek_poz": false
+   },
+   "kart_gecen": 2,
+   "kart_verdikt": "SHADOW",
+   "plasebo_ort": -0.0149,
+   "plasebo_yuzdelik": 0.005,
+   "OOS": {
+    "n": 183,
+    "gun": 135,
+    "wr": 36.1,
+    "basabas_wr": 46.5,
+    "ortR": -0.1939,
+    "ci95": [
+     -0.3375,
+     -0.0446
+    ],
+    "P_EV": 0.0056,
+    "p_tek": 0.9944,
+    "yari1": -0.2953,
+    "yari2": -0.0936,
+    "toplamR": -35.48,
+    "ort_ret_bp": -17.23,
+    "stop_orani": 0.514
+   },
+   "KOR": {
+    "n": 139,
+    "gun": 116,
+    "wr": 36.7,
+    "basabas_wr": 47.2,
+    "ortR": -0.1941,
+    "ci95": [
+     -0.3822,
+     0.0032
+    ],
+    "P_EV": 0.026,
+    "p_tek": 0.974,
+    "yari1": -0.1005,
+    "yari2": -0.2864,
+    "toplamR": -26.98,
+    "ort_ret_bp": -5.61,
+    "stop_orani": 0.518
+   }
+  }
+ },
+ "kart_tum": {
+  "G1": {
+   "hucre": "G1_k1.5_US_D1",
+   "stats": {
+    "n": 40,
+    "gun": 40,
+    "wr": 50.0,
+    "basabas_wr": 39.8,
+    "ortR": 0.2358,
+    "ci95": [
+     -0.2117,
+     0.7263
+    ],
+    "P_EV": 0.8372,
+    "p_tek": 0.1628,
+    "yari1": 0.3803,
+    "yari2": 0.0912,
+    "toplamR": 9.43,
+    "ort_ret_bp": 54.01,
+    "stop_orani": 0.425
+   },
+   "ortR_spread_x1.5": 0.2336,
+   "ortR_iyimser": 0.2401,
+   "ortR_sabit15usd": 0.231,
+   "tek_poz_n": 38,
+   "tek_poz_ortR": 0.3012,
+   "tek_poz_en_iyi5_gun_haric_toplamR": -5.47,
+   "tek_poz_toplamR": 11.45,
+   "yillar": {
+    "2021": -1.0,
+    "2022": 7.2,
+    "2023": 1.41,
+    "2024": -0.69,
+    "2025": 2.92,
+    "2026": -0.41
+   },
+   "kart": {
+    "1_hacim": false,
+    "2_beklenti": false,
+    "3_yarilar": true,
+    "4_spread_x1.5": true,
+    "5_icra": true,
+    "6_tek_poz": true
+   },
+   "kart_gecen": 4,
+   "kart_verdikt": "RED"
+  },
+  "G2": {
+   "hucre": "G2_k1.0_UTC_H4",
+   "stats": {
+    "n": 64,
+    "gun": 64,
+    "wr": 62.5,
+    "basabas_wr": 49.8,
+    "ortR": 0.1246,
+    "ci95": [
+     -0.0233,
+     0.2702
+    ],
+    "P_EV": 0.953,
+    "p_tek": 0.047,
+    "yari1": 0.2751,
+    "yari2": -0.026,
+    "toplamR": 7.97,
+    "ort_ret_bp": 42.8,
+    "stop_orani": 0.109
+   },
+   "ortR_spread_x1.5": 0.1215,
+   "ortR_iyimser": 0.1305,
+   "ortR_sabit15usd": 0.1203,
+   "tek_poz_n": 64,
+   "tek_poz_ortR": 0.1246,
+   "tek_poz_en_iyi5_gun_haric_toplamR": 2.45,
+   "tek_poz_toplamR": 7.97,
+   "yillar": {
+    "2021": 1.27,
+    "2022": 4.06,
+    "2023": 0.56,
+    "2024": -0.44,
+    "2025": -1.02,
+    "2026": 3.54
+   },
+   "kart": {
+    "1_hacim": false,
+    "2_beklenti": true,
+    "3_yarilar": false,
+    "4_spread_x1.5": true,
+    "5_icra": true,
+    "6_tek_poz": true
+   },
+   "kart_gecen": 4,
+   "kart_verdikt": "RED"
+  },
+  "G3": {
+   "hucre": "G3_k1.0_D1",
+   "stats": {
+    "n": 241,
+    "gun": 241,
+    "wr": 47.7,
+    "basabas_wr": 50.1,
+    "ortR": -0.0291,
+    "ci95": [
+     -0.125,
+     0.0706
+    ],
+    "P_EV": 0.28,
+    "p_tek": 0.72,
+    "yari1": 0.0586,
+    "yari2": -0.116,
+    "toplamR": -7.0,
+    "ort_ret_bp": -1.62,
+    "stop_orani": 0.257
+   },
+   "ortR_spread_x1.5": -0.0306,
+   "ortR_iyimser": -0.0259,
+   "ortR_sabit15usd": -0.0315,
+   "tek_poz_n": 237,
+   "tek_poz_ortR": -0.0236,
+   "tek_poz_en_iyi5_gun_haric_toplamR": -18.15,
+   "tek_poz_toplamR": -5.59,
+   "yillar": {
+    "2021": 2.49,
+    "2022": -1.64,
+    "2023": 3.12,
+    "2024": -4.62,
+    "2025": -3.37,
+    "2026": -2.98
+   },
+   "kart": {
+    "1_hacim": true,
+    "2_beklenti": false,
+    "3_yarilar": false,
+    "4_spread_x1.5": false,
+    "5_icra": true,
+    "6_tek_poz": false
+   },
+   "kart_gecen": 2,
+   "kart_verdikt": "SHADOW"
+  },
+  "G4": {
+   "hucre": "G4_z3.5_s1.0_h4",
+   "stats": {
+    "n": 607,
+    "gun": 473,
+    "wr": 39.9,
+    "basabas_wr": 39.2,
+    "ortR": 0.0152,
+    "ci95": [
+     -0.0968,
+     0.1284
+    ],
+    "P_EV": 0.5928,
+    "p_tek": 0.4072,
+    "yari1": 0.0592,
+    "yari2": -0.0286,
+    "toplamR": 9.25,
+    "ort_ret_bp": 6.33,
+    "stop_orani": 0.537
+   },
+   "ortR_spread_x1.5": 0.0087,
+   "ortR_iyimser": 0.0421,
+   "ortR_sabit15usd": 0.0004,
+   "tek_poz_n": 607,
+   "tek_poz_ortR": 0.0152,
+   "tek_poz_en_iyi5_gun_haric_toplamR": -25.99,
+   "tek_poz_toplamR": 9.25,
+   "yillar": {
+    "2021": -0.46,
+    "2022": 2.52,
+    "2023": 13.18,
+    "2024": -10.45,
+    "2025": -9.72,
+    "2026": 14.19
+   },
+   "kart": {
+    "1_hacim": true,
+    "2_beklenti": false,
+    "3_yarilar": false,
+    "4_spread_x1.5": true,
+    "5_icra": false,
+    "6_tek_poz": true
+   },
+   "kart_gecen": 3,
+   "kart_verdikt": "SHADOW"
+  },
+  "G5": {
+   "hucre": "G5_z3.5_s1.0_h4",
+   "stats": {
+    "n": 624,
+    "gun": 486,
+    "wr": 36.2,
+    "basabas_wr": 44.3,
+    "ortR": -0.1619,
+    "ci95": [
+     -0.2545,
+     -0.0662
+    ],
+    "P_EV": 0.0006,
+    "p_tek": 0.9994,
+    "yari1": -0.1345,
+    "yari2": -0.1893,
+    "toplamR": -101.01,
+    "ort_ret_bp": -10.32,
+    "stop_orani": 0.532
+   },
+   "ortR_spread_x1.5": -0.1714,
+   "ortR_iyimser": -0.1155,
+   "ortR_sabit15usd": -0.1826,
+   "tek_poz_n": 624,
+   "tek_poz_ortR": -0.1619,
+   "tek_poz_en_iyi5_gun_haric_toplamR": -129.29,
+   "tek_poz_toplamR": -101.01,
+   "yillar": {
+    "2021": -16.94,
+    "2022": 17.1,
+    "2023": -39.91,
+    "2024": -32.92,
+    "2025": -15.25,
+    "2026": -13.08
+   },
+   "kart": {
+    "1_hacim": true,
+    "2_beklenti": false,
+    "3_yarilar": false,
+    "4_spread_x1.5": false,
+    "5_icra": true,
+    "6_tek_poz": false
+   },
+   "kart_gecen": 2,
+   "kart_verdikt": "SHADOW"
+  }
+ },
+ "maxz": {
+  "G1": {
+   "z_max": 1.912,
+   "hucre": "G1_k1.5_US_D1",
+   "p_sel": 0.35
+  },
+  "G2": {
+   "z_max": 3.518,
+   "hucre": "G2_k1.0_UTC_H4",
+   "p_sel": 0.005
+  },
+  "G3": {
+   "z_max": 0.214,
+   "hucre": "G3_k1.0_D1",
+   "p_sel": 0.93
+  },
+  "G4": {
+   "z_max": 0.897,
+   "hucre": "G4_z3.5_s1.0_h4",
+   "p_sel": 0.835
+  }
+ },
+ "holm_onay_4": {
+  "G2": 1.0,
+  "G1": 1.0,
+  "G4": 1.0,
+  "G3": 1.0
+ },
+ "holm_tum_birincil_38": {},
+ "asimetri_G4_eksi_G5": {
+  "z2.5_s1.0_h1": {
+   "onay_fark": -0.0147,
+   "P_fark_poz": 0.39,
+   "kesif_fark": -0.0003
+  },
+  "z2.5_s1.0_h4": {
+   "onay_fark": -0.0206,
+   "P_fark_poz": 0.394,
+   "kesif_fark": -0.0214
+  },
+  "z2.5_s2.0_h1": {
+   "onay_fark": -0.0068,
+   "P_fark_poz": 0.412,
+   "kesif_fark": -0.0041
+  },
+  "z2.5_s2.0_h4": {
+   "onay_fark": -0.0183,
+   "P_fark_poz": 0.336,
+   "kesif_fark": -0.0312
+  },
+  "z3.5_s1.0_h1": {
+   "onay_fark": 0.1084,
+   "P_fark_poz": 0.925,
+   "kesif_fark": 0.0921
+  },
+  "z3.5_s1.0_h4": {
+   "onay_fark": 0.1726,
+   "P_fark_poz": 0.967,
+   "kesif_fark": 0.1931
+  },
+  "z3.5_s2.0_h1": {
+   "onay_fark": 0.0112,
+   "P_fark_poz": 0.599,
+   "kesif_fark": 0.0075
+  },
+  "z3.5_s2.0_h4": {
+   "onay_fark": 0.0532,
+   "P_fark_poz": 0.806,
+   "kesif_fark": 0.0369
+  }
+ },
+ "pzt_per": {
+  "G1": {
+   "n": 10,
+   "gun": 10,
+   "wr": 30.0,
+   "basabas_wr": 29.9,
+   "ortR": 0.005,
+   "ci95": [
+    -1.0027,
+    1.0897
+   ],
+   "P_EV": 0.5038,
+   "p_tek": 0.4962,
+   "yari1": -0.1342,
+   "yari2": 0.1442,
+   "toplamR": 0.05,
+   "ort_ret_bp": 20.1,
+   "stop_orani": 0.7
+  },
+  "G2": {
+   "n": 27,
+   "gun": 27,
+   "wr": 55.6,
+   "basabas_wr": 46.9,
+   "ortR": 0.0879,
+   "ci95": [
+    -0.1594,
+    0.3309
+   ],
+   "P_EV": 0.7618,
+   "p_tek": 0.2382,
+   "yari1": 0.0069,
+   "yari2": 0.1631,
+   "toplamR": 2.37,
+   "ort_ret_bp": 24.67,
+   "stop_orani": 0.111
+  }
+ },
+ "posthoc_uc_segment_pozitif": {
+  "G1_k1.0_US_D1": {
+   "tum": {
+    "stats": {
+     "n": 81,
+     "gun": 81,
+     "wr": 45.7,
+     "basabas_wr": 40.4,
+     "ortR": 0.1163,
+     "ci95": [
+      -0.1698,
+      0.4166
+     ],
+     "P_EV": 0.7656,
+     "p_tek": 0.2344,
+     "yari1": 0.0388,
+     "yari2": 0.192,
+     "toplamR": 9.42,
+     "ort_ret_bp": 24.52,
+     "stop_orani": 0.444
+    },
+    "ortR_spread_x1.5": 0.1142,
+    "ortR_iyimser": 0.1205,
+    "ortR_sabit15usd": 0.1125,
+    "tek_poz_n": 79,
+    "tek_poz_ortR": 0.1448,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -6.97,
+    "tek_poz_toplamR": 11.44,
+    "yillar": {
+     "2021": 3.06,
+     "2022": -3.36,
+     "2023": 1.81,
+     "2024": 0.13,
+     "2025": 4.67,
+     "2026": 3.1
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED"
+   },
+   "onay": {
+    "stats": {
+     "n": 39,
+     "gun": 39,
+     "wr": 48.7,
+     "basabas_wr": 39.3,
+     "ortR": 0.2026,
+     "ci95": [
+      -0.2045,
+      0.6439
+     ],
+     "P_EV": 0.8296,
+     "p_tek": 0.1704,
+     "yari1": 0.1098,
+     "yari2": 0.2909,
+     "toplamR": 7.9,
+     "ort_ret_bp": 42.06,
+     "stop_orani": 0.41
+    },
+    "ortR_spread_x1.5": 0.2,
+    "ortR_iyimser": 0.2079,
+    "ortR_sabit15usd": 0.2022,
+    "tek_poz_n": 37,
+    "tek_poz_ortR": 0.2681,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -4.44,
+    "tek_poz_toplamR": 9.92,
+    "yillar": {
+     "2024": 0.13,
+     "2025": 4.67,
+     "2026": 3.1
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED",
+    "plasebo_ort": 0.0181,
+    "plasebo_yuzdelik": 0.855
+   }
+  },
+  "G1_k1.5_US_D0": {
+   "tum": {
+    "stats": {
+     "n": 40,
+     "gun": 40,
+     "wr": 50.0,
+     "basabas_wr": 43.1,
+     "ortR": 0.1021,
+     "ci95": [
+      -0.1953,
+      0.4239
+     ],
+     "P_EV": 0.7288,
+     "p_tek": 0.2712,
+     "yari1": 0.0528,
+     "yari2": 0.1514,
+     "toplamR": 4.08,
+     "ort_ret_bp": 25.89,
+     "stop_orani": 0.25
+    },
+    "ortR_spread_x1.5": 0.0993,
+    "ortR_iyimser": 0.1077,
+    "ortR_sabit15usd": 0.0968,
+    "tek_poz_n": 40,
+    "tek_poz_ortR": 0.1021,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -5.95,
+    "tek_poz_toplamR": 4.08,
+    "yillar": {
+     "2021": -1.0,
+     "2022": 1.89,
+     "2023": 0.16,
+     "2024": 0.5,
+     "2025": 2.47,
+     "2026": 0.06
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED"
+   },
+   "onay": {
+    "stats": {
+     "n": 20,
+     "gun": 20,
+     "wr": 50.0,
+     "basabas_wr": 40.1,
+     "ortR": 0.1514,
+     "ci95": [
+      -0.2474,
+      0.5886
+     ],
+     "P_EV": 0.7612,
+     "p_tek": 0.2388,
+     "yari1": 0.132,
+     "yari2": 0.1709,
+     "toplamR": 3.03,
+     "ort_ret_bp": 41.02,
+     "stop_orani": 0.25
+    },
+    "ortR_spread_x1.5": 0.148,
+    "ortR_iyimser": 0.1581,
+    "ortR_sabit15usd": 0.1512,
+    "tek_poz_n": 20,
+    "tek_poz_ortR": 0.1514,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -4.44,
+    "tek_poz_toplamR": 3.03,
+    "yillar": {
+     "2024": 0.5,
+     "2025": 2.47,
+     "2026": 0.06
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED",
+    "plasebo_ort": 0.0037,
+    "plasebo_yuzdelik": 0.855
+   }
+  },
+  "G1_k1.5_US_H4": {
+   "tum": {
+    "stats": {
+     "n": 40,
+     "gun": 40,
+     "wr": 50.0,
+     "basabas_wr": 43.8,
+     "ortR": 0.078,
+     "ci95": [
+      -0.1712,
+      0.3417
+     ],
+     "P_EV": 0.7092,
+     "p_tek": 0.2908,
+     "yari1": 0.0439,
+     "yari2": 0.1121,
+     "toplamR": 3.12,
+     "ort_ret_bp": 19.68,
+     "stop_orani": 0.175
+    },
+    "ortR_spread_x1.5": 0.0749,
+    "ortR_iyimser": 0.0841,
+    "ortR_sabit15usd": 0.0723,
+    "tek_poz_n": 40,
+    "tek_poz_ortR": 0.078,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -5.12,
+    "tek_poz_toplamR": 3.12,
+    "yillar": {
+     "2021": -0.14,
+     "2022": 1.07,
+     "2023": -0.05,
+     "2024": 0.4,
+     "2025": 1.58,
+     "2026": 0.27
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED"
+   },
+   "onay": {
+    "stats": {
+     "n": 20,
+     "gun": 20,
+     "wr": 50.0,
+     "basabas_wr": 42.4,
+     "ortR": 0.1121,
+     "ci95": [
+      -0.271,
+      0.5303
+     ],
+     "P_EV": 0.7012,
+     "p_tek": 0.2988,
+     "yari1": 0.0608,
+     "yari2": 0.1634,
+     "toplamR": 2.24,
+     "ort_ret_bp": 23.93,
+     "stop_orani": 0.2
+    },
+    "ortR_spread_x1.5": 0.1084,
+    "ortR_iyimser": 0.1193,
+    "ortR_sabit15usd": 0.1119,
+    "tek_poz_n": 20,
+    "tek_poz_ortR": 0.1121,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -4.94,
+    "tek_poz_toplamR": 2.24,
+    "yillar": {
+     "2024": 0.4,
+     "2025": 1.58,
+     "2026": 0.27
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED",
+    "plasebo_ort": -0.0052,
+    "plasebo_yuzdelik": 0.825
+   }
+  },
+  "G1_k1.5_US_D1": {
+   "tum": {
+    "stats": {
+     "n": 40,
+     "gun": 40,
+     "wr": 50.0,
+     "basabas_wr": 39.8,
+     "ortR": 0.2358,
+     "ci95": [
+      -0.2117,
+      0.7263
+     ],
+     "P_EV": 0.8372,
+     "p_tek": 0.1628,
+     "yari1": 0.3803,
+     "yari2": 0.0912,
+     "toplamR": 9.43,
+     "ort_ret_bp": 54.01,
+     "stop_orani": 0.425
+    },
+    "ortR_spread_x1.5": 0.2336,
+    "ortR_iyimser": 0.2401,
+    "ortR_sabit15usd": 0.231,
+    "tek_poz_n": 38,
+    "tek_poz_ortR": 0.3012,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -5.47,
+    "tek_poz_toplamR": 11.45,
+    "yillar": {
+     "2021": -1.0,
+     "2022": 7.2,
+     "2023": 1.41,
+     "2024": -0.69,
+     "2025": 2.92,
+     "2026": -0.41
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED"
+   },
+   "onay": {
+    "stats": {
+     "n": 20,
+     "gun": 20,
+     "wr": 45.0,
+     "basabas_wr": 41.3,
+     "ortR": 0.0912,
+     "ci95": [
+      -0.4945,
+      0.7715
+     ],
+     "P_EV": 0.595,
+     "p_tek": 0.405,
+     "yari1": 0.1714,
+     "yari2": 0.011,
+     "toplamR": 1.82,
+     "ort_ret_bp": 16.58,
+     "stop_orani": 0.55
+    },
+    "ortR_spread_x1.5": 0.089,
+    "ortR_iyimser": 0.0955,
+    "ortR_sabit15usd": 0.091,
+    "tek_poz_n": 18,
+    "tek_poz_ortR": 0.2134,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -7.4,
+    "tek_poz_toplamR": 3.84,
+    "yillar": {
+     "2024": -0.69,
+     "2025": 2.92,
+     "2026": -0.41
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED",
+    "plasebo_ort": 0.0209,
+    "plasebo_yuzdelik": 0.64
+   }
+  },
+  "G2_k1.0_UTC_D0": {
+   "tum": {
+    "stats": {
+     "n": 64,
+     "gun": 64,
+     "wr": 51.6,
+     "basabas_wr": 39.0,
+     "ortR": 0.2245,
+     "ci95": [
+      -0.0424,
+      0.5015
+     ],
+     "P_EV": 0.9546,
+     "p_tek": 0.0454,
+     "yari1": 0.2995,
+     "yari2": 0.1496,
+     "toplamR": 14.37,
+     "ort_ret_bp": 76.68,
+     "stop_orani": 0.281
+    },
+    "ortR_spread_x1.5": 0.2222,
+    "ortR_iyimser": 0.2292,
+    "ortR_sabit15usd": 0.2215,
+    "tek_poz_n": 64,
+    "tek_poz_ortR": 0.2245,
+    "tek_poz_en_iyi5_gun_haric_toplamR": 1.75,
+    "tek_poz_toplamR": 14.37,
+    "yillar": {
+     "2021": 2.27,
+     "2022": 2.22,
+     "2023": -1.0,
+     "2024": 1.51,
+     "2025": 4.0,
+     "2026": 5.37
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": true,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 5,
+    "kart_verdikt": "RED"
+   },
+   "onay": {
+    "stats": {
+     "n": 44,
+     "gun": 44,
+     "wr": 47.7,
+     "basabas_wr": 34.6,
+     "ortR": 0.2474,
+     "ci95": [
+      -0.0788,
+      0.6014
+     ],
+     "P_EV": 0.9256,
+     "p_tek": 0.0744,
+     "yari1": 0.0916,
+     "yari2": 0.4032,
+     "toplamR": 10.88,
+     "ort_ret_bp": 68.93,
+     "stop_orani": 0.273
+    },
+    "ortR_spread_x1.5": 0.2446,
+    "ortR_iyimser": 0.2527,
+    "ortR_sabit15usd": 0.2463,
+    "tek_poz_n": 44,
+    "tek_poz_ortR": 0.2474,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -1.28,
+    "tek_poz_toplamR": 10.88,
+    "yillar": {
+     "2024": 1.51,
+     "2025": 4.0,
+     "2026": 5.37
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": true,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 5,
+    "kart_verdikt": "RED",
+    "plasebo_ort": -0.0089,
+    "plasebo_yuzdelik": 0.965
+   }
+  },
+  "G2_k1.0_US_H4": {
+   "tum": {
+    "stats": {
+     "n": 51,
+     "gun": 51,
+     "wr": 54.9,
+     "basabas_wr": 47.3,
+     "ortR": 0.0881,
+     "ci95": [
+      -0.1094,
+      0.2905
+     ],
+     "P_EV": 0.811,
+     "p_tek": 0.189,
+     "yari1": -0.0391,
+     "yari2": 0.2104,
+     "toplamR": 4.49,
+     "ort_ret_bp": 27.5,
+     "stop_orani": 0.176
+    },
+    "ortR_spread_x1.5": 0.0853,
+    "ortR_iyimser": 0.0938,
+    "ortR_sabit15usd": 0.0845,
+    "tek_poz_n": 51,
+    "tek_poz_ortR": 0.0881,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -2.13,
+    "tek_poz_toplamR": 4.49,
+    "yillar": {
+     "2021": 0.65,
+     "2022": 0.42,
+     "2023": -1.0,
+     "2024": 2.39,
+     "2025": 0.95,
+     "2026": 1.09
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": false,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 3,
+    "kart_verdikt": "RED"
+   },
+   "onay": {
+    "stats": {
+     "n": 37,
+     "gun": 37,
+     "wr": 51.4,
+     "basabas_wr": 41.5,
+     "ortR": 0.1195,
+     "ci95": [
+      -0.1148,
+      0.3628
+     ],
+     "P_EV": 0.83,
+     "p_tek": 0.17,
+     "yari1": 0.1821,
+     "yari2": 0.0603,
+     "toplamR": 4.42,
+     "ort_ret_bp": 30.12,
+     "stop_orani": 0.162
+    },
+    "ortR_spread_x1.5": 0.1164,
+    "ortR_iyimser": 0.1258,
+    "ortR_sabit15usd": 0.1182,
+    "tek_poz_n": 37,
+    "tek_poz_ortR": 0.1195,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -2.2,
+    "tek_poz_toplamR": 4.42,
+    "yillar": {
+     "2024": 2.39,
+     "2025": 0.95,
+     "2026": 1.09
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED",
+    "plasebo_ort": -0.0099,
+    "plasebo_yuzdelik": 0.925
+   }
+  },
+  "G2_k1.5_UTC_D0": {
+   "tum": {
+    "stats": {
+     "n": 34,
+     "gun": 34,
+     "wr": 55.9,
+     "basabas_wr": 37.9,
+     "ortR": 0.3828,
+     "ci95": [
+      -0.0312,
+      0.8013
+     ],
+     "P_EV": 0.9652,
+     "p_tek": 0.0348,
+     "yari1": 0.4908,
+     "yari2": 0.2747,
+     "toplamR": 13.01,
+     "ort_ret_bp": 125.45,
+     "stop_orani": 0.324
+    },
+    "ortR_spread_x1.5": 0.3805,
+    "ortR_iyimser": 0.3871,
+    "ortR_sabit15usd": 0.3795,
+    "tek_poz_n": 34,
+    "tek_poz_ortR": 0.3828,
+    "tek_poz_en_iyi5_gun_haric_toplamR": 1.12,
+    "tek_poz_toplamR": 13.01,
+    "yillar": {
+     "2021": 1.62,
+     "2022": 2.25,
+     "2024": 2.47,
+     "2025": 4.39,
+     "2026": 2.28
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": true,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 5,
+    "kart_verdikt": "RED"
+   },
+   "onay": {
+    "stats": {
+     "n": 22,
+     "gun": 22,
+     "wr": 54.5,
+     "basabas_wr": 35.7,
+     "ortR": 0.4156,
+     "ci95": [
+      -0.1185,
+      0.9735
+     ],
+     "P_EV": 0.932,
+     "p_tek": 0.068,
+     "yari1": 0.5544,
+     "yari2": 0.2768,
+     "toplamR": 9.14,
+     "ort_ret_bp": 124.5,
+     "stop_orani": 0.318
+    },
+    "ortR_spread_x1.5": 0.4131,
+    "ortR_iyimser": 0.4206,
+    "ortR_sabit15usd": 0.4147,
+    "tek_poz_n": 22,
+    "tek_poz_ortR": 0.4156,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -2.01,
+    "tek_poz_toplamR": 9.14,
+    "yillar": {
+     "2024": 2.47,
+     "2025": 4.39,
+     "2026": 2.28
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": true,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 5,
+    "kart_verdikt": "RED",
+    "plasebo_ort": -0.0034,
+    "plasebo_yuzdelik": 0.975
+   }
+  },
+  "K_k1.5_stres_korkusuz_UTC_D0": {
+   "tum": {
+    "stats": {
+     "n": 90,
+     "gun": 90,
+     "wr": 45.6,
+     "basabas_wr": 43.7,
+     "ortR": 0.0332,
+     "ci95": [
+      -0.1814,
+      0.2593
+     ],
+     "P_EV": 0.6174,
+     "p_tek": 0.3826,
+     "yari1": 0.1131,
+     "yari2": -0.0468,
+     "toplamR": 2.98,
+     "ort_ret_bp": 26.78,
+     "stop_orani": 0.378
+    },
+    "ortR_spread_x1.5": 0.0307,
+    "ortR_iyimser": 0.0379,
+    "ortR_sabit15usd": 0.0299,
+    "tek_poz_n": 90,
+    "tek_poz_ortR": 0.0332,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -8.91,
+    "tek_poz_toplamR": 2.98,
+    "yillar": {
+     "2021": 0.98,
+     "2022": 2.37,
+     "2023": -2.26,
+     "2024": -0.01,
+     "2025": 1.39,
+     "2026": 0.51
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": false,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 3,
+    "kart_verdikt": "RED"
+   },
+   "onay": {
+    "stats": {
+     "n": 52,
+     "gun": 52,
+     "wr": 44.2,
+     "basabas_wr": 42.3,
+     "ortR": 0.0364,
+     "ci95": [
+      -0.2547,
+      0.3536
+     ],
+     "P_EV": 0.5888,
+     "p_tek": 0.4112,
+     "yari1": 0.0009,
+     "yari2": 0.0719,
+     "toplamR": 1.89,
+     "ort_ret_bp": 26.58,
+     "stop_orani": 0.404
+    },
+    "ortR_spread_x1.5": 0.0335,
+    "ortR_iyimser": 0.0419,
+    "ortR_sabit15usd": 0.0365,
+    "tek_poz_n": 52,
+    "tek_poz_ortR": 0.0364,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -9.4,
+    "tek_poz_toplamR": 1.89,
+    "yillar": {
+     "2024": -0.01,
+     "2025": 1.39,
+     "2026": 0.51
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED"
+   }
+  },
+  "K_literal_RV_UTC_D0": {
+   "tum": {
+    "stats": {
+     "n": 109,
+     "gun": 109,
+     "wr": 49.5,
+     "basabas_wr": 42.3,
+     "ortR": 0.1126,
+     "ci95": [
+      -0.0649,
+      0.305
+     ],
+     "P_EV": 0.8868,
+     "p_tek": 0.1132,
+     "yari1": 0.1885,
+     "yari2": 0.0382,
+     "toplamR": 12.28,
+     "ort_ret_bp": 35.73,
+     "stop_orani": 0.266
+    },
+    "ortR_spread_x1.5": 0.1066,
+    "ortR_iyimser": 0.1171,
+    "ortR_sabit15usd": 0.1097,
+    "tek_poz_n": 109,
+    "tek_poz_ortR": 0.1126,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -0.34,
+    "tek_poz_toplamR": 12.28,
+    "yillar": {
+     "2021": 1.27,
+     "2022": 0.74,
+     "2023": 0.66,
+     "2024": 2.28,
+     "2025": 3.64,
+     "2026": 3.68
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED"
+   },
+   "onay": {
+    "stats": {
+     "n": 73,
+     "gun": 73,
+     "wr": 46.6,
+     "basabas_wr": 39.7,
+     "ortR": 0.1081,
+     "ci95": [
+      -0.1152,
+      0.3484
+     ],
+     "P_EV": 0.8238,
+     "p_tek": 0.1762,
+     "yari1": 0.0652,
+     "yari2": 0.1498,
+     "toplamR": 7.89,
+     "ort_ret_bp": 28.43,
+     "stop_orani": 0.26
+    },
+    "ortR_spread_x1.5": 0.1,
+    "ortR_iyimser": 0.1131,
+    "ortR_sabit15usd": 0.1073,
+    "tek_poz_n": 73,
+    "tek_poz_ortR": 0.1081,
+    "tek_poz_en_iyi5_gun_haric_toplamR": -4.27,
+    "tek_poz_toplamR": 7.89,
+    "yillar": {
+     "2024": 0.57,
+     "2025": 3.64,
+     "2026": 3.68
+    },
+    "kart": {
+     "1_hacim": false,
+     "2_beklenti": false,
+     "3_yarilar": true,
+     "4_spread_x1.5": true,
+     "5_icra": true,
+     "6_tek_poz": true
+    },
+    "kart_gecen": 4,
+    "kart_verdikt": "RED"
+   }
+  }
+ },
+ "N2": {
+  "KESIF": {
+   "n_hucre": 708,
+   "gun": 79,
+   "hucre_ortR": 0.1731,
+   "disari_ortR": -0.0388,
+   "eslenik_fark": 0.2041,
+   "fark_ci95": [
+    -0.0108,
+    0.4221
+   ],
+   "P_fark_neg": 0.032,
+   "yari1_fark": -0.0269,
+   "yari2_fark": 0.435
+  },
+  "ONAY": {
+   "n_hucre": 963,
+   "gun": 106,
+   "hucre_ortR": -0.0759,
+   "disari_ortR": -0.033,
+   "eslenik_fark": -0.0417,
+   "fark_ci95": [
+    -0.1706,
+    0.0896
+   ],
+   "P_fark_neg": 0.752,
+   "yari1_fark": -0.1484,
+   "yari2_fark": 0.0648
+  },
+  "TUM": {
+   "n_hucre": 1671,
+   "gun": 185,
+   "hucre_ortR": 0.0296,
+   "disari_ortR": -0.0358,
+   "eslenik_fark": 0.0624,
+   "fark_ci95": [
+    -0.0587,
+    0.1842
+   ],
+   "P_fark_neg": 0.159,
+   "yari1_fark": 0.1621,
+   "yari2_fark": -0.0371
+  }
+ }
+}

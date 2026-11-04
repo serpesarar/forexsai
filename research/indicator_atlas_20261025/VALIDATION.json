@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-25",
+  "source_file_hashes_verified": 2132,
+  "implementation_source_paths_and_lines_verified": 1480,
+  "method_cards": 120,
+  "unique_tradingview_script_ids": 496,
+  "selected_detail_pages": 17,
+  "open_source_badges_seen_on_selected_pages": 16,
+  "protected_or_invite_badges_seen_on_selected_pages": 1,
+  "catalogue_checks": [
+    "JavaScript syntax",
+    "initial render",
+    "Chinese search",
+    "repository filter",
+    "tab switching",
+    "publication search",
+    "pagination"
+  ],
+  "registry_unique_ids": true,
+  "zip_integrity": true,
+  "zip_source_files": 1988,
+  "excluded_zip_source_repositories": [
+    "mpquant/MyTT",
+    "waditu/czsc"
+  ],
+  "not_performed": [
+    "vendor code execution/import",
+    "compilation",
+    "numerical parity",
+    "full-library causality testing",
+    "broker data backtest",
+    "profitability validation",
+    "visual browser screenshot QA"
+  ]
+}

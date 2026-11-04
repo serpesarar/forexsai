@@ -1,0 +1,40 @@
+{
+  "records": 1480,
+  "repositories": 13,
+  "by_repository": {
+    "TA-Lib/ta-lib": 237,
+    "xgboosted/pandas-ta-classic": 284,
+    "peerchemist/finta": 92,
+    "bukosabino/ta": 31,
+    "mpquant/MyTT": 77,
+    "joshyattridge/smart-money-concepts": 8,
+    "everget/tradingview-pinescript-indicators": 210,
+    "TulipCharts/tulipindicators": 104,
+    "DaveSkender/Stock.Indicators": 85,
+    "joshuaulrich/TTR": 67,
+    "anandanand84/technicalindicators": 43,
+    "QuantConnect/Lean": 218,
+    "waditu/czsc": 24
+  },
+  "by_kind": {
+    "indicator_implementation": 1015,
+    "math_or_statistical_function": 82,
+    "formula_helper": 43,
+    "market_structure_component": 8,
+    "utility_or_visual_script": 23,
+    "indicator_or_helper_function": 67,
+    "indicator_or_statistical_component": 155,
+    "candlestick_pattern": 63,
+    "chan_signal_module": 24
+  },
+  "source_files": 2132,
+  "pine_files": 210,
+  "unimplemented_markers": [
+    "SRC-0530 peerchemist/finta LWMA",
+    "SRC-0532 peerchemist/finta VIDYA",
+    "SRC-0541 peerchemist/finta ALMA",
+    "SRC-0542 peerchemist/finta MAMA",
+    "SRC-0553 peerchemist/finta SWI",
+    "SRC-0599 peerchemist/finta TMF"
+  ]
+}

@@ -1,0 +1,55 @@
+
+===== ORJ =====  verdikt LIVE
+{'islem': 161, 'bagimsiz_gun': 134, 'wr': 55.3, 'ort_R': 0.217, 'toplam_R': 34.87, 'P(EV>0)': 0.99, 'CI95': [0.031, 0.402], 'en_iyi_5_gun_haric': 12.4, 'en_iyi_5_gun_payi': 0.64, 'pozitif_yil': '7/10'}
+   DAX: {'n': 54, 'ortR': 0.171, 'toplam': 9.22, 'WR': 53.7, 'P(EV>0)': 0.891, 'CI95': [-0.089, 0.453], 'yarilar': [0.063, 0.278], 'yil+': '4/8'}
+   NDX: {'n': 107, 'ortR': 0.24, 'toplam': 25.65, 'WR': 56.1, 'P(EV>0)': 0.986, 'CI95': [0.029, 0.466], 'yarilar': [0.021, 0.454], 'yil+': '7/10'}
+   1_hacim         ✓ 161 işlem / 134 bağımsız gün
+   2_beklenti      ✓ ortR=+0.217 P(EV>0)=%99.0
+   3_kararlilik    ✓ ilk=+0.064 son=+0.367
+   4_surtunme      ✓ spread×1.5: ortR=+0.213
+   5_icra          ✓ kapanış-girişi +0.225 vs gerçek +0.217 (fark 0.008, eşik 0.108)
+   6_sira_bagimli  ✓ gün başına tek pozisyon n=134 ortR=+0.160
+
+===== DAXfix =====  verdikt LIVE
+{'islem': 161, 'bagimsiz_gun': 134, 'wr': 55.9, 'ort_R': 0.231, 'toplam_R': 37.12, 'P(EV>0)': 0.995, 'CI95': [0.052, 0.423], 'en_iyi_5_gun_haric': 14.58, 'en_iyi_5_gun_payi': 0.61, 'pozitif_yil': '7/10'}
+   DAX: {'n': 54, 'ortR': 0.212, 'toplam': 11.47, 'WR': 55.6, 'P(EV>0)': 0.939, 'CI95': [-0.056, 0.502], 'yarilar': [0.144, 0.281], 'yil+': '5/8'}
+   NDX: {'n': 107, 'ortR': 0.24, 'toplam': 25.65, 'WR': 56.1, 'P(EV>0)': 0.986, 'CI95': [0.029, 0.466], 'yarilar': [0.021, 0.454], 'yil+': '7/10'}
+   1_hacim         ✓ 161 işlem / 134 bağımsız gün
+   2_beklenti      ✓ ortR=+0.231 P(EV>0)=%99.5
+   3_kararlilik    ✓ ilk=+0.091 son=+0.369
+   4_surtunme      ✓ spread×1.5: ortR=+0.227
+   5_icra          ✓ kapanış-girişi +0.238 vs gerçek +0.231 (fark 0.008, eşik 0.115)
+   6_sira_bagimli  ✓ gün başına tek pozisyon n=134 ortR=+0.176
+
+===== TAM_a =====  verdikt LIVE
+{'islem': 161, 'bagimsiz_gun': 134, 'wr': 55.9, 'ort_R': 0.231, 'toplam_R': 37.12, 'P(EV>0)': 0.995, 'CI95': [0.052, 0.423], 'en_iyi_5_gun_haric': 14.58, 'en_iyi_5_gun_payi': 0.61, 'pozitif_yil': '7/10'}
+   DAX: {'n': 54, 'ortR': 0.212, 'toplam': 11.47, 'WR': 55.6, 'P(EV>0)': 0.939, 'CI95': [-0.056, 0.502], 'yarilar': [0.144, 0.281], 'yil+': '5/8'}
+   NDX: {'n': 107, 'ortR': 0.24, 'toplam': 25.65, 'WR': 56.1, 'P(EV>0)': 0.986, 'CI95': [0.029, 0.466], 'yarilar': [0.021, 0.454], 'yil+': '7/10'}
+   1_hacim         ✓ 161 işlem / 134 bağımsız gün
+   2_beklenti      ✓ ortR=+0.231 P(EV>0)=%99.5
+   3_kararlilik    ✓ ilk=+0.091 son=+0.369
+   4_surtunme      ✓ spread×1.5: ortR=+0.227
+   5_icra          ✓ kapanış-girişi +0.238 vs gerçek +0.231 (fark 0.008, eşik 0.115)
+   6_sira_bagimli  ✓ gün başına tek pozisyon n=134 ortR=+0.176
+
+===== TAM_b =====  verdikt LIVE
+{'islem': 161, 'bagimsiz_gun': 134, 'wr': 55.9, 'ort_R': 0.231, 'toplam_R': 37.12, 'P(EV>0)': 0.995, 'CI95': [0.052, 0.423], 'en_iyi_5_gun_haric': 14.58, 'en_iyi_5_gun_payi': 0.61, 'pozitif_yil': '7/10'}
+   DAX: {'n': 54, 'ortR': 0.212, 'toplam': 11.47, 'WR': 55.6, 'P(EV>0)': 0.939, 'CI95': [-0.056, 0.502], 'yarilar': [0.144, 0.281], 'yil+': '5/8'}
+   NDX: {'n': 107, 'ortR': 0.24, 'toplam': 25.65, 'WR': 56.1, 'P(EV>0)': 0.986, 'CI95': [0.029, 0.466], 'yarilar': [0.021, 0.454], 'yil+': '7/10'}
+   1_hacim         ✓ 161 işlem / 134 bağımsız gün
+   2_beklenti      ✓ ortR=+0.231 P(EV>0)=%99.5
+   3_kararlilik    ✓ ilk=+0.091 son=+0.369
+   4_surtunme      ✓ spread×1.5: ortR=+0.227
+   5_icra          ✓ kapanış-girişi +0.238 vs gerçek +0.231 (fark 0.008, eşik 0.115)
+   6_sira_bagimli  ✓ gün başına tek pozisyon n=134 ortR=+0.176
+
+===== TAM_x =====  verdikt LIVE
+{'islem': 159, 'bagimsiz_gun': 132, 'wr': 56.6, 'ort_R': 0.246, 'toplam_R': 39.13, 'P(EV>0)': 0.995, 'CI95': [0.064, 0.435], 'en_iyi_5_gun_haric': 16.6, 'en_iyi_5_gun_payi': 0.58, 'pozitif_yil': '8/10'}
+   DAX: {'n': 54, 'ortR': 0.212, 'toplam': 11.47, 'WR': 55.6, 'P(EV>0)': 0.939, 'CI95': [-0.056, 0.502], 'yarilar': [0.144, 0.281], 'yil+': '5/8'}
+   NDX: {'n': 105, 'ortR': 0.263, 'toplam': 27.66, 'WR': 57.1, 'P(EV>0)': 0.993, 'CI95': [0.049, 0.495], 'yarilar': [0.071, 0.452], 'yil+': '8/10'}
+   1_hacim         ✓ 159 işlem / 132 bağımsız gün
+   2_beklenti      ✓ ortR=+0.246 P(EV>0)=%99.5
+   3_kararlilik    ✓ ilk=+0.105 son=+0.386
+   4_surtunme      ✓ spread×1.5: ortR=+0.242
+   5_icra          ✓ kapanış-girişi +0.254 vs gerçek +0.246 (fark 0.008, eşik 0.123)
+   6_sira_bagimli  ✓ gün başına tek pozisyon n=132 ortR=+0.194

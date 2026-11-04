@@ -1,0 +1,22 @@
+{
+ "n_configs": 513,
+ "n_eligible": 272,
+ "obs_proxy_pass": 1,
+ "null_proxy_pass_mean": 1.09,
+ "null_proxy_pass_q95": 4.0,
+ "p_count": 0.5870646766169154,
+ "obs_maxT": 2.37669947266909,
+ "null_maxT_q95_all": 3.313001204282605,
+ "null_maxT_q95_elig": 3.041968751894368,
+ "obs_maxT_elig": 2.37669947266909,
+ "n_all_but_sel": 1,
+ "n_candidates": 0,
+ "obs_pos_diff_share_elig": 0.25,
+ "null_pos_diff_share_elig_mean": 0.2018198529411765,
+ "obs_mean_diff_elig": -1.397126825534515,
+ "null_mean_diff_elig_q05_q95": [
+  -2.213302906734586,
+  -1.4288200169567205
+ ],
+ "runtime_s": 33
+}

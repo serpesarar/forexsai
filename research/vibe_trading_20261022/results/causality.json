@@ -1,0 +1,533 @@
+{
+  "commit": "11cff3f3a2d89605c89148b03dcc2dd0fcfb60db",
+  "files": {
+    "agent/src/skills/harmonic/example_signal_engine.py": "aae8014ff2acc634ed7b9690325938eb5fdad2321936f51b4b5fca81345bb197",
+    "agent/src/skills/ichimoku/example_signal_engine.py": "7dfe09547424c9859fdea9e8bf53eaccb37a025636d9c952e9d8c41b56330b18",
+    "agent/src/skills/chanlun/example_signal_engine.py": "87affafb96d7c19c360125311dd03ea88c3e7be1ddc74b6bc3d557a697e3920a",
+    "agent/src/skills/fundamental-filter/example_signal_engine.py": "9d3cfcac58af6e5132a181b98d3a503afadca9e719d31086e6875c663d2afc59",
+    "agent/src/skills/volatility/example_signal_engine.py": "879f47c7b52ff0e91b8d0b4a9318eb65bbaf2c9111a29b11e26efd0082c3793e",
+    "agent/src/skills/technical-basic/example_signal_engine.py": "739f3d1d3cd49677ea55a5818fb6e82fc0741fd6317dfedf28ca1d5aff518669",
+    "agent/src/skills/options-strategy/example_signal_engine.py": "aab056a9bfb6ea9f90f3c0d476fea5269e527a550325dd5642ac4bb97a43d3d6",
+    "agent/src/skills/smc/example_signal_engine.py": "d3b02d9b0689d33506a936f4a9216e4326aa74e3ffdb829966d2aaad9a08e549",
+    "agent/src/skills/candlestick/example_signal_engine.py": "f66c574d61ce9fe2c9cf6fb7906a479f33ddcd91c3720a81681a94c26b1e1aaf",
+    "agent/src/skills/elliott-wave/example_signal_engine.py": "e65d68f9fdd5bbcf8df0b326914a02c9e6b37c884547ad464bce5929d8beaa3c",
+    "agent/src/skills/minute-analysis/example_signal_engine.py": "3f23232dbfc82f71787de1b9e8d2cd16b0b27fa0655b2ed86b426bcb411d0425",
+    "agent/src/skills/pair-trading/example_signal_engine.py": "1ba410cfb9fc4d816c253dc8d4b2fe95197ecb6140a453e21b161ee585104144",
+    "agent/src/skills/cross-market-strategy/example_signal_engine.py": "a579f83468fbf59f4632f924c390d1bd4433aa1aa3a274bc3332bb5fd3c9cb20",
+    "agent/src/skills/multi-factor/example_signal_engine.py": "27ed0e87150ba94ec838df7dd801f9711cb3ad38ef0a2f654c55ae61adef3fbb",
+    "agent/src/skills/event-driven/example_signal_engine.py": "e39dfd70ae8d0cd72bed321dbfecbde964835c815cfc19aa7622a84eb0f44c8e",
+    "agent/src/skills/seasonal/example_signal_engine.py": "a095950a1c668ee8c5c1cfd98764c1634711a96c1bda4ef130997c7ac6a2bb50"
+  },
+  "audits": [
+    {
+      "strategy": "technical-basic",
+      "symbols": [
+        "NDX.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "technical-basic",
+      "symbols": [
+        "GDAXI.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "technical-basic",
+      "symbols": [
+        "XAUUSD"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "technical-basic",
+      "symbols": [
+        "USOIL.FOREX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "candlestick",
+      "symbols": [
+        "NDX.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "candlestick",
+      "symbols": [
+        "GDAXI.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "candlestick",
+      "symbols": [
+        "XAUUSD"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "candlestick",
+      "symbols": [
+        "USOIL.FOREX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "ichimoku",
+      "symbols": [
+        "NDX.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "ichimoku",
+      "symbols": [
+        "GDAXI.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "ichimoku",
+      "symbols": [
+        "XAUUSD"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "ichimoku",
+      "symbols": [
+        "USOIL.FOREX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "volatility",
+      "symbols": [
+        "NDX.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "volatility",
+      "symbols": [
+        "GDAXI.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "volatility",
+      "symbols": [
+        "XAUUSD"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "volatility",
+      "symbols": [
+        "USOIL.FOREX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "seasonal",
+      "symbols": [
+        "NDX.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "seasonal",
+      "symbols": [
+        "GDAXI.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "seasonal",
+      "symbols": [
+        "XAUUSD"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "seasonal",
+      "symbols": [
+        "USOIL.FOREX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "harmonic",
+      "symbols": [
+        "NDX.INDX"
+      ],
+      "checks": 8616,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "harmonic",
+      "symbols": [
+        "GDAXI.INDX"
+      ],
+      "checks": 11460,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "harmonic",
+      "symbols": [
+        "XAUUSD"
+      ],
+      "checks": 8790,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "harmonic",
+      "symbols": [
+        "USOIL.FOREX"
+      ],
+      "checks": 10809,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "elliott-wave",
+      "symbols": [
+        "NDX.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "elliott-wave",
+      "symbols": [
+        "GDAXI.INDX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "elliott-wave",
+      "symbols": [
+        "XAUUSD"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "elliott-wave",
+      "symbols": [
+        "USOIL.FOREX"
+      ],
+      "checks": 6149,
+      "passed": true,
+      "errors": []
+    },
+    {
+      "strategy": "cross-market-strategy",
+      "symbols": [
+        "NDX.INDX",
+        "GDAXI.INDX",
+        "XAUUSD",
+        "USOIL.FOREX"
+      ],
+      "checks": 24596,
+      "passed": false,
+      "errors": [
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 160,
+          "mismatches": 141,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 160,
+          "mismatches": 141,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 218,
+          "mismatches": 199,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "XAUUSD",
+          "cut": 218,
+          "mismatches": 199,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 218,
+          "mismatches": 199,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 276,
+          "mismatches": 257,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "XAUUSD",
+          "cut": 276,
+          "mismatches": 257,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 276,
+          "mismatches": 257,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 334,
+          "mismatches": 315,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 334,
+          "mismatches": 315,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 392,
+          "mismatches": 373,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "XAUUSD",
+          "cut": 392,
+          "mismatches": 373,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 392,
+          "mismatches": 373,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 450,
+          "mismatches": 431,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "XAUUSD",
+          "cut": 450,
+          "mismatches": 431,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 450,
+          "mismatches": 431,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 508,
+          "mismatches": 489,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "XAUUSD",
+          "cut": 508,
+          "mismatches": 489,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 508,
+          "mismatches": 489,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 566,
+          "mismatches": 547,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "GDAXI.INDX",
+          "cut": 566,
+          "mismatches": 546,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 566,
+          "mismatches": 547,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 624,
+          "mismatches": 605,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "XAUUSD",
+          "cut": 624,
+          "mismatches": 605,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 624,
+          "mismatches": 605,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 682,
+          "mismatches": 663,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "XAUUSD",
+          "cut": 682,
+          "mismatches": 663,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 682,
+          "mismatches": 663,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 740,
+          "mismatches": 721,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "GDAXI.INDX",
+          "cut": 740,
+          "mismatches": 720,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 740,
+          "mismatches": 721,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "NDX.INDX",
+          "cut": 799,
+          "mismatches": 780,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "prefix",
+          "symbol": "USOIL.FOREX",
+          "cut": 799,
+          "mismatches": 780,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "future_mutation",
+          "symbol": "NDX.INDX",
+          "cut": 400,
+          "mismatches": 381,
+          "first": "2026-06-17 02:10:00+00:00"
+        },
+        {
+          "type": "future_mutation",
+          "symbol": "USOIL.FOREX",
+          "cut": 400,
+          "mismatches": 381,
+          "first": "2026-06-17 02:10:00+00:00"
+        }
+      ]
+    }
+  ]
+}

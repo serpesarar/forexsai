@@ -1,0 +1,49 @@
+{
+  "1m": {
+    "n": 102712,
+    "ambiguous_removed": 179,
+    "first_utc": "2026-06-16 21:15:00+00:00",
+    "last_utc": "2026-10-01 23:59:00+00:00"
+  },
+  "5m": {
+    "n": 20599,
+    "ambiguous_removed": 36,
+    "first_utc": "2026-06-17 13:55:00+00:00",
+    "last_utc": "2026-10-01 23:55:00+00:00"
+  },
+  "15m": {
+    "n": 6824,
+    "ambiguous_removed": 12,
+    "first_utc": "2026-06-19 09:45:00+00:00",
+    "last_utc": "2026-10-01 23:45:00+00:00"
+  },
+  "1h": {
+    "n": 1766,
+    "ambiguous_removed": 3,
+    "first_utc": "2026-06-17 19:00:00+00:00",
+    "last_utc": "2026-10-01 23:00:00+00:00"
+  },
+  "snapshot_direct_overlap": {
+    "n": 44318,
+    "median_abs": 0.0,
+    "p99_abs": 0.0040000000000048885,
+    "max_abs": 0.15699999999999648
+  },
+  "legacy_clock_crosscheck": [
+    {
+      "extra_offset": 0,
+      "n": 38217,
+      "demeaned_mad": 0.0
+    },
+    {
+      "extra_offset": 10800,
+      "n": 40563,
+      "demeaned_mad": 0.20999999999999375
+    },
+    {
+      "extra_offset": -10800,
+      "n": 37121,
+      "demeaned_mad": 0.38700000000000045
+    }
+  ]
+}

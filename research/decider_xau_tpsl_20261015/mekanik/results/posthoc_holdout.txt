@@ -1,0 +1,16 @@
+Kasa: 2026-06-17 → 2026-10-14 06:00:00+00:00  (17.0 hafta), broker H1 yolu, spread $0.12
+
+R0B_G1: n=205 ortR +0.140 [%95 -0.29,+0.61] P 0.71 | P1 kasa +0.005 fark +0.135 yüzdelik 0.76
+  tek-poz: n=56 (3.3/hafta) ortR +0.134 vs tek-poz P1 -0.023 yüzdelik 0.84; toplam +7.5R
+  SL$ (=1.5×ATR_H1) medyan 25.09$ [p10 20.48, p90 33.87] → 0,01 lot (1 ons) beklenen $/işlem = ortR×SL$ ≈ +3.37$
+  çıkış kodları: {'SL': 113, 'TIME': 92}
+
+R4B_G3: n=8 ortR -0.565 [%95 +nan,+nan] P nan | P1 kasa -0.055 fark -0.510 yüzdelik 0.15
+  tek-poz: n=8 (0.5/hafta) ortR -0.565 vs tek-poz P1 -0.056 yüzdelik 0.14; toplam -4.5R
+  SL$ (=1.5×ATR_H1) medyan 23.73$ [p10 20.33, p90 29.13] → 0,01 lot (1 ons) beklenen $/işlem = ortR×SL$ ≈ -13.40$
+  çıkış kodları: {'SL': 6, 'TIME': 2}
+
+R0B_G3: n=205 ortR +0.053 [%95 -0.19,+0.27] P 0.67 | P1 kasa -0.031 fark +0.084 yüzdelik 0.74
+  tek-poz: n=86 (5.0/hafta) ortR +0.002 vs tek-poz P1 -0.051 yüzdelik 0.67; toplam +0.2R
+  SL$ (=1.5×ATR_H1) medyan 25.09$ [p10 20.48, p90 33.87] → 0,01 lot (1 ons) beklenen $/işlem = ortR×SL$ ≈ +0.06$
+  çıkış kodları: {'SL': 100, 'TP': 85, 'TIME': 20}

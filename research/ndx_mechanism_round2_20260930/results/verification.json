@@ -1,0 +1,6 @@
+{
+  "prefix_checks": "20 definitions × 3 timeframes passed",
+  "future_price_perturbation": "passed",
+  "delay_fixtures": 5,
+  "date_format_equivalence": 10000
+}

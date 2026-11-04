@@ -1,0 +1,974 @@
+[
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "candlestick",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "elliott-wave",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "harmonic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": true,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "ichimoku",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "seasonal",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": true,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": true,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "technical-basic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": true,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": true,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "GDAXI.INDX",
+    "strategy": "volatility",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "candlestick",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "elliott-wave",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "harmonic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "ichimoku",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "seasonal",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": true,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "technical-basic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "NDX.INDX",
+    "strategy": "volatility",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "candlestick",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "elliott-wave",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "harmonic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "ichimoku",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "seasonal",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": true,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "USOIL.FOREX",
+    "strategy": "volatility",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "candlestick",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "elliott-wave",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "harmonic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "ichimoku",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "seasonal",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": true,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": true,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "long_1h",
+    "symbol": "XAUUSD",
+    "strategy": "volatility",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": true,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": false
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "candlestick",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "elliott-wave",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "harmonic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "ichimoku",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "seasonal",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": true,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "technical-basic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "GDAXI.INDX",
+    "strategy": "volatility",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": true,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "candlestick",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "elliott-wave",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "harmonic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "ichimoku",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "seasonal",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": true,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "technical-basic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": true,
+      "test_bootstrap_90": false,
+      "stress_positive": true,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "NDX.INDX",
+    "strategy": "volatility",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": true,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "candlestick",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "elliott-wave",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "harmonic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "ichimoku",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "seasonal",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "technical-basic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "USOIL.FOREX",
+    "strategy": "volatility",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "candlestick",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "elliott-wave",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "harmonic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "ichimoku",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "seasonal",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": false,
+      "development_positive": false,
+      "test_positive": true,
+      "test_bootstrap_90": true,
+      "stress_positive": true,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "technical-basic",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  },
+  {
+    "dataset": "recent_5m",
+    "symbol": "XAUUSD",
+    "strategy": "volatility",
+    "status": "RESEARCH_ONLY",
+    "research_candidate": false,
+    "checks": {
+      "test_150": true,
+      "development_positive": false,
+      "test_positive": false,
+      "test_bootstrap_90": false,
+      "stress_positive": false,
+      "control_holm": false,
+      "real_historical_spread": false,
+      "independent_forward_shadow": false,
+      "actual_m1_execution": true
+    }
+  }
+]

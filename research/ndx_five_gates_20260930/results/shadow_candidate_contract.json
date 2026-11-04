@@ -1,0 +1,54 @@
+{
+  "status": "research_only",
+  "live_authorized": false,
+  "frozen_file": "frozen_second_five.json",
+  "freeze_sha256": "14dd08aab5a3c78fda60859790087c3ad505e4f90f9518d2936a5159e6665766",
+  "order": [
+    "opening_break_60_quiet_both_fast",
+    "exhaustion_15_none_sell_core",
+    "sweep_30_none_sell_slow",
+    "variance_switch_30_quiet_both_core",
+    "failed_break_60_none_buy_fast"
+  ],
+  "common": {
+    "symbol": "NDX.INDX",
+    "NY_start": "03:00",
+    "NY_last_decision": "15:30",
+    "NY_flat_by": "15:55",
+    "days": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu"
+    ],
+    "max_total_positions": 1,
+    "refractory_minutes": 10,
+    "signal_requires_closed_bars": true,
+    "entry": "next exact M1 open",
+    "risk": "max(35,geometry.multiplier * M1 Wilder ATR70) price points"
+  },
+  "required_shadow_fields": [
+    "candidate_id",
+    "version_hash",
+    "decision_utc",
+    "last_closed_M1_utc",
+    "feature_values",
+    "signal_side",
+    "bid",
+    "ask",
+    "spread_price_points",
+    "ATR70",
+    "stop_distance",
+    "target_distance",
+    "accepted_or_rejected",
+    "rejection_reason",
+    "original_bot_decision",
+    "entry_fill_utc",
+    "entry_fill_price",
+    "exit_fill_utc",
+    "exit_fill_price",
+    "commission",
+    "net_R"
+  ],
+  "promotion": "Unchanged future period; >=150 resolved decisions; equivalent project six-check card and actual fill costs; no production activation from this contract"
+}

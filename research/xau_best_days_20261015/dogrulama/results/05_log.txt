@@ -1,0 +1,41 @@
+[ana] tek-poz 2×2 (S1=seri≥2, S2=önceki gün>%1):
+             size   mean      sum
+S1    S2                         
+False False  1973  0.167  328.608
+      True     48 -0.160   -7.672
+True  False  1236  0.038   47.281
+      True    407 -0.191  -77.726
+[broker_1m] tek-poz 2×2 (S1=seri≥2, S2=önceki gün>%1):
+             size   mean    sum
+S1    S2                       
+False False    30 -0.010 -0.293
+      True      1 -1.000 -1.000
+True  False    16  0.586  9.380
+      True      9 -0.137 -1.231
+[duka_ext] tek-poz 2×2 (S1=seri≥2, S2=önceki gün>%1):
+             size   mean    sum
+S1    S2                       
+False False    27  0.129  3.482
+      True      3 -1.000 -3.000
+True  False    16  0.407  6.511
+      True     10 -0.179 -1.794
+S2'nin S1 içindeki payı: 407/455 = 0.89
+  S1 içinde: S2 farkı -0.229 (n_on=407/1643)
+  S1 dışında: S2 farkı -0.326 (n_on=48/2021)
+  S2 içinde: S1 farkı -0.031 (n_on=407/455)
+  S2 dışında: S1 farkı -0.128 (n_on=1236/3209)
+dens24 medyanı: S2 6 vs ¬S2 1
+  ATLA S2∧¬S1 : n=3636 ortR +0.0828 toplam 301.2
+  ATLA S2     : n=3259 ortR +0.1095 toplam 356.8
+  ATLA S1     : n=2047 ortR +0.1622 toplam 332.1
+çıkış kodu payları (ana tek-poz):
+code            SL   TIME
+S1    S2                 
+False False  0.552  0.448
+      True   0.562  0.438
+True  False  0.602  0.398
+      True   0.639  0.361
+       gap_med  prevSL
+S1                    
+False     27.0   0.694
+True       4.0   0.438

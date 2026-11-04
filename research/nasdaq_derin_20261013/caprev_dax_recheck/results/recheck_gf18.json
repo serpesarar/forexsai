@@ -1,0 +1,320 @@
+{
+ "ORJ DAX 1h": {
+  "aynı gün": {
+   "n": 54,
+   "ort": 0.171,
+   "kırpılmış": 0.089,
+   "medyan": 0.206,
+   "isabet": 0.54,
+   "P(>0)": 0.889,
+   "yıl+": "4/8"
+  },
+  "ertesi gün": {
+   "n": 54,
+   "ort": 0.348,
+   "kırpılmış": 0.263,
+   "medyan": 0.203,
+   "isabet": 0.57,
+   "P(>0)": 0.976,
+   "yıl+": "6/8"
+  },
+  "ayna SELL aynı gün": {
+   "n": 54,
+   "ort": -0.187,
+   "kırpılmış": -0.307,
+   "medyan": -0.473,
+   "isabet": 0.33,
+   "P(>0)": 0.089,
+   "yıl+": "1/8"
+  },
+  "stres×VIXlo aynı gün": {
+   "n": 7,
+   "ort": 0.177,
+   "kırpılmış": 0.263,
+   "medyan": 0.449,
+   "isabet": 0.57,
+   "P(>0)": 0.775,
+   "yıl+": "3/5"
+  },
+  "stressiz×VIXhi aynı gün": {
+   "n": 210,
+   "ort": 0.007,
+   "kırpılmış": -0.017,
+   "medyan": 0.063,
+   "isabet": 0.53,
+   "P(>0)": 0.572,
+   "yıl+": "5/8"
+  },
+  "saat plasebosu": {
+   "gerçek": 0.171,
+   "plasebo_ort": -0.059,
+   "plasebo_%95": 0.043,
+   "yüzdelik": 1.0
+  }
+ },
+ "ORJ DAX 30m": {
+  "aynı gün": {
+   "n": 37,
+   "ort": 0.12,
+   "kırpılmış": 0.055,
+   "medyan": 0.029,
+   "isabet": 0.54,
+   "P(>0)": 0.775,
+   "yıl+": "3/6"
+  },
+  "ertesi gün": {
+   "n": 37,
+   "ort": 0.472,
+   "kırpılmış": 0.401,
+   "medyan": 0.212,
+   "isabet": 0.54,
+   "P(>0)": 0.972,
+   "yıl+": "4/6"
+  },
+  "ayna SELL aynı gün": {
+   "n": 37,
+   "ort": -0.168,
+   "kırpılmış": -0.319,
+   "medyan": -0.451,
+   "isabet": 0.35,
+   "P(>0)": 0.173,
+   "yıl+": "1/6"
+  },
+  "stres×VIXlo aynı gün": {
+   "n": 6,
+   "ort": 0.031,
+   "kırpılmış": 0.099,
+   "medyan": 0.119,
+   "isabet": 0.67,
+   "P(>0)": 0.596,
+   "yıl+": "2/4"
+  },
+  "stressiz×VIXhi aynı gün": {
+   "n": 164,
+   "ort": 0.015,
+   "kırpılmış": -0.013,
+   "medyan": 0.074,
+   "isabet": 0.52,
+   "P(>0)": 0.613,
+   "yıl+": "4/6"
+  },
+  "saat plasebosu": {
+   "gerçek": 0.12,
+   "plasebo_ort": 0.022,
+   "plasebo_%95": 0.169,
+   "yüzdelik": 0.835
+  }
+ },
+ "ORJ DAX 15m": {
+  "aynı gün": {
+   "n": 13,
+   "ort": 0.183,
+   "kırpılmış": 0.125,
+   "medyan": -0.052,
+   "isabet": 0.46,
+   "P(>0)": 0.719,
+   "yıl+": "2/4"
+  },
+  "ertesi gün": {
+   "n": 13,
+   "ort": 0.872,
+   "kırpılmış": 0.788,
+   "medyan": 0.63,
+   "isabet": 0.62,
+   "P(>0)": 0.97,
+   "yıl+": "3/4"
+  },
+  "ayna SELL aynı gün": {
+   "n": 13,
+   "ort": -0.196,
+   "kırpılmış": -0.369,
+   "medyan": -0.418,
+   "isabet": 0.31,
+   "P(>0)": 0.231,
+   "yıl+": "1/4"
+  },
+  "stres×VIXlo aynı gün": {
+   "n": 6,
+   "ort": -0.05,
+   "kırpılmış": -0.018,
+   "medyan": -0.023,
+   "isabet": 0.5,
+   "P(>0)": 0.377,
+   "yıl+": "1/4"
+  },
+  "stressiz×VIXhi aynı gün": {
+   "n": 87,
+   "ort": 0.018,
+   "kırpılmış": -0.002,
+   "medyan": 0.099,
+   "isabet": 0.52,
+   "P(>0)": 0.618,
+   "yıl+": "2/5"
+  },
+  "saat plasebosu": {
+   "gerçek": 0.183,
+   "plasebo_ort": 0.194,
+   "plasebo_%95": 0.547,
+   "yüzdelik": 0.495
+  }
+ },
+ "FIX DAX 1h": {
+  "aynı gün": {
+   "n": 54,
+   "ort": 0.212,
+   "kırpılmış": 0.14,
+   "medyan": 0.221,
+   "isabet": 0.56,
+   "P(>0)": 0.939,
+   "yıl+": "5/8"
+  },
+  "ertesi gün": {
+   "n": 54,
+   "ort": 0.467,
+   "kırpılmış": 0.364,
+   "medyan": 0.466,
+   "isabet": 0.59,
+   "P(>0)": 0.991,
+   "yıl+": "6/8"
+  },
+  "ayna SELL aynı gün": {
+   "n": 54,
+   "ort": -0.206,
+   "kırpılmış": -0.331,
+   "medyan": -0.559,
+   "isabet": 0.31,
+   "P(>0)": 0.066,
+   "yıl+": "0/8"
+  },
+  "stres×VIXlo aynı gün": {
+   "n": 6,
+   "ort": 0.197,
+   "kırpılmış": 0.306,
+   "medyan": 0.428,
+   "isabet": 0.67,
+   "P(>0)": 0.762,
+   "yıl+": "3/5"
+  },
+  "stressiz×VIXhi aynı gün": {
+   "n": 205,
+   "ort": 0.002,
+   "kırpılmış": -0.029,
+   "medyan": 0.054,
+   "isabet": 0.51,
+   "P(>0)": 0.508,
+   "yıl+": "5/8"
+  },
+  "saat plasebosu": {
+   "gerçek": 0.212,
+   "plasebo_ort": -0.037,
+   "plasebo_%95": 0.09,
+   "yüzdelik": 1.0
+  }
+ },
+ "FIX DAX 30m": {
+  "aynı gün": {
+   "n": 36,
+   "ort": 0.19,
+   "kırpılmış": 0.139,
+   "medyan": 0.208,
+   "isabet": 0.58,
+   "P(>0)": 0.86,
+   "yıl+": "4/6"
+  },
+  "ertesi gün": {
+   "n": 36,
+   "ort": 0.56,
+   "kırpılmış": 0.465,
+   "medyan": 0.337,
+   "isabet": 0.56,
+   "P(>0)": 0.986,
+   "yıl+": "5/6"
+  },
+  "ayna SELL aynı gün": {
+   "n": 36,
+   "ort": -0.254,
+   "kırpılmış": -0.391,
+   "medyan": -0.773,
+   "isabet": 0.28,
+   "P(>0)": 0.08,
+   "yıl+": "1/6"
+  },
+  "stres×VIXlo aynı gün": {
+   "n": 5,
+   "ort": -0.101,
+   "kırpılmış": -0.093,
+   "medyan": -0.2,
+   "isabet": 0.4,
+   "P(>0)": 0.259,
+   "yıl+": "1/4"
+  },
+  "stressiz×VIXhi aynı gün": {
+   "n": 159,
+   "ort": -0.004,
+   "kırpılmış": -0.039,
+   "medyan": -0.01,
+   "isabet": 0.48,
+   "P(>0)": 0.476,
+   "yıl+": "4/6"
+  },
+  "saat plasebosu": {
+   "gerçek": 0.19,
+   "plasebo_ort": 0.08,
+   "plasebo_%95": 0.227,
+   "yüzdelik": 0.85
+  }
+ },
+ "FIX DAX 15m": {
+  "aynı gün": {
+   "n": 14,
+   "ort": 0.109,
+   "kırpılmış": 0.061,
+   "medyan": -0.189,
+   "isabet": 0.43,
+   "P(>0)": 0.648,
+   "yıl+": "2/4"
+  },
+  "ertesi gün": {
+   "n": 14,
+   "ort": 0.674,
+   "kırpılmış": 0.61,
+   "medyan": 0.51,
+   "isabet": 0.57,
+   "P(>0)": 0.94,
+   "yıl+": "3/4"
+  },
+  "ayna SELL aynı gün": {
+   "n": 14,
+   "ort": -0.052,
+   "kırpılmış": -0.196,
+   "medyan": -0.267,
+   "isabet": 0.36,
+   "P(>0)": 0.423,
+   "yıl+": "1/4"
+  },
+  "stres×VIXlo aynı gün": {
+   "n": 5,
+   "ort": -0.096,
+   "kırpılmış": -0.084,
+   "medyan": -0.161,
+   "isabet": 0.4,
+   "P(>0)": 0.282,
+   "yıl+": "1/4"
+  },
+  "stressiz×VIXhi aynı gün": {
+   "n": 83,
+   "ort": 0.079,
+   "kırpılmış": 0.066,
+   "medyan": 0.122,
+   "isabet": 0.51,
+   "P(>0)": 0.871,
+   "yıl+": "4/5"
+  },
+  "saat plasebosu": {
+   "gerçek": 0.109,
+   "plasebo_ort": 0.07,
+   "plasebo_%95": 0.36,
+   "yüzdelik": 0.6
+  }
+ }
+}

@@ -1,0 +1,1458 @@
+{
+  "rebalances": [
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-16",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": -1.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": -1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": -1.0,
+          "to": 0.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-20",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-21",
+      "turnover": 0.5,
+      "entries": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "exits": [],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 0.0,
+          "to": 1.0,
+          "delta": 1.0
+        }
+      ]
+    },
+    {
+      "date": "2026-10-21",
+      "turnover": 0.5,
+      "entries": [],
+      "exits": [
+        {
+          "code": "GDAXI.INDX",
+          "weight": 1.0
+        }
+      ],
+      "top_moves": [
+        {
+          "code": "GDAXI.INDX",
+          "from": 1.0,
+          "to": 0.0,
+          "delta": -1.0
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "target_change_count": 76,
+    "turnover_total": 38.0,
+    "turnover_mean": 0.5,
+    "turnover_max": 0.5,
+    "largest_rebalance_date": "2026-10-16",
+    "rebalance_executed_bars": 0,
+    "rebalance_executed_fills": 0,
+    "rebalance_realized_turnover": 0.0
+  }
+}

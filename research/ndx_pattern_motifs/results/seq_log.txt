@@ -1,0 +1,35 @@
+Şablon 'Ekran görüntüsündeki 100 mumluk alan': 15m 2026-09-16 03:00 → 2026-09-17 04:45 (100 mum) ad=Flaş Yükseliş – Çöküş – Toparlanma
+Şablon 'Flaş çöküş + V dönüş çekirdeği': 15m 2026-09-16 21:00 → 2026-09-17 02:45 (20 mum) ad=Flaş V-Dip Dönüşü
+== 30m
+  şablon[Ekran görüntüsündeki 1] 30m atr: %0.1→tam 0 en iyi 7/100 (plasebo 7) %0.15→tam 0 en iyi 11/100 (plasebo 11) %0.2→tam 0 en iyi 15/100 (plasebo 15) %0.25→tam 0 en iyi 20/100 (plasebo 21) %0.33→tam 0 en iyi 31/100 (plasebo 29)
+  şablon[Flaş çöküş + V dönüş ç] 30m atr: %0.1→tam 0 en iyi 5/20 (plasebo 5) %0.15→tam 0 en iyi 7/20 (plasebo 7) %0.2→tam 0 en iyi 8/20 (plasebo 8) %0.25→tam 0 en iyi 10/20 (plasebo 9) %0.33→tam 0 en iyi 11/20 (plasebo 11)
+  30m pay %0.03   k3:38/36 k4:8/10 k5:4/4 k6:2/2 k8:0/0  (1s)
+  30m pay %0.05   k3:46/40 k4:10/10 k5:4/4 k6:2/3 k8:0/0  (2s)
+  30m pay %0.07   k3:51/39 k4:9/10 k5:5/4 k6:2/2 k8:0/0  (2s)
+  30m pay %0.1    k3:33/29 k4:7/8 k5:3/3 k6:2/2 k8:0/0  (2s)
+== 15m
+  şablon[Ekran görüntüsündeki 1] 15m abs: %0.02→tam 0 en iyi 13/100 (plasebo 58) %0.03→tam 0 en iyi 22/100 (plasebo 59) %0.05→tam 0 en iyi 40/100 (plasebo 64) %0.07→tam 0 en iyi 57/100 (plasebo 68) %0.1→tam 0 en iyi 76/100 (plasebo 76)
+  şablon[Ekran görüntüsündeki 1] 15m atr: %0.1→tam 0 en iyi 7/100 (plasebo 57) %0.15→tam 0 en iyi 10/100 (plasebo 57) %0.2→tam 0 en iyi 17/100 (plasebo 59) %0.25→tam 0 en iyi 21/100 (plasebo 60) %0.33→tam 0 en iyi 30/100 (plasebo 63)
+  şablon[Flaş çöküş + V dönüş ç] 15m abs: %0.02→tam 0 en iyi 5/20 (plasebo 9) %0.03→tam 0 en iyi 6/20 (plasebo 9) %0.05→tam 0 en iyi 9/20 (plasebo 9) %0.07→tam 0 en iyi 12/20 (plasebo 10) %0.1→tam 0 en iyi 13/20 (plasebo 13)
+  şablon[Flaş çöküş + V dönüş ç] 15m atr: %0.1→tam 0 en iyi 5/20 (plasebo 9) %0.15→tam 0 en iyi 7/20 (plasebo 9) %0.2→tam 0 en iyi 8/20 (plasebo 9) %0.25→tam 0 en iyi 10/20 (plasebo 10) %0.33→tam 0 en iyi 12/20 (plasebo 11)
+  15m pay %0.02   k3:68/73 k4:15/16 k5:5/4 k6:3/2 k8:0/0  (4s)
+  15m pay %0.03   k3:92/102 k4:17/21 k5:9/6 k6:3/3 k8:2/2 k10:0/0  (5s)
+  15m pay %0.05   k3:72/70 k4:13/14 k5:5/5 k6:3/3 k8:2/2 k10:0/0  (7s)
+  15m pay %0.07   k3:60/59 k4:13/12 k5:5/5 k6:3/2 k8:0/2 k10:0/0  (8s)
+== 5m
+  şablon[Ekran görüntüsündeki 1] 5m atr: %0.1→tam 0 en iyi 8/100 (plasebo 7) %0.15→tam 0 en iyi 12/100 (plasebo 13) %0.2→tam 0 en iyi 17/100 (plasebo 16) %0.25→tam 0 en iyi 20/100 (plasebo 23) %0.33→tam 0 en iyi 31/100 (plasebo 31)
+  şablon[Flaş çöküş + V dönüş ç] 5m atr: %0.1→tam 0 en iyi 4/20 (plasebo 5) %0.15→tam 0 en iyi 6/20 (plasebo 6) %0.2→tam 0 en iyi 7/20 (plasebo 8) %0.25→tam 0 en iyi 9/20 (plasebo 9) %0.33→tam 0 en iyi 11/20 (plasebo 12)
+  5m pay %0.01   k3:73/76 k4:18/18 k5:6/5 k6:4/3 k8:2/0 k10:0/0  (7s)
+  5m pay %0.015  k3:122/114 k4:22/21 k5:7/6 k6:3/3 k8:2/2 k10:0/0  (9s)
+  5m pay %0.02   k3:142/128 k4:27/28 k5:11/8 k6:4/4 k8:2/2 k10:0/0  (11s)
+  5m pay %0.03   k3:118/113 k4:20/20 k5:7/7 k6:4/3 k8:2/2 k10:0/0  (14s)
+  5m pay %0.05   k3:68/75 k4:14/15 k5:5/5 k6:3/3 k8:2/0 k10:0/0  (20s)
+== 1m
+  şablon[Ekran görüntüsündeki 1] 1m atr: %0.1→tam 0 en iyi 8/100 (plasebo 8) %0.15→tam 0 en iyi 12/100 (plasebo 13) %0.2→tam 0 en iyi 17/100 (plasebo 18) %0.25→tam 0 en iyi 23/100 (plasebo 22) %0.33→tam 0 en iyi 30/100 (plasebo 31)
+  şablon[Flaş çöküş + V dönüş ç] 1m atr: %0.1→tam 0 en iyi 5/20 (plasebo 5) %0.15→tam 0 en iyi 7/20 (plasebo 7) %0.2→tam 0 en iyi 10/20 (plasebo 8) %0.25→tam 0 en iyi 10/20 (plasebo 9) %0.33→tam 0 en iyi 11/20 (plasebo 11)
+  1m pay %0.005  k3:365/324 k4:59/50 k5:12/10 k6:5/5 k8:2/2 k10:0/2 k12:0/0  (155s)
+  1m pay %0.0075 k3:531/467 k4:91/68 k5:17/19 k6:6/7 k8:3/2 k10:0/2 k12:0/0  (191s)
+  1m pay %0.01   k3:523/498 k4:82/75 k5:17/15 k6:6/5 k8:2/2 k10:0/0  (248s)
+  1m pay %0.015  k3:388/379 k4:62/64 k5:13/17 k6:6/6 k8:2/2 k10:0/2 k12:0/0  (340s)
+  1m pay %0.02   k3:278/297 k4:51/46 k5:11/11 k6:5/5 k8:3/2 k10:0/0  (429s)
+yazıldı: /Users/melihcanodacioglu/Desktop/panel/research/ndx_pattern_motifs/results/seq_scan.json

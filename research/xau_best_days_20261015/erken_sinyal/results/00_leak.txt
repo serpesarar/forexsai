@@ -1,0 +1,3 @@
+kesim 62679 (2018-04-03 08:00:00+00:00): karşılaştırılan 62668 bar, farklı: YOK
+kesim 66163 (2018-11-01 08:00:00+00:00): karşılaştırılan 66152 bar, farklı: YOK
+kesim 88112 (2022-07-21 03:00:00+00:00): karşılaştırılan 88106 bar, farklı: YOK

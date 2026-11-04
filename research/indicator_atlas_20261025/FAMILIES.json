@@ -1,0 +1,1777 @@
+[
+  {
+    "id": "FAM-001",
+    "name": "Ichimoku Kinkō Hyō / 一目均衡表",
+    "family": "Japanese chart systems",
+    "inputs": "OHLC",
+    "explanation": "Tenkan and Kijun are midpoints of rolling high/low ranges; Senkou A averages those lines, Senkou B uses a longer range; the cloud is drawn forward and Chikou backward.",
+    "caveat": "Separate calculation time from display offset. A historical Chikou plot is not information available at that plotted date.",
+    "implementations": [
+      "SRC-0129",
+      "SRC-0406",
+      "SRC-0602",
+      "SRC-0629",
+      "SRC-1081",
+      "SRC-1357"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-002",
+    "name": "Heikin Ashi / 平均足",
+    "family": "Japanese chart systems",
+    "inputs": "OHLC",
+    "explanation": "Synthetic close averages OHLC; synthetic open averages the previous synthetic open and close. This smooths candle appearance.",
+    "caveat": "Synthetic candle prices are not executable broker quotes.",
+    "implementations": [
+      "SRC-1077",
+      "SRC-1205",
+      "SRC-1353"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-003",
+    "name": "Renko / 練行足",
+    "family": "Alternative chart systems",
+    "inputs": "Ticks or ordered lower-timeframe prices",
+    "explanation": "Adds bricks when price traverses a selected box size; time between bricks is irregular.",
+    "caveat": "OHLC reconstruction can conceal path ambiguity; ATR-sized historical bricks may change with settings.",
+    "implementations": [
+      "SRC-1097"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-004",
+    "name": "Kagi / 鉤足",
+    "family": "Alternative chart systems",
+    "inputs": "Ordered prices",
+    "explanation": "Alternates vertical legs after a reversal threshold; prior swing breaks change line state.",
+    "caveat": "Requires ordered price paths; chart-derived fills must use actual prices.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-005",
+    "name": "Point & Figure",
+    "family": "Alternative chart systems",
+    "inputs": "Ordered prices",
+    "explanation": "Uses X/O columns for box-sized advances and declines, reversing after a configured box count.",
+    "caveat": "Intrabar high/low ordering affects columns.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-006",
+    "name": "Line Break",
+    "family": "Alternative chart systems",
+    "inputs": "Prices",
+    "explanation": "Prints a new line when price exceeds thresholds from the preceding lines; reversals use a configurable line count.",
+    "caveat": "Irregular chart events are not fixed-time candles.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-007",
+    "name": "KDJ / 随机指标",
+    "family": "Chinese formula systems",
+    "inputs": "HLC",
+    "explanation": "Normalizes close within a recent high/low range to RSV, smooths into K and D, then forms J = 3K − 2D.",
+    "caveat": "TongDaXin SMA is recursive smoothing, not an ordinary simple moving average; J can exceed 0–100.",
+    "implementations": [
+      "SRC-0133",
+      "SRC-0359",
+      "SRC-0689"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-008",
+    "name": "BBI / 多空指标",
+    "family": "Chinese formula systems",
+    "inputs": "Close",
+    "explanation": "Averages four simple moving averages to form a combined bull/bear baseline; periods differ across implementations.",
+    "caveat": "MyTT defaults use 3/6/12/20; a different script may use 24 for the last period.",
+    "implementations": [
+      "SRC-0697"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-009",
+    "name": "BIAS / 乖离率 / Kairi",
+    "family": "Chinese/Japanese formulas",
+    "inputs": "Close",
+    "explanation": "Measures percentage displacement from a moving average: 100 × (price − MA)/MA.",
+    "caveat": "Same concept appears under several names; it is not several independent signals.",
+    "implementations": [
+      "SRC-0344",
+      "SRC-0692",
+      "SRC-0823",
+      "SRC-0840"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-010",
+    "name": "PSY / 心理线",
+    "family": "Chinese formula systems",
+    "inputs": "Close",
+    "explanation": "Reports the percentage of up-closing bars in a rolling period; often accompanied by a smoothed signal.",
+    "caveat": "Counts bar direction, not investor survey sentiment.",
+    "implementations": [
+      "SRC-0369",
+      "SRC-0694"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-011",
+    "name": "BRAR / 人气意愿指标",
+    "family": "Chinese formula systems",
+    "inputs": "OHLC",
+    "explanation": "AR compares high−open to open−low; BR compares movement relative to the previous close, aggregated over a window.",
+    "caveat": "Exact clipping and zero-denominator conventions vary.",
+    "implementations": [
+      "SRC-0346",
+      "SRC-0706"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-012",
+    "name": "CR / 能量指标",
+    "family": "Chinese formula systems",
+    "inputs": "HLC",
+    "explanation": "Compares upward and downward movement around the previous bar midpoint; aggregates into a relative strength ratio.",
+    "caveat": "Different platforms may use different reference prices.",
+    "implementations": [
+      "SRC-0703"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-013",
+    "name": "VR / 成交量比率",
+    "family": "Chinese formula systems",
+    "inputs": "Close + volume",
+    "explanation": "Compares volume accumulated on up bars with down-bar volume, allocating unchanged bars according to its formula.",
+    "caveat": "Needs meaningful volume. CFD tick-volume VR has different economic meaning from exchange-volume VR.",
+    "implementations": [
+      "SRC-0702"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-014",
+    "name": "DFMA / DMA indicator",
+    "family": "Chinese formula systems",
+    "inputs": "Close",
+    "explanation": "Subtracts a long moving average from a short one and smooths the difference.",
+    "caveat": "The name DMA also means dynamic moving average elsewhere; resolve the formula before porting.",
+    "implementations": [
+      "SRC-0707"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-015",
+    "name": "EXPMA",
+    "family": "Chinese formula systems",
+    "inputs": "Close",
+    "explanation": "Plots exponential moving averages at multiple lengths to compare trend direction and crossings.",
+    "caveat": "Usually an EMA presentation variant rather than a new mathematical family.",
+    "implementations": [
+      "SRC-0110",
+      "SRC-0398",
+      "SRC-0525",
+      "SRC-0667",
+      "SRC-0711",
+      "SRC-0973",
+      "SRC-1070",
+      "SRC-1146",
+      "SRC-1220"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-016",
+    "name": "TAQ",
+    "family": "Chinese formula systems",
+    "inputs": "HLC",
+    "explanation": "Builds a highest-high/lowest-low channel and its midpoint over a chosen window.",
+    "caveat": "Close relative to a current-bar channel is not the same as breakout above the previous channel.",
+    "implementations": [
+      "SRC-0699"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-017",
+    "name": "KTN",
+    "family": "Chinese formula systems",
+    "inputs": "OHLC",
+    "explanation": "MyTT combines an EMA of typical price with ATR-based envelopes; belongs to the Keltner family.",
+    "caveat": "Match typical-price source and ATR smoothing when comparing outputs.",
+    "implementations": [
+      "SRC-0132",
+      "SRC-0494",
+      "SRC-0563",
+      "SRC-0700"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-018",
+    "name": "XSII / 薛斯通道 II",
+    "family": "Chinese formula systems",
+    "inputs": "Close",
+    "explanation": "Combines a smoothed price centre with percentage envelopes and a dynamic channel construction.",
+    "caveat": "Treat this implementation as a defined variant; the name alone does not uniquely specify every platform version.",
+    "implementations": [
+      "SRC-0715"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-019",
+    "name": "Chanlun / 缠论 / CZSC",
+    "family": "Chinese structural systems",
+    "inputs": "OHLC",
+    "explanation": "Builds inclusion-adjusted bars, fractals, strokes, segments and central zones; signal modules describe structural relationships.",
+    "caveat": "A central zone or stroke can change while forming. Modules are not independent profitable indicators.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-020",
+    "name": "SMA",
+    "family": "Moving averages",
+    "inputs": "Price",
+    "explanation": "Arithmetic mean of the last N observations, with equal weights.",
+    "caveat": "Lookback units are bars, not automatically days.",
+    "implementations": [
+      "SRC-0197",
+      "SRC-0426",
+      "SRC-0522",
+      "SRC-0668",
+      "SRC-0801",
+      "SRC-1012",
+      "SRC-1104",
+      "SRC-1145",
+      "SRC-1222",
+      "SRC-1418"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-021",
+    "name": "EMA",
+    "family": "Moving averages",
+    "inputs": "Price",
+    "explanation": "Recursively updates the average using α = 2/(N+1); recent observations receive more weight.",
+    "caveat": "Seed choice and warm-up affect cross-library parity.",
+    "implementations": [
+      "SRC-0110",
+      "SRC-0398",
+      "SRC-0525",
+      "SRC-0667",
+      "SRC-0764",
+      "SRC-0973",
+      "SRC-1070",
+      "SRC-1146",
+      "SRC-1220",
+      "SRC-1345"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-022",
+    "name": "Wilder RMA / SMMA",
+    "family": "Moving averages",
+    "inputs": "Price",
+    "explanation": "Recursive smoothing with α approximately 1/N after an initial seed.",
+    "caveat": "Chinese SMA(X,N,M) uses α=M/N and is not identical to SMA arithmetic averaging.",
+    "implementations": [
+      "SRC-0182",
+      "SRC-0424",
+      "SRC-0540",
+      "SRC-1107"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-023",
+    "name": "WMA / LWMA",
+    "family": "Moving averages",
+    "inputs": "Price",
+    "explanation": "Weights recent samples linearly more heavily than older samples.",
+    "caveat": "Check weight orientation and initial valid index.",
+    "implementations": [
+      "SRC-0235",
+      "SRC-0439",
+      "SRC-0536",
+      "SRC-0669",
+      "SRC-0809",
+      "SRC-1042",
+      "SRC-1127",
+      "SRC-1148",
+      "SRC-1224"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-024",
+    "name": "DEMA / TEMA",
+    "family": "Moving averages",
+    "inputs": "Price",
+    "explanation": "DEMA = 2E1 − E2; TEMA = 3E1 − 3E2 + E3, using successive EMAs.",
+    "caveat": "Lag compensation can overshoot and react more strongly to noise.",
+    "implementations": [
+      "SRC-0103",
+      "SRC-0217",
+      "SRC-0397",
+      "SRC-0431",
+      "SRC-0526",
+      "SRC-0527",
+      "SRC-0754",
+      "SRC-0966",
+      "SRC-1022",
+      "SRC-1064",
+      "SRC-1116",
+      "SRC-1147",
+      "SRC-1342",
+      "SRC-1436"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-025",
+    "name": "Tillson T3",
+    "family": "Moving averages",
+    "inputs": "Price",
+    "explanation": "Combines successive EMA filters with coefficients controlled by a volume-factor parameter.",
+    "caveat": "The volume-factor parameter is a smoothing coefficient, not an observed volume series.",
+    "implementations": [
+      "SRC-0214",
+      "SRC-0430",
+      "SRC-0805",
+      "SRC-1115",
+      "SRC-1428"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-026",
+    "name": "Hull Moving Average",
+    "family": "Moving averages",
+    "inputs": "Price",
+    "explanation": "Combines WMA at full and half length, then smooths the compensated result over approximately √N.",
+    "caveat": "Integer rounding rules can produce platform differences.",
+    "implementations": [
+      "SRC-0121",
+      "SRC-0403",
+      "SRC-0537",
+      "SRC-0773",
+      "SRC-0979",
+      "SRC-1078",
+      "SRC-1151",
+      "SRC-1355"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-027",
+    "name": "ALMA",
+    "family": "Moving averages",
+    "inputs": "Price",
+    "explanation": "Applies Gaussian weights with configurable offset and spread across the rolling price window.",
+    "caveat": "Finta's ALMA entry is a placeholder; use an actual implementation from another source.",
+    "implementations": [
+      "SRC-0010",
+      "SRC-0395",
+      "SRC-0541",
+      "SRC-0748",
+      "SRC-1047",
+      "SRC-1152",
+      "SRC-1249"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-028",
+    "name": "KAMA",
+    "family": "Adaptive filters",
+    "inputs": "Price",
+    "explanation": "Uses an efficiency ratio to adjust smoothing between fast and slow limits.",
+    "caveat": "A trend-adaptive line still requires warm-up and a precisely defined seed.",
+    "implementations": [
+      "SRC-0131",
+      "SRC-0408",
+      "SRC-0534",
+      "SRC-0777",
+      "SRC-0980",
+      "SRC-1082",
+      "SRC-1364"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-029",
+    "name": "VIDYA",
+    "family": "Adaptive filters",
+    "inputs": "Price",
+    "explanation": "Changes EMA weight using a momentum/variability measure such as absolute CMO.",
+    "caveat": "Variants differ. Finta's named VIDYA method raises NotImplementedError.",
+    "implementations": [
+      "SRC-0227",
+      "SRC-0435",
+      "SRC-0532",
+      "SRC-0808",
+      "SRC-1034"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-030",
+    "name": "FRAMA",
+    "family": "Adaptive filters",
+    "inputs": "HLC or selected price",
+    "explanation": "Estimates fractal dimension from subwindow ranges and maps it into an adaptive smoothing coefficient.",
+    "caveat": "Window parity and coefficient bounds matter.",
+    "implementations": [
+      "SRC-0119",
+      "SRC-0543",
+      "SRC-0768",
+      "SRC-1349"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-031",
+    "name": "MAMA / FAMA",
+    "family": "Adaptive filters",
+    "inputs": "Price",
+    "explanation": "Uses Hilbert-transform phase behaviour to adapt moving-average speed; FAMA follows MAMA more slowly.",
+    "caveat": "Finta's MAMA is a placeholder; other implementations are present.",
+    "implementations": [
+      "SRC-0148",
+      "SRC-0414",
+      "SRC-0542",
+      "SRC-0759",
+      "SRC-1087",
+      "SRC-1380"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-032",
+    "name": "McGinley Dynamic",
+    "family": "Adaptive filters",
+    "inputs": "Price",
+    "explanation": "Updates a moving baseline with a denominator dependent on the price-to-baseline ratio.",
+    "caveat": "Numerical handling near zero needs review.",
+    "implementations": [
+      "SRC-0154",
+      "SRC-0416",
+      "SRC-0782",
+      "SRC-1378"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-033",
+    "name": "ZLEMA",
+    "family": "Adaptive filters",
+    "inputs": "Price",
+    "explanation": "Adds a lag compensation term to price before exponential smoothing.",
+    "caveat": "Zero lag in a name does not mean future price is known.",
+    "implementations": [
+      "SRC-0237",
+      "SRC-0440",
+      "SRC-0535",
+      "SRC-0811",
+      "SRC-1043",
+      "SRC-1150",
+      "SRC-1455"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-034",
+    "name": "Jurik Moving Average / RSX variants",
+    "family": "Adaptive filters",
+    "inputs": "Price",
+    "explanation": "Public scripts implement smooth adaptive lines or RSI-like oscillators carrying Jurik-related names.",
+    "caveat": "A public approximation is not proof of identity with proprietary Jurik software.",
+    "implementations": [
+      "SRC-0377",
+      "SRC-0776",
+      "SRC-0839",
+      "SRC-0864"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-035",
+    "name": "Ehlers Super Smoother",
+    "family": "Digital signal processing",
+    "inputs": "Price",
+    "explanation": "A recursive low-pass filter uses period-derived coefficients and previous filter states to attenuate high-frequency variation.",
+    "caveat": "Initialization and coefficient conventions affect outputs.",
+    "implementations": [
+      "SRC-0427",
+      "SRC-0762"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-036",
+    "name": "Ehlers Ultimate Smoother",
+    "family": "Digital signal processing",
+    "inputs": "Price",
+    "explanation": "A low-lag smoothing construction combines high-pass/all-pass relationships to preserve lower-frequency components.",
+    "caveat": "Primary publication and official PineCodersTASC page are linked; no independently audited local implementation claimed.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-037",
+    "name": "Ehlers Roofing Filter",
+    "family": "Digital signal processing",
+    "inputs": "Price",
+    "explanation": "Combines high-pass detrending with low-pass smoothing to retain a selected cycle band.",
+    "caveat": "Filter period is not a forecast horizon.",
+    "implementations": [
+      "SRC-0829"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-038",
+    "name": "Ehlers Cyber Cycle",
+    "family": "Digital signal processing",
+    "inputs": "Price",
+    "explanation": "Smooths and detrends price with recursive terms to isolate oscillatory components.",
+    "caveat": "Turning points can change on the current open bar.",
+    "implementations": [
+      "SRC-0826"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-039",
+    "name": "Laguerre Filter / Laguerre RSI",
+    "family": "Digital signal processing",
+    "inputs": "Price",
+    "explanation": "Uses a sequence of Laguerre states; directional state changes can be normalized into an RSI-like output.",
+    "caveat": "Gamma governs the responsiveness and smoothness trade-off.",
+    "implementations": [
+      "SRC-0778",
+      "SRC-0841"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-040",
+    "name": "Fisher / Inverse Fisher",
+    "family": "Digital signal processing",
+    "inputs": "Normalized series",
+    "explanation": "Transforms a bounded input to emphasize extremes; inverse Fisher compresses an oscillator into bounded outputs.",
+    "caveat": "Clipping near ±1 is essential for finite Fisher values.",
+    "implementations": [
+      "SRC-0115",
+      "SRC-0356",
+      "SRC-0552",
+      "SRC-0976",
+      "SRC-1073",
+      "SRC-1347"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-041",
+    "name": "Hilbert dominant cycle / sine / phasor",
+    "family": "Digital signal processing",
+    "inputs": "Price",
+    "explanation": "Estimates phase and cycle properties using Hilbert-transform approximations.",
+    "caveat": "Unstable initial periods and phase wrap require explicit handling.",
+    "implementations": [
+      "SRC-0122",
+      "SRC-0123",
+      "SRC-0124",
+      "SRC-0125",
+      "SRC-0127",
+      "SRC-0305",
+      "SRC-0306",
+      "SRC-0307",
+      "SRC-0308",
+      "SRC-0309"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-042",
+    "name": "Kalman Filter",
+    "family": "Statistical filters",
+    "inputs": "Price + model variances",
+    "explanation": "Predicts a latent price state and uncertainty, then updates using an uncertainty-dependent gain when a new price arrives.",
+    "caveat": "Q/R assumptions specify the model; a filter is causal, a backward smoother uses future observations.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-043",
+    "name": "Moving Median / Hampel Filter",
+    "family": "Robust filters",
+    "inputs": "Price",
+    "explanation": "Median filtering reduces sensitivity to isolated outliers; Hampel logic identifies extreme deviations around a local median.",
+    "caveat": "A centred window is noncausal unless results are delayed.",
+    "implementations": [
+      "SRC-0770",
+      "SRC-0787"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-044",
+    "name": "Gaussian / Butterworth filters",
+    "family": "Digital signal processing",
+    "inputs": "Price",
+    "explanation": "Low-pass filtering suppresses rapid fluctuations using Gaussian weights or recursive Butterworth coefficients.",
+    "caveat": "Different implementations can be trailing or centred.",
+    "implementations": [
+      "SRC-0750",
+      "SRC-0769"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-045",
+    "name": "RSI",
+    "family": "Momentum",
+    "inputs": "Close",
+    "explanation": "Normalizes smoothed average gains versus losses into a 0–100 oscillator.",
+    "caveat": "Overbought can persist in a trend; default seed conventions differ.",
+    "implementations": [
+      "SRC-0188",
+      "SRC-0376",
+      "SRC-0551",
+      "SRC-0690",
+      "SRC-0863",
+      "SRC-1009",
+      "SRC-1102",
+      "SRC-1154",
+      "SRC-1228",
+      "SRC-1410"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-046",
+    "name": "Stochastic",
+    "family": "Momentum",
+    "inputs": "HLC",
+    "explanation": "Locates close within the rolling high-low range; smooths %K into %D.",
+    "caveat": "Specify fast/slow smoothing and zero-range handling.",
+    "implementations": [
+      "SRC-0203",
+      "SRC-0385",
+      "SRC-0569",
+      "SRC-0869",
+      "SRC-1016",
+      "SRC-1112",
+      "SRC-1191",
+      "SRC-1216",
+      "SRC-1423"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-047",
+    "name": "Stochastic RSI",
+    "family": "Momentum",
+    "inputs": "Close",
+    "explanation": "Applies the stochastic range normalization to RSI values rather than raw prices.",
+    "caveat": "Two indicator layers increase sensitivity and warm-up requirements.",
+    "implementations": [
+      "SRC-0205",
+      "SRC-0387",
+      "SRC-0571",
+      "SRC-1017",
+      "SRC-1113",
+      "SRC-1217"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-048",
+    "name": "Stochastic Momentum Index",
+    "family": "Momentum",
+    "inputs": "HLC",
+    "explanation": "Double-smooths close displacement from the range midpoint and normalizes by a smoothed half-range.",
+    "caveat": "Distinct from SMI Ergodic and ordinary stochastic.",
+    "implementations": [
+      "SRC-0198",
+      "SRC-0381",
+      "SRC-0871",
+      "SRC-1106",
+      "SRC-1192"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-049",
+    "name": "Connors RSI",
+    "family": "Momentum",
+    "inputs": "Close",
+    "explanation": "Averages price RSI, RSI of the signed streak length, and the percentile rank of a one-bar return.",
+    "caveat": "Percent-rank conventions and tie handling vary.",
+    "implementations": [
+      "SRC-0099",
+      "SRC-1062"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-050",
+    "name": "QQE / QQE MOD",
+    "family": "Momentum",
+    "inputs": "Close",
+    "explanation": "Smooths RSI and builds adaptive trailing bands from RSI changes; QQE MOD combines two QQE states.",
+    "caveat": "ATR-like smoothing operates on RSI changes, not automatically on price ranges.",
+    "implementations": [
+      "SRC-0371"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-051",
+    "name": "WaveTrend",
+    "family": "Momentum",
+    "inputs": "HLC or typical price",
+    "explanation": "EMA-centres price, normalizes displacement by smoothed absolute deviation, then smooths the normalized series and a signal line.",
+    "caveat": "Multiple scripts use different smoothing and threshold settings.",
+    "implementations": [
+      "SRC-0600"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-052",
+    "name": "MACD / PPO / APO",
+    "family": "Momentum",
+    "inputs": "Price",
+    "explanation": "Compares fast and slow averages; MACD/APO show absolute differences, PPO divides by the slow average.",
+    "caveat": "These are related transformations, not independent evidence votes.",
+    "implementations": [
+      "SRC-0012",
+      "SRC-0145",
+      "SRC-0176",
+      "SRC-0343",
+      "SRC-0362",
+      "SRC-0368",
+      "SRC-0544",
+      "SRC-0545",
+      "SRC-0688",
+      "SRC-0948",
+      "SRC-0988",
+      "SRC-1002",
+      "SRC-1086",
+      "SRC-1143",
+      "SRC-1221"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-053",
+    "name": "ROC / Momentum",
+    "family": "Momentum",
+    "inputs": "Price",
+    "explanation": "ROC reports percentage change from N bars ago; momentum usually reports the absolute difference.",
+    "caveat": "Compare normalized rather than raw point thresholds across the four markets.",
+    "implementations": [
+      "SRC-0166",
+      "SRC-0183",
+      "SRC-0365",
+      "SRC-0372",
+      "SRC-0548",
+      "SRC-0549",
+      "SRC-0614",
+      "SRC-0615",
+      "SRC-0616",
+      "SRC-0617",
+      "SRC-0618",
+      "SRC-0619",
+      "SRC-0620",
+      "SRC-0710",
+      "SRC-0893",
+      "SRC-0996",
+      "SRC-1006",
+      "SRC-1099",
+      "SRC-1172",
+      "SRC-1173",
+      "SRC-1215",
+      "SRC-1384",
+      "SRC-1385"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-054",
+    "name": "CCI",
+    "family": "Momentum",
+    "inputs": "HLC",
+    "explanation": "Divides typical-price displacement from its mean by a scaled mean absolute deviation.",
+    "caveat": "The standard deviation is not the denominator of classical CCI.",
+    "implementations": [
+      "SRC-0025",
+      "SRC-0347",
+      "SRC-0592",
+      "SRC-0695",
+      "SRC-0816",
+      "SRC-0957",
+      "SRC-1056",
+      "SRC-1132",
+      "SRC-1227",
+      "SRC-1329"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-055",
+    "name": "CMO",
+    "family": "Momentum",
+    "inputs": "Close",
+    "explanation": "Normalizes the difference between summed gains and losses by their total.",
+    "caveat": "Smoothing differs from RSI despite shared input changes.",
+    "implementations": [
+      "SRC-0093",
+      "SRC-0350",
+      "SRC-0596",
+      "SRC-0818",
+      "SRC-0959",
+      "SRC-1061",
+      "SRC-1135",
+      "SRC-1327"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-056",
+    "name": "TSI / SMI Ergodic",
+    "family": "Momentum",
+    "inputs": "Close",
+    "explanation": "Normalizes double-smoothed price changes by double-smoothed absolute changes; a signal EMA can be added.",
+    "caveat": "Do not confuse True Strength Index with Trend Strength Index.",
+    "implementations": [
+      "SRC-0222",
+      "SRC-0391",
+      "SRC-0579",
+      "SRC-0881",
+      "SRC-1119",
+      "SRC-1439"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-057",
+    "name": "Schaff Trend Cycle",
+    "family": "Momentum",
+    "inputs": "Close",
+    "explanation": "Combines MACD with stochastic-style cycle normalization and smoothing.",
+    "caveat": "Variants differ in recursive smoothing and lookbacks.",
+    "implementations": [
+      "SRC-0201",
+      "SRC-0384",
+      "SRC-0609",
+      "SRC-0867",
+      "SRC-1109"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-058",
+    "name": "Coppock / KST / Special K",
+    "family": "Momentum",
+    "inputs": "Close",
+    "explanation": "Combines and smooths rates of change over several horizons to represent longer and shorter momentum cycles.",
+    "caveat": "Closely related families should not be counted as independent confirmations.",
+    "implementations": [
+      "SRC-0134",
+      "SRC-0360",
+      "SRC-0578",
+      "SRC-0819",
+      "SRC-0851",
+      "SRC-1142",
+      "SRC-1213",
+      "SRC-1333"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-059",
+    "name": "Ultimate Oscillator",
+    "family": "Momentum",
+    "inputs": "HLC",
+    "explanation": "Aggregates buying pressure relative to true range over three windows with fixed relative weights.",
+    "caveat": "Check preceding-close definition and zero denominators.",
+    "implementations": [
+      "SRC-0392",
+      "SRC-0573",
+      "SRC-1193",
+      "SRC-1440"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-060",
+    "name": "DeMarker",
+    "family": "Momentum",
+    "inputs": "HL",
+    "explanation": "Compares positive high changes with positive low decreases and normalizes their moving totals.",
+    "caveat": "A bounded oscillator still does not by itself define an executable strategy.",
+    "implementations": [
+      "SRC-0820",
+      "SRC-1336"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-061",
+    "name": "ADX / DMI",
+    "family": "Trend strength",
+    "inputs": "HLC",
+    "explanation": "Derives +DI and −DI from directional movement relative to true range, then smooths their normalized difference into ADX.",
+    "caveat": "ADX strength is separate from +DI/−DI direction.",
+    "implementations": [
+      "SRC-0008",
+      "SRC-0458",
+      "SRC-0565",
+      "SRC-0566",
+      "SRC-0698",
+      "SRC-0945",
+      "SRC-1045",
+      "SRC-1129",
+      "SRC-1207",
+      "SRC-1253"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-062",
+    "name": "Aroon",
+    "family": "Trend strength",
+    "inputs": "HL",
+    "explanation": "Scales bars-since-high and bars-since-low into Up/Down lines; their difference forms an oscillator.",
+    "caveat": "Tie handling for repeated extremes affects values.",
+    "implementations": [
+      "SRC-0013",
+      "SRC-0461",
+      "SRC-0949",
+      "SRC-1048",
+      "SRC-1168",
+      "SRC-1250"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-063",
+    "name": "Vortex",
+    "family": "Trend direction",
+    "inputs": "HLC",
+    "explanation": "Normalizes cross-bar high/low movement sums by total true range to produce VI+ and VI−.",
+    "caveat": "Confirm rolling window and first-bar conventions.",
+    "implementations": [
+      "SRC-0228",
+      "SRC-0482",
+      "SRC-0577",
+      "SRC-1123",
+      "SRC-1448"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-064",
+    "name": "Choppiness / VHF",
+    "family": "Regime measures",
+    "inputs": "HLC",
+    "explanation": "CHOP compares accumulated range to total window excursion; VHF compares directional excursion to total price movement.",
+    "caveat": "These measure path efficiency or consolidation, not a guaranteed future breakout.",
+    "implementations": [
+      "SRC-0089",
+      "SRC-0226",
+      "SRC-0462",
+      "SRC-0481",
+      "SRC-1033",
+      "SRC-1059",
+      "SRC-1162",
+      "SRC-1328"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-065",
+    "name": "Efficiency Ratio",
+    "family": "Regime measures",
+    "inputs": "Price",
+    "explanation": "Absolute net change divided by the sum of absolute step changes measures directional path efficiency.",
+    "caveat": "A high value describes a past path; it does not prove continuation.",
+    "implementations": [
+      "SRC-0112",
+      "SRC-0354",
+      "SRC-0533"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-066",
+    "name": "Trend Strength / CTI / RCI",
+    "family": "Regime measures",
+    "inputs": "Price",
+    "explanation": "Correlation-based measures compare prices or their ranks with time to quantify directional consistency.",
+    "caveat": "Pearson price correlation and rank correlation are distinct definitions.",
+    "implementations": [
+      "SRC-0100",
+      "SRC-0352",
+      "SRC-1136"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-067",
+    "name": "Hurst Exponent",
+    "family": "Regime measures",
+    "inputs": "Price or returns",
+    "explanation": "Estimates scaling/persistence using a particular statistical procedure and lookback.",
+    "caveat": "Short-sample estimates are noisy; estimator choice matters.",
+    "implementations": [
+      "SRC-1080",
+      "SRC-1356"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-068",
+    "name": "Entropy",
+    "family": "Regime measures",
+    "inputs": "Price-derived distribution",
+    "explanation": "Summarizes dispersion or uncertainty of a chosen probability representation of the series.",
+    "caveat": "Results depend on how probabilities or bins are constructed; not all entropy indicators measure the same object.",
+    "implementations": [
+      "SRC-0446"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-069",
+    "name": "Bollinger Bands / %B / Width",
+    "family": "Volatility bands",
+    "inputs": "Price",
+    "explanation": "Plots a moving centre with standard-deviation envelopes; %B locates price and bandwidth measures spread of the bands.",
+    "caveat": "Touching a band is a description, not automatic mean reversion.",
+    "implementations": [
+      "SRC-0021",
+      "SRC-0488",
+      "SRC-0559",
+      "SRC-0955",
+      "SRC-1054",
+      "SRC-1169",
+      "SRC-1230",
+      "SRC-1260"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-070",
+    "name": "Keltner / STARC",
+    "family": "Volatility bands",
+    "inputs": "HLC",
+    "explanation": "Uses ATR/range-based envelopes around a moving-average centre.",
+    "caveat": "ATR and standard deviation bands respond differently to gaps.",
+    "implementations": [
+      "SRC-0132",
+      "SRC-0494",
+      "SRC-0563",
+      "SRC-0735",
+      "SRC-1174",
+      "SRC-1232",
+      "SRC-1366"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-071",
+    "name": "Donchian / Price Channel",
+    "family": "Breakout structure",
+    "inputs": "HL",
+    "explanation": "Upper/lower lines are rolling extremes with a midpoint centre.",
+    "caveat": "A breakout rule normally compares against an already known previous channel.",
+    "implementations": [
+      "SRC-0105",
+      "SRC-0491",
+      "SRC-1066",
+      "SRC-1139",
+      "SRC-1341"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-072",
+    "name": "Squeeze / TTM-style squeeze",
+    "family": "Volatility compression",
+    "inputs": "OHLC",
+    "explanation": "Detects Bollinger bands inside Keltner channels; momentum is displayed separately, often with a regression histogram.",
+    "caveat": "Squeeze does not specify the eventual direction; branded versions need not share identical code.",
+    "implementations": [
+      "SRC-0382",
+      "SRC-1421"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-073",
+    "name": "ATR / NATR / ADR",
+    "family": "Volatility",
+    "inputs": "OHLC",
+    "explanation": "ATR smooths gap-aware true range; NATR normalizes by price; ADR averages daily high-low spans.",
+    "caveat": "Range units must match each instrument; ATR and ADR are not interchangeable.",
+    "implementations": [
+      "SRC-0018",
+      "SRC-0168",
+      "SRC-0486",
+      "SRC-0496",
+      "SRC-0556",
+      "SRC-0696",
+      "SRC-0953",
+      "SRC-0999",
+      "SRC-1049",
+      "SRC-1130",
+      "SRC-1131",
+      "SRC-1208",
+      "SRC-1256"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-074",
+    "name": "Historical / Realized Volatility",
+    "family": "Volatility",
+    "inputs": "Returns",
+    "explanation": "Aggregates squared returns or their standard deviation, with an explicit sampling interval and annualization factor.",
+    "caveat": "Trading sessions and annualization conventions change comparisons.",
+    "implementations": [
+      "SRC-0454",
+      "SRC-1422"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-075",
+    "name": "Rogers-Satchell range volatility",
+    "family": "Volatility",
+    "inputs": "OHLC",
+    "explanation": "Combines log high/open, high/close, low/open and low/close products into a range-based variance estimate.",
+    "caveat": "Requires strictly positive prices; an issue for unadjusted historical oil series containing nonpositive quotes.",
+    "implementations": [
+      "SRC-0187",
+      "SRC-1415"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-076",
+    "name": "Ulcer Index / drawdown",
+    "family": "Downside risk",
+    "inputs": "Price",
+    "explanation": "Measures depth and persistence of percentage drawdowns from recent highs.",
+    "caveat": "Measures downside path risk rather than symmetric return volatility.",
+    "implementations": [
+      "SRC-0501",
+      "SRC-0929",
+      "SRC-1120"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-077",
+    "name": "Supertrend",
+    "family": "Trailing trend/stop",
+    "inputs": "HLC",
+    "explanation": "Creates ATR-multiple bands and carries a selected band forward according to price breaks and previous state.",
+    "caveat": "Open-bar flips can disappear before the bar closes.",
+    "implementations": [
+      "SRC-0208",
+      "SRC-0428",
+      "SRC-0922",
+      "SRC-1114",
+      "SRC-1426"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-078",
+    "name": "Chandelier Exit",
+    "family": "Trailing stop",
+    "inputs": "HLC",
+    "explanation": "Places stops an ATR multiple away from rolling highs/lows, with stateful tightening rules.",
+    "caveat": "Exact prior-stop crossing logic matters for porting.",
+    "implementations": [
+      "SRC-0597",
+      "SRC-0918",
+      "SRC-1058",
+      "SRC-1231"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-079",
+    "name": "Parabolic SAR",
+    "family": "Trailing stop",
+    "inputs": "HL",
+    "explanation": "Updates stop-and-reverse points using an acceleration factor and trend extremes.",
+    "caveat": "Initial trend seed and acceleration caps affect switches.",
+    "implementations": [
+      "SRC-0192",
+      "SRC-0475",
+      "SRC-0557",
+      "SRC-0558",
+      "SRC-0720",
+      "SRC-1003",
+      "SRC-1155",
+      "SRC-1214",
+      "SRC-1398"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-080",
+    "name": "HalfTrend",
+    "family": "Trailing trend",
+    "inputs": "OHLC",
+    "explanation": "Uses rolling extremes, smoothed prices and persistent trend state to build a stepped trend line and ATR channel.",
+    "caveat": "A named port must be checked against the actual author implementation.",
+    "implementations": [
+      "SRC-0919"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-081",
+    "name": "UT Bot",
+    "family": "Trailing trend",
+    "inputs": "Price + ATR",
+    "explanation": "Uses an ATR-distance trailing stop and price/short-average crossings to generate alerts.",
+    "caveat": "The original publication is linked; a chart alert does not define position sizing or fill rules.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-082",
+    "name": "Chande Kroll / NRTR",
+    "family": "Trailing stop",
+    "inputs": "OHLC",
+    "explanation": "Combines directional extremes or trailing reversals with volatility/percentage distances.",
+    "caveat": "Different trailing stop families can produce strongly correlated signals.",
+    "implementations": [
+      "SRC-0091",
+      "SRC-0463",
+      "SRC-0920"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-083",
+    "name": "OBV / PVT / ADL",
+    "family": "Volume accumulation",
+    "inputs": "OHLCV",
+    "explanation": "OBV signs total volume by close direction; PVT weights volume by percentage return; ADL weights by close location within range.",
+    "caveat": "These are three distinct price-volume accumulation rules.",
+    "implementations": [
+      "SRC-0004",
+      "SRC-0170",
+      "SRC-0180",
+      "SRC-0502",
+      "SRC-0513",
+      "SRC-0517",
+      "SRC-0584",
+      "SRC-0712",
+      "SRC-0942",
+      "SRC-1001",
+      "SRC-1090",
+      "SRC-1153",
+      "SRC-1236",
+      "SRC-1470"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-084",
+    "name": "CMF / Chaikin Oscillator",
+    "family": "Volume flow",
+    "inputs": "OHLCV",
+    "explanation": "CMF normalizes accumulated money-flow volume; Chaikin Oscillator compares short and long EMA values of ADL.",
+    "caveat": "Both depend on the meaning and completeness of volume.",
+    "implementations": [
+      "SRC-0006",
+      "SRC-0092",
+      "SRC-0503",
+      "SRC-0505",
+      "SRC-0944",
+      "SRC-1060",
+      "SRC-1134"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-085",
+    "name": "MFI / Force / Ease of Movement",
+    "family": "Volume flow",
+    "inputs": "OHLCV",
+    "explanation": "MFI normalizes signed typical-price flow; Force multiplies price change by volume; EOM relates midpoint movement to volume and range.",
+    "caveat": "Do not treat CFD tick counts as centralized exchange turnover.",
+    "implementations": [
+      "SRC-0109",
+      "SRC-0157",
+      "SRC-0506",
+      "SRC-0508",
+      "SRC-0511",
+      "SRC-0583",
+      "SRC-0588",
+      "SRC-0713",
+      "SRC-0994",
+      "SRC-1089",
+      "SRC-1144",
+      "SRC-1235"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-086",
+    "name": "Klinger / VFI / FVE",
+    "family": "Volume flow",
+    "inputs": "OHLCV",
+    "explanation": "Alternative volume-pressure calculations use price direction, range or volatility thresholds before smoothing or accumulation.",
+    "caveat": "Filter thresholds and scaling vary substantially.",
+    "implementations": [
+      "SRC-0137",
+      "SRC-0509",
+      "SRC-0518",
+      "SRC-0606",
+      "SRC-0607",
+      "SRC-0981",
+      "SRC-1084"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-087",
+    "name": "VWAP / Anchored VWAP",
+    "family": "Volume benchmarks",
+    "inputs": "Price + actual or proxy volume",
+    "explanation": "Computes Σ(price×volume)/Σ(volume) from a session or event anchor.",
+    "caveat": "A price-only approximation cannot reproduce the same quantity; anchors must be known at decision time.",
+    "implementations": [
+      "SRC-0229",
+      "SRC-0436",
+      "SRC-0539",
+      "SRC-1124",
+      "SRC-1237"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-088",
+    "name": "VWMA / EVWMA",
+    "family": "Volume averages",
+    "inputs": "Price + volume",
+    "explanation": "VWMA uses a fixed rolling weighted window; EVWMA uses an elastic volume-sensitive update.",
+    "caveat": "Not equivalent to session VWAP.",
+    "implementations": [
+      "SRC-0230",
+      "SRC-0437",
+      "SRC-0538",
+      "SRC-1037",
+      "SRC-1125",
+      "SRC-1149"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-089",
+    "name": "RVOL / Volume at Time",
+    "family": "Volume participation",
+    "inputs": "Timestamped volume",
+    "explanation": "Compares current volume with historical expected volume, optionally matched by clock time.",
+    "caveat": "Match comparable sessions and daylight-saving transitions.",
+    "implementations": [
+      "SRC-0191",
+      "SRC-1408"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-090",
+    "name": "Volume Profile / POC / VAH / VAL",
+    "family": "Auction tools",
+    "inputs": "Price-level volume or lower-timeframe approximation",
+    "explanation": "Distributes traded volume across price bins; POC is the largest bin and value area is constructed around volume concentration.",
+    "caveat": "OHLCV-only reconstruction is an estimate; session and binning rules affect levels.",
+    "implementations": [
+      "SRC-0520",
+      "SRC-1238",
+      "SRC-1445"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-091",
+    "name": "TPO / Market Profile",
+    "family": "Auction tools",
+    "inputs": "Time-price visits",
+    "explanation": "Counts price-level visits across fixed time blocks; builds a distribution of time participation rather than volume.",
+    "caveat": "Time-at-price is different from actual volume-at-price.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-092",
+    "name": "Delta / Cumulative Delta",
+    "family": "Order flow",
+    "inputs": "Aggressor-classified trades or an explicitly stated proxy",
+    "explanation": "Delta sums buyer-initiated minus seller-initiated volume; CVD accumulates it over an anchor period.",
+    "caveat": "TradingView intrabar direction estimates and true bid/ask aggressor data are not equivalent.",
+    "implementations": [
+      "SRC-1338"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-093",
+    "name": "Footprint / Imbalance / Absorption",
+    "family": "Order flow",
+    "inputs": "Bid/ask trades by price + ordered events",
+    "explanation": "Displays buy/sell volume by price, tests imbalance ratios and relates aggressive flow to price response.",
+    "caveat": "Cannot reconstruct true absorption or bid/ask footprint from four OHLC numbers.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-094",
+    "name": "DOM / Order-book imbalance",
+    "family": "Order flow",
+    "inputs": "Timestamped depth/order events",
+    "explanation": "Compares displayed bid and ask depth, updates, cancellations and queue behaviour.",
+    "caveat": "Displayed liquidity is not executed volume; spoofing and feed coverage affect interpretation.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-095",
+    "name": "Opening Range / Initial Balance",
+    "family": "Session structure",
+    "inputs": "OHLC + timezone/session",
+    "explanation": "Records high/low of a predetermined opening window; monitors price relative to the completed range.",
+    "caveat": "Do not use the final opening-range high before that opening window has ended.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-096",
+    "name": "Pivot Points / CPR / Camarilla",
+    "family": "Session levels",
+    "inputs": "Completed prior OHLC",
+    "explanation": "Calculates deterministic reference levels from the preceding session, with different formula families.",
+    "caveat": "Session boundaries and method names must be explicit.",
+    "implementations": [
+      "SRC-0567",
+      "SRC-1401"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-097",
+    "name": "Fractals / Zigzag / Swing pivots",
+    "family": "Market structure",
+    "inputs": "HL",
+    "explanation": "Identifies local extrema with right-side confirmation or reversal thresholds and connects significant swings.",
+    "caveat": "Confirmed historical pivot location is earlier than the moment it became knowable.",
+    "implementations": [
+      "SRC-0236",
+      "SRC-0611",
+      "SRC-1128",
+      "SRC-1166",
+      "SRC-1456"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-098",
+    "name": "BOS / CHoCH",
+    "family": "Market structure",
+    "inputs": "OHLC + a defined swing algorithm",
+    "explanation": "Marks breaks of swing levels, distinguishing continuation and possible change in structural direction.",
+    "caveat": "Definitions depend on pivot confirmation, close/wick rules and lag.",
+    "implementations": [
+      "SRC-0724"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-099",
+    "name": "Order Blocks",
+    "family": "Market structure",
+    "inputs": "OHLCV + structural rules",
+    "explanation": "Labels a preceding price area associated with a defined structural impulse and tracks mitigation.",
+    "caveat": "Price-bar order blocks do not directly identify institutional inventory.",
+    "implementations": [
+      "SRC-0725"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-100",
+    "name": "FVG / Inverse FVG",
+    "family": "Market structure",
+    "inputs": "OHLC",
+    "explanation": "A three-bar gap condition marks nonoverlap between the first and third bars; inverse variants track later invalidation/reuse.",
+    "caveat": "Some implementations attach the result to the middle bar before the third bar actually exists.",
+    "implementations": [
+      "SRC-0722"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-101",
+    "name": "Liquidity Sweeps / EQH / EQL",
+    "family": "Market structure",
+    "inputs": "OHLC + confirmed swings",
+    "explanation": "Clusters similar highs/lows and detects excursions through a level followed by a specified rejection.",
+    "caveat": "A sweep label is a rule-based price pattern, not proof of stop orders in the book.",
+    "implementations": [
+      "SRC-0380",
+      "SRC-0726"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-102",
+    "name": "Previous Day/Week High-Low",
+    "family": "Market structure",
+    "inputs": "Completed session OHLC",
+    "explanation": "Projects already completed prior-session extremes as reference levels.",
+    "caveat": "Broker days, New York sessions and exchange sessions produce different boundaries.",
+    "implementations": [
+      "SRC-0727"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-103",
+    "name": "Fibonacci / Pitchfork / Regression channels",
+    "family": "Geometric tools",
+    "inputs": "Price + selected anchors",
+    "explanation": "Projects ratios, median-line parallels or statistical trend channels from selected price anchors.",
+    "caveat": "Automatically selected historical anchors may revise as later pivots arrive.",
+    "implementations": [
+      "SRC-0409",
+      "SRC-0983"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-104",
+    "name": "Harmonics: Gartley / Bat / Butterfly / Crab / Shark / Cypher",
+    "family": "Geometric patterns",
+    "inputs": "Confirmed swing points",
+    "explanation": "Classifies multi-leg structures by constrained retracement and extension ratios.",
+    "caveat": "Ratio tolerances and pivot definitions are part of the method; a pattern name is not a full algorithm.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-105",
+    "name": "Elliott Wave",
+    "family": "Structural theories",
+    "inputs": "Price + wave-labelling rules",
+    "explanation": "Labels nested impulse/correction structures subject to a chosen set of wave constraints.",
+    "caveat": "Competing valid counts and relabelling make retrospective chart appearance unreliable as live evidence.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-106",
+    "name": "Wyckoff / VSA / Weis Wave",
+    "family": "Structural theories",
+    "inputs": "OHLCV + specified event rules",
+    "explanation": "Examines price spread, volume, tests and wave accumulation to describe accumulation/distribution hypotheses.",
+    "caveat": "Narrative labels must become deterministic rules before testing; volume quality matters.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-107",
+    "name": "Gann / square-of-nine / time cycles",
+    "family": "Geometric theories",
+    "inputs": "Price scale + time coordinates",
+    "explanation": "Constructs geometric price/time levels from explicit scaling and anchor conventions.",
+    "caveat": "A line angle changes with chart scaling; claims require a precise invariant definition.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-108",
+    "name": "Candlestick pattern families",
+    "family": "Pattern recognition",
+    "inputs": "OHLC",
+    "explanation": "Algorithms compare body, wick, gap and relative-size relationships across one or more bars.",
+    "caveat": "Pattern outputs describe candle arrangements, not calibrated win probabilities; trend context may not be checked.",
+    "implementations": [
+      "SRC-0041",
+      "SRC-0044",
+      "SRC-0049",
+      "SRC-0253",
+      "SRC-0256",
+      "SRC-0261"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-109",
+    "name": "Nadaraya-Watson envelope / smoother",
+    "family": "Kernel methods",
+    "inputs": "Price",
+    "explanation": "Uses kernel-weighted averages to estimate a smooth curve and optional residual bands.",
+    "caveat": "A trailing endpoint estimate can be causal; a centred/repainting display uses future observations relative to older bars.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-110",
+    "name": "Lorentzian Classification / kNN",
+    "family": "Machine-learning scripts",
+    "inputs": "Computed price features + historical labels",
+    "explanation": "Uses a Lorentzian-style distance and approximate neighbour selection to classify future-direction labels from historical examples.",
+    "caveat": "Training-label availability, neighbour chronology and in-sample selection must be checked in the actual code.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-111",
+    "name": "Adaptive ML Supertrend",
+    "family": "Machine-learning scripts",
+    "inputs": "ATR history + price",
+    "explanation": "Clusters historical volatility into regimes and uses a selected cluster representative in a Supertrend calculation.",
+    "caveat": "Volatility clustering is not proof of price prediction; fitting must use only past observations.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-112",
+    "name": "COT Index / net positioning",
+    "family": "Positioning context",
+    "inputs": "CFTC reports + publication timestamps",
+    "explanation": "Transforms participant net positions, changes or historical min-max ranks into contextual series.",
+    "caveat": "Weekly observation date is not public release time; never backfill Tuesday knowledge into a live decision before publication.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-113",
+    "name": "Open Interest / price-OI regimes",
+    "family": "Positioning context",
+    "inputs": "Exchange derivative open interest",
+    "explanation": "Measures outstanding contracts and combines OI changes with price changes to describe participation.",
+    "caveat": "Not a spot CFD field; contract rolls and aggregation affect the series.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-114",
+    "name": "Options IV / skew / term structure / gamma",
+    "family": "Options context",
+    "inputs": "Options chains + rates + model assumptions",
+    "explanation": "Summarizes option-implied uncertainty and exposure across strikes and expiries.",
+    "caveat": "Dealer gamma sign and ownership are often estimated rather than directly observed.",
+    "implementations": [
+      "SRC-1351",
+      "SRC-1359"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-115",
+    "name": "Intermarket ratios / rolling correlation / beta",
+    "family": "Cross-market context",
+    "inputs": "Time-aligned prices of multiple instruments",
+    "explanation": "Compares markets using ratios, covariances, rolling regressions or residuals.",
+    "caveat": "Availability timestamps and different trading hours matter; relationships may change sign.",
+    "implementations": [
+      "SRC-0023",
+      "SRC-0096",
+      "SRC-0444",
+      "SRC-0445",
+      "SRC-1053",
+      "SRC-1063",
+      "SRC-1259",
+      "SRC-1334"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-116",
+    "name": "Seasonality / session statistics",
+    "family": "Calendar context",
+    "inputs": "Timestamped historical returns",
+    "explanation": "Groups past observations by month, weekday or exchange-session clock to describe recurring distributions.",
+    "caveat": "Avoid full-sample averages that leak the evaluation period into its own reference.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-117",
+    "name": "EIA inventories / crude time spreads",
+    "family": "Oil-specific context",
+    "inputs": "EIA releases + separately quoted futures maturities",
+    "explanation": "Inventory changes describe physical balances; near/far futures spreads describe the term structure.",
+    "caveat": "Release timestamp, revisions and contract identity are required; a CFD candle alone cannot supply these data.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-118",
+    "name": "Gold real-yield / dollar / GVZ context",
+    "family": "Gold-specific context",
+    "inputs": "FRED real yields + dollar reference + options volatility",
+    "explanation": "Adds separate macro/volatility series alongside gold prices for analysis.",
+    "caveat": "These are contextual data inputs, not a guaranteed negative or positive relationship with gold.",
+    "implementations": [],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-119",
+    "name": "Nasdaq breadth / VXN / relative strength",
+    "family": "Equity-index context",
+    "inputs": "Constituent prices + index/options data",
+    "explanation": "Measures participation across constituent stocks, implied volatility or relative performance versus a reference index.",
+    "caveat": "Use historical constituents and weights to avoid survivorship bias; QQQ is a reference feed in this project.",
+    "implementations": [
+      "SRC-1243",
+      "SRC-1245"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  },
+  {
+    "id": "FAM-120",
+    "name": "DAX session / breadth / volatility context",
+    "family": "Equity-index context",
+    "inputs": "Eurex/Xetra sessions + constituents + optional volatility data",
+    "explanation": "Aligns futures, cash-index trading and constituent participation to a documented exchange session.",
+    "caveat": "DAX cash, FDAX futures and a broker CFD are distinct series and can have different prices/hours.",
+    "implementations": [
+      "SRC-0728"
+    ],
+    "source_matches_are_discovery_not_equivalence_proof": true
+  }
+]

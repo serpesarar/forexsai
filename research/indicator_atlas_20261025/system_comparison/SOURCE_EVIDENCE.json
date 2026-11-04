@@ -1,0 +1,109 @@
+{
+  "source_scope": "Targeted runtime paths, callers and direct dependencies; vendor/research/test keyword hits excluded from runtime usage counts.",
+  "files": [
+    {
+      "path": "backend/order_block_detector_v2.py",
+      "sha256": "b4fa2f05b4c513dedf31f6f622eee20cc0484d2b2ae20fbc8754fda2a4a45bfe"
+    },
+    {
+      "path": "backend/routers/deepseek_analysis.py",
+      "sha256": "9b9a1fd9af1d2985c5f5727377b6536d8ac11b529a3d54acf6c1819cd6cbe3b4"
+    },
+    {
+      "path": "backend/routers/emel_pulse.py",
+      "sha256": "6d90e39543bfe2f57058d08e50f230ab3a9076fbb695dcbb68bbdf15af7910fc"
+    },
+    {
+      "path": "backend/services/cortex_memory.py",
+      "sha256": "6a158fd2d5ec6c131e7f152bd2f383935f5f83e21102e228246cad8c65714d15"
+    },
+    {
+      "path": "backend/services/cot_report_service.py",
+      "sha256": "0a9746a01f809852c46bebe9b03098f7f25829276dd1c07d9f29e90f477043a1"
+    },
+    {
+      "path": "backend/services/harmonic_pattern_service.py",
+      "sha256": "29f09a7c46e64720656698ff837a181e0c2ce6d526594b6a444240abf3693d3a"
+    },
+    {
+      "path": "backend/services/ml_prediction_service.py",
+      "sha256": "0c488641b6845a0aee9449883c47f39d30cda0863263fd5e7cced85aab73acca"
+    },
+    {
+      "path": "backend/services/mtf_analysis_service.py",
+      "sha256": "62699db8fd0811097044e571dc75df08f920cb3deded6837bb09d104cb86f88e"
+    },
+    {
+      "path": "backend/services/oil_analysis_service.py",
+      "sha256": "840d5c15e7fd4179490f582de8b9652c3c4855bcc3e1f9026f6752db4c5a3c34"
+    },
+    {
+      "path": "backend/services/order_block_service.py",
+      "sha256": "229009ff10e812f2b1414a31cd8a4abb790b752f43656dc57d1c3fe3a249aa05"
+    },
+    {
+      "path": "backend/services/permutation_batch_service.py",
+      "sha256": "67a05327e018782f8c6b74f9ada38ff5b29e943a3d72a71b6969f763ccfd6992"
+    },
+    {
+      "path": "backend/services/price_projection_service.py",
+      "sha256": "db2c206dd79ac407dbc0c77f93a51108df880ea0fc8686212d1ddf12a91845ca"
+    },
+    {
+      "path": "backend/services/rebound_filter_service.py",
+      "sha256": "a3aa965c1fe8f04ad6f9a69273bef5ad75996d759234afe9c9f22e964adeec3e"
+    },
+    {
+      "path": "backend/services/technical_indicators.py",
+      "sha256": "14c9445894321e611a49680e4997d248e3d80c81064425c837c8c6c8f2d7544b"
+    },
+    {
+      "path": "backend/services/xauusd_v2_service.py",
+      "sha256": "b807a818f4763543577213e169c86a81667a2720282c936425b675f454126f17"
+    },
+    {
+      "path": "claude_decider/decide.py",
+      "sha256": "007b398f92bf62ccace58b911e6020b49a1513dccc510bd496c20a95b38c924e"
+    },
+    {
+      "path": "claude_decider/forensics.py",
+      "sha256": "b53357aa7ed7c26498342fc6be868d7b0ac88b34674dcb00adca86c6ed9d5acf"
+    },
+    {
+      "path": "claude_decider/free_context.py",
+      "sha256": "2ca781cc65e6f9f435e1789e54b94890a97fee747dcf745519633c4c433e9386"
+    },
+    {
+      "path": "claude_decider/run_decider.py",
+      "sha256": "b1b5c18fa3b76fa7040dc9aa0c044b6e84f2990e1c76ac39f61f0d6507362c53"
+    },
+    {
+      "path": "yeni deneme/caprev_live.py",
+      "sha256": "8ee1f1f34f5ed62d55a200733d5e76bfa537f35fdf341f56bf1422f816809d6f"
+    },
+    {
+      "path": "yeni deneme/channel_filter.py",
+      "sha256": "cfb3a5a4772b7d40fdf66b00ae6b88a9818053ea3bac173207d5e0c3ccbf553f"
+    },
+    {
+      "path": "yeni deneme/data_recorder.py",
+      "sha256": "fa7a40e0dbf164f1d1e2fabcd642a76bfae9b43bf58c63be170fd89826e88d0d"
+    },
+    {
+      "path": "yeni deneme/entry_gate.py",
+      "sha256": "3ee5ab1ead24d833c16af57f41cf85450a2a75538f091c41abc15c07174b59fe"
+    },
+    {
+      "path": "yeni deneme/forexsai_demo_bot.py",
+      "sha256": "c53f3c0650cbfe19c3db5adbcaf340021525bde1df7e594fbacdd282135e5bf2"
+    },
+    {
+      "path": "yeni deneme/indicators.py",
+      "sha256": "ea9805b2c3334e7851e2920e8471c11d7a0c1be22cf50ec504310c4ab8d41572"
+    },
+    {
+      "path": "yeni deneme/phase_rules.py",
+      "sha256": "ade63d2111d0a0ace80c9db67e178b18eb5ffeec029a818bc3fa419b35829da5"
+    }
+  ]
+}

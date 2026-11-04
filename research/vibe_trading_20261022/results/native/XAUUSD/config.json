@@ -1,0 +1,13 @@
+{
+  "codes": [
+    "XAUUSD"
+  ],
+  "start_date": "2026-10-16",
+  "end_date": "2026-10-20",
+  "interval": "5m",
+  "source": "local",
+  "initial_cash": 1000000,
+  "leverage": 1,
+  "swap_enabled": false,
+  "position_adjustment": "hold"
+}

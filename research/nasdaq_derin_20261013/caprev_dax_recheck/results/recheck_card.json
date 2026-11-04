@@ -1,0 +1,387 @@
+{
+ "ORJ": {
+  "islem": 161,
+  "bagimsiz_gun": 134,
+  "iki_piyasa_ayni_gun": 27,
+  "wr": 55.3,
+  "ort_R": 0.217,
+  "toplam_R": 34.87,
+  "en_iyi_5_gun_haric": 12.4,
+  "en_iyi_5_gun_payi": 0.64,
+  "P(EV>0)": 0.99,
+  "CI95": [
+   0.031,
+   0.402
+  ],
+  "pozitif_yil": "7/10",
+  "bacaklar": {
+   "DAX": {
+    "n": 54,
+    "ortR": 0.171,
+    "toplam": 9.22,
+    "WR": 53.7,
+    "P(EV>0)": 0.891,
+    "CI95": [
+     -0.089,
+     0.453
+    ],
+    "yarilar": [
+     0.063,
+     0.278
+    ],
+    "yil+": "4/8"
+   },
+   "NDX": {
+    "n": 107,
+    "ortR": 0.24,
+    "toplam": 25.65,
+    "WR": 56.1,
+    "P(EV>0)": 0.986,
+    "CI95": [
+     0.029,
+     0.466
+    ],
+    "yarilar": [
+     0.021,
+     0.454
+    ],
+    "yil+": "7/10"
+   }
+  },
+  "checks": {
+   "1_hacim": {
+    "deger": "161 işlem / 134 bağımsız gün",
+    "gecti": true
+   },
+   "2_beklenti": {
+    "deger": "ortR=+0.217 P(EV>0)=%99.0",
+    "gecti": true
+   },
+   "3_kararlilik": {
+    "deger": "ilk=+0.064 son=+0.367",
+    "gecti": true
+   },
+   "4_surtunme": {
+    "deger": "spread×1.5: ortR=+0.213",
+    "gecti": true
+   },
+   "5_icra": {
+    "deger": "kapanış-girişi +0.225 vs gerçek +0.217 (fark 0.008, eşik 0.108)",
+    "gecti": true
+   },
+   "6_sira_bagimli": {
+    "deger": "gün başına tek pozisyon n=134 ortR=+0.160",
+    "gecti": true
+   }
+  },
+  "verdikt": "LIVE"
+ },
+ "DAXfix": {
+  "islem": 161,
+  "bagimsiz_gun": 134,
+  "iki_piyasa_ayni_gun": 27,
+  "wr": 55.9,
+  "ort_R": 0.231,
+  "toplam_R": 37.12,
+  "en_iyi_5_gun_haric": 14.58,
+  "en_iyi_5_gun_payi": 0.61,
+  "P(EV>0)": 0.995,
+  "CI95": [
+   0.052,
+   0.423
+  ],
+  "pozitif_yil": "7/10",
+  "bacaklar": {
+   "DAX": {
+    "n": 54,
+    "ortR": 0.212,
+    "toplam": 11.47,
+    "WR": 55.6,
+    "P(EV>0)": 0.939,
+    "CI95": [
+     -0.056,
+     0.502
+    ],
+    "yarilar": [
+     0.144,
+     0.281
+    ],
+    "yil+": "5/8"
+   },
+   "NDX": {
+    "n": 107,
+    "ortR": 0.24,
+    "toplam": 25.65,
+    "WR": 56.1,
+    "P(EV>0)": 0.986,
+    "CI95": [
+     0.029,
+     0.466
+    ],
+    "yarilar": [
+     0.021,
+     0.454
+    ],
+    "yil+": "7/10"
+   }
+  },
+  "checks": {
+   "1_hacim": {
+    "deger": "161 işlem / 134 bağımsız gün",
+    "gecti": true
+   },
+   "2_beklenti": {
+    "deger": "ortR=+0.231 P(EV>0)=%99.5",
+    "gecti": true
+   },
+   "3_kararlilik": {
+    "deger": "ilk=+0.091 son=+0.369",
+    "gecti": true
+   },
+   "4_surtunme": {
+    "deger": "spread×1.5: ortR=+0.227",
+    "gecti": true
+   },
+   "5_icra": {
+    "deger": "kapanış-girişi +0.238 vs gerçek +0.231 (fark 0.008, eşik 0.115)",
+    "gecti": true
+   },
+   "6_sira_bagimli": {
+    "deger": "gün başına tek pozisyon n=134 ortR=+0.176",
+    "gecti": true
+   }
+  },
+  "verdikt": "LIVE"
+ },
+ "TAM_a": {
+  "islem": 161,
+  "bagimsiz_gun": 134,
+  "iki_piyasa_ayni_gun": 27,
+  "wr": 55.9,
+  "ort_R": 0.231,
+  "toplam_R": 37.12,
+  "en_iyi_5_gun_haric": 14.58,
+  "en_iyi_5_gun_payi": 0.61,
+  "P(EV>0)": 0.995,
+  "CI95": [
+   0.052,
+   0.423
+  ],
+  "pozitif_yil": "7/10",
+  "bacaklar": {
+   "DAX": {
+    "n": 54,
+    "ortR": 0.212,
+    "toplam": 11.47,
+    "WR": 55.6,
+    "P(EV>0)": 0.939,
+    "CI95": [
+     -0.056,
+     0.502
+    ],
+    "yarilar": [
+     0.144,
+     0.281
+    ],
+    "yil+": "5/8"
+   },
+   "NDX": {
+    "n": 107,
+    "ortR": 0.24,
+    "toplam": 25.65,
+    "WR": 56.1,
+    "P(EV>0)": 0.986,
+    "CI95": [
+     0.029,
+     0.466
+    ],
+    "yarilar": [
+     0.021,
+     0.454
+    ],
+    "yil+": "7/10"
+   }
+  },
+  "checks": {
+   "1_hacim": {
+    "deger": "161 işlem / 134 bağımsız gün",
+    "gecti": true
+   },
+   "2_beklenti": {
+    "deger": "ortR=+0.231 P(EV>0)=%99.5",
+    "gecti": true
+   },
+   "3_kararlilik": {
+    "deger": "ilk=+0.091 son=+0.369",
+    "gecti": true
+   },
+   "4_surtunme": {
+    "deger": "spread×1.5: ortR=+0.227",
+    "gecti": true
+   },
+   "5_icra": {
+    "deger": "kapanış-girişi +0.238 vs gerçek +0.231 (fark 0.008, eşik 0.115)",
+    "gecti": true
+   },
+   "6_sira_bagimli": {
+    "deger": "gün başına tek pozisyon n=134 ortR=+0.176",
+    "gecti": true
+   }
+  },
+  "verdikt": "LIVE"
+ },
+ "TAM_b": {
+  "islem": 161,
+  "bagimsiz_gun": 134,
+  "iki_piyasa_ayni_gun": 27,
+  "wr": 55.9,
+  "ort_R": 0.231,
+  "toplam_R": 37.12,
+  "en_iyi_5_gun_haric": 14.58,
+  "en_iyi_5_gun_payi": 0.61,
+  "P(EV>0)": 0.995,
+  "CI95": [
+   0.052,
+   0.423
+  ],
+  "pozitif_yil": "7/10",
+  "bacaklar": {
+   "DAX": {
+    "n": 54,
+    "ortR": 0.212,
+    "toplam": 11.47,
+    "WR": 55.6,
+    "P(EV>0)": 0.939,
+    "CI95": [
+     -0.056,
+     0.502
+    ],
+    "yarilar": [
+     0.144,
+     0.281
+    ],
+    "yil+": "5/8"
+   },
+   "NDX": {
+    "n": 107,
+    "ortR": 0.24,
+    "toplam": 25.65,
+    "WR": 56.1,
+    "P(EV>0)": 0.986,
+    "CI95": [
+     0.029,
+     0.466
+    ],
+    "yarilar": [
+     0.021,
+     0.454
+    ],
+    "yil+": "7/10"
+   }
+  },
+  "checks": {
+   "1_hacim": {
+    "deger": "161 işlem / 134 bağımsız gün",
+    "gecti": true
+   },
+   "2_beklenti": {
+    "deger": "ortR=+0.231 P(EV>0)=%99.5",
+    "gecti": true
+   },
+   "3_kararlilik": {
+    "deger": "ilk=+0.091 son=+0.369",
+    "gecti": true
+   },
+   "4_surtunme": {
+    "deger": "spread×1.5: ortR=+0.227",
+    "gecti": true
+   },
+   "5_icra": {
+    "deger": "kapanış-girişi +0.238 vs gerçek +0.231 (fark 0.008, eşik 0.115)",
+    "gecti": true
+   },
+   "6_sira_bagimli": {
+    "deger": "gün başına tek pozisyon n=134 ortR=+0.176",
+    "gecti": true
+   }
+  },
+  "verdikt": "LIVE"
+ },
+ "TAM_x": {
+  "islem": 159,
+  "bagimsiz_gun": 132,
+  "iki_piyasa_ayni_gun": 27,
+  "wr": 56.6,
+  "ort_R": 0.246,
+  "toplam_R": 39.13,
+  "en_iyi_5_gun_haric": 16.6,
+  "en_iyi_5_gun_payi": 0.58,
+  "P(EV>0)": 0.995,
+  "CI95": [
+   0.064,
+   0.435
+  ],
+  "pozitif_yil": "8/10",
+  "bacaklar": {
+   "DAX": {
+    "n": 54,
+    "ortR": 0.212,
+    "toplam": 11.47,
+    "WR": 55.6,
+    "P(EV>0)": 0.939,
+    "CI95": [
+     -0.056,
+     0.502
+    ],
+    "yarilar": [
+     0.144,
+     0.281
+    ],
+    "yil+": "5/8"
+   },
+   "NDX": {
+    "n": 105,
+    "ortR": 0.263,
+    "toplam": 27.66,
+    "WR": 57.1,
+    "P(EV>0)": 0.993,
+    "CI95": [
+     0.049,
+     0.495
+    ],
+    "yarilar": [
+     0.071,
+     0.452
+    ],
+    "yil+": "8/10"
+   }
+  },
+  "checks": {
+   "1_hacim": {
+    "deger": "159 işlem / 132 bağımsız gün",
+    "gecti": true
+   },
+   "2_beklenti": {
+    "deger": "ortR=+0.246 P(EV>0)=%99.5",
+    "gecti": true
+   },
+   "3_kararlilik": {
+    "deger": "ilk=+0.105 son=+0.386",
+    "gecti": true
+   },
+   "4_surtunme": {
+    "deger": "spread×1.5: ortR=+0.242",
+    "gecti": true
+   },
+   "5_icra": {
+    "deger": "kapanış-girişi +0.254 vs gerçek +0.246 (fark 0.008, eşik 0.123)",
+    "gecti": true
+   },
+   "6_sira_bagimli": {
+    "deger": "gün başına tek pozisyon n=132 ortR=+0.194",
+    "gecti": true
+   }
+  },
+  "verdikt": "LIVE"
+ }
+}
