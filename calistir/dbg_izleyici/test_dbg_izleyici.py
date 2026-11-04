@@ -17,7 +17,7 @@ T0 = 1_793_000_160   # 3'e tam bölünür (bar başı, sn)
 
 def poz(ticket, typ=0, lot=0.05, price=4000.0, tp=4005.0, msc=None, magic=6686):
     return types.SimpleNamespace(ticket=ticket, type=typ, volume=lot, price_open=price, tp=tp, sl=0.0, magic=magic,
-                                 time_msc=msc or T0 * 1000, comment="")
+                                 time_msc=msc or T0 * 1000, comment="", symbol=di.SYMBOL, reason=3)
 
 
 class FakeMT5:
@@ -31,6 +31,7 @@ class FakeMT5:
         self.connected, self.init_calls, self.deals = True, [], []
         self.ticks = np.array([], dtype=[("time_msc", "i8"), ("bid", "f8"), ("ask", "f8"), ("flags", "i4")])
         self.bid = 4000.0
+        self.orders, self.first_tick = [], None
 
     def account_info(self): return self.acc
     def symbol_info(self, s): return types.SimpleNamespace(trade_contract_size=100.0)
@@ -39,8 +40,14 @@ class FakeMT5:
     def last_error(self): return (1, "ok")
     def initialize(self, *a, **k): self.init_calls.append(a); self.connected = True; return True
     def symbol_info_tick(self, s): return types.SimpleNamespace(bid=self.bid, ask=self.bid + 0.3, time=self.bar_t, time_msc=self.bar_t * 1000)
-    def history_deals_get(self, **k): return self.deals
+    def history_deals_get(self, *a, **k): return self.deals
     def copy_ticks_range(self, *a): return self.ticks
+    def orders_get(self): return self.orders
+
+    def copy_ticks_from(self, *a):
+        if self.first_tick is None:
+            return None
+        return np.array([(self.bar_t * 1000 + 100, *self.first_tick)], dtype=[("time_msc", "i8"), ("bid", "f8"), ("ask", "f8")])
 
     def copy_rates_from_pos(self, *a):
         return np.array([(self.bar_t - 180, 4000.0, 4000.0 + self.body), (self.bar_t, 4000.0, 4000.0)],
@@ -98,7 +105,7 @@ def test_giris_tp_kapanis_kaydi(ortam):
     iz.adim()
     mt.positions = [poz(1, tp=4003.0)]
     iz.adim()
-    mt.deals = [types.SimpleNamespace(entry=0), types.SimpleNamespace(entry=1, time_msc=5, price=4003.0, reason=5, profit=1.0, swap=0.0, comment="[tp]")]
+    mt.deals = [types.SimpleNamespace(entry=0, type=0), types.SimpleNamespace(entry=1, type=0, time_msc=5, price=4003.0, reason=5, profit=1.0, swap=0.0, comment="[tp]")]
     mt.positions = []
     iz.adim()
     ev = {r["olay"]: r for r in olaylar(tmp)}
@@ -158,3 +165,60 @@ def test_tick_arsivi_filigrani_ilerler_cift_yazmaz(ortam):
     iz._tick_arsivle(m0 + 10)
     f = next((tmp / "ticks").glob("*.gz"))
     assert len(gzip.open(f, "rt").read().splitlines()) == 2
+
+
+BAZ = 1_793_610_000      # 2026-11-02 Pazartesi 09:00 UTC, pencere içi
+
+
+def _bar_adim(mt, ck, t, wait=True):
+    mt.bar_t = t
+    ck.t = t + 0.4
+    return t
+
+
+def test_ayni_yoklamada_gorulen_giris_bar_durumunu_bozmaz(ortam):
+    """Giriş barın ilk yoklamasında görülür: durum girişten ÖNCEKİ olmalı, kural doğru sayılmalı (11-03 hatası)."""
+    mt, ck, iz, tmp = ortam
+    mt.body = 1.0
+    _bar_adim(mt, ck, BAZ)
+    mt.positions = [poz(5, typ=0, msc=BAZ * 1000 + 230)]
+    iz.adim()
+    b = [r for r in olaylar(tmp) if r["olay"] == "bar"][-1]
+    assert b["BUY"]["n"] == 0 and b["BUY"]["beklenen"] == "fresh"
+    ck.t += di.BAR_WAIT_S + 1
+    iz.adim()
+    assert not any(r["olay"] == "bar_uyumsuz" for r in olaylar(tmp))
+
+
+def test_bar_sinirindan_sonra_kapanan_bacak_karar_aninda_aciktir(ortam):
+    """Karar önce, TP sonra (RAPOR §4): kapanış bar açılışından sonraysa bacak o karar anında açıktır."""
+    mt, ck, iz, tmp = ortam
+    mt.positions = [poz(7, msc=(BAZ - 300) * 1000)]
+    iz.adim()
+    mt.deals = [types.SimpleNamespace(entry=1, type=0, time_msc=BAZ * 1000 + 100, price=4005.0, reason=5, profit=1.0, swap=0.0, comment="")]
+    mt.positions = []
+    mt.body = -1.0
+    _bar_adim(mt, ck, BAZ)
+    iz.adim()
+    b = [r for r in olaylar(tmp) if r["olay"] == "bar"][-1]
+    assert b["BUY"]["n"] == 1
+
+
+def test_karar_fiyati_ilk_tick(ortam):
+    mt, ck, iz, tmp = ortam
+    mt.first_tick = (3999.0, 3999.3)
+    _bar_adim(mt, ck, BAZ)
+    iz.adim()
+    b = [r for r in olaylar(tmp) if r["olay"] == "bar"][-1]
+    assert (b["bid"], b["ask"], b["fiyat"]) == (3999.0, 3999.3, "ilk_tick")
+
+
+def test_elle_emir_bakiye_ve_yeni_magic_kaydi(ortam):
+    mt, ck, iz, tmp = ortam
+    mt.positions = [poz(11, magic=0)]
+    mt.orders = [types.SimpleNamespace(ticket=1, symbol=di.SYMBOL, type=2, volume_current=1.0, price_open=3900.0, tp=0.0, sl=0.0, magic=6686)]
+    mt.deals = [types.SimpleNamespace(type=2, ticket=9, profit=2_000_000.0, comment="deposit", time=T0 + 5, entry=0)]
+    ck.t += di.HESAP_S + 1
+    iz.adim()
+    ev = [r["olay"] for r in olaylar(tmp)]
+    assert {"yeni_magic", "bekleyen_emir", "bakiye_islem"} <= set(ev)

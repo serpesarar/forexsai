@@ -10,7 +10,9 @@ Her yoklamada (0,5 sn) kaydedilenler (log: %LOCALAPPDATA%\\dbg_izleyici\\dbg_izl
   sessizlik_basladi / sessizlik_bitti : ≥3 ardışık barda beklenen eylem yok. Başlangıç anının hesap
       durumu yazılır; nedeni kanıtlamaz ("neden belirsiz eylemsizlik").
   klon_* : aynı DBG fiyatıyla kapalı döngü klon (taban 0,05). Fiyat farkı karışmadan kural kıyası.
+  bekleyen_emir / bakiye_islem / yeni_magic : limit emir, yatırım-çekim, beklenmeyen magic.
   hesap (60 sn), nabiz (5 dk), baglanti_yok / baglanti_geldi, hata.
+Göremedikleri: EA'nın kodu ve girdileri, Experts logu, sahibin kararı. Bunlar ancak davranıştan çıkarılır.
 Tick'ler: ticks\\YYYYMMDD.csv.gz (saatlik, gün sunucu saatine göre).
 
 Bilerek durdurmak: önce bu klasöre DBG_IZLEYICI_DURDUR yazın; yoksa ajan yeniden başlatır.
@@ -29,7 +31,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "dbg_klon"))
-from klon_kurallar import BUY, NONE, SELL, KlonAyar, decide_side, in_window_dt  # noqa: E402
+from klon_kurallar import BUY, NONE, SELL, KlonAyar, decide_side, in_window_dt, lot_for_level  # noqa: E402
 from klon_yonetici import KlonYonetici  # noqa: E402
 
 TERMINAL = r"C:\Program Files\MetaTrader 5\terminal64.exe"
@@ -54,6 +56,10 @@ RECONNECT_S = 60
 # Kural sürümü: C3-v2 (research/dbg_xau_ilk_ayrisma_20261030). Taban ve TP gerçek botun güncel ayarı.
 AYAR = KlonAyar(base_lot=0.05, mult=1.1, tp_usd=5.0, incl_end=True, strict_step=True, step0_no_body=True)
 KURAL = "C3-v2-2026-10-30"
+# 2: bar durumu karar anına göre kurulur (1'de 108 girişin 74'ü bar olayından önce işlendi; o barların
+#    `beklenen`/`bar_uyumsuz`/sessizlik alanları güvenilmez, giris/kapanis/tp_degisti sağlam).
+IZLEYICI_SURUM = 2
+SON_GIRIS_S = 180
 
 log = logging.getLogger("dbg_izleyici")
 
@@ -82,8 +88,9 @@ def jlog(olay: str, **kw: object) -> None:
 
 
 def poz_ozet(p: object) -> dict:
-    return {"ticket": p.ticket, "side": BUY if p.type == 0 else SELL, "lot": p.volume, "price": p.price_open,
-            "tp": p.tp, "sl": p.sl, "magic": p.magic, "time_msc": p.time_msc, "comment": p.comment}
+    return {"ticket": p.ticket, "symbol": p.symbol, "side": BUY if p.type == 0 else SELL, "lot": p.volume,
+            "price": p.price_open, "tp": p.tp, "sl": p.sl, "magic": p.magic, "giris_reason": p.reason,
+            "time_msc": p.time_msc, "comment": p.comment}
 
 
 class Izleyici:
@@ -100,6 +107,11 @@ class Izleyici:
         self.tick_wm = 0
         self.t_hesap = self.t_nabiz = self.t_tick = self.t_baglan = 0.0
         self.bagli = True
+        self.son_giris: list[dict] = []     # karar barına atanacak yeni girişler
+        self.son_kapanis: list[dict] = []   # bar sınırından sonra kapanan bacaklar karar anında hâlâ açıktı
+        self.emir: dict[int, tuple] = {}
+        self.magics = {BOT_MAGIC}
+        self.t_deal = 0
         self.sayac = {"giris": 0, "kapanis": 0, "tp_degisti": 0, "bar": 0, "bar_uyumsuz": 0}
         info = mt5.symbol_info(SYMBOL)
         self.klon = KlonYonetici(AYAR, float(info.trade_contract_size) if info else 100.0)
@@ -111,13 +123,16 @@ class Izleyici:
         hesap_dogrula(acc)
         self._durum_yukle()
         self.poz = {p.ticket: poz_ozet(p) for p in self._pozisyonlar()}
+        self.emir = self._emirler()
         bar = self._bar()
         if bar:
             self.son_bar = bar[0]     # yarım barda karar yok: ilk TAM bar açılışını bekle
         tk = self.mt5.symbol_info_tick(SYMBOL)
         if not self.tick_wm and tk:
             self.tick_wm = int(tk.time_msc)
-        jlog("baslangic", kural=KURAL, login=acc.login, server=acc.server, trade_allowed=acc.trade_allowed,
+        if tk:
+            self.t_deal = int(tk.time)
+        jlog("baslangic", izleyici_surum=IZLEYICI_SURUM, kural=KURAL, login=acc.login, server=acc.server, trade_allowed=acc.trade_allowed,
              balance=acc.balance, equity=acc.equity, acik=list(self.poz.values()), klon=self.klon.durum())
 
     def _durum_yukle(self) -> None:
@@ -136,7 +151,19 @@ class Izleyici:
 
     # ------------------------------------------------------------ MT5 okuma
     def _pozisyonlar(self) -> list:
-        return list(self.mt5.positions_get(symbol=SYMBOL) or [])
+        """Hesabın TÜM pozisyonları: sahip başka sembolde de işlem açarsa görülür."""
+        return list(self.mt5.positions_get() or [])
+
+    def _emirler(self) -> dict[int, tuple]:
+        return {o.ticket: (o.symbol, o.type, o.volume_current, o.price_open, o.tp, o.sl, o.magic)
+                for o in (self.mt5.orders_get() or [])}
+
+    def _ilk_tick(self, bar_t: int) -> tuple[float, float] | None:
+        """Barın ilk tick'i: gerçek bot kararını bu fiyatla veriyor (eşik testi, RAPOR §6)."""
+        tt = self.mt5.copy_ticks_from(SYMBOL, datetime.fromtimestamp(bar_t, tz=timezone.utc), 1, self.mt5.COPY_TICKS_ALL)
+        if tt is None or len(tt) == 0 or int(tt[0]["time_msc"]) // 180000 != bar_t // 180:
+            return None
+        return float(tt[0]["bid"]), float(tt[0]["ask"])
 
     def _bar(self) -> tuple[int, float] | None:
         r = self.mt5.copy_rates_from_pos(SYMBOL, self.mt5.TIMEFRAME_M3, 0, 2)
@@ -144,8 +171,17 @@ class Izleyici:
             return None
         return int(r[-1]["time"]), float(r[-2]["close"] - r[-2]["open"])
 
-    def _yan_durum(self, side: str) -> dict:
-        L = sorted((p for p in self.poz.values() if p["side"] == side and p["magic"] == BOT_MAGIC),
+    def _yan_durum(self, side: str, bar_ms: int | None = None) -> dict:
+        """Bir yönün durumu. bar_ms verilirse KARAR ANI: o an açılmış ve kapanmamış bacaklar.
+
+        Pozisyon farkı bar olayından önce işlenebilir (giriş bar açılışından ~0,23 sn sonra, yoklama 0,5 sn),
+        o yüzden şimdiki açık liste karar anının durumu değildir.
+        """
+        havuz = list(self.poz.values())
+        if bar_ms is not None:
+            havuz = [p for p in havuz if p["time_msc"] < bar_ms]
+            havuz += [p for p in self.son_kapanis if p["time_msc"] < bar_ms and (p.get("cikis_msc") or 0) >= bar_ms]
+        L = sorted((p for p in havuz if p["symbol"] == SYMBOL and p["side"] == side and p["magic"] == BOT_MAGIC),
                    key=lambda p: p["time_msc"])
         lots = sum(p["lot"] for p in L)
         return {"n": len(L), "lots": round(lots, 2), "son_px": L[-1]["price"] if L else None,
@@ -179,21 +215,37 @@ class Izleyici:
         for t, p in yeni.items():
             eski = self.poz.get(t)
             if eski is None:
-                n = sum(1 for q in self.poz.values() if q["side"] == p["side"] and q["magic"] == p["magic"])
-                jlog("giris", **p, n_acik_once=n, bar_sn=round((p["time_msc"] / 1000) % 180, 3), goruldu_msc=tick_msc)
+                n = sum(1 for q in self.poz.values() if q["symbol"] == p["symbol"] and q["side"] == p["side"]
+                        and q["magic"] == p["magic"])
+                jlog("giris", **p, n_acik_once=n, bar_sn=round((p["time_msc"] / 1000) % 180, 3), goruldu_msc=tick_msc,
+                     lot_formul=lot_for_level(AYAR, n + 1))
                 self.sayac["giris"] += 1
                 girenler.append(p["side"])
+                self.son_giris.append(p)
+                if p["magic"] not in self.magics:
+                    self.magics.add(p["magic"])
+                    jlog("yeni_magic", magic=p["magic"], symbol=p["symbol"], giris_reason=p["giris_reason"], comment=p["comment"])
                 continue
             if eski["tp"] != p["tp"]:
-                jlog("tp_degisti", ticket=t, side=p["side"], eski=eski["tp"], yeni=p["tp"], goruldu_msc=tick_msc)
+                acik = [q for q in yeni.values() if q["symbol"] == p["symbol"] and q["side"] == p["side"]
+                        and q["magic"] == p["magic"]]
+                lots = sum(q["lot"] for q in acik)
+                vw = sum(q["lot"] * q["price"] for q in acik) / lots
+                jlog("tp_degisti", ticket=t, side=p["side"], eski=eski["tp"], yeni=p["tp"], goruldu_msc=tick_msc,
+                     tp_vwap_farki=round((p["tp"] - vw) * (1 if p["side"] == BUY else -1), 3))
                 self.sayac["tp_degisti"] += 1
             if eski["lot"] != p["lot"]:
                 jlog("hacim_degisti", ticket=t, side=p["side"], eski=eski["lot"], yeni=p["lot"], goruldu_msc=tick_msc)
         for t, p in self.poz.items():
             if t not in yeni:
-                jlog("kapanis", **p, goruldu_msc=tick_msc, **self._kapanis_bilgi(t))
+                bilgi = self._kapanis_bilgi(t)
+                jlog("kapanis", **p, goruldu_msc=tick_msc, **bilgi)
                 self.sayac["kapanis"] += 1
+                self.son_kapanis.append({**p, "cikis_msc": bilgi.get("cikis_msc")})
         self.poz = yeni
+        esik = tick_msc - SON_GIRIS_S * 1000
+        self.son_giris = [p for p in self.son_giris if p["time_msc"] >= esik]
+        self.son_kapanis = [p for p in self.son_kapanis if (p.get("cikis_msc") or 0) >= esik]
         return girenler
 
     def _kapanis_bilgi(self, ticket: int) -> dict:
@@ -207,18 +259,25 @@ class Izleyici:
 
     # ------------------------------------------------------------ bar: beklenti ve sessizlik
     def _yeni_bar(self, bar: tuple[int, float], bid: float, ask: float) -> None:
+        ilk = self._ilk_tick(bar[0])
+        kaynak = "ilk_tick" if ilk else "yoklama"
+        if ilk:
+            bid, ask = ilk
+        bar_ms = bar[0] * 1000
         utc = datetime.fromtimestamp(self.simdi(), tz=timezone.utc)
         win = in_window_dt(utc, AYAR.schedule, AYAR.incl_end)
         taraf = {}
         for s in SIDES:
-            st = self._yan_durum(s)
+            st = self._yan_durum(s, bar_ms)
             px = ask if s == BUY else bid
             st["beklenen"] = decide_side(s, bar[1], st["n"], st["son_px"] or 0.0, px, win, AYAR)
             taraf[s] = st
-        jlog("bar", t=bar[0], govde=round(bar[1], 3), bid=bid, ask=ask, spread=round(ask - bid, 3), pencere=win, **taraf)
+        jlog("bar", t=bar[0], govde=round(bar[1], 3), bid=bid, ask=ask, spread=round(ask - bid, 3), pencere=win, fiyat=kaynak, **taraf)
         self.sayac["bar"] += 1
+        giren = sorted({p["side"] for p in self.son_giris
+                        if p["symbol"] == SYMBOL and p["magic"] == BOT_MAGIC and p["time_msc"] >= bar_ms})
         self.bekleyen = {"t": bar[0], "son": self.simdi() + BAR_WAIT_S, "bek": {s: taraf[s]["beklenen"] for s in SIDES},
-                         "giren": []}
+                         "giren": giren}
         for e in self.klon.on_bar(bar[1], bid, ask, utc):
             jlog("klon_" + e.kind, side=e.side, level=e.level, lot=e.lot, price=e.price, tp=e.tp)
         self._durum_yaz()
@@ -246,6 +305,23 @@ class Izleyici:
                 jlog("sessizlik_basladi", t=b["t"], sessiz_bar=self.sessiz_bar, beklenen=bek,
                      balance=a.balance, equity=a.equity, margin=a.margin, margin_level=a.margin_level,
                      durum={s: self._yan_durum(s) for s in SIDES})
+
+    # ------------------------------------------------------------ emir ve bakiye
+    def _emir_ve_bakiye(self, simdi_s: int) -> None:
+        emir = self._emirler()
+        if emir != self.emir:
+            jlog("bekleyen_emir", yeni=[v for k, v in emir.items() if k not in self.emir],
+                 giden=[v for k, v in self.emir.items() if k not in emir], adet=len(emir))
+            self.emir = emir
+        if not self.t_deal:
+            self.t_deal = simdi_s
+            return
+        ds = self.mt5.history_deals_get(datetime.fromtimestamp(self.t_deal, tz=timezone.utc),
+                                        datetime.fromtimestamp(simdi_s + 1, tz=timezone.utc)) or []
+        for d in ds:
+            if d.type > 1 and d.time >= self.t_deal:     # 0/1 alış-satış; üstü bakiye, kredi, düzeltme
+                jlog("bakiye_islem", ticket=d.ticket, tur=d.type, tutar=d.profit, comment=d.comment, time=d.time)
+        self.t_deal = simdi_s + 1
 
     # ------------------------------------------------------------ tick arşivi
     def _tick_arsivle(self, son_msc: int) -> None:
@@ -282,14 +358,18 @@ class Izleyici:
             return
         now = self.simdi()
         bid, ask, msc = float(tk.bid), float(tk.ask), int(tk.time_msc)
-        girenler = self._pozisyon_farki(msc)
-        if self.bekleyen is not None:
-            self.bekleyen["giren"].extend(s for s in girenler if s not in self.bekleyen["giren"])
-        self._bar_kontrol()
         bar = self._bar()
-        if bar and bar[0] != self.son_bar:
+        yeni_bar = bool(bar and bar[0] != self.son_bar)
+        girenler = self._pozisyon_farki(msc)
+        if self.bekleyen is not None and not yeni_bar:
+            self.bekleyen["giren"].extend(s for s in girenler if s not in self.bekleyen["giren"])
+        if yeni_bar:                     # önceki barın sonucu, yeni barın durumundan önce kapanır
+            if self.bekleyen is not None:
+                self.bekleyen["son"] = now
+                self._bar_kontrol()
             self.son_bar = bar[0]
             self._yeni_bar(bar, bid, ask)
+        self._bar_kontrol()
         for e in self.klon.on_tick(bid, ask):
             self.klon_kar += e.pnl or 0.0
             jlog("klon_" + e.kind, side=e.side, level=e.level, lot=e.lot, price=e.price, pnl=e.pnl)
@@ -301,6 +381,8 @@ class Izleyici:
                 hesap_dogrula(a)
                 jlog("hesap", balance=a.balance, equity=a.equity, margin=a.margin, margin_level=a.margin_level,
                      acik={s: self._yan_durum(s) for s in SIDES})
+        if now - self.t_hesap < POLL_S * 2:       # hesap adımıyla aynı kadansta
+            self._emir_ve_bakiye(int(tk.time))
         if now - self.t_tick >= TICK_S:
             self.t_tick = now
             self._tick_arsivle(msc)

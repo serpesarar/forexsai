@@ -31,12 +31,21 @@ def main() -> None:
     gs = [r["bar_sn"] for r in R if r["olay"] == "giris"]
     if gs:
         print(f"giriş bar içi saniye: medyan {statistics.median(gs):.2f}, >=20 sn: {sum(x >= 20 for x in gs)}/{len(gs)}")
-    bars = sum(r["olay"] == "bar" for r in R)
-    uy = sum(r["olay"] == "bar_uyumsuz" for r in R)
-    print(f"kural kıyası (gerçek durumla): {bars} bar, {uy} uyumsuz")
+    # Sürüm 1'in bar alanları hatalı (dbg_izleyici.IZLEYICI_SURUM); kıyas yalnız sürüm 2'den itibaren
+    bas = next((i for i, r in enumerate(R) if r["olay"] == "baslangic" and r.get("izleyici_surum", 1) >= 2), None)
+    V2 = R[bas:] if bas is not None else []
+    bars = sum(r["olay"] == "bar" for r in V2)
+    uy = [r for r in V2 if r["olay"] == "bar_uyumsuz"]
+    print(f"kural kıyası (gerçek durumla, sürüm 2): {bars} bar, {len(uy)} uyumsuz")
+    tf = [r["tp_vwap_farki"] for r in R if r["olay"] == "tp_degisti" and "tp_vwap_farki" in r]
+    if tf:
+        print(f"TP − ortalama: medyan {statistics.median(tf):.2f} $ (n={len(tf)})")
+    lf = [r for r in R if r["olay"] == "giris" and "lot_formul" in r and abs(r["lot"] - r["lot_formul"]) > 1e-9]
+    print(f"lot formülüne uymayan giriş: {len(lf)}")
     for r in R:
-        if r["olay"] in ("sessizlik_basladi", "sessizlik_bitti", "reddedildi", "baglanti_yok", "baglanti_geldi", "hata"):
-            print(" ", r["ts_utc"], r["olay"], {k: r[k] for k in ("sessiz_bar", "equity", "margin_level", "mesaj") if k in r})
+        if r["olay"] in ("sessizlik_basladi", "sessizlik_bitti", "reddedildi", "baglanti_yok", "baglanti_geldi", "hata",
+                        "yeni_magic", "bakiye_islem", "bekleyen_emir"):
+            print(" ", r["ts_utc"], r["olay"], {k: r[k] for k in ("sessiz_bar", "equity", "margin_level", "mesaj", "magic", "tutar", "adet") if k in r})
     h = [r for r in R if r["olay"] == "hesap"]
     if h:
         print("son hesap:", {k: h[-1][k] for k in ("balance", "equity", "margin", "margin_level")})
