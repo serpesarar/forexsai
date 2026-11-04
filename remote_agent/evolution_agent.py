@@ -833,7 +833,8 @@ DEFAULT_PROCESS_TARGETS = {
     "decider": {"match": "run_decider.py", "bat": r"calistir\3_claude_decider.bat"},
     "bot":     {"match": "forexsai_demo_bot.py", "bat": r"calistir\2_oto_trade_bot.bat",
                 "safe_wait": True},
-    "backend": {"match": "uvicorn", "bat": r"calistir\18_panel_backend.bat"},
+    # Asıl backend Railway'de. Kutuda ikinci kopya çift yazar: oto-güncelleme kapalıysa açmaz.
+    "backend": {"match": "uvicorn", "bat": r"calistir\18_panel_backend.bat", "only_if_running": True},
     "dbg_klon": {"match": "dbg_klon_runner.py", "bat": r"calistir\19_dbg_klon_golge.bat"},
     "dbg_izleyici": {"match": "dbg_izleyici.py", "bat": r"calistir\23_dbg_izleyici.bat"},
     "recorder": {"match": "data_recorder.py", "bat": r"calistir\1_veri_kaydedici.bat"},
@@ -1495,6 +1496,14 @@ AUTO_RESTART_MAP = [
 ]
 
 
+def should_skip_auto_restart(target: str, targets: dict, pids_of) -> bool:
+    """only_if_running hedefi kapalıysa oto-güncelleme onu AÇMAZ (2026-11-04: backend/ push'u
+    kutuda ikinci backend başlattı, gölge/sonuç tablolarına çift yazdı). Sorgu başarısızsa
+    (None) atlanır: emin olmadan süreç açılmaz."""
+    spec = targets.get(target) or {}
+    return bool(spec.get("only_if_running")) and not pids_of(spec["match"])
+
+
 def auto_update_tick(client) -> None:
     """git fetch → gerideysek pull → değişen klasörlere göre süreçleri tazele."""
     repo = str(cfg.REPO_ROOT)
@@ -1519,6 +1528,9 @@ def auto_update_tick(client) -> None:
     results = []
     for prefix, target in AUTO_RESTART_MAP:
         if any(f.startswith(prefix) for f in changed):
+            if should_skip_auto_restart(target, _process_targets(), _pids_by_cmdline):
+                log.info("oto-restart %s atlandı: çalışmıyordu, açılmadı", target)
+                continue
             out, rc = restart_target(target)
             results.append(f"{target}: rc={rc} {out[:80]}")
             log.info("oto-restart %s → rc=%s", target, rc)

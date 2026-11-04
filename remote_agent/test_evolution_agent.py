@@ -901,3 +901,14 @@ def test_mt5_connect_refuses_dbg_terminal(agent, monkeypatch, server, expected):
     monkeypatch.setattr(agent, "HAS_MT5", True)
     assert agent.mt5_connect() is expected
     assert calls == ([] if expected else ["shutdown"])
+
+
+@pytest.mark.parametrize("target,pids,skip", [
+    ("backend", [], True),        # kapalı backend güncellemede açılmaz
+    ("backend", None, True),      # süreç sorgusu başarısız: emin olmadan açma
+    ("backend", [123], False),    # çalışıyorsa yeni kodla yenilenir
+    ("bot", [], False),           # diğer hedefler eskisi gibi
+    ("recorder", [], False),
+])
+def test_oto_guncelleme_kapali_backendi_acmaz(agent, target, pids, skip):
+    assert agent.should_skip_auto_restart(target, agent.DEFAULT_PROCESS_TARGETS, lambda _m: pids) is skip
