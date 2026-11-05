@@ -301,6 +301,12 @@ GÖREV — {sym} için KENDİ görüşünü oluştur (kanıttan muhakeme et):
     yönü gösteriyorsa konviksiyonu artırabilir; tek başına giriş sebebi DEĞİL.
   · breakout_leaning_genuine → sadece "engel yok" demektir (NDX'te skor-tabanlı gerçek-taraf OOS
     %55 = edge değil), yön kanıtı sayma. Sayısal karar için `detector.call` esastır.
+- `range_forecast` alanı varsa: Zaman Makinesi'nin 60 dk ufuk-sonu fiyat bandı (son 60 seansın AYNI gün-saati;
+  DTS-03: %90 bant 4 sembol × 3 TF'de %88-92 isabetle kalibre). Bant YÖN SÖYLEMEZ (olasılık meyli tabanı geçmedi) —
+  yön kanıtı olarak KULLANMA. Kullanım TP/SL gerçekçiliği içindir: `seviyeler[yön].tp_outside_p90=true` ise hedef 60 dk
+  içinde nadiren görülen bölgededir → management'ta süreyi uzun yaz ya da boyutu küçült; `sl_inside_p50=true` ise stop
+  olağan gürültü bandındadır → bunu management notunda belirt. Bot işlemlerinde bu konumlar sonucu AYIRT ETMEDİ (DTS-06):
+  tek başına WAIT sebebi değildir.
 - XAU BUY ise: "patient WR", GENİŞ stop şart (management'a yaz, boyut düşür).
 - `live_drift` alanı varsa: bu yönün SON 30 canlı sonucu. drift_pp ≥15 (canlı, vaadin 15pp+
   altında) → kanıt hücrelerine güveni DÜŞÜR, boyut küçült; "KAPI ASKIDA" notu varsa OPEN
@@ -592,6 +598,12 @@ GÖREV — bir altın uzmanı gibi bu resmi oku:
 - channel_z: bir TF'de ±2'ye yakınsa mean-reversion; ortadaysa trend-devamı olabilir.
 - Makro (VIX/DXY): SADECE ham bağlam — makro→XAU yön bağı bizim veride ÇÖKTÜ (2024-26'da
   işaret değiştirdi, xauusd-macro-direction kanıtı); yön kanıtı SAYMA.
+- `range_forecast` alanı varsa: Zaman Makinesi'nin 60 dk ufuk-sonu fiyat bandı (son 60 seansın AYNI gün-saati;
+  DTS-03: %90 bant 4 sembol × 3 TF'de %88-92 isabetle kalibre). Bant YÖN SÖYLEMEZ (olasılık meyli tabanı geçmedi) —
+  yön kanıtı olarak KULLANMA. Kullanım TP/SL gerçekçiliği içindir: `seviyeler[yön].tp_outside_p90=true` ise hedef 60 dk
+  içinde nadiren görülen bölgededir → management'ta süreyi uzun yaz ya da boyutu küçült; `sl_inside_p50=true` ise stop
+  olağan gürültü bandındadır → bunu management notunda belirt. Bot işlemlerinde bu konumlar sonucu AYIRT ETMEDİ (DTS-06):
+  tek başına WAIT sebebi değildir.
 {("- GÖLGE KEŞİF: bir yön SEÇ (BUY veya SELL) + dürüst size_factor (0.1=zayıf his, 1.0=güçlü uyum). WAIT yalnız bozuk/eksik veri."
   if FREE_EXPLORER else
   "- BELİRSİZSEN veya net kurulum yoksa WAIT (disiplin — zorlama).")}

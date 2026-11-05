@@ -75,3 +75,47 @@ def test_too_few_sessions_refused():
     b = _bars(days=10)
     with pytest.raises(tm.TMError):
         tm.run_plan(b, "buy")
+
+
+def test_range_band_monotone_and_relative():
+    b = _bars()
+    band = tm.range_band(b, n_bars=12, bar_min=5, replays=400)
+    assert band["p5"] < band["p25"] < band["p50"] < band["p75"] < band["p95"]
+    assert abs(band["p50"] / band["price"] - band["rel_p50"]) < 1e-9 and band["horizon_min"] == 60
+
+
+def test_level_check_uses_own_entry_and_side():
+    band = {"rel_p5": 0.99, "rel_p25": 0.997, "rel_p75": 1.003, "rel_p95": 1.01}
+    lc = tm.level_check(band, entry=200.0, tp=203.0, sl=199.5, side="buy")      # p95 = 202 → TP dışarıda; SL 199.5 ∈ [199.4, 200.6]
+    assert lc["tp_outside_p90"] is True and lc["sl_inside_p50"] is True
+    ls = tm.level_check(band, entry=200.0, tp=199.0, sl=203.0, side="sell")     # p5 = 198 → TP içeride
+    assert ls["tp_outside_p90"] is False and ls["sl_inside_p50"] is False
+
+
+def test_bars_from_mt5_rates_subtracts_broker_offset():
+    rates = [{"time": 1_000_000 + 10800, "open": 1.0, "high": 1.1, "low": 0.9, "close": 1.05}]
+    b = tm.bars_from_mt5_rates(rates, 10800)
+    assert int(b.ts[0]) == 1_000_000 and b.c[0] == 1.05
+
+
+def test_broker_offset_from_tick():
+    assert tm.broker_offset_from_tick(1_000_000 + 10800 + 5, now=1_000_000) == 10800
+    assert tm.broker_offset_from_tick(1_000_000 - 7200, now=1_000_000) == -7200
+    assert tm.broker_offset_from_tick(1_000_000 + 10800 + 3000, now=1_000_000) is None   # bayat/uyumsuz tick
+
+
+def test_range_band_mt5_with_fake_terminal():
+    b = _bars()
+    off = 10800
+    rates = [{"time": int(t) + off, "open": o, "high": h, "low": l, "close": c} for t, o, h, l, c in zip(b.ts, b.o, b.h, b.l, b.c)]
+
+    class FakeMT5:
+        TIMEFRAME_M5, TIMEFRAME_M15, TIMEFRAME_H1 = 5, 15, 16385
+        def symbol_info_tick(self, s):
+            return None
+        def copy_rates_from_pos(self, s, tf, pos, n):
+            return rates
+    tm._mt5_band_cache.clear()
+    band = tm.range_band_mt5(FakeMT5(), "NAS100", broker_offset_s=off)
+    assert band and band["p5"] < band["p95"] and band["broker_offset_s"] == off
+    assert tm.range_band_mt5(FakeMT5(), "OTHER") is None          # tick yok → offset bilinmez → None (fail-open)

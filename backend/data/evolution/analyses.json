@@ -799,5 +799,18 @@
   "needs_backend": false,
   "est_runtime": "~3 dk",
   "learn_targets": []
+ },
+ {
+  "id": "dts_uyarlama",
+  "name": "day-trader-skill tüm özellikleri — 4 sembol × çok TF sınaması (DTS-01…06)",
+  "kind": "script",
+  "command": "cd research/dts_uyarlama_20261104 && python3 dts01_tarayici.py && python3 dts01b_rsi_ortusme.py && python3 dts02_orb.py && python3 dts02b_taban.py && python3 dts03_zaman_makinesi.py && python3 dts0405_butce_risk.py && python3 dts06_bant_tpsl.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "Ön-kayıtlı (PROTOCOL.md + ekler): tarayıcı 5 kurulum 180 hücre (X), ORB zinciri 168 hücre + taban (C), Zaman Makinesi aralığı 5m/15m/1h 33 hücre (A), bütçe sabit $-risk (X), risk kuralları — günlük zarar 3R freni geçti (C, gölge), bant × TP/SL bot 931 + sinyal 3.369 (bot X, sinyal C). Kayıt: docs/KAPI_KAYIT_DEFTERI.md §2.8 DTS-01…06.",
+  "output": "research/dts_uyarlama_20261104/{dts*_ozet.json,dts*_sonuc.json,dts*_hucreler.csv}",
+  "needs_backend": false,
+  "est_runtime": "~25 dk (DTS-03/06 Monte Carlo ağır)",
+  "learn_targets": []
  }
 ]

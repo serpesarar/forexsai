@@ -528,6 +528,19 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                               f"%{fk.get('fake_probability')} ({fk.get('verdict')})")
                 except Exception as e:
                     print("  fakeout hatası (devam):", e)
+            # ZAMAN MAKİNESİ 60 dk fiyat bandı × kendi TP/SL'm (DTS-03 A; yön söylemez — kullanıcı kararı 2026-11-04)
+            if _HAS_MT5:
+                try:
+                    from range_bridge import range_context
+                    from decide import stop_mults
+                    atr_by_dir = {d: ((v or {}).get("live") or {}).get("atr")
+                                  for d, v in (sit.get("directions") or {}).items()}
+                    rf = range_context(_SYM_MAP, sit["symbol"], sit.get("price"), atr_by_dir,
+                                       stop_mults(sit["symbol"]))
+                    if rf:
+                        sit["range_forecast"] = rf
+                except Exception as e:
+                    print("  range_forecast hatası (devam):", e)
             # REJİM ölçümü KARARDAN ÖNCE: situation JSON'u prompt'a gömüldüğü için
             # model rejimi ve zarf uyarısını GÖRÜR (ölçer atıl kalmasın).
             sit["regime"] = regime_meter.measure(sit.get("forensics"), sit["symbol"])
@@ -611,6 +624,17 @@ def run_pass(bars_by_symbol: dict, vix, positions: dict, shadow: bool = True,
                     print("  free-evidence hatası (devam):", e)
             mode_tag = "HİBRİT" if ctx.get("evidence_buy") else "SERBEST-ZEKÂ"
             print(f"[{now:%H:%M}] {FREE_SYMBOL} → Opus ({mode_tag}, çok-TF)...")
+            try:                                                # ZM 60 dk bandı (DTS-03; yön söylemez)
+                from range_bridge import range_context
+                from decide import stop_mults
+                _px = (ctx.get("price") or (((ctx.get("multi_tf") or {}).get("5m") or {}).get("close")))
+                _atr = ((ctx.get("evidence_buy") or {}).get("live") or {}).get("atr")
+                rf = range_context(_SYM_MAP, FREE_SYMBOL, _px, {"BUY": _atr, "SELL": _atr} if _atr else None,
+                                   stop_mults(FREE_SYMBOL))
+                if rf:
+                    ctx["range_forecast"] = rf
+            except Exception as e:
+                print("  range_forecast hatası (devam):", e)
             ctx["regime"] = regime_meter.measure(ctx.get("forensics"), FREE_SYMBOL)
             ctx["entry_quality_by_dir"] = {
                 d: entry_quality.assess(ctx.get("forensics"), d) for d in ("BUY", "SELL")}

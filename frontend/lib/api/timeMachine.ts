@@ -9,6 +9,7 @@ import { getApiBase } from "./base";
 const API = getApiBase();
 
 export type TradeSide = "buy" | "sell";
+export type TmTimeframe = "5m" | "15m" | "1h";
 
 export interface TimeMachinePlanInput {
   symbol: string;
@@ -16,6 +17,28 @@ export interface TimeMachinePlanInput {
   stopAtr: number;
   targetR: number;
   bars: number;
+  tf?: TmTimeframe;
+}
+
+/** Ufuk-sonu fiyat bandı — /api/time-machine/{symbol}/band (DTS-03: %90 bant tüm TF/sembollerde kalibre). */
+export interface RangeBand {
+  symbol: string;
+  tf: TmTimeframe;
+  price: number;
+  horizon_min: number;
+  p5: number;
+  p25: number;
+  p50: number;
+  p75: number;
+  p95: number;
+  rel_p5: number;
+  rel_p25: number;
+  rel_p50: number;
+  rel_p75: number;
+  rel_p95: number;
+  width_pct: number;
+  pool_sessions: number;
+  calibration: string;
 }
 
 export interface TimeMachineResult {
@@ -79,10 +102,10 @@ async function getJson<T>(path: string): Promise<T> {
 }
 
 export function useTimeMachine(input: TimeMachinePlanInput) {
-  const { symbol, side, stopAtr, targetR, bars } = input;
-  const qs = `side=${side}&stop_atr=${stopAtr}&target_r=${targetR}&bars=${bars}`;
+  const { symbol, side, stopAtr, targetR, bars, tf = "5m" } = input;
+  const qs = `side=${side}&stop_atr=${stopAtr}&target_r=${targetR}&bars=${bars}&tf=${tf}`;
   return useQuery<TimeMachineResult>({
-    queryKey: ["time-machine", symbol, side, stopAtr, targetR, bars],
+    queryKey: ["time-machine", symbol, side, stopAtr, targetR, bars, tf],
     queryFn: () => getJson(`/api/time-machine/${encodeURIComponent(symbol)}?${qs}`),
     staleTime: 60_000,
     placeholderData: (prev) => prev,
@@ -94,5 +117,15 @@ export function useTimeMachineCalibration() {
     queryKey: ["time-machine", "calibration"],
     queryFn: () => getJson("/api/time-machine/calibration"),
     staleTime: 60 * 60_000,
+  });
+}
+
+export function useRangeBand(symbol: string, tf: TmTimeframe = "5m", horizonMin = 60) {
+  return useQuery<RangeBand>({
+    queryKey: ["time-machine", "band", symbol, tf, horizonMin],
+    queryFn: () => getJson(`/api/time-machine/${encodeURIComponent(symbol)}/band?tf=${tf}&horizon_min=${horizonMin}`),
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
+    placeholderData: (prev) => prev,
   });
 }

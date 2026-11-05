@@ -359,6 +359,8 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 | `GET /api/prediction/{symbol}?strategy=balanced` | ML Prediction |
 | `GET /api/data/ohlcv/{symbol}?timeframe=1h` | Candle verisi |
 | `GET /api/data/cached/{symbol}` | Anlık fiyat |
+| `GET /api/time-machine/{symbol}/band?tf=&horizon_min=` | Zaman Makinesi ufuk-sonu %5–95 fiyat bandı (DTS-03 A; yön söylemez) |
+| `GET/POST/PATCH/DELETE /api/alerts`, `POST /api/alerts/from-plan` | Fiyat alarmları (require_admin; Telegram) |
 
 ### Learning & Performance
 | Endpoint | Açıklama |
@@ -790,6 +792,16 @@ TQ_SESSION_EXCEPTION=1            # NDX 18 UTC hard-bloğuna altın-istisna:
 SHADOW_TRACKER_ENABLED=1          # %60+ formasyon + fakeout dedektör çağrıları için sızıntısız paper-trade doğrulaması
 SHADOW_TRACKER_MIN_CONF=60        # sanal işlem açma güven eşiği (%)
 SHADOW_TRACKER_INTERVAL_SECONDS=120
+
+# ─── 2026-11-04 day-trader-skill uyarlaması (DTS-01…06, research/dts_uyarlama_20261104/) ───
+# Zaman Makinesi 60 dk %90 fiyat bandı = A (33/33 hücre kalibre); YÖN SÖYLEMEZ.
+RANGE_TP_GATE_ENABLED=1           # prediction_logger: factors.tm_band60/tp1_outside_p90/sl_inside_p50 etiketi
+                                  # + GÖLGE range_tp_gate (TP1 bant dışında). DTS-06: panel sinyallerinde C, BLOK YOK.
+PRICE_ALERTS_ENABLED=1            # fiyat alarm döngüsü (60s, taze MT5 fiyatı, atomik tetik, Telegram); /api/alerts
+# Bot (yeni deneme/, config getattr): RANGE_BAND_ENABLED=True (yalnız RANGE_BAND log + parmak izi),
+# RANGE_GATE_BLOCK=False (DTS-06 botta X — açma), DAILY_LOSS_SHADOW_USD=1200 (DTS-05 günlük 3R freni
+# yalnız GÖLGE log; gerçek DAILY_MAX_LOSS değişmedi — canlıya alma kararı kullanıcıda).
+# Decider: situation.range_forecast (bant + kendi stop seviyelerinin konumu; prompt: yön kanıtı DEĞİL).
 
 # ─── 2026-07-18 tartışma-bias kapısı + bias notlama (agent_debate_analysis_report.md) ───
 DEBATE_BIAS_GATE_ENABLED=1        # debate kararına KARŞIT pulse/smc sinyalini frenle (NDX+USOIL; fail-open)

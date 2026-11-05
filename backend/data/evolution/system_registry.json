@@ -1103,5 +1103,35 @@
     "file": "backend/services/time_machine_service.py",
     "category": "analysis",
     "purpose": "Bir işlem planının (yön, ATR stop, R hedef, ufuk) olasılıklarını son 60 seansın aynı gün-saatindeki 5m mumlarından Monte Carlo ile + aynı planın geçmiş seanslardaki gerçek sonucunu verir (MIT, Jake Schincariol). API /api/time-machine/{symbol}, panel /mum-eslestirme. TM-01: olasılık meyli tabanı geçmiyor (X), %90 fiyat aralığı kalibre (A)."
+  },
+  {
+    "id": "range_band_core",
+    "name": "Ortak fiyat bandı çekirdeği (Zaman Makinesi range_band / level_check)",
+    "file": "backend/services/time_machine_service.py",
+    "category": "analysis",
+    "purpose": "60 dk ufuk-sonu %5–95 fiyat bandı (son 60 seansın aynı saati; DTS-03: 33/33 hücrede kalibre, A) ve bir işlemin TP/SL'inin banda göre konumu. Tüketiciler: prediction_logger factors.tm_band60 + gölge range_tp_gate (RANGE_TP_GATE_ENABLED), bot yeni deneme/range_band_bridge.py (RANGE_BAND log, RANGE_GATE_BLOCK=False), caprev_live kaydı, decider claude_decider/range_bridge.py → situation.range_forecast, panel /api/time-machine/{symbol}/band + neural RangeBandRow. Bant YÖN söylemez; DTS-06: TP/SL konumu bot sonuçlarını ayırt etmedi (X), panel sinyallerinde zayıf (C).",
+    "key_functions": [
+      "range_band",
+      "level_check",
+      "get_range_band",
+      "peek_range_band",
+      "range_band_mt5",
+      "bars_from_mt5_rates"
+    ]
+  },
+  {
+    "id": "price_alert_service",
+    "name": "Fiyat alarmları (day-trader-skill trader-alerts karşılığı)",
+    "file": "backend/services/price_alert_service.py",
+    "category": "infrastructure",
+    "purpose": "price_alerts tablosundaki above/below/stop/target/pct_move/time alarmlarını 60 sn'de bir yalnız TAZE MT5 fiyatıyla değerlendirir; tetik atomik (UPDATE … WHERE status='active', çift backend'de çift bildirim yok), Telegram'a yazar. API /api/alerts (require_admin), /api/alerts/from-plan (Zaman Makinesi planından stop+hedef+ufuk alarmı). Panel /alerts. Bayrak PRICE_ALERTS_ENABLED.",
+    "key_functions": [
+      "evaluate",
+      "validate",
+      "plan_alerts",
+      "run_once",
+      "alert_loop"
+    ],
+    "status_hint": "GET /api/alerts → service.last_run (at/checked/triggered/error)."
   }
 ]

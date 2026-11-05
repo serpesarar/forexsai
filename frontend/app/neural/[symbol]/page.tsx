@@ -36,6 +36,7 @@ import SignalHistoryChart from "@/components/neural/SignalHistoryChart";
 import PatternsPanel, { mapLivePatterns } from "@/components/neural/PatternsPanel";
 import BreakoutRadarPanel from "@/components/neural/BreakoutRadarPanel";
 import ShadowAccuracyCard from "@/components/neural/ShadowAccuracyCard";
+import RangeBandRow from "@/components/neural/RangeBandRow";
 import { useHydrateLocale, useNeuralLocale, type LFn } from "@/components/neural/i18n";
 import { useNeuralLive } from "@/lib/api/neural";
 import {
@@ -522,6 +523,7 @@ export default function NeuralSymbolPage() {
                 <span className="font-mono text-[9px] tracking-[0.2em] text-gray-600 uppercase">{live.active.model}</span>
               </div>
             )}
+            <RangeBandRow symbol={demo.code} active={live.active ?? null} />
             <PositionCalc
               slPoints={slPoints}
               symbolNote={L(

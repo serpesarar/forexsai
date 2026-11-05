@@ -1,0 +1,115 @@
+{
+ "bot": {
+  "n": 931,
+  "brier_p_tp": 0.2664574979114453,
+  "brier_taban": 0.2434235042878025,
+  "tp_out_pay": 0.0053705692803437165,
+  "sl_in_pay": 0.6906552094522019,
+  "kurallar": [
+   {
+    "kural": "TP %90 band\u0131n d\u0131\u015f\u0131nda \u2192 atla",
+    "n": 931,
+    "elenen": 5,
+    "elenen_ortR": 0.5267898203360918,
+    "kalan_ortR": -0.003875218756025589,
+    "hepsi_ortR": -0.001025245398925066,
+    "P_elenen_neg": null,
+    "y1_elenen_ortR": 0.6037113833400453,
+    "y1_kalan_minus_hepsi": -0.0054141433753617935,
+    "y2_elenen_ortR": 0.2191035683202782,
+    "y2_kalan_minus_hepsi": -0.0004321004586825099,
+    "aday": false
+   },
+   {
+    "kural": "SL %50 band\u0131n i\u00e7inde \u2192 atla",
+    "n": 931,
+    "elenen": 643,
+    "elenen_ortR": -0.0038615907103254268,
+    "kalan_ortR": 0.0053072894456250175,
+    "hepsi_ortR": -0.001025245398925066,
+    "P_elenen_neg": 0.712,
+    "y1_elenen_ortR": -0.02177702839694298,
+    "y1_kalan_minus_hepsi": 0.0020701851961217148,
+    "y2_elenen_ortR": 0.009024111796894165,
+    "y2_kalan_minus_hepsi": 0.03720789098120403,
+    "aday": false
+   },
+   {
+    "kural": "dokunma pay\u0131 < ba\u015faba\u015f \u2192 atla",
+    "n": 931,
+    "elenen": 533,
+    "elenen_ortR": 0.016855401424962724,
+    "kalan_ortR": -0.024970935743478334,
+    "hepsi_ortR": -0.001025245398925066,
+    "P_elenen_neg": 0.3536,
+    "y1_elenen_ortR": 0.055214747251350754,
+    "y1_kalan_minus_hepsi": -0.09245812109075785,
+    "y2_elenen_ortR": -0.018595835151049313,
+    "y2_kalan_minus_hepsi": 0.05389436603681137,
+    "aday": false
+   }
+  ],
+  "sembol_ortR": {
+   "GDAXI": -0.025,
+   "NDX": 0.058,
+   "USOIL": -0.096,
+   "XAUUSD": -0.025
+  }
+ },
+ "sinyal": {
+  "n": 3369,
+  "brier_p_tp": 0.16656933808251706,
+  "brier_taban": 0.14464975430744986,
+  "tp_out_pay": 0.40902344909468685,
+  "sl_in_pay": 0.054021964974769965,
+  "kurallar": [
+   {
+    "kural": "TP %90 band\u0131n d\u0131\u015f\u0131nda \u2192 atla",
+    "n": 3369,
+    "elenen": 1378,
+    "elenen_ortR": -0.7750317800546954,
+    "kalan_ortR": -0.5620191834121027,
+    "hepsi_ortR": -0.6491463303914712,
+    "P_elenen_neg": 1.0,
+    "y1_elenen_ortR": -0.8619546871095677,
+    "y1_kalan_minus_hepsi": 0.050851728664815576,
+    "y2_elenen_ortR": -0.69696878363627,
+    "y2_kalan_minus_hepsi": 0.13631467076313925,
+    "aday": true
+   },
+   {
+    "kural": "SL %50 band\u0131n i\u00e7inde \u2192 atla",
+    "n": 3369,
+    "elenen": 182,
+    "elenen_ortR": -0.17563146965848106,
+    "kalan_ortR": -0.6761873422061572,
+    "hepsi_ortR": -0.6491463303914712,
+    "P_elenen_neg": 0.8554,
+    "y1_elenen_ortR": -0.22487778202973638,
+    "y1_kalan_minus_hepsi": -0.02775998333384011,
+    "y2_elenen_ortR": -0.13700691093592787,
+    "y2_kalan_minus_hepsi": -0.02447863589594057,
+    "aday": false
+   },
+   {
+    "kural": "dokunma pay\u0131 < ba\u015faba\u015f \u2192 atla",
+    "n": 3369,
+    "elenen": 1638,
+    "elenen_ortR": -0.6300152982450732,
+    "kalan_ortR": -0.6672495254554804,
+    "hepsi_ortR": -0.6491463303914712,
+    "P_elenen_neg": 1.0,
+    "y1_elenen_ortR": -0.7552912670931098,
+    "y1_kalan_minus_hepsi": -0.023743509405299346,
+    "y2_elenen_ortR": -0.5101275431109304,
+    "y2_kalan_minus_hepsi": -0.00669027273367262,
+    "aday": false
+   }
+  ],
+  "sembol_ortR": {
+   "NDX": -0.076,
+   "USOIL": -0.584,
+   "XAUUSD": -0.819
+  }
+ }
+}

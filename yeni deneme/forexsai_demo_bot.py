@@ -49,6 +49,10 @@ try:                                    # XAU günlük swing (Golden Donchian) G
     import xau_swing_shadow
 except Exception:                       # pragma: no cover
     xau_swing_shadow = None
+try:                                    # Zaman Makinesi bandı × TP/SL (DTS-03/06) — yalnız kayıt; import hatası botu durdurmaz
+    import range_band_bridge
+except Exception:                       # pragma: no cover
+    range_band_bridge = None
 try:                                    # CAPREV portföyü CANLI (kart 6/6, 2026-10-09) — import hatası botu durdurmaz
     import caprev_live
 except Exception:                       # pragma: no cover
@@ -70,6 +74,7 @@ log = logging.getLogger("demo-bot")
 TRADE_CSV = "demo_trades.csv"
 FINGERPRINT_FILE = "entry_fingerprints.jsonl"   # SL forensiği için giriş bağlamı
 _ENTRY_CTX: dict = {}                            # _route_open doldurur, parmak izi okur
+_DAILY_SHADOW: dict = {}                         # DTS-05 gölge günlük fren: işaretlenen gün
 
 # ForexSAI sinyal endpoint'leri (model adı → URL şablonu, cevap alanı)
 PULSE_ENDPOINTS = {
@@ -791,6 +796,8 @@ def open_trade_sr(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                    voters, f"gap={gap:.5f}")
         return
 
+    if not _range_band_ok(scope_key, mt5_symbol, direction, entry, tp, sl, voters):
+        return
     volume = scope_lot(scope_key)
     if bot_signal and bot_signal.get("effective_lot_multiplier"):
         volume = round(volume * float(bot_signal["effective_lot_multiplier"]), 2)
@@ -890,6 +897,8 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
 
     digits = info.digits
     tp, sl, price = round(tp, digits), round(sl, digits), round(price, digits)
+    if not _range_band_ok(scope_key, mt5_symbol, direction, price, tp, sl, voters):
+        return
     volume = scope_lot(scope_key)
 
     # FAZ 3 gölge: "5 bar bekleseydik ne olurdu" (MOD-E adayı; icra değişmez)
@@ -1008,6 +1017,8 @@ def open_trade_v2(scope_key: str, forexsai_sym: str, mt5_symbol: str,
         log.info("[TP-ATR] %s (v2): TP mesafesi %.1f → %.1f", scope_key,
                  tp_now, new_tp)
 
+    if not _range_band_ok(scope_key, mt5_symbol, direction, price, tp, sl, voters):
+        return
     lot_mult = float(bot_signal.get("effective_lot_multiplier") or 1.0)
     volume = round(scope_lot(scope_key) * lot_mult, 2)
     if volume < 0.01:
@@ -1113,6 +1124,29 @@ def _k5b_shadow(scope_key: str, forexsai_sym: str, mt5_symbol: str, direction: s
         log.debug("k5b gölge hatası: %s", exc)
 
 
+def _range_band_ok(scope_key, mt5_symbol, direction, entry, tp, sl, voters) -> bool:
+    """Zaman Makinesi 60 dk bandı × bu işlemin TP/SL'si (kaynak: day-trader-skill trader-timemachine, MIT).
+
+    DTS-03: %90 bant tüm TF/sembollerde kalibre (A). DTS-06: botun işlemlerinde TP/SL'nin banda göre konumu sonucu
+    AYIRT ETMEDİ → varsayılan YALNIZ KAYIT (RANGE_BAND_ENABLED). RANGE_GATE_BLOCK=True: TP %90 bandın dışında → açma
+    (ayrı kanıt olmadan açılmaz). Fail-open: köprü hatası işlemi asla durdurmaz.
+    """
+    if not getattr(config, "RANGE_BAND_ENABLED", True) or range_band_bridge is None:
+        return True
+    rb = range_band_bridge.check(mt5, mt5_symbol, entry, tp, sl, direction)
+    _ENTRY_CTX["range_band"] = rb
+    if not rb:
+        return True
+    note = (f"p5={rb['band_p5']:.6g} p95={rb['band_p95']:.6g} tp_dis={rb.get('tp_outside_p90')} "
+            f"sl_ic={rb.get('sl_inside_p50')} gen%={rb['width_pct']}")
+    _log_trade("RANGE_BAND", scope_key, mt5_symbol, direction, entry, tp, sl, voters, note)
+    if getattr(config, "RANGE_GATE_BLOCK", False) and rb.get("tp_outside_p90"):
+        log.info("%s — RANGE_GATE: TP %%90 bandın dışında (%s) → açılmadı", scope_key, note)
+        _log_trade("RANGE_GATE", scope_key, mt5_symbol, direction, entry, tp, sl, voters, note)
+        return False
+    return True
+
+
 def _log_trade(mode, scope, sym, direction, price, tp, sl, voters, note):
     """İşlemi CSV'ye yaz."""
     new = False
@@ -1151,6 +1185,7 @@ def record_fingerprint(ticket: int, scope_key: str, mt5_symbol: str, direction: 
         "backend_conf": bs.get("adjusted_confidence") or bs.get("confidence"),
         "lot_mult": bs.get("effective_lot_multiplier"),
         "priority": bs.get("priority_score"),
+        "range_band": _ENTRY_CTX.get("range_band"),       # ZM 60 dk bandı × TP/SL (DTS-06, yalnız kayıt)
     }
     if extra:
         rec.update(extra)
@@ -2561,6 +2596,7 @@ def main():
                    ("ENTRY_SCORE_GATE_BLOCK", False), ("ENTRY_SCORE_GATE_CHREV", False),
                    ("VIX_REGIME_MICRO_GATE", True), ("VIX_REGIME_MICRO_BLOCK", False),
                    ("CAPREV_SHADOW_ENABLED", True), ("K5B_SHADOW_ENABLED", True),
+                   ("RANGE_BAND_ENABLED", True), ("RANGE_GATE_BLOCK", False), ("DAILY_LOSS_SHADOW_USD", 1200.0),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
         log.info("  ayar %-30s = %-8s (%s)", _n, _v, _from)
@@ -2634,6 +2670,15 @@ def main():
                     pnl = today_realized_pnl()
                 except Exception as e:
                     pnl = 0.0; log.warning("günlük P/L okunamadı: %s", e)
+                # GÖLGE (DTS-05): 'günlük zarar ≤ 3 × ort. risk (~1.200$) olsa yeni giriş dururdu' — gerçek fren
+                # DEĞİŞMEZ; yalnız günde bir kez işaretlenir (ileri ölçüm). 0 → kapalı.
+                _sh = float(getattr(config, "DAILY_LOSS_SHADOW_USD", 1200.0) or 0)
+                _today = datetime.now(timezone.utc).date().isoformat()
+                if 0 < _sh < config.DAILY_MAX_LOSS and pnl <= -_sh and _DAILY_SHADOW.get("day") != _today:
+                    _DAILY_SHADOW["day"] = _today
+                    log.warning("[GÖLGE] günlük fren %.0f$ olsaydı yeni giriş şimdi durardı (P/L %.0f; gerçek "
+                                "sınır %.0f) — DTS-05", _sh, pnl, config.DAILY_MAX_LOSS)
+                    _log_trade("DAILY_SHADOW", "*", "*", "-", pnl, 0, 0, [], f"esik={_sh:.0f}")
                 if pnl <= -config.DAILY_MAX_LOSS:
                     log.warning("⛔ GÜNLÜK ZARAR LİMİTİ (%.0f ≤ -%.0f) — yeni giriş YOK "
                                 "(yarına kadar)", pnl, config.DAILY_MAX_LOSS)

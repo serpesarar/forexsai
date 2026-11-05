@@ -1,0 +1,69 @@
+{
+ "DTS-04": {
+  "islem": 931,
+  "ort_risk_usd": 401.9239712275519,
+  "risk_usd_cv": 1.659171096013767,
+  "sabit_lot": {
+   "toplam": 13546.25,
+   "gun_sharpe": 0.06631296108366669,
+   "max_dd": -18479.149999999998
+  },
+  "sabit_risk": {
+   "toplam": -383.6378237656461,
+   "gun_sharpe": -0.004407178047571117,
+   "max_dd": -10061.530856418442
+  },
+  "P_sharpe_iyilesir": 0.2736,
+  "calisiyor": false
+ },
+ "DTS-05": {
+  "gunde_3_giris": {
+   "elenen": 717,
+   "elenen_ort_usd": 8.434658298465823,
+   "elenen_ort_R": 0.0028783515407522836,
+   "kalan_toplam": 7498.6,
+   "hepsi_toplam": 13546.249999999998,
+   "y1_elenen_ort_usd": 12.85480446927374,
+   "y1_kalan_minus_hepsi": -4602.02,
+   "y2_elenen_ort_usd": 4.026824512534811,
+   "y2_kalan_minus_hepsi": -1445.6299999999956,
+   "calisiyor": false
+  },
+  "gunluk_zarar_3R": {
+   "elenen": 64,
+   "elenen_ort_usd": -60.640781249999996,
+   "elenen_ort_R": -0.07140603897464115,
+   "kalan_toplam": 17427.26,
+   "hepsi_toplam": 13546.249999999998,
+   "y1_elenen_ort_usd": -17.10652173913044,
+   "y1_kalan_minus_hepsi": 786.899999999999,
+   "y2_elenen_ort_usd": -171.895,
+   "y2_kalan_minus_hepsi": 3094.110000000006,
+   "calisiyor": true
+  },
+  "min_rr_1": {
+   "elenen": 820,
+   "elenen_ort_usd": 17.526073170731706,
+   "elenen_ort_R": 0.008012402477053416,
+   "kalan_toplam": -825.1300000000003,
+   "hepsi_toplam": 13546.249999999998,
+   "y1_elenen_ort_usd": 4.632519893899204,
+   "y1_kalan_minus_hepsi": -1746.4600000000012,
+   "y2_elenen_ort_usd": 28.49869074492099,
+   "y2_kalan_minus_hepsi": -12624.919999999995,
+   "calisiyor": false
+  },
+  "hepsi": {
+   "elenen": 853,
+   "elenen_ort_usd": 15.701922626025791,
+   "elenen_ort_R": -0.005354344639545009,
+   "kalan_toplam": 152.50999999999988,
+   "hepsi_toplam": 13546.249999999998,
+   "y1_elenen_ort_usd": 3.063054187192118,
+   "y1_kalan_minus_hepsi": -1243.600000000001,
+   "y2_elenen_ort_usd": 27.18152125279641,
+   "y2_kalan_minus_hepsi": -12150.139999999994,
+   "calisiyor": false
+  }
+ }
+}

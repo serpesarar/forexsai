@@ -7,9 +7,10 @@
  */
 
 import { useState } from "react";
-import { AlertTriangle, Hourglass, Loader2 } from "lucide-react";
+import { AlertTriangle, BellPlus, Hourglass, Loader2 } from "lucide-react";
 
-import { type TradeSide, useTimeMachine, useTimeMachineCalibration } from "@/lib/api/timeMachine";
+import { useCreatePlanAlerts } from "@/lib/api/alerts";
+import { type TimeMachineResult, type TmTimeframe, type TradeSide, useTimeMachine, useTimeMachineCalibration } from "@/lib/api/timeMachine";
 
 const SYMBOLS = [
   { key: "NDX", label: "NASDAQ 100" },
@@ -19,13 +20,21 @@ const SYMBOLS = [
 ];
 const STOP_ATRS = [0.5, 1, 1.5, 2, 3];
 const TARGET_RS = [1, 1.5, 2, 3];
-const HORIZONS = [
-  { key: 12, label: "1 sa" },
-  { key: 24, label: "2 sa" },
-  { key: 48, label: "4 sa" },
-  { key: 96, label: "8 sa" },
-  { key: 276, label: "1 gün" },
+const TFS: { key: TmTimeframe; label: string }[] = [
+  { key: "5m", label: "5 dk" },
+  { key: "15m", label: "15 dk" },
+  { key: "1h", label: "1 saat" },
 ];
+const TF_MINUTES: Record<TmTimeframe, number> = { "5m": 5, "15m": 15, "1h": 60 };
+/** Ufuk dakika cinsinden; bar sayısı seçilen zaman dilimine göre hesaplanır (API tavanı 287 bar). */
+const HORIZONS = [
+  { key: 60, label: "1 sa" },
+  { key: 120, label: "2 sa" },
+  { key: 240, label: "4 sa" },
+  { key: 480, label: "8 sa" },
+  { key: 1440, label: "1 gün" },
+];
+const MAX_BARS = 287;
 
 function fmtPrice(v: number): string {
   return v >= 1000 ? v.toFixed(1) : v.toFixed(2);
@@ -103,13 +112,34 @@ function CalibrationCard() {
   );
 }
 
+/** Planın stop + hedef + ufuk-sonu zaman alarmlarını kurar (repo trader-alerts `add --from-plan`). */
+function PlanAlertButton({ symbol, data, horizonMin }: { symbol: string; data: TimeMachineResult; horizonMin: number }) {
+  const create = useCreatePlanAlerts();
+  const { side, entry, stop, target } = data.plan;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        onClick={() => create.mutate({ symbol, side, entry, stop, target, horizon_min: horizonMin })}
+        disabled={create.isPending}
+        className="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-200 hover:bg-white/10 disabled:opacity-50"
+      >
+        <BellPlus className="h-4 w-4" /> {create.isPending ? "Kuruluyor…" : "Bu plan için alarm kur (stop · hedef · ufuk sonu)"}
+      </button>
+      {create.isSuccess && <span className="text-xs text-green-300">{create.data.created.length} alarm kuruldu — /alerts</span>}
+      {create.error && <span className="text-xs text-red-300">{(create.error as Error).message}</span>}
+    </div>
+  );
+}
+
 export default function TimeMachinePanel({ initialSymbol = "NDX" }: { initialSymbol?: string }) {
   const [symbol, setSymbol] = useState(initialSymbol);
   const [side, setSide] = useState<TradeSide>("buy");
   const [stopAtr, setStopAtr] = useState(1);
   const [targetR, setTargetR] = useState(1);
-  const [bars, setBars] = useState(48);
-  const { data, isLoading, isFetching, error } = useTimeMachine({ symbol, side, stopAtr, targetR, bars });
+  const [horizonMin, setHorizonMin] = useState(240);
+  const [tf, setTf] = useState<TmTimeframe>("5m");
+  const bars = Math.min(MAX_BARS, Math.max(1, Math.round(horizonMin / TF_MINUTES[tf])));
+  const { data, isLoading, isFetching, error } = useTimeMachine({ symbol, side, stopAtr, targetR, bars, tf });
 
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-xl backdrop-blur sm:p-6">
@@ -127,7 +157,8 @@ export default function TimeMachinePanel({ initialSymbol = "NDX" }: { initialSym
         <Chips<TradeSide> label="Yön" items={[{ key: "buy" as TradeSide, label: "AL" }, { key: "sell" as TradeSide, label: "SAT" }]} value={side} onChange={setSide} />
         <Chips<number> label="Stop (ATR)" items={STOP_ATRS.map((v) => ({ key: v, label: `${v}×` }))} value={stopAtr} onChange={setStopAtr} />
         <Chips<number> label="Hedef" items={TARGET_RS.map((v) => ({ key: v, label: `${v}R` }))} value={targetR} onChange={setTargetR} />
-        <Chips<number> label="Ufuk" items={HORIZONS} value={bars} onChange={setBars} />
+        <Chips<TmTimeframe> label="Zaman dilimi" items={TFS} value={tf} onChange={setTf} />
+        <Chips<number> label="Ufuk" items={HORIZONS} value={horizonMin} onChange={setHorizonMin} />
       </div>
 
       {isLoading && <div className="flex h-40 items-center justify-center text-slate-400"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Simülasyon koşuyor…</div>}
@@ -162,6 +193,7 @@ export default function TimeMachinePanel({ initialSymbol = "NDX" }: { initialSym
               Simülasyon ortalama R {data.mc.avg_R >= 0 ? "+" : ""}{data.mc.avg_R}.
             </p>
           </div>
+          <PlanAlertButton symbol={symbol} data={data} horizonMin={horizonMin} />
           <CalibrationCard />
           <p className="text-[11px] text-slate-500">{data.note}</p>
         </div>

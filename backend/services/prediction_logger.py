@@ -5,6 +5,7 @@ Logs every ML + Claude prediction to database for future learning.
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 from utils.safe_supabase import safe_get_data, safe_get_error
 from typing import Any, Dict, List, Optional, Tuple
@@ -681,6 +682,12 @@ async def log_smc_prediction(
         except Exception as _ladder_err:
             logger.debug("smc atr ladder skipped (%s): %s", symbol, _ladder_err)
 
+        # Zaman Makinesi 60 dk bandı × TP1/SL etiketi + gölge verdikti (DTS-06; asla bloklamaz)
+        _rb = _range_band_tag(symbol, direction, parsed_entry_price, targets_dict, factors)
+        if _rb:
+            factors["shadow_gates"] = [_rb["gate"]]
+            factors["shadow_gate_reasons"] = {_rb["gate"]: _rb["reason"]}
+
         record = {
             "symbol": symbol,
             "timeframe": normalized_timeframe,
@@ -925,6 +932,38 @@ def _atr_ladder_floor(symbol: str, snap: Any, timeframe: str) -> Optional[float]
     atr = _snapshot_atr_distance(snap, timeframe)
     return mult * atr if (atr and mult > 0) else None
 
+
+
+def _range_band_tag(symbol: str, direction: str, entry_price: Any, targets: Dict[str, Any],
+                    factors: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Zaman Makinesi 60 dk bandı × TP1/SL etiketi (kaynak yöntem: day-trader-skill trader-timemachine, MIT).
+
+    DTS-03: %90 bant kalibre (A). DTS-06: panel sinyallerinde 'TP1 %90 bandın dışında' zayıf olumsuz işaret (C;
+    USOIL +0,14R, XAU +0,07R fark) → YALNIZ etiket + gölge verdikti (RANGE_TP_GATE_ENABLED); asla bloklamaz.
+    Bloklamayan okuma: bant önbellekte yoksa arka planda ısınır, bu sinyal etiketsiz geçer. Fail-open.
+    Dönüş: gölge verdikti (TP1 dışarıdaysa) veya None.
+    """
+    try:
+        from services.time_machine_service import level_check, peek_range_band
+        band = peek_range_band(symbol)
+        tp1 = targets.get("TP1") if isinstance(targets, dict) else None
+        if not band or not entry_price or not tp1 or direction not in ("BUY", "SELL"):
+            return None
+        sl = targets.get("SL")
+        lc = level_check(band, float(entry_price), float(tp1), float(sl) if sl else None,
+                         "buy" if direction == "BUY" else "sell")
+        factors["tm_band60"] = {"p5": round(lc["band_p5"], 5), "p95": round(lc["band_p95"], 5),
+                                "w_pct": round(float(band["width_pct"]), 4)}
+        factors["tp1_outside_p90"] = lc.get("tp_outside_p90")
+        if "sl_inside_p50" in lc:
+            factors["sl_inside_p50"] = lc["sl_inside_p50"]
+        if lc.get("tp_outside_p90") and os.getenv("RANGE_TP_GATE_ENABLED", "1") != "0":
+            return {"gate": "range_tp_gate", "symbol": symbol, "direction": direction,
+                    "reason": "TP1 60 dk %90 fiyat bandının dışında (DTS-06, C — gölge)",
+                    "at": datetime.now(timezone.utc).isoformat()}
+    except Exception as e:  # fail-open
+        logger.debug("range band tag skipped (%s): %s", symbol, e)
+    return None
 
 def _atr_ladder_targets(
     symbol: str,
@@ -1313,6 +1352,9 @@ async def log_prediction(
         # kapılar. Sinyalin sonucu geldiğinde Gölge Modu paneli bu listeyi
         # sonuçla eşleştirip kapının AÇILMASININ ne kazandıracağını ölçer.
         # Yalnız adları saklanır (sebep metni ayrı alanda) — JSONB şişmesin.
+        _rb = _range_band_tag(symbol, direction, entry_price, targets_dict, factors)
+        if _rb:
+            shadow_gate_verdicts = list(shadow_gate_verdicts) + [_rb]
         if shadow_gate_verdicts:
             factors["shadow_gates"] = [v["gate"] for v in shadow_gate_verdicts]
             factors["shadow_gate_reasons"] = {

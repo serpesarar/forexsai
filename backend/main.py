@@ -356,6 +356,19 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Shadow Trade Tracker hatası: {e}")
 
+    # 4.8 FİYAT ALARMLARI (default açık: PRICE_ALERTS_ENABLED=0 ile kapat)
+    #     price_alerts tablosundaki aktif alarmları 60 sn'de bir taze MT5 fiyatıyla
+    #     değerlendirir; tetik atomik (çift backend'de çift bildirim yok), Telegram'a yazar.
+    try:
+        if os.getenv("PRICE_ALERTS_ENABLED", "1") == "1":
+            from services.price_alert_service import alert_loop as price_alert_loop
+            asyncio.create_task(price_alert_loop())
+            print("✅ Fiyat alarmları başlatıldı (60s)")
+        else:
+            print("⏸️ Fiyat alarmları kapalı (PRICE_ALERTS_ENABLED=1 ile açılır)")
+    except Exception as e:
+        print(f"❌ Fiyat alarmları hatası: {e}")
+
     # 5. Real-time prices come from the MT5 -> Redis bridge (DataHub ingest).
     #    No external market-data vendor WebSocket is used.
 
@@ -659,6 +672,7 @@ router_module_names = [
     "shadow_tracker_router",
     "candle_similarity_router",
     "time_machine_router",
+    "price_alert_router",
 ]
 
 for module_name in router_module_names:

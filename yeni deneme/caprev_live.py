@@ -266,6 +266,11 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
     ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
     rec = {"kind": "entry", "ok": ok, "retcode": getattr(res, "retcode", None), "ask": ask, "sl": sl,
            "lot": lot, "exit_t": exit_t, **base}
+    try:                                            # ZM 60 dk bandı × SL (yalnız kayıt, DTS-06; fail-open)
+        import range_band_bridge
+        rec["range_band"] = range_band_bridge.check(mt5, sym, ask, None, sl, "BUY")
+    except Exception:
+        pass
     if ok:
         ticket = int(getattr(res, "order", 0))
         rec["ticket"] = ticket
