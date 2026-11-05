@@ -41,6 +41,10 @@ try:                                    # CAPREV-2 / K5b GÖLGE — emir gönder
     import caprev_shadow
 except Exception:                       # pragma: no cover
     caprev_shadow = None
+try:                                    # NDX ORB × VIX GÖLGE (HB-03 C1) — emir göndermez; import hatası botu durdurmaz
+    import orb_vix_shadow
+except Exception:                       # pragma: no cover
+    orb_vix_shadow = None
 try:                                    # XAU 1h yeni-tepe BUY GÖLGE (MK-04) — emir göndermez; import hatası botu durdurmaz
     import xau_shadow
 except Exception:                       # pragma: no cover
@@ -2596,6 +2600,7 @@ def main():
                    ("ENTRY_SCORE_GATE_BLOCK", False), ("ENTRY_SCORE_GATE_CHREV", False),
                    ("VIX_REGIME_MICRO_GATE", True), ("VIX_REGIME_MICRO_BLOCK", False),
                    ("CAPREV_SHADOW_ENABLED", True), ("K5B_SHADOW_ENABLED", True),
+                   ("ORB_VIX_SHADOW_ENABLED", True),
                    ("RANGE_BAND_ENABLED", True), ("RANGE_GATE_BLOCK", False), ("DAILY_LOSS_SHADOW_USD", 1200.0),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
@@ -2663,6 +2668,14 @@ def main():
                     decider_early_cut.manage(mt5, log, resolve_symbol)
                 except Exception as e:
                     log.warning("erken kesme hatası: %s", e)
+
+            # ── NDX ORB × VIX GÖLGE (HB-03 C1, kart go_live_cards/ndx_orb_vix.json) — EMİR YOK. Fren 'continue'undan
+            #    ÖNCE: fren devredeyken de ölçüm sürmeli. Kapatma: config.ORB_VIX_SHADOW_ENABLED = False.
+            if orb_vix_shadow is not None and getattr(config, "ORB_VIX_SHADOW_ENABLED", True):
+                try:
+                    orb_vix_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset)
+                except Exception as e:
+                    log.warning("orb×vix gölge hatası: %s", e)
 
             # ── Global risk geçidi (günlük zarar freni) ──
             if config.DAILY_MAX_LOSS and config.DAILY_MAX_LOSS > 0:

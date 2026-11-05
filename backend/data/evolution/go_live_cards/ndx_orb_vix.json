@@ -1,0 +1,91 @@
+{
+  "scope": "ndx_orb_vix",
+  "aciklama": "NDX 09:30 ET ilk 15 dk aralığı; önceki gün VIX ≥ 18,4; 5m kapanış aralık tepesinin üstünde → sonraki bar açılışı BUY; stop aralık ortası, hedef 2R, 15:55 ET zaman çıkışı, 15:30 sonrası yeni giriş yok, günde ≤1",
+  "tarih": "2026-11-05T00:00:00",
+  "sembol": "NAS100",
+  "spread_pt": 1.3,
+  "ana_olcum": "Dukascopy 5m 2024-01→2026-11 (2026-01-01→02-08 veri yok)",
+  "olay": 152,
+  "aralik": [
+    "2024-04-16",
+    "2026-11-03"
+  ],
+  "wr": 48.7,
+  "ort_R": 0.295,
+  "toplam_R": 44.8,
+  "en_iyi_5_haric_toplam": 34.8,
+  "bootstrap_%95": [
+    0.083,
+    0.511
+  ],
+  "yillar_pozitif": "3/3 (5m); havuz 10/10",
+  "checks": {
+    "1_hacim": {
+      "deger": 152,
+      "esik": "≥150",
+      "gecti": true
+    },
+    "2_beklenti": {
+      "deger": "ortR=+0.295 P(EV>0)=%99.7",
+      "esik": "ortR>0 ve P≥%90",
+      "gecti": true
+    },
+    "3_kararlilik": {
+      "deger": "ilk=+0.399 son=+0.190",
+      "esik": "ikisi de ≥0",
+      "gecti": true
+    },
+    "4_surtunme": {
+      "deger": "spread×1,5 +0,292; 3,4 pt +0,267",
+      "esik": ">0",
+      "gecti": true
+    },
+    "5_icra": {
+      "deger": "kapanış-girişi +0,323 vs gerçek +0,295",
+      "esik": "fark < 0,5×|gerçek ortR|",
+      "gecti": true
+    },
+    "6_sira_bagimli": {
+      "deger": "günde ≤1, aynı anda tek pozisyon yapısal: +0,295",
+      "esik": ">0",
+      "gecti": true
+    }
+  },
+  "bagimsiz": {
+    "1h_2016_2021": {
+      "n": 226,
+      "ort_R": 0.096,
+      "P": 0.994,
+      "bp": 4.93
+    },
+    "30m_2021_2023": {
+      "n": 227,
+      "ort_R": 0.199,
+      "P": 0.998,
+      "bp": 9.44
+    },
+    "broker_onbellek_2026": {
+      "n": 55,
+      "ort_R": 0.083
+    },
+    "havuz_10_yil": {
+      "n": 605,
+      "ort_R": 0.185,
+      "bp": 8.81
+    },
+    "havuz_vix_alti": {
+      "n": 859,
+      "ort_R": 0.004
+    },
+    "vix_etiket_perm_p": 0.0004
+  },
+  "uyarilar": [
+    "2026 zayıf: 5m +0,098R (P %68,5), 15m −0,064R, 30m 2024-26 ≈0",
+    "Eşleşik gün tabanı +0,057R P %85 (ölçüt %90'ı tutmadı; gelecek bilgili taban), bilgisi temiz tabanlar p 0,0012 / P %99,8",
+    "DAX'a aktarılmıyor (−0,055R)",
+    "Saf MT5 2026-05→08 n=13 −0,172R (küçük örnek)",
+    "VIX<18,4'te işlem yok: 2026-Q3/Q4 yalnız 9 işlem"
+  ],
+  "verdikt": "LIVE",
+  "not": "Kart 6/6. Canlı/lot kararı kullanıcıda; öneri önce gölge."
+}
