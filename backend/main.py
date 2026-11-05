@@ -398,6 +398,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Meta-Engine başlatılamadı: {e}")
 
+    # Çok kaynaklı haber beslemesi (tek yazar: NEWSFEED_ENABLED=1 yalnız bir süreçte; fail-open)
+    try:
+        from services.newsfeed.engine import start_newsfeed
+        await start_newsfeed()
+    except Exception as e:
+        print(f"Failed to start newsfeed: {e}")
+
     # 6. Background scheduler (diğer görevler için)
     try:
         from services.background_scheduler import start_scheduler
@@ -453,6 +460,12 @@ async def lifespan(app: FastAPI):
         print("DataHub stopped")
     except Exception as e:
         print(f"Error stopping DataHub: {e}")
+
+    try:
+        from services.newsfeed.engine import stop_newsfeed
+        await stop_newsfeed()
+    except Exception as e:
+        print(f"Error stopping newsfeed: {e}")
 
     try:
         from services.background_scheduler import stop_scheduler
@@ -648,6 +661,7 @@ router_module_names = [
     "news_correlation",
     "market_events",
     "rss_router",
+    "newsfeed_router",
     "prices",
     "economic_calendar_router",
     "meta_engine_router",

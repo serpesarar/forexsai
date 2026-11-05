@@ -172,7 +172,7 @@ Sen ForexSAI projesinin **Lead Architect & Senior Full-Stack Developer**'ısın.
 - **ML:** LightGBM (joblib), 150+ feature
 - **Data Source (Fiyat/Mum):** MetaTrader 5 Bridge → Redis (pub/sub + streams) → DataHub (tek kaynak)
 - **Data Source (Makro):** yfinance — DXY, VIX, US10Y, EURUSD, USDTRY (`macro_data_service`, saatlik)
-- **Haber:** Yakında Telegram haber dedektörü bağlanacak (şu an RSS aggregator). Harici haber vendor'ları sistemden tamamen kaldırıldı (2026-06).
+- **Haber:** `services/newsfeed` çok kaynaklı motor (2026-11-05, `NEWSFEED_ENABLED=1`). Eski `rss_aggregator` kapalı; `enriched_news`e 2026-06-28 sonrası yazım yoktu.
 - **Veri Modu:** `MARKET_DATA_SOURCE=mt5_redis` (.env)
 - **Redis Host:** Railway (uzak sunucu)
 - **Deployment:** Railway (backend), Vercel/Netlify (frontend)
@@ -370,6 +370,21 @@ TRANSITION:         ml=0.40, pulse1=0.20, pulse2=0.25, pulse3=0.15, emel=0.25, s
 | `GET /api/learning/smc-performance` | SMC performansı |
 | `GET /api/whale/dashboard` | Whale Tracker |
 | `GET /api/cot/history/{symbol}` | COT rapor geçmişi |
+
+### Haber Akışı — Çok Kaynaklı Motor (2026-11-05)
+| Endpoint | Açıklama |
+|----------|----------|
+| `GET /api/newsfeed/latest?symbol=&min_relevance=&limit=` | En yeni hikâyeler; yapay zekâ beklemez. |
+| `GET /api/newsfeed/sources` | Kaynak hız karnesi: yarış, ilk gelme, düzeltilmiş gecikme, sağlık, sorgu aralığı. |
+| `GET /api/newsfeed/status` / `stream` | Motor sağlığı / canlı SSE. |
+| `GET /api/newsfeed/repo-scorecard` | 40 GitHub deposunun karnesi. |
+
+- Kod: `services/newsfeed/` (`catalog` kaynaklar, `adapters` ayrıştırıcılar, `dedup` ilk gören kazanır, `classifier` kural, `scoreboard` ölçüm + aralık, `store` yazım, `engine` döngüler). Panel `/haber-akisi`. Test `backend/tests/test_newsfeed.py`.
+- **Tek yazar:** `NEWSFEED_ENABLED=1` yalnız bir süreçte. Tablolar `news_stories`, `news_sightings` (migration `20261105_newsfeed.sql`, 90 gün saklama); ilgi puanı ≥ 50 olanlar yazılır. Tablo yoksa bellekte çalışır. Köprü `NEWSFEED_LEGACY_BRIDGE=1` eski panellerin okuduğu `enriched_news`i de besler (`ai_model=newsfeed_rule`, `impacts=[]`).
+- **Ölçüm tuzakları:** ilk sorgu `seeded`, yarışa girmez; gecikme sorgu beklemesinden arındırılır; `NEWSFEED_ADAPTIVE=0` ile eşit kıyas. Kaynak ≥ 30 yarış görmeden aralığı değişmez.
+- **Yön üretmez, bilinçli:** HB-01'de AI yön etiketi 0/28, 5 dk'ya kadar hız farkı anlamsız (Defter §2.24). Haber sinyal kapısına bağlanmadı.
+- **Truth Social:** açık uç 429/403 verebilir; tarayıcı taklidiyle koruma aşılmaz, yedek `trumpstruth_rss`, kurumsal seçenek Truth API.
+- Anahtar gelince kendiliğinden açılır: `FINNHUB_API_KEY`, `ALPACA_API_KEY`+`ALPACA_SECRET_KEY`, `BENZINGA_API_KEY` (canlı bağlantıları henüz doğrulanmadı).
 
 ### Fakeout Radar — Sahte Kırılım (2026-07-16/17, 4 sembol)
 **ÇOK-SEMBOL (2026-07-17):** aynı lab protokolü DAX/XAU/USOIL'e koşuldu; 4 sembolün 4'ü OOS %70/%70+ geçti (hepsi 5m + LGBM + karar kırılımdan +1 bar sonra):
@@ -792,6 +807,14 @@ TQ_SESSION_EXCEPTION=1            # NDX 18 UTC hard-bloğuna altın-istisna:
 SHADOW_TRACKER_ENABLED=1          # %60+ formasyon + fakeout dedektör çağrıları için sızıntısız paper-trade doğrulaması
 SHADOW_TRACKER_MIN_CONF=60        # sanal işlem açma güven eşiği (%)
 SHADOW_TRACKER_INTERVAL_SECONDS=120
+
+# ─── 2026-11-05 çok kaynaklı haber motoru (services/newsfeed) ───
+NEWSFEED_ENABLED=0                # 1 → motor bu süreçte çalışır; TEK süreçte aç (Railway)
+NEWSFEED_ADAPTIVE=1               # ölçülen hıza göre sorgu aralığı; 0 → eşit kıyas
+NEWSFEED_LEGACY_BRIDGE=1          # enriched_news'i de besle (eski paneller)
+NEWSFEED_RETENTION_DAYS=90        # news_stories/news_sightings saklama süresi
+NEWSFEED_DISABLED_SOURCES=        # virgüllü kaynak id'leri
+# FINNHUB_API_KEY= ALPACA_API_KEY= ALPACA_SECRET_KEY= BENZINGA_API_KEY=  (tanımlıysa ilgili kaynak açılır)
 
 # ─── 2026-11-04 day-trader-skill uyarlaması (DTS-01…06, research/dts_uyarlama_20261104/) ───
 # Zaman Makinesi 60 dk %90 fiyat bandı = A (33/33 hücre kalibre); YÖN SÖYLEMEZ.

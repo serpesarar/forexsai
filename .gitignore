@@ -74,3 +74,10 @@ backend/data/candle_history/
 
 # Pine motoru — indirilen TradingView kaynakları ve çalıştırma çıktıları (büyük, yeniden üretilebilir)
 research/pine_motoru_20261026/data/
+
+# 2026-11-04 GitHub haber/şekil adayları: indirilen yabancı kod, repoya girmez
+research/github_haber_sekil_20261104/repos/
+research/github_haber_sekil_20261104/degerlendirme/pilot/
+research/haber_olay_20261105/data/
+research/mum_repo_adaylari_20261105/.venv/
+research/mum_repo_adaylari_20261105/data/
