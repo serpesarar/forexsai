@@ -4366,5 +4366,27 @@
     "source": "session",
     "created_at": "2026-11-05T00:41:31.389784+00:00",
     "updated_at": "2026-11-05T00:41:31.389786+00:00"
+  },
+  {
+    "id": "bl_3d5a7dbad7",
+    "title": "Backend CALENDAR_GATE sentetik takvimle çalışıyor",
+    "detail": "economic_calendar_service._generate_today_events sabit kodlu haftalık program + DST'siz UTC saatleri; CALENDAR_GATE_ENABLED=1 panel pulse/smc/emel sinyallerini bu UYDURMA olayların ±30 dk'sında blokluyor (K6, kanıt yok). Seçenek: decider'ın event_calendar.py + memory/event_dates.json kaynağına bağla ya da kapıyı kapat — karar kullanıcıda.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T01:24:53.881667+00:00",
+    "updated_at": "2026-11-05T01:24:53.881798+00:00"
+  },
+  {
+    "id": "bl_9482eff4bf",
+    "title": "Haber hattı: Telegram haber dedektörü hiç yazılmadı",
+    "detail": "CLAUDE.md 'yakında Telegram haber dedektörü' diyor; kodda yok. rss_aggregator RSS_AGGREGATION_ENABLED=False sabit. Haber bağlanacaksa önce olay zaman damgası + sembol eşlemeli kayıt tablosu, sonra ön-kayıtlı haber-sonrası etki ölçümü (DTS bandı haber anında genişliyor mu).",
+    "category": "idea",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T01:24:53.884411+00:00",
+    "updated_at": "2026-11-05T01:24:53.884415+00:00"
   }
 ]

@@ -91,3 +91,36 @@ Kırılımın katkısı sayılması için eşli fark > 0, P ≥ 0,90 ve iki yar�
   ort. R'si, iki yarıda da, ≥ 30 elenen işlem. Aksi hâlde bant yalnız bilgi/etiket olarak bağlanır.
 - **RSI<30 örtüşme:** DTS-01 NDX 4h oversold olaylarını önceki işlem günü VIX kapanışı ≥ 18,4 ve "stres günü"
   (önceki gün ≤ −%1,5 veya 5 gün ≤ −%4) içi/dışı ayır; dış kümede fazla getiri > 0 ve P ≥ 0,90 → bot GÖLGE adayı.
+
+---
+
+## Ek-3 — DTS-07: Zaman Makinesi seans / saat / gün kırılımı (2026-11-05, SONUÇLAR GÖRÜLMEDEN yazıldı)
+
+**Soru (kullanıcı):** Bant ve yön meyli genelde çalışmasa da belirli seans, saat veya günlerde çalışıyor mu? Ayrıca
+"bandın iki ucu iki senaryo mu, fiyat birine gidiyor mu?"
+
+**Ön koşul — eksen denetimi (E78, `eksen_denetimi.py`, `eksen_denetimi_5m.py`):** beklenen olay barı (NDX 09:30 ET,
+DAX 09:00 Berlin, USOIL Çrş 10:30 ET, XAU 08:30 ET) ayın en oynak ilk 3 barında mı. NDX 15m 40/44, DAX 15m 42/48 ay
+temiz; XAU 15m 26/43, USOIL 15m 17/43 (kış −60 / yaz +60 deseni = DST hatası), 5m'de de XAU 6/16, USOIL 2/16.
+**Karar:** DTS-07 yalnız NDX ve DAX 15m, yalnız `temiz=True` aylar. XAU/USOIL seans kırılımı "ölçülemedi" (araştırma
+arşivi; canlı ZM broker ofsetini ölçtüğü için etkilenmez).
+
+**Sorgular:** temiz aylarda her 15m bar (yoğun ızgara — E35'e karşı saat dengeli), ısınma 65 broker günü, ufuk
+h=4 (60 dk) ve h=16 (240 dk); ufuk gerçek süresi > 3×h×15 dk ise atla. Karar anı = barın kapanışı (ts+15 dk).
+ZM: `time_machine_service` ile aynı havuz (sorgu gününden önceki son 60 dolu seans, aynı slot, ±2 slot jitter,
+boş slotta en yakın dolu slot), 300 tekrar (vektörleştirilmiş eşdeğer). Çıktılar: uç-kapanış p5/p25/p75/p95 ve
+p_up = P(sim kapanış > giriş).
+
+**Kesimler (önceden sabit, UTC karar saati):** S1 seans {Asya 00–07, Avrupa 07–13, ABD 13–20, Geç 20–24};
+S2 UTC saati (24); S3 haftanın günü (Pzt–Cum); S4 seans×gün (20). Sembol × ufuk başına 53, toplam 212 kesim.
+
+**Ölçüler ve geçme ölçütleri:**
+- **M1 aralık:** kesim içi %90 kapsama ∈ [85, 95] → "bu seansta bant kalibre". Sayı raporlanır.
+- **M1b uç senaryo (betimsel):** ufuk boyunca fiyat p95'e VEYA p5'e dokundu mu; ikisine birden mi; kapanışta dışarıda mı.
+- **M2 yön:** kural p_up ≥ 0,55 → AL, ≤ 0,45 → SAT, arası işlem yok; getiri ufuk sonu kapanışına, spread düşülmüş bp.
+  Bir kesim YÖNDE geçer ⇔ hepsi: (a) işlem ≥ 150 ve ayrı gün ≥ 100; (b) ort. net bp > 0 ve ay-blok bootstrap
+  P(>0) ≥ 0,95; (c) iki kronolojik yarı > 0; (d) 2. yarıda kural > kesimin drift tabanı (1. yarıda kesimin ortalama
+  getiri işaretiyle hep aynı yön); (e) Brier(p_up) 2. yarıda ≤ kesimin 1. yarı yukarı-oranı tabanı; (f) 212 kesim
+  üzerinden Holm (α 0,05, tek yönlü p = 1 − P).
+- **Hüküm:** hiçbir kesim M2'yi geçmezse "seans/saat/gün koşullu yön" X. Geçen olursa C (ileri gölge gerekir; GF-02
+  saat takviminin dönemler arası taşınmadığını göstermişti).
