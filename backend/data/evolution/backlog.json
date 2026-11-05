@@ -4322,5 +4322,49 @@
     "source": "session",
     "created_at": "2026-11-04T20:25:56.233168+00:00",
     "updated_at": "2026-11-04T20:25:56.233314+00:00"
+  },
+  {
+    "id": "bl_f5b92de671",
+    "title": "range_tp_gate gölge karnesini ölç",
+    "detail": "panel sinyallerinde factors.tp1_outside_p90 etiketi ≥4 hafta birikince sembol içi (E91) + iki yarı ile yeniden ölç; tutarsa backend kapısı adayı (kart gerekir). Bot RANGE_GATE_BLOCK=False kalmalı (DTS-06 botta X).",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T00:41:31.382152+00:00",
+    "updated_at": "2026-11-05T00:41:31.382293+00:00"
+  },
+  {
+    "id": "bl_44078c9a6f",
+    "title": "Günlük zarar 3R freni kararı (kullanıcıda)",
+    "detail": "DTS-05: 1.200$ fren elenen 64 işlem ort −60,6$, toplam 13,5k→17,4k, iki yarıda da iyileşme ama E19/E89 üst sınır. Bot DAILY_SHADOW logu ≥2-3 hafta biriksin; sonra DAILY_MAX_LOSS'u düşürme kararı.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T00:41:31.385127+00:00",
+    "updated_at": "2026-11-05T00:41:31.385132+00:00"
+  },
+  {
+    "id": "bl_52b2e2946b",
+    "title": "Fiyat alarmı canlı Telegram uçtan uca sınaması",
+    "detail": "Railway'de deploy sonrası /alerts'tan gerçek fiyat alarmı kur, 60s döngünün tetikleyip Telegram'a düştüğünü gözle doğrula (yerelde taze MT5 fiyatı yoktu; time alarmı + DB atomik tetik sınandı).",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T00:41:31.387477+00:00",
+    "updated_at": "2026-11-05T00:41:31.387480+00:00"
+  },
+  {
+    "id": "bl_38a1e68cd8",
+    "title": "Kutuda RANGE_BAND ve range_forecast doğrulaması",
+    "detail": "bot restart'ı sonrası demo_bot.log'da 'ayar RANGE_BAND_ENABLED' + RANGE_BAND satırları, decider journal'ında range_forecast alanı (remote.py sh).",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T00:41:31.389784+00:00",
+    "updated_at": "2026-11-05T00:41:31.389786+00:00"
   }
 ]
