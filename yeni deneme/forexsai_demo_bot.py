@@ -45,6 +45,10 @@ try:                                    # NDX ORB × VIX GÖLGE (HB-03 C1) — e
     import orb_vix_shadow
 except Exception:                       # pragma: no cover
     orb_vix_shadow = None
+try:                                    # NDX RSI2 C3b/C3 GÖLGE (TR-C3b) — emir göndermez; import hatası botu durdurmaz
+    import c3b_shadow
+except Exception:                       # pragma: no cover
+    c3b_shadow = None
 try:                                    # XAU 1h yeni-tepe BUY GÖLGE (MK-04) — emir göndermez; import hatası botu durdurmaz
     import xau_shadow
 except Exception:                       # pragma: no cover
@@ -2600,7 +2604,7 @@ def main():
                    ("ENTRY_SCORE_GATE_BLOCK", False), ("ENTRY_SCORE_GATE_CHREV", False),
                    ("VIX_REGIME_MICRO_GATE", True), ("VIX_REGIME_MICRO_BLOCK", False),
                    ("CAPREV_SHADOW_ENABLED", True), ("K5B_SHADOW_ENABLED", True),
-                   ("ORB_VIX_SHADOW_ENABLED", True),
+                   ("ORB_VIX_SHADOW_ENABLED", True), ("C3B_SHADOW_ENABLED", True),
                    ("RANGE_BAND_ENABLED", True), ("RANGE_GATE_BLOCK", False), ("DAILY_LOSS_SHADOW_USD", 1200.0),
                    ("LIVE_TRADING", False)):
         _v, _from = _src(_n, _d)
@@ -2676,6 +2680,14 @@ def main():
                     orb_vix_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset)
                 except Exception as e:
                     log.warning("orb×vix gölge hatası: %s", e)
+
+            # ── NDX RSI2 C3b/C3 GÖLGE (kart go_live_cards/ndx_c3b_rsi2_upexit.json) — EMİR YOK. Fren 'continue'undan
+            #    ÖNCE: fren devredeyken de ölçüm sürmeli. Kapatma: config.C3B_SHADOW_ENABLED = False.
+            if c3b_shadow is not None and getattr(config, "C3B_SHADOW_ENABLED", True):
+                try:
+                    c3b_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset)
+                except Exception as e:
+                    log.warning("c3b gölge hatası: %s", e)
 
             # ── Global risk geçidi (günlük zarar freni) ──
             if config.DAILY_MAX_LOSS and config.DAILY_MAX_LOSS > 0:

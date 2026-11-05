@@ -72,6 +72,8 @@ yeni deneme/caprev_state.json
 yeni deneme/caprev_state.tmp
 yeni deneme/orb_vix_state.json
 yeni deneme/orb_vix_state.tmp
+yeni deneme/c3b_state.json
+yeni deneme/c3b_state.tmp
 backend/data/candle_history/
 
 # Pine motoru — indirilen TradingView kaynakları ve çalıştırma çıktıları (büyük, yeniden üretilebilir)
@@ -84,3 +86,4 @@ research/haber_olay_20261105/data/
 research/mum_repo_adaylari_20261105/.venv/
 research/mum_repo_adaylari_20261105/data/
 research/haber_derin_20261105/data/
+research/c1_turev_20261105/data/

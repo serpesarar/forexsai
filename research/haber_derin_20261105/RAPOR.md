@@ -1,6 +1,6 @@
 # HB-03 — Haber neden etkilemiyor gibi görünüyordu, kâr eden yapı var mı? (2026-11-05)
 
-Ön kayıt: `PROTOCOL.md` + EK-1…9. Makro sürpriz aileleri (S1–S6, S8, S11) FinancialJuice arşivi inince eklenecek; bu sürüm ara rapordur.
+Ön kayıt: `PROTOCOL.md` + EK-1…9. Makro sürpriz ve tick hız ölçümü eklendi (§1b).
 
 ## 1. Haber fiyatı etkiliyor mu?
 Evet, gerçek olaylar güçlü etkiliyor; eski test hepsini tek "haber" türü saydığı için göremedi.
@@ -18,6 +18,11 @@ Ters sorgu (büyük hareketlerde en yakın ilgili başlık): dağılım plaseboy
 
 **Üç neden:** (1) Başlıkların çoğu bilgi taşımıyor; yorum, tekrar, açıklama. (2) Gerçek olayda hareket ilk dakikada; 1 dk sonra girene yön bilgisi kalmıyor (CPI/NFP 5 dk tepkisine uy: 15/60/240 dk hepsi negatif). (3) Metinden yön çıkmıyor: Truth metin yönü P<%95, 240 dk'da işaret dönüyor. Oynaklık bilgisi var, yön bilgisi yok.
 
+## 1b. Cevap: haber geç geliyor, değer ilk 1-2 saniyede
+FinancialJuice başlığı resmi saatten p50 47 sn, p90 150 sn sonra. Büyük sürprizde 1. dk 15 bp. Enflasyon (n=9, Duka 2025 tick, gerçek bid/ask, 60 sn çıkış): d≤1 sn +25 bp, d=2 +4,4, d=10 +3,3, d=47 −2,7. Büyüme verisinde (n=18) yön yok. Küçük örneklem, ama 1 dk bar sonucuyla tutarlı. 1 dk sonra girene yön bilgisi kalmaz: S1 NDX n=110 tüm ufuk ≤0.
+
+Canlı pilot (10 sa, 37 kaynak): FJ RSS ilk %62; FJ Telegram düz. 42 sn, Market Feed 47 sn geride; yayın→görülme ≈ 40 sn. Tek gece, yalnız 3 kaynak ≥100 yarış. Ücretsiz hiçbir kaynak 1-2 sn sınırına yaklaşmıyor.
+
 ## 2. Haber ailelerinin hükmü (KEŞİF 2024-25, NDX)
 | Aile | Sonuç | Hüküm |
 |---|---|---|
@@ -28,6 +33,9 @@ Ters sorgu (büyük hareketlerde en yakın ilgili başlık): dağılım plaseboy
 | S16 Çift yönlü emir | P < %85 | X |
 | S14 Hafta sonu boşluğu | keşif +29 bp, 2016-23 −14 bp | X |
 | S18/S19 Bilanço tepkisi | S19 yarılar +18/−73 | X |
+| S1-S5 Makro sürpriz (2025-26) | NDX S1 ≤0; S4 +9 bp P %94; XAU, USOIL tutarsız | X |
+| S6 Haberli şok devamı | keşif +7,15 bp, maxT 0,027 tüm ölçütler; **2026 −2,48 / −0,86 bp** | **X** |
+| S8 Konu sözlüğü (Walter) | en iyi P %87 | X |
 | **S13b Bilanço gecesi** | 2012-25 +16,7 bp vs komşu +3,9, plasebo p 0,0016, 12/14 yıl +; **2026 −14 / −30 bp (17 gece)** | **C** |
 
 ## 3. Bulunan kenar: NDX açılış aralığı kırılımı × VIX (C1)

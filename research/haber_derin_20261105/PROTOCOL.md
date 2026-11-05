@@ -111,3 +111,23 @@ Sınama: yıl yıl 5m 2024/25/26, 15m 2023-26, 30m 2021-26. Geçer: 30m 2021-23 
 Kural sabit. (i) 2. KURAL 6 ölçüt 5m 2024-26. (ii) NDX 1h 2016-06→2021-06, ilk tam saat OR (görülmemiş). (iii) Broker verisi bars_used 2026 (MT5/önbellek). (iv) Aktarım: DAX 15m, XAU/USOIL yalnız rapor (E92 ekseni XAU/USOIL'de bozuk). (v) Sıra/DD: yıllık işlem, en kötü seri, en büyük düşüş R, gün başına ≤1 işlem. (vi) bot_trades ile çakışma: aynı gün aynı yön canlı kaynaklar. Hiçbiri kuralı değiştirmez; (ii) negatif çıkarsa hüküm C'ye iner.
 
 ## EK-10 (2026-11-05) Makro aileleri kodu (`makro.py`), sonuç görülmeden; KEŞİF = 2025 (FJ arşivi 2025'te başlıyor), yalnız NDX. Öncül işaret: sıcak enflasyon/güçlü büyüme → NDX SELL. XAU/USOIL için olay-günü Dukascopy, NDX'te aday çıkarsa veya EIA için ayrıca.
+
+## EK-11 (2026-11-05) S6/S8 Walter arşivi (FJ beklenmeden), NDX
+S6 (haberli devam, habersiz söndür) ve S8 sözlüğü aynen; ilgili başlık düzeni makro.py REL. KEŞİF 2024-01→2025-12; kapalı 2026. Ek teşhis: şok başlangıcına göre ilk ilgili yeni başlığın zamanı (D3), plaseboya karşı. Haber yoğunluğu → sonraki 60 dk oynaklık (yalnız bilgi).
+
+## EK-12 (2026-11-05) S6 haberli devam 60 dk keşifte geçti
+n=408, +7,15 bp, P %99,4, yarılar +5,0/+9,3, stres +4,0, plasebo p 0,000, maxT 0,027.
+Kural sabit: NDX 1m; 5 dk |getiri| ≥ 5× o UTC saatin 5 dk medyanı (medyan KEŞİF'ten sabit), 30 dk aralıklı, takvim ±30 dk dışında; son 10 dk içinde Walter'da REL başlığı; şok barından sonraki dakika, şok yönünde, 60 dk tut. Doğrulama 2026-02-08→06-30 (ort>0, P≥%80), Kör 07-01→11-04 (ort>0). Tek bakış. Sonra: FJ kaynağıyla bağımsız, XAU/USOIL M5, ters kol.
+
+## EK-13 (2026-11-05, getiri görülmeden) Sürpriz ölçeği
+Arşiv 2025'te başladığı için geçmiş std (12 gözlem) aylık verilerde kullanılamaz. Yerine önceden sabit birim: CPI/PPI/PCE/işsizlik 0,1 · NFP 40k · ADP 30k · başvuru 10k · ISM 1,0 · perakende 0,3 · GDP 0,3 · IFO 0,5 · ZEW 3 · FED/ECB faiz 0,25 · EIA/API 2M. z = (gerçek−beklenti)/birim. |z|≥1 sürpriz, |z|<0,5 sürprizsiz. Parite kapsamı başlık adlarından sayılır; aileler eşleşmeyen isimle genişletilirse eklenir (getiri bakılmadan).
+
+## EK-14 (2026-11-05) Makro keşif sonucu: geçen hücre yok (n düşük: NDX 124, XAU 82, USOIL 81 olay)
+İki iz: S4 NDX 60/240 (n=13), S1 USOIL 240 (n=9, EIA+API). 2026 (NDX 02-09+, XAU/USOIL 01-01+) açılır, S1-S5 hepsi rapor; ek iz seçilmez. S4 ve S1-USOIL için geçer: ort>0, P≥%80; birleşik n≥30, P≥%95.
+
+## EK-15 (2026-11-05) Makro: NDX/XAU X. USOIL S5 karşıtı (görülerek türedi, post-hoc)
+S5m: USOIL, ilk 5 dk tepki sürpriz öncülünün tersi → 5 dk sonra sürpriz yönünde gir. Aile EIA ham + API + büyüme verisi ayrı; 2025 / 2026 ayrı. Walter'dan EIA/API "est" başlıklarıyla 2024 bağımsız sınanır. n≥30 yoksa hüküm C. M1 2026-07+ ve spread ×2 stres.
+
+## EK-16 (2026-11-05) D5 sonuç + H-HIZ ön kaydı (tick)
+FJ gecikmesi p50 47 sn, p90 150 sn. Büyük sürprizde 1. dk 15 bp; öncül işaret uyumu CPI/PCE 100%. Görülerek türedi; ölçüt:
+H-HIZ: resmi an t0 (BLS/BEA 08:30, ISM 10:00), yön = sürpriz öncülü, giriş t0+d (d = 0,5/1/2/5/10/20/30/47/60/120 sn) gerçek tick ask/bid, çıkış t0+60/120/300/900 sn gerçek bid/ask. Aile: Enflasyon (Core CPI MoM öncelikli, CPI MoM, Core PCE, PPI) ve İstihdam-Büyüme (NFP, başvuru, ISM, perakende). 2025 Dukascopy tick (spread gerçek). |z|≥1. Geçer: d=47'de bile > 0 ise mevcut hatla işlem; aksi halde 'gerekli azami gecikme' raporlanır. 2026 aynı kural, tick indirilirse.

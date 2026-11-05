@@ -23,10 +23,10 @@ FAMILIES: tuple[tuple[str, str, int, str], ...] = (
     ("US_ISM_MFG", r"^US ISM MANUFACTURING PMI", 9, "grow"), ("US_ISM_SVC", r"^US ISM (?:SERVICES|NON-MANUFACTURING) PMI", 10, "grow"),
     ("US_RETAIL", r"^US RETAIL SALES (?:MOM|MM)", 11, "grow"), ("US_GDP", r"^US (?:GDP|ADVANCE GDP)", 12, "grow"),
     ("US_CLAIMS", r"^US (?:INITIAL )?JOBLESS CLAIMS", 13, "grow_inv"), ("US_ADP", r"^US ADP", 14, "grow"),
-    ("FOMC_RATE", r"^(?:US )?(?:FED|FOMC).*(?:RATE|FUNDS)", 0, "cb"), ("ECB_RATE", r"^ECB.*RATE", 0, "cb"),
+    ("FOMC_RATE", r"^US INTEREST RATE DECISION|^(?:US )?(?:FED|FOMC).*(?:RATE|FUNDS)", 0, "cb"), ("ECB_RATE", r"^ECB.*RATE", 0, "cb"),
     ("DE_CPI", r"^GERMAN CPI", 15, "infl"), ("DE_IFO", r"^GERMAN IFO", 16, "grow"), ("DE_ZEW", r"^GERMAN ZEW", 17, "grow"),
     ("EZ_CPI", r"^EUROZONE (?:CORE )?CPI", 18, "infl"),
-    ("EIA_CRUDE", r"^EIA CRUDE OIL INVENTOR", 19, "oil"), ("API_CRUDE", r"^US API CRUDE STOCK", 20, "oil"),
+    ("EIA_CRUDE", r"^EIA CRUDE OIL INVENTOR", 19, "oil"), ("API_CRUDE", r"^US API CRUDE", 20, "oil"),
 )
 _FAM = [(n, re.compile(p, re.I), o, k) for n, p, o, k in FAMILIES]
 
@@ -60,6 +60,9 @@ def load_channel(chan: str) -> pd.DataFrame:
     return d.sort_values("ts").reset_index(drop=True)
 
 
+UNIT = {"US_CORE_CPI_MOM": .1, "US_CORE_CPI_YOY": .1, "US_CPI_MOM": .1, "US_CPI_YOY": .1, "US_NFP": 40e3, "US_UNEMP": .1, "US_CORE_PCE": .1, "US_PPI": .1, "US_ISM_MFG": 1.0, "US_ISM_SVC": 1.0, "US_RETAIL": .3, "US_GDP": .3, "US_CLAIMS": 10e3, "US_ADP": 30e3, "FOMC_RATE": .25, "ECB_RATE": .25, "DE_CPI": .1, "DE_IFO": .5, "DE_ZEW": 3.0, "EZ_CPI": .1, "EIA_CRUDE": 2e6, "API_CRUDE": 2e6}
+
+
 def macro_events() -> pd.DataFrame:
     """Sürpriz tablosu: z yalnız geçmiş sürprizlerin std'si ile (sızıntısız), ilk MIN_HIST atılır."""
     fj = load_channel("FinancialJuice")
@@ -71,10 +74,7 @@ def macro_events() -> pd.DataFrame:
             rows.append(p)
     e = pd.DataFrame(rows).sort_values("ts").reset_index(drop=True)
     e["surprise"] = e["actual"] - e["forecast"]
-    def _z(g: pd.DataFrame) -> pd.Series:
-        s = g["surprise"].shift(1).expanding(MIN_HIST).std()
-        return g["surprise"] / s.replace(0, np.nan)
-    e["z"] = e.groupby("family", group_keys=False)[["surprise"]].apply(_z)
+    e["z"] = e["surprise"] / e["family"].map(UNIT)
     return e
 
 
