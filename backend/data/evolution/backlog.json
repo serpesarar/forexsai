@@ -4388,5 +4388,16 @@
     "source": "session",
     "created_at": "2026-11-05T01:24:53.884411+00:00",
     "updated_at": "2026-11-05T01:24:53.884415+00:00"
+  },
+  {
+    "id": "bl_f1a5bc986f",
+    "title": "FR-03 4h korku sonrası alt fitil AL izi",
+    "detail": "4h alt fitil (≥%50 aralık, ≥0,5 ATR) + 6 mumda ≥2 ATR düşüş → AL. 2016-23 +0,3R n60, 2024-26 ~0 n42. ≥30 yeni olay birikince (≈3 yıl) ileri veride yeniden ölç; CAPREV/TR-C3 ile örtüşmesini kontrol et",
+    "category": "idea",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-07T01:31:21.499869+00:00",
+    "updated_at": "2026-11-07T01:31:21.500010+00:00"
   }
 ]

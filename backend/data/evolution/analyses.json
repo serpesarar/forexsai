@@ -812,5 +812,16 @@
   "needs_backend": false,
   "est_runtime": "~25 dk (DTS-03/06 Monte Carlo ağır)",
   "learn_targets": []
+ },
+ {
+  "id": "fr_fitil_ret",
+  "name": "FR-01…03: NDX 1h/4h büyük fitil → ret yönü",
+  "kind": "script",
+  "command": "cd research/fitil_ret_20261106 && ../../.venv/bin/python run.py && ../../.venv/bin/python diag.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "Büyük üst/alt fitilli 1h/4h mumdan 0–20 dk sonra ret yönüne girişi 8 ön-kayıtlı hipotez + 14.400 hücrelik TP/SL/gecikme ızgarasıyla (saat-içi permütasyon seçim düzeltmesi), Dukascopy 1m bid/ask ve 2016-23 bağımsız 1h ile sınar.",
+  "output": "research/fitil_ret_20261106/RAPOR.md",
+  "needs_backend": false
  }
 ]
