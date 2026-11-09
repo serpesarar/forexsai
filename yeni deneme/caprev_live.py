@@ -276,6 +276,12 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
         rec["ticket"] = ticket
         st.setdefault("pos", {})[str(ticket)] = {"entry_t": now, "exit_t": exit_t, "market": market}
         log.info("[CANLI] ✅ %s ticket=%s", line, ticket)
+        try:                                    # kural adı + geçmiş başarı ekrana (kural_katalogu); hata emri etkilemez
+            import kural_katalogu
+            kural_katalogu.announce_open(log, "CAPREV", f"{sym} BUY {lot} lot @ {ask} · SL {sl} · ticket {ticket}",
+                                         {"VIX": base["vix"], "gecikme_s": base["latency_s"]})
+        except Exception:
+            pass
         log_trade("LIVE", f"{market}:BUY:CAPREV", sym, "BUY", ask, 0.0, sl, ["caprev"], f"ticket={ticket}")
     else:
         log.error("[CANLI] ❌ CAPREV emir reddedildi retcode=%s → %s", rec["retcode"], line)

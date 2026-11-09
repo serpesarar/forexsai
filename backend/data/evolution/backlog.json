@@ -4324,6 +4324,50 @@
     "updated_at": "2026-11-04T20:25:56.233314+00:00"
   },
   {
+    "id": "bl_ba882462cc",
+    "title": "Probasyon lehe kacis siniri sinamasi",
+    "detail": "11-04 #416396592 sinyalden +166 p yukaridan girdi; probation_verdict yalniz aleyhe bakiyor. 27 gecis: onceki en buyuk +43,7 p. DAYCOMBO 2025-26 replay ile sinyal→5 bar sonrasi kayma/ATR kovalarinda R olc, on-kayit + plasebo.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-04T20:36:20.150211+00:00",
+    "updated_at": "2026-11-04T20:36:20.150338+00:00"
+  },
+  {
+    "id": "bl_cce635e011",
+    "title": "bot_trades broker farki kadar gec yaziliyor",
+    "detail": "evolution_agent.py:298-299 history_deals_get bitisi datetime.now(UTC), deal zamanlari broker saatinde; 11-04'te 15:27 UTC kapanis 17:27 UTC'de yazildi. Otopsi ve panel son ~2 saati gormuyor. Bitis tarihine broker farki+pay ekle, watermark'i kontrol et.",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-04T20:36:20.216980+00:00",
+    "updated_at": "2026-11-04T20:36:20.217106+00:00"
+  },
+  {
+    "id": "bl_2d3259886f",
+    "title": "Çok sembol klon ilk ileri kıyası",
+    "detail": "2026-11-18 sonrası: klon_coklu_ozet.py ile A/B net, en kötü net, kesici sayısı; kaba M3 geçmişiyle kıyas. Parametre değiştirmeden. RH-07.",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-04T22:16:18.154810+00:00",
+    "updated_at": "2026-11-04T22:16:18.155021+00:00"
+  },
+  {
+    "id": "bl_de730c598f",
+    "title": "Zaman Makinesi paneli tarayıcıda gözle kontrol",
+    "detail": "Bu oturumda tarayıcı aracı yoktu: API + SSR + typecheck doğrulandı, panelin veriyle render'ı (fan grafik, olasılık çubuğu, karne) gözle görülmedi. /mum-eslestirme'yi açıp kontrol et.",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-04T23:41:54.702268+00:00",
+    "updated_at": "2026-11-04T23:41:54.702420+00:00"
+  },
+  {
     "id": "bl_f5b92de671",
     "title": "range_tp_gate gölge karnesini ölç",
     "detail": "panel sinyallerinde factors.tp1_outside_p90 etiketi ≥4 hafta birikince sembol içi (E91) + iki yarı ile yeniden ölç; tutarsa backend kapısı adayı (kart gerekir). Bot RANGE_GATE_BLOCK=False kalmalı (DTS-06 botta X).",
@@ -4390,6 +4434,50 @@
     "updated_at": "2026-11-05T01:24:53.884415+00:00"
   },
   {
+    "id": "bl_10f3671b1d",
+    "title": "Haberli bot işlemi kapısını sına",
+    "detail": "HB-01 H4 veri örtüşmediği için sınanamadı; news_stories biriktikten sonra bot_trades ile aynı protokol",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T02:44:28.519075+00:00",
+    "updated_at": "2026-11-05T02:44:28.519268+00:00"
+  },
+  {
+    "id": "bl_029dc5bbe3",
+    "title": "ORB x VIX gölge kuruluşu",
+    "detail": "yeni deneme botunda ndx_orb_vix gölge kaydı; canlı/lot kararı kullanıcıda",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T07:46:42.275516+00:00",
+    "updated_at": "2026-11-05T07:46:42.275659+00:00"
+  },
+  {
+    "id": "bl_7f15cd734c",
+    "title": "C3 RSI2 gölge kuruluşu",
+    "detail": "ndx_c3_rsi2 kartı 6/6; yeni deneme botunda gölge kaydı, CAPREV ile çakışma ve toplam yön riski kararı",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T08:17:39.719319+00:00",
+    "updated_at": "2026-11-05T08:17:39.720107+00:00"
+  },
+  {
+    "id": "bl_2a61134607",
+    "title": "Haber hız sınırı",
+    "detail": "Enflasyon verisinde ≤1 sn gecikme için ücretli hat (Benzinga/Alpaca canlı bağlantı) hızı ölçülmeli; tick n=9, 2026 tick gerekli",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-05T12:35:24.013453+00:00",
+    "updated_at": "2026-11-05T12:35:24.013673+00:00"
+  },
+  {
     "id": "bl_f1a5bc986f",
     "title": "FR-03 4h korku sonrası alt fitil AL izi",
     "detail": "4h alt fitil (≥%50 aralık, ≥0,5 ATR) + 6 mumda ≥2 ATR düşüş → AL. 2016-23 +0,3R n60, 2024-26 ~0 n42. ≥30 yeni olay birikince (≈3 yıl) ileri veride yeniden ölç; CAPREV/TR-C3 ile örtüşmesini kontrol et",
@@ -4399,5 +4487,38 @@
     "source": "session",
     "created_at": "2026-11-07T01:31:21.499869+00:00",
     "updated_at": "2026-11-07T01:31:21.500010+00:00"
+  },
+  {
+    "id": "bl_a9331e89cb",
+    "title": "FR-15 TEYİTLİ ÇEKİÇ: emirsiz gölge + MT5 kartı (NAS100, GER40, US30)",
+    "detail": "1h alt fitil ≥%70 ∧ ≥0,2 ATR → sonraki 1h mum çekiç tepesi üstünde kapanırsa sonraki açılışta AL, SL çekiç dibi, TP 5R, 24 sa. 10/10 sette artı; MT5 H1 2018-26 havuz +0,085R (NAS100 +0,124, GER40 +0,144). 2026 yavaşlama. Önce yeni deneme/ içinde emirsiz gölge; kullanıcı onayı gerekli. Portföyde TR-C3 ile korelasyon 0,10.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-07T02:03:32.904628+00:00",
+    "updated_at": "2026-11-07T02:03:32.904765+00:00"
+  },
+  {
+    "id": "bl_a5b3551e63",
+    "title": "Geri çekilme K6/K1 MT5 D1 kartı + gölge",
+    "detail": "K6 (boğada zirveden %8 → ilk yükselen kapanış) ve K1 (3 düşen hafta+RSI2 → zirveye dönüş) için kutuda MT5 D1 + gerçek swap ile 2. KURAL kartı; geçerse emirsiz gölge kaydı. Kullanıcı onayı gerekli. research/geri_cekilme_20261106",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-07T05:50:10.731072+00:00",
+    "updated_at": "2026-11-07T05:50:10.731282+00:00"
+  },
+  {
+    "id": "bl_00eedc2399",
+    "title": "Canlı kural karnesi (n=60 durdurma, n=100 terfi)",
+    "detail": "C3b/ORB×VIX/çekiç canlı sonuçlarını kural_canli_olaylar.jsonl'den işle; n=60'ta ort R<0 ise kapat; çekiç isabet oranı ilk kez ölçülecek",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-09T04:14:26.607076+00:00",
+    "updated_at": "2026-11-09T04:14:26.607216+00:00"
   }
 ]

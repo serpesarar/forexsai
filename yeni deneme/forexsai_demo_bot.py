@@ -65,6 +65,13 @@ try:                                    # CAPREV portföyü CANLI (kart 6/6, 202
     import caprev_live
 except Exception:                       # pragma: no cover
     caprev_live = None
+try:                                    # C3b / ORB×VIX / FR-15 çekiç CANLI (kullanıcı kararı 2026-11-08, lotlar kural_katalogu) — import hatası botu durdurmaz
+    import kural_katalogu
+    import c3b_live
+    import orb_vix_live
+    import cekic_live
+except Exception:                       # pragma: no cover
+    kural_katalogu = c3b_live = orb_vix_live = cekic_live = None
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -276,6 +283,8 @@ def _bot_magics() -> set:
         m.add(config.VIX_REGIME_MAGIC)
     if caprev_live is not None and getattr(config, "CAPREV_LIVE", True):
         m.add(caprev_live.magic(config))       # günlük zarar freni + global tavan CAPREV'i de sayar
+    if kural_katalogu is not None:             # C3b (+8) / ORB×VIX (+9) / çekiç (+10): fren + global tavan bunları da sayar
+        m |= kural_katalogu.rule_magics(config)
     m.add(config.MAGIC_NUMBER + 4)                                            # DAYCOMBO_MAGIC
     m.add(int(getattr(config, "USOIL_BREAKOUT_MAGIC", config.MAGIC_NUMBER + 5)))
     m.add(reentry_exec.magic())                                               # MAGIC + 6
@@ -2594,7 +2603,7 @@ def main():
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
                    ("DAYCOMBO_SL", 110.0),
-                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
+                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("C3B_LIVE", True), ("C3B_LIVE_LOT", 2.0), ("ORB_VIX_LIVE", True), ("ORB_VIX_LIVE_LOT", 0.75), ("CEKIC_LIVE", True), ("CEKIC_LIVE_LOT", 0.5), ("RULE_MAX_LOTS_PER_SYMBOL", 4.5), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
                    ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
                    ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
                    ("USOIL_BREAKOUT_SL_ATR", 1.0),
@@ -2664,6 +2673,18 @@ def main():
                     caprev_live.manage_exits(mt5, config, log)
                 except Exception as e:
                     log.warning("caprev çıkış hatası: %s", e)
+
+            # ── ORB×VIX 15:55 ET zaman çıkışı + FR-15 çekiç 24 sa / Cuma çıkışı: frenden ÖNCE (fren 'continue' eder) ──
+            if orb_vix_live is not None and config.LIVE_TRADING:
+                try:
+                    orb_vix_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
+                except Exception as e:
+                    log.warning("orb×vix çıkış hatası: %s", e)
+            if cekic_live is not None and config.LIVE_TRADING:
+                try:
+                    cekic_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset)
+                except Exception as e:
+                    log.warning("çekiç çıkış hatası: %s", e)
 
             # ── Decider XAU erken kesme (DX-04): fren 'continue'undan ÖNCE — açık decider
             #    pozisyonu fren devredeyken de yönetilmeli ──
@@ -2765,6 +2786,18 @@ def main():
                                      lambda: check_autotrading(verbose=False), _log_trade)
                 except Exception as e:
                     log.warning("caprev canlı hatası: %s", e)
+
+            # ── C3b / ORB×VIX / FR-15 çekiç CANLI (kullanıcı kararı 2026-11-08; lotlar kural_katalogu.py, ezme: config *_LIVE_LOT).
+            #    Gölgelerden SONRA çağrılır (VIX geçmişini onlar günceller). Her açılışta kural adı + geçmiş başarı ekrana yazılır.
+            #    Kapatma: config.C3B_LIVE / ORB_VIX_LIVE / CEKIC_LIVE = False.
+            for _name, _mod in (("c3b", c3b_live), ("orb×vix", orb_vix_live), ("çekiç", cekic_live)):
+                if _mod is None:
+                    continue
+                try:
+                    _mod.poll(mt5, config, log, resolve_symbol, get_vix, _daycombo_offset, _send_market_order,
+                              _mk_comment, lambda: check_autotrading(verbose=False), _log_trade)
+                except Exception as e:
+                    log.warning("%s canlı hatası: %s", _name, e)
 
             # ── XAU 1h "yeni 20-mum tepesinde BUY" GÖLGE (SL 1,5×ATR, 20 bar) — EMİR YOK. Amaç: gerçek dolum
             #    farkını ölçmek (kart icra ölçütü ✗). Kanıt: research/pinbar_20261010 (MK-03/04). Kapatma:
