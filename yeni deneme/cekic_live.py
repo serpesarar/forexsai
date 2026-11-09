@@ -106,9 +106,7 @@ def _load_state() -> dict:
 
 
 def _save_state(st: dict) -> None:
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
-    tmp.replace(STATE_FILE)
+    kk.save_json(STATE_FILE, st)
 
 
 def manage_exits(mt5, config, log, send_order, offset_fn, now: float | None = None) -> None:

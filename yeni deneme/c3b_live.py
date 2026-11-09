@@ -39,9 +39,7 @@ def _load_state() -> dict:
 
 
 def _save_state(st: dict) -> None:
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
-    tmp.replace(STATE_FILE)
+    kk.save_json(STATE_FILE, st)
 
 
 def should_exit(series: list[dict], entry_idx: int, i: int) -> str | None:

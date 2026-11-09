@@ -102,6 +102,20 @@ def announce_open(log, rule_id: str, line: str, extra: dict | None = None) -> No
     append_event({"kind": "announce", "rule": rule_id, "line": line, **(extra or {})})
 
 
+def save_json(path: Path, obj) -> None:
+    """Durum dosyasını yaz: tmp+replace; OneDrive kilidi (WinError 5) olursa birkaç kez dene, olmazsa doğrudan yaz."""
+    data = json.dumps(obj, ensure_ascii=False)
+    tmp = path.with_suffix(".tmp")
+    for _ in range(3):
+        try:
+            tmp.write_text(data, encoding="utf-8")
+            tmp.replace(path)
+            return
+        except OSError:
+            time.sleep(0.2)
+    path.write_text(data, encoding="utf-8")
+
+
 def append_event(rec: dict) -> None:
     try:
         with EVENTS_JSONL.open("a", encoding="utf-8") as f:
