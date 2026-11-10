@@ -1,0 +1,220 @@
+{
+ "KESIF": {
+  "n": 870,
+  "n_acik": 409,
+  "ort_acik": 10.62,
+  "ort_kapali": 4.85,
+  "delta": 5.77,
+  "p_perm": 0.2505,
+  "P_delta>0": 0.736,
+  "P_acik_net>0": 0.839,
+  "isabet_acik": 0.577,
+  "yari_delta": [
+   -5.8,
+   17.6
+  ],
+  "P_ort>4bp": 0.83,
+  "med_acik": 20.4,
+  "ss_acik": 121.0
+ },
+ "KESIF_plasebo_dusukVIX_dusus": {
+  "n": 479,
+  "n_acik": 200,
+  "ort_acik": 7.69,
+  "ort_kapali": 11.96,
+  "delta": -4.27,
+  "p_perm": 0.8545
+ },
+ "KESIF_plasebo_yukselis": {
+  "n": 1543,
+  "n_acik": 41,
+  "ort_acik": 18.56,
+  "ort_kapali": 3.08,
+  "delta": 15.48,
+  "p_perm": 0.156
+ },
+ "KESIF_tumgun_gece": 5.86,
+ "TEST": {
+  "n": 193,
+  "n_acik": 97,
+  "ort_acik": 21.27,
+  "ort_kapali": 7.72,
+  "delta": 13.56,
+  "p_perm": 0.254,
+  "P_delta>0": 0.708,
+  "P_acik_net>0": 0.868,
+  "isabet_acik": 0.68,
+  "yari_delta": [
+   26.72,
+   0.48
+  ],
+  "P_ort>4bp": 0.866,
+  "med_acik": 26.7,
+  "ss_acik": 136.0
+ },
+ "TEST_plasebo_dusukVIX_dusus": {
+  "n": 619,
+  "n_acik": 188,
+  "ort_acik": 6.83,
+  "ort_kapali": 2.3,
+  "delta": 4.53,
+  "p_perm": 0.119
+ },
+ "TEST_plasebo_yukselis": {
+  "n": 1019,
+  "n_acik": 25,
+  "ort_acik": -4.17,
+  "ort_kapali": 4.34,
+  "delta": -8.51,
+  "p_perm": 0.8175
+ },
+ "TEST_tumgun_gece": 4.99,
+ "KOR": {
+  "n": 429,
+  "n_acik": 188,
+  "ort_acik": 13.64,
+  "ort_kapali": 5.85,
+  "delta": 7.79,
+  "p_perm": 0.2695,
+  "P_delta>0": 0.649,
+  "P_acik_net>0": 0.832,
+  "isabet_acik": 0.537,
+  "yari_delta": [
+   22.44,
+   -7.75
+  ],
+  "P_ort>4bp": 0.829,
+  "med_acik": 7.4,
+  "ss_acik": 126.0
+ },
+ "KOR_plasebo_dusukVIX_dusus": {
+  "n": 512,
+  "n_acik": 161,
+  "ort_acik": 10.2,
+  "ort_kapali": -1.28,
+  "delta": 11.48,
+  "p_perm": 0.059
+ },
+ "KOR_plasebo_yukselis": {
+  "n": 1201,
+  "n_acik": 37,
+  "ort_acik": 23.34,
+  "ort_kapali": 3.8,
+  "delta": 19.53,
+  "p_perm": 0.075
+ },
+ "KOR_tumgun_gece": 4.91,
+ "yil_acik": {
+  "1999": [
+   34,
+   55.8
+  ],
+  "2000": [
+   64,
+   5.9
+  ],
+  "2001": [
+   61,
+   -9.2
+  ],
+  "2002": [
+   54,
+   -16.4
+  ],
+  "2003": [
+   40,
+   41.1
+  ],
+  "2004": [
+   5,
+   -3.9
+  ],
+  "2006": [
+   1,
+   29.5
+  ],
+  "2007": [
+   20,
+   12.9
+  ],
+  "2008": [
+   60,
+   -0.0
+  ],
+  "2009": [
+   38,
+   31.9
+  ],
+  "2010": [
+   32,
+   12.2
+  ],
+  "2011": [
+   39,
+   23.3
+  ],
+  "2012": [
+   15,
+   28.5
+  ],
+  "2013": [
+   1,
+   23.3
+  ],
+  "2014": [
+   6,
+   15.2
+  ],
+  "2015": [
+   13,
+   -30.1
+  ],
+  "2016": [
+   14,
+   38.0
+  ],
+  "2018": [
+   17,
+   45.9
+  ],
+  "2019": [
+   3,
+   82.8
+  ],
+  "2020": [
+   42,
+   43.5
+  ],
+  "2021": [
+   29,
+   13.3
+  ],
+  "2022": [
+   65,
+   -3.2
+  ],
+  "2023": [
+   17,
+   12.1
+  ],
+  "2024": [
+   5,
+   24.6
+  ],
+  "2025": [
+   10,
+   -56.4
+  ],
+  "2026": [
+   9,
+   26.3
+  ]
+ },
+ "havuz_acik": {
+  "n": 694,
+  "ort": 12.93,
+  "isabet": 0.581,
+  "en_iyi5_haric": 9.6,
+  "enkotu": -798.0
+ }
+}

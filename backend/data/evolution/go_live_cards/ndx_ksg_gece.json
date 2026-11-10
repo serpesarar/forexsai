@@ -1,0 +1,111 @@
+{
+  "scope": "ndx_ksg_gece",
+  "aciklama": "NAS100 16:00 ET: son nakit saati (15:00→16:00) getirisi < 0 ise 16:00'da BUY, ertesi seans 09:30'da kapat; stop yok; gece başına tek pozisyon",
+  "tarih": "2026-11-10T00:00:00",
+  "sembol": "NAS100",
+  "ana_olcum": "broker MT5 NAS100 M30 2018-05-15→2026-11-03 (BID bar, bar spread'i ×1,5 + 1,8 bp/gece, Cuma ×3)",
+  "olay": 1039,
+  "aralik": [
+    "2018-05-15",
+    "2026-11-03"
+  ],
+  "isabet": 56.0,
+  "ort_net_bp": 7.02,
+  "ort_brut_bp": 11.0,
+  "karsi_kol_net_bp": -6.1,
+  "yillik_net_bp": 860,
+  "yil_basi_islem": 123,
+  "aylik_sharpe": 0.87,
+  "en_kotu_gece_bp": -400,
+  "maxDD_bp": -1326,
+  "yillar_pozitif": "7/9 (2018 −9,7; 2019 −2,5; 2020→2026 7/7)",
+  "checks": {
+    "1_hacim": {
+      "deger": 1039,
+      "esik": "≥150",
+      "gecti": true
+    },
+    "2_beklenti": {
+      "deger": "net +7,02 bp, ay-blok P(EV>0)=%99,6; dairesel kaydırma p<0,0001",
+      "esik": "ort>0 ve P≥%90",
+      "gecti": true
+    },
+    "3_kararlilik": {
+      "deger": "ilk yarı +5,60 son yarı +8,43",
+      "esik": "ikisi de ≥0",
+      "gecti": true
+    },
+    "4_surtunme": {
+      "deger": "spread×3 +5,64 (P %98,4)",
+      "esik": ">0",
+      "gecti": true
+    },
+    "5_icra": {
+      "deger": "Dukascopy 1m: iyimser (16:00, spread'siz) ≈ +6,9; gerçek 16:01 + 1,5 puan +5,05 (fark 1,9 ≤ 2,5); 16:05 +5,17; 16:14 +4,47; broker 16:30 +5,62; sinyal 15:55'te kesilirse +4,77",
+      "esik": "fark < 0,5×|gerçek|",
+      "gecti": true,
+      "not": "dar geçiyor"
+    },
+    "6_sira_bagimli": {
+      "deger": "gece başına tek pozisyon yapısal: +7,02",
+      "esik": ">0",
+      "gecti": true
+    }
+  },
+  "bagimsiz": {
+    "ozgulluk": "altı saat penceresinden yalnız 15→16 ayırıyor (Δ +13,1 bp P 0,997; 10→11 −6,5; 12→13 −6,5); düşüş günü içinde +15,1, yükseliş günü içinde +12,6",
+    "dukascopy_2021_2026": {
+      "n": 561,
+      "net": 6.2,
+      "P": 0.967,
+      "korelasyon": 0.983
+    },
+    "kor_enstruman": {
+      "US500": {
+        "n": 787,
+        "net": 2.5,
+        "delta": 4.5
+      },
+      "US30": {
+        "n": 1046,
+        "net": 0.2,
+        "delta": 3.2
+      },
+      "US2000": {
+        "n": 1055,
+        "net": 7.6,
+        "delta": 14.9
+      },
+      "uc_ortalama_delta_P": 0.964
+    },
+    "ndx_1h_2016_2018": {
+      "n": 221,
+      "brut": 9.93,
+      "net": 6.03,
+      "delta": 4.54,
+      "P_delta": 0.79,
+      "gecti": false
+    },
+    "donem": {
+      "2018-05→2019-12": {
+        "n": 194,
+        "net": -5.58
+      },
+      "2020-01→2026-11": {
+        "n": 845,
+        "net": 9.91
+      }
+    }
+  },
+  "uyarilar": [
+    "Etki 2020'de başlıyor; 2018-19 eksi, 2016-18'de kapı farkı zayıf → çağa özgü (sınıf C+)",
+    "VIX ≤ 15 kovasında net −3,4 bp (n 256), VIX > 25'te +22,4 (n 179) — sonradan görüldü",
+    "Perşembe +1,1 / Cuma −1,6 net (Cuma üç gece swap) — sonradan görüldü",
+    "Stop yok: en kötü gece −%4,0; düşüş −%13,3",
+    "Aynı faktör ailesi olabilir: C3b ve CAPREV ile aynı gecelerde uzun",
+    "Yerel kart: kutuda go_live_gate.py ile yeniden üretilmedi; ileri gölge verisi yok"
+  ],
+  "verdict": "SHADOW",
+  "verdict_gerekce": "Kart 6/6 ama ön-kayıtlı bağımsız dönem ölçütü (D3) düştü ve etki 2020 sonrası çağa özgü; önce gölge, canlı kararı kullanıcıda",
+  "kanit": "research/ndx_kapi_20261110/ (PROTOCOL.md EK-5/EK-6, results/tur6.json, tur6b.json)"
+}

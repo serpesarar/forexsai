@@ -72,6 +72,10 @@ try:                                    # C3b / ORB×VIX / FR-15 çekiç CANLI (
     import cekic_live
 except Exception:                       # pragma: no cover
     kural_katalogu = c3b_live = orb_vix_live = cekic_live = None
+try:                                    # KSG (NAS100 kapanış saati gecesi) CANLI — kullanıcı kararı 2026-11-10, gölge YOK. AYRI blok: bu import
+    import ksg_live                     # hata verirse C3b/ORB×VIX/çekiç etkilenmesin
+except Exception:                       # pragma: no cover
+    ksg_live = None
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -2603,7 +2607,7 @@ def main():
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
                    ("DAYCOMBO_SL", 110.0),
-                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("C3B_LIVE", True), ("C3B_LIVE_LOT", 2.0), ("ORB_VIX_LIVE", True), ("ORB_VIX_LIVE_LOT", 0.75), ("CEKIC_LIVE", True), ("CEKIC_LIVE_LOT", 0.5), ("RULE_MAX_LOTS_PER_SYMBOL", 4.5), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
+                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("C3B_LIVE", True), ("C3B_LIVE_LOT", 2.0), ("ORB_VIX_LIVE", True), ("ORB_VIX_LIVE_LOT", 0.75), ("CEKIC_LIVE", True), ("CEKIC_LIVE_LOT", 0.5), ("KSG_LIVE", True), ("KSG_LIVE_LOT", 0.5), ("RULE_MAX_LOTS_PER_SYMBOL", 4.5), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
                    ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
                    ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
                    ("USOIL_BREAKOUT_SL_ATR", 1.0),
@@ -2685,6 +2689,11 @@ def main():
                     cekic_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset)
                 except Exception as e:
                     log.warning("çekiç çıkış hatası: %s", e)
+            if ksg_live is not None and config.LIVE_TRADING:       # KSG: ertesi seans 09:30 ET çıkışı (fren 'continue'undan önce)
+                try:
+                    ksg_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
+                except Exception as e:
+                    log.warning("ksg çıkış hatası: %s", e)
 
             # ── Decider XAU erken kesme (DX-04): fren 'continue'undan ÖNCE — açık decider
             #    pozisyonu fren devredeyken de yönetilmeli ──
@@ -2790,7 +2799,7 @@ def main():
             # ── C3b / ORB×VIX / FR-15 çekiç CANLI (kullanıcı kararı 2026-11-08; lotlar kural_katalogu.py, ezme: config *_LIVE_LOT).
             #    Gölgelerden SONRA çağrılır (VIX geçmişini onlar günceller). Her açılışta kural adı + geçmiş başarı ekrana yazılır.
             #    Kapatma: config.C3B_LIVE / ORB_VIX_LIVE / CEKIC_LIVE = False.
-            for _name, _mod in (("c3b", c3b_live), ("orb×vix", orb_vix_live), ("çekiç", cekic_live)):
+            for _name, _mod in (("c3b", c3b_live), ("orb×vix", orb_vix_live), ("çekiç", cekic_live), ("ksg", ksg_live)):
                 if _mod is None:
                     continue
                 try:

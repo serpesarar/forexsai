@@ -1,6 +1,6 @@
 """kural_katalogu.py — canlı kuralların KATALOĞU, lot seviyeleri ve "hangi sinyal açıldı" duyurusu.
 
-Her canlı kural (C3b, ORB×VIX, FR-15 çekiç, CAPREV) burada tek satırla tanımlıdır: ad, geçmiş isabet oranı, ortalama
+Her canlı kural (C3b, ORB×VIX, FR-15 çekiç, CAPREV, KSG) burada tek satırla tanımlıdır: ad, geçmiş isabet oranı, ortalama
 getiri, SL/TP, işlem sıklığı, lot, magic. İşlem açıldığında `announce_open()` ekrana (konsol log'u + demo_bot.log) şunu basar:
 
     ╔══ SİNYAL AÇILDI ═══ C3b — NDX RSI2 geri dönüşü ═══
@@ -9,10 +9,10 @@ getiri, SL/TP, işlem sıklığı, lot, magic. İşlem açıldığında `announc
 
 LOT SEVİYELERİ (kanıt sınıfına göre; kullanıcı kararı 2026-11-08). Her biri `config` içinde `getattr(config, <lot_key>, varsayılan)`
 ile ezilebilir (kutuda config.py gitignore'da → varsayılan BURADA):
-    C3b 2.0  ·  CAPREV 1.0  ·  ORB×VIX 0.75  ·  FR-15 çekiç 0.5 (her endekste)
+    C3b 2.0  ·  CAPREV 1.0  ·  ORB×VIX 0.75  ·  FR-15 çekiç 0.5 (her endekste)  ·  KSG 0.5 (NAS100, gece)
 Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL` (varsayılan 4.5) üstüne çıkamaz (yoğunlaşma freni).
 
-Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
+Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE, KSG_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 EVENTS_JSONL = HERE / "kural_canli_olaylar.jsonl"
 
-MAX_LOTS_PER_SYMBOL_DEFAULT = 4.5          # C3b 2.0 + CAPREV 1.0 + ORB 0.75 + FR-15 0.5 = 4.25 < 4.5
+MAX_LOTS_PER_SYMBOL_DEFAULT = 4.5          # C3b 2.0 + CAPREV 1.0 + ORB 0.75 + FR-15 0.5 = 4.25 < 4.5 (KSG gece açıkken CAPREV/ORB kapalı: en çok 2.0+0.5+0.5)
 
 # id → tanım. magic_offset: config.MAGIC_NUMBER + offset (+1…+6 başka kapsamlar kullanıyor).
 RULES: dict[str, dict] = {
@@ -58,6 +58,14 @@ RULES: dict[str, dict] = {
         "tutus": "en fazla 24 saat", "sl": "çekiç dibi", "tp": "5R",
         "siklik": "endeks başına ≈ 7–8/ay (iki endeks ≈ 15/ay, ≈ 3–4/hafta)",
         "kanit": "go_live_cards/teyitli_cekic_1h.json (yerel 10/10 set artı; MT5 havuz +0,085R P 0,98)",
+    },
+    "KSG": {
+        "ad": "KSG — kapanış saati gecesi (NAS100)", "kisa": "KSG", "sinif": "C+", "magic_offset": 11,
+        "lot_key": "KSG_LIVE_LOT", "lot": 0.5, "live_key": "KSG_LIVE",
+        "isabet": "%56,0", "n": 1039, "ort": "+7,0 bp/gece net (karşı kol −6,1)", "tutus": "gece (16:00 → ertesi 09:30 ET)",
+        "sl": "yok (acil durum SL %6 — araştırmadaki en kötü gece −%4,0)", "tp": "yok; ertesi işlem günü 09:30 ET'de çık",
+        "siklik": "≈ 10 işlem/ay (yılda ≈ 123)",
+        "kanit": "go_live_cards/ndx_ksg_gece.json (6/6; C+: 2018-19 eksi, 2020→ 7/7 yıl; durdurma: n=60'ta ort<0)",
     },
 }
 

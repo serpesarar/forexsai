@@ -1,0 +1,82 @@
+{
+ "karar": 418,
+ "gercek": {
+  "net": 21903,
+  "enkotu5": -22001,
+  "gunlukSR": 0.111
+ },
+ "plasebo": {
+  "net_medyan": 37101,
+  "net_%5_%95": [
+   20501,
+   53147
+  ],
+  "enkotu5_medyan": -18405,
+  "SR_medyan": 0.213
+ },
+ "gercek_net_yuzdelik": 0.069,
+ "gercek_enkotu5_yuzdelik": 0.179,
+ "gercek_SR_yuzdelik": 0.041,
+ "aile": {
+  "CHREV": {
+   "karar": 28,
+   "lotlar": {
+    "5.0": 27,
+    "10.0": 1
+   },
+   "gercek_net": 179,
+   "sabit_ort_lot_net": -229,
+   "corr_lot_R": 0.167
+  },
+  "DAYCOMBO": {
+   "karar": 43,
+   "lotlar": {
+    "1.0": 24,
+    "30.0": 19
+   },
+   "gercek_net": 406,
+   "sabit_ort_lot_net": 10647,
+   "corr_lot_R": -0.187
+  },
+  "DECIDER": {
+   "karar": 80,
+   "lotlar": {
+    "0.1": 80
+   },
+   "gercek_net": 22,
+   "sabit_ort_lot_net": 22,
+   "corr_lot_R": 0.0
+  },
+  "MOMSR": {
+   "karar": 21,
+   "lotlar": {
+    "5.0": 21
+   },
+   "gercek_net": 382,
+   "sabit_ort_lot_net": 382,
+   "corr_lot_R": null
+  },
+  "REENTRY": {
+   "karar": 33,
+   "lotlar": {
+    "30.0": 17,
+    "5.0": 11,
+    "10.0": 5
+   },
+   "gercek_net": 18628,
+   "sabit_ort_lot_net": 24165,
+   "corr_lot_R": -0.181
+  },
+  "VIXREG": {
+   "karar": 212,
+   "lotlar": {
+    "5.0": 205,
+    "10.0": 7
+   },
+   "gercek_net": 2240,
+   "sabit_ort_lot_net": 2393,
+   "corr_lot_R": -0.0
+  }
+ },
+ "olcut_beceri": false
+}

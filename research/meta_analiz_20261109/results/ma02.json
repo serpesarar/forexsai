@@ -1,0 +1,214 @@
+{
+ "KESIF_1999_2009": {
+  "uzun_geride_kalan": {
+   "etiket": "KESIF_1999_2009",
+   "n": 565,
+   "brut_ort": 20.71,
+   "net_ort": 13.79,
+   "net_med": 10.11,
+   "isabet": 0.605,
+   "sure": 1.94,
+   "maliyet_ort": 6.92,
+   "P_net_poz": 0.984,
+   "yari": [
+    36.08,
+    -8.41
+   ],
+   "plasebo_net_ort": -4.3,
+   "plasebo_yuzdelik": 1.0,
+   "sembol": {
+    "DJI": {
+     "size": 187,
+     "mean": 3.97
+    },
+    "GSPC": {
+     "size": 198,
+     "mean": -6.58
+    },
+    "NDX": {
+     "size": 180,
+     "mean": 46.41
+    }
+   },
+   "net_ss": 130.2
+  },
+  "ayna_kisa_one_gecen": {
+   "etiket": "KESIF_1999_2009",
+   "n": 575,
+   "brut_ort": 17.18,
+   "net_ort": 10.46,
+   "net_med": 12.46,
+   "isabet": 0.657,
+   "sure": 1.81,
+   "maliyet_ort": 6.72,
+   "P_net_poz": 0.967,
+   "yari": [
+    26.53,
+    -5.56
+   ],
+   "plasebo_net_ort": -3.5,
+   "plasebo_yuzdelik": 1.0,
+   "sembol": {
+    "DJI": {
+     "size": 190,
+     "mean": 12.3
+    },
+    "GSPC": {
+     "size": 182,
+     "mean": 16.36
+    },
+    "NDX": {
+     "size": 203,
+     "mean": 3.44
+    }
+   },
+   "net_ss": 114.2
+  }
+ },
+ "TEST_2010_2018": {
+  "uzun_geride_kalan": {
+   "etiket": "TEST_2010_2018",
+   "n": 468,
+   "brut_ort": 0.56,
+   "net_ort": -6.4,
+   "net_med": 1.24,
+   "isabet": 0.521,
+   "sure": 1.97,
+   "maliyet_ort": 6.96,
+   "P_net_poz": 0.0,
+   "yari": [
+    -5.34,
+    -7.45
+   ],
+   "plasebo_net_ort": -7.54,
+   "plasebo_yuzdelik": 0.73,
+   "sembol": {
+    "DJI": {
+     "size": 162,
+     "mean": -12.44
+    },
+    "GSPC": {
+     "size": 178,
+     "mean": -7.89
+    },
+    "NDX": {
+     "size": 128,
+     "mean": 3.32
+    }
+   },
+   "net_ss": 45.8
+  },
+  "ayna_kisa_one_gecen": {
+   "etiket": "TEST_2010_2018",
+   "n": 414,
+   "brut_ort": 0.43,
+   "net_ort": -6.54,
+   "net_med": 4.19,
+   "isabet": 0.577,
+   "sure": 1.98,
+   "maliyet_ort": 6.97,
+   "P_net_poz": 0.005,
+   "yari": [
+    -6.66,
+    -6.42
+   ],
+   "plasebo_net_ort": -8.01,
+   "plasebo_yuzdelik": 0.768,
+   "sembol": {
+    "DJI": {
+     "size": 135,
+     "mean": 0.31
+    },
+    "GSPC": {
+     "size": 108,
+     "mean": -0.35
+    },
+    "NDX": {
+     "size": 171,
+     "mean": -15.85
+    }
+   },
+   "net_ss": 53.5
+  }
+ },
+ "KOR_BROKER_2018_2026": {
+  "donem": [
+   "2020-05-20",
+   "2026-11-04"
+  ],
+  "gun": 1609,
+  "medyan_maliyet_bp": 2.67,
+  "uzun_geride_kalan": {
+   "etiket": "KOR",
+   "n": 417,
+   "brut_ort": 6.37,
+   "net_ort": 0.83,
+   "net_med": 10.48,
+   "isabet": 0.621,
+   "sure": 1.95,
+   "maliyet_ort": 5.54,
+   "P_net_poz": 0.587,
+   "yari": [
+    5.21,
+    -3.52
+   ],
+   "plasebo_net_ort": -4.1,
+   "plasebo_yuzdelik": 0.914,
+   "sembol": {
+    "NAS100": {
+     "size": 93,
+     "mean": 13.21
+    },
+    "US2000": {
+     "size": 112,
+     "mean": 3.62
+    },
+    "US30": {
+     "size": 119,
+     "mean": -3.09
+    },
+    "US500": {
+     "size": 93,
+     "mean": -9.87
+    }
+   },
+   "net_ss": 85.4
+  },
+  "ayna_kisa_one_gecen": {
+   "etiket": "KOR",
+   "n": 442,
+   "brut_ort": 4.25,
+   "net_ort": -1.22,
+   "net_med": 15.19,
+   "isabet": 0.636,
+   "sure": 1.9,
+   "maliyet_ort": 5.47,
+   "P_net_poz": 0.394,
+   "yari": [
+    5.05,
+    -7.49
+   ],
+   "plasebo_net_ort": -4.77,
+   "plasebo_yuzdelik": 0.858,
+   "sembol": {
+    "NAS100": {
+     "size": 120,
+     "mean": -15.6
+    },
+    "US2000": {
+     "size": 96,
+     "mean": 8.26
+    },
+    "US30": {
+     "size": 97,
+     "mean": 7.85
+    },
+    "US500": {
+     "size": 129,
+     "mean": -1.72
+    }
+   },
+   "net_ss": 92.8
+  }
+ }
+}

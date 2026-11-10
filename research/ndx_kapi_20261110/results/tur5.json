@@ -1,0 +1,195 @@
+{
+ "A_havuz": {
+  "n": 597,
+  "n_veto": 141,
+  "R_veto": 0.076,
+  "R_kalan": 0.216,
+  "delta": 0.14,
+  "P_delta>0": 0.943,
+  "p_perm": 0.1176,
+  "P_Rveto<=0": 0.167,
+  "isabet_veto": 0.468,
+  "toplamR_veto": 10.7,
+  "toplamR_kalan": 98.6
+ },
+ "A_1h": {
+  "n": 225,
+  "n_veto": 49,
+  "R_veto": 0.018,
+  "R_kalan": 0.121,
+  "delta": 0.103,
+  "P_delta>0": 0.781,
+  "p_perm": 0.268,
+  "P_Rveto<=0": 0.437,
+  "isabet_veto": 0.469,
+  "toplamR_veto": 0.9,
+  "toplamR_kalan": 21.3
+ },
+ "A_30m": {
+  "n": 222,
+  "n_veto": 56,
+  "R_veto": -0.016,
+  "R_kalan": 0.249,
+  "delta": 0.264,
+  "P_delta>0": 0.988,
+  "p_perm": 0.0556,
+  "P_Rveto<=0": 0.581,
+  "isabet_veto": 0.446,
+  "toplamR_veto": -0.9,
+  "toplamR_kalan": 41.3
+ },
+ "A_5m": {
+  "n": 150,
+  "n_veto": 36,
+  "R_veto": 0.299,
+  "R_kalan": 0.316,
+  "delta": 0.018,
+  "P_delta>0": 0.521,
+  "p_perm": 0.4618,
+  "P_Rveto<=0": 0.066,
+  "isabet_veto": 0.5,
+  "toplamR_veto": 10.7,
+  "toplamR_kalan": 36.0
+ },
+ "A_yil": {
+  "2016": [
+   3,
+   0.139,
+   5,
+   0.208
+  ],
+  "2018": [
+   15,
+   0.08,
+   22,
+   0.143
+  ],
+  "2019": [
+   12,
+   -0.277,
+   15,
+   0.437
+  ],
+  "2020": [
+   12,
+   0.099,
+   102,
+   0.062
+  ],
+  "2021": [
+   12,
+   0.082,
+   58,
+   0.277
+  ],
+  "2022": [
+   46,
+   0.031,
+   93,
+   0.098
+  ],
+  "2023": [
+   5,
+   -0.378,
+   47,
+   0.43
+  ],
+  "2024": [
+   5,
+   0.528,
+   28,
+   0.256
+  ],
+  "2025": [
+   16,
+   0.541,
+   46,
+   0.451
+  ],
+  "2026": [
+   15,
+   -0.037,
+   40,
+   0.203
+  ]
+ },
+ "A_yil_veto_kotu": [
+  5,
+  7
+ ],
+ "A_portfoy": {
+  "toplamR_once": 109.3,
+  "toplamR_sonra": 98.6,
+  "SR_once": 1.32,
+  "SR_sonra": 1.44,
+  "P_SR_artis": 0.776
+ },
+ "A_plasebo_dusukVIX": {
+  "n": 840,
+  "n_veto": 50,
+  "R_veto": 0.222,
+  "R_kalan": -0.001,
+  "delta": -0.223,
+  "P_delta>0": 0.051,
+  "p_perm": 0.941,
+  "P_Rveto<=0": 0.045,
+  "isabet_veto": 0.54,
+  "toplamR_veto": 11.1,
+  "toplamR_kalan": -1.0
+ },
+ "A_kollar": {
+  "dun_dusus": [
+   307,
+   0.286
+  ],
+  "dun_yukselis_SMA50_ustu": [
+   149,
+   0.072
+  ],
+  "dun_yukselis_SMA50_alti": [
+   141,
+   0.076
+  ]
+ },
+ "B": {
+  "KESIF": {
+   "n_alt": 325,
+   "ort_alt": -16.0,
+   "med_alt": -7.0,
+   "n_ust": 441,
+   "ort_ust": 6.8,
+   "fark": -22.8
+  },
+  "TEST": {
+   "n_alt": 131,
+   "ort_alt": 11.6,
+   "med_alt": 19.9,
+   "n_ust": 97,
+   "ort_ust": -0.7,
+   "fark": 12.4
+  },
+  "KOR": {
+   "n_alt": 240,
+   "ort_alt": -5.5,
+   "med_alt": 12.3,
+   "n_ust": 310,
+   "ort_ust": -1.4,
+   "fark": -4.2
+  },
+  "havuz": {
+   "n_alt": 696,
+   "ort_alt": -7.2,
+   "ort_ust": 2.9,
+   "P_fark<0": 0.899
+  }
+ },
+ "olcut": {
+  "A1": false,
+  "A2": false,
+  "A3": true,
+  "A4": true,
+  "A5": false,
+  "A6": true,
+  "B": false
+ }
+}

@@ -22,6 +22,10 @@ FAMILY_BY_OFFSET = {
     5: "USOIL_BRK",  # USOIL breakout (gölge)
     6: "REENTRY",
     7: "CAPREV",     # CAPREV portföyü NDX+DAX canlı (2026-10-09, kart 6/6)
+    8: "C3B",        # NDX RSI2 geri dönüşü canlı (2026-11-08)
+    9: "ORBVIX",     # NDX ORB × VIX canlı (2026-11-08)
+    10: "CEKIC",     # FR-15 teyitli çekiç canlı (2026-11-08)
+    11: "KSG",       # NAS100 kapanış saati gecesi canlı (2026-11-10)
     20: "DECIDER",   # claude_decider demo icrası
 }
 MANUAL_MAGIC = 0
