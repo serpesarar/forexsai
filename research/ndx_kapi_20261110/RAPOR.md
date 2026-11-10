@@ -80,3 +80,43 @@ Yani NDX'te korku sonrası gün-içi dönüş 2018 sonrası bir olgu; gece primi
 - Kutuda kartı broker M1 ile yeniden üret (16:00 anındaki gerçek spread ve swap tahakkuk saati).
 - C3b / CAPREV / ORB × VIX ile gece-gün örtüşmesi ve birleşik en kötü gün (MH-06).
 - Tur 4 eğimi: ORB × VIX'te düşüş günü sonrası lot artışı, E110 ölçütüyle (aylık Sharpe artışı P ≥ %90).
+
+## Ek — İşlem açıldıktan sonra seyir (MAE / MFE), çıkış zamanlaması ve canlı bağlantı (2026-11-10, kullanıcı isteği)
+
+**MAE** = girişten sonraki en kötü yön (düşüş), **MFE** = en iyi yön (yükseliş); işlem boyunca bar high/low. bp = baz puan,
+puan = NAS100 ≈ 27.800 fiyatında endeks puanı. Kaynak: `mae_mfe.py`, `results/mae_mfe_*.csv`.
+
+| Kural | n | Ort. düşüş (MAE) | Medyan | En kötü %10 | En kötü | Ort. yükseliş (MFE) | Medyan | En iyi %10 | En iyi |
+|---|---|---|---|---|---|---|---|---|---|
+| KSG (16:00 → ertesi 09:30) | 1.039 | −70 bp (−195 puan) | −48 | −154 | −609 | +57 bp (+157 puan) | +41 | +125 | +506 |
+| C3 (15:30 → ertesi 15:30) | 128 | −128 bp (−355 puan) | −95 | −254 | −720 | +133 bp (+371 puan) | +119 | +272 | +516 |
+| C3b (ilk yükselen 15:30, ≤5 gün) | 128 | −166 bp (−461 puan) | −113 | −372 | −1.015 | +150 bp (+417 puan) | +132 | +274 | +832 |
+| Bot DAYCOMBO BUY (TP 80 / SL 110) | 43 | −24 bp (−70 puan) | −29 | −41 | −49 | +24 bp (+69 puan) | +28 | +32 | +35 |
+| Bot REENTRY BUY | 20 | −20 bp (−58 puan) | −16 | −41 | −43 | +26 bp (+75 puan) | +29 | +34 | +49 |
+| Bot REENTRY SELL | 13 | −21 bp (−63 puan) | −16 | −40 | −77 | +30 bp (+86 puan) | +29 | +37 | +45 |
+| Bot VIXREG SELL | 209 | −25 bp (−72 puan) | −25 | −42 | −65 | +23 bp (+69 puan) | +28 | +35 | +110 |
+| Bot CHREV BUY / SELL | 13 / 15 | −29 / −28 bp | −32 / −33 | −48 / −42 | −61 / −49 | +22 / +21 bp | +27 | +31 / +34 | +33 / +36 |
+| Bot MOMSR BUY | 21 | −15 bp (−42 puan) | −15 | −31 | −47 | +15 bp (+44 puan) | +13 | +28 | +29 |
+| Bot DECIDER SELL | 80 | −10 bp (−31 puan) | −8 | −23 | −46 | +10 bp (+28 puan) | +10 | +15 | +43 |
+| ORB × VIX (5m, 152 işlem) | 152 | yol verisi yok; sonuç dağılımı: %46,7 stop (−1R), %32,2 hedef (+2R), %21,1 arada (ort. +0,56R); ort. risk 39 bp | | | | | | | |
+
+Notlar:
+- **Bot aileleri braketle kesiliyor** (SL 110 / TP 80 puan; DECIDER 46 / 31, MOMSR 125 / 52): MAE SL'i, MFE TP'yi aşamaz, bu yüzden küçük
+  görünürler. Ortalama düşüş SL mesafesinin yaklaşık %20–27'si, ortalama yükseliş TP mesafesinin %80–95'i (kapanıştan önce TP'ye değip çıkılan işlemler dahil).
+- **KSG, C3, C3b'de stop yok**, seyir serbest. KSG kazanan gecelerde ort. −41 bp düştükten sonra +85 bp'ye çıkıyor; kaybeden gecelerde ort. −108 bp düşüp
+  yalnız +21 bp'ye çıkıyor. Gecelerin %22,8'inde seyir en az −100 bp, %5,4'ünde en az −200 bp. Dar stop (−100 bp) kazananların büyük kısmını da keser.
+- **Acil SL eşiği:** −400 bp'de 8 gece, −500/−600 bp'de 2 gece (2018-12-20 ve 2025-04-04, ikisi −609 bp), −700 bp'de 0 gece tetikler. Ortalama net:
+  SL'siz +7,02, %7 SL +7,02, %6 SL +6,16, %5 SL +6,35, %4 SL +4,95 bp. Canlıda %7 kullanılıyor (yalnız sigorta).
+- C3 ve C3b satırları aynı olay zincirinden (tek pozisyon) çıkarıldığı için n = 128; kartta C3 n=201 (çakışmalı) idi.
+- Gün-içi QQQ günlük testlerinde (NK-01…05) pozisyon yolu yok, yalnız günlük getiri olduğundan MAE/MFE hesaplanamadı. Dukascopy 2024-25 DAYCOMBO/REENTRY
+  yeniden üretimi bot işlemleriyle aynı braketi kullandığı için ayrıca hesaplanmadı.
+
+**Çıkış zamanlaması (EK-7, `t_cikis.py`).** KSG kazancı 09:30 açılış sıçramasından gelmiyor: 09:29 kapanış → 09:30 açılış, KSG geceleri +0,13 bp, diğer gecelerde
++0,11 bp (Dukascopy 1m); broker M30 +0,19 / −0,26 bp. Çıkış gecikmesine duyarlılık (Dukascopy 1m, net): 09:29 +6,06 · **09:30 +6,18** · 09:31 +8,12 · 09:32 +8,25 ·
+09:35 +6,44 · 09:45 +5,56 bp (ay-blok P 0,96–0,995). Canlı çıkışın tarama gecikmesi kenarı bozmuyor.
+*Düzeltme:* betiğin ilk koşusunda dakika numarası yanlıştı (09:30 yerine 15:30 çıkışı ölçülmüş, +9,8 bp); o sonuç geçersizdir, yukarıdakiler düzeltilmiş koşudan.
+
+**Canlı bağlantı (kullanıcı kararı: gölge değil canlı).** `yeni deneme/ksg_live.py`, lot 0.5, magic +11, acil SL %7, çıkış ertesi işlem günü 09:30 ET.
+Araştırmayla sadakat (`ksg_sadakat.py`): canlı modül araştırmanın 1.039 sinyal gecesini aynen üretir; fazladan 7 gece tatil/yarım gün öncesi. Birim testleri
+yerelde ve kutuda geçti (7 + 12). Commit 40fef13d main'de, kutuda çekildi. **Bot yeniden başlatması açık pozisyon nedeniyle ertelendi (borç yazıldı);
+KSG, bot yeni kodla başlayana kadar emir açmaz.** Durdurma ölçütü: n = 60 gecede ort. net < 0.

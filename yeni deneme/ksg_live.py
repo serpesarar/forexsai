@@ -9,8 +9,9 @@ KURAL (donduruldu; değiştirmek kanıtı geçersiz kılar):
   O15 = bugünkü 15:00 ET M30 barının açılışı, O16 = 16:00 ET barının açılışı.  O16/O15 − 1 < 0  →  16:00'da AL.
   Çıkış: sonraki işlem gününün 09:30 ET'si (Cuma girişi Pazartesi 09:30'da kapanır). Stop/TP yok.
   Seans kısa günse (09:30–16:00 arası < 12 M30 barı) işlem yok — araştırma da bu günleri dışlıyor.
-  TEK FARK (C3b ile aynı): broker tarafında ACİL DURUM SL'i (varsayılan %6, `KSG_LIVE_EMERGENCY_SL`). Araştırmadaki en kötü
-  gece −%4,0 (bar-low bazlı −%6,1) olduğundan örneklemde net sonucu neredeyse değiştirmez; bot ölürse sınırsız zarara karşı sigorta.
+  TEK FARK (C3b ile aynı): broker tarafında ACİL DURUM SL'i (varsayılan %7, `KSG_LIVE_EMERGENCY_SL`). Araştırmada giriş sonrası en kötü
+  seyir −%6,1 (bar-low; 2018-12-20 ve 2025-04-04): %6 SL bu iki geceyi keser ve ortalamayı +7,02 → +6,16 bp düşürürdü, %7 hiçbir geceyi
+  kesmez. Yani SL sinyalin parçası değil, yalnız bot ölürse sınırsız zarara karşı sigorta.
   Giriş gecikmesi: 16:00 barı açılışından en çok 10 dk sonra (araştırma: 16:01 +5,1, 16:05 +5,2, 16:14 +4,5 bp — kenar sürer).
 """
 from __future__ import annotations
@@ -33,7 +34,7 @@ MIN_ENTRY_BAR = 16 * 60           # 16:00 ET
 MIN_OPEN = 9 * 60 + 30            # 09:30 ET — çıkış anı ve seans başı
 MIN_SESSION_BARS = 12             # 09:30–16:00 arası M30 bar sayısı (tam seans 13; kısa gün elenir)
 MAX_LATE_S = 600
-EMERGENCY_SL = 0.06
+EMERGENCY_SL = 0.07
 FETCH_M30 = 120
 
 _last_poll = 0.0

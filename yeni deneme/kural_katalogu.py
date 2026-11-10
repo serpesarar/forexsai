@@ -63,7 +63,7 @@ RULES: dict[str, dict] = {
         "ad": "KSG — kapanış saati gecesi (NAS100)", "kisa": "KSG", "sinif": "C+", "magic_offset": 11,
         "lot_key": "KSG_LIVE_LOT", "lot": 0.5, "live_key": "KSG_LIVE",
         "isabet": "%56,0", "n": 1039, "ort": "+7,0 bp/gece net (karşı kol −6,1)", "tutus": "gece (16:00 → ertesi 09:30 ET)",
-        "sl": "yok (acil durum SL %6 — araştırmadaki en kötü gece −%4,0)", "tp": "yok; ertesi işlem günü 09:30 ET'de çık",
+        "sl": "yok (acil durum SL %7 — araştırmada giriş sonrası en kötü seyir −%6,1, net −%4,0)", "tp": "yok; ertesi işlem günü 09:30 ET'de çık",
         "siklik": "≈ 10 işlem/ay (yılda ≈ 123)",
         "kanit": "go_live_cards/ndx_ksg_gece.json (6/6; C+: 2018-19 eksi, 2020→ 7/7 yıl; durdurma: n=60'ta ort<0)",
     },

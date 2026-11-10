@@ -1,0 +1,56 @@
+{
+ "duka": {
+  "x569": {
+   "n": 566,
+   "net": 6.06,
+   "P": 0.964,
+   "karsi_kol": -7.59
+  },
+  "x570": {
+   "n": 566,
+   "net": 6.18,
+   "P": 0.966,
+   "karsi_kol": -7.48
+  },
+  "x571": {
+   "n": 566,
+   "net": 8.12,
+   "P": 0.994,
+   "karsi_kol": -7.02
+  },
+  "x572": {
+   "n": 566,
+   "net": 8.25,
+   "P": 0.995,
+   "karsi_kol": -7.7
+  },
+  "x575": {
+   "n": 566,
+   "net": 6.44,
+   "P": 0.983,
+   "karsi_kol": -6.7
+  },
+  "x585": {
+   "n": 566,
+   "net": 5.56,
+   "P": 0.966,
+   "karsi_kol": -6.63
+  }
+ },
+ "sicrama_duka": {
+  "KSG": 0.13,
+  "diger": 0.11,
+  "tum": 0.12
+ },
+ "sicrama_broker": {
+  "KSG": 0.19,
+  "diger": -0.26,
+  "tum": -0.04
+ },
+ "brut_gece_broker": {
+  "KSG": 10.93,
+  "diger": -2.19
+ },
+ "sicrama_haric_KSG_brut": 10.75,
+ "sicrama_haric_diger_brut": -1.32
+}

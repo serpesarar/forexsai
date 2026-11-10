@@ -19,7 +19,7 @@ Tanımlar tek yerde: `yeni deneme/kural_katalogu.py` (`RULES`). Olaylar `kural_c
 | **CAPREV** kapitülasyon alımı (NDX+DAX) | +7 | **1.0** | `CAPREV_LIVE_LOT`, `CAPREV_LIVE` | %55,3 (n 161) | +0,22R | 1× günlük oynaklık | seans kapanışı | ≈1,3/ay | B+ |
 | **ORB × VIX** (NDX, VIX≥18,4) | +9 | **0.75** | `ORB_VIX_LIVE_LOT`, `ORB_VIX_LIVE` | %48,7 (n 152) | +0,295R | aralık ortası | 2R, 15:55 ET zaman çıkışı | ≈5/ay | B |
 | **FR-15 teyitli çekiç** (NAS100 + GER40) | +10 | **0.5** (her endeks) | `CEKIC_LIVE_LOT`, `CEKIC_LIVE` | ≈%26–30 (FR-10 ölçümü) | ≈+0,07R | çekiç dibi | 5R, 24 sa, Cuma 16:45 NY çıkışı | ≈7–8/ay/endeks | B |
-| **KSG kapanış saati gecesi** (NAS100) | +11 | **0.5** | `KSG_LIVE_LOT`, `KSG_LIVE` | %56,0 (n 1039) | +7,0 bp/gece net | yok (acil SL %6) | ertesi işlem günü 09:30 ET; giriş 16:00 ET, 15:00→16:00 getirisi < 0 ise | ≈10/ay | C+ |
+| **KSG kapanış saati gecesi** (NAS100) | +11 | **0.5** | `KSG_LIVE_LOT`, `KSG_LIVE` | %56,0 (n 1039) | +7,0 bp/gece net | yok (acil SL %7) | ertesi işlem günü 09:30 ET; giriş 16:00 ET, 15:00→16:00 getirisi < 0 ise | ≈10/ay | C+ |
 
 **Lot mantığı:** kanıt sınıfı ve işlem yapısı. En güçlü kanıt (A, yüksek isabet, kısa tutuş) en büyük lotu alır; düşük isabetli,
 komşu eşiklerde kırılgan, sık işlem açan FR-15 en küçüğü. Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL`

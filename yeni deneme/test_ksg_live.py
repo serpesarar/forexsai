@@ -67,7 +67,7 @@ def test_exit_due_next_trading_day_0930():
 
 
 def test_emergency_stop_and_catalog():
-    assert ks.stop_price(28000.0, 1) == 26320.0
+    assert ks.stop_price(28000.0, 1) == 26040.0
     r = kk.RULES["KSG"]
     assert r["magic_offset"] == 11 and r["lot"] == 0.5 and r["live_key"] == "KSG_LIVE"
     assert kk.RULES["KSG"]["magic_offset"] not in {v["magic_offset"] for k, v in kk.RULES.items() if k != "KSG"}

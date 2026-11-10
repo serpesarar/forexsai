@@ -192,3 +192,10 @@ Amaç icra artefaktını dışlamak (E7, E97): sinyal fiyatı ile giriş fiyatı
 - **S5 2020 öncesi / sonrası (rapor):** D1'de etki 2020'de başlıyor göründü; iki dilim ayrı yazılır.
 
 Not (EK-6 sapması): Dukascopy'de 16:15–16:30 ET arası bar yok (endeks CFD arası). S1'in 16:15 girişi yerine 16:14 kullanıldı; sonuç görülmeden değiştirildi.
+
+## EK-7 — Canlı çıkış zamanlaması (canlı modül yazılırken fark edilen soru; sonuç görülmeden yazıldı)
+Soru: KSG kazancının ne kadarı 09:30 ET'de CFD fiyatının vadeli tabanlı → nakit tabanlı geçişindeki açılış sıçramasında? Canlı çıkış
+09:30:00 açılışında değil, tarama döngüsünün ilk turunda gerçekleşir (gecikme 0–60+ sn).
+- **T1 sıçrama:** 09:29 barı kapanışından 09:30 barı açılışına getiri (bp), KSG geceleri vs diğer geceler (Dukascopy 1m 2021-11→2026-11 ve broker M30 2018-26: 09:00 barı kapanışı → 09:30 açılışı).
+- **T2 çıkış gecikmesi (Dukascopy 1m, ölçüt):** çıkış 09:30, 09:31, 09:32, 09:35, 09:45 açılışı (bid; giriş 16:00 + 1,5 puan, 1,8 bp/gece): ortalama net
+  ve ay-blok P. Ölçüt: 09:32 çıkışında net > 0 ve P ≥ %90. Düşerse canlı çıkış mekaniği kenarı taşımıyor → sınıf C'ye iner ve yeniden tasarım gerekir.
