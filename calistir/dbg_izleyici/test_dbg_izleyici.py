@@ -34,7 +34,7 @@ class FakeMT5:
         self.orders, self.first_tick = [], None
 
     def account_info(self): return self.acc
-    def symbol_info(self, s): return types.SimpleNamespace(trade_contract_size=100.0)
+    def symbol_info(self, s): return types.SimpleNamespace(trade_contract_size=1.0, trade_tick_size=0.01, trade_tick_value=1.0)
     def positions_get(self, **k): return list(self.positions)
     def terminal_info(self): return types.SimpleNamespace(connected=self.connected)
     def last_error(self): return (1, "ok")
@@ -222,3 +222,11 @@ def test_elle_emir_bakiye_ve_yeni_magic_kaydi(ortam):
     iz.adim()
     ev = [r["olay"] for r in olaylar(tmp)]
     assert {"yeni_magic", "bekleyen_emir", "bakiye_islem"} <= set(ev)
+
+
+def test_klon_degeri_tick_degerinden_cent_hesapta_100(ortam):
+    """trade_contract_size 1,0 olan cent sembolünde kâr 100 kat küçük çıkıyordu (11-10)."""
+    mt, ck, iz, tmp = ortam
+    assert iz.klon.contract == 100.0
+    from klon_yonetici import Sepet
+    assert Sepet(di.BUY, [0.05], [4000.0]).floating(4005.0, 4005.3, iz.klon.contract) == pytest.approx(25.0)

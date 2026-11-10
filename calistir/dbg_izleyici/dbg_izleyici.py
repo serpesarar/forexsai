@@ -114,7 +114,10 @@ class Izleyici:
         self.t_deal = 0
         self.sayac = {"giris": 0, "kapanis": 0, "tp_degisti": 0, "bar": 0, "bar_uyumsuz": 0}
         info = mt5.symbol_info(SYMBOL)
-        self.klon = KlonYonetici(AYAR, float(info.trade_contract_size) if info else 100.0)
+        # 1 lot × 1 fiyat birimi = kaç hesap birimi: tick_value/tick_size (DBG cent hesabında 100; trade_contract_size
+        # 1,0 döner ve kârı 100 kat küçük gösterirdi: 11-10'da gerçek TP 24,48 USC, klon 0,25 USC)
+        deger = float(info.trade_tick_value) / float(info.trade_tick_size) if info and info.trade_tick_size else 100.0
+        self.klon = KlonYonetici(AYAR, deger)
         self.klon_kar = 0.0
 
     # ------------------------------------------------------------ başlangıç / durum
@@ -141,11 +144,13 @@ class Izleyici:
             self.klon.yukle(d.get("klon", {}))
             self.tick_wm = int(d.get("tick_wm", 0))
             self.klon_kar = float(d.get("klon_kar", 0.0))
+            if d.get("kontrat_surum", 1) < 2:      # eski toplam 100 kat küçüktü; ölçek sabit, düzeltilir
+                self.klon_kar *= 100.0
 
     def _durum_yaz(self) -> None:
         try:
             STATE_FILE.write_text(json.dumps({"klon": self.klon.durum(), "tick_wm": self.tick_wm,
-                                              "klon_kar": self.klon_kar}), encoding="utf-8")
+                                              "klon_kar": self.klon_kar, "kontrat_surum": 2}), encoding="utf-8")
         except OSError as exc:
             log.error("durum yazılamadı: %s", exc)
 
