@@ -1,0 +1,62 @@
+{
+ "1_hacim": {
+  "n_ETF_ay": 204,
+  "n_broker": 108,
+  "gecti": true
+ },
+ "2_beklenti": {
+  "n": 204,
+  "ort": 24.3,
+  "isabet": 0.598,
+  "P": 1.0,
+  "y1": 17.3,
+  "y2": 31.3,
+  "gecti": true
+ },
+ "3_kararlilik": {
+  "yari1": 17.3,
+  "yari2": 31.3,
+  "gecti": true
+ },
+ "4_surtunme": {
+  "broker_x1.5": {
+   "n": 108,
+   "ort": 39.9,
+   "isabet": 0.602,
+   "P": 1.0,
+   "y1": 35.0,
+   "y2": 44.9
+  },
+  "gecti": true
+ },
+ "5_icra": {
+  "iyimser_0930_spreadsiz": 75.8,
+  "gercek_0931_spread": 72.7,
+  "n": 33,
+  "gecti": true
+ },
+ "6_tek_pozisyon": {
+  "not": "ayda bir seans",
+  "gecti": true
+ },
+ "broker": {
+  "NAS100": {
+   "n": 64,
+   "ort": 38.3,
+   "isabet": 0.547,
+   "P": 0.998,
+   "y1": 2.1,
+   "y2": 74.5
+  },
+  "US500": {
+   "n": 44,
+   "ort": 43.9,
+   "isabet": 0.705,
+   "P": 1.0,
+   "y1": 50.8,
+   "y2": 37.0
+  }
+ },
+ "gecen": "6/6",
+ "verdikt": "LIVE adayı (önce GÖLGE, karar kullanıcıda)"
+}

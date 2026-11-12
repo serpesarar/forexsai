@@ -76,6 +76,10 @@ try:                                    # KSG (NAS100 kapanış saati gecesi) CA
     import ksg_live                     # hata verirse C3b/ORB×VIX/çekiç etkilenmesin
 except Exception:                       # pragma: no cover
     ksg_live = None
+try:                                    # AY SONU dengeleme akışı (son seans + ay başı uzun; NAS100 + US500) CANLI — kullanıcı kararı
+    import aysonu_live                  # 2026-11-12, kanıt research/qs03_akis_takvim_20261111. AYRI blok: import hatası diğerlerini etkilemesin
+except Exception:                       # pragma: no cover
+    aysonu_live = None
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -2694,6 +2698,11 @@ def main():
                     ksg_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
                 except Exception as e:
                     log.warning("ksg çıkış hatası: %s", e)
+            if aysonu_live is not None and config.LIVE_TRADING:    # AY SONU: son seans 16:00 / ay başı D+3 16:30 ET çıkışı (frenden önce)
+                try:
+                    aysonu_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
+                except Exception as e:
+                    log.warning("ay sonu çıkış hatası: %s", e)
 
             # ── Decider XAU erken kesme (DX-04): fren 'continue'undan ÖNCE — açık decider
             #    pozisyonu fren devredeyken de yönetilmeli ──
@@ -2799,7 +2808,8 @@ def main():
             # ── C3b / ORB×VIX / FR-15 çekiç CANLI (kullanıcı kararı 2026-11-08; lotlar kural_katalogu.py, ezme: config *_LIVE_LOT).
             #    Gölgelerden SONRA çağrılır (VIX geçmişini onlar günceller). Her açılışta kural adı + geçmiş başarı ekrana yazılır.
             #    Kapatma: config.C3B_LIVE / ORB_VIX_LIVE / CEKIC_LIVE = False.
-            for _name, _mod in (("c3b", c3b_live), ("orb×vix", orb_vix_live), ("çekiç", cekic_live), ("ksg", ksg_live)):
+            for _name, _mod in (("c3b", c3b_live), ("orb×vix", orb_vix_live), ("çekiç", cekic_live), ("ksg", ksg_live),
+                                ("ay sonu", aysonu_live)):
                 if _mod is None:
                     continue
                 try:

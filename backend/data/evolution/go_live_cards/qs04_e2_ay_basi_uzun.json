@@ -1,0 +1,54 @@
+{
+ "tarih": "2026-11-11",
+ "kural": "Ay sonu D kapanışında SPY ay içi − TLT ay içi ≥ +%2 → NAS100 UZUN, D 16:30 → D+3 16:30",
+ "1_hacim": {
+  "n_QQQ": 123,
+  "n_broker": 44,
+  "gecti": false
+ },
+ "2_beklenti": {
+  "n": 123,
+  "ort": 70.0,
+  "isabet": 0.707,
+  "P": 1.0,
+  "y1": 90.6,
+  "y2": 49.8,
+  "gecti": true
+ },
+ "3_kararlilik": {
+  "yari1": 90.6,
+  "yari2": 49.8,
+  "gecti": true
+ },
+ "4_surtunme": {
+  "broker_x1.5": {
+   "n": 44,
+   "ort": 55.3,
+   "isabet": 0.614,
+   "P": 0.952,
+   "y1": 10.3,
+   "y2": 100.3
+  },
+  "gecti": true
+ },
+ "5_icra": {
+  "iyimser": 56.1,
+  "gercek": 56.1,
+  "gecti": true
+ },
+ "6_tek_pozisyon": {
+  "not": "R1 D−3→D, E2 D→D+3 ardışık; çakışma yok",
+  "gecti": true
+ },
+ "gecen": "5/6",
+ "verdikt": "SHADOW",
+ "broker_gercek": {
+  "n": 44,
+  "ort": 56.1,
+  "isabet": 0.614,
+  "P": 0.952,
+  "y1": 11.2,
+  "y2": 101.1
+ },
+ "scope": "qs04_e2_ay_basi_uzun"
+}

@@ -10,9 +10,10 @@ getiri, SL/TP, işlem sıklığı, lot, magic. İşlem açıldığında `announc
 LOT SEVİYELERİ (kanıt sınıfına göre; kullanıcı kararı 2026-11-08). Her biri `config` içinde `getattr(config, <lot_key>, varsayılan)`
 ile ezilebilir (kutuda config.py gitignore'da → varsayılan BURADA):
     C3b 2.0  ·  CAPREV 1.0  ·  ORB×VIX 0.75  ·  FR-15 çekiç 0.5 (her endekste)  ·  KSG 0.5 (NAS100, gece)
+    AYSONU son seans 1.0 · AYSONU ay başı 0.75 (NAS100; US500 aynı nominal) — 2026-11-12
 Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL` (varsayılan 4.5) üstüne çıkamaz (yoğunlaşma freni).
 
-Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE, KSG_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
+Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE, KSG_LIVE, AYSONU_SON_LIVE, AYSONU_E2_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
 """
 from __future__ import annotations
 
@@ -66,6 +67,26 @@ RULES: dict[str, dict] = {
         "sl": "yok (acil durum SL %7 — araştırmada giriş sonrası en kötü seyir −%6,1, net −%4,0)", "tp": "yok; ertesi işlem günü 09:30 ET'de çık",
         "siklik": "≈ 10 işlem/ay (yılda ≈ 123)",
         "kanit": "go_live_cards/ndx_ksg_gece.json (6/6; C+: 2018-19 eksi, 2020→ 7/7 yıl; durdurma: n=60'ta ort<0)",
+    },
+    # 2026-11-12 kullanıcı kararı: ay sonu dengeleme akışı CANLI (aysonu_live.py). NAS100 lotu burada; US500 aynı nominal (parite).
+    "AYSONU_SON": {
+        "ad": "AY SONU son seans — fon dengeleme akışı (NAS100 + US500)", "kisa": "AYSSON", "sinif": "B", "magic_offset": 12,
+        "lot_key": "AYSONU_SON_LIVE_LOT", "lot": 1.0, "live_key": "AYSONU_SON_LIVE",
+        "isabet": "%55 NAS100 / %70 US500 (broker 2018-26)", "n": 204,
+        "ort": "+38 bp NAS100 / +44 bp US500 (broker); ETF 2002-26 +24 bp P 1,00",
+        "tutus": "aynı gün 09:30 → 16:00 ET (ayın son işlem günü)",
+        "sl": "yok (acil durum SL %4 — en kötü seyir −%2,3)", "tp": "yok; 16:00 ET'de çık",
+        "siklik": "≈ 8–9 işlem/yıl (ayda en çok 1; |Δ| < %2 olan ay yok)",
+        "kanit": "go_live_cards/qs06_son_seans.json (6/6; 2014-26 +31 bp t 4,0)",
+    },
+    "AYSONU_E2": {
+        "ad": "AY BAŞI uzun — dengeleme sonrası geri tepme (NAS100 + US500)", "kisa": "AYSE2", "sinif": "B", "magic_offset": 13,
+        "lot_key": "AYSONU_E2_LIVE_LOT", "lot": 0.75, "live_key": "AYSONU_E2_LIVE",
+        "isabet": "%61 broker NAS100 / %71 QQQ", "n": 123, "ort": "+56 bp broker NAS100; QQQ 2002-26 +70 bp",
+        "tutus": "3 işlem günü (D 16:30 → D+3 16:30 ET)",
+        "sl": "yok (acil durum SL %8 — en kötü seyir −%6,5)", "tp": "yok; 3. işlem günü 16:30 ET'de çık",
+        "siklik": "≈ 5 işlem/yıl (yalnız ay hisse lehine ≥ %2 kapandıysa)",
+        "kanit": "go_live_cards/qs04_e2_ay_basi_uzun.json + qs04_ay_sonu_dongusu.json (döngü 6/6)",
     },
 }
 
@@ -159,19 +180,37 @@ def buy(mt5, config, log, send_order, mk_comment, rule_id: str, sym: str, lot: f
     return ok, int(getattr(res, "order", 0)) if ok else 0, getattr(res, "retcode", None)
 
 
+def sell(mt5, config, log, send_order, mk_comment, rule_id: str, sym: str, lot: float, bid: float,
+         sl: float, tp: float, tag: str):
+    """Market SELL (açığa satış). (ok, ticket, retcode). SL/TP 0.0 = yok. 2026-11-12: AYSONU son seans iki yönlü."""
+    req = {"action": mt5.TRADE_ACTION_DEAL, "symbol": sym, "volume": lot, "type": mt5.ORDER_TYPE_SELL,
+           "price": bid, "sl": sl, "tp": tp, "deviation": config.DEVIATION_POINTS, "magic": magic(config, rule_id),
+           "comment": mk_comment("fxs ", tag), "type_time": mt5.ORDER_TIME_GTC}
+    res = send_order(req, sym)
+    ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
+    return ok, int(getattr(res, "order", 0)) if ok else 0, getattr(res, "retcode", None)
+
+
+def _is_short(mt5, pos) -> bool:
+    """pos SELL pozisyonu mu? MT5: POSITION_TYPE_BUY=0, POSITION_TYPE_SELL=1. Alan yoksa BUY sayılır (eski davranış)."""
+    return int(getattr(pos, "type", 0)) == int(getattr(mt5, "POSITION_TYPE_SELL", 1))
+
+
 def close(mt5, config, log, send_order, rule_id: str, pos, why: str) -> bool:
-    """Açık BUY pozisyonu market kapat."""
+    """Açık pozisyonu market kapat (BUY → SELL @bid, SELL → BUY @ask)."""
     tick = mt5.symbol_info_tick(pos.symbol)
     if tick is None:
         return False
+    short = _is_short(mt5, pos)
+    px = tick.ask if short else tick.bid
     req = {"action": mt5.TRADE_ACTION_DEAL, "symbol": pos.symbol, "position": pos.ticket, "volume": float(pos.volume),
-           "type": mt5.ORDER_TYPE_SELL, "price": tick.bid, "deviation": config.DEVIATION_POINTS,
+           "type": mt5.ORDER_TYPE_BUY if short else mt5.ORDER_TYPE_SELL, "price": px, "deviation": config.DEVIATION_POINTS,
            "magic": magic(config, rule_id), "comment": f"fxs {RULES[rule_id]['kisa']} exit"[:28]}
     res = send_order(req, pos.symbol)
     ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
     append_event({"kind": "exit", "rule": rule_id, "ticket": pos.ticket, "symbol": pos.symbol, "why": why,
-                  "bid": tick.bid, "ok": ok, "retcode": getattr(res, "retcode", None),
+                  "bid": tick.bid, "price": px, "short": short, "ok": ok, "retcode": getattr(res, "retcode", None),
                   "entry_price": pos.price_open, "volume": pos.volume})
     (log.info if ok else log.error)("%s %s kapanış ticket=%s @%.2f (%s) retcode=%s", RULES[rule_id]["kisa"],
-                                    "✅" if ok else "❌", pos.ticket, tick.bid, why, getattr(res, "retcode", None))
+                                    "✅" if ok else "❌", pos.ticket, px, why, getattr(res, "retcode", None))
     return ok

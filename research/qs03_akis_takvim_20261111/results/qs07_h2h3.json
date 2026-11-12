@@ -1,0 +1,164 @@
+{
+ "H2_ETF_2002_26": {
+  "n_ay_sonu": 204,
+  "egim_ay_sonu": -0.116,
+  "egim_siradan": 0.015,
+  "fark": -0.13,
+  "P_fark>0": 0.032,
+  "Y_buyuk_itme": {
+   "n": 102,
+   "ort": 12.1,
+   "isabet": 0.637,
+   "P": 0.956,
+   "y1": 11.1,
+   "y2": 13.1
+  },
+  "Y_kucuk_itme": {
+   "n": 102,
+   "ort": 26.8,
+   "isabet": 0.657,
+   "P": 1.0,
+   "y1": 25.3,
+   "y2": 28.3
+  },
+  "ort_itme_P": 26.3
+ },
+ "H2_SPY_1993_2002": {
+  "n_ay_sonu": 73,
+  "egim_ay_sonu": 0.052,
+  "egim_siradan": -0.033,
+  "fark": 0.085,
+  "P_fark>0": 0.956,
+  "Y_buyuk_itme": {
+   "n": 37,
+   "ort": 9.1,
+   "isabet": 0.676,
+   "P": 0.837,
+   "y1": -2.5,
+   "y2": 20.1
+  },
+  "Y_kucuk_itme": {
+   "n": 36,
+   "ort": -4.8,
+   "isabet": 0.389,
+   "P": 0.26,
+   "y1": -0.3,
+   "y2": -9.2
+  },
+  "ort_itme_P": 15.2
+ },
+ "H2_broker_2018_26": {
+  "n": 108,
+  "egim": -0.115,
+  "Y_buyuk_itme": {
+   "n": 54,
+   "ort": 6.1,
+   "isabet": 0.574,
+   "P": 0.705,
+   "y1": -6.2,
+   "y2": 18.4
+  },
+  "Y_kucuk_itme": {
+   "n": 54,
+   "ort": 30.4,
+   "isabet": 0.685,
+   "P": 1.0,
+   "y1": 49.0,
+   "y2": 11.8
+  }
+ },
+ "H2_sinif": "X",
+ "H3": {
+  "yabanci_1990_2003": {
+   "AEX": {
+    "pencere-disi": 4.71,
+    "P(pencere>disi)": 0.786,
+    "n": 1902
+   },
+   "AXJO": {
+    "pencere-disi": 6.5,
+    "P(pencere>disi)": 0.969,
+    "n": 1873
+   },
+   "BSESN": {
+    "pencere-disi": -4.55,
+    "P(pencere>disi)": 0.36,
+    "n": 1065
+   },
+   "BVSP": {
+    "pencere-disi": 1.37,
+    "P(pencere>disi)": 0.537,
+    "n": 1745
+   },
+   "FCHI": {
+    "pencere-disi": 1.44,
+    "P(pencere>disi)": 0.606,
+    "n": 2312
+   },
+   "GSPTSE": {
+    "pencere-disi": -0.98,
+    "P(pencere>disi)": 0.394,
+    "n": 2350
+   },
+   "IBEX": {
+    "pencere-disi": -2.46,
+    "P(pencere>disi)": 0.357,
+    "n": 1734
+   },
+   "JKSE": {
+    "pencere-disi": 4.17,
+    "P(pencere>disi)": 0.7,
+    "n": 2214
+   },
+   "KS11": {
+    "pencere-disi": 12.32,
+    "P(pencere>disi)": 0.79,
+    "n": 1135
+   },
+   "MXX": {
+    "pencere-disi": 19.7,
+    "P(pencere>disi)": 0.994,
+    "n": 2005
+   },
+   "SSMI": {
+    "pencere-disi": -0.17,
+    "P(pencere>disi)": 0.49,
+    "n": 2197
+   },
+   "TWII": {
+    "pencere-disi": -13.82,
+    "P(pencere>disi)": 0.114,
+    "n": 1053
+   },
+   "GDAXI": {
+    "pencere-disi": 5.69,
+    "P(pencere>disi)": 0.825,
+    "n": 2343
+   },
+   "N225": {
+    "pencere-disi": 7.25,
+    "P(pencere>disi)": 0.874,
+    "n": 2275
+   },
+   "FTSE": {
+    "pencere-disi": 1.02,
+    "P(pencere>disi)": 0.603,
+    "n": 2360
+   }
+  },
+  "GSPC_1985_93": {
+   "pencere-disi": -2.92,
+   "P(pencere>disi)": 0.314
+  },
+  "IXIC_1985_93": {
+   "pencere-disi": -1.17,
+   "P(pencere>disi)": 0.435
+  },
+  "ozet": {
+   "yabanci_arti": "10/15",
+   "havuz": 2.81,
+   "isaret_p": 0.151,
+   "sinif": "X"
+  }
+ }
+}

@@ -1,0 +1,224 @@
+{
+ "KESIF": {
+  "QQQ": {
+   "D2_beta_hisse_bp_per_1pct": -5.47,
+   "t_hisse": -1.17,
+   "beta_tahvil": 3.0,
+   "t_tahvil": 0.53,
+   "D1_yalniz_hisse_kural": {
+    "n": 86,
+    "ort": 15.3,
+    "isabet": 0.547,
+    "P": 0.741,
+    "y1": 8.4,
+    "y2": 22.3
+   },
+   "Delta_kural": {
+    "n": 101,
+    "ort": 19.4,
+    "isabet": 0.545,
+    "P": 0.801,
+    "y1": 11.4,
+    "y2": 27.4
+   },
+   "D4_yalniz_tahvil_kural(tahvil↑→UZUN)": {
+    "n": 77,
+    "ort": 12.9,
+    "isabet": 0.506,
+    "P": 0.683,
+    "y1": 8.0,
+    "y2": 17.7
+   }
+  },
+  "SPY": {
+   "D2_beta_hisse_bp_per_1pct": -9.43,
+   "t_hisse": -2.52,
+   "beta_tahvil": 7.06,
+   "t_tahvil": 1.56,
+   "D1_yalniz_hisse_kural": {
+    "n": 86,
+    "ort": 42.0,
+    "isabet": 0.628,
+    "P": 0.982,
+    "y1": 48.6,
+    "y2": 35.4
+   },
+   "Delta_kural": {
+    "n": 101,
+    "ort": 44.5,
+    "isabet": 0.604,
+    "P": 0.989,
+    "y1": 37.3,
+    "y2": 51.6
+   },
+   "D4_yalniz_tahvil_kural(tahvil↑→UZUN)": {
+    "n": 77,
+    "ort": 35.7,
+    "isabet": 0.584,
+    "P": 0.947,
+    "y1": 47.8,
+    "y2": 23.9
+   }
+  }
+ },
+ "TEST": {
+  "QQQ": {
+   "D2_beta_hisse_bp_per_1pct": -3.57,
+   "t_hisse": -0.89,
+   "beta_tahvil": 9.79,
+   "t_tahvil": 2.23,
+   "D1_yalniz_hisse_kural": {
+    "n": 93,
+    "ort": 6.5,
+    "isabet": 0.527,
+    "P": 0.6,
+    "y1": -5.4,
+    "y2": 18.2
+   },
+   "Delta_kural": {
+    "n": 104,
+    "ort": 44.4,
+    "isabet": 0.558,
+    "P": 0.991,
+    "y1": 38.6,
+    "y2": 50.2
+   },
+   "D4_yalniz_tahvil_kural(tahvil↑→UZUN)": {
+    "n": 85,
+    "ort": 35.7,
+    "isabet": 0.565,
+    "P": 0.939,
+    "y1": 40.9,
+    "y2": 30.6
+   }
+  },
+  "SPY": {
+   "D2_beta_hisse_bp_per_1pct": -3.4,
+   "t_hisse": -1.12,
+   "beta_tahvil": 9.14,
+   "t_tahvil": 2.75,
+   "D1_yalniz_hisse_kural": {
+    "n": 93,
+    "ort": 7.3,
+    "isabet": 0.505,
+    "P": 0.674,
+    "y1": 4.4,
+    "y2": 10.2
+   },
+   "Delta_kural": {
+    "n": 104,
+    "ort": 41.0,
+    "isabet": 0.558,
+    "P": 0.998,
+    "y1": 39.3,
+    "y2": 42.6
+   },
+   "D4_yalniz_tahvil_kural(tahvil↑→UZUN)": {
+    "n": 85,
+    "ort": 33.9,
+    "isabet": 0.565,
+    "P": 0.973,
+    "y1": 29.6,
+    "y2": 38.2
+   }
+  }
+ },
+ "BAGIMSIZ_1990_2002": {
+  "beta_hisse": -4.74,
+  "t_hisse": -1.16,
+  "beta_tahvil": 7.24,
+  "t_tahvil": 0.83
+ },
+ "D3_profil": {
+  "D-1": {
+   "Delta": -17.9,
+   "yalniz_hisse": -19.1,
+   "n": 396
+  },
+  "D-2": {
+   "Delta": -5.0,
+   "yalniz_hisse": -10.5,
+   "n": 394
+  },
+  "D-3": {
+   "Delta": 38.8,
+   "yalniz_hisse": 19.1,
+   "n": 412
+  },
+  "D-4": {
+   "Delta": 31.4,
+   "yalniz_hisse": 31.5,
+   "n": 408
+  },
+  "D-5": {
+   "Delta": 32.2,
+   "yalniz_hisse": 25.2,
+   "n": 412
+  },
+  "D-6": {
+   "Delta": 19.6,
+   "yalniz_hisse": 12.6,
+   "n": 392
+  },
+  "D-7": {
+   "Delta": -14.1,
+   "yalniz_hisse": -16.6,
+   "n": 410
+  },
+  "D-8": {
+   "Delta": 0.7,
+   "yalniz_hisse": -20.8,
+   "n": 420
+  },
+  "D-9": {
+   "Delta": -12.3,
+   "yalniz_hisse": -15.0,
+   "n": 400
+  },
+  "D-10": {
+   "Delta": -9.2,
+   "yalniz_hisse": -36.8,
+   "n": 390
+  },
+  "D-11": {
+   "Delta": -18.9,
+   "yalniz_hisse": -15.9,
+   "n": 376
+  },
+  "D-12": {
+   "Delta": -16.8,
+   "yalniz_hisse": -21.6,
+   "n": 360
+  },
+  "D-13": {
+   "Delta": 22.9,
+   "yalniz_hisse": 10.0,
+   "n": 344
+  },
+  "D-14": {
+   "Delta": 1.1,
+   "yalniz_hisse": -7.8,
+   "n": 360
+  },
+  "D-15": {
+   "Delta": 11.3,
+   "yalniz_hisse": 9.9,
+   "n": 346
+  },
+  "D-16": {
+   "Delta": -0.3,
+   "yalniz_hisse": -9.4,
+   "n": 330
+  },
+  "D-17": {
+   "Delta": 22.6,
+   "yalniz_hisse": 43.9,
+   "n": 304
+  },
+  "D-18": {
+   "Delta": 0.8,
+   "yalniz_hisse": 31.0,
+   "n": 264
+  }
+ }
+}

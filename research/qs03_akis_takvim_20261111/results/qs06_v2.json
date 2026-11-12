@@ -1,0 +1,278 @@
+{
+ "2002_13": {
+  "R1": {
+   "aylik_ort": 27.0,
+   "SR": 0.53,
+   "en_kotu_ay": -513.0,
+   "yil_arti": "10/12"
+  },
+  "GUN0": {
+   "aylik_ort": 12.6,
+   "SR": 0.57,
+   "en_kotu_ay": -237.0,
+   "yil_arti": "8/12"
+  },
+  "GECE1": {
+   "aylik_ort": 11.5,
+   "SR": 0.62,
+   "en_kotu_ay": -264.0,
+   "yil_arti": "9/12"
+  },
+  "E2u": {
+   "aylik_ort": 33.9,
+   "SR": 1.0,
+   "en_kotu_ay": -401.0,
+   "yil_arti": "10/12"
+  },
+  "E2u_sabah": {
+   "aylik_ort": 23.2,
+   "SR": 0.65,
+   "en_kotu_ay": -486.0,
+   "yil_arti": "9/12"
+  },
+  "dongu_QS04": {
+   "aylik_ort": 61.0,
+   "SR": 0.96,
+   "en_kotu_ay": -513.0,
+   "yil_arti": "10/12"
+  },
+  "v2_GUN0+GECE1": {
+   "aylik_ort": 24.2,
+   "SR": 0.88,
+   "en_kotu_ay": -255.0,
+   "yil_arti": "11/12"
+  },
+  "v2+E2u_sabah": {
+   "aylik_ort": 47.4,
+   "SR": 1.1,
+   "en_kotu_ay": -379.0,
+   "yil_arti": "10/12"
+  }
+ },
+ "2014_26": {
+  "R1": {
+   "aylik_ort": 28.8,
+   "SR": 0.7,
+   "en_kotu_ay": -486.0,
+   "yil_arti": "9/13"
+  },
+  "GUN0": {
+   "aylik_ort": 21.1,
+   "SR": 1.03,
+   "en_kotu_ay": -182.0,
+   "yil_arti": "12/13"
+  },
+  "GECE1": {
+   "aylik_ort": 13.0,
+   "SR": 0.7,
+   "en_kotu_ay": -196.0,
+   "yil_arti": "10/13"
+  },
+  "E2u": {
+   "aylik_ort": 19.0,
+   "SR": 0.54,
+   "en_kotu_ay": -654.0,
+   "yil_arti": "9/13"
+  },
+  "E2u_sabah": {
+   "aylik_ort": 11.7,
+   "SR": 0.33,
+   "en_kotu_ay": -620.0,
+   "yil_arti": "5/13"
+  },
+  "dongu_QS04": {
+   "aylik_ort": 47.8,
+   "SR": 0.88,
+   "en_kotu_ay": -570.0,
+   "yil_arti": "12/13"
+  },
+  "v2_GUN0+GECE1": {
+   "aylik_ort": 34.2,
+   "SR": 1.31,
+   "en_kotu_ay": -234.0,
+   "yil_arti": "13/13"
+  },
+  "v2+E2u_sabah": {
+   "aylik_ort": 45.9,
+   "SR": 1.09,
+   "en_kotu_ay": -639.0,
+   "yil_arti": "12/13"
+  }
+ },
+ "tum": {
+  "R1": {
+   "aylik_ort": 28.0,
+   "SR": 0.61,
+   "en_kotu_ay": -513.0,
+   "yil_arti": "19/25"
+  },
+  "GUN0": {
+   "aylik_ort": 17.2,
+   "SR": 0.81,
+   "en_kotu_ay": -237.0,
+   "yil_arti": "20/25"
+  },
+  "GECE1": {
+   "aylik_ort": 12.3,
+   "SR": 0.66,
+   "en_kotu_ay": -264.0,
+   "yil_arti": "19/25"
+  },
+  "E2u": {
+   "aylik_ort": 26.0,
+   "SR": 0.75,
+   "en_kotu_ay": -654.0,
+   "yil_arti": "19/25"
+  },
+  "E2u_sabah": {
+   "aylik_ort": 17.1,
+   "SR": 0.48,
+   "en_kotu_ay": -620.0,
+   "yil_arti": "14/25"
+  },
+  "dongu_QS04": {
+   "aylik_ort": 54.0,
+   "SR": 0.92,
+   "en_kotu_ay": -570.0,
+   "yil_arti": "22/25"
+  },
+  "v2_GUN0+GECE1": {
+   "aylik_ort": 29.5,
+   "SR": 1.11,
+   "en_kotu_ay": -255.0,
+   "yil_arti": "24/25"
+  },
+  "v2+E2u_sabah": {
+   "aylik_ort": 46.6,
+   "SR": 1.09,
+   "en_kotu_ay": -639.0,
+   "yil_arti": "22/25"
+  }
+ },
+ "GECE1_bacak": {
+  "s=-1 (gece UZUN)": {
+   "n": 128,
+   "ort": 23.9,
+   "isabet": 0.742,
+   "P": 1.0,
+   "y1": 24.0,
+   "y2": 23.7
+  },
+  "s=+1 (gece KISA)": {
+   "n": 76,
+   "ort": 6.6,
+   "isabet": 0.447,
+   "P": 0.735,
+   "y1": 1.9,
+   "y2": 11.4
+  }
+ },
+ "GUN0_bacak": {
+  "s=+1 (UZUN)": {
+   "n": 76,
+   "ort": 23.2,
+   "isabet": 0.526,
+   "P": 0.965,
+   "y1": 5.6,
+   "y2": 40.7
+  },
+  "s=-1 (KISA)": {
+   "n": 128,
+   "ort": 25.0,
+   "isabet": 0.641,
+   "P": 1.0,
+   "y1": 25.5,
+   "y2": 24.5
+  }
+ },
+ "broker_2018_26": {
+  "NAS100": {
+   "GUN0": {
+    "n": 64,
+    "ort": 38.3,
+    "isabet": 0.547,
+    "P": 0.998,
+    "y1": 2.1,
+    "y2": 74.5
+   },
+   "GECE1": {
+    "n": 64,
+    "ort": 15.3,
+    "isabet": 0.641,
+    "P": 0.909,
+    "y1": 27.7,
+    "y2": 2.9
+   },
+   "v2": {
+    "n": 64,
+    "ort": 53.6,
+    "isabet": 0.672,
+    "P": 0.999,
+    "y1": 29.8,
+    "y2": 77.4
+   },
+   "v2_SR_islem_ayi": 1.4,
+   "GECE1_KSG_ayni_yon_oran": 0.359,
+   "GECE1_KSG_ile_cakisan": {
+    "n": 23,
+    "ort": 28.0,
+    "isabet": 0.783,
+    "P": 0.964,
+    "y1": 67.1,
+    "y2": -7.7
+   },
+   "GECE1_KSG_disi": {
+    "n": 41,
+    "ort": 8.2,
+    "isabet": 0.561,
+    "P": 0.708,
+    "y1": 6.4,
+    "y2": 9.9
+   }
+  },
+  "US500": {
+   "GUN0": {
+    "n": 44,
+    "ort": 43.9,
+    "isabet": 0.705,
+    "P": 1.0,
+    "y1": 50.8,
+    "y2": 37.0
+   },
+   "GECE1": {
+    "n": 44,
+    "ort": 10.2,
+    "isabet": 0.591,
+    "P": 0.878,
+    "y1": 26.4,
+    "y2": -6.0
+   },
+   "v2": {
+    "n": 44,
+    "ort": 54.1,
+    "isabet": 0.659,
+    "P": 1.0,
+    "y1": 77.2,
+    "y2": 31.1
+   },
+   "v2_SR_islem_ayi": 1.91,
+   "GECE1_KSG_ayni_yon_oran": 0.477,
+   "GECE1_KSG_ile_cakisan": {
+    "n": 21,
+    "ort": 21.0,
+    "isabet": 0.667,
+    "P": 0.925,
+    "y1": 67.0,
+    "y2": -20.9
+   },
+   "GECE1_KSG_disi": {
+    "n": 23,
+    "ort": 0.4,
+    "isabet": 0.522,
+    "P": 0.504,
+    "y1": -5.8,
+    "y2": 6.1
+   }
+  }
+ }
+}

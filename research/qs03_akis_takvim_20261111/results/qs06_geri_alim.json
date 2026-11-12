@@ -1,0 +1,187 @@
+{
+ "ABD": {
+  "SPY": {
+   "2004_14": {
+    "acik_ort": -2.33,
+    "yasak_ort": 3.55,
+    "fark": -5.88,
+    "P_fark>0": 0.093,
+    "n_acik": 1009,
+    "n_yasak": 836
+   },
+   "2015_26": {
+    "acik_ort": 3.42,
+    "yasak_ort": 5.43,
+    "fark": -2.01,
+    "P_fark>0": 0.369,
+    "n_acik": 1076,
+    "n_yasak": 905
+   },
+   "1993_2003": {
+    "acik_ort": 3.49,
+    "yasak_ort": 2.67,
+    "fark": 0.82,
+    "P_fark>0": 0.554,
+    "n_acik": 1011,
+    "n_yasak": 824
+   }
+  },
+  "QQQ": {
+   "2004_14": {
+    "acik_ort": -1.74,
+    "yasak_ort": 5.24,
+    "fark": -6.98,
+    "P_fark>0": 0.089,
+    "n_acik": 1009,
+    "n_yasak": 836
+   },
+   "2015_26": {
+    "acik_ort": 4.7,
+    "yasak_ort": 8.35,
+    "fark": -3.65,
+    "P_fark>0": 0.292,
+    "n_acik": 1076,
+    "n_yasak": 905
+   }
+  }
+ },
+ "yabanci_2004_26": {
+  "AEX": {
+   "acik_ort": -1.76,
+   "yasak_ort": 5.09,
+   "fark": -6.85,
+   "P_fark>0": 0.049,
+   "n_acik": 2189,
+   "n_yasak": 1738
+  },
+  "AXJO": {
+   "acik_ort": -3.55,
+   "yasak_ort": 5.8,
+   "fark": -9.36,
+   "P_fark>0": 0.002,
+   "n_acik": 2124,
+   "n_yasak": 1730
+  },
+  "BSESN": {
+   "acik_ort": 0.96,
+   "yasak_ort": 1.42,
+   "fark": -0.46,
+   "P_fark>0": 0.448,
+   "n_acik": 1973,
+   "n_yasak": 1726
+  },
+  "BVSP": {
+   "acik_ort": -4.32,
+   "yasak_ort": 5.44,
+   "fark": -9.76,
+   "P_fark>0": 0.022,
+   "n_acik": 2001,
+   "n_yasak": 1738
+  },
+  "FCHI": {
+   "acik_ort": -1.92,
+   "yasak_ort": 3.02,
+   "fark": -4.94,
+   "P_fark>0": 0.141,
+   "n_acik": 2186,
+   "n_yasak": 1738
+  },
+  "GSPTSE": {
+   "acik_ort": -0.37,
+   "yasak_ort": 3.75,
+   "fark": -4.13,
+   "P_fark>0": 0.117,
+   "n_acik": 2074,
+   "n_yasak": 1741
+  },
+  "IBEX": {
+   "acik_ort": -0.81,
+   "yasak_ort": 2.46,
+   "fark": -3.27,
+   "P_fark>0": 0.237,
+   "n_acik": 2171,
+   "n_yasak": 1738
+  },
+  "JKSE": {
+   "acik_ort": -0.87,
+   "yasak_ort": 4.45,
+   "fark": -5.32,
+   "P_fark>0": 0.108,
+   "n_acik": 1898,
+   "n_yasak": 1719
+  },
+  "KS11": {
+   "acik_ort": -0.01,
+   "yasak_ort": 5.69,
+   "fark": -5.7,
+   "P_fark>0": 0.091,
+   "n_acik": 1974,
+   "n_yasak": 1735
+  },
+  "MXX": {
+   "acik_ort": -0.26,
+   "yasak_ort": 3.61,
+   "fark": -3.87,
+   "P_fark>0": 0.12,
+   "n_acik": 2080,
+   "n_yasak": 1738
+  },
+  "SSMI": {
+   "acik_ort": -0.23,
+   "yasak_ort": 1.13,
+   "fark": -1.37,
+   "P_fark>0": 0.348,
+   "n_acik": 2078,
+   "n_yasak": 1737
+  },
+  "TWII": {
+   "acik_ort": 0.51,
+   "yasak_ort": 2.84,
+   "fark": -2.33,
+   "P_fark>0": 0.261,
+   "n_acik": 1970,
+   "n_yasak": 1701
+  },
+  "GDAXI": {
+   "acik_ort": 0.74,
+   "yasak_ort": 3.64,
+   "fark": -2.9,
+   "P_fark>0": 0.254,
+   "n_acik": 2145,
+   "n_yasak": 1738
+  },
+  "STOXX50E": {
+   "acik_ort": -2.04,
+   "yasak_ort": 2.36,
+   "fark": -4.4,
+   "P_fark>0": 0.198,
+   "n_acik": 1773,
+   "n_yasak": 1492
+  },
+  "N225": {
+   "acik_ort": 1.18,
+   "yasak_ort": 5.79,
+   "fark": -4.61,
+   "P_fark>0": 0.168,
+   "n_acik": 1926,
+   "n_yasak": 1741
+  },
+  "FTSE": {
+   "acik_ort": -2.77,
+   "yasak_ort": 2.37,
+   "fark": -5.13,
+   "P_fark>0": 0.073,
+   "n_acik": 2113,
+   "n_yasak": 1737
+  }
+ },
+ "ozet": {
+  "ABD_fark_ort": -4.63,
+  "yabanci_fark_ort": -4.65,
+  "yabanci_arti": "0/16",
+  "1": false,
+  "2": true,
+  "3": false,
+  "sinif": "X"
+ }
+}
