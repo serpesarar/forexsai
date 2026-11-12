@@ -80,6 +80,10 @@ try:                                    # AY SONU dengeleme akışı (son seans 
     import aysonu_live                  # 2026-11-12, kanıt research/qs03_akis_takvim_20261111. AYRI blok: import hatası diğerlerini etkilemesin
 except Exception:                       # pragma: no cover
     aysonu_live = None
+try:                                    # XAU 1h yeni 20 mum tepesi AL + S2 (R0B_G1, MK-06/MK-13) CANLI — kullanıcı kararı 2026-11-12.
+    import xau_r0b_live                 # AYRI blok: import hatası diğer canlı kuralları etkilemesin. Gölge xau_shadow yan yana sürer.
+except Exception:                       # pragma: no cover
+    xau_r0b_live = None
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -2703,6 +2707,11 @@ def main():
                     aysonu_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
                 except Exception as e:
                     log.warning("ay sonu çıkış hatası: %s", e)
+            if xau_r0b_live is not None and config.LIVE_TRADING:   # XAU 1h: 20 bar / Cuma 16:50 NY / boşluk çıkışı (frenden önce)
+                try:
+                    xau_r0b_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
+                except Exception as e:
+                    log.warning("xau 1h çıkış hatası: %s", e)
 
             # ── Decider XAU erken kesme (DX-04): fren 'continue'undan ÖNCE — açık decider
             #    pozisyonu fren devredeyken de yönetilmeli ──
@@ -2809,7 +2818,7 @@ def main():
             #    Gölgelerden SONRA çağrılır (VIX geçmişini onlar günceller). Her açılışta kural adı + geçmiş başarı ekrana yazılır.
             #    Kapatma: config.C3B_LIVE / ORB_VIX_LIVE / CEKIC_LIVE = False.
             for _name, _mod in (("c3b", c3b_live), ("orb×vix", orb_vix_live), ("çekiç", cekic_live), ("ksg", ksg_live),
-                                ("ay sonu", aysonu_live)):
+                                ("ay sonu", aysonu_live), ("xau 1h", xau_r0b_live)):
                 if _mod is None:
                     continue
                 try:

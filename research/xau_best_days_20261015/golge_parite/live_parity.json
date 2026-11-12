@@ -1,0 +1,19 @@
+{
+ "n": 3296,
+ "ort_R": 0.1093,
+ "isabet": 0.3641,
+ "toplam_R": 360.3,
+ "artı_yil": "16/19",
+ "cikis": {
+  "stop": 1887,
+  "20": 1058,
+  "Cuma": 322,
+  "segment": 29
+ },
+ "arastirma_hedef": {
+  "n": 3259,
+  "ort_R": 0.1095,
+  "isabet": 0.363,
+  "toplam_R": 356.8
+ }
+}

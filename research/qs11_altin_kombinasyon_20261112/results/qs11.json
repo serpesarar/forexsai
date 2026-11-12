@@ -1,0 +1,298 @@
+{
+ "H1_trend_dusus_gunu": {
+  "tum": {
+   "n": 411,
+   "islem_ay": 1.56,
+   "net": 18.5,
+   "isabet": 0.562,
+   "taban_ustu": 3.0,
+   "P_taban_ustu": 0.605,
+   "uzun_n": 411,
+   "kisa_n": 0
+  },
+  "yari1": {
+   "n": 224,
+   "islem_ay": 1.85,
+   "net": 10.6,
+   "isabet": 0.549,
+   "taban_ustu": -6.2,
+   "P_taban_ustu": 0.369,
+   "uzun_n": 224,
+   "kisa_n": 0
+  },
+  "yari2": {
+   "n": 187,
+   "islem_ay": 1.32,
+   "net": 27.9,
+   "isabet": 0.578,
+   "taban_ustu": 13.6,
+   "P_taban_ustu": 0.81,
+   "uzun_n": 187,
+   "kisa_n": 0
+  },
+  "tek_pozisyon": {
+   "n": 320,
+   "net": 14.8
+  },
+  "broker_2018_26": {
+   "n": 156,
+   "net_x1.5": 21.5,
+   "isabet": 0.545,
+   "P": 0.891
+  },
+  "destek_GC_2000_04": {
+   "n": 87,
+   "islem_ay": 1.67,
+   "net": 12.0,
+   "isabet": 0.575,
+   "taban_ustu": -1.9,
+   "P_taban_ustu": 0.469,
+   "uzun_n": 87,
+   "kisa_n": 0
+  },
+  "olcut": {
+   "a": false,
+   "b": false,
+   "c": true,
+   "d_holm": 1.0
+  },
+  "sinif": "X"
+ },
+ "H2_altin_gumus": {
+  "tum": {
+   "n": 414,
+   "islem_ay": 1.57,
+   "net": -6.3,
+   "isabet": 0.495,
+   "taban_ustu": -4.0,
+   "P_taban_ustu": 0.371,
+   "uzun_n": 204,
+   "kisa_n": 210,
+   "uzun_taban_ustu": 10.9,
+   "kisa_taban_ustu": -18.4
+  },
+  "yari1": {
+   "n": 161,
+   "islem_ay": 1.33,
+   "net": 6.5,
+   "isabet": 0.565,
+   "taban_ustu": 9.1,
+   "P_taban_ustu": 0.655,
+   "uzun_n": 78,
+   "kisa_n": 83,
+   "uzun_taban_ustu": 42.2,
+   "kisa_taban_ustu": -22.1
+  },
+  "yari2": {
+   "n": 253,
+   "islem_ay": 1.78,
+   "net": -14.4,
+   "isabet": 0.451,
+   "taban_ustu": -12.3,
+   "P_taban_ustu": 0.154,
+   "uzun_n": 126,
+   "kisa_n": 127,
+   "uzun_taban_ustu": -8.8,
+   "kisa_taban_ustu": -15.8
+  },
+  "tek_pozisyon": {
+   "n": 414,
+   "net": -6.3
+  },
+  "broker_2018_26": {
+   "n": 179,
+   "net_x1.5": -26.2,
+   "isabet": 0.413,
+   "P": 0.074
+  },
+  "destek_GC_2000_04": {
+   "n": 78,
+   "islem_ay": 1.5,
+   "net": -12.9,
+   "isabet": 0.487,
+   "taban_ustu": -14.9,
+   "P_taban_ustu": 0.274,
+   "uzun_n": 45,
+   "kisa_n": 33,
+   "uzun_taban_ustu": -27.7,
+   "kisa_taban_ustu": 2.6
+  },
+  "olcut": {
+   "a": false,
+   "b": false,
+   "c": false,
+   "d_holm": 1.0
+  },
+  "sinif": "X"
+ },
+ "H3a_vade_sonrasi_uzun": {
+  "tum": {
+   "n": 263,
+   "islem_ay": 1.0,
+   "net": -1.3,
+   "isabet": 0.468,
+   "taban_ustu": -12.6,
+   "P_taban_ustu": 0.106,
+   "uzun_n": 263,
+   "kisa_n": 0
+  },
+  "yari1": {
+   "n": 121,
+   "islem_ay": 1.0,
+   "net": 18.2,
+   "isabet": 0.545,
+   "taban_ustu": 6.7,
+   "P_taban_ustu": 0.652,
+   "uzun_n": 121,
+   "kisa_n": 0
+  },
+  "yari2": {
+   "n": 142,
+   "islem_ay": 1.0,
+   "net": -17.9,
+   "isabet": 0.401,
+   "taban_ustu": -29.0,
+   "P_taban_ustu": 0.013,
+   "uzun_n": 142,
+   "kisa_n": 0
+  },
+  "tek_pozisyon": {
+   "n": 263,
+   "net": -1.3
+  },
+  "broker_2018_26": {
+   "n": 94,
+   "net_x1.5": -23.1,
+   "isabet": 0.404,
+   "P": 0.084
+  },
+  "destek_GC_2000_04": {
+   "n": 51,
+   "islem_ay": 0.98,
+   "net": -16.9,
+   "isabet": 0.471,
+   "taban_ustu": -30.1,
+   "P_taban_ustu": 0.075,
+   "uzun_n": 51,
+   "kisa_n": 0
+  },
+  "olcut": {
+   "a": false,
+   "b": false,
+   "c": false,
+   "d_holm": 1.0
+  },
+  "sinif": "X"
+ },
+ "H3b_vade_oncesi_kisa": {
+  "tum": {
+   "n": 263,
+   "islem_ay": 1.0,
+   "net": -20.7,
+   "isabet": 0.46,
+   "taban_ustu": -5.5,
+   "P_taban_ustu": 0.322,
+   "uzun_n": 0,
+   "kisa_n": 263
+  },
+  "yari1": {
+   "n": 121,
+   "islem_ay": 1.0,
+   "net": -23.4,
+   "isabet": 0.446,
+   "taban_ustu": -7.9,
+   "P_taban_ustu": 0.344,
+   "uzun_n": 0,
+   "kisa_n": 121
+  },
+  "yari2": {
+   "n": 142,
+   "islem_ay": 1.0,
+   "net": -18.5,
+   "isabet": 0.472,
+   "taban_ustu": -3.4,
+   "P_taban_ustu": 0.416,
+   "uzun_n": 0,
+   "kisa_n": 142
+  },
+  "tek_pozisyon": {
+   "n": 263,
+   "net": -20.7
+  },
+  "broker_2018_26": {
+   "n": 95,
+   "net_x1.5": -27.6,
+   "isabet": 0.442,
+   "P": 0.088
+  },
+  "destek_GC_2000_04": {
+   "n": 51,
+   "islem_ay": 0.98,
+   "net": -5.5,
+   "isabet": 0.412,
+   "taban_ustu": 11.8,
+   "P_taban_ustu": 0.685,
+   "uzun_n": 0,
+   "kisa_n": 51
+  },
+  "olcut": {
+   "a": false,
+   "b": false,
+   "c": false,
+   "d_holm": 1.0
+  },
+  "sinif": "X"
+ },
+ "H4_likidasyon_gunu": {
+  "tum": {
+   "n": 55,
+   "islem_ay": 0.21,
+   "net": -4.8,
+   "isabet": 0.564,
+   "taban_ustu": -25.0,
+   "P_taban_ustu": 0.294,
+   "uzun_n": 55,
+   "kisa_n": 0
+  },
+  "yari1": {
+   "n": 35,
+   "islem_ay": 0.29,
+   "net": -19.2,
+   "isabet": 0.543,
+   "taban_ustu": -39.7,
+   "P_taban_ustu": 0.258,
+   "uzun_n": 35,
+   "kisa_n": 0
+  },
+  "yari2": {
+   "n": 20,
+   "islem_ay": 0.14,
+   "net": 20.5,
+   "isabet": 0.6,
+   "taban_ustu": 0.5,
+   "P_taban_ustu": 0.5,
+   "uzun_n": 20,
+   "kisa_n": 0
+  },
+  "tek_pozisyon": {
+   "n": 49,
+   "net": -30.8
+  },
+  "broker_2018_26": {
+   "n": 18,
+   "net_x1.5": 13.1,
+   "isabet": 0.611,
+   "P": 0.566
+  },
+  "destek_GC_2000_04": {
+   "n": 3
+  },
+  "olcut": {
+   "a": false,
+   "b": false,
+   "c": true,
+   "d_holm": 1.0
+  },
+  "sinif": "X"
+ }
+}

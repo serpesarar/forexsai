@@ -22,6 +22,7 @@ Tanımlar tek yerde: `yeni deneme/kural_katalogu.py` (`RULES`). Olaylar `kural_c
 | **KSG kapanış saati gecesi** (NAS100) | +11 | **0.5** | `KSG_LIVE_LOT`, `KSG_LIVE` | %56,0 (n 1039) | +7,0 bp/gece net | yok (acil SL %7) | ertesi işlem günü 09:30 ET; giriş 16:00 ET, 15:00→16:00 getirisi < 0 ise | ≈10/ay | C+ |
 | **AY SONU son seans** (NAS100 + US500, iki yönlü) | +12 | **1.0** NAS100; US500 aynı nominal (≈3,7) | `AYSONU_SON_LIVE_LOT`, `AYSONU_SON_LIVE`, `AYSONU_US500_PARITY` | %55 NAS100 / %70 US500 (broker 2018-26) | +38 / +44 bp (broker); ETF 2002-26 +24 bp | yok (acil SL %4) | ayın son işlem günü 09:30 → 16:00 ET; yön D−3'te SPY−TLT ay içi farkı (≥+%2 SAT, ≤−%2 AL) | ≈8–9/yıl | B |
 | **AY BAŞI uzun** (NAS100 + US500) | +13 | **0.75** NAS100; US500 aynı nominal | `AYSONU_E2_LIVE_LOT`, `AYSONU_E2_LIVE` | %61 broker / %71 QQQ | +56 bp (broker) | yok (acil SL %8) | D kapanışında fark ≥ +%2 → AL D 16:30 → D+3 16:30 ET | ≈5/yıl | B |
+| **XAU 1h yeni tepe** (XAUUSD; R0B_G1 + S2) | +14 | **0.05** (5 ons ≈ 20 bin $) | `XAU_R0B_LIVE_LOT`, `XAU_R0B_LIVE`, `XAU_R0B_S2_THR` | %36,3 (n 3.259, Duka 2008-26) | +0,109R (risk ≈ 120 $/işlem) | 1,5×ATR14(H1) | yok; 20. bar kapanışı, Cuma 16:50 NY | ≈3,4/hafta (≈14–15/ay) | B+ |
 
 **Lot mantığı:** kanıt sınıfı ve işlem yapısı. En güçlü kanıt (A, yüksek isabet, kısa tutuş) en büyük lotu alır; düşük isabetli,
 komşu eşiklerde kırılgan, sık işlem açan FR-15 en küçüğü. Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL`
@@ -46,3 +47,9 @@ qs06_son_seans (6/6), qs04_ay_sonu_dongusu (6/6). Veri yfinance SPY/TLT; NYSE ta
 aynı nominal → iki endeks aynı bahis (korelasyon ~0,94). Yoğunlaşma tavanı (4.5) NAS100'de diğer kurallar açıkken son seansı atlatabilir (olaya yazılır).
 Durdurma ölçütü: son seans n=24 işlemde ort. net < 0 → `AYSONU_SON_LIVE = False`.
 
+**XAU 1h (2026-11-12):** kullanıcı kararıyla gölgeden canlıya (`yeni deneme/xau_r0b_live.py`). Kural: kapanmış 1h barın tepesi önceki 20 barın tepesine
+eşit/üstündeyse AL; önceki UTC günü altın > +%1 kapandıysa ATLA (kovalama cezası, MK-13 A). Kanıt MK-06 (kart 10/10) + MK-13; canlı mantık Duka 2008-26'da
+uçtan uca yeniden koşuldu: n 3.296 / +0,109R / %36,4 (araştırma 3.259 / +0,1095R / %36,3; `research/xau_best_days_20261015/golge_parite/live_parity.py`).
+**Uyarılar:** isabet düşük (%36), seri kayıp olağan (maks. düşüş −49R ≈ 5.900 $ bu lotta); kazancın bir kısmı altının 2008-26 yükselişi (seçim düzeltmesinde
+sürüklenme-üstü fark p 0,47); gölge ileri karnesi n 6 (−0,6R). Gölge `xau_shadow.py` yan yana sürer. Durdurma ölçütü: canlı n=60 işlemde ort. R < 0 →
+`XAU_R0B_LIVE = False`. Decider XAU işlemleri ayrı magic'tedir, bu kuralı etkilemez.

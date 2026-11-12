@@ -11,9 +11,10 @@ LOT SEVİYELERİ (kanıt sınıfına göre; kullanıcı kararı 2026-11-08). Her
 ile ezilebilir (kutuda config.py gitignore'da → varsayılan BURADA):
     C3b 2.0  ·  CAPREV 1.0  ·  ORB×VIX 0.75  ·  FR-15 çekiç 0.5 (her endekste)  ·  KSG 0.5 (NAS100, gece)
     AYSONU son seans 1.0 · AYSONU ay başı 0.75 (NAS100; US500 aynı nominal) — 2026-11-12
+    XAU 1h yeni tepe 0.05 (XAUUSD) — 2026-11-12
 Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL` (varsayılan 4.5) üstüne çıkamaz (yoğunlaşma freni).
 
-Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE, KSG_LIVE, AYSONU_SON_LIVE, AYSONU_E2_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
+Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE, KSG_LIVE, AYSONU_SON_LIVE, AYSONU_E2_LIVE, XAU_R0B_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
 """
 from __future__ import annotations
 
@@ -87,6 +88,17 @@ RULES: dict[str, dict] = {
         "sl": "yok (acil durum SL %8 — en kötü seyir −%6,5)", "tp": "yok; 3. işlem günü 16:30 ET'de çık",
         "siklik": "≈ 5 işlem/yıl (yalnız ay hisse lehine ≥ %2 kapandıysa)",
         "kanit": "go_live_cards/qs04_e2_ay_basi_uzun.json + qs04_ay_sonu_dongusu.json (döngü 6/6)",
+    },
+    # 2026-11-12 kullanıcı kararı: XAU 1h yeni tepe (R0B_G1 + S2) CANLI (xau_r0b_live.py); gölge xau_shadow.py yan yana sürer.
+    # Lot 0.05 = 5 ons ≈ 20 bin $ nominal (NAS100 1 lot mertebesi); stop 1,5×ATR_H1 ≈ 24 $ → işlem başı risk ≈ 120 $.
+    "XAU_R0B": {
+        "ad": "XAU 1h yeni 20 mum tepesi AL (+ dün > %1 ise atla)", "kisa": "XAUR0B", "sinif": "B+", "magic_offset": 14,
+        "lot_key": "XAU_R0B_LIVE_LOT", "lot": 0.05, "live_key": "XAU_R0B_LIVE",
+        "isabet": "%36,3", "n": 3259, "ort": "+0,109 R/işlem (Dukascopy 2008-26, tek pozisyon)",
+        "tutus": "en fazla 20 saatlik bar (≈1 gün)", "sl": "1,5 × ATR14(H1)", "tp": "yok; 20. bar kapanışı / Cuma 16:50 NY",
+        "siklik": "≈ 3,4 işlem/hafta (≈ 14–15/ay)",
+        "kanit": "MK-06 kart 10/10 (research/decider_xau_tpsl_20261015/mekanik) + MK-13 S2 (A); uyarı: sürüklenme-üstü fark seçim "
+                 "düzeltmesinden geçmiyor (p_sel 0,47), gölge ileri n 6; durdurma n=60'ta ort R<0",
     },
 }
 

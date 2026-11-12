@@ -99,11 +99,11 @@ def test_c3b_exit_rules():
 def test_lots_distinct_and_overridable():
     cfg = types.SimpleNamespace(MAGIC_NUMBER=1000, LIVE_TRADING=True)
     lots = {k: kk.lot_of(cfg, k) for k in kk.RULES}
-    assert lots == {"C3B": 2.0, "CAPREV": 1.0, "ORBVIX": 0.75, "CEKIC": 0.5, "KSG": 0.5, "AYSONU_SON": 1.0, "AYSONU_E2": 0.75}
+    assert lots == {"C3B": 2.0, "CAPREV": 1.0, "ORBVIX": 0.75, "CEKIC": 0.5, "KSG": 0.5, "AYSONU_SON": 1.0, "AYSONU_E2": 0.75, "XAU_R0B": 0.05}
     cfg.C3B_LIVE_LOT = 3.0
     assert kk.lot_of(cfg, "C3B") == 3.0
-    assert len({kk.magic(cfg, k) for k in kk.RULES}) == 7 and kk.magic(cfg, "CAPREV") == 1007
-    assert kk.magic(cfg, "AYSONU_SON") == 1012 and kk.magic(cfg, "AYSONU_E2") == 1013
+    assert len({kk.magic(cfg, k) for k in kk.RULES}) == 8 and kk.magic(cfg, "CAPREV") == 1007
+    assert kk.magic(cfg, "AYSONU_SON") == 1012 and kk.magic(cfg, "AYSONU_E2") == 1013 and kk.magic(cfg, "XAU_R0B") == 1014
 
 
 def test_enabled_needs_both_flags():
