@@ -49,6 +49,10 @@ try:                                    # NDX RSI2 C3b/C3 GÖLGE (TR-C3b) — em
     import c3b_shadow
 except Exception:                       # pragma: no cover
     c3b_shadow = None
+try:                                    # DAX FOMC öncesi uzun GÖLGE (DP-03, 2026-11-12) — emir göndermez; import hatası botu durdurmaz
+    import dax_fomc_shadow
+except Exception:                       # pragma: no cover
+    dax_fomc_shadow = None
 try:                                    # XAU 1h yeni-tepe BUY GÖLGE (MK-04) — emir göndermez; import hatası botu durdurmaz
     import xau_shadow
 except Exception:                       # pragma: no cover
@@ -2736,6 +2740,14 @@ def main():
                     c3b_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset)
                 except Exception as e:
                     log.warning("c3b gölge hatası: %s", e)
+
+            # ── DAX FOMC öncesi uzun GÖLGE (DP-03, kart go_live_cards/dax_fomc_oncesi.json) — EMİR YOK. Fren 'continue'undan
+            #    ÖNCE: fren devredeyken de ölçüm sürmeli. Kapatma: config.DAX_FOMC_SHADOW_ENABLED = False.
+            if dax_fomc_shadow is not None and getattr(config, "DAX_FOMC_SHADOW_ENABLED", True):
+                try:
+                    dax_fomc_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset, cfg=config)
+                except Exception as e:
+                    log.warning("dax fomc gölge hatası: %s", e)
 
             # ── Global risk geçidi (günlük zarar freni) ──
             if config.DAILY_MAX_LOSS and config.DAILY_MAX_LOSS > 0:

@@ -74,6 +74,8 @@ yeni deneme/orb_vix_state.json
 yeni deneme/orb_vix_state.tmp
 yeni deneme/c3b_state.json
 yeni deneme/c3b_state.tmp
+yeni deneme/dax_fomc_state.json
+yeni deneme/dax_fomc_state.tmp
 backend/data/candle_history/
 
 # Pine motoru — indirilen TradingView kaynakları ve çalıştırma çıktıları (büyük, yeniden üretilebilir)

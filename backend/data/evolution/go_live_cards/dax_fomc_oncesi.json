@@ -1,0 +1,147 @@
+{
+ "scope": "dax_fomc_oncesi",
+ "tarih": "2026-11-12",
+ "kural": "GER40: FOMC gününden önceki işlem günü 17:30 Berlin barı açılışında AL → FOMC günü 19:30 barı açılışında SAT (duyuru 20:00 Berlin, Xetra 17:30'da kapanmış). Stop yok (önerilen acil SL %3). Yılda 8 olay.",
+ "veri": "broker GER40 M30 (research/c1_turev_20261105/data/mt5, sunucu=NY+7 → UTC, eksen 09:00/15:30 hacim tepesiyle denetlendi) 2019-10→2026-06; ^GDAXI günlük 2008-2026; FOMC takvimi research/xau_best_days_20261015/makro/out/calendar.csv",
+ "kart_broker_GER40": {
+  "n": 52,
+  "net_bp": 31.870164554574654,
+  "P_EV": 0.9976,
+  "yari": [
+   51.77208431020245,
+   11.968244798946841
+  ],
+  "sp15_bp": 30.730284616146868,
+  "iyimser_bp": 34.12723994205679,
+  "icra_farki": 2.2570753874821357,
+  "isabet": 0.6346153846153846,
+  "en_buyuk5_haric": 10.667909329272343,
+  "en_kotu": -179.6703204893684,
+  "ilk": "2019-10-30",
+  "son": "2026-06-17",
+  "olcutler": {
+   "hacim": false,
+   "beklenti": true,
+   "kararlilik": true,
+   "surtunme": true,
+   "icra": true,
+   "sira_bagimli": true
+  },
+  "gecen": 5
+ },
+ "GDAXI_gunluk_2008_2026": {
+  "n": 144,
+  "net_bp": 26.252600283974264,
+  "P_EV": 0.998,
+  "yari": [
+   27.81116231798418,
+   24.694038249964343
+  ]
+ },
+ "saglamlik": {
+  "sahte_tarih_p": 0.0085,
+  "en_iyi5_haric_bp": 16.655440953035644,
+  "gun_esli_kontrol_bp": {
+   "1": 9.8,
+   "2": 5.6
+  },
+  "yil": {
+   "2008": 95.8,
+   "2009": 174.3,
+   "2010": -43.3,
+   "2011": -27.3,
+   "2012": 43.5,
+   "2013": 18.0,
+   "2014": -5.5,
+   "2015": -20.8,
+   "2016": 21.1,
+   "2017": 43.4,
+   "2018": 14.8,
+   "2019": -17.8,
+   "2020": 86.2,
+   "2021": 2.1,
+   "2022": 90.8,
+   "2023": 30.0,
+   "2024": 47.1,
+   "2025": -12.0,
+   "2026": -35.5
+  },
+  "yan_piyasalar": {
+   "^STOXX50E": {
+    "n": 142,
+    "fomc": 29.6,
+    "diger": 0.9
+   },
+   "^FCHI": {
+    "n": 144,
+    "fomc": 30.2,
+    "diger": 0.9
+   },
+   "^FTSE": {
+    "n": 147,
+    "fomc": 21.8,
+    "diger": 1.1
+   },
+   "^N225": {
+    "n": 133,
+    "fomc": 18.9,
+    "diger": 3.7
+   }
+  },
+  "vix_ge_18_4": {
+   "n": 64,
+   "ort": 38.1
+  },
+  "vix_lt_18_4": {
+   "n": 80,
+   "ort": 20.1
+  },
+  "broker_gun_ici_yol": {
+   "20:00": [
+    52,
+    -1.6
+   ],
+   "22:00": [
+    29,
+    -0.1
+   ],
+   "08:00": [
+    52,
+    17.0
+   ],
+   "09:00": [
+    52,
+    17.0
+   ],
+   "11:00": [
+    52,
+    22.8
+   ],
+   "13:00": [
+    52,
+    26.0
+   ],
+   "15:30": [
+    52,
+    27.6
+   ],
+   "17:30": [
+    52,
+    33.7
+   ],
+   "19:30": [
+    52,
+    34.1
+   ]
+  }
+ },
+ "taze_ileri_2026_07_10": {
+  "2026-07-29": -4.4,
+  "2026-09-16": 41.3,
+  "2026-10-28": 37.6
+ },
+ "verdikt": "SHADOW",
+ "sinif": "B",
+ "gerekce": "Ön-kayıtlı D3 ölçütleri geçti (fark +25,4 bp P %98,3, iki yarı artı, broker aynı yönde); kart 5/6 — yalnız hacim (52 broker / 144 günlük olay) geçmiyor. Sahte tarih plasebosu p 0,009, dört yan piyasa aynı yönde. Zayıf: 2025/2026 ilk yarı eksi, tek dönem (2008+), oturum içi 5 sınama (Holm 0,085). Canlı kararı kullanıcıda.",
+ "kanit": "research/dax_profesor_20261112/RAPOR.md"
+}
