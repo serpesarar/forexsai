@@ -2,6 +2,7 @@
 Sadakat: research/qs03_akis_takvim_20261111 verisi varsa (kutuda research/ sparse-checkout dışı → atlanır) modülün sinyali araştırma
 motorunun (qs04.monthly + side) sinyaliyle ay ay karşılaştırılır; tatil takvimi gerçek işlem günleriyle 2025-01 → 2026-10 doğrulanır."""
 import sys
+import tempfile
 import types
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -85,7 +86,7 @@ def test_close_direction():
 # ───────── uçtan uca: sahte MT5 ile poll + manage_exits ─────────
 def test_poll_enters_both_symbols_on_D_only():
     ay._last_poll = 0.0
-    ay.STATE_FILE = Path("/tmp/aysonu_test_state.json")
+    ay.STATE_FILE = Path(tempfile.gettempdir()) / "aysonu_test_state.json"
     ay.STATE_FILE.unlink(missing_ok=True)
     mt5, _ = _fake_mt5()
     cfg = types.SimpleNamespace(MAGIC_NUMBER=1000, DEVIATION_POINTS=20, LIVE_TRADING=True)
@@ -112,7 +113,7 @@ def test_poll_enters_both_symbols_on_D_only():
 
 def test_e2_entry_and_exits():
     ay._last_poll = 0.0; ay._last_exit_poll = 0.0
-    ay.STATE_FILE = Path("/tmp/aysonu_test_state2.json"); ay.STATE_FILE.unlink(missing_ok=True)
+    ay.STATE_FILE = Path(tempfile.gettempdir()) / "aysonu_test_state2.json"; ay.STATE_FILE.unlink(missing_ok=True)
     D = date(2026, 11, 30)
     pos_list = []
     mt5, _ = _fake_mt5(pos_list)
