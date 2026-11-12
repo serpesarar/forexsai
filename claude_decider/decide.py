@@ -420,6 +420,42 @@ def _sandbox() -> str:
     return str(_SANDBOX_CACHE)
 
 
+#: CLI hata metnini sınıflandırma kalıpları (ilk eşleşen kazanır).
+_CLI_ERROR_KINDS = (
+    ("kota", re.compile(r"usage limit|hit your .*limit|rate.?limit|429|overloaded|quota|credit balance", re.I)),
+    ("oturum", re.compile(r"not logged in|/login|oauth|401|unauthori[sz]ed|authentication|invalid api key", re.I)),
+    ("model", re.compile(r"model.*(not found|not available|invalid|does not exist)|404", re.I)),
+)
+CLI_ERROR_MSG_CHARS = 300
+
+
+def _cli_error_detail(stdout: str, stderr: str) -> tuple[str, str]:
+    """Başarısız CLI çağrısından (tür, okunur mesaj) çıkar.
+
+    2026-11-11: CLI hata gövdesini stdout'a JSON yazıyor ve `usage`/`session_id` alanları
+    `result`'tan ÖNCE geliyor; eski `stdout[:200]` kesmesi asıl mesajı her seferinde
+    kesip atıyordu (17:57 UTC'den itibaren 18+ karar `duration_api_ms: 0` gösterdi ama
+    neden görünmedi). JSON çözülürse `result` + `api_error_status` + `subtype` okunur.
+    """
+    parts: list[str] = []
+    try:
+        meta = json.loads(stdout or "")
+    except (json.JSONDecodeError, TypeError):
+        meta = None
+    if isinstance(meta, dict):
+        for key in ("result", "api_error_status", "subtype", "error"):
+            val = meta.get(key)
+            if val not in (None, "", False):
+                parts.append(f"{key}={val}")
+    else:
+        parts.append(f"stdout={(stdout or '').strip()[:CLI_ERROR_MSG_CHARS]}")
+    if (stderr or "").strip():
+        parts.append(f"stderr={stderr.strip()[:CLI_ERROR_MSG_CHARS]}")
+    msg = (" | ".join(parts) or "boş çıktı")[:CLI_ERROR_MSG_CHARS * 2]
+    kind = next((k for k, pat in _CLI_ERROR_KINDS if pat.search(msg)), "bilinmiyor")
+    return kind, msg
+
+
 def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = CALL_TIMEOUT,
                 effort: str | None = None, _respawned: bool = False) -> dict:
     global _CLAUDE_BIN_CACHE
@@ -459,9 +495,10 @@ def call_claude(prompt: str, model: str = DECIDE_MODEL, timeout: int = CALL_TIME
         # 2026-08-17 tanısı: CLI kota/rate-limit hatalarını stderr'e DEĞİL stdout'a JSON
         # olarak yazıyor — eskiden yalnız (boş) stderr loglanıyordu, gerçek sebep (kota mı,
         # auth mı) hiç görünmüyordu (467/3766 kayıtta "claude exit 1: " boş gövde).
+        kind, msg = _cli_error_detail(r.stdout, r.stderr)
         return {"action": "WAIT",
-                "reason": f"claude exit {r.returncode} | stderr: {r.stderr[:200]} | stdout: {r.stdout[:200]}",
-                "_error": True}
+                "reason": f"claude exit {r.returncode} [{kind}]: {msg}",
+                "_error": True, "_error_kind": kind}
     try:
         meta = json.loads(r.stdout)
     except json.JSONDecodeError:
