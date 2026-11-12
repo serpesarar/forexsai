@@ -20,6 +20,8 @@ Tanımlar tek yerde: `yeni deneme/kural_katalogu.py` (`RULES`). Olaylar `kural_c
 | **ORB × VIX** (NDX, VIX≥18,4) | +9 | **0.75** | `ORB_VIX_LIVE_LOT`, `ORB_VIX_LIVE` | %48,7 (n 152) | +0,295R | aralık ortası | 2R, 15:55 ET zaman çıkışı | ≈5/ay | B |
 | **FR-15 teyitli çekiç** (NAS100 + GER40) | +10 | **0.5** (her endeks) | `CEKIC_LIVE_LOT`, `CEKIC_LIVE` | ≈%26–30 (FR-10 ölçümü) | ≈+0,07R | çekiç dibi | 5R, 24 sa, Cuma 16:45 NY çıkışı | ≈7–8/ay/endeks | B |
 | **KSG kapanış saati gecesi** (NAS100) | +11 | **0.5** | `KSG_LIVE_LOT`, `KSG_LIVE` | %56,0 (n 1039) | +7,0 bp/gece net | yok (acil SL %7) | ertesi işlem günü 09:30 ET; giriş 16:00 ET, 15:00→16:00 getirisi < 0 ise | ≈10/ay | C+ |
+| **AY SONU son seans** (NAS100 + US500, iki yönlü) | +12 | **1.0** NAS100; US500 aynı nominal (≈3,7) | `AYSONU_SON_LIVE_LOT`, `AYSONU_SON_LIVE`, `AYSONU_US500_PARITY` | %55 NAS100 / %70 US500 (broker 2018-26) | +38 / +44 bp (broker); ETF 2002-26 +24 bp | yok (acil SL %4) | ayın son işlem günü 09:30 → 16:00 ET; yön D−3'te SPY−TLT ay içi farkı (≥+%2 SAT, ≤−%2 AL) | ≈8–9/yıl | B |
+| **AY BAŞI uzun** (NAS100 + US500) | +13 | **0.75** NAS100; US500 aynı nominal | `AYSONU_E2_LIVE_LOT`, `AYSONU_E2_LIVE` | %61 broker / %71 QQQ | +56 bp (broker) | yok (acil SL %8) | D kapanışında fark ≥ +%2 → AL D 16:30 → D+3 16:30 ET | ≈5/yıl | B |
 
 **Lot mantığı:** kanıt sınıfı ve işlem yapısı. En güçlü kanıt (A, yüksek isabet, kısa tutuş) en büyük lotu alır; düşük isabetli,
 komşu eşiklerde kırılgan, sık işlem açan FR-15 en küçüğü. Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL`
@@ -38,3 +40,9 @@ Test: `cd "yeni deneme" && python3 test_kural_canli.py`.
 **Bilinen sınırlar:** ORB×VIX 2026'da zayıf (+0,10R); FR-15 isabeti ayrıca kayıtlı değil (ilk 100 işlemde ölçülecek);
 C3b kartında stop yok, canlıdaki acil SL %10 örneklemde hiçbir işlemi değiştirmez; yeni kurallar geçmiş kanıtla canlıya alındı,
 ileri dönem canlı karnesi gelene kadar "kanıtlanmış" sayılmaz. Durdurma ölçütü (önceden yazılı): kural n=60 işlemde ort. R<0 ise kapat.
+
+**AY SONU (2026-11-12):** kullanıcı kararıyla doğrudan canlı (`yeni deneme/aysonu_live.py`). Kanıt research/qs03_akis_takvim_20261111 (QS-03…07), kartlar
+qs06_son_seans (6/6), qs04_ay_sonu_dongusu (6/6). Veri yfinance SPY/TLT; NYSE takvimi 2025-28 kodda (2029'dan önce güncelle). US500 lotu NAS100 lotuyla
+aynı nominal → iki endeks aynı bahis (korelasyon ~0,94). Yoğunlaşma tavanı (4.5) NAS100'de diğer kurallar açıkken son seansı atlatabilir (olaya yazılır).
+Durdurma ölçütü: son seans n=24 işlemde ort. net < 0 → `AYSONU_SON_LIVE = False`.
+
