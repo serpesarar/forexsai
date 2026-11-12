@@ -62,3 +62,6 @@ Kaynak: kutudaki Pepperstone MT5 geçmişi (hesap 61628380, `pull.py`, salt-okum
     `python3 research/dax_gun_otopsi_20261112/yigilma.py` (taban CSV'yi `islem_otopsi --symbol all --base-days 400` ile yenile).
   - Aynı mekanizmanın alternatif biçimi: sembol başına toplam açık risk tavanı (ör. DAX'ta aynı yönde en fazla 1,5× tek işlem riski). Bu ayrı ön kayıt gerektirir.
 - (c) **Yapma:** bıçak yakalama kapısı (IO-25), kayıp sonrası bekleme / kovalama (IO-04), stop genişletme (IO-13), BE/kilit (M9), zaman stopu (M7).
+
+## EK — gölgeye bağlandı (2026-11-12, commit b3c16222)
+`yeni deneme/yigilma_shadow.py`: emir göndermez, giriş engellemez. Her 30 sn hesabın son 8 günlük deal geçmişini okur (decider dahil), her yeni pozisyonu Y1/Y2 ile `yigilma_shadow.jsonl`'e yazar, kapanınca $ ve R ekler; Y2'de logda `YIĞILMA-GÖLGE Y2` uyarısı. Gerçek deal verisiyle parite: 11-10 MOMSR (+752 $, CEKIC −5,9 p), 11-11 MOMSR, 11-12 CHREV Y2. Kutuda ilk çalışma 163 geçmiş girişi `retro` etiketledi (karne dışı). Karne: `python yigilma_shadow.py --karne`. Kapatma: `config.YIGILMA_SHADOW_ENABLED = False`.
