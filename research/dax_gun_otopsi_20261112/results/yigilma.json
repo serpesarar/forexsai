@@ -1,0 +1,247 @@
+{
+ "Y1_tumu": {
+  "n_flag": 66,
+  "n_rest": 1011,
+  "r_flag": -0.031,
+  "r_rest": -0.002,
+  "usd_flag": 9050,
+  "delta": -0.029,
+  "P_neg": 0.585,
+  "ci": [
+   -0.299,
+   0.227
+  ],
+  "yari1": -0.108,
+  "yari2": 0.15,
+  "tabakali": -0.019
+ },
+ "Y1_GDAXI": {
+  "n_flag": 16,
+  "n_rest": 95,
+  "r_flag": -0.074,
+  "r_rest": -0.005,
+  "usd_flag": -1500,
+  "delta": -0.069,
+  "P_neg": 0.593,
+  "ci": [
+   -0.614,
+   0.762
+  ],
+  "yari1": -0.178,
+  "yari2": 0.152,
+  "tabakali": -0.288
+ },
+ "Y2_tumu": {
+  "n_flag": 44,
+  "n_rest": 1033,
+  "r_flag": -0.157,
+  "r_rest": 0.003,
+  "usd_flag": -8311,
+  "delta": -0.161,
+  "P_neg": 0.871,
+  "ci": [
+   -0.433,
+   0.138
+  ],
+  "yari1": -0.157,
+  "yari2": -0.249,
+  "tabakali": -0.166
+ },
+ "Y2_GDAXI": {
+  "n_flag": 15,
+  "n_rest": 96,
+  "r_flag": -0.102,
+  "r_rest": -0.001,
+  "usd_flag": -1681,
+  "delta": -0.1,
+  "P_neg": 0.636,
+  "ci": [
+   -0.623,
+   0.87
+  ],
+  "yari1": -0.178,
+  "yari2": 0.067,
+  "tabakali": -0.307
+ },
+ "Y1_sembol": [
+  {
+   "symbol": "GDAXI.INDX",
+   "Y1": false,
+   "count": 95,
+   "mean": -0.005
+  },
+  {
+   "symbol": "GDAXI.INDX",
+   "Y1": true,
+   "count": 16,
+   "mean": -0.074
+  },
+  {
+   "symbol": "NDX.INDX",
+   "Y1": false,
+   "count": 396,
+   "mean": 0.068
+  },
+  {
+   "symbol": "NDX.INDX",
+   "Y1": true,
+   "count": 43,
+   "mean": 0.104
+  },
+  {
+   "symbol": "USOIL.FOREX",
+   "Y1": false,
+   "count": 152,
+   "mean": -0.066
+  },
+  {
+   "symbol": "USOIL.FOREX",
+   "Y1": true,
+   "count": 7,
+   "mean": -0.757
+  },
+  {
+   "symbol": "XAUUSD",
+   "Y1": false,
+   "count": 368,
+   "mean": -0.049
+  }
+ ],
+ "Y1_aile": [
+  {
+   "family": "CEKIC",
+   "Y1": false,
+   "count": 3,
+   "mean": -1.0
+  },
+  {
+   "family": "CHREV",
+   "Y1": false,
+   "count": 54,
+   "mean": 0.043
+  },
+  {
+   "family": "CHREV",
+   "Y1": true,
+   "count": 15,
+   "mean": -0.208
+  },
+  {
+   "family": "DAYCOMBO",
+   "Y1": false,
+   "count": 36,
+   "mean": 0.203
+  },
+  {
+   "family": "DAYCOMBO",
+   "Y1": true,
+   "count": 11,
+   "mean": 0.259
+  },
+  {
+   "family": "DECIDER",
+   "Y1": false,
+   "count": 485,
+   "mean": -0.031
+  },
+  {
+   "family": "DECIDER",
+   "Y1": true,
+   "count": 1,
+   "mean": -1.0
+  },
+  {
+   "family": "KSG",
+   "Y1": true,
+   "count": 1,
+   "mean": -0.206
+  },
+  {
+   "family": "MANUEL",
+   "Y1": false,
+   "count": 1,
+   "mean": 0.3
+  },
+  {
+   "family": "MANUEL",
+   "Y1": true,
+   "count": 1,
+   "mean": 0.138
+  },
+  {
+   "family": "MOMSR",
+   "Y1": false,
+   "count": 183,
+   "mean": -0.008
+  },
+  {
+   "family": "MOMSR",
+   "Y1": true,
+   "count": 15,
+   "mean": -0.117
+  },
+  {
+   "family": "REENTRY",
+   "Y1": false,
+   "count": 34,
+   "mean": 0.374
+  },
+  {
+   "family": "REENTRY",
+   "Y1": true,
+   "count": 3,
+   "mean": 0.721
+  },
+  {
+   "family": "USOIL_BRK",
+   "Y1": false,
+   "count": 16,
+   "mean": -0.38
+  },
+  {
+   "family": "USOIL_BRK",
+   "Y1": true,
+   "count": 3,
+   "mean": -1.0
+  },
+  {
+   "family": "VIXREG",
+   "Y1": false,
+   "count": 199,
+   "mean": 0.006
+  },
+  {
+   "family": "VIXREG",
+   "Y1": true,
+   "count": 16,
+   "mean": 0.118
+  }
+ ],
+ "Y3": {
+  "n": 37,
+  "sl_pts_q": [
+   119.0,
+   119.0,
+   119.9
+  ],
+  "risk_usd_q": [
+   677.0,
+   681.0,
+   1341.0
+  ],
+  "last": [
+   {
+    "entry_utc": "2026-11-12 12:00:54+00:00",
+    "sl_pts": "119.09999999999854",
+    "risk_usd": "1319.77",
+    "volume": "10.0",
+    "r_exit": "-1.0"
+   }
+  ],
+  "sl_pts_pct": 0.811,
+  "lots": {
+   "5.0": 30,
+   "10.0": 7
+  }
+ }
+}

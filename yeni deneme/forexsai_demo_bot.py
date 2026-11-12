@@ -53,6 +53,10 @@ try:                                    # DAX FOMC öncesi uzun GÖLGE (DP-03, 2
     import dax_fomc_shadow
 except Exception:                       # pragma: no cover
     dax_fomc_shadow = None
+try:                                    # aileler arası yığılma Y2 GÖLGE etiketi (IO-29, 2026-11-12) — emir göndermez, giriş engellemez
+    import yigilma_shadow
+except Exception:                       # pragma: no cover
+    yigilma_shadow = None
 try:                                    # XAU 1h yeni-tepe BUY GÖLGE (MK-04) — emir göndermez; import hatası botu durdurmaz
     import xau_shadow
 except Exception:                       # pragma: no cover
@@ -2748,6 +2752,14 @@ def main():
                     dax_fomc_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset, cfg=config)
                 except Exception as e:
                     log.warning("dax fomc gölge hatası: %s", e)
+
+            # ── Aileler arası yığılma GÖLGE etiketi (IO-29 Y2, sınıf C) — EMİR YOK, giriş engellemez. Tüm hesabın
+            #    deal geçmişini okur (decider dahil). Fren 'continue'undan ÖNCE. Kapatma: config.YIGILMA_SHADOW_ENABLED = False.
+            if yigilma_shadow is not None and getattr(config, "YIGILMA_SHADOW_ENABLED", True):
+                try:
+                    yigilma_shadow.poll(mt5, log)
+                except Exception as e:
+                    log.warning("yığılma gölge hatası: %s", e)
 
             # ── Global risk geçidi (günlük zarar freni) ──
             if config.DAILY_MAX_LOSS and config.DAILY_MAX_LOSS > 0:
