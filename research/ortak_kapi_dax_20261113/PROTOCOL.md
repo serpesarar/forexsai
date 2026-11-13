@@ -19,3 +19,19 @@ decider DAX gerçek icraları (magic +20).
 
 Geçme ölçütleri OK-01 ile aynı (iki yarı aynı işaret, gün-blok P ≥ %95 kapı için / ≥ %90 engel için, n ≥ 30, bağımsız ikinci popülasyon).
 Geçen engel kod düzeyinde uygulanır (decider LIVE_ALLOWED veya bot config varsayılanı) ve main'e push edilir; yeni kapı ise yalnız GÖLGE.
+
+## EK-1 (D1–D6 sonuçlarından SONRA, D7 sonucundan ÖNCE — 2026-11-13)
+D1–D6: engel/kapı yok. **D7 — DAX BUY × VIX rejimi** (mekanizma: §3-2 "korku döner", NDX'te VIXREG/OLD-10; DAX'ta girişler için hiç sınanmadı).
+Rejim = ÖNCEKİ günün VIX kapanışı (E20) < 18,4 "SAKİN" / ≥ 18,4 "KORKU". Öngörü (yön önceden): DAX BUY SAKİN'de KORKU'dan kötü.
+Popülasyonlar: (a) bot DAX BUY (MOMSR + CHREV), (b) decider DAX BUY journal OPEN epizodları (net R) + mekanik tetik BUY, (c) **bağımsız uzun
+vekil**: `ndx_gate_forge/data/dax_30m.parquet` / `dax_1h.parquet` üzerinde her işlem saatinde DAX BUY, tek pozisyon, 80/110 oranlı braket
+(OK-01 H11 simülatörü), Xetra saatleri 07:00–15:30 UTC, sonraki bar açılışı + yarım spread.
+ENGEL ölçütü: SAKİN'de ort R < 0 ve SAKİN − KORKU < 0; (a) ve (b)'de aynı işaret, (c)'de iki kronolojik yarıda da aynı işaret ve gün-blok P(fark<0) ≥ %95.
+Geçerse: decider ve bot DAX BUY için "VIX < 18,4 iken açma" — decider'da `LIVE_ALLOWED` yolunda kural, bot'ta config varsayılanı (önce GÖLGE değil
+doğrudan engel, çünkü engel yeni pozisyon üretmez; 2. KURAL yeni scope'lar içindir).
+Sapma (sonuçtan önce): DAX vekil dosyalarında saat ekseni belirsiz (kış Xetra tepesi 07, yaz ABD tepesi 14) → seans filtresi KALDIRILDI;
+(c) hafta içi her bar. VIX önceki gün kapanışı olduğundan saat kayması rejim etiketini etkilemez.
+
+## EK-2 (D7 sonuç kaydı)
+(a) bot DAX BUY SAKİN −0,016 (54) vs KORKU +0,303 (11), fark −0,32, yarılar −/−, P(fark<0) 0,81; (b) decider OPEN fark +0,02; (b2) mekanik fark −0,14
+(P(<0) 0,88); (c) bağımsız vekil 2021-26 fark **+0,025** (yarılar +/+), 2016-21 **+0,045** (P(>0) 0,95) → uzun veride TERS. Engel ölçütü tutmadı → X.

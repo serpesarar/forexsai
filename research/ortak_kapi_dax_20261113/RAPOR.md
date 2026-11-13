@@ -21,9 +21,10 @@ OK-01'in DAX tekrarı (ön kayıt `PROTOCOL.md`; veri ve kod OK-01'den, `01_dax.
 | D4 | Mekanik tetik + LLM seçimi (DAX) | tetik BUY −0,092 / SELL −0,104 (OK-01 H6); BUY OPEN − kör tetik +0,126 (yarılar +0,02 / +0,25, P 0,83), OPEN − LLM-WAIT +0,087 (P 0,76); SELL n 9 | C (decider'ın en güçlü seçim izi, ölçüt altında) |
 | D5 | Kendi karnesi (k=5) bot DAX | al +0,233 vs atla −0,052, Δ +0,285 (P 0,82); OK-01'de bağımsız popülasyonlarda genel X | X |
 | D6 | Çapraz varlık (eş NDX 30 dk) | bot F1 Δ −0,20 (P 0,19), F2 −0,07; decider F1 −0,02, F2 −0,02 | X |
+| D7 | **DAX BUY × VIX rejimi** (EK-1, "korku döner"; önceki gün VIX < 18,4 SAKİN) | canlıda SAKİN kötü: bot fark −0,32R (P(<0) 0,81, KORKU n 11), decider mekanik −0,14 (0,88), decider OPEN +0,02; **bağımsız uzun vekil TERS**: 2021-26 +0,025, 2016-21 +0,045 (P(>0) 0,95) → canlı fark kısa örnekleme özgü | X |
 
 ## Hüküm
-- DAX'ta **engellenecek kaybettiren grup yok** ve **yeni kapı yok**; kod değişikliği yapılmadı (ölçüt dışı bir engel uydurulmadı).
+- DAX'ta **engellenecek kaybettiren grup yok** ve **yeni kapı yok** (D1–D7); kod değişikliği yapılmadı (ölçüt dışı bir engel uydurulmadı).
 - Decider DAX BUY yaklaşık başabaşta (+0,035R net) ve DAX'ın tek pozitif seçim izi burada (D4, C). XAU BUY'ın canlıdan çıkması
   (OK-01) günlük emir sınırını boşaltır → DAX BUY icraları artacak; beklenen etki ≈ 0, lot 0,1. İzlenecek.
 - Bot DAX'ın parası CHREV'den (≈+0,09R × 5 lot); MOMSR DAX BUY 42 işlemde ≈ 0R, −919 $ → kaybettirmiyor ama katkısı yok (DP-00 ile aynı).
