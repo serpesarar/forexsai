@@ -97,3 +97,11 @@ Koşulsuz yön için tahmin edilebilir çift yok (§1). Doğrulanmış tek kapı
 **AUD**: AUD'lu dört çiftin dördü ilk 6'da (Sharpe ort. 0,39). Çift sıralaması (Sharpe / yıllık % / iki dönem farkı):
 GBPAUD kısa 0,50 / +3,1 / +7,7 & +2,5 · EURAUD kısa 0,42 / +2,6 / +7,4 & 0,0 · AUDUSD 0,33 / +2,6 / +8,0 & +3,3 · NZDUSD 0,32 · USDMXN kısa 0,32 ·
 AUDJPY 0,31 … USDJPY −0,01, USDSEK −0,03 (en zayıf). Uyarı: 16 içinden en iyiyi seçmek seçim yüklüdür; kart ve gölge 16 çiftin tamamıyla.
+
+## 10. Canlı demo icra (2026-11-13)
+`yeni deneme/fx_vixreg_live.py` (commit a672a90d) — H12 VIXREG-FX demo hesapta GERÇEK emirle: 16 çift × 0,01 lot, her hafta içi
+16:30–16:57 ET'de hedef duruma uzlaştırma (k−2 VIX ≥ 18,4 → uzun, aksi kapat), acil SL %5. Ayrı magic (MAGIC+15) — katalog magic'leri global
+MAX_TOTAL_POSITIONS=6 tavanına sayıldığı için 16 FX pozisyonu NDX'i kilitlerdi; bu yüzden günlük zarar freni de bunları saymaz. Kutu kuru
+çalıştırma: LIVE_TRADING açık, 16/16 sembol işlem modunda (min 0,01), VIX geçmişi okunuyor, Pazartesi 16 Kasım hedefi UZUN. Bot, açık pozisyon
+kapanınca yeni kodla yeniden başlayacak (restart borcu). Lot ve kapatma: `config.FX_VIXREG_LIVE_LOT` / `config.FX_VIXREG_LIVE = False`.
+Olay kaydı: `yeni deneme/fx_vixreg_live.jsonl`. Durdurma ölçütü (önceden): 60 rejim günü sonunda günlük ort. < 0 ise kapat.
