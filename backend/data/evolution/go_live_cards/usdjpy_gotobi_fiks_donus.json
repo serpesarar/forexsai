@@ -1,0 +1,196 @@
+{
+ "scope": "usdjpy_gotobi_fiks_donus",
+ "tarih": "2026-11-13",
+ "sembol": "USDJPY",
+ "kural": "Gotobi günü (5,10,15,20,25,30; hafta sonu/JP tatili → önceki JP iş günü) USDJPY 23:00→01:00 UTC (08:00→10:00 JST, Tokyo fiksi 09:55 içeride) getirisi > 0 ise 01:00 UTC H1 açılışında SAT, 06:00 UTC açılışında kapat. Stop yok (öneri acil SL 60 bp). Yılda ~41 olay.",
+ "mekanizma": "Japon ithalatçılarının gotobi fiksinde zorunlu USD alımı (Ito & Yamada 2017); geçici fiyat etkisi fiks sonrası geri döner. Doz-tepki: sabah yükselişi büyüdükçe dönüş büyüyor.",
+ "ana_olcum": "Pepperstone MT5 USDJPY H1 2010-10→2026-11 (kutu, salt-okuma); maliyet = max(bar spread, 2026-11 tick spread'i saat bazında) + Razor komisyonu 0,70 bp RT",
+ "olay": 657,
+ "aralik": [
+  "2010-10-08",
+  "2026-11-10"
+ ],
+ "isabet": 52.5,
+ "ort_net_bp": 1.79,
+ "ort_brut_bp": 3.2,
+ "ort_maliyet_bp": 1.41,
+ "medyan_bp": 0.78,
+ "en_iyi5_haric_bp": 1.23,
+ "en_kotu_bp": -164.3,
+ "kontrol_gunleri_ayni_kosul_bp": -0.73,
+ "yil_pozitif": "12/17",
+ "checks": {
+  "1_hacim": {
+   "deger": 657,
+   "esik": "≥150",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "net +1.79 bp, P(EV>0)=%94.5",
+   "esik": "ort>0 ve P≥%90",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "ilk yarı +1.93 son yarı +1.66; KEŞİF(≤2021) +1.40 KÖR +2.75",
+   "esik": "ikisi de ≥0",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "maliyet×1,5: +1.09 bp",
+   "esik": ">0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "iyimser (bar açılışı, maliyetsiz) +3.20 vs gerçek +1.79 (fark 1.41; zamanlama farkı -0.02, kalanı spread+komisyon 1.41 bp)",
+   "esik": "fark < 0,5×gerçek",
+   "gecti": false
+  },
+  "6_sira_bagimli": {
+   "deger": "gün başına tek pozisyon (01→06 UTC), çakışma 0, ort +1.79",
+   "esik": ">0",
+   "gecti": true
+  }
+ },
+ "gecen": "5/6",
+ "verdikt_kod": "SHADOW",
+ "verdikt_onerilen": "SHADOW",
+ "neden_shadow": "Kural, ana hücre H8b'nin KÖR verisi görüldükten sonra yazıldı (EK-4, E53 sınıfı) → kanıt B−. Kenar maliyete ince (brüt 3,2 / maliyet 1,4 bp). Bağımsız besleme (Dukascopy) sınaması bekliyor.",
+ "yan": {
+  "cikis_saati_duyarlilik_bp": {
+   "3": 0.25,
+   "4": 1.43,
+   "5": 1.56,
+   "6": 1.79,
+   "7": 1.81,
+   "8": 2.04
+  },
+  "esik_doz_tepki_bp": {
+   "-1000000000.0": 0.99,
+   "0.0": 1.79,
+   "5.0": 2.06,
+   "10.0": 2.43,
+   "20.0": 3.89
+  },
+  "gotobi_tanimi_bp": {
+   "5_10_gunleri": 3.04,
+   "kaydirilmis_veya_ay_sonu": -0.22
+  },
+  "aile_maxt_p": {
+   "USDJPY": {
+    "t": 1.98,
+    "p": 0.08
+   },
+   "EURJPY": {
+    "t": 1.75,
+    "p": 0.142
+   },
+   "GBPJPY": {
+    "t": 2.15,
+    "p": 0.052
+   },
+   "AUDJPY": {
+    "t": 1.38,
+    "p": 0.325
+   }
+  },
+  "kor_ciftler_gercek_maliyet": {
+   "USDJPY": {
+    "tick_cost_bp": 0.17,
+    "ort_maliyet": 1.41,
+    "n": 657,
+    "ort": 1.79,
+    "t": 1.57,
+    "P": 0.946,
+    "kesif": [
+     465,
+     1.4
+    ],
+    "kor": [
+     192,
+     2.75
+    ],
+    "yari": [
+     1.93,
+     1.66
+    ],
+    "net15": 1.09,
+    "brut": 3.2,
+    "icra_fark": -0.02,
+    "basabas_maliyet_bp": 3.2
+   },
+   "EURJPY": {
+    "tick_cost_bp": 0.56,
+    "ort_maliyet": 1.41,
+    "n": 694,
+    "ort": 1.17,
+    "t": 0.98,
+    "P": 0.831,
+    "kesif": [
+     486,
+     0.51
+    ],
+    "kor": [
+     208,
+     2.72
+    ],
+    "yari": [
+     1.06,
+     1.29
+    ],
+    "net15": 0.47,
+    "brut": 2.58,
+    "icra_fark": -0.02,
+    "basabas_maliyet_bp": 2.58
+   },
+   "GBPJPY": {
+    "tick_cost_bp": 0.61,
+    "ort_maliyet": 2.06,
+    "n": 685,
+    "ort": 1.38,
+    "t": 1.25,
+    "P": 0.896,
+    "kesif": [
+     482,
+     0.85
+    ],
+    "kor": [
+     203,
+     2.63
+    ],
+    "yari": [
+     0.71,
+     2.05
+    ],
+    "net15": 0.35,
+    "brut": 3.43,
+    "icra_fark": -0.02,
+    "basabas_maliyet_bp": 3.43
+   },
+   "AUDJPY": {
+    "tick_cost_bp": 0.73,
+    "ort_maliyet": 3.16,
+    "n": 659,
+    "ort": -0.31,
+    "t": -0.19,
+    "P": 0.413,
+    "kesif": [
+     463,
+     -1.28
+    ],
+    "kor": [
+     196,
+     1.97
+    ],
+    "yari": [
+     -1.34,
+     0.71
+    ],
+    "net15": -1.89,
+    "brut": 2.84,
+    "icra_fark": -0.03,
+    "basabas_maliyet_bp": 2.84
+   }
+  }
+ },
+ "kanit": "research/fx_secim_20261113/ (PROTOCOL.md EK-1…4, RAPOR.md, h8c_saglamlik.py, kart.py)"
+}

@@ -1,0 +1,96 @@
+{
+ "scope": "fx_aysonu_fiks_donus",
+ "tarih": "2026-11-13",
+ "sembol": "EURUSD,GBPUSD,USDJPY,USDCHF,USDCAD,AUDUSD (eşit ağırlık sepet)",
+ "kural": "Ayın son iş günü her çift için 10:00→16:00 Londra getirisi r; 16:00 Londra H1 açılışında −sign(r) yönünde gir, 20:00 Londra açılışında çık. Stop yok. Yılda 12 olay × 6 bacak.",
+ "mekanizma": "Ay sonu WM/R 16:00 fiksinde zorunlu dengeleme akışı (hedge/endeks/portföy) fiyatı fiks öncesi iter; geçici etki fiks sonrası geri döner (Melvin-Prins 2015, Evans 2018). Normal günlerde aynı kural eksi (devam) → ayrım ay sonuna özgü.",
+ "ana_olcum": "Pepperstone MT5 H1 2010-11→2026-10 (kutu, salt-okuma); maliyet = max(bar spread, 2026-11 tick spread'i) + Razor komisyonu",
+ "olay": 182,
+ "aralik": [
+  "2010-11-30",
+  "2026-10-30"
+ ],
+ "isabet": 54.9,
+ "ort_net_bp": 1.93,
+ "ort_brut_bp": 3.31,
+ "medyan_bp": 1.37,
+ "en_iyi5_haric_bp": 0.39,
+ "en_kotu_bp": -33.7,
+ "kontrol_gunleri_bp": -1.24,
+ "kontrol_farki": 3.17,
+ "P_fark": 0.999,
+ "cift_bazinda_bp": {
+  "AUDUSD": 5.03,
+  "EURUSD": 0.96,
+  "GBPUSD": 1.63,
+  "USDCAD": 1.84,
+  "USDCHF": 5.66,
+  "USDJPY": -3.54
+ },
+ "doz_tepki_ay_sonu": {
+  "0": -0.54,
+  "1": 0.73,
+  "2": 4.48
+ },
+ "doz_tepki_kontrol": {
+  "0": -1.33,
+  "1": -1.23,
+  "2": -1.18
+ },
+ "yil": {
+  "2010": 13.1,
+  "2011": 4.8,
+  "2012": -1.1,
+  "2013": 4.3,
+  "2014": 0.2,
+  "2015": 7.0,
+  "2016": 0.4,
+  "2017": -1.0,
+  "2018": -0.6,
+  "2019": 3.1,
+  "2020": 2.8,
+  "2021": 3.5,
+  "2022": 5.4,
+  "2023": 1.3,
+  "2024": -4.8,
+  "2025": 0.0,
+  "2026": 3.3
+ },
+ "checks": {
+  "1_hacim": {
+   "deger": 182,
+   "esik": "≥150",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "net +1.93 bp, P(EV>0)=%96.8",
+   "esik": "ort>0 ve P≥%90",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "ilk yarı +1.88 son yarı +1.98; KEŞİF +2.28 KÖR +1.09",
+   "esik": "ikisi de ≥0",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "maliyet×1,5: +1.24 bp",
+   "esik": ">0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "iyimser (maliyetsiz) +3.31 vs gerçek +1.93 (fark 1.37; zamanlama +0.00)",
+   "esik": "fark < 0,5×gerçek",
+   "gecti": false
+  },
+  "6_sira_bagimli": {
+   "deger": "ay sonu başına çift başına tek pozisyon (16→20 Londra), ort +1.93",
+   "esik": ">0",
+   "gecti": true
+  }
+ },
+ "gecen": "5/6",
+ "verdikt_kod": "SHADOW",
+ "verdikt_onerilen": "SHADOW",
+ "neden_shadow": "Ön-kayıtlı (EK-5) ve mekanizmalı, ama kenar maliyete ince (5. ölçüt) ve yılda yalnız 12 karar günü; ileri gölge + Dukascopy teyidi bekliyor.",
+ "kanit": "research/fx_secim_20261113/ (PROTOCOL.md EK-5, h9_kart.py, RAPOR.md)"
+}

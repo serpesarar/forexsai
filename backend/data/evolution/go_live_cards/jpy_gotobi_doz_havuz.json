@@ -1,0 +1,80 @@
+{
+ "scope": "jpy_gotobi_doz_havuz",
+ "tarih": "2026-11-13",
+ "sembol": "USDJPY, EURJPY, GBPJPY, AUDJPY (eşit ağırlık, çift seçimi yok)",
+ "kural": "Gotobi günü (5/10/15/20/25/30; hafta sonu/JP tatili → önceki JP iş günü; ay sonu JP iş günü) her JPY çifti için r = open(01:00 UTC) / open(önceki gün 23:00 UTC) − 1. r > 0 VE r > aynı çiftin önceki 250 iş günü 23→01 UTC getirilerinin 67. yüzdeliği ise 01:00 UTC açılışında SAT, 06:00 UTC açılışında kapat. Stop yok (acil SL önerisi 60 bp).",
+ "mekanizma": "Tokyo 09:55 gotobi fiksinde zorunlu ithalatçı USD (JPY satışı) alımı fiyatı fiksten önce iter, geçici etki fiks sonrası geri döner; itme büyükse dönüş büyür (ön-kayıtlı EK-6 doz eşiği, nedensel).",
+ "ana_olcum": "Pepperstone MT5 H1 2010-10→2026-11; maliyet = max(bar spread, tick spread) + Razor komisyonu ($7/lot RT)",
+ "olay_gunu": 624,
+ "bacak": 1634,
+ "isabet": 50.8,
+ "ort_net_bp": 1.39,
+ "ort_brut_bp": 3.33,
+ "ort_maliyet_bp": 1.93,
+ "medyan_bp": 0.2,
+ "en_iyi5_haric_bp": 1.03,
+ "en_kotu_bp": -150.5,
+ "kontrol_gunleri_bp": -0.98,
+ "P_kontrol_farki": 0.946,
+ "plasebo_kaydirma_ort": -0.19,
+ "plasebo_yuzdelik": 0.955,
+ "cift_bazinda_bp": {
+  "AUDJPY": 0.0,
+  "EURJPY": 3.27,
+  "GBPJPY": 2.11,
+  "USDJPY": 1.73
+ },
+ "yil": {
+  "2011": 16.11,
+  "2012": -1.43,
+  "2013": 7.92,
+  "2014": -1.79,
+  "2015": -0.91,
+  "2016": 4.32,
+  "2017": -3.44,
+  "2018": 3.38,
+  "2019": -2.47,
+  "2020": -5.18,
+  "2021": -0.33,
+  "2022": 11.29,
+  "2023": -0.82,
+  "2024": 1.59,
+  "2025": 3.15,
+  "2026": -4.62
+ },
+ "checks": {
+  "1_hacim": {
+   "deger": 624,
+   "esik": "≥150",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "net +1.39 bp, P(EV>0)=%87.1",
+   "esik": "ort>0 ve P≥%90",
+   "gecti": false
+  },
+  "3_kararlilik": {
+   "deger": "ilk yarı +2.12 son yarı +0.66; KEŞİF +0.93 KÖR +2.44",
+   "esik": "ikisi de ≥0",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "maliyet×1,5: +0.43 bp",
+   "esik": ">0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "iyimser (maliyetsiz) +3.33 vs gerçek +1.39 (fark 1.93)",
+   "esik": "fark < 0,5×gerçek",
+   "gecti": false
+  },
+  "6_sira_bagimli": {
+   "deger": "gün başına çift başına tek pozisyon (01→06 UTC), ort +1.39",
+   "esik": ">0",
+   "gecti": true
+  }
+ },
+ "gecen": "4/6",
+ "verdikt_kod": "SHADOW",
+ "kanit": "research/fx_secim_20261113/ (PROTOCOL.md EK-6, ek6.py, h8cd_kart.py)"
+}

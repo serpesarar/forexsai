@@ -53,6 +53,10 @@ try:                                    # DAX FOMC öncesi uzun GÖLGE (DP-03, 2
     import dax_fomc_shadow
 except Exception:                       # pragma: no cover
     dax_fomc_shadow = None
+try:                                    # FX fiks akışı dönüşü GÖLGE (FX-01, 2026-11-13) — emir göndermez; import hatası botu durdurmaz
+    import fx_fiks_shadow
+except Exception:                       # pragma: no cover
+    fx_fiks_shadow = None
 try:                                    # aileler arası yığılma Y2 GÖLGE etiketi (IO-29, 2026-11-12) — emir göndermez, giriş engellemez
     import yigilma_shadow
 except Exception:                       # pragma: no cover
@@ -2752,6 +2756,15 @@ def main():
                     dax_fomc_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset, cfg=config)
                 except Exception as e:
                     log.warning("dax fomc gölge hatası: %s", e)
+
+            # ── FX fiks akışı dönüşü GÖLGE (FX-01 H8c USDJPY gotobi + H9 ay sonu Londra fiksi; kartlar
+            #    go_live_cards/usdjpy_gotobi_fiks_donus.json, fx_aysonu_fiks_donus.json, 5/6) — EMİR YOK. Fren 'continue'undan
+            #    ÖNCE. Kapatma: config.FX_FIKS_SHADOW_ENABLED = False.
+            if fx_fiks_shadow is not None and getattr(config, "FX_FIKS_SHADOW_ENABLED", True):
+                try:
+                    fx_fiks_shadow.poll(mt5, log, _daycombo_offset, cfg=config)
+                except Exception as e:
+                    log.warning("fx fiks gölge hatası: %s", e)
 
             # ── Aileler arası yığılma GÖLGE etiketi (IO-29 Y2, sınıf C) — EMİR YOK, giriş engellemez. Tüm hesabın
             #    deal geçmişini okur (decider dahil). Fren 'continue'undan ÖNCE. Kapatma: config.YIGILMA_SHADOW_ENABLED = False.

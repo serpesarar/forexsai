@@ -1,0 +1,98 @@
+{
+ "USDJPY": {
+  "tick_cost_bp": 0.17,
+  "ort_maliyet": 1.41,
+  "n": 657,
+  "ort": 1.79,
+  "t": 1.57,
+  "P": 0.946,
+  "kesif": [
+   465,
+   1.4
+  ],
+  "kor": [
+   192,
+   2.75
+  ],
+  "yari": [
+   1.93,
+   1.66
+  ],
+  "net15": 1.09,
+  "brut": 3.2,
+  "icra_fark": -0.02,
+  "basabas_maliyet_bp": 3.2
+ },
+ "EURJPY": {
+  "tick_cost_bp": 0.56,
+  "ort_maliyet": 1.41,
+  "n": 694,
+  "ort": 1.17,
+  "t": 0.98,
+  "P": 0.831,
+  "kesif": [
+   486,
+   0.51
+  ],
+  "kor": [
+   208,
+   2.72
+  ],
+  "yari": [
+   1.06,
+   1.29
+  ],
+  "net15": 0.47,
+  "brut": 2.58,
+  "icra_fark": -0.02,
+  "basabas_maliyet_bp": 2.58
+ },
+ "GBPJPY": {
+  "tick_cost_bp": 0.61,
+  "ort_maliyet": 2.06,
+  "n": 685,
+  "ort": 1.38,
+  "t": 1.25,
+  "P": 0.896,
+  "kesif": [
+   482,
+   0.85
+  ],
+  "kor": [
+   203,
+   2.63
+  ],
+  "yari": [
+   0.71,
+   2.05
+  ],
+  "net15": 0.35,
+  "brut": 3.43,
+  "icra_fark": -0.02,
+  "basabas_maliyet_bp": 3.43
+ },
+ "AUDJPY": {
+  "tick_cost_bp": 0.73,
+  "ort_maliyet": 3.16,
+  "n": 659,
+  "ort": -0.31,
+  "t": -0.19,
+  "P": 0.413,
+  "kesif": [
+   463,
+   -1.28
+  ],
+  "kor": [
+   196,
+   1.97
+  ],
+  "yari": [
+   -1.34,
+   0.71
+  ],
+  "net15": -1.89,
+  "brut": 2.84,
+  "icra_fark": -0.03,
+  "basabas_maliyet_bp": 2.84
+ }
+}

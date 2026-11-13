@@ -1,0 +1,758 @@
+{
+ "cift": {
+  "EURUSD": {
+   "n": 220,
+   "ort_R": 0.808,
+   "ort_net_bp": 50.5,
+   "medyan_R": -0.993,
+   "isabet": 0.355,
+   "P_R": 0.999,
+   "ort_gun": 32.1,
+   "donem_R": {
+    "D1": [
+     149,
+     1.221
+    ],
+    "D2": [
+     46,
+     0.236
+    ],
+    "D3": [
+     25,
+     -0.601
+    ]
+   },
+   "ilk5_haric_R": 0.532,
+   "ort_maliyet_bp": 22.2,
+   "uzun_R": 0.874,
+   "kisa_R": 0.734,
+   "plasebo_net_bp": -19.9,
+   "plasebo_yuzdelik": 0.998
+  },
+  "GBPUSD": {
+   "n": 142,
+   "ort_R": -0.19,
+   "ort_net_bp": -45.0,
+   "medyan_R": -1.021,
+   "isabet": 0.232,
+   "P_R": 0.126,
+   "ort_gun": 28.3,
+   "donem_R": {
+    "D1": [
+     66,
+     -0.157
+    ],
+    "D2": [
+     54,
+     -0.138
+    ],
+    "D3": [
+     22,
+     -0.42
+    ]
+   },
+   "ilk5_haric_R": -0.459,
+   "ort_maliyet_bp": 10.8,
+   "uzun_R": -0.377,
+   "kisa_R": 0.051,
+   "plasebo_net_bp": -9.8,
+   "plasebo_yuzdelik": 0.094
+  },
+  "USDJPY": {
+   "n": 220,
+   "ort_R": 0.941,
+   "ort_net_bp": 52.9,
+   "medyan_R": -1.008,
+   "isabet": 0.327,
+   "P_R": 0.999,
+   "ort_gun": 31.2,
+   "donem_R": {
+    "D1": [
+     153,
+     1.349
+    ],
+    "D2": [
+     46,
+     -0.04
+    ],
+    "D3": [
+     21,
+     0.116
+    ]
+   },
+   "ilk5_haric_R": 0.667,
+   "ort_maliyet_bp": 26.8,
+   "uzun_R": 0.705,
+   "kisa_R": 1.191,
+   "plasebo_net_bp": -27.2,
+   "plasebo_yuzdelik": 1.0
+  },
+  "USDCHF": {
+   "n": 205,
+   "ort_R": 1.052,
+   "ort_net_bp": 54.4,
+   "medyan_R": -0.605,
+   "isabet": 0.38,
+   "P_R": 0.997,
+   "ort_gun": 35.3,
+   "donem_R": {
+    "D1": [
+     138,
+     1.701
+    ],
+    "D2": [
+     47,
+     -0.308
+    ],
+    "D3": [
+     20,
+     -0.232
+    ]
+   },
+   "ilk5_haric_R": 0.201,
+   "ort_maliyet_bp": 20.4,
+   "uzun_R": 0.438,
+   "kisa_R": 1.532,
+   "plasebo_net_bp": -14.0,
+   "plasebo_yuzdelik": 0.992
+  },
+  "USDCAD": {
+   "n": 128,
+   "ort_R": -0.112,
+   "ort_net_bp": -16.9,
+   "medyan_R": -0.982,
+   "isabet": 0.234,
+   "P_R": 0.233,
+   "ort_gun": 30.5,
+   "donem_R": {
+    "D1": [
+     53,
+     0.171
+    ],
+    "D2": [
+     53,
+     -0.191
+    ],
+    "D3": [
+     22,
+     -0.603
+    ]
+   },
+   "ilk5_haric_R": -0.361,
+   "ort_maliyet_bp": 15.1,
+   "uzun_R": -0.009,
+   "kisa_R": -0.226,
+   "plasebo_net_bp": -14.1,
+   "plasebo_yuzdelik": 0.436
+  },
+  "AUDUSD": {
+   "n": 129,
+   "ort_R": 0.016,
+   "ort_net_bp": -5.2,
+   "medyan_R": -1.017,
+   "isabet": 0.287,
+   "P_R": 0.512,
+   "ort_gun": 33.1,
+   "donem_R": {
+    "D1": [
+     54,
+     0.298
+    ],
+    "D2": [
+     47,
+     0.11
+    ],
+    "D3": [
+     28,
+     -0.684
+    ]
+   },
+   "ilk5_haric_R": -0.336,
+   "ort_maliyet_bp": 18.5,
+   "uzun_R": -0.069,
+   "kisa_R": 0.105,
+   "plasebo_net_bp": -17.8,
+   "plasebo_yuzdelik": 0.614
+  },
+  "NZDUSD": {
+   "n": 124,
+   "ort_R": 0.067,
+   "ort_net_bp": -5.2,
+   "medyan_R": -0.995,
+   "isabet": 0.274,
+   "P_R": 0.602,
+   "ort_gun": 35.1,
+   "donem_R": {
+    "D1": [
+     52,
+     0.534
+    ],
+    "D2": [
+     49,
+     -0.19
+    ],
+    "D3": [
+     23,
+     -0.441
+    ]
+   },
+   "ilk5_haric_R": -0.27,
+   "ort_maliyet_bp": 19.5,
+   "uzun_R": -0.218,
+   "kisa_R": 0.391,
+   "plasebo_net_bp": -17.0,
+   "plasebo_yuzdelik": 0.618
+  },
+  "EURJPY": {
+   "n": 127,
+   "ort_R": -0.099,
+   "ort_net_bp": -22.4,
+   "medyan_R": -1.031,
+   "isabet": 0.236,
+   "P_R": 0.271,
+   "ort_gun": 32.4,
+   "donem_R": {
+    "D1": [
+     59,
+     0.028
+    ],
+    "D2": [
+     49,
+     -0.208
+    ],
+    "D3": [
+     19,
+     -0.211
+    ]
+   },
+   "ilk5_haric_R": -0.362,
+   "ort_maliyet_bp": 28.1,
+   "uzun_R": -0.013,
+   "kisa_R": -0.211,
+   "plasebo_net_bp": -25.4,
+   "plasebo_yuzdelik": 0.556
+  },
+  "GBPJPY": {
+   "n": 125,
+   "ort_R": -0.028,
+   "ort_net_bp": -27.2,
+   "medyan_R": -1.011,
+   "isabet": 0.2,
+   "P_R": 0.419,
+   "ort_gun": 31.2,
+   "donem_R": {
+    "D1": [
+     59,
+     0.238
+    ],
+    "D2": [
+     46,
+     -0.236
+    ],
+    "D3": [
+     20,
+     -0.333
+    ]
+   },
+   "ilk5_haric_R": -0.388,
+   "ort_maliyet_bp": 29.5,
+   "uzun_R": 0.007,
+   "kisa_R": -0.074,
+   "plasebo_net_bp": -28.9,
+   "plasebo_yuzdelik": 0.498
+  },
+  "AUDJPY": {
+   "n": 128,
+   "ort_R": -0.037,
+   "ort_net_bp": -34.9,
+   "medyan_R": -1.003,
+   "isabet": 0.25,
+   "P_R": 0.406,
+   "ort_gun": 32.2,
+   "donem_R": {
+    "D1": [
+     58,
+     0.119
+    ],
+    "D2": [
+     52,
+     -0.331
+    ],
+    "D3": [
+     18,
+     0.307
+    ]
+   },
+   "ilk5_haric_R": -0.403,
+   "ort_maliyet_bp": 33.2,
+   "uzun_R": 0.009,
+   "kisa_R": -0.105,
+   "plasebo_net_bp": -29.0,
+   "plasebo_yuzdelik": 0.45
+  },
+  "CADJPY": {
+   "n": 78,
+   "ort_R": -0.131,
+   "ort_net_bp": -28.5,
+   "medyan_R": -1.021,
+   "isabet": 0.308,
+   "P_R": 0.24,
+   "ort_gun": 26.5,
+   "donem_R": {
+    "D1": [
+     7,
+     0.732
+    ],
+    "D2": [
+     50,
+     -0.205
+    ],
+    "D3": [
+     21,
+     -0.243
+    ]
+   },
+   "ilk5_haric_R": -0.411,
+   "ort_maliyet_bp": 21.9,
+   "uzun_R": -0.225,
+   "kisa_R": 0.019,
+   "plasebo_net_bp": -22.0,
+   "plasebo_yuzdelik": 0.438
+  },
+  "NZDJPY": {
+   "n": 82,
+   "ort_R": -0.273,
+   "ort_net_bp": -88.0,
+   "medyan_R": -1.03,
+   "isabet": 0.22,
+   "P_R": 0.138,
+   "ort_gun": 22.8,
+   "donem_R": {
+    "D1": [
+     8,
+     1.066
+    ],
+    "D2": [
+     49,
+     -0.255
+    ],
+    "D3": [
+     25,
+     -0.737
+    ]
+   },
+   "ilk5_haric_R": -0.632,
+   "ort_maliyet_bp": 23.2,
+   "uzun_R": -0.309,
+   "kisa_R": -0.236,
+   "plasebo_net_bp": -24.7,
+   "plasebo_yuzdelik": 0.084
+  },
+  "EURGBP": {
+   "n": 130,
+   "ort_R": -0.264,
+   "ort_net_bp": -40.9,
+   "medyan_R": -0.998,
+   "isabet": 0.231,
+   "P_R": 0.064,
+   "ort_gun": 28.1,
+   "donem_R": {
+    "D1": [
+     57,
+     0.005
+    ],
+    "D2": [
+     50,
+     -0.299
+    ],
+    "D3": [
+     23,
+     -0.856
+    ]
+   },
+   "ilk5_haric_R": -0.529,
+   "ort_maliyet_bp": 19.6,
+   "uzun_R": -0.077,
+   "kisa_R": -0.397,
+   "plasebo_net_bp": -20.9,
+   "plasebo_yuzdelik": 0.164
+  },
+  "EURCHF": {
+   "n": 120,
+   "ort_R": -0.453,
+   "ort_net_bp": -46.4,
+   "medyan_R": -1.011,
+   "isabet": 0.2,
+   "P_R": 0.001,
+   "ort_gun": 28.1,
+   "donem_R": {
+    "D1": [
+     52,
+     -0.227
+    ],
+    "D2": [
+     45,
+     -0.55
+    ],
+    "D3": [
+     23,
+     -0.774
+    ]
+   },
+   "ilk5_haric_R": -0.661,
+   "ort_maliyet_bp": 15.5,
+   "uzun_R": 0.003,
+   "kisa_R": -0.726,
+   "plasebo_net_bp": -9.1,
+   "plasebo_yuzdelik": 0.008
+  },
+  "EURAUD": {
+   "n": 91,
+   "ort_R": -0.191,
+   "ort_net_bp": -23.9,
+   "medyan_R": -0.958,
+   "isabet": 0.242,
+   "P_R": 0.132,
+   "ort_gun": 26.5,
+   "donem_R": {
+    "D1": [
+     17,
+     -0.056
+    ],
+    "D2": [
+     54,
+     -0.251
+    ],
+    "D3": [
+     20,
+     -0.145
+    ]
+   },
+   "ilk5_haric_R": -0.476,
+   "ort_maliyet_bp": 12.6,
+   "uzun_R": -0.278,
+   "kisa_R": -0.102,
+   "plasebo_net_bp": -14.2,
+   "plasebo_yuzdelik": 0.344
+  },
+  "GBPAUD": {
+   "n": 79,
+   "ort_R": -0.307,
+   "ort_net_bp": -47.4,
+   "medyan_R": -0.997,
+   "isabet": 0.241,
+   "P_R": 0.013,
+   "ort_gun": 30.6,
+   "donem_R": {
+    "D1": [
+     5,
+     0.41
+    ],
+    "D2": [
+     52,
+     -0.3
+    ],
+    "D3": [
+     22,
+     -0.486
+    ]
+   },
+   "ilk5_haric_R": -0.467,
+   "ort_maliyet_bp": 13.5,
+   "uzun_R": -0.422,
+   "kisa_R": -0.183,
+   "plasebo_net_bp": -14.0,
+   "plasebo_yuzdelik": 0.206
+  },
+  "AUDCAD": {
+   "n": 143,
+   "ort_R": -0.455,
+   "ort_net_bp": -80.6,
+   "medyan_R": -1.033,
+   "isabet": 0.21,
+   "P_R": 0.002,
+   "ort_gun": 28.3,
+   "donem_R": {
+    "D1": [
+     71,
+     -0.483
+    ],
+    "D2": [
+     55,
+     -0.52
+    ],
+    "D3": [
+     17,
+     -0.125
+    ]
+   },
+   "ilk5_haric_R": -0.646,
+   "ort_maliyet_bp": 29.0,
+   "uzun_R": -0.079,
+   "kisa_R": -0.786,
+   "plasebo_net_bp": -28.6,
+   "plasebo_yuzdelik": 0.008
+  },
+  "EURCAD": {
+   "n": 105,
+   "ort_R": -0.333,
+   "ort_net_bp": -56.8,
+   "medyan_R": -1.018,
+   "isabet": 0.257,
+   "P_R": 0.014,
+   "ort_gun": 28.5,
+   "donem_R": {
+    "D1": [
+     36,
+     -0.159
+    ],
+    "D2": [
+     49,
+     -0.407
+    ],
+    "D3": [
+     20,
+     -0.464
+    ]
+   },
+   "ilk5_haric_R": -0.558,
+   "ort_maliyet_bp": 17.8,
+   "uzun_R": -0.259,
+   "kisa_R": -0.406,
+   "plasebo_net_bp": -19.0,
+   "plasebo_yuzdelik": 0.08
+  },
+  "GBPCHF": {
+   "n": 130,
+   "ort_R": -0.194,
+   "ort_net_bp": -51.2,
+   "medyan_R": -1.019,
+   "isabet": 0.223,
+   "P_R": 0.135,
+   "ort_gun": 26.0,
+   "donem_R": {
+    "D1": [
+     63,
+     0.083
+    ],
+    "D2": [
+     53,
+     -0.38
+    ],
+    "D3": [
+     14,
+     -0.732
+    ]
+   },
+   "ilk5_haric_R": -0.546,
+   "ort_maliyet_bp": 22.9,
+   "uzun_R": -0.255,
+   "kisa_R": -0.139,
+   "plasebo_net_bp": -20.4,
+   "plasebo_yuzdelik": 0.094
+  },
+  "AUDNZD": {
+   "n": 128,
+   "ort_R": -0.282,
+   "ort_net_bp": -40.8,
+   "medyan_R": -0.816,
+   "isabet": 0.258,
+   "P_R": 0.049,
+   "ort_gun": 34.3,
+   "donem_R": {
+    "D1": [
+     65,
+     -0.53
+    ],
+    "D2": [
+     45,
+     -0.166
+    ],
+    "D3": [
+     18,
+     0.323
+    ]
+   },
+   "ilk5_haric_R": -0.503,
+   "ort_maliyet_bp": 31.6,
+   "uzun_R": -0.028,
+   "kisa_R": -0.493,
+   "plasebo_net_bp": -30.7,
+   "plasebo_yuzdelik": 0.31
+  },
+  "USDMXN": {
+   "n": 68,
+   "ort_R": 0.26,
+   "ort_net_bp": 22.0,
+   "medyan_R": -0.991,
+   "isabet": 0.309,
+   "P_R": 0.756,
+   "ort_gun": 35.5,
+   "donem_R": {
+    "D1": [
+     7,
+     2.167
+    ],
+    "D2": [
+     45,
+     0.076
+    ],
+    "D3": [
+     16,
+     -0.055
+    ]
+   },
+   "ilk5_haric_R": -0.363,
+   "ort_maliyet_bp": 2.0,
+   "uzun_R": 0.7,
+   "kisa_R": -0.179,
+   "plasebo_net_bp": 2.4,
+   "plasebo_yuzdelik": 0.634
+  },
+  "USDZAR": {
+   "n": 93,
+   "ort_R": -0.528,
+   "ort_net_bp": -132.5,
+   "medyan_R": -0.987,
+   "isabet": 0.183,
+   "P_R": 0.0,
+   "ort_gun": 21.4,
+   "donem_R": {
+    "D1": [
+     14,
+     -0.441
+    ],
+    "D2": [
+     51,
+     -0.471
+    ],
+    "D3": [
+     28,
+     -0.674
+    ]
+   },
+   "ilk5_haric_R": -0.695,
+   "ort_maliyet_bp": 32.4,
+   "uzun_R": -0.565,
+   "kisa_R": -0.481,
+   "plasebo_net_bp": -27.0,
+   "plasebo_yuzdelik": 0.01
+  },
+  "USDNOK": {
+   "n": 77,
+   "ort_R": 0.092,
+   "ort_net_bp": -16.8,
+   "medyan_R": -0.675,
+   "isabet": 0.312,
+   "P_R": 0.616,
+   "ort_gun": 36.5,
+   "donem_R": {
+    "D1": [
+     9,
+     1.23
+    ],
+    "D2": [
+     46,
+     0.083
+    ],
+    "D3": [
+     22,
+     -0.356
+    ]
+   },
+   "ilk5_haric_R": -0.396,
+   "ort_maliyet_bp": 22.3,
+   "uzun_R": 0.306,
+   "kisa_R": -0.129,
+   "plasebo_net_bp": -22.8,
+   "plasebo_yuzdelik": 0.56
+  },
+  "USDSEK": {
+   "n": 109,
+   "ort_R": 0.055,
+   "ort_net_bp": -16.8,
+   "medyan_R": -0.98,
+   "isabet": 0.339,
+   "P_R": 0.55,
+   "ort_gun": 31.7,
+   "donem_R": {
+    "D1": [
+     40,
+     0.298
+    ],
+    "D2": [
+     49,
+     -0.04
+    ],
+    "D3": [
+     20,
+     -0.2
+    ]
+   },
+   "ilk5_haric_R": -0.329,
+   "ort_maliyet_bp": 20.1,
+   "uzun_R": 0.131,
+   "kisa_R": -0.039,
+   "plasebo_net_bp": -19.5,
+   "plasebo_yuzdelik": 0.536
+  }
+ },
+ "ana": {
+  "n": 1168,
+  "ort_R": 0.488,
+  "ort_net_bp": 20.6,
+  "medyan_R": -0.994,
+  "isabet": 0.31,
+  "P_R": 1.0,
+  "ort_gun": 32.3,
+  "donem_R": {
+   "D1": [
+    665,
+    1.001
+   ],
+   "D2": [
+    342,
+    -0.079
+   ],
+   "D3": [
+    161,
+    -0.429
+   ]
+  },
+  "ilk5_haric_R": 0.413,
+  "ort_maliyet_bp": 19.9,
+  "uzun_R": 0.286,
+  "kisa_R": 0.699,
+  "plasebo_net_bp": -17.8,
+  "plasebo_yuzdelik": 1.0
+ },
+ "kor": {
+  "n": 1813,
+  "ort_R": -0.2,
+  "ort_net_bp": -44.3,
+  "medyan_R": -1.0,
+  "isabet": 0.244,
+  "P_R": 0.0,
+  "ort_gun": 29.5,
+  "donem_R": {
+   "D1": [
+    627,
+    -0.018
+   ],
+   "D2": [
+    840,
+    -0.268
+   ],
+   "D3": [
+    346,
+    -0.367
+   ]
+  },
+  "ilk5_haric_R": -0.246,
+  "ort_maliyet_bp": 23.1,
+  "uzun_R": -0.086,
+  "kisa_R": -0.318,
+  "plasebo_net_bp": -21.7,
+  "plasebo_yuzdelik": 0.004
+ }
+}
