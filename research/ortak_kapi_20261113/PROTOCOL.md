@@ -115,3 +115,20 @@ strateji içinde karıştırılması (500). S1 (VIXREG vekili) ayrıca raporlan�
 H11 vekil (10 yıl NDX, 7 strateji × 2 dönem): VIXREG vekilinde Δ ≈ 0/ters, taban BUY'da anlamlı ters; yalnız S3 kanal-üst SELL ANA'da +0,10
 (pl %93–98) ama 1h'de tutarsız → X. Panel tek-poz (7.073 sinyal, 53 anahtar): TERS yönde (k=3 Δ −0,095R, plasebo %0) → H10 X.
 Uygulanan: decider canlı izin listesinden XAUUSD:BUY çıkarıldı (H3, B).
+
+## EK-10 (OK-01 kapanışından SONRA, kullanıcı "bulana kadar dur(ma)" dedi; bu sonuçlar görülmeden yazıldı)
+**H12 — Farklı emtialarla birlikte: çapraz varlık hizası / gecikme yakalama.** Broker 1m (`indicator_snapshots`, gerçek UTC).
+Her işlem/sinyal (sembol S, yön d, giriş t) için 30 dk pencerede yön-işaretli getiriler (ATR değil, %):
+own = d·r_S(t−30m,t), peer = d·r_P(t−30m,t). Eş: NDX↔DAX, USOIL→NDX (risk eşi), XAU→NDX.
+- **F1 eş hizası:** peer > 0 (eş de işlem yönünde gidiyor).
+- **F2 gecikme yakalama (BİRİNCİL):** peer − own > 0 (eş, işlem yönünde S'den daha çok gitmiş → S yetişir).
+- **F3 risk-off karşıtlığı (yalnız endeks işlemleri):** d·(−r_XAU) > 0.
+Popülasyonlar: (A) bot pozisyonları 06-29→11-12 (NDX/DAX/USOIL), (B) panel tek-pozisyon dizisi (≈7.000), (C) decider mekanik tetik epizodları (≈2.000).
+Geçme (F2 için): üç popülasyonda da ort R(F2) − ort R(¬F2) > 0; B'de iki yarı aynı işaret ve gün-blok P ≥ %95; B'de sembol bazında
+çoğunluk aynı işaret. 15/60 dk pencereler ve F1/F3 duyarlılık/ikincil olarak raporlanır, seçim için kullanılmaz.
+
+## EK-11 (H12 sonuç kaydı)
+F2 (birincil): bot Δ +0,010 (P 0,58), panel Δ −0,274 (P 0,000, TERS), decider Δ −0,013 → X. Panel'deki büyük etkiler (F1 +0,11, F2 −0,27)
+kendi 30 dk getirisinin beşliklerinde monoton (−0,27 → +0,34R); bot ve decider'da düz. Teşhis: panel `ml_entry_price` kayıt anındaki
+fiyattan medyan 25–45 dk (p75 40–95 dk) eski → kayıttan önceki hareket sonucu mekanik belirler (E124). H10'un panel sonucu da bu yüzden
+kanıt sayılmaz (bot H10 hükmü decider + 10 yıllık vekille X olarak kalır).

@@ -39,6 +39,7 @@ Botun parası birkaç günde (en iyi 5 gün +48.289 $, en kötü 5 gün −18.82
 | H9 | Bot aileleri: "iyi seriden sonra al" | her k'da kaybettiriyor; Spearman −0,09/−0,09/−0,14, plasebo %0–1 → **anlamlı negatif seri bağımlılık** | X (ama tersine bkz. H10) |
 | H10 | **"Kendi karnesi geri dönüşü"** — aynı aile-sembol-yönde girişten önce kapanmış son k işlemin ort R ≤ 0 ise al | Bot (nedensel): k=3/5/10 Δ +0,17/+0,11/+0,18R, yarılar +/+, plasebo %95–99,7, aile 8–9/10, plato k=1…12 hep + ; ama $ olarak −10,6k (büyük lotlu kazananları atlıyor), k=5 gün-blok P 0,93. **Bağımsız popülasyonlarda tekrarlanmadı:** decider yoğun dizi Δ +0,01…+0,05 (pl %41–89), decider tek-poz −0,01…+0,06 (pl %37–86), decider OPEN ters; **panel tek-poz TERS** (k=3 Δ −0,095, pl %0) | X (bota/döneme özgü) |
 | H11 | H10'un 10 yıllık NDX vekili (bot yapısı birebir: tek pozisyon, 80/110 braket, sonraki bar + yarım spread; 7 strateji; 30m 2021-26 + 1h 2016-21) | VIXREG vekili Δ −0,04…+0,03 (pl %11–72); taban BUY anlamlı TERS (1h k=10 Δ −0,11, pl %0); yalnız kanal-üst SELL 30m'de +0,10 (pl %93–98), 1h'de tutarsız | X |
+| H12 | **Farklı emtialarla birlikte:** giriş anında eş piyasanın (NDX↔DAX, USOIL/XAU→NDX) son 30 dk'sı — eş hizası (F1), gecikme yakalama (F2, birincil), altın risk-off karşıtlığı (F3); bot + panel + decider, 15/30/60 dk | F2 bot +0,01 (P 0,58), decider −0,01, panel −0,27 (TERS) → X. Panel'in büyük etkisi kayıt artefaktı: `ml_entry_price` kayıttan 25–95 dk eski (E124); gerçek girişli bot/decider'da düz | X |
 
 ## 3. Hüküm
 
@@ -63,4 +64,5 @@ Botun parası birkaç günde (en iyi 5 gün +48.289 $, en kötü 5 gün −18.82
 - (uygulandı, push bekliyor) decider XAU BUY canlıdan çıktı.
 - VIXREG SELL lotu: ≈ 0R ile yüksek risk payı → lotu düşürmek varyansı azaltır; beklenen $ bedeli MA-05'e göre sıfırdan ayırt edilemiyor.
 - REENTRY/DAYCOMBO 30 lot: kanıt sınıfı C; en kötü 5 gün −18.829 $. Lot tavanı MA-03 karşı-olgusunda günlük SR'yi artırıyordu (C).
-- Yeni kapı yok: H1–H11'in hiçbiri GÖLGE ölçütünü geçmedi.
+- Yeni kapı yok: H1–H12'nin hiçbiri GÖLGE ölçütünü geçmedi.
+- Panel sinyal karnesi giriş-öncesi fiyat özelliği sınamasında kullanılmamalı (E124): giriş fiyatı kayıttan 25–95 dk eski.
