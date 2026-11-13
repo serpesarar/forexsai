@@ -63,3 +63,20 @@ dax_fomc_shadow kalıbıyla `fx_fiks_shadow.poll(mt5, log, _daycombo_offset, cfg
 `PROTOCOL.md` · `fx_core.py` (yükleme/saat/maliyet) · `hyp.py` (H1/H2/H3/H8) · `h4.py` · `h5.py` · `h8_perm.py` · `h8c_saglamlik.py` · `kart.py` ·
 `h9_kart.py` · `secim.py` · gölge `yeni deneme/fx_fiks_shadow.py` · `probe.py`/`export.py`/`tick_spread.py`/`kutu.py` (kutu, salt-okuma) · `results/` · kartlar
 `backend/data/evolution/go_live_cards/usdjpy_gotobi_fiks_donus.json`, `fx_aysonu_fiks_donus.json`.
+
+## 6. Tur 2 — EK-6 / EK-7 (kartı 6/6'ya taşıma denemesi)
+| ID | Kural | Sonuç | Sınıf |
+|---|---|---|---|
+| H9-KÖR | H9 birebir, sepette olmayan 14 çift | net −1,92 bp, 3/14 çift + → ay sonu fiks dönüşü USD çiftlerine özgü | X (H9 → C+) |
+| H9-D | H9 + nedensel doz eşiği (|r_pre| > önceki 250 gün 67. yüzdelik) | sepet +3,68 (P 0,98) ama KÖR dönem +0,05, kör çiftler −0,67 | C |
+| H8c-D | H8c + aynı doz eşiği, 4 JPY çifti eşit ağırlık (çift seçimi yok) | n 624 gün, +1,39 bp (P 0,87), maliyet 1,93 / brüt 3,33, 7/16 yıl +; kart 4/6 | C+ |
+| H10 | Günlük Donchian55 ∧ EMA200 trend, 2×ATR stop, Donchian20 çıkış (D1 1971/1993→) | ana 7 çift: ≤2009 +1,00 R, 2010–21 −0,08, 2022→ −0,43; kör 17 çift −0,20 R | X (çağ: 2010 sonrası söndü) |
+| H10 ayna | aynı tetik karşı yön, 20 gün | ana −0,30 R, kör −0,11 | X |
+
+**Tur 2 hükmü:** 6/6 kart çıkmadı. Modern FX'te günlük ölçekte ne trend ne dönüş var; tek iz takvime kilitli fiks akışında ve maliyet mertebesinde.
+
+## 7. Uygulama — ileri gölge işlem (demo, emirsiz)
+`yeni deneme/fx_fiks_shadow.py` bota bağlandı (commit 56a798a8, düzeltme a2633fcd: sunucu farkı tam saate yuvarlanır; piyasa kapanışında
+bayat tick 6.300 sn ölçtü). Kutuda gerçek MT5 ile duman testi: 2026-11-13 gotobi, sabah +1,63 bp → 159,863 SAT → 06:00 159,968 = **−7,98 bp**
+(yerel H1 ile birebir). Bot açık pozisyon nedeniyle yeniden başlatmayı erteledi (borç); kapanınca modül devreye girer. Karne:
+`python "yeni deneme/fx_fiks_shadow.py" --karne`. Kapatma: `config.FX_FIKS_SHADOW_ENABLED = False`. Gerçek emre geçiş 2. KURAL gereği 6/6 ister.
