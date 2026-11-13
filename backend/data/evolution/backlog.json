@@ -4960,5 +4960,16 @@
     "source": "session",
     "created_at": "2026-11-13T18:00:48.542845+00:00",
     "updated_at": "2026-11-13T18:00:48.543291+00:00"
+  },
+  {
+    "id": "bl_79c3b7d49d",
+    "title": "Decider DAX BUY icra artışını izle",
+    "detail": "XAU BUY canlıdan çıkınca günlük 10 emir sınırı DAX/NDX'e kalır; 2 hafta sonra DAX BUY gerçek icra R'si journal +0,035 ile tutarlı mı bak (OK-02 D3/D4)",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-13T18:24:20.906363+00:00",
+    "updated_at": "2026-11-13T18:24:20.906965+00:00"
   }
 ]
