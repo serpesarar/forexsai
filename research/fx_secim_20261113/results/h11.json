@@ -1,0 +1,260 @@
+{
+ "ana": {
+  "ciftler": [
+   "AUDJPY",
+   "NZDJPY",
+   "CADJPY"
+  ],
+  "gun": 8659,
+  "iceride_pay": 0.536,
+  "TUM": {
+   "gun": 8659,
+   "iceride_ort_bp": 0.31,
+   "disarida_ort_bp": 0.28,
+   "fark_bp": 0.03,
+   "P_fark_blok": 0.498,
+   "strateji_yillik_%": -0.33,
+   "al_tut_yillik_%": 0.75,
+   "Sharpe_strateji": -0.04,
+   "Sharpe_al_tut": 0.05,
+   "maxDD_strateji_%": -46.5,
+   "maxDD_al_tut_%": -66.3
+  },
+  "P1": {
+   "gun": 4282,
+   "iceride_ort_bp": 1.95,
+   "disarida_ort_bp": -1.55,
+   "fark_bp": 3.5,
+   "P_fark_blok": 0.916,
+   "strateji_yillik_%": 1.13,
+   "al_tut_yillik_%": 0.0,
+   "Sharpe_strateji": 0.13,
+   "Sharpe_al_tut": 0.0,
+   "maxDD_strateji_%": -30.8,
+   "maxDD_al_tut_%": -66.3
+  },
+  "P2": {
+   "gun": 3114,
+   "iceride_ort_bp": -1.01,
+   "disarida_ort_bp": 2.48,
+   "fark_bp": -3.49,
+   "P_fark_blok": 0.1,
+   "strateji_yillik_%": -2.23,
+   "al_tut_yillik_%": 0.52,
+   "Sharpe_strateji": -0.29,
+   "Sharpe_al_tut": 0.04,
+   "maxDD_strateji_%": -43.0,
+   "maxDD_al_tut_%": -41.7
+  },
+  "P3": {
+   "gun": 1263,
+   "iceride_ort_bp": -0.31,
+   "disarida_ort_bp": 3.85,
+   "fark_bp": -4.17,
+   "P_fark_blok": 0.116,
+   "strateji_yillik_%": -0.64,
+   "al_tut_yillik_%": 3.84,
+   "Sharpe_strateji": -0.1,
+   "Sharpe_al_tut": 0.4,
+   "maxDD_strateji_%": -16.3,
+   "maxDD_al_tut_%": -18.9
+  },
+  "cift": {
+   "AUDJPY": {
+    "iceride": 0.01,
+    "disarida": 0.84,
+    "P3_fark": -4.7
+   },
+   "NZDJPY": {
+    "iceride": -0.51,
+    "disarida": 0.9,
+    "P3_fark": -5.45
+   },
+   "CADJPY": {
+    "iceride": 0.05,
+    "disarida": 0.27,
+    "P3_fark": -2.35
+   }
+  }
+ },
+ "kor": {
+  "ciftler": [
+   "AUDUSD",
+   "NZDUSD",
+   "USDJPY",
+   "GBPJPY",
+   "EURJPY",
+   "USDMXN",
+   "USDZAR"
+  ],
+  "gun": 9590,
+  "iceride_pay": 0.547,
+  "TUM": {
+   "gun": 9590,
+   "iceride_ort_bp": -0.79,
+   "disarida_ort_bp": 0.08,
+   "fark_bp": -0.87,
+   "P_fark_blok": 0.213,
+   "strateji_yillik_%": -1.53,
+   "al_tut_yillik_%": -0.99,
+   "Sharpe_strateji": -0.31,
+   "Sharpe_al_tut": -0.12,
+   "maxDD_strateji_%": -59.4,
+   "maxDD_al_tut_%": -72.0
+  },
+  "P1": {
+   "gun": 5210,
+   "iceride_ort_bp": -0.09,
+   "disarida_ort_bp": -0.94,
+   "fark_bp": 0.84,
+   "P_fark_blok": 0.729,
+   "strateji_yillik_%": -0.61,
+   "al_tut_yillik_%": -1.33,
+   "Sharpe_strateji": -0.12,
+   "Sharpe_al_tut": -0.15,
+   "maxDD_strateji_%": -40.2,
+   "maxDD_al_tut_%": -62.4
+  },
+  "P2": {
+   "gun": 3117,
+   "iceride_ort_bp": -1.66,
+   "disarida_ort_bp": 1.27,
+   "fark_bp": -2.93,
+   "P_fark_blok": 0.077,
+   "strateji_yillik_%": -3.1,
+   "al_tut_yillik_%": -1.62,
+   "Sharpe_strateji": -0.6,
+   "Sharpe_al_tut": -0.21,
+   "maxDD_strateji_%": -41.3,
+   "maxDD_al_tut_%": -38.1
+  },
+  "P3": {
+   "gun": 1263,
+   "iceride_ort_bp": -0.76,
+   "disarida_ort_bp": 2.72,
+   "fark_bp": -3.48,
+   "P_fark_blok": 0.036,
+   "strateji_yillik_%": -1.42,
+   "al_tut_yillik_%": 1.95,
+   "Sharpe_strateji": -0.35,
+   "Sharpe_al_tut": 0.31,
+   "maxDD_strateji_%": -10.5,
+   "maxDD_al_tut_%": -10.8
+  },
+  "cift": {
+   "AUDUSD": {
+    "iceride": -1.18,
+    "disarida": 1.26,
+    "P3_fark": -3.27
+   },
+   "NZDUSD": {
+    "iceride": -0.72,
+    "disarida": 0.71,
+    "P3_fark": -4.01
+   },
+   "USDJPY": {
+    "iceride": 0.58,
+    "disarida": -0.48,
+    "P3_fark": -1.44
+   },
+   "GBPJPY": {
+    "iceride": 1.21,
+    "disarida": -0.88,
+    "P3_fark": -2.28
+   },
+   "EURJPY": {
+    "iceride": 1.02,
+    "disarida": -0.61,
+    "P3_fark": -4.75
+   },
+   "USDMXN": {
+    "iceride": -3.1,
+    "disarida": 1.44,
+    "P3_fark": -7.53
+   },
+   "USDZAR": {
+    "iceride": -4.63,
+    "disarida": 1.86,
+    "P3_fark": -1.1
+   }
+  }
+ },
+ "ana_ayna": {
+  "ciftler": [
+   "AUDJPY",
+   "NZDJPY",
+   "CADJPY"
+  ],
+  "gun": 8659,
+  "iceride_pay": 0.464,
+  "TUM": {
+   "gun": 8659,
+   "iceride_ort_bp": 0.28,
+   "disarida_ort_bp": 0.31,
+   "fark_bp": -0.03,
+   "P_fark_blok": 0.502,
+   "strateji_yillik_%": -0.43,
+   "al_tut_yillik_%": 0.75,
+   "Sharpe_strateji": -0.04,
+   "Sharpe_al_tut": 0.05,
+   "maxDD_strateji_%": -90.5,
+   "maxDD_al_tut_%": -66.3
+  },
+  "P1": {
+   "gun": 4282,
+   "iceride_ort_bp": -1.55,
+   "disarida_ort_bp": 1.95,
+   "fark_bp": -3.5,
+   "P_fark_blok": 0.084,
+   "strateji_yillik_%": -3.21,
+   "al_tut_yillik_%": 0.0,
+   "Sharpe_strateji": -0.23,
+   "Sharpe_al_tut": 0.0,
+   "maxDD_strateji_%": -90.5,
+   "maxDD_al_tut_%": -66.3
+  },
+  "P2": {
+   "gun": 3114,
+   "iceride_ort_bp": 2.48,
+   "disarida_ort_bp": -1.01,
+   "fark_bp": 3.49,
+   "P_fark_blok": 0.9,
+   "strateji_yillik_%": 1.56,
+   "al_tut_yillik_%": 0.52,
+   "Sharpe_strateji": 0.18,
+   "Sharpe_al_tut": 0.04,
+   "maxDD_strateji_%": -22.5,
+   "maxDD_al_tut_%": -41.7
+  },
+  "P3": {
+   "gun": 1263,
+   "iceride_ort_bp": 3.85,
+   "disarida_ort_bp": -0.31,
+   "fark_bp": 4.17,
+   "P_fark_blok": 0.884,
+   "strateji_yillik_%": 4.09,
+   "al_tut_yillik_%": 3.84,
+   "Sharpe_strateji": 0.57,
+   "Sharpe_al_tut": 0.4,
+   "maxDD_strateji_%": -11.7,
+   "maxDD_al_tut_%": -18.9
+  },
+  "cift": {
+   "AUDJPY": {
+    "iceride": 0.84,
+    "disarida": 0.01,
+    "P3_fark": 4.7
+   },
+   "NZDJPY": {
+    "iceride": 0.9,
+    "disarida": -0.51,
+    "P3_fark": 5.45
+   },
+   "CADJPY": {
+    "iceride": 0.27,
+    "disarida": 0.05,
+    "P3_fark": 2.35
+   }
+  }
+ }
+}

@@ -2762,7 +2762,7 @@ def main():
             #    ÖNCE. Kapatma: config.FX_FIKS_SHADOW_ENABLED = False.
             if fx_fiks_shadow is not None and getattr(config, "FX_FIKS_SHADOW_ENABLED", True):
                 try:
-                    fx_fiks_shadow.poll(mt5, log, _daycombo_offset, cfg=config)
+                    fx_fiks_shadow.poll(mt5, log, _daycombo_offset, cfg=config, get_vix=get_vix)
                 except Exception as e:
                     log.warning("fx fiks gölge hatası: %s", e)
 

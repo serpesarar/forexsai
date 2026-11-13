@@ -1,0 +1,218 @@
+{
+ "KOR": {
+  "ciftler": [
+   "USDNOK",
+   "USDSEK",
+   "USDCAD",
+   "EURAUD",
+   "EURCAD",
+   "GBPAUD"
+  ],
+  "gun": 8721,
+  "iceride_pay": 0.461,
+  "TUM": {
+   "gun": 8721,
+   "iceride_ort_bp": 0.74,
+   "disarida_ort_bp": -0.93,
+   "fark_bp": 1.67,
+   "P_fark_blok": 0.979,
+   "strateji_yillik_%": 0.5,
+   "al_tut_yillik_%": -0.4,
+   "Sharpe_strateji": 0.1,
+   "Sharpe_al_tut": -0.06,
+   "maxDD_strateji_%": -27.1,
+   "maxDD_al_tut_%": -41.6
+  },
+  "P1": {
+   "gun": 4342,
+   "iceride_ort_bp": -0.03,
+   "disarida_ort_bp": 0.43,
+   "fark_bp": -0.46,
+   "P_fark_blok": 0.325,
+   "strateji_yillik_%": -0.41,
+   "al_tut_yillik_%": 0.45,
+   "Sharpe_strateji": -0.07,
+   "Sharpe_al_tut": 0.07,
+   "maxDD_strateji_%": -27.1,
+   "maxDD_al_tut_%": -27.6
+  },
+  "P2": {
+   "gun": 3116,
+   "iceride_ort_bp": 3.04,
+   "disarida_ort_bp": -2.27,
+   "fark_bp": 5.31,
+   "P_fark_blok": 1.0,
+   "strateji_yillik_%": 2.26,
+   "al_tut_yillik_%": -1.08,
+   "Sharpe_strateji": 0.49,
+   "Sharpe_al_tut": -0.17,
+   "maxDD_strateji_%": -9.7,
+   "maxDD_al_tut_%": -41.6
+  },
+  "P3": {
+   "gun": 1263,
+   "iceride_ort_bp": -0.43,
+   "disarida_ort_bp": -0.82,
+   "fark_bp": 0.39,
+   "P_fark_blok": 0.592,
+   "strateji_yillik_%": -0.74,
+   "al_tut_yillik_%": -1.63,
+   "Sharpe_strateji": -0.17,
+   "Sharpe_al_tut": -0.29,
+   "maxDD_strateji_%": -10.8,
+   "maxDD_al_tut_%": -17.0
+  },
+  "cift": {
+   "USDNOK": {
+    "iceride": 1.19,
+    "disarida": -1.99,
+    "P3_fark": 0.74
+   },
+   "USDSEK": {
+    "iceride": 0.18,
+    "disarida": -0.87,
+    "P3_fark": 0.51
+   },
+   "USDCAD": {
+    "iceride": 0.69,
+    "disarida": -0.83,
+    "P3_fark": 0.97
+   },
+   "EURAUD": {
+    "iceride": 2.16,
+    "disarida": -1.15,
+    "P3_fark": -0.01
+   },
+   "EURCAD": {
+    "iceride": 0.18,
+    "disarida": -0.13,
+    "P3_fark": -2.37
+   },
+   "GBPAUD": {
+    "iceride": 3.99,
+    "disarida": -2.36,
+    "P3_fark": 2.5
+   }
+  }
+ },
+ "GORULEN": {
+  "ciftler": [
+   "AUDJPY",
+   "NZDJPY",
+   "CADJPY",
+   "AUDUSD",
+   "NZDUSD",
+   "USDJPY",
+   "GBPJPY",
+   "EURJPY",
+   "USDMXN",
+   "USDZAR"
+  ],
+  "gun": 9590,
+  "iceride_pay": 0.453,
+  "TUM": {
+   "gun": 9590,
+   "iceride_ort_bp": 0.12,
+   "disarida_ort_bp": -0.63,
+   "fark_bp": 0.75,
+   "P_fark_blok": 0.732,
+   "strateji_yillik_%": -0.35,
+   "al_tut_yillik_%": -0.72,
+   "Sharpe_strateji": -0.05,
+   "Sharpe_al_tut": -0.08,
+   "maxDD_strateji_%": -74.6,
+   "maxDD_al_tut_%": -67.1
+  },
+  "P1": {
+   "gun": 5210,
+   "iceride_ort_bp": -1.09,
+   "disarida_ort_bp": 0.06,
+   "fark_bp": -1.14,
+   "P_fark_blok": 0.221,
+   "strateji_yillik_%": -1.97,
+   "al_tut_yillik_%": -1.36,
+   "Sharpe_strateji": -0.23,
+   "Sharpe_al_tut": -0.13,
+   "maxDD_strateji_%": -74.6,
+   "maxDD_al_tut_%": -63.5
+  },
+  "P2": {
+   "gun": 3117,
+   "iceride_ort_bp": 1.63,
+   "disarida_ort_bp": -1.46,
+   "fark_bp": 3.09,
+   "P_fark_blok": 0.914,
+   "strateji_yillik_%": 0.96,
+   "al_tut_yillik_%": -0.98,
+   "Sharpe_strateji": 0.15,
+   "Sharpe_al_tut": -0.11,
+   "maxDD_strateji_%": -15.5,
+   "maxDD_al_tut_%": -37.0
+  },
+  "P3": {
+   "gun": 1263,
+   "iceride_ort_bp": 3.06,
+   "disarida_ort_bp": -0.63,
+   "fark_bp": 3.69,
+   "P_fark_blok": 0.952,
+   "strateji_yillik_%": 3.1,
+   "al_tut_yillik_%": 2.52,
+   "Sharpe_strateji": 0.59,
+   "Sharpe_al_tut": 0.37,
+   "maxDD_strateji_%": -6.1,
+   "maxDD_al_tut_%": -13.2
+  },
+  "cift": {
+   "AUDJPY": {
+    "iceride": 0.84,
+    "disarida": 0.01,
+    "P3_fark": 4.7
+   },
+   "NZDJPY": {
+    "iceride": 0.9,
+    "disarida": -0.51,
+    "P3_fark": 5.45
+   },
+   "CADJPY": {
+    "iceride": 0.27,
+    "disarida": 0.05,
+    "P3_fark": 2.35
+   },
+   "AUDUSD": {
+    "iceride": 1.26,
+    "disarida": -1.18,
+    "P3_fark": 3.27
+   },
+   "NZDUSD": {
+    "iceride": 0.71,
+    "disarida": -0.72,
+    "P3_fark": 4.01
+   },
+   "USDJPY": {
+    "iceride": -0.48,
+    "disarida": 0.58,
+    "P3_fark": 1.44
+   },
+   "GBPJPY": {
+    "iceride": -0.88,
+    "disarida": 1.21,
+    "P3_fark": 2.28
+   },
+   "EURJPY": {
+    "iceride": -0.61,
+    "disarida": 1.02,
+    "P3_fark": 4.75
+   },
+   "USDMXN": {
+    "iceride": 1.44,
+    "disarida": -3.1,
+    "P3_fark": 7.53
+   },
+   "USDZAR": {
+    "iceride": 1.86,
+    "disarida": -4.63,
+    "P3_fark": 1.1
+   }
+  }
+ }
+}

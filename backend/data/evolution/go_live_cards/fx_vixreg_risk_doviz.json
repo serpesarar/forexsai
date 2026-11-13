@@ -1,0 +1,105 @@
+{
+ "scope": "fx_vixreg_risk_doviz",
+ "tarih": "2026-11-13",
+ "sembol": "16 FX çifti, risk para birimi uzun yönünde eşit ağırlık",
+ "kural": "t+1 günü getirisi için t−1 günü VIX kapanışı ≥ 18,4 ise (bir gün fazladan gecikme) o gün risk para birimi UZUN (AUD/NZD/CAD/MXN/ZAR/NOK/SEK/GBP vs JPY/USD/EUR), aksi hâlde DÜZ. Günlük, broker 17:00 ET kapanışları.",
+ "mekanizma": "Fed çağında (2010→) korku fiyatlandıktan sonra risk varlıkları döner (NDX VIXREG'in FX karşılığı). 2009 öncesi tersi (sakin rejim taşıması) → çağa bağlı.",
+ "ana_olcum": "Pepperstone MT5 D1 2010-01→2026-11, spot (faiz farkı yok), maliyet 2× yıllık medyan spread + komisyon/geçiş",
+ "kor_dogrulama": {
+  "fark_2010+": 3.75,
+  "P_blok": 0.998,
+  "iceride_ort": 1.86,
+  "strat_yillik_%": 1.39,
+  "al_tut_yillik_%": -1.24,
+  "Sharpe_s": 0.31,
+  "Sharpe_at": -0.2,
+  "cift_fark": {
+   "USDNOK": 4.15,
+   "USDSEK": 2.07,
+   "USDCAD": 3.35,
+   "EURAUD": 5.03,
+   "EURCAD": 1.74,
+   "GBPAUD": 6.01
+  },
+  "pozitif": "6/6",
+  "yil_strat_%": {
+   "2010": 7.12,
+   "2011": -1.69,
+   "2012": 4.51,
+   "2013": 1.14,
+   "2014": 0.19,
+   "2015": -0.76,
+   "2016": 2.32,
+   "2017": 0.0,
+   "2018": 0.06,
+   "2019": 2.11,
+   "2020": 6.29,
+   "2021": 5.76,
+   "2022": -3.36,
+   "2023": -0.24,
+   "2024": -0.74,
+   "2025": 0.46,
+   "2026": 0.31
+  },
+  "yil_pozitif": "11/17"
+ },
+ "yillik_%": 1.52,
+ "Sharpe": 0.29,
+ "al_tut_Sharpe": -0.06,
+ "maxDD_%": -10.7,
+ "yil_%": {
+  "2010": 0.74,
+  "2011": -6.77,
+  "2012": 7.55,
+  "2013": 2.05,
+  "2014": 1.45,
+  "2015": -1.99,
+  "2016": -0.72,
+  "2017": 0.0,
+  "2018": 1.04,
+  "2019": 2.13,
+  "2020": 5.1,
+  "2021": 7.03,
+  "2022": 0.43,
+  "2023": 3.1,
+  "2024": 0.29,
+  "2025": 2.45,
+  "2026": 2.08
+ },
+ "NDX_VIXREG_korelasyon": 0.608,
+ "checks": {
+  "1_hacim": {
+   "deger": "157 rejim epizodu, 1638 rejim günü",
+   "esik": "≥150 olay",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "epizod ort +19.0 bp, P(EV>0)=%98.6",
+   "esik": "ort>0 ve P≥%90",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "ilk yarı +8.6 son yarı +29.3 bp/epizod",
+   "esik": "ikisi de ≥0",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "maliyet×1,5 yıllık +1.33%",
+   "esik": ">0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "iyimser (1 gün gecikme, maliyetsiz) yıllık +2.25% vs gerçek (2 gün gecikme + maliyet) +1.52%",
+   "esik": "fark < 0,5×gerçek",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "çift başına tek pozisyon (rejim açık/kapalı), çakışma yok",
+   "esik": ">0",
+   "gecti": true
+  }
+ },
+ "gecen": "6/6",
+ "verdikt_kod": "LIVE",
+ "kanit": "research/fx_secim_20261113/ (PROTOCOL.md EK-8/EK-9, h11.py, h12_kart.py, results/h12*.json)"
+}

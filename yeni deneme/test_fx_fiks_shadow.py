@@ -100,3 +100,23 @@ def test_sunucu_farki_yuvarlama():
     assert fx.server_offset(6300) == 7200          # piyasa kapanışında bayat tick (2026-11-13 kutuda ölçüldü)
     assert fx.server_offset(10800 + 900) == 10800
     assert fx.server_offset(0) is None and fx.server_offset(-3600) is None
+
+
+def test_vixreg_zamanlama():
+    # 2026-11-13 Cuma 22:10 UTC = 17:10 EST → görüntü zamanı; 21:50 UTC = 16:50 → değil
+    assert fx.vixreg_due(fx.utc_at(date(2026, 11, 13), 22) + 600, None) == date(2026, 11, 13)
+    assert fx.vixreg_due(fx.utc_at(date(2026, 11, 13), 21) + 3000, None) is None
+    assert fx.vixreg_due(fx.utc_at(date(2026, 11, 13), 22) + 600, "2026-11-13") is None
+    assert fx.vixreg_due(fx.utc_at(date(2026, 7, 10), 21) + 600, None) == date(2026, 7, 10)   # EDT: 17:10 ET = 21:10 UTC
+
+
+def test_vixreg_getiri_kurali():
+    pairs = list(fx.VIXREG_PAIRS)
+    def snap(d, vix, px):
+        return {"kind": "vixreg_snap", "d": d, "vix": vix, "closes": {p: px for p in pairs}}
+    snaps = [snap("2026-11-02", 25.0, 1.0), snap("2026-11-03", 15.0, 1.0), snap("2026-11-04", 15.0, 1.01), snap("2026-11-05", 15.0, 1.02)]
+    r = fx.vixreg_returns(snaps)
+    assert [x["on"] for x in r] == [True, False]               # 11-04 getirisi 11-02 VIX'iyle (25 → uzun), 11-05 → 11-03 (15 → düz)
+    long_sign = sum(fx.VIXREG_PAIRS.values()) / len(pairs)
+    assert r[0]["strat_bp"] == pytest.approx(long_sign * math.log(1.01) * 1e4)
+    assert r[1]["strat_bp"] == pytest.approx(-fx.VIXREG_COST_BP)

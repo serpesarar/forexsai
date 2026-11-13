@@ -146,3 +146,21 @@ Maliyet: 2 × (o yılın medyan bar spread'i) + komisyon + gerçek gecelik swap 
 USDNOK, USDSEK. Dönemler: **D1** veri başı → 2009 · **D2** 2010–2021 · **D3** 2022 → (en yeni). Taban: aynı çift, aynı yön payı, aynı tutuş
 süresi dağılımlı rastgele girişler (500 çekiliş). Geçer: ana havuz ort R > 0, P ≥ 0,90, D1/D2/D3 üçünde de ≥ 0, plasebo yüzdelik ≥ 0,90,
 kör havuz ort R > 0; en büyük 5 işlem çıkınca hâlâ > 0 (E101). Ayna (karşı-trend aynı tetik) bilgi amaçlı.
+
+## EK-8 (2026-11-13 ~22:30 UTC — EK-6/7 sonuçlarından SONRA, H11 sınanmadan ÖNCE)
+**H11 Taşıma × VIX rejimi.** Mekanizma: taşıma pozisyonları sakin rejimde birikir, stres başlayınca zorla kapanır (H4: stres günü JPY çaprazı
+düşmeye DEVAM ediyor). Kural (günlük, broker D1 17:00 ET kapanışları): t+1 günü getirisi için pozisyon, **t−1 günü VIX kapanışı** < 18,4 ise
+UZUN taşıma çifti, aksi hâlde DÜZ (bir gün fazladan gecikme → E99 güvenli). Maliyet: her giriş/çıkışta 2 × yıllık medyan spread + komisyon;
+spot getiri (tarihsel faiz farkı YOK → taşıma lehine olan getiri dışarıda, ihtiyatlı); bugünkü swap ayrıca bilgi amaçlı.
+Çiftler — **ana:** AUDJPY, NZDJPY, CADJPY (JPY fonlu); **kör:** AUDUSD, NZDUSD, USDJPY, GBPJPY, EURJPY, USDMXN (kısa = MXN uzun), USDZAR (kısa).
+Dönemler: P1 veri başı→2009, P2 2010–2021, P3 2022→. Ölçüt (ana havuz, günlük eşit ağırlık): (a) içeride gün ort − dışarıda gün ort > 0 ve
+gün-blok (21 gün) bootstrap P ≥ 0,90; (b) içeride ort > 0 her üç dönemde; (c) filtreli stratejinin Sharpe'ı al-tut Sharpe'ından büyük her
+üç dönemde; (d) kör havuzda (a) aynı işaret. Ters ayna (VIX ≥ 18,4 → uzun) bilgi amaçlı. Kart ölçütleri ayrıca raporlanır (olay = rejim girişi).
+
+## EK-9 (2026-11-13 ~22:45 UTC — H11 ve aynası görüldükten SONRA, H12 kör çiftleri sınanmadan ÖNCE)
+Görülen: H11 X. Ayna (VIX ≥ 18,4 → uzun) ≤2009'da eksi, 2010→'da ana ve kör havuzda +; P3'te 10/10 çift aynı yön. Bu, NDX VIXREG'in (VIX ≥ 18,4
+→ BUY lehte) FX karşılığı olabilir (Fed çağı "korku döner"). **Seçim yüklü** → hüküm yalnız H11'de HİÇ kullanılmamış çiftlerle.
+**H12 (VIXREG-FX):** t−1 VIX kapanışı ≥ 18,4 → risk para birimi UZUN (aksi düz), yalnız 2010-01→. Maliyet H11 gibi.
+**Kör çiftler (önceden):** USDNOK (kısa), USDSEK (kısa), USDCAD (kısa), EURAUD (kısa), EURCAD (kısa), GBPAUD (kısa), AUDCAD? HAYIR (iki taraf
+risk). Geçer: kör havuzda içeride − dışarıda > 0 hem P2 hem P3'te, havuz blok P ≥ 0,90, strateji Sharpe ≥ al-tut Sharpe (P2+P3),
+6 çiftin ≥ 4'ünde fark > 0. Ayrıca H11'deki 10 çiftin 2010→ sonucu "görülen" diye ayrı yazılır.

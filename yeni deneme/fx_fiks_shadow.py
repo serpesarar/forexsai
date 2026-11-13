@@ -12,6 +12,8 @@ KURALLAR (dondurulmuş; değiştirmek kanıtı geçersiz kılar). Saatler UTC H1
     USDJPY open(D 01:00) > open(D−1 23:00) ise D 01:00'de SAT → D 06:00'da kapat. Stop yok.
   AYSONU (H9): ayın son hafta içi günü, her çift için r = open(16:00 Londra) − open(10:00 Londra);
     16:00 Londra'da −sign(r) yönünde gir → 20:00 Londra'da kapat. Çiftler: EURUSD GBPUSD USDJPY USDCHF USDCAD AUDUSD.
+  VIXREG-FX (H12, kart fx_vixreg_risk_doviz.json 6/6): her hafta içi 17:05 ET sonrası günde bir anlık görüntü (VIX + 16 çiftin D1
+    kapanışı). Karne: k günü getirisi için (k−2) günü VIX'i ≥ 18,4 ise risk para birimi uzun, aksi düz; geçişte 1 bp maliyet.
 İki sonuç: bp_model (bar açılışları − kart maliyeti) ve bp_fill (tespit anındaki gerçek bid/ask; bar açılışından ≤ MAX_LATE_S sonra).
 
 Karne:   python fx_fiks_shadow.py --karne
@@ -40,6 +42,11 @@ POLL_EVERY_S = 60
 MAX_LATE_S = 300
 STALE_EXIT_H = 30
 HOUR_S = 3600
+VIXREG_PAIRS = {"AUDJPY": 1, "NZDJPY": 1, "CADJPY": 1, "AUDUSD": 1, "NZDUSD": 1, "USDJPY": 1, "GBPJPY": 1, "EURJPY": 1,
+                "USDMXN": -1, "USDZAR": -1, "USDNOK": -1, "USDSEK": -1, "USDCAD": -1, "EURAUD": -1, "EURCAD": -1, "GBPAUD": -1}
+VIXREG_TH = 18.4
+VIXREG_DUE_ET_MIN = 17 * 60 + 5
+VIXREG_COST_BP = 1.0
 
 # JP tatilleri (holidays.JP, 2026–2027). Takvim bitince her gün bir kez uyarı loglanır. Ezme: config.FX_JP_HOLIDAYS.
 JP_HOLIDAYS: tuple[str, ...] = (
@@ -130,6 +137,47 @@ def bp(side: int, entry: float, exit_: float, cost: float) -> float:
     return round(side * math.log(exit_ / entry) * 1e4 - cost, 2)
 
 
+def _nth_sunday(year: int, month: int, n: int) -> date:
+    d = date(year, month, 1)
+    d += timedelta(days=(6 - d.weekday()) % 7)
+    return d + timedelta(weeks=n - 1)
+
+
+def us_et(now: float) -> tuple[date, int]:
+    """UTC epoch → (New York tarihi, gün-dakikası). EDT: 2. Pazar Mart 07:00Z → 1. Pazar Kasım 06:00Z."""
+    u = datetime.fromtimestamp(now, timezone.utc)
+    s_ = datetime.combine(_nth_sunday(u.year, 3, 2), datetime.min.time(), timezone.utc).replace(hour=7)
+    e_ = datetime.combine(_nth_sunday(u.year, 11, 1), datetime.min.time(), timezone.utc).replace(hour=6)
+    loc = u - timedelta(hours=4 if s_ <= u < e_ else 5)
+    return loc.date(), loc.hour * 60 + loc.minute
+
+
+def vixreg_due(now: float, last_day: str | None) -> date | None:
+    d, m = us_et(now)
+    if d.weekday() >= 5 or m < VIXREG_DUE_ET_MIN or (last_day is not None and last_day >= d.isoformat()):
+        return None
+    return d
+
+
+def vixreg_returns(snaps: list[dict]) -> list[dict]:
+    """Anlık görüntülerden kartla aynı kural: k günü getirisi (k−1→k kapanış), (k−2) VIX'i ≥ eşik ise uzun."""
+    sn = sorted((x for x in snaps if x.get("vix") is not None), key=lambda x: x["d"])
+    out, prev_on = [], None
+    for k in range(2, len(sn)):
+        on = sn[k - 2]["vix"] >= VIXREG_TH
+        rs = []
+        for p, side in VIXREG_PAIRS.items():
+            a, b = sn[k - 1]["closes"].get(p), sn[k]["closes"].get(p)
+            if a and b:
+                rs.append(side * math.log(b / a) * 1e4)
+        if not rs:
+            continue
+        cost = VIXREG_COST_BP if (prev_on is not None and on != prev_on) else 0.0
+        out.append({"d": sn[k]["d"], "on": on, "pool_bp": sum(rs) / len(rs), "strat_bp": (sum(rs) / len(rs)) * on - cost})
+        prev_on = on
+    return out
+
+
 def summarize(records: list[dict]) -> dict:
     out = {}
     for leg in ("GOTOBI", "AYSONU"):
@@ -141,6 +189,11 @@ def summarize(records: list[dict]) -> dict:
                     "n_fill": len(bf), "bp_fill": round(sum(bf) / len(bf), 2) if bf else None,
                     "atlanan": sum(1 for r in records if r.get("kind") == "skip" and r.get("leg") == leg),
                     "kacirilan": sum(1 for r in records if r.get("kind") == "missed" and r.get("leg") == leg)}
+    vr = vixreg_returns([r for r in records if r.get("kind") == "vixreg_snap"])
+    st_ = [x["strat_bp"] for x in vr]
+    out["VIXREG_FX"] = {"gun": len(vr), "rejim_gunu": sum(1 for x in vr if x["on"]),
+                        "strat_bp_gun": round(sum(st_) / len(st_), 2) if st_ else None, "toplam_bp": round(sum(st_), 1),
+                        "yillik_%_tahmin": round(sum(st_) / len(st_) * 252 / 100, 2) if st_ else None}
     return out
 
 
@@ -270,7 +323,19 @@ def _fetch(mt5, sym: str, srv_minus_utc: int) -> dict[int, float]:
     return {int(x["time"]) - srv_minus_utc: float(x["open"]) for x in r}
 
 
-def poll(mt5, log, offset_fn, cfg=None, now: float | None = None, force: bool = False) -> None:
+def _vixreg_snapshot(mt5, d: date, vix: float | None) -> dict:
+    closes = {}
+    for p in VIXREG_PAIRS:
+        mt5.symbol_select(p, True)
+        r = mt5.copy_rates_from_pos(p, mt5.TIMEFRAME_D1, 1, 1)
+        if r is None or len(r) == 0:
+            continue
+        if datetime.fromtimestamp(int(r[0]["time"]), timezone.utc).date() == d:   # sunucu tarihi = NY kapanış günü
+            closes[p] = float(r[0]["close"])
+    return {"kind": "vixreg_snap", "d": d.isoformat(), "vix": vix, "closes": closes}
+
+
+def poll(mt5, log, offset_fn, cfg=None, now: float | None = None, force: bool = False, get_vix=None) -> None:
     """Bot ana döngüsünden her tarama çağrılır. EMİR YOK. Hata → çağıran yakalar.
     offset_fn(sembol) = broker sunucu saati − UTC (saniye)."""
     global _last_poll, _warned_day
@@ -284,6 +349,15 @@ def poll(mt5, log, offset_fn, cfg=None, now: float | None = None, force: bool = 
         log.warning("FX-FİKS-GÖLGE: JP tatil takvimi bitti — JP_HOLIDAYS / config.FX_JP_HOLIDAYS güncelle")
         _warned_day = str(today)
     st = _load_state()
+    if get_vix is not None:
+        d_due = vixreg_due(now, st.get("vixreg_last"))
+        if d_due is not None:
+            rec = _vixreg_snapshot(mt5, d_due, get_vix())
+            if len(rec["closes"]) >= len(VIXREG_PAIRS) // 2:
+                _append(rec)
+                st["vixreg_last"] = d_due.isoformat()
+                _save_state(st)
+                log.info("FX-FİKS-GÖLGE VIXREG anlık görüntü %s VIX=%s çift=%d (EMİR YOK)", d_due, rec["vix"], len(rec["closes"]))
     need = set(p["sym"] for p in st["pos"])
     tomorrow = today + timedelta(days=1)
     if today in gotobi_days(today.year, today.month, hol) or tomorrow in gotobi_days(tomorrow.year, tomorrow.month, hol):
