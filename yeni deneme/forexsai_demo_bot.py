@@ -96,6 +96,10 @@ try:                                    # XAU 1h yeni 20 mum tepesi AL + S2 (R0B
     import xau_r0b_live                 # AYRI blok: import hatası diğer canlı kuralları etkilemesin. Gölge xau_shadow yan yana sürer.
 except Exception:                       # pragma: no cover
     xau_r0b_live = None
+try:                                    # VIXREG-FX (FX-01 H12, kart 6/6) CANLI demo, 0,01 lot/çift — oturum hedefi kararı 2026-11-13.
+    import fx_vixreg_live               # AYRI magic (+15), global tavana SAYILMAZ. Kapatma: config.FX_VIXREG_LIVE = False.
+except Exception:                       # pragma: no cover
+    fx_vixreg_live = None
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -2855,7 +2859,7 @@ def main():
             #    Gölgelerden SONRA çağrılır (VIX geçmişini onlar günceller). Her açılışta kural adı + geçmiş başarı ekrana yazılır.
             #    Kapatma: config.C3B_LIVE / ORB_VIX_LIVE / CEKIC_LIVE = False.
             for _name, _mod in (("c3b", c3b_live), ("orb×vix", orb_vix_live), ("çekiç", cekic_live), ("ksg", ksg_live),
-                                ("ay sonu", aysonu_live), ("xau 1h", xau_r0b_live)):
+                                ("ay sonu", aysonu_live), ("xau 1h", xau_r0b_live), ("fx vixreg", fx_vixreg_live)):
                 if _mod is None:
                     continue
                 try:
