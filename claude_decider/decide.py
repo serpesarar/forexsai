@@ -175,8 +175,12 @@ LIVE_BLOCKED: set[tuple[str, str]] = {("NDX.INDX", "BUY")}
 # aynı sembol-yönde AÇMADIĞI fırsatların (WAIT karşı-olgusu) ort R'si:
 #   XAU BUY +0,06 vs −0,14 (iki yarıda da +) · DAX BUY +0,07 vs −0,02 · NDX SELL +0,04 vs −0,04
 # Diğer yönler karar + kâğıt ölçümüne devam eder; liste haftalık distill_journal raporuyla gözden
-# geçirilir. Env: LIVE_ALLOWED="XAUUSD:BUY,GDAXI.INDX:BUY,NDX.INDX:SELL" · "*" → kısıt yok.
-_LIVE_ALLOWED_ENV = os.getenv("LIVE_ALLOWED", "XAUUSD:BUY,GDAXI.INDX:BUY,NDX.INDX:SELL")
+# geçirilir. Env: LIVE_ALLOWED="GDAXI.INDX:BUY,NDX.INDX:SELL" · "*" → kısıt yok.
+# 2026-11-13 OK-01 H3 (research/ortak_kapi_20261113/RAPOR.md): XAU BUY listeden ÇIKARILDI — 3 ayda
+# 383 icra ort −0,051R (isabet %57 < başabaş %60), journal 441 epizod net −0,105R, iki yarıda da
+# eksi (−0,02/−0,19), gün-blok P(<0) 0,998, 06-25→08-12 ön döneminde de −0,25R (sınıf B). XAU kararları
+# kâğıtta/journal'da ölçülmeye devam eder; geri açmak için env ile "XAUUSD:BUY" eklenir.
+_LIVE_ALLOWED_ENV = os.getenv("LIVE_ALLOWED", "GDAXI.INDX:BUY,NDX.INDX:SELL")
 LIVE_ALLOWED: set[tuple[str, str]] | None = (
     None if _LIVE_ALLOWED_ENV.strip() == "*" else
     {tuple(x.strip().split(":", 1)) for x in _LIVE_ALLOWED_ENV.split(",") if ":" in x})

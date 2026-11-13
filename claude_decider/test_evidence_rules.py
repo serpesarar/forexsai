@@ -48,8 +48,10 @@ def test_shadow_mode_does_not_change_decision(monkeypatch):
 
 
 def test_live_allowlist():
-    assert decide.live_eligible("XAUUSD", "BUY") == (True, "")
+    assert decide.live_eligible("GDAXI.INDX", "BUY") == (True, "")
     assert decide.live_eligible("NDX.INDX", "SELL") == (True, "")
+    ok, why = decide.live_eligible("XAUUSD", "BUY")              # OK-01 H3 (2026-11-13): canlıdan çıktı
+    assert not ok and "İZİN LİSTESİ" in why
     ok, why = decide.live_eligible("USOIL.FOREX", "SELL")
     assert not ok and "İZİN LİSTESİ" in why
     assert not decide.live_eligible("XAUUSD", "SELL")[0]          # sert yasak önce gelir
