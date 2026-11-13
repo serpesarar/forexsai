@@ -4945,10 +4945,11 @@
     "detail": "main'e push sonrası decider yeniden başlayınca journal'da XAU OPEN kararlarının live_eligible=False ile kâğıtta kaldığını ve MT5'te yeni XAU decider emri açılmadığını kontrol et (remote.py sh)",
     "category": "wiring",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-11-13T18:00:48.276183+00:00",
-    "updated_at": "2026-11-13T18:00:48.276573+00:00"
+    "updated_at": "2026-11-13T18:00:48.276573+00:00",
+    "resolution": "2026-11-13 19:20 UTC kutuda doğrulandı: HEAD 0d4de2b4, LIVE_ALLOWED varsayılanı GDAXI.INDX:BUY,NDX.INDX:SELL, decider 19:19:51 UTC yeniden başladı"
   },
   {
     "id": "bl_cfb91405b3",
