@@ -80,3 +80,14 @@ dax_fomc_shadow kalıbıyla `fx_fiks_shadow.poll(mt5, log, _daycombo_offset, cfg
 bayat tick 6.300 sn ölçtü). Kutuda gerçek MT5 ile duman testi: 2026-11-13 gotobi, sabah +1,63 bp → 159,863 SAT → 06:00 159,968 = **−7,98 bp**
 (yerel H1 ile birebir). Bot açık pozisyon nedeniyle yeniden başlatmayı erteledi (borç); kapanınca modül devreye girer. Karne:
 `python "yeni deneme/fx_fiks_shadow.py" --karne`. Kapatma: `config.FX_FIKS_SHADOW_ENABLED = False`. Gerçek emre geçiş 2. KURAL gereği 6/6 ister.
+
+## 8. Tur 3 — taşıma × VIX rejimi (EK-8/EK-9) → **6/6 kapı**
+| ID | Kural | Sonuç | Sınıf |
+|---|---|---|---|
+| H11 | t−1 VIX < 18,4 → taşıma çifti (AUDJPY/NZDJPY/CADJPY) uzun | ≤2009 + (fark +3,5 bp/gün), 2010→ TERS (−3,5 / −4,2) → çağa bağlı | X |
+| **H12 VIXREG-FX** | **t−1 VIX ≥ 18,4 → risk para birimi uzun (aksi düz), 2010→; H11'de hiç kullanılmamış 6 kör çiftte ön-kayıtlı** | **kör: fark +3,75 bp/gün, blok P 0,998, 6/6 çift +, Sharpe 0,31 vs al-tut −0,20; P2 +5,31 / P3 +0,39. 16 çift kartı: 157 epizod, +19 bp/epizod, P 0,986, iki yarı + (+8,6 / +29,3), ×1,5 +%1,33/yıl, icra fark küçük → 6/6; 2022–26 her yıl +; maxDD −%10,7** | **B (kart 6/6, LIVE kodu; öneri GÖLGE→kullanıcı)** |
+
+Uyarılar: mutlak getiri küçük (birim nominalle +%1,5/yıl, Sharpe 0,29); 2009 öncesi tersi (çağ: Fed dönemi "korku döner", §3-31); canlı NDX
+VIXREG ile günlük ρ 0,61 → büyük ölçüde aynı bahsin FX bacağı, bağımsız bahis sayılmaz (§3-30). Spot getiri; faiz farkı dahil değil.
+Uygulama: `fx_fiks_shadow.py` VIXREG-FX bacağı (günlük 17:05 ET anlık görüntü, karne kartla aynı kural; 2010→ tekrar oynatma +%1,79/yıl).
+Kutu duman testi 2026-11-13: 16/16 çift kapanışı, VIX 19,3 → rejim AÇIK. Commit c0f9c366, 7de5478e.
