@@ -94,3 +94,9 @@ def test_karne_ozet():
             {"kind": "skip", "leg": "GOTOBI"}]
     s = fx.summarize(recs)["GOTOBI"]
     assert s["n"] == 2 and s["bp_model"] == 0.5 and s["atlanan"] == 1 and s["n_fill"] == 1
+
+
+def test_sunucu_farki_yuvarlama():
+    assert fx.server_offset(6300) == 7200          # piyasa kapanışında bayat tick (2026-11-13 kutuda ölçüldü)
+    assert fx.server_offset(10800 + 900) == 10800
+    assert fx.server_offset(0) is None and fx.server_offset(-3600) is None

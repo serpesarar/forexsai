@@ -112,6 +112,15 @@ def last_weekday_of_month(d: date) -> date:
     return e
 
 
+VALID_OFFSETS_S = (7200, 10800)    # Pepperstone sunucu = New York + 7 → UTC+2 (kış) / UTC+3 (yaz)
+
+
+def server_offset(raw_s: float) -> int | None:
+    """Ölçülen sunucu−UTC farkını tam saate yuvarlar (piyasa kapanışında bayat tick ±30 dk sapar). Geçersizse None."""
+    off = int(round(raw_s / 3600.0)) * 3600
+    return off if off in VALID_OFFSETS_S else None
+
+
 def bar_open(bars: dict[int, float], t_utc: int) -> float | None:
     """bars: {UTC epoch bar başı: open}."""
     return bars.get(t_utc)
@@ -283,7 +292,10 @@ def poll(mt5, log, offset_fn, cfg=None, now: float | None = None, force: bool = 
         need.update(AYSONU_SYMBOLS)
     if not need:
         return
-    off = offset_fn(GOTOBI_SYMBOL)
+    off = server_offset(offset_fn(GOTOBI_SYMBOL))
+    if off is None:
+        log.warning("FX-FİKS-GÖLGE: sunucu saat farkı ölçülemedi (bayat tick?) — tarama atlandı")
+        return
     bars, ticks = {}, {}
     for s in need:
         bars[s] = _fetch(mt5, s, off)
