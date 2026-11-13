@@ -25,7 +25,7 @@ OK-01'in DAX tekrarı (ön kayıt `PROTOCOL.md`; veri ve kod OK-01'den, `01_dax.
 
 ## Engel (2026-11-13, uygulandı)
 **Decider DAX SELL** `LIVE_BLOCKED`'a yazıldı (`claude_decider/decide.py`): mekanik tetik 383 epizod net −0,104R, üç dönem −0,29 / −0,05 / −0,11,
-P(<0) 0,992 (B); LLM OPEN 9 epizod −0,141R → seçim kaybı kapatmıyor. Zaten `LIVE_ALLOWED` dışındaydı; bu kayıt joker (`*`) izinde de emir
+P(<0) 0,992; **ön-kayıtlı D2 ölçütü birebir** (EK-3): son 3 ay n 333 −0,076R, yarılar −0,055/−0,097, P(<0) 0,956, ön dönem −0,292 → B; LLM OPEN 9 epizod −0,141R → seçim kaybı kapatmıyor. Zaten `LIVE_ALLOWED` dışındaydı; bu kayıt joker (`*`) izinde de emir
 gitmemesini garanti eder, journal ölçümü sürer. DAX BUY açık kalır (tetik −0,092 ama LLM seçimi +0,035R, D4 +0,13 C).
 
 ## Hüküm

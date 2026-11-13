@@ -35,3 +35,9 @@ Sapma (sonuçtan önce): DAX vekil dosyalarında saat ekseni belirsiz (kış Xet
 ## EK-2 (D7 sonuç kaydı)
 (a) bot DAX BUY SAKİN −0,016 (54) vs KORKU +0,303 (11), fark −0,32, yarılar −/−, P(fark<0) 0,81; (b) decider OPEN fark +0,02; (b2) mekanik fark −0,14
 (P(<0) 0,88); (c) bağımsız vekil 2021-26 fark **+0,025** (yarılar +/+), 2016-21 **+0,045** (P(>0) 0,95) → uzun veride TERS. Engel ölçütü tutmadı → X.
+
+## EK-3 (2026-11-13, sonradan uygulama — açıkça işaretli)
+D2 ENGEL ölçütü (değiştirilmeden) decider mekanik tetik popülasyonlarına da uygulandı (D2'de yalnız OPEN vardı):
+DAX SELL 3 ay n 333 −0,076R, yarılar −0,055/−0,097, P(<0) 0,956, ön dönem n 50 −0,292 → **ENGEL B** (`LIVE_BLOCKED`, 073d01fe, kutuda 19:27 UTC).
+DAX BUY 3 ay n 301 −0,109R, yarılar −/−, P 0,985, ön dönem +0,026 → ENGEL C; ama canlıda işlem gören LLM-OPEN alt kümesi +0,035R (D2'yi geçmiyor)
+→ DAX BUY canlı kalır (engellenen şey icra edilen popülasyon olmalı).
