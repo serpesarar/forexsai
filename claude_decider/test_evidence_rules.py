@@ -55,6 +55,19 @@ def test_live_allowlist():
     ok, why = decide.live_eligible("USOIL.FOREX", "SELL")
     assert not ok and "İZİN LİSTESİ" in why
     assert not decide.live_eligible("XAUUSD", "SELL")[0]          # sert yasak önce gelir
+    ok, why = decide.live_eligible("GDAXI.INDX", "SELL")          # OK-02 (2026-11-13)
+    assert not ok and "CANLI-DIŞI" in why
+
+
+def test_dax_sell_blocked_even_with_wildcard(monkeypatch):
+    monkeypatch.setenv("LIVE_ALLOWED", "*")
+    mod = importlib.reload(decide)
+    try:
+        assert not mod.live_eligible("GDAXI.INDX", "SELL")[0]
+        assert mod.live_eligible("GDAXI.INDX", "BUY")[0]
+    finally:
+        monkeypatch.delenv("LIVE_ALLOWED")
+        importlib.reload(decide)
 
 
 def _row(ts: str, sym: str, act: str, d: str, pnl: float) -> dict:

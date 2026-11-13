@@ -167,7 +167,11 @@ HARD_BANS: set[tuple[str, str]] = {("XAUUSD", "SELL"), ("USOIL.FOREX", "BUY")} |
 #   · araştırma OOS %76 ile uyumsuz (p=7.3e-9) — kapı çökmedi, HİÇ yeterince iyi olmadı
 #   · kurtarıcı ayırt edici YOK: rev kovası / ADX / seans / VIX / üst-TF trendi / çıkış
 #     geometrisi (be30_runner dahil) hiçbiri ayırmadı → daraltma kanıtsız olurdu
-LIVE_BLOCKED: set[tuple[str, str]] = {("NDX.INDX", "BUY")}
+# GDAXI.INDX SELL (2026-11-13, OK-02, research/ortak_kapi_dax_20261113/RAPOR.md):
+#   · mekanik tetik (OPEN+WAIT karşı-olgu) 383 epizod net −0,104R; üç dönem −0,29 / −0,05 / −0,11; P(<0) 0,992
+#   · LLM OPEN 9 epizod −0,141R → seçim kaybı kapatmıyor (DAX BUY'da kapatıyor: +0,035R, açık kalır)
+#   · zaten LIVE_ALLOWED dışındaydı; buraya yazılması LIVE_ALLOWED="*" iken de emir gitmemesini garanti eder
+LIVE_BLOCKED: set[tuple[str, str]] = {("NDX.INDX", "BUY"), ("GDAXI.INDX", "SELL")}
 
 
 # CANLI-İCRA İZİN LİSTESİ (2026-10-08, research/decider_kural_20261008): gerçek emir YALNIZ

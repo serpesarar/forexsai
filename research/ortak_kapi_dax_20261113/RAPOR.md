@@ -23,6 +23,11 @@ OK-01'in DAX tekrarı (ön kayıt `PROTOCOL.md`; veri ve kod OK-01'den, `01_dax.
 | D6 | Çapraz varlık (eş NDX 30 dk) | bot F1 Δ −0,20 (P 0,19), F2 −0,07; decider F1 −0,02, F2 −0,02 | X |
 | D7 | **DAX BUY × VIX rejimi** (EK-1, "korku döner"; önceki gün VIX < 18,4 SAKİN) | canlıda SAKİN kötü: bot fark −0,32R (P(<0) 0,81, KORKU n 11), decider mekanik −0,14 (0,88), decider OPEN +0,02; **bağımsız uzun vekil TERS**: 2021-26 +0,025, 2016-21 +0,045 (P(>0) 0,95) → canlı fark kısa örnekleme özgü | X |
 
+## Engel (2026-11-13, uygulandı)
+**Decider DAX SELL** `LIVE_BLOCKED`'a yazıldı (`claude_decider/decide.py`): mekanik tetik 383 epizod net −0,104R, üç dönem −0,29 / −0,05 / −0,11,
+P(<0) 0,992 (B); LLM OPEN 9 epizod −0,141R → seçim kaybı kapatmıyor. Zaten `LIVE_ALLOWED` dışındaydı; bu kayıt joker (`*`) izinde de emir
+gitmemesini garanti eder, journal ölçümü sürer. DAX BUY açık kalır (tetik −0,092 ama LLM seçimi +0,035R, D4 +0,13 C).
+
 ## Hüküm
 - DAX'ta **engellenecek kaybettiren grup yok** ve **yeni kapı yok** (D1–D7); kod değişikliği yapılmadı (ölçüt dışı bir engel uydurulmadı).
 - Decider DAX BUY yaklaşık başabaşta (+0,035R net) ve DAX'ın tek pozitif seçim izi burada (D4, C). XAU BUY'ın canlıdan çıkması
