@@ -3,7 +3,7 @@ import json, sys
 from pathlib import Path
 import numpy as np, pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import fx_core as f, h11
+import fx_core as f, h11_tasima_vix as h11
 CARD = f.ROOT / "backend/data/evolution/go_live_cards/fx_vixreg_risk_doviz.json"
 BLIND = {"USDNOK": -1, "USDSEK": -1, "USDCAD": -1, "EURAUD": -1, "EURCAD": -1, "GBPAUD": -1}
 PAIRS = {**h11.MAIN, **h11.BLIND, **BLIND}
@@ -57,7 +57,7 @@ card = {"scope": "fx_vixreg_risk_doviz", "tarih": "2026-11-13", "sembol": "16 FX
  "yil_%": {int(y): round(float(g.mean() * 252 / 100), 2) for y, g in s.groupby(s.index.year)},
  "NDX_VIXREG_korelasyon": 0.608,
  "checks": checks, "gecen": f"{n_ok}/6", "verdikt_kod": "LIVE" if n_ok == 6 else ("SHADOW" if n_ok >= 4 else "RED"),
- "kanit": "research/fx_secim_20261113/ (PROTOCOL.md EK-8/EK-9, h11.py, h12_kart.py, results/h12*.json)"}
+ "kanit": "research/fx_secim_20261113/ (PROTOCOL.md EK-8/EK-9, h11_tasima_vix.py, h12_kart.py, results/h12*.json)"}
 CARD.write_text(json.dumps(card, ensure_ascii=False, indent=1, default=float))
 print(json.dumps({k: card[k] for k in ("yillik_%", "Sharpe", "al_tut_Sharpe", "maxDD_%", "gecen", "verdikt_kod", "yil_%")}, ensure_ascii=False))
 for k, c in checks.items(): print(k, c["gecti"], c["deger"])

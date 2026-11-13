@@ -327,11 +327,12 @@ def _vixreg_snapshot(mt5, d: date, vix: float | None) -> dict:
     closes = {}
     for p in VIXREG_PAIRS:
         mt5.symbol_select(p, True)
-        r = mt5.copy_rates_from_pos(p, mt5.TIMEFRAME_D1, 1, 1)
+        r = mt5.copy_rates_from_pos(p, mt5.TIMEFRAME_D1, 0, 3)   # Cuma kapanışından sonra yeni bar açılmaz → konum değişir
         if r is None or len(r) == 0:
             continue
-        if datetime.fromtimestamp(int(r[0]["time"]), timezone.utc).date() == d:   # sunucu tarihi = NY kapanış günü
-            closes[p] = float(r[0]["close"])
+        for x in r:
+            if datetime.fromtimestamp(int(x["time"]), timezone.utc).date() == d:   # sunucu tarihi = NY kapanış günü
+                closes[p] = float(x["close"])
     return {"kind": "vixreg_snap", "d": d.isoformat(), "vix": vix, "closes": closes}
 
 

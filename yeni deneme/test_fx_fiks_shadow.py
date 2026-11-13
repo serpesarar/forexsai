@@ -120,3 +120,29 @@ def test_vixreg_getiri_kurali():
     long_sign = sum(fx.VIXREG_PAIRS.values()) / len(pairs)
     assert r[0]["strat_bp"] == pytest.approx(long_sign * math.log(1.01) * 1e4)
     assert r[1]["strat_bp"] == pytest.approx(-fx.VIXREG_COST_BP)
+
+
+class _FakeMT5:
+    TIMEFRAME_D1 = 16408
+
+    def __init__(self, bars):
+        self.bars = bars
+
+    def symbol_select(self, *_):
+        return True
+
+    def copy_rates_from_pos(self, sym, tf, pos, n):
+        return self.bars[pos:pos + n]
+
+
+def test_vixreg_anlik_goruntu_cuma_ve_hafta_ici():
+    import calendar
+    t = lambda d: calendar.timegm(d.timetuple())            # sunucu gece yarısı (epoch, sunucu saati)
+    thu, fri = {"time": t(date(2026, 11, 12)), "close": 1.0}, {"time": t(date(2026, 11, 13)), "close": 2.0}
+    # Cuma kapanışı sonrası: en yeni bar Cuma'nın kendisi (konum 0)
+    rec = fx._vixreg_snapshot(_FakeMT5([fri, thu]), date(2026, 11, 13), 20.0)
+    assert set(rec["closes"].values()) == {2.0} and len(rec["closes"]) == len(fx.VIXREG_PAIRS)
+    # Hafta içi 17:05 ET sonrası: konum 0 yeni gün barı, konum 1 kapanan gün
+    mon = {"time": t(date(2026, 11, 17)), "close": 9.9}
+    rec2 = fx._vixreg_snapshot(_FakeMT5([mon, {"time": t(date(2026, 11, 16)), "close": 3.0}]), date(2026, 11, 16), 20.0)
+    assert set(rec2["closes"].values()) == {3.0}
