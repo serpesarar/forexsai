@@ -91,3 +91,9 @@ Uyarılar: mutlak getiri küçük (birim nominalle +%1,5/yıl, Sharpe 0,29); 200
 VIXREG ile günlük ρ 0,61 → büyük ölçüde aynı bahsin FX bacağı, bağımsız bahis sayılmaz (§3-30). Spot getiri; faiz farkı dahil değil.
 Uygulama: `fx_fiks_shadow.py` VIXREG-FX bacağı (günlük 17:05 ET anlık görüntü, karne kartla aynı kural; 2010→ tekrar oynatma +%1,79/yıl).
 Kutu duman testi 2026-11-13: 16/16 çift kapanışı, VIX 19,3 → rejim AÇIK. Commit c0f9c366, 7de5478e.
+
+## 9. "Hangi döviz?" sorusunun nihai yanıtı (H12 altında çift/para birimi sıralaması, 2010→, `results/h12_cift_siralama.csv`)
+Koşulsuz yön için tahmin edilebilir çift yok (§1). Doğrulanmış tek kapı (VIX ≥ 18,4 rejimi) altında en tutarlı tepki veren para birimi
+**AUD**: AUD'lu dört çiftin dördü ilk 6'da (Sharpe ort. 0,39). Çift sıralaması (Sharpe / yıllık % / iki dönem farkı):
+GBPAUD kısa 0,50 / +3,1 / +7,7 & +2,5 · EURAUD kısa 0,42 / +2,6 / +7,4 & 0,0 · AUDUSD 0,33 / +2,6 / +8,0 & +3,3 · NZDUSD 0,32 · USDMXN kısa 0,32 ·
+AUDJPY 0,31 … USDJPY −0,01, USDSEK −0,03 (en zayıf). Uyarı: 16 içinden en iyiyi seçmek seçim yüklüdür; kart ve gölge 16 çiftin tamamıyla.
