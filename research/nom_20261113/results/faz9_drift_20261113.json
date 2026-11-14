@@ -1,0 +1,203 @@
+{
+ "ts": 1794623001.933792,
+ "surum": "nom_v1b_20261113",
+ "ozellik": {
+  "n_karar": 919,
+  "pencere_gun": 14,
+  "ozellikler": [
+   {
+    "ozellik": "H1_atr_ratio",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 1.9748,
+    "durum": "KAYMA"
+   },
+   {
+    "ozellik": "round1000_near",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 1.9606,
+    "durum": "KAYMA"
+   },
+   {
+    "ozellik": "round100_near",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 1.6749,
+    "durum": "KAYMA"
+   },
+   {
+    "ozellik": "round500_near",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 1.5867,
+    "durum": "KAYMA"
+   },
+   {
+    "ozellik": "H1_ema50_slope",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.9652,
+    "durum": "KAYMA"
+   },
+   {
+    "ozellik": "D1_atr_ratio",
+    "sinif": "yavas",
+    "olcu": "destek_disi_orani",
+    "deger": 0.501,
+    "durum": "KAYMA"
+   },
+   {
+    "ozellik": "sess_range_adr",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.4746,
+    "durum": "KAYMA"
+   },
+   {
+    "ozellik": "H1_adx14",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.3813,
+    "durum": "KAYMA"
+   },
+   {
+    "ozellik": "run_len_signed",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.2497,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "M15_ema200_slope",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.2416,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "sr_n_within_05_above",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1991,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "H1_ema20_slope",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1927,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "H1_rsi21",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1822,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "M15_ema200_dist",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1693,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "H1_ema50_dist",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1673,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "H1_psar_dist_atr",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1499,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "rv120_ratio",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1447,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "sr_n_within_05_below",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1414,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "H1_macd_hist_atr",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1378,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "H1_rsi14",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1335,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "rv30_ratio",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1313,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "sr_below_tests",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1303,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "atr_M15_H1",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1056,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "lvl_onl_dist",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1056,
+    "durum": "izle"
+   },
+   {
+    "ozellik": "H1_er20",
+    "sinif": "hizli",
+    "olcu": "psi",
+    "deger": 0.1048,
+    "durum": "izle"
+   }
+  ],
+  "kayan_onemli_ozellikler": [
+   "H1_atr_ratio"
+  ]
+ },
+ "kalibrasyon": {
+  "long": {
+   "drift_uyarisi": null,
+   "son14_beceri": null,
+   "brier_beceri": null,
+   "n": 0
+  },
+  "short": {
+   "drift_uyarisi": null,
+   "son14_beceri": null,
+   "brier_beceri": null,
+   "n": 0
+  }
+ },
+ "alarm": true
+}

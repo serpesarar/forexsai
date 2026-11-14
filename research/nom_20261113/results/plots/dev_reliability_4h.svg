@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 322" width="600" height="322"><rect width="100%" height="100%" fill="#0f172a"/><text x="150.0" y="18" text-anchor="middle" font-size="12" fill="#e2e8f0">4h LONG 1/1 ATR (dev)</text>
+<line x1="40.0" y1="260.0" x2="290.0" y2="30.0" stroke="#475569" stroke-dasharray="4 3"/>
+<line x1="40.0" y1="260.0" x2="290.0" y2="260.0" stroke="#64748b"/>
+<line x1="40.0" y1="260.0" x2="40.0" y2="30.0" stroke="#64748b"/>
+<text x="40.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.00</text>
+<text x="36" y="263.0" font-size="9" text-anchor="end" fill="#94a3b8">0.00</text>
+<text x="90.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.11</text>
+<text x="36" y="217.0" font-size="9" text-anchor="end" fill="#94a3b8">0.11</text>
+<text x="140.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.21</text>
+<text x="36" y="171.0" font-size="9" text-anchor="end" fill="#94a3b8">0.21</text>
+<text x="190.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.32</text>
+<text x="36" y="125.0" font-size="9" text-anchor="end" fill="#94a3b8">0.32</text>
+<text x="240.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.42</text>
+<text x="36" y="79.0" font-size="9" text-anchor="end" fill="#94a3b8">0.42</text>
+<text x="290.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.53</text>
+<text x="36" y="33.0" font-size="9" text-anchor="end" fill="#94a3b8">0.53</text>
+<polyline points="52.2,239.2 74.1,217.1 108.9,192.9 149.1,162.5 178.2,129.3 198.9,107.0 216.9,89.0 236.6,75.4 255.7,66.6 278.1,63.6" fill="none" stroke="#f97316" stroke-width="1.5"/>
+<line x1="52.2" x2="52.2" y1="241.3" y2="236.9" stroke="#f97316"/>
+<circle cx="52.2" cy="239.2" r="2.5" fill="#f97316"/>
+<line x1="74.1" x2="74.1" y1="220.1" y2="213.9" stroke="#f97316"/>
+<circle cx="74.1" cy="217.1" r="2.5" fill="#f97316"/>
+<line x1="108.9" x2="108.9" y1="196.5" y2="189.1" stroke="#f97316"/>
+<circle cx="108.9" cy="192.9" r="2.5" fill="#f97316"/>
+<line x1="149.1" x2="149.1" y1="166.7" y2="158.1" stroke="#f97316"/>
+<circle cx="149.1" cy="162.5" r="2.5" fill="#f97316"/>
+<line x1="178.2" x2="178.2" y1="134.0" y2="124.6" stroke="#f97316"/>
+<circle cx="178.2" cy="129.3" r="2.5" fill="#f97316"/>
+<line x1="198.9" x2="198.9" y1="111.9" y2="102.0" stroke="#f97316"/>
+<circle cx="198.9" cy="107.0" r="2.5" fill="#f97316"/>
+<line x1="216.9" x2="216.9" y1="94.1" y2="83.9" stroke="#f97316"/>
+<circle cx="216.9" cy="89.0" r="2.5" fill="#f97316"/>
+<line x1="236.6" x2="236.6" y1="80.4" y2="70.3" stroke="#f97316"/>
+<circle cx="236.6" cy="75.4" r="2.5" fill="#f97316"/>
+<line x1="255.7" x2="255.7" y1="71.7" y2="61.4" stroke="#f97316"/>
+<circle cx="255.7" cy="66.6" r="2.5" fill="#f97316"/>
+<line x1="278.1" x2="278.1" y1="68.7" y2="58.4" stroke="#f97316"/>
+<circle cx="278.1" cy="63.6" r="2.5" fill="#f97316"/>
+<polyline points="71.1,224.8 78.6,225.4 114.5,202.2 165.2,146.8 182.5,135.6 194.8,130.0 221.7,94.5 241.6,66.3 251.8,55.2 261.1,66.8" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+<line x1="71.1" x2="71.1" y1="227.5" y2="221.8" stroke="#94a3b8"/>
+<circle cx="71.1" cy="224.8" r="2.5" fill="#94a3b8"/>
+<line x1="78.6" x2="78.6" y1="228.1" y2="222.4" stroke="#94a3b8"/>
+<circle cx="78.6" cy="225.4" r="2.5" fill="#94a3b8"/>
+<line x1="114.5" x2="114.5" y1="205.6" y2="198.7" stroke="#94a3b8"/>
+<circle cx="114.5" cy="202.2" r="2.5" fill="#94a3b8"/>
+<line x1="165.2" x2="165.2" y1="151.3" y2="142.2" stroke="#94a3b8"/>
+<circle cx="165.2" cy="146.8" r="2.5" fill="#94a3b8"/>
+<line x1="182.5" x2="182.5" y1="140.2" y2="130.8" stroke="#94a3b8"/>
+<circle cx="182.5" cy="135.6" r="2.5" fill="#94a3b8"/>
+<line x1="194.8" x2="194.8" y1="134.8" y2="125.2" stroke="#94a3b8"/>
+<circle cx="194.8" cy="130.0" r="2.5" fill="#94a3b8"/>
+<line x1="221.7" x2="221.7" y1="99.5" y2="89.4" stroke="#94a3b8"/>
+<circle cx="221.7" cy="94.5" r="2.5" fill="#94a3b8"/>
+<line x1="241.6" x2="241.6" y1="71.2" y2="61.3" stroke="#94a3b8"/>
+<circle cx="241.6" cy="66.3" r="2.5" fill="#94a3b8"/>
+<line x1="251.8" x2="251.8" y1="60.5" y2="49.9" stroke="#94a3b8"/>
+<circle cx="251.8" cy="55.2" r="2.5" fill="#94a3b8"/>
+<line x1="261.1" x2="261.1" y1="71.8" y2="61.8" stroke="#94a3b8"/>
+<circle cx="261.1" cy="66.8" r="2.5" fill="#94a3b8"/>
+<text x="150.0" y="294" text-anchor="middle" font-size="10" fill="#94a3b8">tahmin P(TP önce)</text><text x="450.0" y="18" text-anchor="middle" font-size="12" fill="#e2e8f0">4h SHORT 1/1 ATR (dev)</text>
+<line x1="340.0" y1="260.0" x2="590.0" y2="30.0" stroke="#475569" stroke-dasharray="4 3"/>
+<line x1="340.0" y1="260.0" x2="590.0" y2="260.0" stroke="#64748b"/>
+<line x1="340.0" y1="260.0" x2="340.0" y2="30.0" stroke="#64748b"/>
+<text x="340.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.00</text>
+<text x="336" y="263.0" font-size="9" text-anchor="end" fill="#94a3b8">0.00</text>
+<text x="390.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.11</text>
+<text x="336" y="217.0" font-size="9" text-anchor="end" fill="#94a3b8">0.11</text>
+<text x="440.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.22</text>
+<text x="336" y="171.0" font-size="9" text-anchor="end" fill="#94a3b8">0.22</text>
+<text x="490.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.33</text>
+<text x="336" y="125.0" font-size="9" text-anchor="end" fill="#94a3b8">0.33</text>
+<text x="540.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.43</text>
+<text x="336" y="79.00000000000003" font-size="9" text-anchor="end" fill="#94a3b8">0.43</text>
+<text x="590.0" y="274" font-size="9" text-anchor="middle" fill="#94a3b8">0.54</text>
+<text x="336" y="33.0" font-size="9" text-anchor="end" fill="#94a3b8">0.54</text>
+<polyline points="358.5,234.8 383.8,209.4 414.4,179.0 448.6,148.5 474.1,129.4 495.2,111.6 518.8,108.4 537.3,85.8 551.5,65.7 578.1,78.2" fill="none" stroke="#f97316" stroke-width="1.5"/>
+<line x1="358.5" x2="358.5" y1="237.1" y2="232.3" stroke="#f97316"/>
+<circle cx="358.5" cy="234.8" r="2.5" fill="#f97316"/>
+<line x1="383.8" x2="383.8" y1="212.5" y2="206.0" stroke="#f97316"/>
+<circle cx="383.8" cy="209.4" r="2.5" fill="#f97316"/>
+<line x1="414.4" x2="414.4" y1="182.8" y2="175.0" stroke="#f97316"/>
+<circle cx="414.4" cy="179.0" r="2.5" fill="#f97316"/>
+<line x1="448.6" x2="448.6" y1="152.9" y2="144.1" stroke="#f97316"/>
+<circle cx="448.6" cy="148.5" r="2.5" fill="#f97316"/>
+<line x1="474.1" x2="474.1" y1="134.0" y2="124.7" stroke="#f97316"/>
+<circle cx="474.1" cy="129.4" r="2.5" fill="#f97316"/>
+<line x1="495.2" x2="495.2" y1="116.3" y2="106.8" stroke="#f97316"/>
+<circle cx="495.2" cy="111.6" r="2.5" fill="#f97316"/>
+<line x1="518.8" x2="518.8" y1="113.2" y2="103.6" stroke="#f97316"/>
+<circle cx="518.8" cy="108.4" r="2.5" fill="#f97316"/>
+<line x1="537.3" x2="537.3" y1="90.7" y2="80.9" stroke="#f97316"/>
+<circle cx="537.3" cy="85.8" r="2.5" fill="#f97316"/>
+<line x1="551.5" x2="551.5" y1="70.8" y2="60.6" stroke="#f97316"/>
+<circle cx="551.5" cy="65.7" r="2.5" fill="#f97316"/>
+<line x1="578.1" x2="578.1" y1="83.0" y2="73.3" stroke="#f97316"/>
+<circle cx="578.1" cy="78.2" r="2.5" fill="#f97316"/>
+<polyline points="379.8,214.1 392.5,210.0 417.4,193.9 465.5,147.0 486.6,127.2 494.3,131.8 514.1,101.1 537.3,82.6 547.8,64.2 557.9,83.4" fill="none" stroke="#94a3b8" stroke-width="1.5"/>
+<line x1="379.8" x2="379.8" y1="217.1" y2="210.8" stroke="#94a3b8"/>
+<circle cx="379.8" cy="214.1" r="2.5" fill="#94a3b8"/>
+<line x1="392.5" x2="392.5" y1="213.2" y2="206.6" stroke="#94a3b8"/>
+<circle cx="392.5" cy="210.0" r="2.5" fill="#94a3b8"/>
+<line x1="417.4" x2="417.4" y1="197.3" y2="190.2" stroke="#94a3b8"/>
+<circle cx="417.4" cy="193.9" r="2.5" fill="#94a3b8"/>
+<line x1="465.5" x2="465.5" y1="151.4" y2="142.5" stroke="#94a3b8"/>
+<circle cx="465.5" cy="147.0" r="2.5" fill="#94a3b8"/>
+<line x1="486.6" x2="486.6" y1="131.8" y2="122.6" stroke="#94a3b8"/>
+<circle cx="486.6" cy="127.2" r="2.5" fill="#94a3b8"/>
+<line x1="494.3" x2="494.3" y1="136.4" y2="127.1" stroke="#94a3b8"/>
+<circle cx="494.3" cy="131.8" r="2.5" fill="#94a3b8"/>
+<line x1="514.1" x2="514.1" y1="105.8" y2="96.4" stroke="#94a3b8"/>
+<circle cx="514.1" cy="101.1" r="2.5" fill="#94a3b8"/>
+<line x1="537.3" x2="537.3" y1="87.5" y2="77.6" stroke="#94a3b8"/>
+<circle cx="537.3" cy="82.6" r="2.5" fill="#94a3b8"/>
+<line x1="547.8" x2="547.8" y1="69.2" y2="59.2" stroke="#94a3b8"/>
+<circle cx="547.8" cy="64.2" r="2.5" fill="#94a3b8"/>
+<line x1="557.9" x2="557.9" y1="88.3" y2="78.5" stroke="#94a3b8"/>
+<circle cx="557.9" cy="83.4" r="2.5" fill="#94a3b8"/>
+<text x="450.0" y="294" text-anchor="middle" font-size="10" fill="#94a3b8">tahmin P(TP önce)</text><text x="10" y="314" font-size="10" fill="#f97316">● model (isotonic)</text><text x="130" y="314" font-size="10" fill="#94a3b8">● NY saati iklim tabanı</text></svg>

@@ -1,0 +1,6 @@
+{
+ "n_points": 25,
+ "trunc_400d_mismatch_cols": [],
+ "window_days": 240,
+ "window_reldev_gt_1pct": {}
+}

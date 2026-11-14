@@ -1,0 +1,82 @@
+{
+ "window": [
+  1789516800,
+  1793750400
+ ],
+ "targets": [
+  {
+   "target": "1h_long_1x1",
+   "n_window": 3040,
+   "skill_challenger": 0.03050392964320836,
+   "skill_champion": 0.03440817193664669,
+   "diff": -0.0039042422934383314
+  },
+  {
+   "target": "1h_long_1.5x1",
+   "n_window": 3040,
+   "skill_challenger": 0.02624579175288666,
+   "skill_champion": 0.025853120540173524,
+   "diff": 0.000392671212713136
+  },
+  {
+   "target": "1h_long_2x1",
+   "n_window": 3040,
+   "skill_challenger": 0.02070663709690357,
+   "skill_champion": 0.019591730868215418,
+   "diff": 0.0011149062286881506
+  },
+  {
+   "target": "1h_long_1x1.5",
+   "n_window": 3040,
+   "skill_challenger": 0.03287187364292754,
+   "skill_champion": 0.03155814466657769,
+   "diff": 0.0013137289763498483
+  },
+  {
+   "target": "1h_long_1.5x1.5",
+   "n_window": 3040,
+   "skill_challenger": 0.029961332779931515,
+   "skill_champion": 0.028516498507251797,
+   "diff": 0.001444834272679718
+  },
+  {
+   "target": "1h_short_1x1",
+   "n_window": 3040,
+   "skill_challenger": 0.04279518873547583,
+   "skill_champion": 0.041947348297687426,
+   "diff": 0.0008478404377884052
+  },
+  {
+   "target": "1h_short_1.5x1",
+   "n_window": 3040,
+   "skill_challenger": 0.02889307568487587,
+   "skill_champion": 0.02803804010006883,
+   "diff": 0.0008550355848070401
+  },
+  {
+   "target": "1h_short_2x1",
+   "n_window": 3040,
+   "skill_challenger": 0.029704864500632033,
+   "skill_champion": 0.029784668080362176,
+   "diff": -7.980357973014218e-05
+  },
+  {
+   "target": "1h_short_1x1.5",
+   "n_window": 3040,
+   "skill_challenger": 0.04141292467380353,
+   "skill_champion": 0.03801319793254854,
+   "diff": 0.0033997267412549936
+  },
+  {
+   "target": "1h_short_1.5x1.5",
+   "n_window": 3040,
+   "skill_challenger": 0.027345892271323224,
+   "skill_champion": 0.027449029660497448,
+   "diff": -0.00010313738917422377
+  }
+ ],
+ "win_frac": 0.7,
+ "mean_diff": 0.0005281560191938595,
+ "promote": true,
+ "note": "dryrun: terfi yap\u0131lmaz; mekanizma s\u0131namas\u0131"
+}

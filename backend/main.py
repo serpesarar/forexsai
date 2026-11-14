@@ -356,6 +356,17 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"❌ Shadow Trade Tracker hatası: {e}")
 
+    # 4.7b NOM GÖLGE MODU (default KAPALI: NOM_SHADOW_ENABLED=1 ile aç) — NASDAQ Olasılık Motoru
+    #      tahminlerini nom_predictions'a yazar, ufku dolunca sonucu aynı satıra yazar (canlı kalibrasyon).
+    #      Emir açmaz; prediction_logs'a dokunmaz. Kutuda/scriptte de koşuyorsa ikisini birden açma.
+    try:
+        if os.getenv("NOM_SHADOW_ENABLED", "0") == "1":
+            from services.nom.shadow import shadow_loop as nom_shadow_loop
+            asyncio.create_task(nom_shadow_loop())
+            print("✅ NOM gölge modu başlatıldı")
+    except Exception as e:
+        print(f"❌ NOM gölge modu hatası: {e}")
+
     # 4.8 FİYAT ALARMLARI (default açık: PRICE_ALERTS_ENABLED=0 ile kapat)
     #     price_alerts tablosundaki aktif alarmları 60 sn'de bir taze MT5 fiyatıyla
     #     değerlendirir; tetik atomik (çift backend'de çift bildirim yok), Telegram'a yazar.
@@ -687,6 +698,7 @@ router_module_names = [
     "candle_similarity_router",
     "time_machine_router",
     "price_alert_router",
+    "nom_router",
 ]
 
 for module_name in router_module_names:

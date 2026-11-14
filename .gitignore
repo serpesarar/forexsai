@@ -91,3 +91,14 @@ research/mum_repo_adaylari_20261105/.venv/
 research/mum_repo_adaylari_20261105/data/
 research/haber_derin_20261105/data/
 research/c1_turev_20261105/data/
+
+# NOM (NASDAQ Olasılık Motoru) — büyük veri ve önbellek (yeniden üretilebilir: research/nom_20261113/README.md)
+research/nom_20261113/data/
+research/nom_20261113/results/oos/
+research/nom_20261113/results/final/
+research/nom_20261113/logs/
+backend/data/nom_cache/
+# Yön Lab — büyük veri/ızgara (yeniden üretilebilir: research/yon_lab_20261114/README.md)
+research/yon_lab_20261114/data/
+research/yon_lab_20261114/logs/
+research/yon_lab_20261114/results/faz7_oos_*.parquet
