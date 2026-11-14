@@ -4972,5 +4972,137 @@
     "source": "session",
     "created_at": "2026-11-13T18:24:20.906363+00:00",
     "updated_at": "2026-11-13T18:24:20.906965+00:00"
+  },
+  {
+    "id": "bl_75a05cafa7",
+    "title": "FX fiks dönüşü gölge modülü (H8c+H9)",
+    "detail": "yeni deneme/fx_fiks_shadow.py: gotobi günü 01:00 UTC USDJPY sanal SAT (sabah 23→01 UTC yükseldiyse) → 06:00 kapat; ay sonu 16:00 Londra 6 majör ters yön → 20:00. EMİR YOK, jsonl karne. Kartlar usdjpy_gotobi_fiks_donus / fx_aysonu_fiks_donus 5/6. Kullanıcı onayı + main push gerekir. — 2026-11-13 bağlandı: 56a798a8 + a2633fcd; kutu duman testi OK.",
+    "category": "wiring",
+    "priority": "high",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-11-13T19:42:24.292341+00:00",
+    "updated_at": "2026-11-13T19:42:24.292736+00:00"
+  },
+  {
+    "id": "bl_ab5198b3c2",
+    "title": "Dukascopy bağımsız besleme: USDJPY gotobi 2012-2021",
+    "detail": "duka_serial.py 503/zaman aşımına takıldı (92 gün). 1m ile H8c'yi ayrı beslemede ve 08:00→08:45 JST erken pencereyi (M15'te KÖR'den görüldü) bağımsız dönemde sına.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-13T19:42:24.302633+00:00",
+    "updated_at": "2026-11-13T19:42:24.302651+00:00"
+  },
+  {
+    "id": "bl_6fa6603446",
+    "title": "Kutu ajanı: zaman aşımında yetim python alt süreci (E127)",
+    "detail": "_stream_process kabuğu öldürüyor, python -c çocuğu yaşıyor ve MT5'i meşgul ediyor. Süreç ağacını öldür (taskkill /T) veya iş nesnesi kullan.",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-13T19:42:24.312224+00:00",
+    "updated_at": "2026-11-13T19:42:24.312246+00:00"
+  },
+  {
+    "id": "bl_4f631d46e1",
+    "title": "FX fiks gölge karnesi oku (≥3 ay)",
+    "detail": "python \"yeni deneme/fx_fiks_shadow.py\" --karne kutuda; GOTOBI ~41/yıl, AYSONU 12×6 bacak. bp_model ve bp_fill'i kartlarla (H8c +1,79, H9 +1,93 bp) kıyasla; ≥30 gotobi olayından önce hüküm verme. İlk nokta 2026-11-13 −7,98 bp.",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-13T22:17:54.533952+00:00",
+    "updated_at": "2026-11-13T22:17:54.534477+00:00"
+  },
+  {
+    "id": "bl_3c41939539",
+    "title": "VIXREG-FX canlı karar (kart 6/6)",
+    "detail": "H12 kartı LIVE kodu verdi; öneri önce ≥20 rejim epizodu gölge, sonra küçük lotla demo. NDX VIXREG ile ρ 0,61 → toplam risk bütçesinde aynı aile say. Karne: fx_fiks_shadow.py --karne (VIXREG_FX).",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-13T22:26:38.306109+00:00",
+    "updated_at": "2026-11-13T22:26:38.306380+00:00"
+  },
+  {
+    "id": "bl_aad1de5618",
+    "title": "VIXREG-FX canlı karne (60 rejim günü)",
+    "detail": "fx_vixreg_live.jsonl + MT5 magic 52890984 deal geçmişi; durdurma: 60 rejim günü sonunda günlük ort < 0 → config.FX_VIXREG_LIVE=False. Lot büyütme kullanıcı kararı; NDX VIXREG ile ρ 0,61 → aynı risk ailesi. Global tavana ve günlük frene sayılmıyor.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-13T22:33:13.427866+00:00",
+    "updated_at": "2026-11-13T22:33:13.428088+00:00"
+  },
+  {
+    "id": "bl_5b8007633a",
+    "title": "VIXREG-FX ilk emir kontrolü — 2026-11-16 17:00 ET sonrası",
+    "detail": "remote.py health (bot 13 Kasım 22:30 UTC sonrası yeniden başladı mı), remote.py sh ile 'yeni deneme/fx_vixreg_live.jsonl' son satırları: 16 entry ok=true, lot 0.01, magic 52890984 beklenir (13 Kasım VIX 19,3 → hedef UZUN). Açılmadıysa nedeni: restart borcu / LIVE_TRADING / autotrading.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-13T22:34:23.813265+00:00",
+    "updated_at": "2026-11-13T22:34:23.813452+00:00"
+  },
+  {
+    "id": "bl_717117f8ff",
+    "title": "NOM gölge modunu aç ve 4-8 hafta mezuniyet ölç",
+    "detail": "NOM_SHADOW_ENABLED=1 (tek süreçte) veya scripts/nom_shadow.py --loop; mezuniyet: ≥28 gün, ≥300 bağımsız, tüm kovalar WF bandında, Brier becerisi ≥0, eğim 0,7-1,3 (calibration?source=shadow)",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-14T03:02:18.825449+00:00",
+    "updated_at": "2026-11-14T03:02:18.825584+00:00"
+  },
+  {
+    "id": "bl_e5c9296904",
+    "title": "NOM v2: yön-koşullu tek model + 2018-2021 Dukascopy verisi",
+    "detail": "Faz 4'te tek model Brier %0,7 iyi; 2018-21 (2020 çöküşü) indirmesi 503 ile engellendi — faz9_retrain.py run terfi kuralıyla sına",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-14T03:02:18.828801+00:00",
+    "updated_at": "2026-11-14T03:02:18.828811+00:00"
+  },
+  {
+    "id": "bl_9784f2b3aa",
+    "title": "NOM final kalibrasyon eğimi 0,54-0,68",
+    "detail": "Final dönemde olasılıklar fazla yayılıyor; v1b son 12 ayla yeniden kalibre edildi — canlıda eğimi izle, drift alarmı şu an H1 ATR rejiminden açık",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-14T03:02:18.831636+00:00",
+    "updated_at": "2026-11-14T03:02:18.831639+00:00"
+  },
+  {
+    "id": "bl_4596aa8910",
+    "title": "Gün-içi yön: ücretli emir defteri / agresör akışı sınaması",
+    "detail": "CME NQ L2 + işlem verisi (Databento vb.) ile order-flow imbalance → saniye-dakika yönü; maliyet kararı kullanıcıda; Yön Lab §2.55 tek sınanmamış sınıf",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-14T03:51:36.465096+00:00",
+    "updated_at": "2026-11-14T03:51:36.465239+00:00"
+  },
+  {
+    "id": "bl_644a09a78c",
+    "title": "15 dk aşırı-uzama dönüşü icra zamanlaması olarak",
+    "detail": "Zaten verilmiş SHORT kararlarını (bot/decider) aşırı-uzama barında açmak giriş fiyatını iyileştirir mi — ayrı ön kayıt; YL-03 bilgi sönüyor (KÖR −0,7 p)",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-14T03:51:36.468061+00:00",
+    "updated_at": "2026-11-14T03:51:36.468065+00:00"
   }
 ]

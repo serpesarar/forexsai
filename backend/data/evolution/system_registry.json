@@ -741,12 +741,12 @@
     "name": "RSS News Aggregator",
     "file": "backend/services/rss_aggregator.py",
     "category": "data",
-    "purpose": "Çoklu RSS kaynağından finansal haber toplar (akıllı filtre + Redis cache, 7dk aralık). Şu an RSS_AGGREGATION_ENABLED=False — Telegram haber dedektörü beklemede.",
+    "purpose": "ESKİ haber hattı: DeepSeek analizli RSS. Kapalı (RSS_AGGREGATION_ENABLED=False, zamanlayıcı çağrısı yorumda); enriched_news'e son yazım 2026-06-28. Yerini newsfeed_engine aldı.",
     "key_functions": [
       "GET /api/rss/news",
       "GET /api/rss/latest-breaking"
     ],
-    "status_hint": "RSS_AGGREGATION_ENABLED bayrağı (şu an kapalı)"
+    "status_hint": "Kapalı; tablo enriched_news newsfeed köprüsüyle yeniden besleniyor"
   },
   {
     "id": "ws_broadcast",
@@ -1098,6 +1098,86 @@
     "status_hint": "Anonymous requests return 401; non-operators return 403; existing verified operators retain access through Bearer headers."
   },
   {
+    "id": "external_gold_reporthistory_303733",
+    "name": "External gold EA statement reverse engineering",
+    "file": "research/reporthistory_303733_20261029/RAPOR.md",
+    "category": "research",
+    "purpose": "Reconstruct external MT5 basket mechanics, lot/TP epochs, causal M3 entry diagnostics and statement anomalies.",
+    "key_functions": [
+      "extract.py",
+      "analyze.py",
+      "mechanics.py",
+      "entry_rules.py"
+    ],
+    "status_hint": "OFFLINE; mechanics identified, exact seed timing unresolved; no live strategy validation."
+  },
+  {
+    "id": "ndx_19point_body_replay",
+    "name": "Nasdaq M1 19 puan gövde devamı araştırması",
+    "file": "research/ndx_19puan_20261030/RAPOR.md",
+    "category": "research",
+    "purpose": "Replay closed M1 bodies of at least 19 index points in their direction at the next minute open, with SL20 and eleven fixed TP20-to-10 scenarios; chronological selection, single-position paths, costs and intrabar ambiguity audits.",
+    "key_functions": [
+      "run.py: replay / single",
+      "audit.py: independent first-hit and prefix checks",
+      "present.py: report and figures"
+    ],
+    "status_hint": "OFFLINE research only; protocol and per-event ledgers in research/ndx_19puan_20261030. Cache spread is assumed; M1 dual touches require tick validation."
+  },
+  {
+    "id": "ndx_25_30_40point_body_replay",
+    "name": "Nasdaq M1 25/30/40 puan gövde devamı araştırması",
+    "file": "research/ndx_25_30_40puan_20261030/RAPOR.md",
+    "category": "research",
+    "purpose": "Extend the audited 19-point replay to user-requested 25/30/40-point closed M1 bodies, with SL20 and TP20-to-10; verify cached fixed-entry outcomes, rebuild each single-position path, and compare chronological, cost, ambiguity and causal baseline results.",
+    "key_functions": [
+      "analyse.py: threshold membership / reference audit / single-position replay",
+      "present.py: comparative report and trade figures"
+    ],
+    "status_hint": "OFFLINE; 33 new threshold/TP cells (44 with prior19), same frozen data ending 2026-10-27; reused test archive is not untouched validation."
+  },
+  {
+    "id": "ndx_body_session_replay",
+    "name": "Nasdaq M1 gövde devamı — Asya/Avrupa/New York seans araştırması",
+    "file": "research/ndx_seans_20261030/RAPOR.md",
+    "category": "research",
+    "purpose": "Analyze all four body thresholds and eleven targets under DST-aware session and side filters, rebuild each position path, audit overlap and cost scenarios, and control day-cluster multiple selection across 792 inspected cells.",
+    "key_functions": [
+      "analyse.py: clocks / single / bootstrap_family",
+      "recent_detail.py: recent-only positive cohort disclosure",
+      "present.py: session report and figures"
+    ],
+    "status_hint": "OFFLINE: no full-sample positive primary cells; Asia >=30 TP20 is weakly positive in 2026 only (305 events, +0.59 points), unstable across epochs. Intrabar optimistic positives are not realized fills."
+  },
+  {
+    "id": "ndx_deep_session_research",
+    "name": "Nasdaq seans derin araştırması — alternatif giriş, ATR/zaman çıkışı ve aylık öğreniciler",
+    "file": "research/ndx_seans_derin_20261101/RAPOR.md",
+    "category": "research",
+    "purpose": "Replay 1890 preregistered mechanical cells and 27 monthly learned policies with causal timing, pending-order occupancy, single positions, real 2025 bid/ask tick cohort calibration, day-block family correction, cost stress and a separately sealed 5092-bar October 27-30 holdout.",
+    "key_functions": [
+      "core.py / engine.c: causal features and first-passage replay",
+      "mechanical.py / models.py: frozen rules and purged monthly learning",
+      "evaluate.py / ticks.py: selection adjustment, cost controls, sealed holdout and tick calibration",
+      "checks.py / report_data.py / present.py: independent audits and Turkish evidence report"
+    ],
+    "status_hint": "OFFLINE / NOT_VALIDATED. 317 mechanical cells nominally positive in 2026, zero pass family correction; no learned selector meets V1 n>=100. Frozen NY reversal/time-exit candidate m1259: 301 old events +0.185R, 10 fresh +0.914R, but 2025 negative and CI includes zero. Asia m1134: 276 old +0.119R, 5 fresh -0.4R. Actual-spread prospective volume >=150 remains pending. Final report reviewed 2026-11-03; data ends 2026-10-30. Follow-up ndx_session_carry_research independently adds 8 new NY events averaging -0.285R; the hypothesis remains unvalidated."
+  },
+  {
+    "id": "ndx_session_carry_research",
+    "name": "Nasdaq yeniden denetim ve pozisyon taşıma — altı mekanizma, on yönetim",
+    "file": "research/ndx_seans_tasima_20261103/NIHAI_RAPOR.md",
+    "category": "research",
+    "purpose": "Audit three previous frozen candidates and explore 540 preregistered mechanism/session/side/management cells, nine fixed/monthly/regime policies and three diagnostic global accounts. Validate causal trailing/partial/early-exit ordering, matched calendar-volatility controls, real 2025 tick cohorts and a sealed 2645-clean-bar tail through November 3.",
+    "key_functions": [
+      "lab.py / engine.c: causal mechanisms and 30-120 minute position management",
+      "audit.py / state_checks.py: 450 archived samples, 600 independent native/oracle cases and adversarial order tests",
+      "search.py / validate.py: past-only selection, shrinkage regimes, stress, matched controls, global accounts and blind tail",
+      "ticks.py / report_data.py / present.py: quote cohort calibration, risk evidence and final report"
+    ],
+    "status_hint": "OFFLINE / NOT_VALIDATED. 126/540 nominal 2026 positives; 9 positive across D1/V1/2026, zero stable across all four halves with n>=150, zero family-adjusted passes (min p=0.876). Previous m1259 new 8=-0.285R; new descriptive c077/c080/c524 all lose their 5/8/6 tail trades. Monthly selectors all negative in 2026; regime selectors cash. Real 2026 bid/ask and sufficient new event volume remain absent. No live/deploy/remote writes."
+  },
+  {
     "id": "time_machine_service",
     "name": "Zaman Makinesi (day-trader-skill trader-timemachine uyarlaması)",
     "file": "backend/services/time_machine_service.py",
@@ -1133,5 +1213,119 @@
       "alert_loop"
     ],
     "status_hint": "GET /api/alerts → service.last_run (at/checked/triggered/error)."
+  },
+  {
+    "id": "github_news_shape_survey_20261104",
+    "name": "GitHub haber ve mum benzerliği kaynak araştırması — 40 depo",
+    "file": "research/github_haber_sekil_20261104/REPORT_TR.md",
+    "category": "research",
+    "purpose": "Survey 21 news/data/NLP and 19 pattern/time-series repositories for fast macro/geopolitical news ingestion and 30/50-bar historical analogue retrieval. Record current owners, default-branch commits, license evidence, provider dependencies, selected source findings and ForexSAI integration considerations.",
+    "key_functions": [
+      "REPOSITORIES.json: metadata, commit snapshots, qualitative fit and limitations",
+      "EVIDENCE.md: 27 pinned source/configuration reads and official references",
+      "REPORT_TR.md: Turkish findings, shortlist and proposed evaluation design"
+    ],
+    "status_hint": "DOCUMENTATION / SOURCE REVIEW ONLY. No third-party code executed, feed entitlement or latency benchmark verified, strategy backtested, or live/remote/deployment behavior changed. Similarity detection is distinct from directional edge; prior PM/ME/CORTEX findings remain applicable."
+  },
+  {
+    "id": "newsfeed_engine",
+    "name": "Çok Kaynaklı Haber Motoru",
+    "file": "backend/services/newsfeed/engine.py",
+    "category": "data",
+    "purpose": "37 ücretsiz kaynağı (RSS, Telegram açık önizleme, Truth Social, resmi kurumlar) aynı anda izler; ilk gören kazanır, kaynak başına ilk görülme ölçülür, sorgu aralığı ölçülen hıza göre ayarlanır. Başlık yapay zekâ beklemez. Yön üretmez (HB-01 X). Anahtarlı Alpaca/Benzinga/Finnhub anahtar gelince açılır.",
+    "key_functions": [
+      "GET /api/newsfeed/latest",
+      "GET /api/newsfeed/sources",
+      "GET /api/newsfeed/status",
+      "GET /api/newsfeed/stream",
+      "GET /api/newsfeed/repo-scorecard"
+    ],
+    "status_hint": "NEWSFEED_ENABLED=1 yalnız tek süreçte; tablolar: news_stories, news_sightings (migration 20261105)"
+  },
+  {
+    "id": "free_ultrafast_news_research_20261105",
+    "name": "Ücretsiz ultra hızlı haber — push yolları ve salt okunur bağlantı testleri",
+    "file": "research/ultra_hizli_ucretsiz_haber_20261105/REPORT_TR.md",
+    "category": "research",
+    "purpose": "Evaluate free Telegram MTProto, Jin10 public guest news, EquationNews public WebSocket/MCP and Android X/Truth notification forwarding for a 3-4 second ingestion target. Preserve source provenance, bounded read-only probes and explicit timestamp/coverage limitations.",
+    "key_functions": [
+      "probe_public_ws.py: two public BWE/Equation connections; no events in the short window",
+      "probe_jin10_guest.py: normal guest-only protocol; history excluded; one live event observed",
+      "probe_equation_mcp.py: public macro metadata and retrospective X ID timestamp diagnostic",
+      "SOURCES.json / REPORT_TR.md: evidence, provider limits and current newsfeed adapter comparison"
+    ],
+    "status_hint": "RESEARCH / LIMITED OBSERVATION. Jin10 one service-timestamp delta 0.7545s; 50 Equation macro records have median record-minus-X-ID time 1.3275s, not observed live delivery latency. No comprehensive free first-publication 3-4s SLA established. No account/device setup, engine flag, remote/deployment or trading changes."
+  },
+  {
+    "id": "aysonu_live",
+    "name": "Ay sonu dengeleme akışı — CANLI (son seans + ay başı uzun, NAS100 + US500)",
+    "file": "yeni deneme/aysonu_live.py",
+    "category": "bot",
+    "purpose": "Kullanıcı kararı 2026-11-12. D−3'te SPY−TLT ay içi farkı ≥+%2 → ayın son seansı SAT, ≤−%2 → AL (D 09:30→16:00 ET, magic +12, NAS100 1.0 lot, US500 aynı nominal, acil SL %4; kart qs06_son_seans 6/6). D kapanışında fark ≥+%2 → AL D 16:30 → D+3 16:30 (magic +13, 0.75 lot, acil SL %8; kart qs04). Veri yfinance SPY/TLT; NYSE tatilleri 2025-28 kodda, veri tarihleriyle çapraz denetim. Araştırma research/qs03_akis_takvim_20261111, defter §2.43. Kapatma config.AYSONU_SON_LIVE/AYSONU_E2_LIVE. Durdurma: son seans n=24'te ort<0.",
+    "key_functions": [
+      "month_info",
+      "delta",
+      "flow_side",
+      "parity_lot",
+      "poll",
+      "manage_exits"
+    ]
+  },
+  {
+    "id": "xau_r0b_live",
+    "name": "XAU 1h yeni tepe AL + S2 (canlı)",
+    "file": "yeni deneme/xau_r0b_live.py",
+    "category": "bot",
+    "purpose": "Kullanıcı kararı 2026-11-12. XAUUSD kapanmış 1h barın tepesi önceki 20 barın tepesine eşit/üstündeyse AL; önceki UTC günü > +%1 ise ATLA (S2, MK-13). SL 1,5×ATR14(H1), TP yok, 20. bar kapanışı / Cuma 16:50 NY / >3 sa boşluk çıkışı; 0.05 lot, magic +14. Kanıt MK-06 (kart 10/10) + MK-13; canlı mantık paritesi Duka 2008-26 n 3.296 +0,109R (live_parity.py). Gölge xau_shadow.py yan yana. Kapatma config.XAU_R0B_LIVE. Durdurma: n=60'ta ort R<0.",
+    "key_functions": [
+      "evaluate",
+      "exit_reason",
+      "poll",
+      "manage_exits"
+    ],
+    "added": "2026-11-12"
+  },
+  {
+    "id": "nom_engine",
+    "name": "NASDAQ Olasılık Motoru (NOM) API",
+    "file": "backend/services/nom/engine.py",
+    "category": "service",
+    "purpose": "GET /api/probability/nasdaq?horizon=&geometry=(&asof=): LONG/SHORT P(TP önce)/P(SL önce)/P(zaman aşımı), sürtünmeli beklenen R, WF bantları, en yakın 3 destek/direnç, RSI her TF, rejim, VIX, yaklaşan olay, TreeSHAP 5 neden. Kanıtlı hedef 0/40 → durum hep NÖTR. Veri bayatsa (>5 dk) tahmin yok. Emir açmaz. Router routers/nom_router.py, panel /olasilik-motoru, araştırma research/nom_20261113.",
+    "key_functions": [
+      "predict",
+      "_explain",
+      "_context"
+    ],
+    "added": "2026-11-13"
+  },
+  {
+    "id": "nom_features",
+    "name": "NOM özellik + etiket paketi (tek kod yolu)",
+    "file": "backend/services/nom/features.py",
+    "category": "service",
+    "purpose": "132 özellik (M5…D1 göstergeleri, ölçülmüş S/R, gün-içi, takvim, makro 17:15 ET kilidi), HTF yalnız end≤t; labels.py triple-barrier bid/ask, aynı bar→SL. Eğitim ve canlı aynı fonksiyon; tests/test_nom_features.py kesme eşdeğerliği + gelecek bozma.",
+    "key_functions": [
+      "compute_features",
+      "build_context",
+      "level_context",
+      "label_batch"
+    ],
+    "added": "2026-11-13"
+  },
+  {
+    "id": "nom_shadow",
+    "name": "NOM gölge modu + canlı kalibrasyon + drift",
+    "file": "backend/services/nom/shadow.py",
+    "category": "service",
+    "purpose": "nom_predictions tablosuna tahmin yazar, ufuk dolunca aynı etiket koduyla sonucu yazar (NOM_SHADOW_ENABLED=1, varsayılan KAPALI; scripts/nom_shadow.py --loop/--backfill). calibration.py kova kalibrasyonu + mezuniyet; drift.py PSI/destek dışı + kalibrasyon alarmı; model_store.py sürüm/terfi/geri alma.",
+    "key_functions": [
+      "record_once",
+      "fill_outcomes",
+      "live_report",
+      "report",
+      "promote",
+      "rollback"
+    ],
+    "added": "2026-11-13"
   }
 ]
