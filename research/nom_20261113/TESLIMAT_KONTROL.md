@@ -31,3 +31,23 @@ satır 61 (Faz 0) … 240 (Faz 9), teslimatlar satır 249, DUR koşulları satı
 | Teslimat 8 DÜRÜST SONUÇ | ✅ | FAZ_5 §5 |
 | Commit / push | ✅ | `753ae55d` (main) + 2026-11-14 tamamlama commit'leri (`git log -- research/nom_20261113`) |
 Açık madde yok. (2018–21 Dukascopy sunucu engeline takıldı: 2018-05-23'e kadar indirildi, kalan ~33 saatlik indirme durduruldu; dönem kullanıcı onayıyla HistData'dan tamamlandı ve iki besleme çakışan 123 günde kıyaslandı, FAZ_0 EK-3/EK-5.)
+
+## DUR koşulları — prompt satır 264–273, tek tek (2026-11-14)
+| DUR koşulu (prompt) | Tetiklendi mi | Kanıt |
+|---|---|---|
+| Faz 0'da kullanılabilir NASDAQ verisi < 2 yıl **ve** Dukascopy indirmesi başarısız | **Hayır** | Dukascopy 1m 2021-11-01 → 2026-11-03 = 5,0 yıl (FAZ_0 §1 tablosu, 1,64 M bar) + MT5 ile 2026-11'e uzatıldı (EK, r 0,996); 2018-01 → 2021-10 HistData (EK-3/EK-5). Dukascopy 2018–21 indirmesi engelli ama yavaş ilerliyor (aşağıda) — durma eşiği olan "< 2 yıl" hiç oluşmadı. |
+| Final test WF'den dramatik kötü (overfit) | **Hayır** | FAZ_5 §3: final Brier becerisi 15 dk +0,049 (WF +0,059), 1 s +0,022 (+0,015), 4 s +0,038 (+0,011), seans +0,082 (−0,001) → kötü değil. Kalibrasyon eğimi düşüşü (0,54–0,68) raporlandı; final setle ayar **yapılmadı** (`FINAL_OPENED.json`: tek açılış, önceki deneme yalnız çökme). |
+| Canlı sistem / mevcut bot / production DB'yi **değiştiren** adım | **Hayır** | NOM commit'leri (`753ae55d`, `35d503d6`, `da0c6711`, `fba87720`, `e247c419`) `yeni deneme/`, `claude_decider/`, `remote_agent/` dosyalarına dokunmuyor (git show ile denetlendi). Backend'e yalnız yeni salt-okur router + `main.py`'de **varsayılan KAPALI** gölge döngüsü (`NOM_SHADOW_ENABLED=0`); Supabase'e yalnız yeni tablo `nom_predictions` (prompt'un izin verdiği istisna). `prediction_logs`/sinyal kapılarına bağlantı yok. |
+| Ücretli veri kaynağı / API anahtarı | **Hayır** | Dukascopy, HistData, yfinance, ALFRED/FRED, BLS — hepsi ücretsiz, anahtarsız. |
+
+## Teslimatlar 1–8 — yeniden doğrulama (2026-11-14)
+1 raporlar `FAZ_0…9_RAPOR.md` (10 dosya) · 2 `data/ndx_1m_v1.parquet` + FAZ_0 kalite skoru · 3 FAZ_1 + FAZ_2 (leakage kesme/bozma testi
+geçti) · 4 FAZ_4/5 (iklim + kural tabanı, `plots/*reliability*.svg`, sürtünmeli ve 2× EV, yıl/rejim dilimleri, P1/P2 plasebo, gün-blok
+bootstrap, final) · 5 `/api/probability/nasdaq` + `/olasilik-motoru` + `nom_predictions` + `backend/scripts/nom_shadow.py` · 6
+`pytest backend/tests/test_nom_*.py` → **11 passed** (bugün yeniden koşuldu) · 7 `README.md` (yeni betikler eklendi) · 8 FAZ_5 §5 DÜRÜST SONUÇ.
+
+## Faz 0.4 Dukascopy "mümkün olan en eski tarihten" — durum
+Dukascopy sunucusu bu IP'ye 503/URLError ile hız sınırı uyguluyor (saatte ~34–60 dosya). 2018-01-01 → 2018-05-23 indi (123 gün);
+indirici kaldığı yerden yeniden başlatıldı (`logs/duka_fetch_bid5.log`, `src/duka_fetch.py`, 50 sn aralık). Tamamlanınca
+`src/faz0_duka_vs_histdata_2018.py` tüm 2018-01 → 2021-10 için yeniden koşulacak ve eski dönem değerlendirmesi Dukascopy ile de
+tekrarlanacak. O zamana kadar aynı dönem, saat ekseni üç pencerede doğrulanmış HistData ile kapsanıyor (FAZ_0 EK-5).
