@@ -80,3 +80,17 @@ kullanılır; MT5 altın standart dönemde onunla r=0,994 uyumlu.
 ## 5. Kullanılabilir veri hükmü
 Çekirdek: **2021-11-01 → 2026-11-03, 1m, 1.645k bar, ~5 yıl** (2022 ayı, 2023-25 boğa, 2025 Nisan çöküşü).
 DUR koşulu (<2 yıl) oluşmadı. Hedeflenen "≥5 yıl" karşılandı; "2020 çöküşü" karşılanamadı (indirme engeli).
+
+## EK (2026-11-14) — MT5'i bugüne tamamlama ve 2018–2021 indirme girişimleri
+- **MT5 bugüne tamamlandı** (§4 madde 2'nin kapanışı): kutudaki Pepperstone terminalinden salt okunur NAS100 **M1 2026-08-05 → 2026-11-13**
+  ve **M5 2025-06-18 → 2026-11-13** çekildi (`research/yon_lab_20261114/src/kutu_export_m5.py`, terminal tavanı 100.000 bar, E126).
+  Dukascopy ile karşılaştırma (`results/faz0_mt5_uzatma.json`): M1 87.590 ortak bar, **gecikme 0 dk, getiri korelasyonu 0,996,
+  ±3 puan uyum %95,0**; M5 89.899 ortak bar, gecikme 0, korelasyon 0,968. Önceki altın standart (05-19 → 08-28, r 0,978, %91,7) ile
+  tutarlı → Dukascopy ana seri olarak kalır, MT5 ile 2026-11'e kadar doğrulanmış olur.
+- **2026-01-01 → 02-07 boşluğu dolduruldu** (32 gün dosyası indi; Yön Lab v2 veri katmanında kullanıldı).
+- **2018-01 → 2021-10 (2020 çöküşü) tamamlanamadı:** Dukascopy seri indirici (1,5 sn aralık + 60→600 sn geri çekilme) ~3 saatte
+  yalnız 57 gün indirebildi; günlükte 36 "503 / connection reset" engeli (`logs/duka_fetch_bid*.log`). Kalan ~1.100 gün bu hızla
+  > 50 saat → indirici durduruldu (yeniden başlatılabilir, inen günleri atlar). Alternatif ücretsiz 1m kaynak HistData.com
+  (NSXUSD M1) denendi: indirme belirteci yalnız tarayıcı JavaScript'iyle üretiliyor, komut satırından alınamıyor; ayrıca farklı
+  besleme (E88/E104) olurdu. **DUR koşulu tetiklenmedi:** kullanılabilir veri 5 yıl 1m (2021-11 → 2026-11), eşik 2 yıl.
+  Rejim kapsamı: 2022 ayı piyasası, 2023–25 boğa, 2025 Nisan çöküşü var; 2020 çöküşü yok (sınırlılık, FAZ_5 ve README'de).

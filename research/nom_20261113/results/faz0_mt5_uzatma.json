@@ -1,0 +1,32 @@
+{
+ "M1": {
+  "overlap_bars": 87590,
+  "overlap_start": "2026-08-05 04:08:00+00:00",
+  "overlap_end": "2026-11-04 23:59:00+00:00",
+  "best_lag_min": 0,
+  "ret_corr_lag0": 0.9956523834714124,
+  "agree_within_tol_frac": 0.9499372074437721,
+  "days_agree_lt80pct": 8,
+  "days_total": 79,
+  "mt5_kapsam": [
+   "2026-08-05 04:08:00",
+   "2026-11-13 21:53:00",
+   99999
+  ]
+ },
+ "M5": {
+  "overlap_bars": 89899,
+  "overlap_start": "2025-06-18 06:50:00+00:00",
+  "overlap_end": "2026-11-04 23:55:00+00:00",
+  "best_lag_min": 0,
+  "ret_corr_lag0": 0.968267761390455,
+  "agree_within_tol_frac": 0.6679162170880655,
+  "days_agree_lt80pct": 186,
+  "days_total": 425,
+  "mt5_kapsam": [
+   "2025-06-18 06:50:00",
+   "2026-11-13 21:45:00",
+   99999
+  ]
+ }
+}
