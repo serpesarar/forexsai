@@ -5104,5 +5104,16 @@
     "source": "session",
     "created_at": "2026-11-14T03:51:36.468061+00:00",
     "updated_at": "2026-11-14T03:51:36.468065+00:00"
+  },
+  {
+    "id": "bl_991270f1ec",
+    "title": "NOM v2: bp-spread etiketleriyle yeniden eğitim",
+    "detail": "v1 etiketleri 2021-23'te puan-spread yüzünden muhafazakâr (E133); v3 veriyle yeniden etiketle, faz9_retrain terfi kuralıyla karşılaştır",
+    "category": "retrain",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-14T04:02:39.439984+00:00",
+    "updated_at": "2026-11-14T04:02:39.440128+00:00"
   }
 ]

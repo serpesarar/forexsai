@@ -94,3 +94,14 @@ DUR koşulu (<2 yıl) oluşmadı. Hedeflenen "≥5 yıl" karşılandı; "2020 ç
   (NSXUSD M1) denendi: indirme belirteci yalnız tarayıcı JavaScript'iyle üretiliyor, komut satırından alınamıyor; ayrıca farklı
   besleme (E88/E104) olurdu. **DUR koşulu tetiklenmedi:** kullanılabilir veri 5 yıl 1m (2021-11 → 2026-11), eşik 2 yıl.
   Rejim kapsamı: 2022 ayı piyasası, 2023–25 boğa, 2025 Nisan çöküşü var; 2020 çöküşü yok (sınırlılık, FAZ_5 ve README'de).
+
+## EK-2 (2026-11-14) — spread modelinin birimi (bulgu) ve 2018–21 tamamlama planı
+- Faz 0'ın spread modeli **puan** cinsindendi (2025 fiyat düzeyinde 1,4–3,4 p). Fiyat düzeyi farklı dönemlere aynen taşınınca sürtünme
+  ATR'ye göre bozuluyor: 2018'de (fiyat ≈ 6.800) ≈ 3× şişiyor (15 dk'da gözlenen TP %16 → bp ölçekli %23); NOM eğitiminin 2021–23 kısmında
+  (fiyat 11–16 bin) ≈ %30–60 fazla → NOM v1 etiketleri o yıllarda **muhafazakâr** (olasılık tarafında TP biraz az, SL biraz çok).
+  Canlı fiyat (≈ 27–31 bin) 2025 düzeyinin üstünde olduğundan servis tarafında sürtünme gerçeğe yakın/hafif fazla.
+- Düzeltme: `src/faz0_v3_eski_donem.py` → `data/ndx_1m_v3.parquet`, spread = max(Dukascopy 2025, Pepperstone) NY-saati **bp × fiyat**.
+  v1 (NOM paketinin veri sürümü) değiştirilmedi; v2 paket adayı backlog'da (bp etiketleriyle yeniden eğitim, Faz 9 terfi kuralıyla).
+- 2018–21 indirmesi sabit beklemeli (6 sn aralık, 503'te 45 sn) indiriciyle sürüyor (`logs/duka_fetch_bid3.log`); tamamlanınca aynı
+  betik etkin NOM paketini 2018-01 → 2021-10'da (2020 çöküşü dilimi dahil) hiç görmediği veri olarak değerlendirir
+  (`results/faz0_v3_eski_donem.json`) ve bu ek güncellenir.

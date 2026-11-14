@@ -9,8 +9,10 @@ from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[1] / 'data' / 'duka_m1'
 URL = 'https://datafeed.dukascopy.com/datafeed/USATECHIDXUSD/{y}/{m:02d}/{d:02d}/{side}_candles_min_1.bi5'
-PACE_S = 1.5
-MAX_BLOCK_S = 7200
+import os
+PACE_S = float(os.getenv('DUKA_PACE_S', '1.5'))
+MAX_BLOCK_S = int(os.getenv('DUKA_MAX_BLOCK_S', '7200'))
+FIXED_WAIT_S = int(os.getenv('DUKA_FIXED_WAIT_S', '0'))   # >0: 503'te sabit bekleme (üstel değil)
 
 
 def days(s: str, e: str):
@@ -47,8 +49,9 @@ def main() -> None:
             except Exception as ex:  # noqa: BLE001
                 code = type(ex).__name__
             print(time.strftime('%H:%M:%S'), 'blocked', code, x, sd, 'wait', wait, flush=True)
-            time.sleep(wait)
-            blocked += wait
+            w = FIXED_WAIT_S or wait
+            time.sleep(w)
+            blocked += w
             wait = min(wait * 2, 600)
             if blocked >= MAX_BLOCK_S:
                 print('GAVE UP after', blocked, 'done', done, flush=True)

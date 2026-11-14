@@ -163,6 +163,7 @@ Kanıt sınıfı: **A** gerçek para/bağımsız ikinci veri/OOS+plasebo · **B*
 | E130 | **Martingal blok karıştırmada blok uzunluğu ufuktan uzunsa blok-içi kısa dönüş sıfıra taşınır** → kısa ufuklu bulgu için eşik yükselir (korumacı) ve tekrarlar arası çok değişir | YL-03: 30 dk bloklarla |t|>4 kombinasyon sayısı tekrarlar arasında 6…160 | blok ≤ ufuk seç ya da eşik raporunda blok uzunluğunu yaz; ikinci bir sıfır (Holm/BH) yanında ver |
 | E131 | **Hayalet havuzunda yalnız kendini dışlamak yetmez:** aynı gün aynı kovadaki komşu noktalar aynı fiyat yolunu paylaşır, hayaleti gerçeğe benzetir ve FAZLA'yı sıfıra çeker | YL-01 tasarımında yakalandı (komşular ≈ %6 havuz) | aynı (kova, gün) grubunu bütünüyle dışla |
 | E132 | **Dışa aktarma betiğinin piyasa kapalıyken ölçtüğü sunucu−UTC farkı bayat tick'ten gelir** (E5 tekrarı) | Yön Lab kutu dışa aktarımı Cumartesi −12.600 sn ölçtü | piyasa kapalıysa ölçme; broker kuralı (sunucu = NY + 7) |
+| E133 | **Spread modelini puan cinsinden kurup farklı fiyat düzeyli döneme taşımak** sürtünmeyi ATR'ye göre bozar (düşük fiyatta şişirir) | NOM: 2025 puan modeli 2018'de ≈3×, 2021–23'te ≈%30–60 fazla sürtünme; 2018 15 dk TP %16 (puan) vs %23 (bp) | spread'i bp × fiyat ya da ATR oranı olarak modelle; eski dönem sınamasında birimi yaz |
 
 ---
 
