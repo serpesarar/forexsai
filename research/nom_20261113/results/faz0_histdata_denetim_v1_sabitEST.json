@@ -1,0 +1,38 @@
+{
+ "temizlik": {
+  "satir": 1372850,
+  "R1_kapali": 14176,
+  "R2_ohlc": 0,
+  "R4_sicrama": 7
+ },
+ "kapsam": [
+  "2018-01-01 21:30:00+00:00",
+  "2021-12-31 21:13:00+00:00"
+ ],
+ "dukascopy_2021_11_12": {
+  "overlap_bars": 58194,
+  "best_lag_min": 0,
+  "best_lag_corr": 1.0,
+  "ret_corr_lag0": 1.0,
+  "agree_within_tol_frac": 1.0,
+  "level_offset_median_pts": 0.0,
+  "days_agree_lt80pct": 0,
+  "days_total": 52
+ },
+ "dukascopy_2018_bas": {
+  "overlap_bars": 52801,
+  "best_lag_min": 0,
+  "best_lag_corr": 0.7204875654065671,
+  "ret_corr_lag0": 0.7204875654065671,
+  "agree_within_tol_frac": 0.7875608416507263,
+  "level_offset_median_pts": 8.329999999999927,
+  "days_agree_lt80pct": 16,
+  "days_total": 64
+ },
+ "yil_bar": {
+  "2018": 341058,
+  "2019": 339157,
+  "2020": 337772,
+  "2021": 340680
+ }
+}

@@ -75,18 +75,22 @@ zayıflatır; yine de sıralama bilgisi yok denecek kadar az). 28k kapı kaydı 
 ## 6. Bağımsız eski dönem: 2018-01 → 2021-10 (HistData, 2020 çöküşü dahil) — Faz 0 EK-3 sonrası ek sınama
 Etkin paket (2021-11 → 2026-11 ile eğitildi) bu dönemi HİÇ görmedi; farklı besleme; spread bp × fiyat; iklim tabanı dönemin KENDİ saat
 oranları (modele avantaj vermez). 15 dk ızgara, 1/1 geometri. Kaynak `results/faz0_v3_eski_donem.json`.
+**Düzeltme (2026-11-14, E135):** ilk koşu HistData damgalarını sabit EST (+5 sa) sanıyordu; yaz aylarında 60 dk kaymıştı (Faz 0 EK-5).
+Aşağıdaki tablo düzeltilmiş eksenle; ilk koşu `faz0_v3_eski_donem_v1_sabitEST.json`'da saklı ve son sütunda.
 
-| Hedef | n | Brier becerisi (tüm) | Kalibrasyon eğimi | ort. P(TP) / gerçekleşen | 2020-02-15→05-15 becerisi | Her an EV (R) |
-|---|---|---|---|---|---|---|
-| 15m long | 83.728 | +0,012 | 1,18 | 0,222 / 0,174 | **+0,054** | −0,54 |
-| 15m short | 83.728 | +0,019 | 1,14 | 0,237 / 0,184 | +0,045 | −0,54 |
-| 1h long | 83.448 | −0,002 | 1,20 | 0,292 / 0,268 | +0,013 | −0,25 |
-| 1h short | 83.448 | −0,007 | 1,05 | 0,320 / 0,269 | +0,005 | −0,27 |
-| 4h long | 82.545 | −0,001 | 1,14 | 0,311 / 0,304 | −0,008 | −0,08 |
-| 4h short | 82.545 | −0,004 | 0,95 | 0,348 / 0,300 | +0,001 | −0,14 |
-| seans long | 23.467 | +0,016 | 0,94 | 0,357 / 0,355 | 0,000 | −0,06 |
-| seans short | 23.467 | +0,016 | 0,83 | 0,352 / 0,357 | +0,004 | −0,11 |
-**Okuma:** Eski dönemde de kalibrasyon eğimi mezuniyet bandında (0,83–1,20); sıralama becerisi 15 dk ve seans sonunda küçük pozitif,
-1 s / 4 s'te sıfır (dönemin kendi saat iklimi kadar). 15 dk'da düzey yanlılığı (+%5 puan) besleme/spread farkından. 2020 çöküşünde
-15 dk becerisi en yüksek (+0,05) — oynaklık bilgisi kriz rejiminde de çalışıyor. **Her an işlem açmak çöküş dahil her ufukta eksi;
-yön kenarı hükmü (0/40) bağımsız eski dönemde de geçerli.**
+| Hedef | n | Brier becerisi (tüm) | Kalibrasyon eğimi | ort. P(TP) / gerçekleşen | 2020-02-15→05-15 becerisi | Her an EV (R) | ilk koşu becerisi |
+|---|---|---|---|---|---|---|---|
+| 15m long | 84.500 | **+0,025** | 1,25 | 0,221 / 0,173 | **+0,068** | −0,55 | +0,012 |
+| 15m short | 84.500 | **+0,034** | 1,21 | 0,235 / 0,183 | +0,062 | −0,55 | +0,019 |
+| 1h long | 83.906 | −0,000 | 1,14 | 0,288 / 0,268 | +0,008 | −0,25 | −0,002 |
+| 1h short | 83.906 | −0,004 | 1,05 | 0,317 / 0,269 | +0,002 | −0,28 | −0,007 |
+| 4h long | 83.454 | +0,008 | 1,15 | 0,310 / 0,306 | +0,005 | −0,08 | −0,001 |
+| 4h short | 83.454 | +0,004 | 0,95 | 0,347 / 0,302 | +0,014 | −0,14 | −0,004 |
+| seans long | 23.467 | +0,010 | 0,82 | 0,355 / 0,364 | −0,026 | −0,06 | +0,016 |
+| seans short | 23.467 | +0,010 | 0,77 | 0,346 / 0,361 | −0,017 | −0,10 | +0,016 |
+
+**Okuma:** Doğru saat ekseniyle eski dönemde 15 dk becerisi geliştirme dönemi düzeyine yaklaşıyor (+0,025/+0,034 vs WF +0,059) ve
+2020 çöküşünde en yüksek (+0,06–0,07) — oynaklık bilgisi kriz rejiminde de, bağımsız beslemede de taşınıyor. 1 s ≈ 0, 4 s küçük +,
+seans küçük + (çöküş diliminde −). Kalibrasyon eğimi 0,77–1,25 (mezuniyet bandı 0,7–1,3 içinde); 15 dk'da düzey yanlılığı (+5 puan)
+besleme/spread farkından. **Her an işlem açmak çöküş dahil her ufukta eksi; yön kenarı hükmü (0/40) bağımsız eski dönemde de geçerli.**
+Saat ekseni hatası bu hükmü değiştirmedi ama oynaklık becerisini olduğundan düşük gösteriyordu.

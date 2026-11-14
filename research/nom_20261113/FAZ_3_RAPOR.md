@@ -23,3 +23,17 @@ Kod: `src/validation.py` (Faz 4/5 bunu çağırır; şema değişirse sonuçlar 
 
 Kilit doğrulaması: `walk_forward()` geliştirme katlarında `test &= t < FINAL_START` ve `assert_not_final`;
 Faz 4 koşusunun hiçbir katı 2026-05-01 sonrasını içermez (katlar `faz4_metrics.csv`'de, son kat 2026Q1).
+
+## EK (2026-11-14) — Purged K-Fold koşuldu (`src/faz34_ek.py`, `results/faz34_ek.json`)
+Şema yalnız yazılmış değil, Faz 4 ile aynı sabit LightGBM parametreleri ve aynı isotonic kalibrasyonla koşuldu: geliştirme dönemi
+(2021-11 → 2026-04, final hariç; `assert_not_final` her katta) 6 ardışık blok, test bloğunun iki yanında ufuk + 1 g ambargo arındırma.
+Ölçüt: saat-iklimine göre Brier becerisi.
+
+| Hedef | Purged K-Fold katları (1…6) | Ortalama | WF ortalaması (7 kat) |
+|---|---|---|---|
+| 1 s long 1/1 | 0,012 · 0,006 · 0,014 · 0,014 · 0,012 · 0,024 | **+0,013** | +0,014 |
+| 4 s long 1/1 | 0,014 · 0,009 · 0,020 · 0,027 · 0,026 · 0,029 | **+0,021** | +0,015 |
+
+6 katın 6'sı pozitif, düzey WF ile aynı mertebede. K-Fold geleceği de eğitimde gördüğü için (iki yanlı arındırmaya rağmen) üst sınır
+sayılır; 4 s'teki +0,006'lık fark bu iyimserlik payıyla tutarlı. **Hüküm: WF sonucu şemaya bağlı değil; hiperparametre seçimi
+yapılmadığından K-Fold ayrıca bir seçim için kullanılmadı.**

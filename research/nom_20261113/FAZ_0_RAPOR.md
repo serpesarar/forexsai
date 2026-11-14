@@ -110,12 +110,46 @@ DUR koşulu (<2 yıl) oluşmadı. Hedeflenen "≥5 yıl" karşılandı; "2020 ç
 - Kaynak: HistData.com NASDAQ 100 (NSXUSD) 1m "Generic ASCII" tam yıl arşivleri 2018/2019/2020/2021 (3,6 / 3,9 / 4,8 / 4,9 MB;
   kullanıcının Chrome oturumundan, sitenin kendi gezinme akışıyla — doğrudan adresle girilince indirme belirteci boş geliyor).
   `data/histdata/` (git dışı), ayrıştırıcı `src/histdata_layer.py`, katman `data/histdata_ndx_1m.parquet`.
-- Saat: belge "yaz saatsiz EST" → UTC = EST + 5 s. **Ölçüldü** (`results/faz0_histdata_denetim.json`):
+- Saat: ~~belge "yaz saatsiz EST" → UTC = EST + 5 s~~ **YANLIŞTI — EK-5 (E135): yaz aylarında 60 dk kayıktı; düzeltildi.** İlk ölçüm (`results/faz0_histdata_denetim.json`):
   2021-11/12'de Dukascopy ile 58.194 ortak bar, **en iyi gecikme 0 dk, getiri korelasyonu 1,000, seviye farkı 0** (2021 HistData =
   Dukascopy); 2018 başında 52.801 ortak bar, gecikme 0 ama korelasyon 0,72, seviye farkı ~8 p → HistData'nın erken yılları farklı besleme.
-- Temizlik: 1.372.850 satır, R1 kapalı saat 14.176, R2 0, R4 sıçrama 7. Eski dönem: **1.300.473 bar, 1.194 gün, eksik hafta içi 5**
+- Temizlik (ilk eksen): 1.372.850 satır, R1 kapalı saat 14.176 (düzeltilmiş eksende 131), R2 0, R4 sıçrama 7. Eski dönem: **1.300.473 bar (düzeltilmiş 1.314.518), 1.194 gün, eksik hafta içi 5**
   (207 ince gün = HistData'nın 16:15–18:00 ET boşluğu ve tatiller).
 - Kullanım: **tek beslemeli bağımsız eski dönem** (eğitim dışı, E88/E104) → `src/faz0_v3_eski_donem.py`, `data/ndx_1m_v3.parquet`
   (spread bp × fiyat), sonuç `results/faz0_v3_eski_donem.json` (FAZ_5 §6). Dukascopy indiricisi gereksizleşti, durduruldu.
 - **Faz 0 madde 4 kapandı:** veri 2018-01 → 2026-11 (8,8 yıl, 1m), rejimler: 2018 Şubat şoku, 2018 Q4 düşüşü, **2020 çöküşü**,
   2021 boğası, 2022 ayı piyasası, 2023–25 boğa, 2025 Nisan çöküşü.
+
+## EK-4 (2026-11-14) — prompt satır satır kapanış: takvim kütüphanesi, PCE, 1MDATA
+- **Faz 0.3 `pandas_market_calendars`:** ayrı araştırma ortamı `.venv_ext` (py3.14; ana `.venv`'in numpy/sklearn kısıtları korunmak için)
+  kuruldu, XNYS takvimiyle statik takvim karşılaştırıldı (`src/faz0_takvim_dogrula.py`, `results/faz0_takvim_1mdata.json`):
+  2018–2026 **87 tatil ve 20 yarım gün, iki tarafta da birebir aynı, fark 0**. Servis statik modülü kullanmaya devam eder (Railway'de ek
+  bağımlılık yok); eşdeğerlik kanıtlı.
+- **Faz 0.4 PCE:** BEA Personal Income and Outlays açıklama günleri ALFRED PCEPI sürüm tarihlerinden alındı (2018-01 → 2026-10, 105
+  tarih; ALFRED listesinde 2019-02 ve 2025-10/11 yok — o aylarda revizyon/kapanma) → takvime 08:30 ET olarak eklendi
+  (`data/macro/pce_dates_alfred.txt`, `calendar.parquet`, `backend/data/nom/calendar.csv`). PCE prompt Faz 2'nin olay-özelliği listesinde
+  yok; model özellikleri değişmedi, canlı "yaklaşan olay" bağlamında görünür.
+- **Faz 0.2 `1MDATA/mt5_ustec_1m_bars.json`:** 2026-02-11 → 05-21, 97.252 bar. Alan broker saatinde (E93): kaydırmasız MT5 altın standartla
+  r −0,03; **−180 dk kaydırmada r 0,999, uyum %99,8**; Dukascopy ile −180'de r 0,69 (dönemin Şubat–Mart kış kısmında offset +120 —
+  tek sabit kaydırma oturmaz; broker_time kuralı gerekir). Eğitimde kullanılmadı (RECOVER json'uyla aynı karar).
+- **Faz 0.4 MT5 betikleri:** prompt `RECOVER/mt5_export_1m_bars.py` / `research/mt5_pull_missing_1m.py` diyor; kutu terminali 100.000 bar
+  tavanlı (E126) olduğundan aynı işi gören salt-okunur dışa aktarım (`yon_lab_20261114/src/kutu_export_m5.py`) kullanıldı → EK.
+- **Dukascopy 2018–21:** HistData ile dönem kapandı (EK-3); Dukascopy indiricisi 2018-05-23'te durduruldu; eldeki
+  123 günle iki beslemeli kıyas yapıldı → EK-5.
+
+## EK-5 (2026-11-14) — HistData saat ekseni düzeltmesi (E135) + iki beslemeli eski dönem kıyası
+Dukascopy 2018 indirmesi saatte ~34 gün hızla (503/URLError sabit beklemeleri) 2018-01-01 → 05-23'e ulaştı (123 gün); kalan 1.121 gün
+~33 saat sürecekti ve dönem HistData ile zaten kapalı olduğundan durduruldu (`src/duka_fetch.py` kaldığı yerden sürer). Eldeki
+123 günle iki besleme kıyaslandı (`src/faz0_duka_vs_histdata_2018.py`, `results/faz0_duka_vs_histdata_2018.json`):
+- **Hata bulundu:** kışta gecikme 0 (r 0,97), **yazda −60 dk** (r 0,993; gecikme 0'da 0,14). İlk HistData denetimi yalnız kış
+  pencerelerinde (2021 Kasım–Aralık, 2018 başı) yapılmıştı; 2018 başı r 0,72 bir işaretti ama gözden kaçtı.
+- **Kural yıla göre farklı:** ham etiket ET'dir; yaz saati 2018 dosyasında **ABD** takvimiyle, 2019–2021 dosyalarında **AB**
+  takvimiyle değişir. Kanıt: ABD–AB geçiş pencerelerindeki FOMC/NFP anları (2018-03-21 FOMC etiket 14:00; 2019-03-20, 2019-10-30,
+  2021-03-17, 2021-11-03 FOMC 13:00; 2019-11-01, 2021-11-05 NFP 07:30; yaz ortası FOMC'ler her yıl 14:00).
+- **Doğrulama (düzeltme sonrası):** gecikme 0 üç pencerede — 2018 kış r 0,969, 2018 yaz r 0,993, 2021 Kasım–Aralık r 1,000; olay
+  anları UTC'de 9/11 ilk-2 dakikada, kalan 2 (sakin kış FOMC'leri) ve ek 3 kış FOMC'sinde 19:00 UTC hareketi 18:00'ten büyük (5/5);
+  **kapalı saatte kalan bar (R1) 14.176 → 131** (referanstan bağımsız teyit).
+- Düzeltilmiş eksende 123 günün tamamı: en iyi gecikme 0, 1m getiri r 0,92 (98.123 ortak bar); kapanış düzey farkı medyan 10,8 bp
+  (|fark| p95 24 bp; HistData yukarıda — spot endeks vs CFD), günlük aralık oranı medyan 1,01, 1m |getiri| oranı 0,99 → oynaklık
+  ölçüsü bakımından eşdeğer beslemeler.
+- Etki: FAZ_5 §6 yeniden koşuldu (15 dk becerisi +0,012/+0,019 → +0,025/+0,034); yön kenarı hükmü değişmedi.

@@ -5115,5 +5115,16 @@
     "source": "session",
     "created_at": "2026-11-14T04:02:39.439984+00:00",
     "updated_at": "2026-11-14T04:02:39.440128+00:00"
+  },
+  {
+    "id": "bl_f430e6d921",
+    "title": "NOM v2: LGB+CatBoost ensemble + yön-koşullu tek model",
+    "detail": "faz34_ek'te ensemble +0,002/+0,004 Brier becerisi; tek kod yolu/SHAP maliyeti nedeniyle v1'e alınmadı; v2 yeniden eğitiminde final-dışı WF ile yeniden ölç",
+    "category": "retrain",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-14T06:00:39.318566+00:00",
+    "updated_at": "2026-11-14T06:00:39.318775+00:00"
   }
 ]

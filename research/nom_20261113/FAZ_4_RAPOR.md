@@ -56,7 +56,44 @@ Ondalık kovalarda tahmin ≈ gerçekleşen, monoton. Örnek 1 s LONG 1/1: (0,03
   biraz iyi) → mimari farkı yok, sınır veride.
 - **P2 karıştırılmış-etiket plasebosu** (gün-blok, 20 tekrar, 3 son kat): gerçek beceri **+0,0183** (katlar 0,008 / 0,016 /
   0,031); plasebo p95 **−0,0003** (tümü negatif) → becerinin şans olmadığı kanıtlı.
-- **Derin modeller (TCN/LSTM/Transformer):** ortamda torch yok; ön kayıt kuralı "ancak boosting tabanı geçerse" idi —
-  boosting'in saat-iklimine üstünlüğü 1 s'te +0,015 Brier mertebesinde ve yön bilgisi neredeyse yok; derin modelin bu
-  veride (5 yıl, tek enstrüman) anlamlı ek bilgi bulacağına dair gerekçe yok. **Denenmedi, bırakıldı.**
-- **Ensemble/stacking:** XGB ≈ LGB, aynı özellik bilgisi → anlamlı iyileşme beklenmez, yapılmadı.
+- **Derin modeller ve ensemble:** ilk sürümde denenmemişti; 2026-11-14 ekinde denendi → aşağıdaki EK.
+
+## EK (2026-11-14) — CatBoost, ensemble, derin modeller (LSTM / TCN / Transformer) DENENDİ
+Kod: `src/faz34_ek.py` (CatBoost, LGB+Cat ortalaması, Purged K-Fold → `results/faz34_ek.json`), `src/deep_nets.py` +
+`src/faz4_deep.py` (derin modeller → `results/faz4_deep.json`; ayrı süreç ve `.venv_ext` (torch) — lightgbm/catboost ile aynı süreçte
+macOS OpenMP kilitlenmesi oluyor). Hepsi Faz 4 ile **aynı WF katları**, aynı etiket ve 132 özellik, aynı isotonic kalibrasyon (yalnız
+kalibrasyon diliminde), saat-iklimine göre Brier becerisi; final dönem hiçbir koşuda yok. Hedefler 1 s ve 4 s long 1/1.
+
+**Derin girdi:** son 120 kapanmış 1m bar dizisi `[log getiri, (h−l), (c−o)] / (ATR_H1/fiyat)` + 132 tablo özelliği (ölçekleyici
+yalnız eğitim diliminden). LSTM(32), TCN (genişleme 1-2-4-8-16 nedensel evrişim, 32 kanal), Transformer (10 dk'lık 12 yama, 2 katman,
+4 baş, d=32); hepsinde tablo MLP'si + 3 sınıf başlığı, Adam, 6 dönem, kalibrasyon log-loss'una göre en iyi dönem. Katlar
+2024H2 / 2025H1 / 2025H2 (eğitim verisinin en büyük olduğu katlar — derin modellere en uygun koşul).
+
+| Hedef | Kat | LightGBM | CatBoost | LSTM | TCN | Transformer |
+|---|---|---|---|---|---|---|
+| 1 s long 1/1 | 2024H2 | **+0,011** | +0,009 | −0,006 | −0,004 | +0,002 |
+| | 2025H1 | **+0,019** | +0,017 | +0,008 | +0,008 | +0,011 |
+| | 2025H2 | **+0,030** | +0,024 | +0,023 | +0,020 | +0,021 |
+| | ort. | **+0,020** | +0,017 | +0,008 | +0,008 | +0,011 |
+| 4 s long 1/1 | 2024H2 | +0,006 | **+0,009** | −0,009 | −0,004 | −0,008 |
+| | 2025H1 | **+0,035** | +0,023 | +0,010 | +0,010 | +0,016 |
+| | 2025H2 | **+0,032** | +0,031 | +0,018 | +0,015 | +0,010 |
+| | ort. | **+0,024** | +0,021 | +0,006 | +0,007 | +0,006 |
+
+**Hüküm (derin):** 18 derin kat×hedef×mimari hücresinin **18'inde** beceri LightGBM'in altında (ortalama farkı 1 s −0,009…−0,012,
+4 s −0,017…−0,018); en kötü katta ikliminin de altında. Ön-kayıtlı kural "derin model ancak boosting'i WF'de geçerse dahil edilir"
+→ **geçemedi, raporlandı ve bırakıldı.** Yorum: ham 1m dizisinde tablo özelliklerinin (ATR, saat, seans, oynaklık rejimi) zaten
+özetlediğinden fazla bilgi yok; derin ağlar aynı bilgiyi daha gürültülü öğreniyor (5 yıl, tek enstrüman).
+
+**CatBoost ve ensemble (7 WF katı, `faz34_ek.json`):**
+
+| Hedef | LightGBM | CatBoost | LGB+Cat ortalaması | Purged K-Fold (LGB) |
+|---|---|---|---|---|
+| 1 s long 1/1 | +0,0139 | +0,0134 | **+0,0160** | +0,0134 |
+| 4 s long 1/1 | +0,0154 | +0,0151 | **+0,0194** | +0,0208 |
+
+CatBoost ≈ LightGBM (kat başına ±0,01). İki modelin ortalaması LightGBM'den 1 s'te 7 katın 6'sında, 4 s'te 6'sında iyi (ikisinden birden: 4/7 ve 6/7); kazanç
++0,002 / +0,004 Brier becerisi (ortalama almanın varyans azaltması — yeni bilgi değil). **Üretime alınmadı:** (1) kazanç Faz 8 canlı
+kalibrasyon belirsizliğinin (final eğim 0,54–0,68 → ±5–8 puan) çok altında; (2) iki model paketi tek kod yolunu, SHAP
+açıklamasını (TreeSHAP LGB) ve yeniden eğitim süresini ikiye katlar; (3) yön kenarı hükmünü değiştirmez (ensemble de olasılık
+düzeyini iyileştirir, EV işaretini değil). v2 yeniden eğitiminde aday (backlog).

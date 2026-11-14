@@ -1,7 +1,7 @@
 {
  "temizlik": {
   "satir": 1372850,
-  "R1_kapali": 14176,
+  "R1_kapali": 131,
   "R2_ohlc": 0,
   "R4_sicrama": 7
  },
@@ -19,20 +19,30 @@
   "days_agree_lt80pct": 0,
   "days_total": 52
  },
- "dukascopy_2018_bas": {
-  "overlap_bars": 52801,
+ "dukascopy_2018_kis": {
+  "overlap_bars": 40293,
   "best_lag_min": 0,
-  "best_lag_corr": 0.7204875654065671,
-  "ret_corr_lag0": 0.7204875654065671,
-  "agree_within_tol_frac": 0.7875608416507263,
-  "level_offset_median_pts": 8.329999999999927,
-  "days_agree_lt80pct": 16,
-  "days_total": 64
+  "best_lag_corr": 0.9692896200187088,
+  "ret_corr_lag0": 0.9692896200187088,
+  "agree_within_tol_frac": 0.9840170749261659,
+  "level_offset_median_pts": 7.069999999999709,
+  "days_agree_lt80pct": 1,
+  "days_total": 49
+ },
+ "dukascopy_2018_yaz": {
+  "overlap_bars": 57830,
+  "best_lag_min": 0,
+  "best_lag_corr": 0.9925171073171806,
+  "ret_corr_lag0": 0.9925171073171806,
+  "agree_within_tol_frac": 0.9906277018848348,
+  "level_offset_median_pts": 7.480999999999767,
+  "days_agree_lt80pct": 1,
+  "days_total": 58
  },
  "yil_bar": {
-  "2018": 341058,
-  "2019": 339157,
-  "2020": 337772,
-  "2021": 340680
+  "2018": 348473,
+  "2019": 341332,
+  "2020": 339962,
+  "2021": 342945
  }
 }

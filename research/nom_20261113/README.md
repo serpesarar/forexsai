@@ -9,7 +9,7 @@ Sonuçların dürüst özeti: `FAZ_5_RAPOR.md` ve `FAZ_9_RAPOR.md` → "DÜRÜST
 |---|---|
 | `PROTOCOL.md` | ön kayıt (etiket, özellik, doğrulama, geçme ölçütleri) |
 | `FAZ_0_RAPOR.md` … `FAZ_9_RAPOR.md` | faz raporları |
-| `src/` | araştırma kodu: `duka_fetch`, `macro_fetch`, `data_layer`, `faz0_build`, `faz12_build`, `faz1_tick_check`, `faz2_audit`, `validation`, `faz4_train`, `faz5_econ`, `faz9_retrain` |
+| `src/` | araştırma kodu: `duka_fetch`, `macro_fetch`, `data_layer`, `faz0_build`, `faz12_build`, `faz1_tick_check`, `faz2_audit`, `validation`, `faz4_train`, `faz5_econ`, `faz9_retrain`; ekler: `histdata_layer` (2018–21, saat kuralı E135), `faz0_v3_eski_donem`, `faz0_duka_vs_histdata_2018`, `faz0_takvim_dogrula`, `faz34_ek` (Purged K-Fold, CatBoost, ensemble), `deep_nets` + `faz4_deep` (LSTM/TCN/Transformer) |
 | `data/` (git dışı) | `ndx_1m_v1.parquet`, `features_v1.parquet`, `labels_*.parquet`, `macro/` |
 | `results/` | metrikler, WF/final OOS tahminleri, kalibrasyon tabloları, SVG grafikler |
 | `backend/services/nom/` | **tek kod yolu**: `bars`, `features`, `labels`, `nyse_calendar`, `model_store`, `live_data`, `engine`, `shadow`, `calibration`, `drift` |
@@ -46,6 +46,10 @@ cd research/nom_20261113
 ../../.venv/bin/python src/faz2_audit.py           # sızıntı + önem
 ../../.venv/bin/python src/faz4_train.py main      # WF modelleri (~25 dk)
 ../../.venv/bin/python src/faz4_train.py compare   # yön-koşullu / XGBoost / P2 plasebo
+.venv_ext/bin/python src/faz34_ek.py               # Purged K-Fold + CatBoost + ensemble (catboost .venv_ext'te)
+.venv_ext/bin/python src/faz4_deep.py --kinds lstm,tcn,transformer   # derin modeller (torch; AYRI süreç — OpenMP)
+../../.venv/bin/python src/histdata_layer.py       # 2018–21 HistData katmanı + saat ekseni denetimi
+../../.venv/bin/python src/faz0_v3_eski_donem.py   # bağımsız eski dönem (FAZ_5 §6)
 ../../.venv/bin/python src/faz5_econ.py dev        # ekonomik test + eşik seçimi
 ../../.venv/bin/python src/faz5_econ.py final      # FİNAL TEST — tek kez (FINAL_OPENED.json kilidi)
 ../../.venv/bin/python src/faz5_econ.py bundle     # üretim paketi + ACTIVE

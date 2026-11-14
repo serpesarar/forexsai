@@ -1,0 +1,157 @@
+{
+ "envanter": {
+  "bar": 1300473,
+  "gun": 1194,
+  "beklenen_hafta_ici": 1000,
+  "eksik_hafta_ici": 5,
+  "ince_gun_lt600": 207,
+  "ilk": "2018-01-01 21:30:00+00:00",
+  "son": "2021-10-31 23:59:00+00:00"
+ },
+ "degerlendirme": {
+  "15m_long_1x1": {
+   "tum": {
+    "n": 83728,
+    "brier_beceri_vs_saat_iklimi": 0.011553109679720008,
+    "kalibrasyon_egimi_ptp": 1.1781064598757347,
+    "ort_p_tp": 0.22246734853713424,
+    "tp_orani": 0.17409946493407225,
+    "ev_r_her_an": -0.5418350100517273
+   },
+   "cokus_2020": {
+    "n": 5278,
+    "brier_beceri_vs_saat_iklimi": 0.054180937405528984,
+    "kalibrasyon_egimi_ptp": 1.0188709313474678,
+    "ort_p_tp": 0.2644858753084906,
+    "tp_orani": 0.2605153467222433,
+    "ev_r_her_an": -0.20095868408679962
+   }
+  },
+  "15m_short_1x1": {
+   "tum": {
+    "n": 83728,
+    "brier_beceri_vs_saat_iklimi": 0.01900001373112925,
+    "kalibrasyon_egimi_ptp": 1.143664930236158,
+    "ort_p_tp": 0.23669311185685854,
+    "tp_orani": 0.1844663672845404,
+    "ev_r_her_an": -0.5404669046401978
+   },
+   "cokus_2020": {
+    "n": 5278,
+    "brier_beceri_vs_saat_iklimi": 0.0453102254877622,
+    "kalibrasyon_egimi_ptp": 0.8924606312403606,
+    "ort_p_tp": 0.27152046562810717,
+    "tp_orani": 0.2565365668813945,
+    "ev_r_her_an": -0.22626225650310516
+   }
+  },
+  "1h_long_1x1": {
+   "tum": {
+    "n": 83448,
+    "brier_beceri_vs_saat_iklimi": -0.0019384032028260112,
+    "kalibrasyon_egimi_ptp": 1.201963046112168,
+    "ort_p_tp": 0.29179465754307704,
+    "tp_orani": 0.2677355958201515,
+    "ev_r_her_an": -0.2499711662530899
+   },
+   "cokus_2020": {
+    "n": 5239,
+    "brier_beceri_vs_saat_iklimi": 0.012505009932282984,
+    "kalibrasyon_egimi_ptp": 0.961024137637915,
+    "ort_p_tp": 0.3246416263564841,
+    "tp_orani": 0.3409047528154228,
+    "ev_r_her_an": -0.0870719775557518
+   }
+  },
+  "1h_short_1x1": {
+   "tum": {
+    "n": 83448,
+    "brier_beceri_vs_saat_iklimi": -0.007167927149239306,
+    "kalibrasyon_egimi_ptp": 1.0495266823044576,
+    "ort_p_tp": 0.32031742109005157,
+    "tp_orani": 0.26947320487009874,
+    "ev_r_her_an": -0.27193954586982727
+   },
+   "cokus_2020": {
+    "n": 5239,
+    "brier_beceri_vs_saat_iklimi": 0.0050995202876230605,
+    "kalibrasyon_egimi_ptp": 0.9719391126866795,
+    "ort_p_tp": 0.3511266087633004,
+    "tp_orani": 0.32315327352548195,
+    "ev_r_her_an": -0.12909185886383057
+   }
+  },
+  "4h_long_1x1": {
+   "tum": {
+    "n": 82545,
+    "brier_beceri_vs_saat_iklimi": -0.0013799036809054588,
+    "kalibrasyon_egimi_ptp": 1.142919319563467,
+    "ort_p_tp": 0.3114209193799181,
+    "tp_orani": 0.3035919801320492,
+    "ev_r_her_an": -0.08213254809379578
+   },
+   "cokus_2020": {
+    "n": 5180,
+    "brier_beceri_vs_saat_iklimi": -0.007818896247518747,
+    "kalibrasyon_egimi_ptp": 0.7348861309259681,
+    "ort_p_tp": 0.3276352399327105,
+    "tp_orani": 0.35154440154440153,
+    "ev_r_her_an": -0.02481740154325962
+   }
+  },
+  "4h_short_1x1": {
+   "tum": {
+    "n": 82545,
+    "brier_beceri_vs_saat_iklimi": -0.003890916038514769,
+    "kalibrasyon_egimi_ptp": 0.9476821606234854,
+    "ort_p_tp": 0.34760256706562026,
+    "tp_orani": 0.2999697134896117,
+    "ev_r_her_an": -0.14049141108989716
+   },
+   "cokus_2020": {
+    "n": 5180,
+    "brier_beceri_vs_saat_iklimi": 0.0007035266886491476,
+    "kalibrasyon_egimi_ptp": 0.9147504939439474,
+    "ort_p_tp": 0.37073686423136776,
+    "tp_orani": 0.3382239382239382,
+    "ev_r_her_an": -0.07681435346603394
+   }
+  },
+  "session_long_1x1": {
+   "tum": {
+    "n": 23467,
+    "brier_beceri_vs_saat_iklimi": 0.01584818384933584,
+    "kalibrasyon_egimi_ptp": 0.9410488553710387,
+    "ort_p_tp": 0.35702393453186854,
+    "tp_orani": 0.35458303149102993,
+    "ev_r_her_an": -0.05613584443926811
+   },
+   "cokus_2020": {
+    "n": 1540,
+    "brier_beceri_vs_saat_iklimi": 9.183243557275844e-05,
+    "kalibrasyon_egimi_ptp": 0.9391766934212831,
+    "ort_p_tp": 0.36984377588304224,
+    "tp_orani": 0.38441558441558443,
+    "ev_r_her_an": -0.007430640049278736
+   }
+  },
+  "session_short_1x1": {
+   "tum": {
+    "n": 23467,
+    "brier_beceri_vs_saat_iklimi": 0.016039413994114904,
+    "kalibrasyon_egimi_ptp": 0.8276976654422463,
+    "ort_p_tp": 0.3519192424288794,
+    "tp_orani": 0.35743810457237823,
+    "ev_r_her_an": -0.10812941193580627
+   },
+   "cokus_2020": {
+    "n": 1540,
+    "brier_beceri_vs_saat_iklimi": 0.004392027088186645,
+    "kalibrasyon_egimi_ptp": 0.9606092124281522,
+    "ort_p_tp": 0.3495282987926079,
+    "tp_orani": 0.37337662337662336,
+    "ev_r_her_an": -0.06843089312314987
+   }
+  }
+ }
+}

@@ -1,0 +1,21 @@
+{
+ "duka_bar": 98256,
+ "histdata_bar": 136891,
+ "duka_gun": 107,
+ "histdata_gun": 122,
+ "en_iyi_gecikme_dk": 0,
+ "getiri_korelasyonu_gecikme0": 0.9194343661575127,
+ "getiri_korelasyonu_en_iyi": 0.9194343661575127,
+ "ortak_bar": 98123,
+ "kapanis_farki_bp_medyan": 10.800878607137854,
+ "kapanis_farki_bp_mutlak_p50_p95": [
+  10.801663717894261,
+  24.33880315641911
+ ],
+ "gunluk_aralik_orani_histdata_bolu_duka_medyan": 1.0136015578102824,
+ "gunluk_aralik_orani_p10_p90": [
+  0.9880863285221686,
+  1.2677955035871096
+ ],
+ "abs_1m_getiri_orani_h_bolu_d": 0.9895334230326224
+}

@@ -1,0 +1,51 @@
+{
+ "tatil_pmc": 87,
+ "tatil_statik": 87,
+ "tatil_yalniz_pmc": [],
+ "tatil_yalniz_statik": [],
+ "yarim_pmc": 20,
+ "yarim_statik": 20,
+ "yarim_yalniz_pmc": [],
+ "yarim_yalniz_statik": [],
+ "1mdata_vs_mt5_gold_kaydirma0": {
+  "overlap_bars": 1680,
+  "best_lag_min": -90,
+  "ret_corr_lag0": -0.02912476537299647,
+  "agree_within_tol_frac": 0.015476190476190477
+ },
+ "1mdata_vs_mt5_gold_kaydirma-180": {
+  "overlap_bars": 1620,
+  "best_lag_min": 0,
+  "ret_corr_lag0": 0.9986735051498601,
+  "agree_within_tol_frac": 0.9981481481481481
+ },
+ "1mdata_vs_mt5_gold_kaydirma-120": {
+  "overlap_bars": 1560,
+  "best_lag_min": 60,
+  "ret_corr_lag0": 0.09011161294305767,
+  "agree_within_tol_frac": 0.04423076923076923
+ },
+ "1mdata_vs_dukascopy_kaydirma0": {
+  "overlap_bars": 87475,
+  "best_lag_min": 14,
+  "ret_corr_lag0": 0.07985509050872418,
+  "agree_within_tol_frac": 0.036330380108602456
+ },
+ "1mdata_vs_dukascopy_kaydirma-180": {
+  "overlap_bars": 92857,
+  "best_lag_min": 0,
+  "ret_corr_lag0": 0.6934837255556988,
+  "agree_within_tol_frac": 0.7231872664419484
+ },
+ "1mdata_vs_dukascopy_kaydirma-120": {
+  "overlap_bars": 90052,
+  "best_lag_min": 60,
+  "ret_corr_lag0": 0.34187796966081513,
+  "agree_within_tol_frac": 0.2987162972504775
+ },
+ "1mdata_kapsam": [
+  "2026-02-11 01:00:00",
+  "2026-05-21 03:21:00",
+  97252
+ ]
+}

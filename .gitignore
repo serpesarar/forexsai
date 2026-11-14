@@ -102,3 +102,5 @@ backend/data/nom_cache/
 research/yon_lab_20261114/data/
 research/yon_lab_20261114/logs/
 research/yon_lab_20261114/results/faz7_oos_*.parquet
+research/nom_20261113/.venv_ext/
+research/nom_20261113/catboost_info/

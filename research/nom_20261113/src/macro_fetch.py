@@ -23,6 +23,8 @@ START = '2012-01-01'
 FOMC_2026_EXTRA = ['2026-07-29', '2026-09-16', '2026-10-28', '2026-12-09']
 # BLS 2026 takvimi (bls.gov/schedule/2026, 2026-11-13'te doğrulandı; kaynak liste CPI 09-11'de bitiyordu)
 CPI_2026_EXTRA = ['2026-10-14', '2026-11-10', '2026-12-10']
+# PCE (BEA Personal Income and Outlays) — ALFRED PCEPI sürüm tarihleri 2018-01 → 2026-10 (2019-02, 2025-10/11 listede yok), 08:30 ET
+PCE_FILE = OUT / 'pce_dates_alfred.txt'
 NFP_2026_EXTRA = ['2026-10-02', '2026-11-06', '2026-12-04']
 
 
@@ -57,7 +59,8 @@ def build_calendar() -> pd.DataFrame:
     c = c[['event', 'date', 'et']]
     extra = pd.concat([pd.DataFrame({'event': 'FOMC', 'date': FOMC_2026_EXTRA, 'et': '14:00'}),
                        pd.DataFrame({'event': 'CPI', 'date': CPI_2026_EXTRA, 'et': '08:30'}),
-                       pd.DataFrame({'event': 'NFP', 'date': NFP_2026_EXTRA, 'et': '08:30'})])
+                       pd.DataFrame({'event': 'NFP', 'date': NFP_2026_EXTRA, 'et': '08:30'}),
+                       pd.DataFrame({'event': 'PCE', 'date': PCE_FILE.read_text().split(), 'et': '08:30'})])
     c = pd.concat([c, extra]).drop_duplicates(['event', 'date'])
     rows = []
     for t in EARN:
