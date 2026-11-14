@@ -105,3 +105,17 @@ DUR koşulu (<2 yıl) oluşmadı. Hedeflenen "≥5 yıl" karşılandı; "2020 ç
 - 2018–21 indirmesi sabit beklemeli (6 sn aralık, 503'te 45 sn) indiriciyle sürüyor (`logs/duka_fetch_bid3.log`); tamamlanınca aynı
   betik etkin NOM paketini 2018-01 → 2021-10'da (2020 çöküşü dilimi dahil) hiç görmediği veri olarak değerlendirir
   (`results/faz0_v3_eski_donem.json`) ve bu ek güncellenir.
+
+## EK-3 (2026-11-14) — 2018-01 → 2021-10 TAMAMLANDI (HistData NSXUSD, kullanıcı onayıyla)
+- Kaynak: HistData.com NASDAQ 100 (NSXUSD) 1m "Generic ASCII" tam yıl arşivleri 2018/2019/2020/2021 (3,6 / 3,9 / 4,8 / 4,9 MB;
+  kullanıcının Chrome oturumundan, sitenin kendi gezinme akışıyla — doğrudan adresle girilince indirme belirteci boş geliyor).
+  `data/histdata/` (git dışı), ayrıştırıcı `src/histdata_layer.py`, katman `data/histdata_ndx_1m.parquet`.
+- Saat: belge "yaz saatsiz EST" → UTC = EST + 5 s. **Ölçüldü** (`results/faz0_histdata_denetim.json`):
+  2021-11/12'de Dukascopy ile 58.194 ortak bar, **en iyi gecikme 0 dk, getiri korelasyonu 1,000, seviye farkı 0** (2021 HistData =
+  Dukascopy); 2018 başında 52.801 ortak bar, gecikme 0 ama korelasyon 0,72, seviye farkı ~8 p → HistData'nın erken yılları farklı besleme.
+- Temizlik: 1.372.850 satır, R1 kapalı saat 14.176, R2 0, R4 sıçrama 7. Eski dönem: **1.300.473 bar, 1.194 gün, eksik hafta içi 5**
+  (207 ince gün = HistData'nın 16:15–18:00 ET boşluğu ve tatiller).
+- Kullanım: **tek beslemeli bağımsız eski dönem** (eğitim dışı, E88/E104) → `src/faz0_v3_eski_donem.py`, `data/ndx_1m_v3.parquet`
+  (spread bp × fiyat), sonuç `results/faz0_v3_eski_donem.json` (FAZ_5 §6). Dukascopy indiricisi gereksizleşti, durduruldu.
+- **Faz 0 madde 4 kapandı:** veri 2018-01 → 2026-11 (8,8 yıl, 1m), rejimler: 2018 Şubat şoku, 2018 Q4 düşüşü, **2020 çöküşü**,
+  2021 boğası, 2022 ayı piyasası, 2023–25 boğa, 2025 Nisan çöküşü.

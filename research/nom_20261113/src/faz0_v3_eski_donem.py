@@ -43,10 +43,16 @@ def build_v3() -> pd.DataFrame:
         m = pd.concat([m, jan[m.columns.intersection(jan.columns)]]).sort_values('t').drop_duplicates('t', keep='first')
     print('spread modeli: v3 bp × fiyat (v1 puan modeli NOM paketi için korunur)', flush=True)
     m = m.reset_index(drop=True)
+    # Eski dönem TEK besleme: HistData NSXUSD (2018-01 → 2021-10); Dukascopy 2018 günleri bu dönemde kullanılmaz (karışık besleme, E88)
+    hd = pd.read_parquet(H / 'data/histdata_ndx_1m.parquet')
+    a, b = (int(pd.Timestamp(x, tz='UTC').timestamp()) for x in OLD)
+    hd = hd[(hd.t >= a) & (hd.t < b)].assign(spr=np.nan, spr_obs=np.nan, src='histdata_nsxusd')
+    m = pd.concat([m[(m.t < a) | (m.t >= b)], hd[[c for c in m.columns if c in hd.columns]]]).sort_values('t').reset_index(drop=True)
+    print('eski dönem kaynağı: HistData NSXUSD', len(hd), 'bar', flush=True)
     # Spread modeli puan cinsindendi (2025 fiyat düzeyi). Fiyat düzeyi farklı dönemlere bp × fiyat olarak taşınır:
     # bp(saat) = max(Dukascopy 2025 gözlenen spread / fiyat, Pepperstone MT5 spread / fiyat) NY-saati medyanı.
     h = pd.to_datetime(m.t, unit='s', utc=True).dt.tz_convert(DL.NY).dt.hour.to_numpy()
-    obs = m.spr_obs.notna().to_numpy() if 'spr_obs' in m else np.zeros(len(m), bool)
+    obs = (m.spr_obs.notna() & (m.spr_obs > 0)).to_numpy() if 'spr_obs' in m else np.zeros(len(m), bool)
     bp_duka = pd.Series((m.spr_obs / m.close).to_numpy()[obs]).groupby(h[obs]).median().reindex(range(24)).ffill().bfill()
     g = DL.load_mt5_gold()
     gh = pd.to_datetime(g.t, unit='s', utc=True).dt.tz_convert(DL.NY).dt.hour.to_numpy()

@@ -71,3 +71,22 @@ zayıflatır; yine de sıralama bilgisi yok denecek kadar az). 28k kapı kaydı 
   belirsiz okuyun.
 - **Güvenilir olduğu kullanım:** "Şu an 1 s içinde ±1 ATR'ye dokunma ihtimali / zaman aşımı ihtimali nedir?", risk
   boyutlandırma ve "bu stop bu sürede yenir mi?" sorusu — yani **oynaklık/menzil bilgisi**; yönsüz.
+
+## 6. Bağımsız eski dönem: 2018-01 → 2021-10 (HistData, 2020 çöküşü dahil) — Faz 0 EK-3 sonrası ek sınama
+Etkin paket (2021-11 → 2026-11 ile eğitildi) bu dönemi HİÇ görmedi; farklı besleme; spread bp × fiyat; iklim tabanı dönemin KENDİ saat
+oranları (modele avantaj vermez). 15 dk ızgara, 1/1 geometri. Kaynak `results/faz0_v3_eski_donem.json`.
+
+| Hedef | n | Brier becerisi (tüm) | Kalibrasyon eğimi | ort. P(TP) / gerçekleşen | 2020-02-15→05-15 becerisi | Her an EV (R) |
+|---|---|---|---|---|---|---|
+| 15m long | 83.728 | +0,012 | 1,18 | 0,222 / 0,174 | **+0,054** | −0,54 |
+| 15m short | 83.728 | +0,019 | 1,14 | 0,237 / 0,184 | +0,045 | −0,54 |
+| 1h long | 83.448 | −0,002 | 1,20 | 0,292 / 0,268 | +0,013 | −0,25 |
+| 1h short | 83.448 | −0,007 | 1,05 | 0,320 / 0,269 | +0,005 | −0,27 |
+| 4h long | 82.545 | −0,001 | 1,14 | 0,311 / 0,304 | −0,008 | −0,08 |
+| 4h short | 82.545 | −0,004 | 0,95 | 0,348 / 0,300 | +0,001 | −0,14 |
+| seans long | 23.467 | +0,016 | 0,94 | 0,357 / 0,355 | 0,000 | −0,06 |
+| seans short | 23.467 | +0,016 | 0,83 | 0,352 / 0,357 | +0,004 | −0,11 |
+**Okuma:** Eski dönemde de kalibrasyon eğimi mezuniyet bandında (0,83–1,20); sıralama becerisi 15 dk ve seans sonunda küçük pozitif,
+1 s / 4 s'te sıfır (dönemin kendi saat iklimi kadar). 15 dk'da düzey yanlılığı (+%5 puan) besleme/spread farkından. 2020 çöküşünde
+15 dk becerisi en yüksek (+0,05) — oynaklık bilgisi kriz rejiminde de çalışıyor. **Her an işlem açmak çöküş dahil her ufukta eksi;
+yön kenarı hükmü (0/40) bağımsız eski dönemde de geçerli.**
