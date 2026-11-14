@@ -1,0 +1,34 @@
+[
+ {
+  "katman": "L1_dix_gex",
+  "hucre": 90,
+  "T_star_q95": 2.9255718979215772,
+  "max_abs_t_K": 2.517075226759594,
+  "secilen": 0,
+  "dogrulama": []
+ },
+ {
+  "katman": "L2_saatlik_capraz",
+  "hucre": 105,
+  "T_star_q95": 3.246421803850359,
+  "max_abs_t_K": 2.2043592108445167,
+  "secilen": 0,
+  "dogrulama": []
+ },
+ {
+  "katman": "L3_m5_capraz_endeks",
+  "hucre": 68,
+  "T_star_q95": 3.663537126662715,
+  "max_abs_t_K": 2.712170820640906,
+  "secilen": 0,
+  "dogrulama": []
+ },
+ {
+  "katman": "L4_tick_mikroyapi",
+  "hucre": 50,
+  "T_star_q95": 3.0047011826737045,
+  "max_abs_t_K": 2.1350231216247293,
+  "secilen": 0,
+  "dogrulama": []
+ }
+]

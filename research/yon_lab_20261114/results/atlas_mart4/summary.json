@@ -1,0 +1,20 @@
+{
+ "tag": "mart4",
+ "n_cells": {
+  "family": 39,
+  "members": 683,
+  "reaction": 584,
+  "singles": 3645,
+  "combos": 3547
+ },
+ "max_abs_t_K": {
+  "family": 1.8260269853053868,
+  "members": 2.790631621413489,
+  "reaction": 2.9383244933897505,
+  "singles": 3.9088046180391514,
+  "combos": 6.772808143903868,
+  "singles_indep100": 3.9088046180391514,
+  "combos_indep100": 5.093558728445199
+ },
+ "secs": 19
+}

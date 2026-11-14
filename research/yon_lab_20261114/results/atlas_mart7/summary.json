@@ -1,0 +1,20 @@
+{
+ "tag": "mart7",
+ "n_cells": {
+  "family": 39,
+  "members": 685,
+  "reaction": 596,
+  "singles": 3640,
+  "combos": 3461
+ },
+ "max_abs_t_K": {
+  "family": 1.2872744790771065,
+  "members": 2.6564508086852197,
+  "reaction": 2.458555541125426,
+  "singles": 3.4329245940674395,
+  "combos": 10.892391791504059,
+  "singles_indep100": 3.191180561463266,
+  "combos_indep100": 4.830512963985417
+ },
+ "secs": 19
+}

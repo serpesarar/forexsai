@@ -1,0 +1,20 @@
+{
+ "tag": "real",
+ "n_cells": {
+  "family": 39,
+  "members": 681,
+  "reaction": 587,
+  "singles": 3642,
+  "combos": 3413
+ },
+ "max_abs_t_K": {
+  "family": 1.5836264629894334,
+  "members": 2.900919341858729,
+  "reaction": 2.6374825939326607,
+  "singles": 7.494441933007754,
+  "combos": 7.126713260699413,
+  "singles_indep100": 7.494441933007754,
+  "combos_indep100": 7.126713260699413
+ },
+ "secs": 18
+}
