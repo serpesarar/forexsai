@@ -61,6 +61,14 @@ def _gate(report: dict, gate_id: str) -> dict:
     return next(g for g in report["gates"] if g["id"] == gate_id)
 
 
+@pytest.mark.parametrize("value,blocking", [("0", False), ("true", False), ("1", True)])
+def test_issue17_flag_display_matches_strict_activation(monkeypatch, value, blocking):
+    monkeypatch.setenv("PULSE1_SWING_HIGH_GATE_BLOCK", value)
+    gate = next(g for g in so.get_shadow_flags()["gates"]
+                if g["id"] == "pulse1_swing_high_gate")
+    assert gate["blocking"] is blocking
+
+
 def test_losing_set_says_open_the_gate(gate_report):
     """Bloklayacağı sinyaller kaybediyorsa kapı gerçek bir frendir."""
     g = _gate(gate_report, "trend_align_gate")
