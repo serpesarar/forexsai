@@ -1183,6 +1183,7 @@ ve ilk kez maliyeti ödenmiş kanıtlı kenarın (ORB × VIX) içinde süzgeç o
 | AN-10 | 2026-11-17 | Gerçekleşen çarpıklık (1m, Amaya vd. 2015) RSK / RSK5 en eksi tertil → gün / hafta | RSK5 hafta +38,6 / +9,5 (taban +25,9) / +65,4 bp, kısmi t −2,48 / 1,27 / −3,13 (işaret kararsız); örtüşmesiz kural TEST +11 bp | X |
 | AN-11 | 2026-11-17 | Sıçrama payı JMP = 1 − BV/RV → ertesi gün | yüksek JMP kolu −3,6 / +20,0 / +7,8 bp; kısmi t 0,07 / 2,81 / 1,54, havuz 2,53 | C (iz) |
 | AN-12 | 2026-11-17 | **Teslimiyet mumu** (EK-4/4b): VIX ≥ 18,4 ∧ gün içi düşüş ≤ −1 dvol ∧ 1m uzun alt fitil (≥ 0,75 a60; 3× ön kayıt 0 olay → sıklıkla seçildi), üst yarıda kapanış → AL, seans sonu / ertesi gün; kontrol aynı günün fitilsiz ilk düşüş dakikası | seans sonu −5,4 / −30,4 / −11,9 bp (düşen bıçak); ertesi gün −24 / +88 / +12; fitil kontrolü 6 hücrenin 4'ünde kötüleştiriyor | X |
+| AN-13 | 2026-11-17 | **S4 × sabah 1m anatomisi** (EK-5): 09:30–12:00 ort. 1m kapanış konumu / fitil dengesi üst tertili → S4 (korku günü öğleden sonra) güçlü mü | Ters: tepede kapanan sabah −5,8 / −1,3 / −5,7 bp, dipte kapanan +19,8 / +38,0 / +1,3; fitil dengesi tutarsız; kitap Sharpe YENİ 2,18 → 2,13 / 2,05; Holm 0,89 / 1,0 | X |
 
 **Hüküm:** Gözle önerilen 1m yapılar tek başına kural değil (maliyet bariyeri, §3-35); ufuk uzatılınca 1m izi günlük mumun kopyası (AN-08). 12 ön kayıtlı yapıdan ayakta kalan iki iz: ORB × VIX içinde kırılım anatomisi (gölge etiketi canlıda) ve sıçrama payı (C).
 

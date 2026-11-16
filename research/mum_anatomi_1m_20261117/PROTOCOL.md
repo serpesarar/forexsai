@@ -90,3 +90,12 @@ spr×1,5 > 0. Geçerse: 2. KURAL kartı + mevcut kitaba katkı (aylık Sharpe, E
 EK-4'teki "alt fitil ≥ 3 × a60" 9 yılda 0 olay üretti (sınanamaz). Eşik yalnız olay SIKLIĞIYLA seçildi (getiri hesaplanmadan): 183 korku-düşüş
 gününde olay oranı 0,5× %78 · 0,75× %64 · 1,0× %28 · 1,5× %3 · 2,0× %0. Kural: günlerin ≥ %50'sinde olay veren en sıkı eşik → **0,75 × a60**.
 Diğer her şey EK-4 ile aynı; geçme ölçütleri değişmedi.
+
+## EK-5 (2026-11-17, koşulmadan önce) — S4 × sabah 1m anatomisi ("alıcı kabulü")
+S4 (ndx_10y_1m_20261116 EK-2: dünkü VIX ≥ 18,4 ∧ 12:00 > 09:30 açılışı → 12:00 AL, 15:55) tek başına kart 6/6 ama kitaba eklenince Sharpe artmadı.
+Soru: 09:30–12:00 1m anatomisi S4'ün güçlü alt kümesini ayırır mı?
+- A_clv = 09:30–11:59 1m barların ortalama kapanış konumu; A_w = (Σ alt fitil − Σ üst fitil)/Σ aralık aynı pencerede.
+- Öngörü: yüksek A_clv ve yüksek A_w (sabah boyunca alıcı kabulü) → öğleden sonra sürüklenme güçlü.
+Tertiller KEŞİF (2022–23) S4 olaylarında. Kural S4+: S4 ∧ A_clv KEŞİF üst tertili. Geçer: S4+ net > 0 üç dönemde (KEŞİF/TEST/BAĞIMSIZ),
+TEST ve BAĞIMSIZ P ≥ 0,90, S4+ > S4 alt tertil üç dönemde ∧ canlı kitaba (ORB 3R'li) 0,5 lot eklenince aylık Sharpe ESKİ ve YENİ'de artar.
+A_w aynı biçimde ikinci (bağımsız) sınama olarak raporlanır; ikisi için Holm.

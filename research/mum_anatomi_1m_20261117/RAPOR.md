@@ -60,3 +60,13 @@ Korku dönüşü günler ölçeğinde ve zaman çıkışıyla geliyor (C3b/CAPRE
 13 ön kayıtlı 1m yapıdan (4 ufuk) tek başına işlem kuralı çıkmadı; ayakta kalan izler ORB × VIX kırılım anatomisi (canlıda gölge kaydı) ve sıçrama payı (C).
 Bu çalışmada 1m verinin işleme gerçekten yarayan katkısı mum şeklinden değil, yol çözünürlüğünden geldi: aynı veriyle ORB × VIX çıkışının 2R → 3R
 düzeltilmesi (`research/ndx_10y_1m_20261116`, kart 6/6, canlı).
+
+## EK-5 — S4 × sabah 1m anatomisi (`src/s4_anat.py`)
+S4 (tek başına kart 6/6, kitaba katkısız) sabah 09:30–12:00 1m anatomisiyle ayrılabilir mi? Öngörü: sabah alıcı kabulü (yüksek ort. kapanış konumu,
+alt fitil baskınlığı) → güçlü öğleden sonra.
+| özellik | üst tertil (KEŞİF / TEST / BAĞIMSIZ) | alt tertil | kitap Sharpe ESKİ / YENİ |
+|---|---|---|---|
+| A_clv | −5,8 / −1,3 / −5,7 bp | +19,8 / +38,0 / +1,3 | 1,69 → 1,67 / 2,18 → 2,13 |
+| A_w | −4,4 / +23,7 / +9,3 | +19,0 / −3,6 / +11,2 | 1,69 → 1,76 / 2,18 → 2,05 |
+**AN-13 X** (Holm 0,89 / 1,0). Öngörü yine ters: sabah mumları tepede kapanan korku günü öğleden sonra kötü; ters yön sonradan seçilirse veri kurcalama
+olur ve BAĞIMSIZ'da +1,3 bp ile zaten zayıf. 14 ön kayıtlı 1m yapıdan tek başına geçen yok.
