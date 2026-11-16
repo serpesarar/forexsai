@@ -66,3 +66,26 @@ değerlendirmesi Dukascopy ile tekrarlandı (`results/faz0_v3_eski_donem_duka.js
 | 9 | yeniden eğitim → WF → yalnız geçerse terfi, sürüm + geri alma, drift | `src/faz9_retrain.py` (terfi kuralı), `services/nom/model_store.py` (`promote`, `rollback`; test `test_promote_rollback`), `services/nom/drift.py` (PSI, destek dışı oranı) + `calibration.py` (`DRIFT_DROP`) |
 
 Testler bugün yeniden koşuldu: `pytest backend/tests/test_nom_engine.py backend/tests/test_nom_features.py` → **11 passed**.
+
+### Çalıştırarak doğrulama (2026-11-16, ~20:40 UTC) — dosya taraması değil, koşu
+- **Faz 1 (yeniden hesap):** `data/labels_15m.parquet` → 15m long 1/1: n 320.402, P(TP) 0,1833, P(SL) 0,5121, P(zaman) 0,3046, EV −0,418R
+  = `results/faz1_base_rates.csv` ALL satırı **birebir**.
+- **Faz 5 final (yeniden hesap, yeniden AÇILMADAN):** `results/final/*.parquet` (40 hedef) kayıtlı tahminlerinden ufuk başına 10 hedef
+  ortalaması: Brier becerisi 15 dk +0,049 · 1 s +0,022 · 4 s +0,038 · seans +0,082; AUC TP model/iklim 0,609/0,597 · 0,625/0,624 ·
+  0,662/0,650 · 0,725/0,721 → FAZ_5 §3 tablosu **birebir**. Final kilidi tek kez açıldı; yeniden eğitim/ayar yapılmadı.
+- **Faz 6 (canlı API):** `backend-nom-test` (port 8081) ayağa kaldırıldı; `GET /api/probability/nasdaq` 1h/1.5x1, 15m/1x1, 4h/1x1 →
+  200; son bar 20:40 UTC (gecikme 67–80 sn), durum **NÖTR / belirsiz**, LONG/SHORT P(TP/SL/zaman) + beklenen R + %95 kova bandı,
+  bağlam (3 destek/3 direnç ATR uzaklık + test sayısı, RSI M5–D1 ve 70/30 uzaklığı, rejim, seans, VIX 19,3, yaklaşan olay
+  EARN_NVDA), SHAP 5 faktör Türkçe, sürüm `nom_v1b_20261113`; takma ad `/probability/nasdaq` → 200.
+- **Faz 7 (panel render):** `frontend-nom-test` (3013) `/olasilik-motoru` tarayıcıda açıldı: LONG/SHORT barları, %95 aralık,
+  "Neden?" 5 faktör, S/R haritası, RSI/rejim, VIX, olay, canlı kalibrasyon grafiği (WF bandı vs canlı). Ufuk seçici "4 saat"
+  tıklandı → ATR birimi M15→H1, olasılıklar yenilendi, NOM istekleri 200. Konsol hataları yalnız test arka ucunda olmayan
+  genel düzen uçları (`/api/data/cached`, `/ws/all`); NOM'a ait hata yok.
+- **Faz 8 (gölge):** `nom_shadow.py --once` → **5 tahmin yazıldı** (`source='shadow'`, t_dec 2026-11-16 20:41; seans ufku
+  kapanışa <30 dk olduğundan atlandı). `--backfill 2026-11-13T21:00 2026-11-16T16:00` → 92 örneklem dışı satır, **90 sonuç yazıldı**.
+  `/calibration` (1 s 1,5/1, 56 gün): n 193, LONG Brier becerisi **−0,027**, eğim **0,35**, 5 kova WF bandı dışında, `drift_uyarisi`
+  açık; SHORT +0,021 → **mezun değil (12,7 gün < 28)**. `/drift`: 918 karar, birkaç hızlı özellikte PSI KAYMA (yuvarlak seviye
+  yakınlığı, H1 ATR oranı — NDX 27k düzeyi ve yüksek VIX haftası). Bu, FAZ_5'in final eğim bulgusuyla (0,54–0,68) tutarlı:
+  sıralama var, olasılık düzeyi yeni rejimde kayıyor → gölge izlemeye devam, güvenilir sayılmaz (mezuniyet kuralı işliyor).
+- **Faz 9:** `test_promote_rollback` geçti; `/drift` ucu canlı yanıt verdi.
+- Testler: **11 passed** (leakage 3, eşdeğerlik 1, etiket 3, API/engine 4).
