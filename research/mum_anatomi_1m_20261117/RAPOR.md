@@ -28,3 +28,19 @@ ama kitap Sharpe'ını iki dönemde artırmadığı için lot değiştirilmedi.
 
 Ders (defter E140): **grafikte göze çarpan bağlam ayrımı (sıkışma→devam, uzama→dönüş) seçilmiş örneklerden doğar**; aynı ayrım yüzlerce olayda
 yok. Görsel sezgi hipotez üretir, kanıt değildir; sezginin yönü bile ters çıkabilir (üst fitil).
+
+## EK-2 / EK-3 — 1m anatomisinin günlük izi ve dağılım şekli (gece / ertesi gün / hafta ufku; `src/q_daily.py`, `src/q_shape.py`)
+Gerekçe: 30 dk'da bilgi maliyetin altında; ufuk uzayınca hareket ≫ maliyet. Kontroller: günün getirisi, 5 günlük getiri, günlük IBS, log RV.
+Hücreler (KEŞİF 2022-23 / TEST 2024-26 / BAĞIMSIZ 2018-21; sinyal kolu net bp; kısmi OLS t):
+| ID | özellik → hedef | sinyal kolu | kısmi t | hüküm |
+|---|---|---|---|---|
+| AN-07 | W_gun (gün boyu alt−üst fitil payı) yüksek → gece / ertesi gün | gece −8,2 / +3,7 / −1,3 | 0,36 / 0,62 / 0,27 | X |
+| AN-08 | CLV_gun (1m kapanış konumu ort.) düşük → ertesi gün | +4,6 / +16,8 / +19,4 (üst kol −3,5 / −4,0 / −12,4) | −0,02 / 0,5 / 1,06 | X — günlük getiri/IBS'nin kopyası |
+| AN-09 | W_son (15:00–16:00 fitil payı) yüksek → gece | −15,0 / +11,6 / +7,0 | −0,65 / 0,47 / 0,87 | X |
+| AN-10 | RSK5 (5 g gerçekleşen çarpıklık) en eksi tertil → gün / hafta | gün +19,9 / +4,8 / +14,3; hafta +38,6 / +9,5 (taban +25,9) / +65,4 | hafta −2,48 / 1,27 / −3,13 | X (TEST'te taban altı, işaret kararsız) |
+| AN-11 | JMP (sıçrama payı 1 − BV/RV) → ertesi gün | yüksek kol −3,6 / +20,0 / +7,8 | 0,07 / 2,81 / 1,54, havuz 2,53 | C (iz: sıçramalı günün ertesi yukarı; KEŞİF'te yok) |
+
+**Genel hüküm (12 ön kayıtlı yapı, 3 ufuk):** 1m mum anatomisinden (kapanış yeri, fitil, şekil, dizi, dağılım) tek başına işlem kuralı
+çıkmadı. Kısa ufukta bilgi maliyetin altında; uzun ufukta 1m izi büyük ölçüde günlük mumun zaten taşıdığı bilginin (günün getirisi, IBS) kopyası.
+Ayakta kalan iki iz: ORB × VIX içinde kırılım anatomisi (AN-01, gölge etiketi canlıda) ve sıçrama payı (AN-11, C). Sıradaki dürüst adım
+gözle yeni şekil aramak değil, bu iki izin ileri karnesi.

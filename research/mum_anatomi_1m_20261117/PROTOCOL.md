@@ -51,3 +51,25 @@ payı YÜKSEK iyi) iki dönemde aynı yönde. Sorular:
 - EK1-b **Mekanizma (bilgi):** "yoklama sayısı" = 09:30–giriş arası OR tepesine değen (h ≥ OR_hi) 1m bar sayısı; f_uw5 ile ilişkisi ve R'ye etkisi.
   Öngörü: yüksek üst fitil = OR tepesinin daha önce yoklanmış olması ("ikinci deneme kırılımı").
 - EK1-c **Veto değil eleme sınaması:** f_run ≤ 1 ∧ f_uw5 ≤ alt tertil (0,1815) olan "en kötü hücre" ORB işlemleri iki dönemde de < 0 mı?
+
+## EK-2 (2026-11-17, koşulmadan önce) — 1m anatomisinin GÜNLÜK izi, gece/ertesi gün ufkunda
+Gerekçe: 30 dk ufukta 1m yapılarının bilgisi maliyetin altında (AN-05). Aynı anatomi gün boyunca toplanınca günlük mumda (OHLC/IBS)
+görünmeyen bir iz bırakır: fiyatın gün içinde nerede "kabul gördüğü". Ufuk gece/ertesi gün olunca hareket ≫ maliyet (≈ 1 bp).
+Her tam RTH günü için (09:30–16:00 1m barları, yalnız o gün 16:00'dan önce kapanmış barlar):
+- W_gun = (Σ alt fitil − Σ üst fitil) / Σ aralık — alt fitil baskınlığı = gün boyu alıcı emilimi. Öngörü: yüksek W → gece/ertesi gün yukarı.
+- CLV_gun = 1m barların ortalama kapanış konumu. Öngörü: düşük (satış baskısı) → dönüş yukarı ("korku döner") — iki yön de raporlanır.
+- W_son = aynı ölçü yalnız 15:00–16:00 (KSG penceresi).
+Hedefler: GECE = 16:00 açılışı (ask) → ertesi işlem günü 09:30 (bid), finansmanlı net bp; GUN = 16:00 → ertesi 16:00 net bp.
+Kontroller: günün getirisi r_gun (açılış→16:00) ve günlük IBS (kapanışın günlük aralıktaki yeri). Kısmi etki = OLS hedef ~ özellik(z) + r_gun(z) + IBS(z),
+dönem içi. Kural: W_gun KEŞİF üst tertilinde ise 16:00 AL → ertesi 09:30 (Q1); 16:00 → ertesi 16:00 (Q2).
+Dönemler KEŞİF 2022–23 / TEST 2024–26 / BAĞIMSIZ 2018–21. Geçer: (a) kural net > 0 üç dönemde, TEST ve BAĞIMSIZ P ≥ 0,90; (b) üst tertil −
+alt tertil > 0 üç dönemde; (c) kısmi OLS katsayısı üç dönemde aynı işaret ve havuz t ≥ 2. Hepsi geçerse kart + kitap katkısı.
+
+## EK-3 (2026-11-17, koşulmadan önce) — 1m getiri dağılımının şekli (günlük mumda olmayan bilgi)
+EK-2'de 1m izi günlük getiri/IBS'nin kopyası çıktı. Günlük OHLC'den hesaplanamayan iki ölçü:
+- RSK = gerçekleşen çarpıklık (RTH 1m log getirileri, Amaya vd. 2015): √N·Σr³ / (Σr²)^1,5; 5 günlük ort. RSK5. Öngörü: en eksi tertil
+  (çöküş benzeri gün içi yol) → ileri getiri yukarı.
+- JMP = sıçrama payı = max(0, 1 − BV/RV), BV = (π/2)·Σ|r_t||r_{t−1}|. Öngörü yok, iki yön raporlanır.
+Hedefler: GUN (16:00 → ertesi 16:00), HAFTA (16:00 → 5. işlem günü 16:00), finansmanlı net bp. Kontroller: r_gun, r5 (5 günlük getiri), IBS, log RV.
+Kural: RSK5 KEŞİF alt tertili → 16:00 AL, HAFTA çıkış (tek pozisyon, örtüşme yok). Geçer ölçütleri EK-2 ile aynı (üç dönem net > 0, TEST/BAĞIMSIZ
+P ≥ 0,90, uç fark > 0 üç dönemde, kısmi OLS aynı işaret ve havuz |t| ≥ 2).

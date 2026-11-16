@@ -5203,5 +5203,16 @@
     "source": "session",
     "created_at": "2026-11-16T22:39:40.420331+00:00",
     "updated_at": "2026-11-16T22:39:40.420461+00:00"
+  },
+  {
+    "id": "bl_681a821395",
+    "title": "Sıçrama payı (JMP) ileri karnesi",
+    "detail": "AN-11 C: yüksek 1-BV/RV gününün ertesi yukarı (kısmi t havuz 2,53, KEŞİF'te yok); 2026-11 sonrası yeni veriyle ön kayıtlı tek sınama",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-16T22:43:57.887277+00:00",
+    "updated_at": "2026-11-16T22:43:57.887434+00:00"
   }
 ]
