@@ -5,6 +5,7 @@ pydantic-settings>=2.6.0
 python-dotenv==1.0.1
 python-dateutil>=2.8.0
 pandas==2.2.2
+pyarrow==17.0.0          # NOM canlı veri önbelleği (parquet); yoksa /api/probability/nasdaq 500 verir
 numpy==1.26.4
 lxml>=5.2.0
 scikit-learn==1.5.2
