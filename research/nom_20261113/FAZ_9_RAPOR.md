@@ -44,3 +44,16 @@ taşıdığı için silindi (geri alma hedefi olmamalı).
   her koşuda eksikleri yeniden dener (2020 çöküşü rejimi eklenirse model v2).
 - Yön-koşullu tek model (Faz 4: Brier %0,7 daha iyi) v2 adayı — terfi kuralıyla sınanmalı.
 - Gölge modunun kalıcı açılması (`NOM_SHADOW_ENABLED=1`) kullanıcı kararı.
+
+## EK (2026-11-16) — tam yeniden eğitim döngüsü gerçekten koşuldu (`python src/faz9_retrain.py run`)
+Log `logs/faz9_retrain_run_20261116.log`, karar `results/faz9_retrain_20261116.json`.
+1. Veri: Dukascopy'den eksik 4 gün indirildi (2026-11-03 → 11-16, hız sınırına uyarak), `faz0_build` → `ndx_1m_v1.parquet`,
+   `faz12_build` → özellik + etiket (aynı kod yolu). Taban oran tablosu yeniden üretildi (log).
+2. Pencere W = 2026-11-05 → 11-16 (şampiyon eğitim sonu 11-03 + ambargo; ikisi için de görülmemiş). 40 hedef, W'de 175–616 satır.
+3. Meydan okuyan (W başına kadar veriyle eğitildi) vs şampiyon `nom_v1b_20261113`: daha iyi olduğu hedef oranı **%56,7**
+   (kural ≥ %60), ortalama beceri farkı **+0,0004**, en kötü fark ≥ −0,01 → **KARAR: ŞAMPİYON KALIR** (terfi yok, ACTIVE değişmedi).
+4. Şampiyonun W'deki saat-iklimine göre becerisi: 15 dk +0,07–0,09, 1 s +0,036–0,062, 4 s ≈ +0,05, seans +0,05–0,11 —
+   örneklem dışı yeni haftalarda olasılık becerisi sürüyor.
+5. Sürüm/geri alma: `model_store.promote/rollback` (test `test_promote_rollback`); drift: `/api/probability/nasdaq/drift` canlı yanıt.
+Terfi kuralı amaçlandığı gibi çalıştı: küçük ve tutarsız iyileşme terfi ettirilmedi.
+

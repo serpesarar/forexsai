@@ -1,0 +1,292 @@
+{
+ "window": [
+  1793836800,
+  1794787200
+ ],
+ "targets": [
+  {
+   "target": "15m_long_1x1",
+   "n_window": 616,
+   "skill_challenger": 0.07389575656475078,
+   "skill_champion": 0.07350215089157142,
+   "diff": 0.0003936056731793647
+  },
+  {
+   "target": "15m_long_1.5x1",
+   "n_window": 616,
+   "skill_challenger": 0.08206953134383399,
+   "skill_champion": 0.08378459355473833,
+   "diff": -0.001715062210904339
+  },
+  {
+   "target": "15m_long_2x1",
+   "n_window": 616,
+   "skill_challenger": 0.1024265198077079,
+   "skill_champion": 0.10247520614764905,
+   "diff": -4.868633994115079e-05
+  },
+  {
+   "target": "15m_long_1x1.5",
+   "n_window": 616,
+   "skill_challenger": 0.06893720095581901,
+   "skill_champion": 0.06535678748028928,
+   "diff": 0.003580413475529731
+  },
+  {
+   "target": "15m_long_1.5x1.5",
+   "n_window": 616,
+   "skill_challenger": 0.08185923101393489,
+   "skill_champion": 0.07957872340082006,
+   "diff": 0.002280507613114824
+  },
+  {
+   "target": "15m_short_1x1",
+   "n_window": 616,
+   "skill_challenger": 0.08166079698387396,
+   "skill_champion": 0.07791832330041026,
+   "diff": 0.0037424736834636985
+  },
+  {
+   "target": "15m_short_1.5x1",
+   "n_window": 616,
+   "skill_challenger": 0.08383394129309896,
+   "skill_champion": 0.08578891841187808,
+   "diff": -0.001954977118779122
+  },
+  {
+   "target": "15m_short_2x1",
+   "n_window": 616,
+   "skill_challenger": 0.09877919027617288,
+   "skill_champion": 0.09716867884936708,
+   "diff": 0.001610511426805794
+  },
+  {
+   "target": "15m_short_1x1.5",
+   "n_window": 616,
+   "skill_challenger": 0.06546597758802941,
+   "skill_champion": 0.06560882397707946,
+   "diff": -0.0001428463890500442
+  },
+  {
+   "target": "15m_short_1.5x1.5",
+   "n_window": 616,
+   "skill_challenger": 0.08769545970161119,
+   "skill_champion": 0.08667934613744976,
+   "diff": 0.001016113564161425
+  },
+  {
+   "target": "1h_long_1x1",
+   "n_window": 608,
+   "skill_challenger": 0.06335570769741783,
+   "skill_champion": 0.062144238581382405,
+   "diff": 0.001211469116035424
+  },
+  {
+   "target": "1h_long_1.5x1",
+   "n_window": 608,
+   "skill_challenger": 0.056161654441487574,
+   "skill_champion": 0.0559565781442114,
+   "diff": 0.00020507629727617438
+  },
+  {
+   "target": "1h_long_2x1",
+   "n_window": 608,
+   "skill_challenger": 0.0646906093533578,
+   "skill_champion": 0.060037254752346336,
+   "diff": 0.004653354601011461
+  },
+  {
+   "target": "1h_long_1x1.5",
+   "n_window": 608,
+   "skill_challenger": 0.058947507888874595,
+   "skill_champion": 0.05850225135346765,
+   "diff": 0.000445256535406946
+  },
+  {
+   "target": "1h_long_1.5x1.5",
+   "n_window": 608,
+   "skill_challenger": 0.057725839529678025,
+   "skill_champion": 0.05797530992976241,
+   "diff": -0.0002494704000843839
+  },
+  {
+   "target": "1h_short_1x1",
+   "n_window": 608,
+   "skill_challenger": 0.049297809289947536,
+   "skill_champion": 0.050436376358477975,
+   "diff": -0.0011385670685304383
+  },
+  {
+   "target": "1h_short_1.5x1",
+   "n_window": 608,
+   "skill_challenger": 0.03388610416114002,
+   "skill_champion": 0.03676939240093868,
+   "diff": -0.0028832882397986648
+  },
+  {
+   "target": "1h_short_2x1",
+   "n_window": 608,
+   "skill_challenger": 0.03645196909892412,
+   "skill_champion": 0.03575499613859934,
+   "diff": 0.0006969729603247821
+  },
+  {
+   "target": "1h_short_1x1.5",
+   "n_window": 608,
+   "skill_challenger": 0.057862527548045994,
+   "skill_champion": 0.05984947082293235,
+   "diff": -0.0019869432748863547
+  },
+  {
+   "target": "1h_short_1.5x1.5",
+   "n_window": 608,
+   "skill_challenger": 0.04202220155925229,
+   "skill_champion": 0.04567148829164824,
+   "diff": -0.003649286732395951
+  },
+  {
+   "target": "4h_long_1x1",
+   "n_window": 603,
+   "skill_challenger": 0.048172535559367735,
+   "skill_champion": 0.045794436997105725,
+   "diff": 0.00237809856226201
+  },
+  {
+   "target": "4h_long_1.5x1",
+   "n_window": 603,
+   "skill_challenger": 0.039184580492860444,
+   "skill_champion": 0.05228654712238823,
+   "diff": -0.013101966629527784
+  },
+  {
+   "target": "4h_long_2x1",
+   "n_window": 603,
+   "skill_challenger": 0.044528007398598524,
+   "skill_champion": 0.04173177360562985,
+   "diff": 0.002796233792968672
+  },
+  {
+   "target": "4h_long_1x1.5",
+   "n_window": 603,
+   "skill_challenger": 0.0362961440144417,
+   "skill_champion": 0.03813205442678891,
+   "diff": -0.001835910412347208
+  },
+  {
+   "target": "4h_long_1.5x1.5",
+   "n_window": 603,
+   "skill_challenger": 0.04751450989302719,
+   "skill_champion": 0.049234828212464166,
+   "diff": -0.0017203183194369753
+  },
+  {
+   "target": "4h_short_1x1",
+   "n_window": 603,
+   "skill_challenger": 0.03766713826802792,
+   "skill_champion": 0.036893538772120316,
+   "diff": 0.0007735994959076065
+  },
+  {
+   "target": "4h_short_1.5x1",
+   "n_window": 603,
+   "skill_challenger": 0.025694384819715088,
+   "skill_champion": 0.030841291256443526,
+   "diff": -0.005146906436728438
+  },
+  {
+   "target": "4h_short_2x1",
+   "n_window": 603,
+   "skill_challenger": 0.03927212194717855,
+   "skill_champion": 0.035653971824756936,
+   "diff": 0.003618150122421615
+  },
+  {
+   "target": "4h_short_1x1.5",
+   "n_window": 603,
+   "skill_challenger": 0.02683664763201543,
+   "skill_champion": 0.02213916400226079,
+   "diff": 0.00469748362975464
+  },
+  {
+   "target": "4h_short_1.5x1.5",
+   "n_window": 603,
+   "skill_challenger": 0.055327122026244346,
+   "skill_champion": 0.04111775848640098,
+   "diff": 0.014209363539843367
+  },
+  {
+   "target": "session_long_1x1",
+   "n_window": 175,
+   "skill_challenger": 0.04704986523390753,
+   "skill_champion": 0.04731728237254129,
+   "diff": -0.00026741713863376315
+  },
+  {
+   "target": "session_long_1.5x1",
+   "n_window": 175,
+   "skill_challenger": 0.0970807916764751,
+   "skill_champion": 0.0976200819804326,
+   "diff": -0.0005392903039574959
+  },
+  {
+   "target": "session_long_2x1",
+   "n_window": 175,
+   "skill_challenger": 0.060181158864078155,
+   "skill_champion": 0.06037860896877045,
+   "diff": -0.0001974501046922983
+  },
+  {
+   "target": "session_long_1x1.5",
+   "n_window": 175,
+   "skill_challenger": 0.13837862226399367,
+   "skill_champion": 0.1412977809537631,
+   "diff": -0.002919158689769441
+  },
+  {
+   "target": "session_long_1.5x1.5",
+   "n_window": 175,
+   "skill_challenger": 0.21672348973338773,
+   "skill_champion": 0.21732013708062115,
+   "diff": -0.0005966473472334144
+  },
+  {
+   "target": "session_short_1x1",
+   "n_window": 175,
+   "skill_challenger": 0.03497290704802447,
+   "skill_champion": 0.034844841495516365,
+   "diff": 0.00012806555250810536
+  },
+  {
+   "target": "session_short_1.5x1",
+   "n_window": 175,
+   "skill_challenger": 0.11113342014594885,
+   "skill_champion": 0.10801934655833945,
+   "diff": 0.0031140735876094006
+  },
+  {
+   "target": "session_short_2x1",
+   "n_window": 175,
+   "skill_challenger": 0.1438812031929949,
+   "skill_champion": 0.15650459797162308,
+   "diff": -0.012623394778628172
+  },
+  {
+   "target": "session_short_1x1.5",
+   "n_window": 175,
+   "skill_challenger": 0.07017687757375723,
+   "skill_champion": 0.06990604740414896,
+   "diff": 0.00027083016960827155
+  },
+  {
+   "target": "session_short_1.5x1.5",
+   "n_window": 175,
+   "skill_challenger": 0.20848448918404838,
+   "skill_champion": 0.20813496208410898,
+   "diff": 0.00034952709993940623
+  }
+ ],
+ "win_frac": 0.5666666666666667,
+ "mean_diff": 0.00042448181723522274,
+ "promote": false,
+ "champion": "nom_v1b_20261113"
+}

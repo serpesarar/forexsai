@@ -71,6 +71,19 @@ zayıflatır; yine de sıralama bilgisi yok denecek kadar az). 28k kapı kaydı 
   belirsiz okuyun.
 - **Güvenilir olduğu kullanım:** "Şu an 1 s içinde ±1 ATR'ye dokunma ihtimali / zaman aşımı ihtimali nedir?", risk
   boyutlandırma ve "bu stop bu sürede yenir mi?" sorusu — yani **oynaklık/menzil bilgisi**; yönsüz.
+- **Canlı durum (2026-11-16 ölçümü, gölge + örneklem dışı geri doldurma, 12,7 gün, 193 bağımsız tahmin, 1 s 1,5/1):**
+  LONG Brier becerisi **−0,027**, kalibrasyon eğimi **0,35**, 5 kova WF bandı dışında; SHORT +0,021; haftalık beceri
+  −0,057 / +0,020 / −0,361 (son hafta yüksek VIX ≥18,4 ve NDX 27k); `/drift` yuvarlak seviye ve H1 ATR oranı özelliklerinde
+  PSI kayması. Final dönemde görülen eğim düşüşü (0,54–0,68) canlıda daha derin. **Mezuniyet (≥28 gün, ≥300 bağımsız,
+  tüm kovalar bantta, beceri ≥0, eğim 0,7–1,3) karşılanmıyor → motor şu an "güvenilir" DEĞİLDİR**; olasılık değerleri
+  sıralama bilgisi olarak bile temkinle okunmalı. Bu, mezuniyet kuralının amaçlandığı gibi çalıştığının kanıtıdır, kusur
+  gizlenmez. Çare yeniden ayar değil: Faz 9 döngüsü (yalnız eskisini geçerse terfi) ve gölgede süre biriktirmek.
+  **Ayrıştırma (aynı gün):** canlı satırların 176/193'ü Dukascopy ızgarasında birebir eşleşti; aynı anlarda canlı (MT5 kaydedici)
+  ve Dukascopy beslemesinden üretilen P(TP) **r 0,995, ort. |fark| 0,004**, sonuç etiketleri **%93,8 aynı** → eğitim/servis
+  eşdeğerliği canlı veride de tutuyor, kusur besleme/kod değil. Bu 176 anda beceri iki beslemede de ≈ 0 (−0,007 / +0,003,
+  eğitim tabanına göre). Aynı model aynı haftalarda 15 dk ızgarada saat-iklimine göre +0,056 (Faz 9 penceresi, n 608) →
+  canlı −0,027 kısa/seyrek (saatte 1) örneklem + saat iklimi yerine düz taban farkıdır; "model bozuldu" kanıtı değil, "kanıt
+  henüz yok" durumudur. Mezuniyet yine karşılanmıyor.
 
 ## 6. Bağımsız eski dönem: 2018-01 → 2021-10 (HistData, 2020 çöküşü dahil) — Faz 0 EK-3 sonrası ek sınama
 Etkin paket (2021-11 → 2026-11 ile eğitildi) bu dönemi HİÇ görmedi; farklı besleme; spread bp × fiyat; iklim tabanı dönemin KENDİ saat

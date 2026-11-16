@@ -89,3 +89,18 @@ Testler bugün yeniden koşuldu: `pytest backend/tests/test_nom_engine.py backen
   sıralama var, olasılık düzeyi yeni rejimde kayıyor → gölge izlemeye devam, güvenilir sayılmaz (mezuniyet kuralı işliyor).
 - **Faz 9:** `test_promote_rollback` geçti; `/drift` ucu canlı yanıt verdi.
 - Testler: **11 passed** (leakage 3, eşdeğerlik 1, etiket 3, API/engine 4).
+
+### Ek koşular (2026-11-16, hook sonrası)
+- **Faz 9 tam döngü:** `faz9_retrain.py run` (indir → yeniden kur → W'de şampiyon/meydan okuyan) → **şampiyon kalır** (%56,7 < %60,
+  ort. +0,0004); `results/faz9_retrain_20261116.json`, FAZ_9 EK.
+- **Gölge mod testi:** `backend/tests/test_nom_shadow.py` → **4 passed** (her hedefe bir satır + idempotent upsert, sonuç tahminle
+  yazılmaz; bayatta yazım yok; `fill_outcomes` yalnız ufku dolanı çözer ve **eğitimdeki `label_batch` ile birebir**; update filtresi
+  önce (E128); DB yoksa fail-open).
+- **Panel render testi:** `frontend/tests/nomPanel.test.tsx` (vitest, canlı API'den alınmış gerçek yanıt fixture'ları) → **5 passed**
+  (LONG/SHORT + %95, NÖTR + yön uyarısı, 5 SHAP faktörü, S/R haritası, RSI/rejim/VIX, model sürümü, canlı kalibrasyon SVG +
+  "mezun değil", ufuk/geometri seçicisi hook'u yeni hedefle çağırır, veri bayatsa tahmin gizlenir).
+- **Canlı eşdeğerlik:** canlı gölge satırları vs aynı anın Dukascopy tahmini r 0,995, sonuç etiketi %93,8 aynı (FAZ_5 §5).
+- Toplam NOM testleri: backend **15 passed** (11 + 4), frontend **5 passed**.
+- **Mezuniyet:** karşılanmıyor (12,7 gün < 28; takvim gerektirir). Prompt "yaz" diyor — yazıldı ve uygulanıyor; motor
+  mezun olana kadar "güvenilir değil" etiketiyle gölgede kalır (DÜRÜST SONUÇ, FAZ_5 §5).
+
