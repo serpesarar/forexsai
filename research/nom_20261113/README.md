@@ -9,7 +9,7 @@ Sonuçların dürüst özeti: `FAZ_5_RAPOR.md` ve `FAZ_9_RAPOR.md` → "DÜRÜST
 |---|---|
 | `PROTOCOL.md` | ön kayıt (etiket, özellik, doğrulama, geçme ölçütleri) |
 | `FAZ_0_RAPOR.md` … `FAZ_9_RAPOR.md` | faz raporları |
-| `src/` | araştırma kodu: `duka_fetch`, `macro_fetch`, `data_layer`, `faz0_build`, `faz12_build`, `faz1_tick_check`, `faz2_audit`, `validation`, `faz4_train`, `faz5_econ`, `faz9_retrain`; ekler: `histdata_layer` (2018–21, saat kuralı E135), `faz0_v3_eski_donem`, `faz0_duka_vs_histdata_2018`, `faz0_takvim_dogrula`, `faz34_ek` (Purged K-Fold, CatBoost, ensemble), `deep_nets` + `faz4_deep` (LSTM/TCN/Transformer) |
+| `src/` | araştırma kodu: `duka_fetch`, `macro_fetch`, `data_layer`, `faz0_build`, `faz12_build`, `faz1_tick_check`, `faz2_audit`, `validation`, `faz4_train`, `faz5_econ`, `faz9_retrain`; ekler: `histdata_layer` (2018–21, saat kuralı E135), `faz0_v3_eski_donem`, `faz0_duka_vs_histdata_2018`, `faz0_takvim_dogrula`, `faz34_ek` (Purged K-Fold, CatBoost, ensemble), `deep_nets` + `faz4_deep` (LSTM/TCN/Transformer), `faz8_eski_donem_mezuniyet` (mezuniyet ölçütünün 2018–21 yeniden oynatması + güç kontrolü) |
 | `data/` (git dışı) | `ndx_1m_v1.parquet`, `features_v1.parquet`, `labels_*.parquet`, `macro/` |
 | `results/` | metrikler, WF/final OOS tahminleri, kalibrasyon tabloları, SVG grafikler |
 | `backend/services/nom/` | **tek kod yolu**: `bars`, `features`, `labels`, `nyse_calendar`, `model_store`, `live_data`, `engine`, `shadow`, `calibration`, `drift` |

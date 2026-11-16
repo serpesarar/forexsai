@@ -111,3 +111,8 @@ Testler bugün yeniden koşuldu: `pytest backend/tests/test_nom_engine.py backen
 - İlk canlı kayıt: t_dec 2026-11-16 21:12 UTC, 5 hedef (`source='shadow'`), 15 dk aralıkla sürüyor.
 - Mezuniyet ölçümü: 28 gün dolunca (≈ 2026-12-14, canlı-gölge başlangıcından) `GET /api/probability/nasdaq/calibration?source=shadow`.
   O tarihe kadar motor "güvenilir değil" etiketiyle gölgede.
+
+### Mezuniyet ölçütü geçmişte yeniden oynatıldı (2026-11-16)
+`src/faz8_eski_donem_mezuniyet.py`: sayaçta iki ölçüm hatası bulundu ve düzeltildi (E138; eşikler aynı). Düzeltilmiş ölçüt
+2018–21 Dukascopy'de gerçek modeli 29 günlük pencerelerin %26–62'sinde mezun ediyor, bozuk modelleri ≤%13 / %0 → ölçüt
+ayırt edici. Test `test_graduation_independence_and_band` (backend NOM testleri **16 passed**). Canlı mezuniyet ≈ 2026-12-14.

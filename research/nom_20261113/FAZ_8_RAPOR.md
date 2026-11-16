@@ -60,3 +60,32 @@ beklenen). 1 s 1/1 Brier becerisi long −0,003 / short +0,019 (9,8 gün, 175 ba
 (süre < 28 gün); short tarafta drift uyarısı (son 14 gün / önceki ayrımı bu kısa pencerede anlamsız — ilk hafta).
 Bu kayıtlar `source` ile ayrılır; panel tümünü gösterir, **resmi mezuniyet yalnız canlı gölge kayıtlarıyla**:
 `GET /api/probability/nasdaq/calibration?…&source=shadow`.
+
+## EK (2026-11-16) — mezuniyet ölçütü geçmiş mumlarda yeniden oynatıldı; ölçüt sayacında iki hata bulundu ve düzeltildi
+`src/faz8_eski_donem_mezuniyet.py` → `results/faz8_eski_donem_mezuniyet.json` (eski sürüm sonucu `_v0_eskiOlcut.json`).
+Etkin paket, hiç görmediği 2018-01 → 2021-10 Dukascopy 1m mumlarında gölge hedefleriyle 15 dk ızgarada tahmin üretti; canlı
+raporun AYNI `side_report` fonksiyonu 29 günlük ardışık pencerelere (47 pencere) uygulandı.
+- **Hata 1 (bağımsız sayımı):** kod ≥60 dk *boşluk* sayıyordu; 15 dk gölge akışında bu yalnız seans araları → 28 günde ~21
+  "bağımsız" → ≥300 şartı yapısal olarak geçilemezdi. Düzeltme: birbirinden ≥60 dk uzak seçilebilen en fazla tahmin
+  (açgözlü seyreltme, `thin_mask`) → 28 günde ~430.
+- **Hata 2 (kova bandı):** canlı kovanın gerçekleşen oranı WF'nin dar %95 aralığıyla (±0,02) kıyaslanıyordu; 28 günde kova
+  başına birkaç düzine tahminin kendi gürültüsü yok sayılıyordu → iyi kalibre model pencerelerin 48/48'inde bant dışı.
+  Düzeltme: canlı kovanın kendi %95 Wilson aralığı (seyreltilmiş örnekle) WF bandıyla örtüşmeli; kovada ≥20 bağımsız tahmin.
+- Eşikler (28 gün, 300 bağımsız, eğim 0,7–1,3, beceri ≥0, tüm kovalar bantta) DEĞİŞMEDİ; yalnız ölçüm doğru yapılıyor.
+  Hatalar canlı sonuç notlanmadan, geçmiş yeniden oynatmasıyla bulundu (canlı kayıt henüz 28 güne ulaşmadı).
+
+| Hedef | gerçek model: mezun pencere | bozuk: P(TP)+0,08 | bozuk: P(TP) karıştırılmış |
+|---|---|---|---|
+| 15m 1/1 long / short | 12 / 13 (47) | 2 / 1 | 0 / 0 |
+| 1h 1/1 long / short | 20 / 25 | 6 / 0 | 0 / 0 |
+| 1h 1,5/1 long / short | **29** / 23 | 6 / 3 | 0 / 0 |
+| 4h 1/1 long / short | 20 / 17 | 6 / 1 | 0 / 0 |
+| 4h 1,5/1,5 long / short | 25 / 19 | 5 / 3 | 0 / 0 |
+| seans 1/1 long / short | 0 / 0 | 0 / 0 | 0 / 0 |
+
+Okuma: düzeltilmiş ölçüt **ayırt edici** — iyi model 29 günlük pencerelerin %26–62'sinde mezun, kalibrasyonu bozuk model
+≤%13, bilgisiz model %0. Yani tek bir 28 günlük pencerede mezuniyet temkinli bir kapı (gerçek model de çoğu zaman geçemez);
+yanlış pozitif riski düşük. **Seans ufku** günde tek tahmin ürettiği için 28 günde 300 bağımsıza ulaşamaz → seans için
+mezuniyet en erken ~300 işlem günü sonra mümkün (bilinçli: bu ufukta kanıt yavaş birikir).
+Canlı durum (düzeltilmiş sayaçla, 1 s 1,5/1): 12,7 gün, 193 bağımsız, bant dışı 0, LONG beceri −0,027 / eğim 0,35 → **mezun
+değil**; gölge döngüsü Railway'de 2026-11-16 21:13 UTC'den beri açık, resmi ölçüm `source=shadow` ile ≈ 2026-12-14.

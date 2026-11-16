@@ -144,3 +144,24 @@ def test_fill_outcomes_matches_training_labels(monkeypatch):
 def test_db_missing_fail_open(monkeypatch):
     monkeypatch.setattr(SH, '_db', lambda: None)
     assert SH.record_once() == 0 and SH.fill_outcomes() == 0
+
+
+def test_graduation_independence_and_band():
+    """Mezuniyet sayacı: 15 dk akışta ≥60 dk seyreltme (boşluk sayımı DEĞİL) + canlı kovanın kendi %95 aralığıyla örtüşme."""
+    from services.nom import calibration as CB
+    ts = np.arange(0, 28 * 86400, 900)                      # 28 gün, 15 dk aralık
+    keep = CB.thin_mask(ts)
+    assert keep.sum() == 28 * 24 and np.all(np.diff(ts[keep]) >= 3600)
+    lo, hi = CB.wilson(6, 30)                               # %20, n=30 → geniş aralık
+    assert lo < 0.2 < hi and hi - lo > 0.2
+    rng = np.random.default_rng(1)
+    t = pd.to_datetime(ts, unit='s', utc=True)
+    p = rng.uniform(0.1, 0.5, len(ts))
+    y = (rng.uniform(size=len(ts)) < p).astype(int)        # kalibre: gerçekleşen = tahmin
+    df = pd.DataFrame({'t_dec': t, 'p_long_tp': p, 'outcome_long_cls': np.where(y == 1, 0, 1), 'outcome_long_r': 0.0})
+    bins = [{'lo': a, 'hi': a + 0.1, 'ci_lo': a + 0.04, 'ci_hi': a + 0.06} for a in (0.1, 0.2, 0.3, 0.4)]
+    g = CB.side_report(df, 'long', bins)['mezuniyet']
+    assert g['bagimsiz_n'] >= 300 and g['bant_disi_kova'] == 0
+    df['p_long_tp'] = np.clip(p + 0.15, 0, 1)               # bozuk kalibrasyon → kovalar bant dışı
+    bins2 = [{'lo': a, 'hi': a + 0.1, 'ci_lo': a + 0.04, 'ci_hi': a + 0.06} for a in (0.2, 0.3, 0.4, 0.5, 0.6)]
+    assert CB.side_report(df, 'long', bins2)['mezuniyet']['bant_disi_kova'] >= 2

@@ -3,6 +3,11 @@
 Mezuniyet: ≥ GRAD_MIN_DAYS gün ve ≥ GRAD_MIN_INDEP bağımsız (≥60 dk aralıklı) çözülmüş tahmin; her p_tp kovasında
 gerçekleşen oran WF bandının (%95 GA) içinde; rolling Brier becerisi (taban oranına göre) ≥ 0; kalibrasyon eğimi
 0,7–1,3. Biri tutmazsa 'güvenilir değil'.
+Düzeltme (2026-11-16, eski dönem yeniden oynatmasıyla bulundu, canlı sonuç görülmeden): (1) "bağımsız" = birbirinden
+≥60 dk uzak seçilebilen en fazla tahmin (açgözlü seyreltme); önceki kod ≥60 dk BOŞLUK sayıyordu → 15 dk gölge akışında
+28 günde ~21 → ölçüt yapısal olarak geçilemezdi. (2) kova "bant içinde" = canlı kovanın KENDİ %95 Wilson aralığı WF
+bandıyla (±0,02) örtüşür ve kovada ≥ BAND_MIN_N seyreltilmiş tahmin vardır; önceki kod canlı örnekleme gürültüsünü yok
+sayıyordu → iyi kalibre model 28 günlük pencerelerin 48/48'inde bant dışı çıkıyordu.
 Drift: son 14 günün Brier becerisi önceki dönemden ≥ 0,03 düşükse veya bant dışı kova sayısı ≥ 2 → uyarı.
 """
 from __future__ import annotations
@@ -18,6 +23,31 @@ GRAD_MIN_DAYS = 28
 GRAD_MIN_INDEP = 300
 SLOPE_BAND = (0.7, 1.3)
 DRIFT_DROP = 0.03
+INDEP_GAP_S = 3600
+BAND_MIN_N = 20
+Z95 = 1.96
+
+
+def thin_mask(ts_s: np.ndarray, gap_s: int = INDEP_GAP_S) -> np.ndarray:
+    """Sıralı zaman damgalarından birbirine ≥ gap_s uzak en fazla örneği açgözlü seç (bağımsız alt küme)."""
+    order = np.argsort(ts_s, kind='stable')
+    keep = np.zeros(len(ts_s), bool)
+    last = -np.inf
+    for i in order:
+        if ts_s[i] - last >= gap_s:
+            keep[i] = True
+            last = ts_s[i]
+    return keep
+
+
+def wilson(k: float, n: float, z: float = Z95) -> tuple[float, float]:
+    if n <= 0:
+        return 0.0, 1.0
+    ph = k / n
+    den = 1 + z * z / n
+    c = (ph + z * z / (2 * n)) / den
+    h = z * np.sqrt(ph * (1 - ph) / n + z * z / (4 * n * n)) / den
+    return float(c - h), float(c + h)
 
 
 def _fetch(horizon: str, gk: str, days: int, source: str | None = None) -> pd.DataFrame:
@@ -53,26 +83,31 @@ def side_report(df: pd.DataFrame, side: str, bins: list[dict]) -> dict:
     base = y.mean()
     brier = float(((p - y) ** 2).mean())
     brier_base = float(((base - y) ** 2).mean()) or np.nan
+    t = pd.to_datetime(d.t_dec, utc=True)
+    ts_all = t.astype('int64').to_numpy() // 10**9
+    ind = thin_mask(ts_all)                                  # bağımsız alt küme (≥60 dk aralıklı)
     rows, out_band = [], 0
     for b in bins:
         m = (p >= b['lo']) & (p <= b['hi'])
         if m.sum() == 0:
             continue
         obs = float(y[m].mean())
-        inside = b['ci_lo'] - 0.02 <= obs <= b['ci_hi'] + 0.02
-        out_band += int(not inside and m.sum() >= 20)
-        rows.append({'kova': [round(b['lo'], 3), round(b['hi'], 3)], 'n': int(m.sum()), 'beklenen': round(float(p[m].mean()), 4),
-                     'gerceklesen': round(obs, 4), 'wf_bandi': [round(b['ci_lo'], 4), round(b['ci_hi'], 4)],
-                     'bant_icinde': bool(inside)})
+        mi = m & ind
+        lo, hi = wilson(float(y[mi].sum()), float(mi.sum()))
+        inside = lo <= b['ci_hi'] + 0.02 and hi >= b['ci_lo'] - 0.02   # canlı %95 aralığı WF bandıyla örtüşür
+        out_band += int(not inside and mi.sum() >= BAND_MIN_N)
+        rows.append({'kova': [round(b['lo'], 3), round(b['hi'], 3)], 'n': int(m.sum()), 'n_bagimsiz': int(mi.sum()),
+                     'beklenen': round(float(p[m].mean()), 4), 'gerceklesen': round(obs, 4),
+                     'gerceklesen_ga95': [round(lo, 4), round(hi, 4)],
+                     'wf_bandi': [round(b['ci_lo'], 4), round(b['ci_hi'], 4)], 'bant_icinde': bool(inside)})
     slope = float(np.polyfit(p, y, 1)[0]) if len(p) > 30 and p.std() > 1e-6 else np.nan
-    t = pd.to_datetime(d.t_dec, utc=True)
     wk = pd.DataFrame({'w': t.dt.to_period('W').astype(str), 'e': (p - y) ** 2, 'b': (base - y) ** 2}).groupby('w').mean()
     roll = [{'hafta': i, 'brier_beceri': round(float(1 - v.e / v.b), 4) if v.b > 0 else None} for i, v in wk.iterrows()]
     recent = t >= t.max() - pd.Timedelta(days=14)
     sk_recent = 1 - ((p[recent] - y[recent]) ** 2).mean() / max(((base - y[recent]) ** 2).mean(), 1e-9) if recent.any() else np.nan
     sk_prev = 1 - ((p[~recent] - y[~recent]) ** 2).mean() / max(((base - y[~recent]) ** 2).mean(), 1e-9) if (~recent).any() else np.nan
-    ts = np.sort(t.astype('int64').to_numpy() // 10**9)
-    indep = int(1 + (np.diff(ts) >= 3600).sum()) if len(ts) else 0   # ≥60 dk aralıklı = bağımsız
+    ts = np.sort(ts_all)
+    indep = int(ind.sum())                                    # ≥60 dk aralıklı seçilebilen en fazla tahmin
     days = float((ts[-1] - ts[0]) / 86400) if len(ts) > 1 else 0.0
     skill = 1 - brier / brier_base if brier_base and brier_base > 0 else np.nan
     grad = {'gun': round(days, 1), 'bagimsiz_n': indep, 'bant_disi_kova': out_band, 'brier_beceri': skill,
