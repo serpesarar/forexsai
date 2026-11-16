@@ -1023,5 +1023,17 @@
   "output": "research/ndx_10y_1m_20261116/RAPOR.md",
   "needs_backend": false,
   "est_runtime": "~2 dk (önbellekle)"
+ },
+ {
+  "id": "mum_anatomi_1m",
+  "name": "1m mum anatomisi — gözle keşif → algoritma (ORB içi kırılım anatomisi, itki bacağı, aşırı fitil)",
+  "kind": "script",
+  "command": "cd research/mum_anatomi_1m_20261117 && ../../.venv/bin/python src/p1_orb.py && ../../.venv/bin/python src/p23.py && ../../.venv/bin/python src/p1_ek1.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "Gözle incelenen 1m grafiklerden önerilen yapıları (itki bacağı bağlamı, temiz/dağınık kırılım, ret fitili) Dukascopy 2018-26 1m veride ön kayıtla sınar; ORB×VIX içinde ardışık yeşil/üst fitil izi C, genel kurallar X. Grafik: src/draw.py (.venv_ext).",
+  "output": "research/mum_anatomi_1m_20261117/RAPOR.md",
+  "needs_backend": false,
+  "est_runtime": "~1 dk"
  }
 ]

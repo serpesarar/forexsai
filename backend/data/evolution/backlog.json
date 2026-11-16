@@ -5192,5 +5192,16 @@
     "source": "session",
     "created_at": "2026-11-16T22:16:51.496941+00:00",
     "updated_at": "2026-11-16T22:16:51.497068+00:00"
+  },
+  {
+    "id": "bl_5448380d23",
+    "title": "ORB×VIX 1m anatomi gölge karnesi",
+    "detail": "anatomi_1m alanı n≥100 canlı ORB işleminde: f_run≥3 kolu diğerinden iyi mi, kitap dozu iki dönemde artırıyor mu; olursa lot dozu öner",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-16T22:39:40.420331+00:00",
+    "updated_at": "2026-11-16T22:39:40.420461+00:00"
   }
 ]

@@ -61,6 +61,29 @@ def plan(trig: dict, ask: float, vix_prev: float | None, max_risk_frac: float = 
     return {"sl": stop, "tp": ask + tp_r * risk, "risk": risk, "tp_r": tp_r}, None
 
 
+def anatomy_1m(bars: list[dict], today: date, now_utc: float) -> dict:
+    """GÖLGE ETİKETİ (research/mum_anatomi_1m_20261117, sınıf C): 09:30 ET → şimdiye kadar KAPANMIŞ 1m barların anatomisi.
+    f_run = sona biten ardışık yeşil bar sayısı, f_uw5 = son 5 barda üst fitil / aralık, f_clv = ort. kapanış konumu,
+    f_flip = renk değişim oranı. Karar vermez; yalnız olay kaydına yazılır (ileri karne)."""
+    sel = [b for b in bars if cs.to_local(b["t"], sh.TZ)[0] == today and cs.to_local(b["t"], sh.TZ)[1] >= sh.OPEN_MIN
+           and b["t"] + 60 <= now_utc]
+    if len(sel) < 5:
+        return {}
+    up = [b["close"] > b["open"] for b in sel]
+    run = 0
+    for x in reversed(up):
+        if not x:
+            break
+        run += 1
+    last = sel[-5:]
+    rng5 = sum(b["high"] - b["low"] for b in last)
+    uw5 = sum(b["high"] - max(b["open"], b["close"]) for b in last) / rng5 if rng5 > 0 else None
+    clv = [(b["close"] - b["low"]) / (b["high"] - b["low"]) for b in sel if b["high"] > b["low"]]
+    flips = sum(1 for a, b in zip(up, up[1:]) if a != b) / (len(up) - 1)
+    return {"f_run": run, "f_uw5": None if uw5 is None else round(uw5, 4),
+            "f_clv": round(sum(clv) / len(clv), 4) if clv else None, "f_flip": round(flips, 4), "n_1m": len(sel)}
+
+
 def manage_exits(mt5, config, log, send_order, offset_fn, resolve_symbol, now: float | None = None) -> None:
     """15:55 ET zaman çıkışı (ana döngüde frenden ÖNCE çağrılır); SL/TP broker tarafında."""
     now = time.time() if now is None else now
@@ -101,6 +124,12 @@ def poll(mt5, config, log, resolve_symbol, get_vix, offset_fn, send_order, mk_co
     late = now - (trig["trig_t"] + sh.BAR_MIN * 60)
     rec = {"day": str(today), "oh": trig["oh"], "ol": trig["ol"], "trig_close": trig["trig_close"], "vix_prev": vix_prev,
            "latency_s": round(late, 1)}
+    try:                                                                          # gölge etiketi; hata emri etkilemez
+        m1 = mt5.copy_rates_from_pos(sym, mt5.TIMEFRAME_M1, 0, 450)
+        if m1 is not None and len(m1):
+            rec["anatomi_1m"] = anatomy_1m(cs._m15_utc(m1, offset_fn(sym)), today, now)
+    except Exception:
+        pass
     if late > MAX_LATE_S:
         kk.append_event({"kind": "skip", "rule": RULE, "reason": "geç tespit", **rec})
         return

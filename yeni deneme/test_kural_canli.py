@@ -152,3 +152,16 @@ def test_ksg_vix25_double_lot():
     assert kl.entry_lot(0.5, 25.0) == 1.0 and kl.entry_lot(0.5, 31.2) == 1.0
     assert kl.entry_lot(0.5, 24.9) == 0.5 and kl.entry_lot(0.5, None) == 0.5
     assert kl.entry_lot(0.5, 30.0, enabled=False) == 0.5
+
+
+def test_orb_anatomy_1m_shadow_label():
+    from datetime import datetime, timezone
+    import caprev_shadow as cs
+    t0 = cs.local_to_utc(date(2026, 11, 16), 570, "US")                # 09:30 ET
+    mk = lambda k, o, h, l, c: {"t": t0 + 60 * k, "open": o, "high": h, "low": l, "close": c}
+    bars = [mk(-1, 1, 2, 0, 1.5),                                         # 09:29 → dahil değil
+            mk(0, 10, 11, 9, 9.5), mk(1, 9.5, 10, 9, 9.8), mk(2, 9.8, 10.5, 9.7, 10.4),
+            mk(3, 10.4, 11, 10.3, 10.9), mk(4, 10.9, 12, 10.8, 11.5), mk(5, 11.5, 13, 11, 12)]   # son bar açık
+    a = ov.anatomy_1m(bars, date(2026, 11, 16), t0 + 5 * 60 + 30)
+    assert a["n_1m"] == 5 and a["f_run"] == 4 and 0 < a["f_uw5"] < 1 and a["f_flip"] == 0.25
+    assert ov.anatomy_1m(bars[:3], date(2026, 11, 16), t0 + 3600) == {}
