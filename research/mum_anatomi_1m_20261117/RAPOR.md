@@ -44,3 +44,19 @@ Hücreler (KEŞİF 2022-23 / TEST 2024-26 / BAĞIMSIZ 2018-21; sinyal kolu net b
 çıkmadı. Kısa ufukta bilgi maliyetin altında; uzun ufukta 1m izi büyük ölçüde günlük mumun zaten taşıdığı bilginin (günün getirisi, IBS) kopyası.
 Ayakta kalan iki iz: ORB × VIX içinde kırılım anatomisi (AN-01, gölge etiketi canlıda) ve sıçrama payı (AN-11, C). Sıradaki dürüst adım
 gözle yeni şekil aramak değil, bu iki izin ileri karnesi.
+
+## EK-4 — Teslimiyet mumu (korku rejiminde 1m ret fitili, `src/t_teslim.py`)
+Kural: dünkü VIX ≥ 18,4 ∧ gün içi düşüş ≤ −1 × dvol20 (10:00–15:00) ∧ 1m alt fitil ≥ k × a60, fitil payı ≥ 0,5, üst yarıda kapanış → sonraki bar AL;
+T0 = 15:55, T1 = ertesi gün 16:00. Kontrol K = aynı gün düşüş şartının ilk dakikası (fitil şartı yok). k = 3 ön kayıtta 0 olay verdi → EK-4b'de
+yalnız sıklıkla k = 0,75 (günlerin %64'ü).
+| ufuk | KEŞİF T / K | TEST T / K | BAĞIMSIZ T / K |
+|---|---|---|---|
+| T0 (seans sonu) | −5,4 / −6,3 bp (n 34) | −30,4 / −16,5 (n 23, P 0,001) | −11,9 / +11,3 (n 60) |
+| T1 (ertesi gün) | −24,1 / −16,5 | +88,5 / +74,6 | +12,2 / +22,3 |
+**AN-12 X:** gün içi teslimiyet fitili düşen bıçağı yakalıyor (seans sonu üç dönemde eksi); fitil şartı kontrolü 6 hücrenin 4'ünde kötüleştiriyor.
+Korku dönüşü günler ölçeğinde ve zaman çıkışıyla geliyor (C3b/CAPREV); 1m fitili zamanlamaya bilgi eklemiyor (§3-3 "teyit günlük ölçekte ters").
+
+## Son söz
+13 ön kayıtlı 1m yapıdan (4 ufuk) tek başına işlem kuralı çıkmadı; ayakta kalan izler ORB × VIX kırılım anatomisi (canlıda gölge kaydı) ve sıçrama payı (C).
+Bu çalışmada 1m verinin işleme gerçekten yarayan katkısı mum şeklinden değil, yol çözünürlüğünden geldi: aynı veriyle ORB × VIX çıkışının 2R → 3R
+düzeltilmesi (`research/ndx_10y_1m_20261116`, kart 6/6, canlı).

@@ -73,3 +73,20 @@ EK-2'de 1m izi günlük getiri/IBS'nin kopyası çıktı. Günlük OHLC'den hesa
 Hedefler: GUN (16:00 → ertesi 16:00), HAFTA (16:00 → 5. işlem günü 16:00), finansmanlı net bp. Kontroller: r_gun, r5 (5 günlük getiri), IBS, log RV.
 Kural: RSK5 KEŞİF alt tertili → 16:00 AL, HAFTA çıkış (tek pozisyon, örtüşme yok). Geçer ölçütleri EK-2 ile aynı (üç dönem net > 0, TEST/BAĞIMSIZ
 P ≥ 0,90, uç fark > 0 üç dönemde, kısmi OLS aynı işaret ve havuz |t| ≥ 2).
+
+## EK-4 (2026-11-17, koşulmadan önce) — TESLİMİYET MUMU: korku rejiminde 1m ret fitili, uzun ufuk
+Gerekçe: 1m anatomisi tek başına maliyeti aşmıyor; defterin tek sağlam mekanizması "korku döner" (§3-2, C3b/CAPREV/ORB×VIX). Birleşim:
+korku günü gün içi sert düşüşte gelen uzun alt fitilli, üst yarıda kapanan 1m mum = satıcı tükenmesinin mum izi. Ufuk seans sonu / ertesi gün.
+Kural T (dondurulmuş):
+- Gün şartı: dünkü VIX ≥ 18,4; tam RTH günü.
+- An şartı (10:00 ≤ bar ≤ 15:00 ET): o ana kadar kapanmış barlarla gün içi düşüş (açılıştan bar kapanışına) ≤ −1 × dvol20 (CAPREV dvol'u).
+- Mum şartı: alt fitil ≥ 3 × a60 ∧ alt fitil / aralık ≥ 0,5 ∧ kapanış konumu ≥ 0,5.
+- Giriş: sonraki bar açılışı (ask), günde ≤ 1. Çıkış T0 = aynı gün 15:55; T1 = ertesi işlem günü 16:00. Stop yok (zaman çıkışı; acil stop ayrıca raporlanır).
+Kontrol K: aynı gün ve an şartını ilk karşılayan dakika (mum şartı yok) → aynı giriş/çıkış. Fitilin katkısı = T − K.
+Dönemler KEŞİF 2022–23 / TEST 2024–26 / BAĞIMSIZ 2018–21. Geçer: T net > 0 üç dönemde ∧ TEST ve BAĞIMSIZ P ≥ 0,90 ∧ T > K üç dönemde ∧
+spr×1,5 > 0. Geçerse: 2. KURAL kartı + mevcut kitaba katkı (aylık Sharpe, E110).
+
+## EK-4b (2026-11-17) — eşik düzeltmesi, getiriye BAKILMADAN
+EK-4'teki "alt fitil ≥ 3 × a60" 9 yılda 0 olay üretti (sınanamaz). Eşik yalnız olay SIKLIĞIYLA seçildi (getiri hesaplanmadan): 183 korku-düşüş
+gününde olay oranı 0,5× %78 · 0,75× %64 · 1,0× %28 · 1,5× %3 · 2,0× %0. Kural: günlerin ≥ %50'sinde olay veren en sıkı eşik → **0,75 × a60**.
+Diğer her şey EK-4 ile aynı; geçme ölçütleri değişmedi.
