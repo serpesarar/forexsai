@@ -1,0 +1,130 @@
+{
+  "scope": "ndx_pazartesi_uzun",
+  "aciklama": "NDX Pazartesi 03:00 ET (Avrupa açılışı) AL (ask) → Salı 03:00 ET SAT (bid), stopsuz, haftada 1; gecelik finansman dahil",
+  "tarih": "2026-11-16T18:18:02",
+  "sembol": "NAS100 (ölçüm Dukascopy USATECHIDXUSD 1m)",
+  "ana_olcum": "Dukascopy BID 1m 2018-01 → 2026-11, spread NY-saati bp modeli; research/kosul_izgara_20261117",
+  "olay": 413,
+  "ort_bp": 22.73,
+  "medyan_bp": 19.23,
+  "isabet": 0.571,
+  "P": 0.9992,
+  "en_iyi_5_haric": 16.02,
+  "en_kotu": -470.0,
+  "yil": {
+    "2018": [
+      48,
+      -30.2
+    ],
+    "2019": [
+      48,
+      4.3
+    ],
+    "2020": [
+      46,
+      104.0
+    ],
+    "2021": [
+      47,
+      12.5
+    ],
+    "2022": [
+      45,
+      7.0
+    ],
+    "2023": [
+      45,
+      28.4
+    ],
+    "2024": [
+      48,
+      12.6
+    ],
+    "2025": [
+      45,
+      34.6
+    ],
+    "2026": [
+      41,
+      36.7
+    ]
+  },
+  "checks": {
+    "1_hacim": {
+      "deger": [
+        413
+      ],
+      "gecti": true
+    },
+    "2_beklenti": {
+      "deger": [
+        22.73,
+        0.999
+      ],
+      "gecti": true
+    },
+    "3_kararlilik": {
+      "deger": [
+        21.3,
+        24.2
+      ],
+      "gecti": true
+    },
+    "4_surtunme": {
+      "deger": [
+        21.2
+      ],
+      "gecti": true
+    },
+    "5_icra_1dk_gec": {
+      "deger": [
+        22.15
+      ],
+      "gecti": true
+    },
+    "6_tek_pozisyon": {
+      "deger": [
+        true
+      ],
+      "gecti": true
+    }
+  },
+  "gun_plasebosu_bp": {
+    "Pzt": 22.731438533395394,
+    "Sal": 6.325203720313528,
+    "Car": 4.8518904419117375,
+    "Per": -3.08818938913287,
+    "Cum": -9.411931932759273
+  },
+  "P_diger_gunlerden_iyi": 0.999,
+  "yan_girisler_bp": {
+    "08:30": 20.862355620654192,
+    "09:30": 24.04432821883153
+  },
+  "kitap_katkisi_0.5lot": {
+    "ESKI": {
+      "kitap": 1.6866043142730451,
+      "kitap+P1": 1.6664598189459323,
+      "P": 0.43425
+    },
+    "YENI": {
+      "kitap": 2.182192313051495,
+      "kitap+P1": 2.2492604264588216,
+      "P": 0.844
+    },
+    "TUM": {
+      "kitap": 1.8612185507501973,
+      "kitap+P1": 1.919066318614535,
+      "P": 0.848
+    }
+  },
+  "kesif_nasil": "11.340 hücrelik koşul ızgarası (KEŞİF 2018–23) en iyi 30'u → KÖR 2024–26 tekrar 8/30 (beklenen 3, binom p 0,008); Pazartesi hücresi KÖR +25 bp P 0,997",
+  "uyarilar": [
+    "Izgara kökenli (çoklu bakış); maxT eşiğini KEŞİF'te geçmedi, kanıt kör tekrardan",
+    "Mekanizma belirsiz (GF-06 'Pazartesi SAT yok' ile aynı yön)",
+    "2018 −30 bp; en kötü işlem −470 bp (stopsuz)",
+    "Kitaba katkı P 0,85 (YENİ artı, ESKİ hafif eksi)"
+  ],
+  "verdikt": "LIVE-uygun (6/6) — öneri: önce gölge veya küçük lot; karar kullanıcıda",
+  "verdikt_6": 6
+}

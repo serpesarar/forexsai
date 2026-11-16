@@ -5214,5 +5214,27 @@
     "source": "session",
     "created_at": "2026-11-16T22:43:57.887277+00:00",
     "updated_at": "2026-11-16T22:43:57.887434+00:00"
+  },
+  {
+    "id": "bl_1000044f7c",
+    "title": "IG-01 SMT bağımsız dönem",
+    "detail": "Teyitli SMT − kontrol +0,153R P 0,887 (tek broker 17 ay); Dukascopy USA500+NDX 1m 2018→ ile aynı donmuş kural, ön kayıtlı yeniden sınama",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-16T23:08:38.592855+00:00",
+    "updated_at": "2026-11-16T23:08:38.592977+00:00"
+  },
+  {
+    "id": "bl_ef1234a6c1",
+    "title": "Pazartesi uzun (KI-04) canlı/gölge kararı",
+    "detail": "kart 6/6 ndx_pazartesi_uzun.json: Pzt 03:00 ET AL → Salı 03:00, +22,7 bp, kör 2024-26 +25 bp; gölge modülü veya 0,5 lot canlı; durdurma n=40 haftada ort<0",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-16T23:18:24.836385+00:00",
+    "updated_at": "2026-11-16T23:18:24.836497+00:00"
   }
 ]
