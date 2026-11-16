@@ -99,3 +99,11 @@ Soru: 09:30–12:00 1m anatomisi S4'ün güçlü alt kümesini ayırır mı?
 Tertiller KEŞİF (2022–23) S4 olaylarında. Kural S4+: S4 ∧ A_clv KEŞİF üst tertili. Geçer: S4+ net > 0 üç dönemde (KEŞİF/TEST/BAĞIMSIZ),
 TEST ve BAĞIMSIZ P ≥ 0,90, S4+ > S4 alt tertil üç dönemde ∧ canlı kitaba (ORB 3R'li) 0,5 lot eklenince aylık Sharpe ESKİ ve YENİ'de artar.
 A_w aynı biçimde ikinci (bağımsız) sınama olarak raporlanır; ikisi için Holm.
+
+## EK-6 (2026-11-17, koşulmadan önce) — veriyle öğrenilen şekil sözlüğü (grafiği "görerek" kümeleme)
+Elle seçilen yapılar (AN-01…13) X. Son ve kapsamlı soru: şekilleri ben seçmeden, son 30 adet 1m mumun resmi ileri getiriyi ayırıyor mu?
+- Karar anları: RTH 10:00–15:30, 15 dakikada bir (tam gün). Vektör = [normalize yol (c_i / c_son − 1) / σ30, i = 1…30] ⊕ [30 barın kapanış
+  konumu CLV] ⊕ [30 barın üst ve alt fitil / a60] → 120 boyut; standartlaştırma + PCA 12 + k-means k = 20, YALNIZ KEŞİF (2022–23) üzerinde.
+- Hedefler: H60 = sonraki bar açılışı → +60 dk, H1G = → ertesi gün 16:00; yön kümenin KEŞİF ortalama işaretinden; net bp (ask/bid).
+- Seçim KEŞİF'te: |t| ≥ eşik, eşik = küme etiketlerinin gün içinde karıştırıldığı 200 permütasyonda max|t|'nin %95'i (maxT).
+- Geçer: seçilen küme TEST ve BAĞIMSIZ'da aynı yönde net > 0 ∧ P ≥ 0,90. Geçen olursa kart + kitap katkısı.

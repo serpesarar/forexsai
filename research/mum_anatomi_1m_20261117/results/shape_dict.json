@@ -1,0 +1,25 @@
+{
+ "n": {
+  "KESIF": 10433,
+  "TEST": 13910,
+  "BAGIMSIZ": 19541
+ },
+ "H60": {
+  "maxT_esik": 6.187290514475812,
+  "kesif_max_abs_t": 2.394726558939243,
+  "secilen": {},
+  "kesif_t_vs_sonraki_fark_korelasyonu": {
+   "TEST": -0.06585344497577798,
+   "BAGIMSIZ": 0.16690330620808894
+  }
+ },
+ "H1G": {
+  "maxT_esik": 3.6066726515056953,
+  "kesif_max_abs_t": 2.1455509491353024,
+  "secilen": {},
+  "kesif_t_vs_sonraki_fark_korelasyonu": {
+   "TEST": -0.29933106387301744,
+   "BAGIMSIZ": -0.14089444444174123
+  }
+ }
+}

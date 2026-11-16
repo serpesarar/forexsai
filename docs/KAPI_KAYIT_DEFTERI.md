@@ -1184,8 +1184,9 @@ ve ilk kez maliyeti ödenmiş kanıtlı kenarın (ORB × VIX) içinde süzgeç o
 | AN-11 | 2026-11-17 | Sıçrama payı JMP = 1 − BV/RV → ertesi gün | yüksek JMP kolu −3,6 / +20,0 / +7,8 bp; kısmi t 0,07 / 2,81 / 1,54, havuz 2,53 | C (iz) |
 | AN-12 | 2026-11-17 | **Teslimiyet mumu** (EK-4/4b): VIX ≥ 18,4 ∧ gün içi düşüş ≤ −1 dvol ∧ 1m uzun alt fitil (≥ 0,75 a60; 3× ön kayıt 0 olay → sıklıkla seçildi), üst yarıda kapanış → AL, seans sonu / ertesi gün; kontrol aynı günün fitilsiz ilk düşüş dakikası | seans sonu −5,4 / −30,4 / −11,9 bp (düşen bıçak); ertesi gün −24 / +88 / +12; fitil kontrolü 6 hücrenin 4'ünde kötüleştiriyor | X |
 | AN-13 | 2026-11-17 | **S4 × sabah 1m anatomisi** (EK-5): 09:30–12:00 ort. 1m kapanış konumu / fitil dengesi üst tertili → S4 (korku günü öğleden sonra) güçlü mü | Ters: tepede kapanan sabah −5,8 / −1,3 / −5,7 bp, dipte kapanan +19,8 / +38,0 / +1,3; fitil dengesi tutarsız; kitap Sharpe YENİ 2,18 → 2,13 / 2,05; Holm 0,89 / 1,0 | X |
+| AN-14 | 2026-11-17 | **Veriyle öğrenilen şekil sözlüğü** (EK-6): son 30 adet 1m mumun resmi (yol + kapanış konumu + fitiller, 120 boyut) → PCA 12 + k-means 20 (KEŞİF), 43.884 karar anı, +60 dk ve ertesi gün | KEŞİF en büyük |t| 2,39 / 2,15 vs maxT eşiği 6,19 / 3,61 → seçilen 0; küme etkileri dönemler arası korelasyon −0,30…+0,17 | X — **1m mum şekli sınıfı kapandı** (yeniden açmak için yeni veri türü gerekir) |
 
-**Hüküm:** Gözle önerilen 1m yapılar tek başına kural değil (maliyet bariyeri, §3-35); ufuk uzatılınca 1m izi günlük mumun kopyası (AN-08). 12 ön kayıtlı yapıdan ayakta kalan iki iz: ORB × VIX içinde kırılım anatomisi (gölge etiketi canlıda) ve sıçrama payı (C).
+**Hüküm:** Gözle önerilen 1m yapılar tek başına kural değil (maliyet bariyeri, §3-35); ufuk uzatılınca 1m izi günlük mumun kopyası (AN-08). 14 ön kayıtlı yapı + öğrenilmiş şekil sözlüğünden (AN-14) ayakta kalan iki iz: ORB × VIX içinde kırılım anatomisi (gölge etiketi canlıda) ve sıçrama payı (C).
 
 ## 3. Meta-dersler (kalıcı ilkeler)
 

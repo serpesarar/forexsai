@@ -70,3 +70,14 @@ alt fitil baskınlığı) → güçlü öğleden sonra.
 | A_w | −4,4 / +23,7 / +9,3 | +19,0 / −3,6 / +11,2 | 1,69 → 1,76 / 2,18 → 2,05 |
 **AN-13 X** (Holm 0,89 / 1,0). Öngörü yine ters: sabah mumları tepede kapanan korku günü öğleden sonra kötü; ters yön sonradan seçilirse veri kurcalama
 olur ve BAĞIMSIZ'da +1,3 bp ile zaten zayıf. 14 ön kayıtlı 1m yapıdan tek başına geçen yok.
+
+## EK-6 — Veriyle öğrenilen şekil sözlüğü (`src/shape_dict.py`)
+Şekilleri elle seçmeden: her 15 dk'da son 30 adet 1m mumun resmi (normalize yol + kapanış konumu + üst/alt fitil, 120 boyut) → PCA 12 → k-means 20,
+yalnız KEŞİF'te. 43.884 karar anı (KEŞİF 10.433 / TEST 13.910 / BAĞIMSIZ 19.541).
+| hedef | KEŞİF en büyük |t| | maxT %95 eşiği | seçilen küme | küme etkisi KEŞİF↔TEST / BAĞIMSIZ korelasyonu |
+|---|---|---|---|---|
+| +60 dk | 2,39 | 6,19 | 0 | −0,07 / +0,17 |
+| ertesi gün | 2,15 | 3,61 | 0 | −0,30 / −0,14 |
+**AN-14 X:** 1m mum resminin hiçbir öğrenilmiş şekil sınıfı ileri getiriyi KEŞİF'in kendisinde bile şanstan ayırmıyor ve sınıf etkileri dönemler arasında
+taşınmıyor. Elle seçilen 13 yapı ile birlikte NASDAQ 1m mum şekli sınıfı kapandı: yeni araştırma bu sınıfı yeniden açmak için *yeni veri türü*
+(emir defteri/agresör akışı) gerektirir.
