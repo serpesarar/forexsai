@@ -5181,5 +5181,16 @@
     "source": "session",
     "created_at": "2026-11-16T22:09:50.336921+00:00",
     "updated_at": "2026-11-16T22:09:50.336924+00:00"
+  },
+  {
+    "id": "bl_e41d444e2a",
+    "title": "S4 korku günü öğleden sonra gölgesi",
+    "detail": "NX-13: tek başına 6/6 (+9,9 bp, n 550) ama kitap Sharpe'ı düşürüyor; ORB×VIX ile korelasyon ölçümü sonrası gölge modülü kullanıcı kararı",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-16T22:16:51.496941+00:00",
+    "updated_at": "2026-11-16T22:16:51.497068+00:00"
   }
 ]

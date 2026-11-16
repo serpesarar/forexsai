@@ -90,3 +90,16 @@ aynı işareti verdi; H1 ters çıktı ama R birimi risk genişliğiyle karış�
   ×0,5, aksi normalize. Geçer: aylık kitap Sharpe'ı iki dönemde de artar ∧ birleşik P ≥ 0,90.
 - **EK1-d FOMC öncesi sürüklenme uzatması (Lucca–Moench 2015):** FOMC gecesi çıkışı 09:30 yerine karar günü 13:55 ET (14:00 açıklamasından
   önce); ve 24 saatlik pencere (D−1 14:00 → D 13:55). Geçer: 09:30 çıkışını iki dönemde aşar (bp, n küçük → en fazla C+).
+
+## EK-2 (2026-11-16, yeni strateji aileleri — koşulmadan önce yazıldı)
+Gerekçe: ORB × VIX'in TP'siz/3R hâli "korku günü gün içi yukarı sürüklenmesi"ni gösteriyor (§3-2 korku döner). Bu mekanizmayı 1m veriyle
+ORB dışındaki yeni girişlerde sınıyorum. Hepsi dondurulmuş, tek tanım, parametre taraması yok. Ölçü net bp (zaman çıkışlı) veya R.
+- **S1 Korku açılış boşluğu:** dünkü VIX ≥ 18,4 ∧ 09:30 açılışı < önceki kapanış × (1 − 0,5·dvol20) → 09:30 AL (ask), 15:55 SAT, stopsuz.
+  Kontrol: aynı boşluk VIX < 18,4. Öngörü: korku kolu artı, kontrol ≈ 0.
+- **S2 ORB kısa aynası:** dünkü VIX ≥ 18,4, ilk 5m kapanış < OR dibi → SAT, stop OR ortası, TP 3R, 15:55. Öngörü (§3-2): eksi.
+- **S3 Avrupa açılışı aralık kırılımı:** dünkü VIX ≥ 18,4, OR = 03:00–03:15 ET, ilk 5m kapanış > OR tepesi (≤ 08:00) → AL, stop OR ortası, TP 3R,
+  09:25 çıkış. Öngörü yok (yeni seans).
+- **S4 Korku günü öğleden sonra sürüklenmesi:** dünkü VIX ≥ 18,4 ∧ 12:00 fiyatı > 09:30 açılışı → 12:00 AL, 15:55 SAT. Kontrol VIX < 18,4.
+  (TS-01 S aynasının "stres" yerine VIX ile, 1m'de tekrarı.)
+Geçer: ort > 0 iki dönemde ∧ P ≥ 0,90 iki dönemde ∧ spr×1,5 > 0 ∧ (S1/S4) korku kolu kontrolden iyi. Geçen olursa kart çıkarılır;
+canlı yerine önce gölge önerilir (yeni scope, 2. KURAL).

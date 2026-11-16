@@ -85,7 +85,22 @@ ORB 3R n = 60 işlemde ort R < 0 → 2R'ye dön; C3b/KSG dozları için n = 20 d
 **Bağlanmayanlar (bilinçli):** C3b 16:00 girişi (en büyük lotlu kuralın giriş saatini değiştirmek; KT-01 A2'de kör 1/3; gölge etiketi önerisi),
 CAPREV/AY SONU son seans zayıflığı (kural değişmedi, karar kullanıcıda; ikisi de 2018-21'de pozitif ama P < 0,7), FOMC gecesi (zaten gölge önerisi).
 
+## EK-2 — yeni strateji aileleri (ön kayıt PROTOCOL EK-2, `src/e_ek2.py`, `src/f_s4.py`)
+| S | kural (dondurulmuş) | ESKİ n / ort / P | YENİ n / ort / P | hüküm |
+|---|---|---|---|---|
+| S1 | korku açılış boşluğu: dünkü VIX ≥ 18,4 ∧ açılış < önceki kapanış × (1 − 0,5·dvol) → 09:30 AL, 15:55 | 66 / +36,7 bp / 0,99 | 93 / +12,0 / 0,75 | C (kontrol VIX < 18,4: +12 / −11) |
+| S2 | ORB kısa aynası (VIX ≥ 18,4, OR dibi kırılımı SAT, 3R) | 297 / +0,012R / 0,55 | 364 / +0,018R / 0,59 | X (spr×1,5 −0,002) |
+| S3 | Avrupa açılışı (03:00–03:15 ET) aralık kırılımı AL, 3R, 09:25 | 320 / −0,013R | 419 / −0,083R | X |
+| **S4** | **korku günü öğleden sonra:** dünkü VIX ≥ 18,4 ∧ 12:00 fiyatı > 09:30 açılışı → 12:00 AL, 15:55 SAT | 249 / **+10,0 bp / 0,993** | 301 / **+9,9 / 0,954** | **tek başına 6/6, portföyde X** |
+
+S4 ayrıntısı: isabet %61,5, spr×1,5 +9,3, en iyi 5 hariç +5,6, 1 dk geç giriş +9,9, kontrol (VIX < 18,4) −3,0 / −1,0 bp; yıllar 7/9 artı (2024 −13,
+2026 −1,8). ORB'nin 12:00'de açık olduğu günlerde +8,1 / +11,2, açık olmadığı günlerde +12,7 / +8,4. **Canlı kitaba (ORB 3R'li) 0,5 lotla eklenince
+aylık Sharpe ESKİ 1,69 → 1,80 (P 0,93) ama YENİ 2,18 → 2,04 (P 0,09), tüm dönem 1,86 → 1,78** — aynı korku günlerine yığılan risk (E110, §3-30).
+Karar: **bağlanmadı**; gölge adayı (B− tek başına). Mekanizma ORB×VIX'inkiyle aynı (korku günü gün içi yukarı sürüklenme); ikinci bir bahis değil.
+
 ## Hükümler (defter §2.57)
 NX-01 A yeniden sınama (8 kural, 5 dayanıyor, 3 zayıf) · NX-02 ORB 2R → 3R **B, canlı** · NX-03 C3b 16:00 C → **C+** · NX-04 panik freni **X** (A olgu) ·
 NX-05 oynaklık-yönetimli kitap X · NX-06 OR genişliği C · NX-07 KSG yoğunluğu C · NX-08 doz etiketleri: KSG × VIX25 ve C3b vade haftası **B−, canlı**,
-ORB × dün düşüş C+ kalır (Sharpe yok), CAPREV × son saat **C+ → C** · NX-09 FOMC 13:55 uzatması C · NX-10 kitap stres olgusu A.
+ORB × dün düşüş C+ kalır (Sharpe yok), CAPREV × son saat **C+ → C** · NX-09 FOMC 13:55 uzatması C · NX-10 kitap stres olgusu A · NX-11 S1 korku açılış boşluğu C · NX-12 S2/S3 X · NX-13 S4 korku günü öğleden sonra tek başına 6/6, portföy katkısı yok → gölge adayı (B−/portföy X).
+
+**Dağıtım doğrulaması (2026-11-16 22:12 UTC):** kutu `remote.py pull` ile 889ee25d'ye geçti, bot `remote.py restart bot` ile yeniden başladı (açık pozisyon 0), kutuda `orb_vix_live.TP_R_LIVE = 3.0`, `c3b_live.OPEX_LOT_MULT = 0.5`, `ksg_live.VIX_DOSE_TH = 25.0` yüklendi; MT5 Pepperstone-Demo bağlı.
