@@ -104,3 +104,10 @@ Testler bugün yeniden koşuldu: `pytest backend/tests/test_nom_engine.py backen
 - **Mezuniyet:** karşılanmıyor (12,7 gün < 28; takvim gerektirir). Prompt "yaz" diyor — yazıldı ve uygulanıyor; motor
   mezun olana kadar "güvenilir değil" etiketiyle gölgede kalır (DÜRÜST SONUÇ, FAZ_5 §5).
 
+
+### Gölge döngüsü canlıda AÇIK (2026-11-16, kullanıcı onayıyla)
+- Railway `upbeat-flow`: `NOM_SHADOW_ENABLED=1` (tek yazar; kutu/yerel betik kapalı). Önce `pyarrow` eksikliği giderildi
+  (commit 6ab64192; canlı `/api/probability/nasdaq` 500 → 200).
+- İlk canlı kayıt: t_dec 2026-11-16 21:12 UTC, 5 hedef (`source='shadow'`), 15 dk aralıkla sürüyor.
+- Mezuniyet ölçümü: 28 gün dolunca (≈ 2026-12-14, canlı-gölge başlangıcından) `GET /api/probability/nasdaq/calibration?source=shadow`.
+  O tarihe kadar motor "güvenilir değil" etiketiyle gölgede.
