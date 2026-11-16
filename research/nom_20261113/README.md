@@ -49,7 +49,9 @@ cd research/nom_20261113
 .venv_ext/bin/python src/faz34_ek.py               # Purged K-Fold + CatBoost + ensemble (catboost .venv_ext'te)
 .venv_ext/bin/python src/faz4_deep.py --kinds lstm,tcn,transformer   # derin modeller (torch; AYRI süreç — OpenMP)
 ../../.venv/bin/python src/histdata_layer.py       # 2018–21 HistData katmanı + saat ekseni denetimi
-../../.venv/bin/python src/faz0_v3_eski_donem.py   # bağımsız eski dönem (FAZ_5 §6)
+../../.venv/bin/python src/faz0_v3_eski_donem.py   # bağımsız eski dönem (FAZ_5 §6), kaynak HistData
+../../.venv/bin/python src/faz0_v3_eski_donem.py --kaynak duka   # aynısı Dukascopy beslemesiyle
+../../.venv/bin/python src/faz0_duka_vs_histdata_2018.py   # 2018-01→2021-10 iki besleme kıyası (FAZ_0 EK-6)
 ../../.venv/bin/python src/faz5_econ.py dev        # ekonomik test + eşik seçimi
 ../../.venv/bin/python src/faz5_econ.py final      # FİNAL TEST — tek kez (FINAL_OPENED.json kilidi)
 ../../.venv/bin/python src/faz5_econ.py bundle     # üretim paketi + ACTIVE

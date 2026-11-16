@@ -94,3 +94,21 @@ Aşağıdaki tablo düzeltilmiş eksenle; ilk koşu `faz0_v3_eski_donem_v1_sabit
 seans küçük + (çöküş diliminde −). Kalibrasyon eğimi 0,77–1,25 (mezuniyet bandı 0,7–1,3 içinde); 15 dk'da düzey yanlılığı (+5 puan)
 besleme/spread farkından. **Her an işlem açmak çöküş dahil her ufukta eksi; yön kenarı hükmü (0/40) bağımsız eski dönemde de geçerli.**
 Saat ekseni hatası bu hükmü değiştirmedi ama oynaklık becerisini olduğundan düşük gösteriyordu.
+
+**Ek (2026-11-16): aynı değerlendirme Dukascopy beslemesiyle** (`src/faz0_v3_eski_donem.py --kaynak duka` →
+`results/faz0_v3_eski_donem_duka.json`; eski dönemin fiyat kaynağı dışında her şey aynı). HistData 2019–21'in Dukascopy ile birebir
+aynı olduğu ortaya çıktı (Faz 0 EK-6); fark yalnız 2018'den gelir.
+
+| Hedef | Brier becerisi HD / Duka | 2020 çöküşü HD / Duka | eğim HD / Duka | her an EV HD / Duka |
+|---|---|---|---|---|
+| 15m long | +0,025 / **+0,027** | +0,068 / +0,066 | 1,25 / 1,25 | −0,55 / −0,54 |
+| 15m short | +0,034 / **+0,036** | +0,062 / +0,059 | 1,21 / 1,20 | −0,55 / −0,54 |
+| 1h long | −0,000 / +0,005 | +0,008 / +0,008 | 1,14 / 1,14 | −0,25 / −0,25 |
+| 1h short | −0,004 / +0,002 | +0,002 / +0,001 | 1,05 / 1,04 | −0,28 / −0,27 |
+| 4h long | +0,008 / +0,010 | +0,005 / +0,004 | 1,15 / 1,14 | −0,08 / −0,08 |
+| 4h short | +0,004 / +0,006 | +0,014 / +0,013 | 0,95 / 0,93 | −0,14 / −0,14 |
+| seans long | +0,010 / +0,010 | −0,026 / −0,024 | 0,82 / 0,83 | −0,06 / −0,06 |
+| seans short | +0,010 / +0,010 | −0,017 / −0,016 | 0,77 / 0,77 | −0,10 / −0,10 |
+
+Okuma: iki kaynakta beceri farkı ≤ 0,006, kalibrasyon eğimleri aynı, her an EV aynı (eksi). 2018'in ayrı beslemesi sonucu taşımıyor;
+eski dönem hükmü (oynaklık becerisi kısa ufukta var, yön kenarı yok) besleme seçiminden bağımsız.

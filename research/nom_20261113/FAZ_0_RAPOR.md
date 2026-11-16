@@ -153,3 +153,24 @@ Dukascopy 2018 indirmesi saatte ~34 gün hızla (503/URLError sabit beklemeleri)
   (|fark| p95 24 bp; HistData yukarıda — spot endeks vs CFD), günlük aralık oranı medyan 1,01, 1m |getiri| oranı 0,99 → oynaklık
   ölçüsü bakımından eşdeğer beslemeler.
 - Etki: FAZ_5 §6 yeniden koşuldu (15 dk becerisi +0,012/+0,019 → +0,025/+0,034); yön kenarı hükmü değişmedi.
+
+## EK-6 (2026-11-16) — Dukascopy 2018-01 → 2021-10 TAMAMLANDI; iki besleme tüm dönemde kıyaslandı
+`src/duka_fetch.py` 1.200 gün dosyasının tamamını indirdi (2018-01-01 → 2021-10-31, Cumartesi hariç; **eksik 0, boş 0**; sunucu hız
+sınırı nedeniyle ~2,5 gün sürdü, sınır aşılmaya çalışılmadı). Okuma (R1–R3): 1.274.532 bar, 1.180 NY günü.
+`src/faz0_duka_vs_histdata_2018.py` (artık argümansız = tüm dönem, yıllık kırılımlı) → `results/faz0_duka_vs_histdata_2018_2021.json`:
+
+| Yıl | ortak bar | gecikme | 1m getiri r | kapanış farkı |medyan| / p95 (bp) | günlük aralık oranı | 1m |getiri| oranı | yalnız Duka / yalnız HD gün |
+|---|---|---|---|---|---|---|---|
+| 2018 | 305.334 | 0 | 0,960 | 12,8 / 35,1 | 1,003 | 0,995 | 0 / 15 |
+| 2019 | 341.332 | 0 | 0,9996 | **0 / 0** | 1,000 | 1,000 | 1 / 0 |
+| 2020 | 339.961 | 0 | 0,9997 | **0 / 0** | 1,000 | 1,000 | 0 / 0 |
+| 2021 (→10-31) | 284.750 | 0 | 0,9999 | **0 / 0** | 1,000 | 1,000 | 0 / 0 |
+| tüm | 1.271.377 | 0 | 0,991 | 0 / 22,6 | 1,000 | 0,999 | 1 / 15 |
+
+- **Bulgu (E137): HistData NSXUSD 2019–2021 = Dukascopy USATECHIDXUSD (fiyat birebir aynı).** EK-5'teki "AB yaz saati takvimi" bunun
+  doğal sonucu (İsviçre kaynaklı besleme). Yalnız 2018 dosyası farklı bir besleme (ABD takvimi, +12,8 bp düzey farkı, r 0,96).
+  Dolayısıyla HistData eski dönem için **bağımsız ikinci kaynak değildir**; 2019–21'de bağımsızlık iddiası geri çekilir, 2018'de geçerli.
+- Saat ekseni düzeltmesi (E135) dört yılın dördünde gecikme 0 ile teyit edildi (Dukascopy bi5 damgası UTC; referans).
+- HistData'da olup Dukascopy'de olmayan 15 gün hep 2018'de (Dukascopy'nin o yılki boş/ince günleri).
+- Eski dönem değerlendirmesi Dukascopy ile de koşuldu (FAZ_5 §6 ek tablo): fark ≤ 0,006 beceri, eğimler aynı → hüküm kaynaktan bağımsız.
+
