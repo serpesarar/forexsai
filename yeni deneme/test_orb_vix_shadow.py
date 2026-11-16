@@ -189,3 +189,9 @@ def test_poll_resolves_and_writes_result(tmp_state):
     ov.poll(mt, _log(), lambda m: "NAS100", lambda: 20.0, lambda s: 0, now=t_at(605), force=True)
     lines = ov.EVENTS_JSONL.read_text().splitlines()
     assert any('"kind": "result"' in x and '"R_model": 2.0' in x for x in lines)
+
+
+
+def test_walk_live_target_3r():
+    assert ov.walk([{"low": 105, "high": 130}], 110, 100, 3.0)[:2] == (None, None)    # 130 < 140 hedefi
+    assert ov.walk([{"low": 105, "high": 141}], 110, 100, 3.0)[:2] == (3.0, "tp")

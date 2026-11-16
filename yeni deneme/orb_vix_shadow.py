@@ -44,7 +44,9 @@ OR_BARS = OR_MIN // BAR_MIN
 SESSION_END_MIN = 955           # 15:55 ET
 LAST_ENTRY_GAP_MIN = 25         # bar bitişi ≤ 15:30 ET
 MIN_RISK_FRAC = 0.0005
-TARGET_R = 2.0
+TARGET_R = 2.0                  # kart geometrisi (dondurulmuş; R_model)
+# Canlı emir 2026-11-16'dan beri TP 3R (orb_vix_live.TP_R_LIVE); gölge kart geometrisini (2R) ölçmeye devam eder,
+# 3R'nin ileri karnesi canlı işlemlerden gelir (kural_canli_olaylar.jsonl, tp_r alanı).
 VIX_MIN = 18.4
 POLL_EVERY_S = 60
 FETCH_M5 = 150                  # ≈ 12,5 saat: bugünün seansı
@@ -86,15 +88,15 @@ def find_trigger(sess: list[dict]) -> dict | None:
     return None
 
 
-def walk(bars: list[dict], entry: float, stop: float) -> tuple[float | None, str | None, float]:
-    """Önce stop, sonra 2R hedef. (R, nasıl, risk). Sonuçlanmadıysa (None, None, risk)."""
+def walk(bars: list[dict], entry: float, stop: float, target_r: float = TARGET_R) -> tuple[float | None, str | None, float]:
+    """Önce stop, sonra target_r hedef (kart 2R; canlı 2026-11-16'dan beri 3R). (R, nasıl, risk). Sonuçlanmadıysa (None, None, risk)."""
     risk = entry - stop
-    target = entry + TARGET_R * risk
+    target = entry + target_r * risk
     for b in bars:
         if b["low"] <= stop:
             return -1.0, "sl", risk
         if b["high"] >= target:
-            return TARGET_R, "tp", risk
+            return target_r, "tp", risk
     return None, None, risk
 
 

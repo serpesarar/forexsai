@@ -5128,6 +5128,17 @@
     "updated_at": "2026-11-14T06:00:39.318775+00:00"
   },
   {
+    "id": "bl_465ec6d28e",
+    "title": "FS-04 DAX izi: VIX≥18,4 fan long aynası",
+    "detail": "DAX 15m n 179 +0,60R, VIX-koşullu tabandan +0,56 (P 0,95), sonradan görüldü; yeniden açmak için yalnız bu hücreyi ön-kayıtla GER40 broker + başka Avrupa endeksinde ≥150 olayla sına",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-14T10:40:47.596446+00:00",
+    "updated_at": "2026-11-14T10:40:47.596578+00:00"
+  },
+  {
     "id": "bl_3154c5a044",
     "title": "NOM canlı kalibrasyon tabanı saat iklimine",
     "detail": "calibration.side_report düz canlı ortalamayı taban alıyor; WF ile kıyas için eğitim saat-iklimi tabanı da raporlansın. 28 gün dolunca (≈2026-12-01) mezuniyet yeniden ölçülsün",
@@ -5137,5 +5148,38 @@
     "source": "session",
     "created_at": "2026-11-16T20:56:37.491876+00:00",
     "updated_at": "2026-11-16T20:56:37.492053+00:00"
+  },
+  {
+    "id": "bl_43549c2cc2",
+    "title": "ORB×VIX TP 3R canlı karnesi",
+    "detail": "n=60 canlı işlemde ort R<0 ise ORB_VIX_LIVE_TP_R=2.0'a dön; kural_canli_olaylar.jsonl tp_r alanı",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-16T22:09:50.325678+00:00",
+    "updated_at": "2026-11-16T22:09:50.325822+00:00"
+  },
+  {
+    "id": "bl_ececaa94a7",
+    "title": "C3b vade haftası + KSG VIX25 doz karnesi",
+    "detail": "n=20 dozlu işlemde dozlu ort < dozsuz ort ise C3B_OPEX_HALF / KSG_VIX25_DOUBLE kapat",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-16T22:09:50.332941+00:00",
+    "updated_at": "2026-11-16T22:09:50.332947+00:00"
+  },
+  {
+    "id": "bl_9d2657b2d6",
+    "title": "CAPREV NDX + AY SONU son seans 2018-21 zayıflığı",
+    "detail": "NX-01: CAPREV NDX ESKİ +0,065R P 0,64 (2020 −0,07), son seans +8,6 bp P 0,68; lot/kapatma kararı kullanıcıda",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-16T22:09:50.336921+00:00",
+    "updated_at": "2026-11-16T22:09:50.336924+00:00"
   }
 ]

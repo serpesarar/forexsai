@@ -1011,5 +1011,17 @@
   "output": "research/yon_lab_20261114/FAZ_10_RAPOR.md",
   "needs_backend": false,
   "est_runtime": "~15 dk (veri yerelde; KÖR kilitli)"
+ },
+ {
+  "id": "ndx_10y_1m",
+  "name": "NDX 9 yıllık 1m — canlı kuralların yeniden sınaması + komşuluk + yeni kapılar",
+  "kind": "script",
+  "command": "cd research/ndx_10y_1m_20261116 && ../../.venv/bin/python src/a_retest.py && ../../.venv/bin/python src/b_extend.py && ../../.venv/bin/python src/c_new.py && ../../.venv/bin/python src/d_ek1.py && ../../.venv/bin/python src/kart.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "Dukascopy 1m 2018-01→2026-11 tek beslemede C3b, C3, CAPREV, ORB×VIX, FR-15 çekiç, KSG, AY SONU/AY BAŞI, FOMC gecesi kurallarını canlı kodla birebir yeniden koşar (ESKİ 2018-21 / YENİ 2021-26), komşuluk haritası, 6 ön kayıtlı hipotez, kitap stres sınaması ve ORB TP 3R kartı. Sonuç: çekirdek ayakta, ORB 2R→3R kart 6/6, panik freni ters.",
+  "output": "research/ndx_10y_1m_20261116/RAPOR.md",
+  "needs_backend": false,
+  "est_runtime": "~2 dk (önbellekle)"
  }
 ]

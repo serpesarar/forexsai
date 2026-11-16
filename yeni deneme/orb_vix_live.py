@@ -5,7 +5,10 @@ KULLANICI KARARI 2026-11-08: kendi lotuyla canlıya bağla (kural_katalogu: 0.75
 
 KURAL (orb_vix_shadow ile BİREBİR; tetik fonksiyonu oradan alınır — yalnız "hi" kolu, yani önceki işlem gününün son VIX'i ≥ 18,4):
   09:30–09:45 ET ilk 15 dk aralığı (3 M5 bar); ilk M5 kapanışı aralık tepesinin üstünde (bar bitişi ≤ 15:30 ET)
-  → hemen market BUY. SL = aralık ortası, TP = giriş + 2×risk, 15:55 ET zaman çıkışı. Günde ≤ 1, kısa yok.
+  → hemen market BUY. SL = aralık ortası, TP = giriş + 3×risk (2026-11-16'ya kadar 2R), 15:55 ET zaman çıkışı. Günde ≤ 1, kısa yok.
+  TP 3R GEREKÇESİ (research/ndx_10y_1m_20261116, Dukascopy 1m 2018-01→2026-11): 2R çıkış eğrisinin en kötü noktası; 3R/4R/5R/TP'siz
+  hepsi iki dönemde de üstün. TP 3R kartı 6/6: n 741, ort +0,199R (2R: +0,101), P 1,00, yarılar +0,19/+0,21, spr×1,5 +0,18, 9/9 yıl artı.
+  Eski davranış: config.ORB_VIX_LIVE_TP_R = 2.0.
   Risk < giriş × %0,05 → işlem yok (kart). VIX geçmişi yoksa ('unknown' kol) işlem açılmaz.
   EK GÜVENLİK (kartta yok; örneklemde tetiklenmez): risk > giriş × %2 ise işlem yok (`ORB_VIX_LIVE_MAX_RISK_FRAC`).
 """
@@ -26,6 +29,7 @@ STATE_FILE = HERE / "orb_vix_live_state.json"
 POLL_EVERY_S = 30
 MAX_LATE_S = 300
 MAX_RISK_FRAC = 0.02
+TP_R_LIVE = 3.0                  # 2026-11-16: 2R → 3R (ndx_10y_1m_20261116 EK1-a, kart 6/6); ezme config.ORB_VIX_LIVE_TP_R
 
 _last_poll = 0.0
 
@@ -41,7 +45,8 @@ def _save_state(st: dict) -> None:
     kk.save_json(STATE_FILE, st)
 
 
-def plan(trig: dict, ask: float, vix_prev: float | None, max_risk_frac: float = MAX_RISK_FRAC) -> tuple[dict | None, str | None]:
+def plan(trig: dict, ask: float, vix_prev: float | None, max_risk_frac: float = MAX_RISK_FRAC,
+         tp_r: float = TP_R_LIVE) -> tuple[dict | None, str | None]:
     """(emir planı, ret nedeni). Saf fonksiyon: kart kuralları + ek risk tavanı."""
     if vix_prev is None:
         return None, "VIX geçmişi yok (kol belirsiz)"
@@ -53,7 +58,7 @@ def plan(trig: dict, ask: float, vix_prev: float | None, max_risk_frac: float = 
         return None, "risk çok dar (kart: olay yok)"
     if risk > max_risk_frac * ask:
         return None, f"risk {risk:.1f} > fiyatın %{100 * max_risk_frac:.0f}'si (ek güvenlik)"
-    return {"sl": stop, "tp": ask + sh.TARGET_R * risk, "risk": risk}, None
+    return {"sl": stop, "tp": ask + tp_r * risk, "risk": risk, "tp_r": tp_r}, None
 
 
 def manage_exits(mt5, config, log, send_order, offset_fn, resolve_symbol, now: float | None = None) -> None:
@@ -103,7 +108,8 @@ def poll(mt5, config, log, resolve_symbol, get_vix, offset_fn, send_order, mk_co
     if tick is None or info is None:
         return
     ask = round(tick.ask, info.digits)
-    pl, why = plan(trig, ask, vix_prev, float(getattr(config, "ORB_VIX_LIVE_MAX_RISK_FRAC", MAX_RISK_FRAC)))
+    pl, why = plan(trig, ask, vix_prev, float(getattr(config, "ORB_VIX_LIVE_MAX_RISK_FRAC", MAX_RISK_FRAC)),
+                   float(getattr(config, "ORB_VIX_LIVE_TP_R", TP_R_LIVE)))
     if pl is None:
         kk.append_event({"kind": "skip", "rule": RULE, "reason": why, **rec})
         log.info("ORB×VIX tetik ama işlem yok: %s", why)
@@ -125,10 +131,10 @@ def _enter(mt5, config, log, sym, ask, pl, rec, send_order, mk_comment, autotrad
         return
     ok, ticket, rc = kk.buy(mt5, config, log, send_order, mk_comment, RULE, sym, lot, ask, sl, tp, "ORBVIX NDX")
     kk.append_event({"kind": "entry", "rule": RULE, "ok": ok, "retcode": rc, "ticket": ticket, "ask": ask, "sl": sl,
-                     "tp": tp, "lot": lot, **rec})
+                     "tp": tp, "tp_r": pl["tp_r"], "lot": lot, **rec})
     if not ok:
         log.error("[CANLI] ❌ ORB×VIX emir reddedildi retcode=%s", rc)
         return
-    kk.announce_open(log, RULE, f"{sym} BUY {lot} lot @ {ask} · SL {sl} · TP {tp} (2R) · VIX(dün) {rec['vix_prev']:.1f} · ticket {ticket}",
+    kk.announce_open(log, RULE, f"{sym} BUY {lot} lot @ {ask} · SL {sl} · TP {tp} ({pl['tp_r']:g}R) · VIX(dün) {rec['vix_prev']:.1f} · ticket {ticket}",
                      {"gecikme_s": rec["latency_s"]})
     log_trade("LIVE", "NDX.INDX:BUY:ORBVIX", sym, "BUY", ask, tp, sl, ["orbvix"], f"ticket={ticket}")

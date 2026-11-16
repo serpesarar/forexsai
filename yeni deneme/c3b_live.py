@@ -8,6 +8,9 @@ KURAL (c3b_shadow ile BİREBİR; sinyal ve seri fonksiyonları oradan alınır):
   S = 15:30 ET M30 barından önceki barın kapanışı, E = 15:30 barının açılışı. RSI2(S serisi) < 10 → E'de uzun.
   Çıkış: ilk S_t > S_{t−1} günü 15:30 açılışında; en geç 5 işlem günü sonra. Tek pozisyon; çıkış günü yeni sinyal
   varsa aynı açılışta yeniden girilir. TP yok.
+  DOZ (2026-11-16, research/ndx_10y_1m_20261116 H5 + EK1-c): opsiyon vade haftasında (ayın 3. Cuması ve önceki 4 gün) giriş
+  lotu yarıya iner. Dukascopy 1m: vade haftası ESKİ −19 bp (n 8) / YENİ −17 bp (n 18) vs diğer +74 / +99; kitap aylık Sharpe
+  1,82 → 1,95 (P 0,94, iki dönemde de artı). Sınıf B− (TS-01 O4'ün yeniden ölçümü). Kapatma: config.C3B_OPEX_HALF = False.
   TEK FARK: kartta stop yok; broker tarafında ACİL DURUM SL'i (varsayılan %10, `C3B_LIVE_EMERGENCY_SL`) konur — geçmişteki en
   kötü işlem −%6,8 olduğundan örneklemde hiçbir işlemi değiştirmez; yalnız bot ölürse sınırsız zarara karşı sigortadır.
 """
@@ -27,6 +30,21 @@ HERE = Path(__file__).resolve().parent
 STATE_FILE = HERE / "c3b_live_state.json"
 POLL_EVERY_S = 30
 EMERGENCY_SL = 0.10
+OPEX_LOT_MULT = 0.5
+
+
+def opex_week(d: date) -> bool:
+    """Ayın 3. Cuması ve ondan önceki 4 gün (Pzt–Cum vade haftası)."""
+    first = date(d.year, d.month, 1)
+    fri3 = first.toordinal() + (4 - first.weekday()) % 7 + 14
+    return fri3 - 4 <= d.toordinal() <= fri3
+
+
+def entry_lot(base: float, day: date, enabled: bool = True, step: float = 0.01) -> float:
+    """Doz: vade haftasında base × OPEX_LOT_MULT (lot adımına yuvarlı)."""
+    if enabled and opex_week(day):
+        return round(round(base * OPEX_LOT_MULT / step) * step, 8)
+    return base
 
 _last_poll = 0.0
 
@@ -90,7 +108,9 @@ def _enter(mt5, config, log, sym, rec, st, now, send_order, mk_comment, autotrad
     if tick is None or info is None:
         return
     ask = round(tick.ask, info.digits)
-    lot = kk.lot_of(config, RULE)
+    lot = entry_lot(kk.lot_of(config, RULE), date.fromisoformat(rec["day"]), bool(getattr(config, "C3B_OPEX_HALF", True)),
+                    float(getattr(info, "volume_step", 0.01) or 0.01))
+    rec["opex_week"] = opex_week(date.fromisoformat(rec["day"]))
     sl = round(ask * (1 - float(getattr(config, "C3B_LIVE_EMERGENCY_SL", EMERGENCY_SL))), info.digits)
     ok_c, open_lot, cap = kk.concentration_ok(mt5, config, sym, lot)
     if not ok_c:

@@ -17,7 +17,7 @@ Tanımlar tek yerde: `yeni deneme/kural_katalogu.py` (`RULES`). Olaylar `kural_c
 |---|---|---|---|---|---|---|---|---|---|
 | **C3b** NDX RSI2 geri dönüşü | +8 | **2.0** | `C3B_LIVE_LOT`, `C3B_LIVE` | %78,1 (n 155) | +65 bp | yok (acil SL %10) | ilk yükselen 15:30 ET fiyatı, en çok 5 gün | ≈1,2/ay | A |
 | **CAPREV** kapitülasyon alımı (NDX+DAX) | +7 | **1.0** | `CAPREV_LIVE_LOT`, `CAPREV_LIVE` | %55,3 (n 161) | +0,22R | 1× günlük oynaklık | seans kapanışı | ≈1,3/ay | B+ |
-| **ORB × VIX** (NDX, VIX≥18,4) | +9 | **0.75** | `ORB_VIX_LIVE_LOT`, `ORB_VIX_LIVE` | %48,7 (n 152) | +0,295R | aralık ortası | 2R, 15:55 ET zaman çıkışı | ≈5/ay | B |
+| **ORB × VIX** (NDX, VIX≥18,4) | +9 | **0.75** | `ORB_VIX_LIVE_LOT`, `ORB_VIX_LIVE`, `ORB_VIX_LIVE_TP_R` | %39,8 (n 741, Duka 1m 2018-26) | +0,199R (TP 3R) | aralık ortası | **3R** (2026-11-16 öncesi 2R), 15:55 ET zaman çıkışı | ≈7/ay | B |
 | **FR-15 teyitli çekiç** (NAS100 + GER40) | +10 | **0.5** (her endeks) | `CEKIC_LIVE_LOT`, `CEKIC_LIVE` | ≈%26–30 (FR-10 ölçümü) | ≈+0,07R | çekiç dibi | 5R, 24 sa, Cuma 16:45 NY çıkışı | ≈7–8/ay/endeks | B |
 | **KSG kapanış saati gecesi** (NAS100) | +11 | **0.5** | `KSG_LIVE_LOT`, `KSG_LIVE` | %56,0 (n 1039) | +7,0 bp/gece net | yok (acil SL %7) | ertesi işlem günü 09:30 ET; giriş 16:00 ET, 15:00→16:00 getirisi < 0 ise | ≈10/ay | C+ |
 | **AY SONU son seans** (NAS100 + US500, iki yönlü) | +12 | **1.0** NAS100; US500 aynı nominal (≈3,7) | `AYSONU_SON_LIVE_LOT`, `AYSONU_SON_LIVE`, `AYSONU_US500_PARITY` | %55 NAS100 / %70 US500 (broker 2018-26) | +38 / +44 bp (broker); ETF 2002-26 +24 bp | yok (acil SL %4) | ayın son işlem günü 09:30 → 16:00 ET; yön D−3'te SPY−TLT ay içi farkı (≥+%2 SAT, ≤−%2 AL) | ≈8–9/yıl | B |
@@ -27,6 +27,14 @@ Tanımlar tek yerde: `yeni deneme/kural_katalogu.py` (`RULES`). Olaylar `kural_c
 **Lot mantığı:** kanıt sınıfı ve işlem yapısı. En güçlü kanıt (A, yüksek isabet, kısa tutuş) en büyük lotu alır; düşük isabetli,
 komşu eşiklerde kırılgan, sık işlem açan FR-15 en küçüğü. Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL`
 (4.5) üstüne çıkamaz — hepsi "korkudan sonra endeks AL" olduğundan çöküş haftasında aynı anda zarar yazarlar.
+
+**2026-11-16 değişiklikleri (`research/ndx_10y_1m_20261116/RAPOR.md`, defter §2.57):**
+- ORB × VIX hedefi **2R → 3R**: 9 yıllık Dukascopy 1m'de 2R çıkış eğrisinin en kötü noktası; TP 3R kartı 6/6 (`go_live_cards/ndx_orb_vix_tp3.json`),
+  9/9 yıl artı. Eski "+0,295R / 10 yıl +0,185R" sayıları 2R ve kısmen 1h geometrisindendi; canlı geometride 2R +0,101R. Geri dönüş `ORB_VIX_LIVE_TP_R = 2.0`.
+  Durdurma: canlı n=60'ta ort R < 0 → 2R'ye dön.
+- **C3b vade haftasında yarım lot** (2.0 → 1.0; ayın 3. Cuması ve önceki 4 gün): kitap aylık Sharpe 1,82 → 1,95. Kapatma `C3B_OPEX_HALF = False`.
+- **KSG dünkü VIX ≥ 25'te çift lot** (0.5 → 1.0): kitap aylık Sharpe 1,82 → 1,88. Kapatma `KSG_VIX25_DOUBLE = False`. Tavan 4,5 lot korunur.
+- Dozlar için durdurma: n=20 dozlu işlemde dozlu ortalama < dozsuz ortalama → ilgili bayrağı kapat.
 
 **KSG (2026-11-10):** kullanıcı kararıyla gölge atlanıp doğrudan canlı. Sınıf C+: etki 2020'den beri (2018-19 eksi). Durdurma ölçütü: n=60 gecede ort. net < 0 → `KSG_LIVE = False`. Gece açıkken CAPREV/ORB kapalıdır; birlikte en çok C3b 2.0 + çekiç + KSG 0.5.
 

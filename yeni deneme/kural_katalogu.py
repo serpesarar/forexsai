@@ -35,7 +35,8 @@ RULES: dict[str, dict] = {
         "isabet": "%78,1", "n": 155, "ort": "+65 bp/işlem", "tutus": "≈1,6 gün (en fazla 5 gün)",
         "sl": "yok (acil durum SL %10 — geçmişteki en kötü işlem −%6,8)", "tp": "yok; ilk yükselen 15:30 ET fiyatında çık",
         "siklik": "≈ 1,2 işlem/ay (yılda ≈ 15)",
-        "kanit": "go_live_cards/ndx_c3b_rsi2_upexit.json (6/6; kör US500/US30/US2000/GER40 pozitif)",
+        "kanit": "go_live_cards/ndx_c3b_rsi2_upexit.json (6/6; kör US500/US30/US2000/GER40 pozitif); Dukascopy 1m 2018-26 n 132 +68 bp; "
+                 "vade haftasında yarım lot (C3B_OPEX_HALF)",
     },
     "CAPREV": {
         "ad": "CAPREV — kapitülasyon alımı (NDX + DAX)", "kisa": "CAPREV", "sinif": "B+", "magic_offset": 7,
@@ -48,10 +49,10 @@ RULES: dict[str, dict] = {
     "ORBVIX": {
         "ad": "ORB × VIX — NDX açılış aralığı kırılımı (VIX≥18,4)", "kisa": "ORBVIX", "sinif": "B", "magic_offset": 9,
         "lot_key": "ORB_VIX_LIVE_LOT", "lot": 0.75, "live_key": "ORB_VIX_LIVE",
-        "isabet": "%48,7", "n": 152, "ort": "+0,295 R/işlem", "tutus": "aynı gün (15:55 ET'ye kadar)",
-        "sl": "açılış aralığı ortası", "tp": "2R",
-        "siklik": "≈ 5 işlem/ay (≈ 1,2/hafta)",
-        "kanit": "go_live_cards/ndx_orb_vix.json (6/6; 2026 zayıf +0,10R)",
+        "isabet": "%39,8", "n": 741, "ort": "+0,199 R/işlem (TP 3R; 2R'de +0,101)", "tutus": "aynı gün (15:55 ET'ye kadar)",
+        "sl": "açılış aralığı ortası", "tp": "3R (2026-11-16'dan beri; önce 2R)",
+        "siklik": "≈ 7 işlem/ay (VIX ≥ 18,4 günlerinde)",
+        "kanit": "go_live_cards/ndx_orb_vix_tp3.json (Dukascopy 1m 2018-26, 6/6, 9/9 yıl artı; research/ndx_10y_1m_20261116)",
     },
     "CEKIC": {
         "ad": "FR-15 — teyitli çekiç (1h alt fitil)", "kisa": "CEKIC", "sinif": "B", "magic_offset": 10,
@@ -67,7 +68,8 @@ RULES: dict[str, dict] = {
         "isabet": "%56,0", "n": 1039, "ort": "+7,0 bp/gece net (karşı kol −6,1)", "tutus": "gece (16:00 → ertesi 09:30 ET)",
         "sl": "yok (acil durum SL %7 — araştırmada giriş sonrası en kötü seyir −%6,1, net −%4,0)", "tp": "yok; ertesi işlem günü 09:30 ET'de çık",
         "siklik": "≈ 10 işlem/ay (yılda ≈ 123)",
-        "kanit": "go_live_cards/ndx_ksg_gece.json (6/6; C+: 2018-19 eksi, 2020→ 7/7 yıl; durdurma: n=60'ta ort<0)",
+        "kanit": "go_live_cards/ndx_ksg_gece.json (6/6; C+: 2018-19 eksi, 2020→ 7/7 yıl; durdurma: n=60'ta ort<0); "
+                 "dünkü VIX ≥ 25'te çift lot (KSG_VIX25_DOUBLE)",
     },
     # 2026-11-12 kullanıcı kararı: ay sonu dengeleme akışı CANLI (aysonu_live.py). NAS100 lotu burada; US500 aynı nominal (parite).
     "AYSONU_SON": {

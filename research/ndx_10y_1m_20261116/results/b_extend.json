@@ -1,0 +1,151 @@
+{
+ "C3B": {
+  "n_combos": 18,
+  "plato_iki_donem_arti": 1.0,
+  "live": {
+   "mean_ESKI": 59.55361474243443,
+   "mean_YENI": 73.45364149648474,
+   "mo_ESKI": 66.02683373617731,
+   "mo_YENI": 97.5368026428732
+  },
+  "adaylar": [
+   {
+    "or_min": NaN,
+    "tp_r": NaN,
+    "vix_min": NaN,
+    "tf": NaN,
+    "is_live": false,
+    "n_ESKI": 51,
+    "mean_ESKI": 73.73351036946562,
+    "mo_ESKI": 81.74802236614667,
+    "dP_ESKI": 0.94525,
+    "n_YENI": 87,
+    "mean_YENI": 76.55445988904732,
+    "mo_YENI": 109.18422967782158,
+    "dP_YENI": 0.9435,
+    "exit_next_day": NaN,
+    "rsi_th": 10.0,
+    "max_hold": 3.0,
+    "entry_min": 960.0,
+    "sig_from": NaN,
+    "exit_min": NaN,
+    "lw_min": NaN,
+    "hold_h": NaN
+   },
+   {
+    "or_min": NaN,
+    "tp_r": NaN,
+    "vix_min": NaN,
+    "tf": NaN,
+    "is_live": false,
+    "n_ESKI": 51,
+    "mean_ESKI": 73.73351036946562,
+    "mo_ESKI": 81.74802236614667,
+    "dP_ESKI": 0.94525,
+    "n_YENI": 81,
+    "mean_YENI": 82.27775908346723,
+    "mo_YENI": 109.25407353706302,
+    "dP_YENI": 0.97475,
+    "exit_next_day": NaN,
+    "rsi_th": 10.0,
+    "max_hold": 5.0,
+    "entry_min": 960.0,
+    "sig_from": NaN,
+    "exit_min": NaN,
+    "lw_min": NaN,
+    "hold_h": NaN
+   },
+   {
+    "or_min": NaN,
+    "tp_r": NaN,
+    "vix_min": NaN,
+    "tf": NaN,
+    "is_live": false,
+    "n_ESKI": 51,
+    "mean_ESKI": 73.73351036946562,
+    "mo_ESKI": 81.74802236614667,
+    "dP_ESKI": 0.94525,
+    "n_YENI": 80,
+    "mean_YENI": 82.69989368427305,
+    "mo_YENI": 108.45887696298104,
+    "dP_YENI": 0.9695,
+    "exit_next_day": NaN,
+    "rsi_th": 10.0,
+    "max_hold": 8.0,
+    "entry_min": 960.0,
+    "sig_from": NaN,
+    "exit_min": NaN,
+    "lw_min": NaN,
+    "hold_h": NaN
+   }
+  ]
+ },
+ "CAPREV": {
+  "n_combos": 24,
+  "plato_iki_donem_arti": 0.75,
+  "live": {
+   "mean_ESKI": 0.06509664303077585,
+   "mean_YENI": 0.4074053452585836,
+   "mo_ESKI": 0.0551906321347882,
+   "mo_YENI": 0.42744167371392366
+  },
+  "adaylar": []
+ },
+ "CEKIC": {
+  "n_combos": 12,
+  "plato_iki_donem_arti": 1.0,
+  "live": {
+   "mean_ESKI": 0.08165425757433477,
+   "mean_YENI": 0.14658869005077602,
+   "mo_ESKI": 0.5325277667891399,
+   "mo_YENI": 0.9636404050878882
+  },
+  "adaylar": []
+ },
+ "KSG": {
+  "n_combos": 6,
+  "plato_iki_donem_arti": 1.0,
+  "live": {
+   "mean_ESKI": 6.710806747786841,
+   "mean_YENI": 6.1970399410822345,
+   "mo_ESKI": 71.04701926461287,
+   "mo_YENI": 60.040173855403296
+  },
+  "adaylar": []
+ },
+ "ORBVIX": {
+  "n_combos": 72,
+  "plato_iki_donem_arti": 0.7916666666666666,
+  "live": {
+   "mean_ESKI": 0.11031201966567206,
+   "mean_YENI": 0.09384553161016225,
+   "mo_ESKI": 0.8177477979563951,
+   "mo_YENI": 0.6153805351486048
+  },
+  "adaylar": [
+   {
+    "or_min": 15.0,
+    "tp_r": 3.0,
+    "vix_min": 18.4,
+    "tf": 5.0,
+    "is_live": false,
+    "n_ESKI": 341,
+    "mean_ESKI": 0.2200458321033743,
+    "mo_ESKI": 1.6312093205924052,
+    "dP_ESKI": 0.99875,
+    "n_YENI": 400,
+    "mean_YENI": 0.1816804838294436,
+    "mo_YENI": 1.1913474349471713,
+    "dP_YENI": 0.995,
+    "exit_next_day": NaN,
+    "rsi_th": NaN,
+    "max_hold": NaN,
+    "entry_min": NaN,
+    "sig_from": NaN,
+    "exit_min": NaN,
+    "lw_min": NaN,
+    "hold_h": NaN
+   }
+  ]
+ }
+}

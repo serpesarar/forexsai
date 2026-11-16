@@ -74,7 +74,8 @@ def test_friday_close_window():
 def test_orb_plan_rules():
     trig = {"stop": 9950.0}
     pl, why = ov.plan(trig, 10000.0, 20.0)
-    assert why is None and pl["sl"] == 9950.0 and abs(pl["tp"] - 10100.0) < 1e-9   # TP = giriş + 2×risk
+    assert why is None and pl["sl"] == 9950.0 and abs(pl["tp"] - 10150.0) < 1e-9   # TP = giriş + 3×risk (2026-11-16)
+    assert abs(ov.plan(trig, 10000.0, 20.0, tp_r=2.0)[0]["tp"] - 10100.0) < 1e-9      # eski 2R geometrisi config ile
     assert ov.plan(trig, 10000.0, 17.0)[0] is None            # alt VIX kolu
     assert ov.plan(trig, 10000.0, None)[0] is None            # VIX geçmişi yok
     assert ov.plan(trig, 9950.5, 20.0)[0] is None             # risk çok dar (< %0,05)
@@ -135,3 +136,19 @@ if __name__ == "__main__":
         f()
         print("ok", f.__name__)
     print(len(fns), "test geçti")
+
+
+# ───────── 2026-11-16 dozlar (research/ndx_10y_1m_20261116) ─────────
+def test_c3b_opex_week_half_lot():
+    assert c3.opex_week(date(2026, 11, 20)) and c3.opex_week(date(2026, 11, 16))      # 3. Cuma 20 Kasım ve Pazartesisi
+    assert not c3.opex_week(date(2026, 11, 13)) and not c3.opex_week(date(2026, 11, 23))
+    assert c3.entry_lot(2.0, date(2026, 11, 18)) == 1.0
+    assert c3.entry_lot(2.0, date(2026, 11, 18), enabled=False) == 2.0
+    assert c3.entry_lot(2.0, date(2026, 11, 10)) == 2.0
+
+
+def test_ksg_vix25_double_lot():
+    import ksg_live as kl
+    assert kl.entry_lot(0.5, 25.0) == 1.0 and kl.entry_lot(0.5, 31.2) == 1.0
+    assert kl.entry_lot(0.5, 24.9) == 0.5 and kl.entry_lot(0.5, None) == 0.5
+    assert kl.entry_lot(0.5, 30.0, enabled=False) == 0.5

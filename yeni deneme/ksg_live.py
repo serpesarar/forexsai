@@ -12,6 +12,9 @@ KURAL (donduruldu; değiştirmek kanıtı geçersiz kılar):
   TEK FARK (C3b ile aynı): broker tarafında ACİL DURUM SL'i (varsayılan %7, `KSG_LIVE_EMERGENCY_SL`). Araştırmada giriş sonrası en kötü
   seyir −%6,1 (bar-low; 2018-12-20 ve 2025-04-04): %6 SL bu iki geceyi keser ve ortalamayı +7,02 → +6,16 bp düşürürdü, %7 hiçbir geceyi
   kesmez. Yani SL sinyalin parçası değil, yalnız bot ölürse sınırsız zarara karşı sigorta.
+  DOZ (2026-11-16, research/ndx_10y_1m_20261116 H5 + EK1-c; DB-02'nin 1m yeniden ölçümü): dünkü VIX ≥ 25 ise lot × 2.
+  Dukascopy 1m: VIX ≥ 25 geceleri ESKİ +32,2 bp (n 98) vs +0,3 / YENİ +11,3 (n 92) vs +5,3; kitap aylık Sharpe 1,82 → 1,88
+  (birleşik P 0,92, iki dönemde de artı). VIX geçmişi yoksa doz uygulanmaz. Sınıf B−. Kapatma: config.KSG_VIX25_DOUBLE = False.
   Giriş gecikmesi: 16:00 barı açılışından en çok 10 dk sonra (araştırma: 16:01 +5,1, 16:05 +5,2, 16:14 +4,5 bp — kenar sürer).
 """
 from __future__ import annotations
@@ -36,6 +39,24 @@ MIN_SESSION_BARS = 12             # 09:30–16:00 arası M30 bar sayısı (tam s
 MAX_LATE_S = 600
 EMERGENCY_SL = 0.07
 FETCH_M30 = 120
+VIX_DOSE_TH = 25.0
+VIX_DOSE_MULT = 2.0
+
+
+def entry_lot(base: float, vix_prev: float | None, enabled: bool = True) -> float:
+    """Doz: dünkü VIX ≥ 25 → base × 2; VIX bilinmiyorsa base."""
+    if enabled and vix_prev is not None and vix_prev >= VIX_DOSE_TH:
+        return round(base * VIX_DOSE_MULT, 8)
+    return base
+
+
+def _vix_prev(today: date) -> float | None:
+    """ORB/CAPREV gölgesinin günlük VIX geçmişinden dünkü değer (salt okunur; hata → None)."""
+    try:
+        import orb_vix_shadow as ovs
+        return cs.vix_features(ovs._load_state().get("vix_hist", {}), today, None)["vix_prev"]
+    except Exception:
+        return None
 
 _last_poll = 0.0
 _last_exit_poll = 0.0
@@ -151,7 +172,9 @@ def _enter(mt5, config, log, sym, rec, send_order, mk_comment, autotrading_ok, l
     if tick is None or info is None:
         return
     ask = round(tick.ask, info.digits)
-    lot = kk.lot_of(config, RULE)
+    vix_prev = _vix_prev(date.fromisoformat(rec["day"]))
+    rec["vix_prev"] = vix_prev
+    lot = entry_lot(kk.lot_of(config, RULE), vix_prev, bool(getattr(config, "KSG_VIX25_DOUBLE", True)))
     sl = stop_price(ask, info.digits, float(getattr(config, "KSG_LIVE_EMERGENCY_SL", EMERGENCY_SL)))
     ok_c, open_lot, cap = kk.concentration_ok(mt5, config, sym, lot)
     if not ok_c:
