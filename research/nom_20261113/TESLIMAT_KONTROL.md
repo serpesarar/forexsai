@@ -51,3 +51,18 @@ bootstrap, final) · 5 `/api/probability/nasdaq` + `/olasilik-motoru` + `nom_pre
 2020 çöküşü, 2022 ayı, 2023-25 boğa dahil. İki besleme tüm dönemde kıyaslandı (`results/faz0_duka_vs_histdata_2018_2021.json`,
 FAZ_0 EK-6): gecikme 4 yılın 4'ünde 0; HistData 2019–21 = Dukascopy (birebir), 2018 farklı besleme (r 0,96, 12,8 bp). Eski dönem
 değerlendirmesi Dukascopy ile tekrarlandı (`results/faz0_v3_eski_donem_duka.json`, FAZ_5 §6 ek tablo): beceri farkı ≤ 0,006, hüküm aynı.
+
+## Yeniden doğrulama (2026-11-16, Dukascopy tamamlandıktan sonra) — prompt maddesi → dosyadaki kanıt
+| Faz | Prompt maddesi | Bugün bakılan kanıt |
+|---|---|---|
+| 1 | triple-barrier ATR katı, LONG/SHORT ayrı, 5 geometri × 4 ufuk, aynı bar → SL, bid/ask giriş, taban oran | FAZ_1 §taban oranlar; `results/faz1_base_rates.csv`, `faz1_tick_ambiguity.*`; test `test_same_bar_is_sl`, `test_entry_includes_friction_and_tp` |
+| 2 | kapanmış bar kuralı + otomatik sızıntı testi, katalog, permütasyon + SHAP, MiroShark kararı | `results/faz2_feature_catalog.csv`, `faz2_leak_real.json`, `faz2_importance_*.csv` (4 hedef); MiroShark: 21 gün, tamamı final dönemde → kullanılmadı (FAZ_2 §18-19); testler `test_truncation_equivalence`, `test_future_perturbation`, `test_macro_not_visible_before_1715_et` |
+| 3 | WF + Purged K-Fold (ambargo ≥ en uzun ufuk), final kilit, eğitimde ölçekleyici/eşik, P1/P2 plasebo, bootstrap | FAZ_3 tablosu (`EMBARGO_S=86400`, `assert_not_final`), `results/FINAL_OPENED.json`, `faz34_ek.json` (Purged K-Fold 6 kat) |
+| 4 | tabanlar, LGB/CatBoost/XGB, ayrı vs yön-koşullu, derin modeller, ensemble, isotonic, Brier/log-loss/AUC/reliability, kantil kalibrasyon | FAZ_4 + EK; `results/plots/dev_reliability_{15m,1h,4h,session}.svg`; `faz4_deep.json` (LSTM/TCN/Transformer 18/18 LGB altında → bırakıldı) |
+| 5 | sürtünmeli + 2× EV, 0,55/0,60/0,65 eşik akışı (n, WR, EV, PF, maxDD, kayıp serisi), rejim/yıl dilimleri, bot çapraz kontrol, final tek kez | `results/faz5_dev.json` (40 hedef; alanlar `ev_r`, `pf`, `max_dd_r`, `max_loss_streak`, `base_ev_r_2x`); `faz5_bot_crosscheck.json` (281 işlem, AUC 0,544 < perm p95 0,571); `faz5_final.json`, `plots/final_reliability_*.svg`; eski dönem iki kaynakla (§6) |
+| 6 | `GET /probability/nasdaq` LONG/SHORT P, beklenen R, bağlam (3 destek/3 direnç, RSI, rejim, seans, VIX, olay), SHAP 5 faktör Türkçe, NÖTR durumu, sürüm + tazelik, bayatsa tahmin yok, train/serve testi, emir yok | `backend/routers/nom_router.py` (`/api/probability/nasdaq` + takma ad), `services/nom/engine.py` (`STALE_S`, `VERI_BAYAT`, `NÖTR / belirsiz`, `pred_contrib` SHAP); testler `test_predict_structure`, `test_stale_and_closed`, `test_bad_inputs`, `test_router` |
+| 7 | panel: LONG/SHORT barları + %95 aralık, S/R haritası, RSI/rejim, "Neden?", geometri/ufuk seçici, canlı kalibrasyon grafiği | `frontend/app/olasilik-motoru/page.tsx`, `components/nom/ProbabilityEnginePanel.tsx` (kova %95 `ci_lo–ci_hi`, WF bandı vs canlı SVG), `lib/api/nom.ts` |
+| 8 | `nom_predictions` migration + RLS, outcome yazımı, gölge betiği, canlı kalibrasyon raporu, mezuniyet kriteri | `supabase/migrations/20261113_nom_predictions.sql`, `backend/scripts/nom_shadow.py`, `services/nom/{shadow,calibration}.py`, FAZ_8 §mezuniyet (≥4 hafta, tercihen 8, yüksek VIX haftası) |
+| 9 | yeniden eğitim → WF → yalnız geçerse terfi, sürüm + geri alma, drift | `src/faz9_retrain.py` (terfi kuralı), `services/nom/model_store.py` (`promote`, `rollback`; test `test_promote_rollback`), `services/nom/drift.py` (PSI, destek dışı oranı) + `calibration.py` (`DRIFT_DROP`) |
+
+Testler bugün yeniden koşuldu: `pytest backend/tests/test_nom_engine.py backend/tests/test_nom_features.py` → **11 passed**.
