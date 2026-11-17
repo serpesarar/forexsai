@@ -1,0 +1,778 @@
+{
+ "V1 DUKA 2m": {
+  "n": 1483937,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 0,
+  "kuyruk_dk": 0,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 0.091
+ },
+ "V2 DUKA 2m←1m bölüntü": {
+  "kaynak_bar_aralikta": 2964405,
+  "mumlara_dusen": 2964405,
+  "n_alt_esit": true
+ },
+ "V2 DUKA 2m←1m kaynaktan yeniden hesap": {
+  "ortak": 1483937,
+  "birebir": 1483937,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 DUKA 3m": {
+  "n": 988730,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 0,
+  "kuyruk_dk": 0,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 0.145
+ },
+ "V2 DUKA 3m←1m bölüntü": {
+  "kaynak_bar_aralikta": 2964405,
+  "mumlara_dusen": 2964405,
+  "n_alt_esit": true
+ },
+ "V2 DUKA 3m←1m kaynaktan yeniden hesap": {
+  "ortak": 988730,
+  "birebir": 988730,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 DUKA 90m": {
+  "n": 35733,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 0,
+  "kuyruk_dk": 0,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 3.896
+ },
+ "V2 DUKA 90m←1m bölüntü": {
+  "kaynak_bar_aralikta": 2964292,
+  "mumlara_dusen": 2964292,
+  "n_alt_esit": true
+ },
+ "V2 DUKA 90m←1m kaynaktan yeniden hesap": {
+  "ortak": 35733,
+  "birebir": 35733,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 DUKA 210m": {
+  "n": 15734,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 2201,
+  "kuyruk_dk": 180,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 8.014
+ },
+ "V2 DUKA 210m←1m bölüntü": {
+  "kaynak_bar_aralikta": 2964262,
+  "mumlara_dusen": 2964262,
+  "n_alt_esit": true
+ },
+ "V2 DUKA 210m←1m kaynaktan yeniden hesap": {
+  "ortak": 15734,
+  "birebir": 15734,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 2m→6m = 3m→6m": {
+  "ortak": 495580,
+  "birebir": 495580,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 2m→90m = 90m dosyası": {
+  "ortak": 35733,
+  "birebir": 35733,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 3m→90m = 90m dosyası": {
+  "ortak": 35733,
+  "birebir": 35733,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 2m→210m = 210m dosyası": {
+  "ortak": 15734,
+  "birebir": 15734,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 3m→210m = 210m dosyası": {
+  "ortak": 15734,
+  "birebir": 15734,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 90m×7 = 210m×3 (630 dk blok + 180 kuyruk)": {
+  "ortak": 6771,
+  "birebir": 6771,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 2m→gün = kaynak→gün": {
+  "ortak": 2288,
+  "birebir": 2288,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 3m→gün = kaynak→gün": {
+  "ortak": 2288,
+  "birebir": 2288,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 90m→gün = kaynak→gün": {
+  "ortak": 2288,
+  "birebir": 2288,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 DUKA 210m→gün = kaynak→gün": {
+  "ortak": 2287,
+  "birebir": 2287,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V6 DUKA 2m fitil_durumu": {
+  "tutarli": true,
+  "tam": 1482585,
+  "eksik_dakika_teyitsiz": 1274,
+  "eksik_dakika_supheli": 72,
+  "eksik_dakika_teyitli": 6
+ },
+ "V6 DUKA 3m fitil_durumu": {
+  "tutarli": true,
+  "tam": 987300,
+  "eksik_dakika_teyitsiz": 1348,
+  "eksik_dakika_supheli": 65,
+  "eksik_dakika_teyitli": 17
+ },
+ "V6 DUKA 90m fitil_durumu": {
+  "tutarli": true,
+  "tam": 34341,
+  "eksik_dakika_teyitli": 772,
+  "eksik_dakika_supheli": 375,
+  "eksik_dakika_teyitsiz": 245
+ },
+ "V6 DUKA 210m fitil_durumu": {
+  "tutarli": true,
+  "tam": 14473,
+  "eksik_dakika_teyitli": 833,
+  "eksik_dakika_teyitsiz": 220,
+  "eksik_dakika_supheli": 208
+ },
+ "V1 USTEC 2m": {
+  "n": 59575,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 0,
+  "kuyruk_dk": 0,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 0.017
+ },
+ "V2 USTEC 2m←1m bölüntü": {
+  "kaynak_bar_aralikta": 119140,
+  "mumlara_dusen": 119140,
+  "n_alt_esit": true
+ },
+ "V2 USTEC 2m←1m kaynaktan yeniden hesap": {
+  "ortak": 59575,
+  "birebir": 59575,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 USTEC 3m": {
+  "n": 39718,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 0,
+  "kuyruk_dk": 0,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 0.023
+ },
+ "V2 USTEC 3m←1m bölüntü": {
+  "kaynak_bar_aralikta": 119139,
+  "mumlara_dusen": 119139,
+  "n_alt_esit": true
+ },
+ "V2 USTEC 3m←1m kaynaktan yeniden hesap": {
+  "ortak": 39718,
+  "birebir": 39718,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 USTEC 90m": {
+  "n": 1384,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 0,
+  "kuyruk_dk": 0,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 0.867
+ },
+ "V2 USTEC 90m←1m bölüntü": {
+  "kaynak_bar_aralikta": 119058,
+  "mumlara_dusen": 119058,
+  "n_alt_esit": true
+ },
+ "V2 USTEC 90m←1m kaynaktan yeniden hesap": {
+  "ortak": 1384,
+  "birebir": 1384,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 USTEC 210m": {
+  "n": 606,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 84,
+  "kuyruk_dk": 180,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 1.98
+ },
+ "V2 USTEC 210m←1m bölüntü": {
+  "kaynak_bar_aralikta": 119088,
+  "mumlara_dusen": 119088,
+  "n_alt_esit": true
+ },
+ "V2 USTEC 210m←1m kaynaktan yeniden hesap": {
+  "ortak": 606,
+  "birebir": 606,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 2m→6m = 3m→6m": {
+  "ortak": 19861,
+  "birebir": 19861,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 2m→90m = 90m dosyası": {
+  "ortak": 1383,
+  "birebir": 1383,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 3m→90m = 90m dosyası": {
+  "ortak": 1383,
+  "birebir": 1383,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 2m→210m = 210m dosyası": {
+  "ortak": 605,
+  "birebir": 605,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 3m→210m = 210m dosyası": {
+  "ortak": 605,
+  "birebir": 605,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 90m×7 = 210m×3 (630 dk blok + 180 kuyruk)": {
+  "ortak": 257,
+  "birebir": 257,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 2m→gün = kaynak→gün": {
+  "ortak": 86,
+  "birebir": 86,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 3m→gün = kaynak→gün": {
+  "ortak": 86,
+  "birebir": 86,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 90m→gün = kaynak→gün": {
+  "ortak": 86,
+  "birebir": 86,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 USTEC 210m→gün = kaynak→gün": {
+  "ortak": 86,
+  "birebir": 86,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 MT5 2m": {
+  "n": 94645,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 0,
+  "kuyruk_dk": 0,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 0.146
+ },
+ "V2 MT5 2m←M1(+kopya) bölüntü": {
+  "kaynak_bar_aralikta": 189152,
+  "mumlara_dusen": 189152,
+  "n_alt_esit": true
+ },
+ "V2 MT5 2m←M1(+kopya) kaynaktan yeniden hesap": {
+  "ortak": 94645,
+  "birebir": 94645,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 MT5 3m": {
+  "n": 63107,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 0,
+  "kuyruk_dk": 0,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 0.219
+ },
+ "V2 MT5 3m←M1(+kopya) bölüntü": {
+  "kaynak_bar_aralikta": 189153,
+  "mumlara_dusen": 189153,
+  "n_alt_esit": true
+ },
+ "V2 MT5 3m←M1(+kopya) kaynaktan yeniden hesap": {
+  "ortak": 63107,
+  "birebir": 63107,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 MT5 90m": {
+  "n": 34985,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 0,
+  "kuyruk_dk": 0,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 0.82
+ },
+ "V2 MT5 90m←M30 bölüntü": {
+  "kaynak_bar_aralikta": 49986,
+  "mumlara_dusen": 49986,
+  "n_alt_esit": true
+ },
+ "V2 MT5 90m←M30 kaynaktan yeniden hesap": {
+  "ortak": 17419,
+  "birebir": 17419,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V2 MT5 90m←M15 bölüntü": {
+  "kaynak_bar_aralikta": 66632,
+  "mumlara_dusen": 66632,
+  "n_alt_esit": true
+ },
+ "V2 MT5 90m←M15 kaynaktan yeniden hesap": {
+  "ortak": 11611,
+  "birebir": 11611,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V2 MT5 90m←M5 bölüntü": {
+  "kaynak_bar_aralikta": 66789,
+  "mumlara_dusen": 66789,
+  "n_alt_esit": true
+ },
+ "V2 MT5 90m←M5 kaynaktan yeniden hesap": {
+  "ortak": 3884,
+  "birebir": 3884,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V2 MT5 90m←M1 bölüntü": {
+  "kaynak_bar_aralikta": 178131,
+  "mumlara_dusen": 178131,
+  "n_alt_esit": true
+ },
+ "V2 MT5 90m←M1 kaynaktan yeniden hesap": {
+  "ortak": 2071,
+  "birebir": 2071,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V1 MT5 210m": {
+  "n": 15303,
+  "sira_duplike": 0,
+  "ohlc_ihlal": 0,
+  "nan": 0,
+  "izgara_disi": 0,
+  "gune_tasan": 0,
+  "sure_hatali": 0,
+  "kisa_kuyruk_bar": 2120,
+  "kuyruk_dk": 180,
+  "fazla_alt_bar": 0,
+  "eksik_alt_bar_%": 1.862
+ },
+ "V2 MT5 210m←M30 bölüntü": {
+  "kaynak_bar_aralikta": 49984,
+  "mumlara_dusen": 49984,
+  "n_alt_esit": true
+ },
+ "V2 MT5 210m←M30 kaynaktan yeniden hesap": {
+  "ortak": 7621,
+  "birebir": 7621,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V2 MT5 210m←M15 bölüntü": {
+  "kaynak_bar_aralikta": 66632,
+  "mumlara_dusen": 66632,
+  "n_alt_esit": true
+ },
+ "V2 MT5 210m←M15 kaynaktan yeniden hesap": {
+  "ortak": 5077,
+  "birebir": 5077,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V2 MT5 210m←M5 bölüntü": {
+  "kaynak_bar_aralikta": 66807,
+  "mumlara_dusen": 66807,
+  "n_alt_esit": true
+ },
+ "V2 MT5 210m←M5 kaynaktan yeniden hesap": {
+  "ortak": 1700,
+  "birebir": 1700,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V2 MT5 210m←M1 bölüntü": {
+  "kaynak_bar_aralikta": 178042,
+  "mumlara_dusen": 178042,
+  "n_alt_esit": true
+ },
+ "V2 MT5 210m←M1 kaynaktan yeniden hesap": {
+  "ortak": 905,
+  "birebir": 905,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 2m→6m = 3m→6m": {
+  "ortak": 31567,
+  "birebir": 31567,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 2m→90m = 90m dosyası": {
+  "ortak": 2071,
+  "birebir": 2071,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 3m→90m = 90m dosyası": {
+  "ortak": 2071,
+  "birebir": 2071,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 2m→210m = 210m dosyası": {
+  "ortak": 905,
+  "birebir": 905,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 3m→210m = 210m dosyası": {
+  "ortak": 905,
+  "birebir": 905,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 90m×7 = 210m×3 (630 dk blok + 180 kuyruk)": {
+  "ortak": 6517,
+  "birebir": 6517,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 2m→gün = kaynak→gün": {
+  "ortak": 136,
+  "birebir": 136,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 3m→gün = kaynak→gün": {
+  "ortak": 136,
+  "birebir": 136,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 90m→gün = kaynak→gün": {
+  "ortak": 129,
+  "birebir": 129,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V3 MT5 210m→gün = kaynak→gün": {
+  "ortak": 128,
+  "birebir": 128,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 yerli M5 = M1→M5": {
+  "ortak": 35668,
+  "birebir": 35668,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 yerli M15 = M1→M15": {
+  "ortak": 11899,
+  "birebir": 11899,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 yerli M30 = M1→M30": {
+  "ortak": 5951,
+  "birebir": 5951,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 yerli M15 = M5→M15": {
+  "ortak": 34186,
+  "birebir": 34186,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 yerli M30 = M5→M30": {
+  "ortak": 17097,
+  "birebir": 17097,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 yerli M30 = M15→M30": {
+  "ortak": 50422,
+  "birebir": 50422,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 yerli H1 = M30→H1": {
+  "ortak": 50236,
+  "birebir": 50236,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 3m→M15 = yerli M15": {
+  "ortak": 12627,
+  "birebir": 12627,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 3m→M30 = yerli M30": {
+  "ortak": 6315,
+  "birebir": 6315,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 2m→M30 = yerli M30": {
+  "ortak": 6315,
+  "birebir": 6315,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 90m×2 = yerli H1×3": {
+  "ortak": 17498,
+  "birebir": 17498,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 210m×2 = yerli H1×7 (+180 kuyruk)": {
+  "ortak": 8715,
+  "birebir": 8715,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 90m: M1'den = M5'den": {
+  "ortak": 2040,
+  "birebir": 2040,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 90m: M5'den = M15'den": {
+  "ortak": 5924,
+  "birebir": 5924,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 90m: M15'den = M30'den": {
+  "ortak": 17535,
+  "birebir": 17535,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 90m: M1'den = M30'den": {
+  "ortak": 2040,
+  "birebir": 2040,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 210m: M1'den = M5'den": {
+  "ortak": 892,
+  "birebir": 892,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 210m: M5'den = M15'den": {
+  "ortak": 2592,
+  "birebir": 2592,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 210m: M15'den = M30'den": {
+  "ortak": 7669,
+  "birebir": 7669,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V4 MT5 210m: M1'den = M30'den": {
+  "ortak": 892,
+  "birebir": 892,
+  "birebir_%": 100.0,
+  "max_fark": 0.0
+ },
+ "V5 DUKA↔MT5 90m": {
+  "gecikme_bar→r": {
+   "-3": 0.0008,
+   "-2": -0.0096,
+   "-1": -0.0006,
+   "0": 0.9769,
+   "1": 0.011,
+   "2": -0.0042,
+   "3": -0.0058
+  },
+  "en_iyi": 0,
+  "ortak": 34630,
+  "seviye_farki_medyan": -1.02,
+  "seviye_farki_IQR": 3.9
+ },
+ "V5 DUKA↔USTEC 90m": {
+  "gecikme_bar→r": {
+   "-3": -0.0074,
+   "-2": 0.0076,
+   "-1": 0.0349,
+   "0": 0.9889,
+   "1": 0.0428,
+   "2": 0.013,
+   "3": -0.0065
+  },
+  "en_iyi": 0,
+  "ortak": 1373,
+  "seviye_farki_medyan": 0.19,
+  "seviye_farki_IQR": 2.39
+ },
+ "V5 USTEC↔MT5 90m": {
+  "gecikme_bar→r": {
+   "-3": -0.0014,
+   "-2": 0.0077,
+   "-1": 0.0356,
+   "0": 0.9994,
+   "1": 0.0385,
+   "2": 0.0093,
+   "3": -0.0044
+  },
+  "en_iyi": 0,
+  "ortak": 1384,
+  "seviye_farki_medyan": -7.4,
+  "seviye_farki_IQR": 22.9
+ },
+ "V5 DUKA↔MT5 210m": {
+  "gecikme_bar→r": {
+   "-3": 0.0169,
+   "-2": 0.0208,
+   "-1": -0.005,
+   "0": 0.9773,
+   "1": -0.006,
+   "2": 0.0198,
+   "3": 0.0193
+  },
+  "en_iyi": 0,
+  "ortak": 15209,
+  "seviye_farki_medyan": -1.03,
+  "seviye_farki_IQR": 4.32
+ },
+ "V5 DUKA↔USTEC 210m": {
+  "gecikme_bar→r": {
+   "-3": 0.0594,
+   "-2": -0.0477,
+   "-1": 0.0135,
+   "0": 0.9893,
+   "1": 0.0217,
+   "2": -0.0362,
+   "3": 0.0519
+  },
+  "en_iyi": 0,
+  "ortak": 601,
+  "seviye_farki_medyan": 0.25,
+  "seviye_farki_IQR": 2.56
+ },
+ "V5 USTEC↔MT5 210m": {
+  "gecikme_bar→r": {
+   "-3": 0.0514,
+   "-2": -0.0479,
+   "-1": 0.0187,
+   "0": 0.9995,
+   "1": 0.0197,
+   "2": -0.0449,
+   "3": 0.047
+  },
+  "en_iyi": 0,
+  "ortak": 606,
+  "seviye_farki_medyan": -7.95,
+  "seviye_farki_IQR": 23.05
+ },
+ "SONUC": {
+  "zorunlu_basarisiz": [],
+  "gecti": true
+ }
+}

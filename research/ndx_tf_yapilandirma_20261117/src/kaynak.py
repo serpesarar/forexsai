@@ -1,0 +1,137 @@
+"""NASDAQ mum kaynaklarının yükleyicileri — hepsi aynı biçime getirilir.
+
+Ortak biçim (DataFrame):
+    t     int64   bar AÇILIŞI, gerçek UTC epoch (saniye)
+    open/high/low/close  float64
+    vol   float64  tik hacmi (yoksa NaN)
+    spr   float64  fiyat biriminde spread (yoksa NaN)
+
+İki bağımsız besleme var ve KARIŞTIRILMAZ (seviye farkı IQR ~29 puan, FAZ_0 §2):
+    DUKA  Dukascopy USATECHIDXUSD BID 1m (UTC)
+    MT5   Pepperstone NAS100 (kutu terminali). Sunucu saati = New York + 7 sa
+          (yeni deneme/broker_time.py); csv.gz dosyalarındaki `t` sunucu duvar saatidir.
+"""
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[3]
+NY = "America/New_York"
+SERVER_MINUS_NY_H = 7
+MT5_POINT = 0.1  # NAS100 point (data/mt5/meta.json)
+COLS = ["t", "open", "high", "low", "close", "vol", "spr"]
+
+DUKA_1M = ROOT / "research/nom_20261113/data/ndx_1m_v3_duka.parquet"
+MT5_DIR_A = ROOT / "research/c1_turev_20261105/data/mt5"
+MT5_DIR_B = ROOT / "research/yon_lab_20261114/data/mt5"
+MT5_UTC_CSV = [
+    ROOT / "nasdaq_tam_veri_2026-08-29/1m_veri/NAS100_1m_2026-05-19_2026-08-28.csv",
+    ROOT / "islem_paketi_2026-08-27/NASDAQ/1m_veri/NAS100_1m_MT5_2026-08-13_2026-08-27.csv",
+]
+CANDLE_CACHE_1M = [
+    ROOT / "nasdaq_1m_candle_cache_2026-02-10_2026-08-29/nasdaq_1m_candle_cache_TAM_2026-02-10_2026-08-29.csv",
+    ROOT / "backend/data/nom_cache/ndx_1m.parquet",
+]
+
+
+def server_to_utc(t_server: np.ndarray) -> np.ndarray:
+    """MT5 sunucu duvar saati epoch'u → gerçek UTC epoch.
+
+    Sunucu = NY + 7 sa. NY duvar saatine indirip America/New_York ile yerelleştiririz;
+    DST geçişi Pazar 02:00 NY'de, piyasa kapalıyken olur → belirsiz/olmayan saat beklenmez.
+    """
+    wall_ny = pd.to_datetime(t_server, unit="s") - pd.Timedelta(hours=SERVER_MINUS_NY_H)
+    loc = wall_ny.tz_localize(NY, ambiguous="NaT", nonexistent="NaT")
+    if loc.isna().any():
+        raise ValueError(f"{int(loc.isna().sum())} bar DST geçiş saatine düştü — beklenmiyordu")
+    return (loc.tz_convert("UTC").asi8 // 10**9).astype(np.int64)
+
+
+def _finish(df: pd.DataFrame) -> pd.DataFrame:
+    for c in COLS:
+        if c not in df:
+            df[c] = np.nan
+    df = df[COLS].copy()
+    df["t"] = df["t"].astype(np.int64)
+    for c in COLS[1:]:
+        df[c] = df[c].astype(np.float64)
+    return df.sort_values("t").reset_index(drop=True)
+
+
+DUKA_RAW_BI5 = ROOT / "research/nom_20261113/data/duka_m1"
+DUKA_V1 = ROOT / "research/nom_20261113/data/ndx_1m_v1.parquet"
+
+
+def _duka_tail_after(t_last: int) -> pd.DataFrame:
+    """Ana dosyanın bitişinden sonraki Dukascopy barları — ham bi5'ten, ana dosyayla AYNI temizlik kurallarıyla
+    (nom_20261113/src/data_layer.load_bi5_range: R1 kapalı saat, R2 OHLC, R3 düz sıfır-hacim dolgu).
+    İkinci kopya ndx_1m_v1 ile birebir aynı olması dayatılır. Spread modeli bu barlarda yok (spr = NaN)."""
+    import datetime as _dt
+    import importlib
+    sys.path.insert(0, str(ROOT / "research/nom_20261113/src"))
+    DL = importlib.import_module("data_layer")
+    start = _dt.datetime.fromtimestamp(t_last, _dt.timezone.utc).date()
+    b, _ = DL.load_bi5_range(DUKA_RAW_BI5, start, _dt.date.today(), "duka_bi5_ext")
+    b = b[b["t"] > t_last][["t", "open", "high", "low", "close"]].reset_index(drop=True)
+    v1 = pd.read_parquet(DUKA_V1, columns=["t", "open", "high", "low", "close"])
+    v1 = v1[v1["t"] > t_last].reset_index(drop=True)
+    if len(b) != len(v1) or not np.allclose(b.to_numpy(), v1.to_numpy(), atol=1e-9, rtol=0):
+        raise AssertionError("Dukascopy ek günleri: ham bi5 ile ndx_1m_v1 ayrışıyor")
+    return b
+
+
+def load_duka_1m(extend: bool = True) -> pd.DataFrame:
+    d = _finish(pd.read_parquet(DUKA_1M)[["t", "open", "high", "low", "close", "spr"]].copy())
+    if extend:
+        tail = _duka_tail_after(int(d["t"].iloc[-1]))
+        d = _finish(pd.concat([d, tail], ignore_index=True)) if len(tail) else d
+    return d
+
+
+def load_mt5_native(tf: str, folder: Path = MT5_DIR_A) -> pd.DataFrame:
+    """tf ∈ M1, M5, M15, M30, H1 — sunucu saatinden UTC'ye çevrilmiş."""
+    x = pd.read_csv(folder / f"NAS100_{tf}.csv.gz")
+    out = pd.DataFrame({
+        "t": server_to_utc(x["t"].to_numpy()),
+        "open": x["o"], "high": x["h"], "low": x["l"], "close": x["c"],
+        "vol": x["v"], "spr": x["sp"] * MT5_POINT,
+    })
+    return _finish(out)
+
+
+def load_mt5_utc_csv(path: Path) -> pd.DataFrame:
+    x = pd.read_csv(path)
+    t = pd.to_datetime(x["time_utc"], utc=True).astype("int64") // 10**9
+    out = pd.DataFrame({
+        "t": t, "open": x["open"], "high": x["high"], "low": x["low"], "close": x["close"],
+        "vol": x["tick_volume"], "spr": x["spread"] * MT5_POINT,
+    })
+    return _finish(out)
+
+
+def load_candle_cache(path: Path) -> pd.DataFrame:
+    if path.suffix == ".parquet":
+        return _finish(pd.read_parquet(path))
+    x = pd.read_csv(path)
+    t = pd.to_datetime(x["time_utc"], utc=True).astype("int64") // 10**9
+    return _finish(pd.DataFrame({"t": t, "open": x["open"], "high": x["high"], "low": x["low"],
+                                 "close": x["close"], "vol": x.get("volume")}))
+
+
+# ── 2026-11-17 EK: kutudan taze çekim + önceki broker beslemesi (USTEC) ─────────
+KUTU_TAZE = Path(__file__).resolve().parents[1] / "out/kutu_taze"  # calistir/arac_nas100_mum_export.py çıktısı
+USTEC_JSON = [ROOT / "1MDATA/mt5_ustec_1m_bars.json", ROOT / "RECOVER/mt5_ustec_1m_bars.json"]
+
+
+def load_ustec_json(path: Path) -> pd.DataFrame:
+    """Önceki broker hesabının USTEC 1m dışa aktarımı. `t` sunucu duvar saati (NY+7), s05'te ölçüldü:
+    Dukascopy'ye karşı her hafta en iyi gecikme 0 (çevrimden sonra). Bugünkü NAS100'den AYRI besleme."""
+    import json as _json
+    bars = pd.DataFrame(_json.loads(path.read_text())["bars"])
+    out = pd.DataFrame({"t": server_to_utc(bars["t"].to_numpy()), "open": bars["o"], "high": bars["h"],
+                        "low": bars["l"], "close": bars["c"], "vol": bars.get("v")})
+    return _finish(out)

@@ -1,0 +1,3 @@
+out/
+*.parquet
+*.csv.gz

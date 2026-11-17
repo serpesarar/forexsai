@@ -1,0 +1,170 @@
+{
+ "kaynaklar": {
+  "DUKA_1m": {
+   "n": 2964406,
+   "bas": "2018-01-02 07:05:00",
+   "bit": "2026-11-15 23:59:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "c1_turev_M1": {
+   "n": 100541,
+   "bas": "2026-07-27 04:14:00",
+   "bit": "2026-11-05 08:02:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "yon_lab_M1": {
+   "n": 99999,
+   "bas": "2026-08-05 04:08:00",
+   "bit": "2026-11-13 21:53:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "tam_veri_1m_utc": {
+   "n": 100000,
+   "bas": "2026-05-19 19:20:00",
+   "bit": "2026-08-28 20:54:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "islem_paketi_1m_utc": {
+   "n": 14143,
+   "bas": "2026-08-13 00:00:00",
+   "bit": "2026-08-27 06:00:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "MT5_M5": {
+   "n": 100107,
+   "bas": "2025-06-09 07:00:00",
+   "bit": "2026-11-05 07:55:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "MT5_M15": {
+   "n": 100035,
+   "bas": "2022-08-10 20:15:00",
+   "bit": "2026-11-05 07:45:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "MT5_M30": {
+   "n": 100017,
+   "bas": "2018-05-14 12:30:00",
+   "bit": "2026-11-05 07:30:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "MT5_H1": {
+   "n": 65278,
+   "bas": "2008-08-05 21:00:00",
+   "bit": "2026-11-05 07:00:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "MT5_M5_yon_lab": {
+   "n": 99999,
+   "bas": "2025-06-18 06:50:00",
+   "bit": "2026-11-13 21:45:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0
+  },
+  "candle_cache_0": {
+   "n": 195285,
+   "bas": "2026-02-10 22:00:00",
+   "bit": "2026-08-28 20:53:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0,
+   "dosya": "nasdaq_1m_candle_cache_2026-02-10_2026-08-29/nasdaq_1m_candle_cache_TAM_2026-02-10_2026-08-29.csv"
+  },
+  "candle_cache_1": {
+   "n": 233949,
+   "bas": "2026-03-22 22:00:00",
+   "bit": "2026-11-16 20:44:00",
+   "duplike": 0,
+   "izgara_disi": 0,
+   "ohlc_ihlal": 0,
+   "nan": 0,
+   "dosya": "backend/data/nom_cache/ndx_1m.parquet"
+  }
+ },
+ "mt5_1m_ciftleri": {
+  "c1_turev_M1~yon_lab_M1": {
+   "ortak": 90898,
+   "birebir_%": 100.0,
+   "max_fark": 0.0
+  },
+  "c1_turev_M1~tam_veri_1m_utc": {
+   "ortak": 34081,
+   "birebir_%": 100.0,
+   "max_fark": 0.0
+  },
+  "c1_turev_M1~islem_paketi_1m_utc": {
+   "ortak": 14143,
+   "birebir_%": 100.0,
+   "max_fark": 0.0
+  },
+  "yon_lab_M1~tam_veri_1m_utc": {
+   "ortak": 24438,
+   "birebir_%": 100.0,
+   "max_fark": 0.0
+  },
+  "yon_lab_M1~islem_paketi_1m_utc": {
+   "ortak": 14143,
+   "birebir_%": 100.0,
+   "max_fark": 0.0
+  },
+  "tam_veri_1m_utc~islem_paketi_1m_utc": {
+   "ortak": 14143,
+   "birebir_%": 100.0,
+   "max_fark": 0.0
+  }
+ },
+ "mt5_native_vs_1m": {},
+ "eksen": {
+  "candle_cache_0~MT5": {
+   "en_iyi_gecikme_dk": 0,
+   "r": 0.994,
+   "ortak": 99611,
+   "birebir_%": 93.272,
+   "max_fark": 76.417
+  },
+  "candle_cache_1~MT5": {
+   "en_iyi_gecikme_dk": 0,
+   "r": 0.994,
+   "ortak": 175561,
+   "birebir_%": 99.965,
+   "max_fark": 74.4
+  },
+  "DUKA~MT5": {
+   "en_iyi_gecikme_dk": 0,
+   "r": 0.9787,
+   "ortak": 169984,
+   "birebir_%": 17.027,
+   "max_fark": 201.029
+  }
+ }
+}

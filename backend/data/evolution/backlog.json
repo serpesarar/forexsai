@@ -5269,5 +5269,16 @@
     "source": "session",
     "created_at": "2026-11-17T03:36:48.198508+00:00",
     "updated_at": "2026-11-17T03:36:48.198696+00:00"
+  },
+  {
+    "id": "bl_201e042896",
+    "title": "MT5 2/3 dk mumlarını 2026-11-13 sonrasına uzat",
+    "detail": "2026-11-17 yapıldı: kutudan taze NAS100 M1/M5/M15/M30/H1 çekildi (calistir/arac_nas100_mum_export.py); MT5 2/3 dk artık 2026-05-07 → 11-17.",
+    "category": "wiring",
+    "priority": "low",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-11-17T20:17:27.381564+00:00",
+    "updated_at": "2026-11-17T20:53:06.832565+00:00"
   }
 ]

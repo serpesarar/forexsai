@@ -1,0 +1,188 @@
+{
+ "capa": "NY 17:00 işlem günü başı, günlük sıfırlama",
+ "DUKA": {
+  "atilan_kapali_saat_bari": 0,
+  "2m": {
+   "n": 1483937,
+   "bas": "2018-01-02 07:06:00+00:00",
+   "bit": "2026-11-15 23:58:00+00:00",
+   "tam_%": 99.91,
+   "kaynak_tf": {
+    "1m": 1483937
+   },
+   "fitil_durumu": {
+    "tam": 1482585,
+    "eksik_dakika_teyitsiz": 1274,
+    "eksik_dakika_supheli": 72,
+    "eksik_dakika_teyitli": 6
+   },
+   "dosya": "out/DUKA/NDX_DUKA_2m.parquet"
+  },
+  "3m": {
+   "n": 988730,
+   "bas": "2018-01-02 07:06:00+00:00",
+   "bit": "2026-11-15 23:57:00+00:00",
+   "tam_%": 99.86,
+   "kaynak_tf": {
+    "1m": 988730
+   },
+   "fitil_durumu": {
+    "tam": 987300,
+    "eksik_dakika_teyitsiz": 1348,
+    "eksik_dakika_supheli": 65,
+    "eksik_dakika_teyitli": 17
+   },
+   "dosya": "out/DUKA/NDX_DUKA_3m.parquet"
+  },
+  "90m": {
+   "n": 35733,
+   "bas": "2018-01-02 08:30:00+00:00",
+   "bit": "2026-11-15 22:00:00+00:00",
+   "tam_%": 96.1,
+   "kaynak_tf": {
+    "1m": 35733
+   },
+   "fitil_durumu": {
+    "tam": 34341,
+    "eksik_dakika_teyitli": 772,
+    "eksik_dakika_supheli": 375,
+    "eksik_dakika_teyitsiz": 245
+   },
+   "dosya": "out/DUKA/NDX_DUKA_90m.parquet"
+  },
+  "210m": {
+   "n": 15734,
+   "bas": "2018-01-02 08:30:00+00:00",
+   "bit": "2026-11-13 19:00:00+00:00",
+   "tam_%": 91.99,
+   "kaynak_tf": {
+    "1m": 15734
+   },
+   "fitil_durumu": {
+    "tam": 14473,
+    "eksik_dakika_teyitli": 833,
+    "eksik_dakika_teyitsiz": 220,
+    "eksik_dakika_supheli": 208
+   },
+   "dosya": "out/DUKA/NDX_DUKA_210m.parquet"
+  }
+ },
+ "MT5": {
+  "atilan_kapali_saat_bari_M1": 0,
+  "kaynak_M1": {
+   "n": 178228,
+   "bas": "2026-05-19 19:20:00",
+   "bit": "2026-11-17 20:26:00"
+  },
+  "atilan_kapali_saat_bari_M5": 0,
+  "kaynak_M5": {
+   "n": 102462,
+   "bas": "2025-06-09 07:00:00",
+   "bit": "2026-11-17 20:20:00"
+  },
+  "atilan_kapali_saat_bari_M15": 0,
+  "kaynak_M15": {
+   "n": 100820,
+   "bas": "2022-08-10 20:15:00",
+   "bit": "2026-11-17 20:00:00"
+  },
+  "atilan_kapali_saat_bari_M30": 0,
+  "kaynak_M30": {
+   "n": 100409,
+   "bas": "2018-05-14 12:30:00",
+   "bit": "2026-11-17 19:30:00"
+  },
+  "kopya_gun_bar": 10925,
+  "2m": {
+   "n": 94645,
+   "bas": "2026-05-07 22:00:00+00:00",
+   "bit": "2026-11-17 20:24:00+00:00",
+   "tam_%": 99.85,
+   "kaynak_tf": {
+    "M1": 89179,
+    "M1_kopya": 5466
+   },
+   "dosya": "out/MT5/NDX_MT5_2m.parquet"
+  },
+  "3m": {
+   "n": 63107,
+   "bas": "2026-05-07 22:00:00+00:00",
+   "bit": "2026-11-17 20:24:00+00:00",
+   "tam_%": 99.78,
+   "kaynak_tf": {
+    "M1": 59462,
+    "M1_kopya": 3645
+   },
+   "dosya": "out/MT5/NDX_MT5_3m.parquet"
+  },
+  "90m": {
+   "n": 34985,
+   "bas": "2018-05-14 13:30:00+00:00",
+   "bit": "2026-11-17 17:30:00+00:00",
+   "tam_%": 99.18,
+   "kaynak_tf": {
+    "M30": 17419,
+    "M15": 11611,
+    "M5": 3884,
+    "M1": 2071
+   },
+   "dosya": "out/MT5/NDX_MT5_90m.parquet"
+  },
+  "210m": {
+   "n": 15303,
+   "bas": "2018-05-14 14:30:00+00:00",
+   "bit": "2026-11-17 15:30:00+00:00",
+   "tam_%": 98.14,
+   "kaynak_tf": {
+    "M30": 7621,
+    "M15": 5077,
+    "M5": 1700,
+    "M1": 905
+   },
+   "dosya": "out/MT5/NDX_MT5_210m.parquet"
+  }
+ },
+ "USTEC": {
+  "atilan_kapali_saat_bari": 0,
+  "2m": {
+   "n": 59575,
+   "bas": "2026-02-10 23:00:00+00:00",
+   "bit": "2026-06-12 01:20:00+00:00",
+   "tam_%": 99.98,
+   "kaynak_tf": {
+    "1m": 59575
+   },
+   "dosya": "out/USTEC/NDX_USTEC_2m.parquet"
+  },
+  "3m": {
+   "n": 39718,
+   "bas": "2026-02-10 23:00:00+00:00",
+   "bit": "2026-06-12 01:18:00+00:00",
+   "tam_%": 99.98,
+   "kaynak_tf": {
+    "1m": 39718
+   },
+   "dosya": "out/USTEC/NDX_USTEC_3m.parquet"
+  },
+  "90m": {
+   "n": 1384,
+   "bas": "2026-02-10 22:00:00+00:00",
+   "bit": "2026-06-11 22:30:00+00:00",
+   "tam_%": 99.13,
+   "kaynak_tf": {
+    "1m": 1384
+   },
+   "dosya": "out/USTEC/NDX_USTEC_90m.parquet"
+  },
+  "210m": {
+   "n": 606,
+   "bas": "2026-02-10 22:00:00+00:00",
+   "bit": "2026-06-11 21:00:00+00:00",
+   "tam_%": 98.02,
+   "kaynak_tf": {
+    "1m": 606
+   },
+   "dosya": "out/USTEC/NDX_USTEC_210m.parquet"
+  }
+ }
+}
