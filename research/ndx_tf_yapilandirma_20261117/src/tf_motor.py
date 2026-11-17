@@ -93,7 +93,14 @@ def aggregate(src: pd.DataFrame, src_tf: int, out_tf: int, kaynak_tf: str | None
     a["vol"] = gb["v"].sum(min_count=1)
     a = a.reset_index().rename(columns={"k": "t"})
     a["sure_dk"] = bucket_length(a["bmin"].to_numpy(), out_tf)
-    a["n_nominal"] = nominal_slots(a["bmin"].to_numpy(), a["sure_dk"].to_numpy(), src_tf, closed)
+    # Beslemenin kapalı penceresinde kaynak barı VARSA (tek vaka: Dukascopy M30 dışa aktarımı 2017-03-13 16:30 ET,
+    # ABD/AB yaz saati ayrışma günü uzamış seans) o bar gerçek veridir: beklenen sayıya eklenir, silinmez.
+    in_closed = np.zeros(len(mins), bool)
+    for c0, c1 in closed:
+        in_closed |= (mins >= c0) & (mins + src_tf <= c1)
+    extra = pd.Series(in_closed.astype(int)).groupby(key).sum()
+    a["n_nominal"] = nominal_slots(a["bmin"].to_numpy(), a["sure_dk"].to_numpy(), src_tf, closed) + \
+        extra.reindex(a["t"]).fillna(0).astype(int).to_numpy()
     a["tam"] = a["n_alt"] == a["n_nominal"]
     a["kaynak_tf"] = kaynak_tf or f"{src_tf}m"
     a["zaman_utc"] = pd.to_datetime(a["t"], unit="s", utc=True)

@@ -30,6 +30,7 @@ BASE = Path(__file__).resolve().parents[1]
 OUT = BASE / "out"
 TFS = (2, 3, 90, 210)
 MT5_COARSE = (("M1", 1), ("M5", 5), ("M15", 15), ("M30", 30))
+EXTRA_FEEDS = (("EET30", 30), ("NQ", 5))  # s08 çıktısı: (besleme, kaynak TF dk)
 EXT_M1 = OUT / "ek/mt5_m1_ek_gunler.parquet"
 DAY_END_SLACK_MIN = 10  # veri günün son 10 dk'sında bitiyorsa (Cuma kapanışı) gün tamamdır
 WICK_SUSPECT_RATIO = 0.20  # fitil sapması > karşı mumun aralığının %20'si → şüpheli (yalnız eksik dakikalı mumda)
@@ -181,11 +182,33 @@ def main() -> None:
     for tf, a in us_out.items():
         meta["USTEC"][f"{tf}m"] = summary(a) | {"dosya": save(a, "USTEC", tf)}
 
+    # ── EET30 ve NQ (ev dizininden, s08'de ay/hafta kalibre) ──
+    ext_out: dict[str, dict[int, pd.DataFrame]] = {}
+    for feed, stf in EXTRA_FEEDS:
+        p = OUT / f"ek/{feed}_kalibre.parquet"
+        if not p.exists():
+            continue
+        src, n_closed = drop_closed_hour(pd.read_parquet(p)[K.COLS])
+        meta[feed] = {"atilan_kapali_saat_bari": n_closed}
+        ext_out[feed] = {}
+        for tf in (90, 210):
+            a = M.aggregate(src, stf, tf, f"{stf}m", M.CLOSED["MT5"])
+            a = a[covered(a, src, stf)].reset_index(drop=True)
+            ext_out[feed][tf] = a
+            meta[feed][f"{tf}m"] = summary(a) | {"dosya": save(a, feed, tf)}
+
     # ── DUKA ──
     duka, n_closed = drop_closed_hour(K.load_duka_1m())
     meta["DUKA"]["atilan_kapali_saat_bari"] = n_closed
+    m30x, _ = drop_closed_hour(K.load_duka_m30_export())
     for tf, a in build_1m_feed(duka, "DUKA", M.CLOSED["DUKA"], "1m").items():
-        a = annotate_duka_wicks(a, [("MT5_NAS100", mt5_out[tf]), ("MT5_USTEC", us_out[tf])])
+        if tf in (90, 210):  # 1 dk'nın başlamadığı 2016-03 → 2018-01: Dukascopy'nin kendi M30 dışa aktarımından
+            pre = M.aggregate(m30x, 30, tf, "M30_disaktarim", M.CLOSED["DUKA"])
+            pre = pre[covered(pre, m30x, 30) & (pre["t"] + pre["sure_dk"] * 60 <= a["t"].iloc[0])]
+            a = pd.concat([pre, a]).sort_values("t").reset_index(drop=True)
+        refs = [("MT5_NAS100", mt5_out[tf]), ("MT5_USTEC", us_out[tf])]
+        refs += [(f, ext_out[f][tf]) for f in ext_out if tf in ext_out[f]]
+        a = annotate_duka_wicks(a, refs)
         meta["DUKA"][f"{tf}m"] = summary(a) | {"dosya": save(a, "DUKA", tf)}
 
     (BASE / "results/s03_uretim.json").write_text(json.dumps(meta, indent=1, ensure_ascii=False))

@@ -7,6 +7,51 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parents[1]
 
 
+def _red_cozum() -> list[str]:
+    p = BASE / "results/s09_red_gun_cozumu.json"
+    if not p.exists():
+        return []
+    r = json.loads(p.read_text())
+    L = ["", "## Reddedilen her kopya gününün çözümü (`s09`)", "",
+         f"Toplam {r['red_gun_toplam']} reddedilen gün; her biri son çıktılardan birinde kapsanıyor:", "",
+         "| Çözüm | Gün |", "|---|---|"]
+    L += [f"| {k} | {v} |" for k, v in r["cozum_dagilimi"].items()]
+    L += ["", f"Kapsanmayan gün: **{len(r['kapsanmadi_ornek'])}**. Gün gün liste: `results/s09_red_gun_cozumu.csv`."]
+    return L
+
+
+def _ek_besleme() -> list[str]:
+    p = BASE / "results/s08_ek_besleme.json"
+    if not p.exists():
+        return []
+    r = json.loads(p.read_text())
+    L = ["", "## Ev dizinindeki ek beslemeler — haftalık saat kalibrasyonu (`s08`)", "",
+         "| Besleme | Dosya | TF | hafta kabul | bar kabul | kural(lar) |", "|---|---|---|---|---|---|"]
+    for k, v in r.items():
+        L.append(f"| {k} | {v['dosya']} | {v['tf_dk']}m | {v['kabul_hafta']}/{v['hafta']} | %{v['kabul_bar_%']} | "
+                 + ", ".join(f"{a} {b}" for a, b in v["kurallar"].items()) + " |")
+    L += ["", "Reddedilen haftaların tamamında en iyi gecikme 0 (saat doğru) ama r < 0,90 (ince veri / iki ürün farkı); ölçüt "
+          "gevşetilmedi. Hafta hafta liste: `results/s08_ek_besleme.json`."]
+    return L
+
+
+def _dis_envanter() -> list[str]:
+    p = BASE / "results/s10_dis_envanter.csv"
+    if not p.exists():
+        return []
+    d = __import__("pandas").read_csv(p)
+    L = ["", "## Proje dışı (ev dizini) NASDAQ adlı dosyalar (`s10`)", "",
+         f"{len(d)} dosya. Özet:", "", "| Hüküm | Dosya |", "|---|---|"]
+    L += [f"| {k} | {v} |" for k, v in d["hukum"].str.split(" —").str[0].value_counts().items()]
+    L += ["", "| Dosya | MB | TF | aralık | besleme · saat · r · eşit% | hüküm |", "|---|---|---|---|---|---|"]
+    for _, x in d.iterrows():
+        idn = "" if not isinstance(x.get("besleme"), str) else f"{x['besleme']} · {x.get('saat', '')} · {x.get('r', '')} · {x.get('esit_%', '')}"
+        tf = "" if x.get("tf_dk") != x.get("tf_dk") else f"{int(x['tf_dk'])}m"
+        rng = "" if not isinstance(x.get("bas"), str) else f"{x['bas'][:10]} → {x['bit'][:10]}"
+        L.append(f"| {x['dosya']} | {x['boyut_MB']} | {tf} | {rng} | {idn} | {x['hukum']} |")
+    return L
+
+
 def main() -> None:
     e = json.loads((BASE / "results/s05_ek_kaynak.json").read_text())
     L = ["# Dosya hükümleri — diskteki tüm NASDAQ mum dosyaları", "",
@@ -54,6 +99,7 @@ def main() -> None:
           "", "## Türetilemez / mum değil", "", "| Dosya | Neden |", "|---|---|"]
     for k, v in e["turetilemez"].items():
         L.append(f"| {k} | {v} — 2/3 dk ancak 1 dk'dan, 90/210 dk 60'ın katı değil |")
+    L += _red_cozum() + _ek_besleme() + _dis_envanter()
     (BASE / "DOSYA_HUKUMLERI.md").write_text("\n".join(L) + "\n")
     print(len(L), "satır")
 

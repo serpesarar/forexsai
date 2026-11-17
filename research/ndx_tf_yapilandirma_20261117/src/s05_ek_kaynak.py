@@ -226,6 +226,7 @@ def main() -> None:
     us1 = pd.concat([K.load_ustec_json(p) for p in K.USTEC_JSON]).drop_duplicates("t").sort_values("t").reset_index(drop=True)
     ustec_ref = {b: regroup(us1, b) for b in (5, 15, 30)}
     add: dict[np.datetime64, pd.DataFrame] = {}
+    day_rows: list[pd.DataFrame] = []
     for p, tf in MT5_FAMILY:
         df, v, interp = best_interpretation(R / p, tf, natives, ustec_ref)
         r = {"tf_dk": tf, "n": len(df), "damga": interp,
@@ -242,6 +243,10 @@ def main() -> None:
                     add.setdefault(d, df[cd == d].assign(kaynak=p))  # birebir aynı olduğunu ayrıca dayatır
         else:
             r["ref"] = "yerli MT5 barıyla çakışma yok — sınanamadı, kullanılmadı"
+        if len(v):  # gün gün hüküm kaydı (s09 her reddedilen günü son çıktıların kapsamına bağlar)
+            vu_all = day_verdicts(df, tf, ustec_ref)
+            day_rows.append(pd.DataFrame({"dosya": p, "tf": tf, "gun": v.index, "nas100_kabul": v["kabul"].to_numpy(),
+                                          "ustec_kabul": v.index.isin(vu_all.index[vu_all["kabul"]]) if len(vu_all) else False}))
         # reddedilen günler önceki broker (USTEC) beslemesinin kopyası mı?
         if len(v) and (~v["kabul"]).any():
             vu = day_verdicts(df, tf, ustec_ref)
@@ -260,6 +265,7 @@ def main() -> None:
         rep["mt5_m1_eklenen"] = {"gun": len(days), "bar": len(ext), "ilk": str(pd.Timestamp(days[0]).date()),
                                  "son": str(pd.Timestamp(days[-1]).date()),
                                  "kaynak_dagilimi": ext["kaynak"].value_counts().to_dict()}
+    pd.concat(day_rows).to_csv(BASE / "results/s05_gun_hukumleri.csv", index=False)
     (BASE / "results/s05_ek_kaynak.json").write_text(json.dumps(rep, indent=1, ensure_ascii=False, default=str))
     print(json.dumps({k: rep[k] for k in ("duka_ailesi",) + (("mt5_m1_eklenen",) if add else ())}, indent=1, ensure_ascii=False, default=str))
 

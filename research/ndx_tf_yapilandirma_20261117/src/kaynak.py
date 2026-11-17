@@ -84,12 +84,41 @@ def _duka_tail_after(t_last: int) -> pd.DataFrame:
     return b
 
 
-def load_duka_1m(extend: bool = True) -> pd.DataFrame:
+DUKA_M1_EXPORT = Path.home() / "Downloads/USATECHIDXUSD_M1.csv"   # Dukascopy M1 dışa aktarımı (3 ondalık, UTC)
+DUKA_M30_EXPORT = Path.home() / "Downloads/USATECHIDXUSD30.csv"   # Dukascopy M30 dışa aktarımı (2 ondalık, UTC, 2016-03 →)
+EXPORT_TOL = 1e-6
+
+
+def _read_export(path: Path) -> pd.DataFrame:
+    sys.path.insert(0, str(Path(__file__).parent))
+    import dis_okuyucu as R
+    x = R.read_ohlc(path)
+    return _finish(pd.DataFrame({"t": x["wall"].astype("int64") // 10**9, "open": x["open"], "high": x["high"],
+                                 "low": x["low"], "close": x["close"]}))
+
+
+def load_duka_1m(extend: bool = True, export: bool = True) -> pd.DataFrame:
+    """Ana Dukascopy 1 dk + ham bi5 kuyruğu + M1 dışa aktarımının ana dosyada OLMAYAN dakikaları.
+
+    M1 dışa aktarımı ortak dakikalarda ana dosyayla birebir olmak zorunda (değilse durur); 2025-06 → 10 arasında
+    tik indirmesindeki saat boşluklarına düşen 16.772 gerçek dakikayı ekler.
+    """
     d = _finish(pd.read_parquet(DUKA_1M)[["t", "open", "high", "low", "close", "spr"]].copy())
     if extend:
         tail = _duka_tail_after(int(d["t"].iloc[-1]))
         d = _finish(pd.concat([d, tail], ignore_index=True)) if len(tail) else d
+    if export and DUKA_M1_EXPORT.exists():
+        e = _read_export(DUKA_M1_EXPORT)
+        m = e.merge(d, on="t", suffixes=("_e", "_d"))
+        diff = np.abs(m[["open_e", "high_e", "low_e", "close_e"]].to_numpy() - m[["open_d", "high_d", "low_d", "close_d"]].to_numpy())
+        if len(m) == 0 or float(diff.max()) > EXPORT_TOL:
+            raise AssertionError(f"Dukascopy M1 dışa aktarımı ana dosyayla ayrışıyor (max {diff.max() if len(m) else 'çakışma yok'})")
+        d = _finish(pd.concat([d, e[~e["t"].isin(d["t"])]], ignore_index=True))
     return d
+
+
+def load_duka_m30_export() -> pd.DataFrame:
+    return _read_export(DUKA_M30_EXPORT)
 
 
 def load_mt5_native(tf: str, folder: Path = MT5_DIR_A) -> pd.DataFrame:

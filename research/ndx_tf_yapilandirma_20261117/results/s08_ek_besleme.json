@@ -1,0 +1,6530 @@
+{
+ "EET30": {
+  "dosya": "~/Desktop/Trading Projeleri/nasdaq/nasdaq100_30min_full.csv",
+  "tf_dk": 30,
+  "ham_bar": 103693,
+  "hafta": 463,
+  "kabul_hafta": 425,
+  "kurallar": {
+   "Europe/Athens": 425
+  },
+  "kabul_bar": 95493,
+  "kabul_bar_%": 92.09,
+  "donemler": [
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.967,
+    "r±1": 0.298,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2016-11-14/2016-11-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.917,
+    "r±1": -0.2,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2016-11-21/2016-11-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": 0.1,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2016-11-28/2016-12-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.951,
+    "r±1": -0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2016-12-05/2016-12-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.97,
+    "r±1": -0.141,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2016-12-12/2016-12-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.96,
+    "r±1": -0.144,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2016-12-19/2016-12-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.968,
+    "r±1": 0.047,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2016-12-26/2017-01-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.869,
+    "r±1": -0.101,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-01-02/2017-01-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.939,
+    "r±1": 0.03,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-01-09/2017-01-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.914,
+    "r±1": -0.188,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-01-16/2017-01-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.748,
+    "r±1": -0.064,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-01-23/2017-01-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.807,
+    "r±1": -0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-01-30/2017-02-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.862,
+    "r±1": 0.031,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-02-06/2017-02-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.914,
+    "r±1": -0.006,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-02-13/2017-02-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.902,
+    "r±1": 0.104,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-02-20/2017-02-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.953,
+    "r±1": 0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-02-27/2017-03-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.904,
+    "r±1": 0.07,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-03-06/2017-03-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.935,
+    "r±1": 0.097,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-03-13/2017-03-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.948,
+    "r±1": 0.067,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-03-20/2017-03-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.869,
+    "r±1": 0.075,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-03-27/2017-04-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.924,
+    "r±1": 0.13,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-04-03/2017-04-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.98,
+    "r±1": 0.182,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-04-10/2017-04-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.968,
+    "r±1": -0.224,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-04-17/2017-04-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.467,
+    "r±1": -0.044,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-04-24/2017-04-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.856,
+    "r±1": -0.148,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-05-01/2017-05-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.934,
+    "r±1": -0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-05-08/2017-05-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.91,
+    "r±1": 0.147,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-05-15/2017-05-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.868,
+    "r±1": 0.02,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-05-22/2017-05-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.87,
+    "r±1": 0.112,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-05-29/2017-06-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.091,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-06-05/2017-06-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.952,
+    "r±1": 0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-06-12/2017-06-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.866,
+    "r±1": 0.001,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-06-19/2017-06-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.975,
+    "r±1": 0.099,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-06-26/2017-07-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.838,
+    "r±1": 0.158,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-07-03/2017-07-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.936,
+    "r±1": -0.204,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-07-10/2017-07-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.825,
+    "r±1": 0.043,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-07-17/2017-07-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.812,
+    "r±1": 0.28,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-07-24/2017-07-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.832,
+    "r±1": 0.038,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-07-31/2017-08-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.902,
+    "r±1": 0.134,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-08-07/2017-08-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.894,
+    "r±1": 0.071,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-08-14/2017-08-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.915,
+    "r±1": 0.06,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-08-21/2017-08-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.89,
+    "r±1": 0.166,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-08-28/2017-09-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.916,
+    "r±1": -0.005,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-09-04/2017-09-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.852,
+    "r±1": -0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-09-11/2017-09-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.955,
+    "r±1": -0.065,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-09-18/2017-09-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.958,
+    "r±1": -0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-09-25/2017-10-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.97,
+    "r±1": -0.133,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-10-02/2017-10-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.953,
+    "r±1": 0.006,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-10-09/2017-10-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.929,
+    "r±1": 0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-10-16/2017-10-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.799,
+    "r±1": 0.006,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-10-23/2017-10-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.878,
+    "r±1": -0.005,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-10-30/2017-11-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.955,
+    "r±1": 0.106,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-11-06/2017-11-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.87,
+    "r±1": 0.128,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-11-13/2017-11-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.903,
+    "r±1": -0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-11-20/2017-11-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.981,
+    "r±1": -0.034,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-11-27/2017-12-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.881,
+    "r±1": 0.019,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-12-04/2017-12-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.94,
+    "r±1": -0.03,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-12-11/2017-12-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.84,
+    "r±1": 0.039,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2017-12-18/2017-12-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.946,
+    "r±1": -0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2017-12-25/2017-12-31"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.956,
+    "r±1": 0.152,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-01-01/2018-01-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.953,
+    "r±1": -0.103,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-01-08/2018-01-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.924,
+    "r±1": -0.0,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-01-15/2018-01-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.914,
+    "r±1": 0.205,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-01-22/2018-01-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.885,
+    "r±1": 0.01,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2018-01-29/2018-02-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.926,
+    "r±1": -0.059,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-02-05/2018-02-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.953,
+    "r±1": -0.043,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-02-12/2018-02-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.874,
+    "r±1": 0.135,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2018-02-19/2018-02-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.983,
+    "r±1": -0.096,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-02-26/2018-03-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.839,
+    "r±1": -0.028,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2018-03-05/2018-03-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.948,
+    "r±1": 0.127,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-03-12/2018-03-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.906,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-03-19/2018-03-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.921,
+    "r±1": 0.105,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-03-26/2018-04-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.92,
+    "r±1": 0.046,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-04-02/2018-04-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.801,
+    "r±1": 0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2018-04-09/2018-04-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.966,
+    "r±1": -0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-04-16/2018-04-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.982,
+    "r±1": -0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-04-23/2018-04-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.988,
+    "r±1": 0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-04-30/2018-05-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.986,
+    "r±1": -0.135,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-05-07/2018-05-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.13,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-05-14/2018-05-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.029,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-05-21/2018-05-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.005,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-05-28/2018-06-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": 0.079,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-06-04/2018-06-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.98,
+    "r±1": -0.19,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-06-11/2018-06-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-06-18/2018-06-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.051,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-06-25/2018-07-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.093,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-07-02/2018-07-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.959,
+    "r±1": -0.011,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-07-09/2018-07-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.088,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-07-16/2018-07-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-07-23/2018-07-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.977,
+    "r±1": -0.066,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-07-30/2018-08-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.983,
+    "r±1": 0.062,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-08-06/2018-08-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.074,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-08-13/2018-08-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.977,
+    "r±1": 0.097,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-08-20/2018-08-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": 0.207,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-08-27/2018-09-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-09-03/2018-09-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.111,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-09-10/2018-09-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.14,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-09-17/2018-09-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.989,
+    "r±1": 0.072,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-09-24/2018-09-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": 0.142,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-10-01/2018-10-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": -0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-10-08/2018-10-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.068,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-10-15/2018-10-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": 0.015,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-10-22/2018-10-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.986,
+    "r±1": -0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-10-29/2018-11-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.049,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-11-05/2018-11-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.987,
+    "r±1": 0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-11-12/2018-11-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.093,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-11-19/2018-11-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.985,
+    "r±1": 0.03,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-11-26/2018-12-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.064,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-12-03/2018-12-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.986,
+    "r±1": -0.076,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-12-10/2018-12-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.109,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2018-12-17/2018-12-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.529,
+    "r±1": 0.166,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2018-12-24/2018-12-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.857,
+    "r±1": 0.185,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2018-12-31/2019-01-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.12,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-01-07/2019-01-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.054,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-01-14/2019-01-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.037,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-01-21/2019-01-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.972,
+    "r±1": -0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-01-28/2019-02-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.059,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-02-04/2019-02-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.005,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-02-11/2019-02-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.071,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-02-18/2019-02-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": -0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-02-25/2019-03-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.195,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-03-04/2019-03-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.975,
+    "r±1": -0.026,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-03-11/2019-03-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.044,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-03-18/2019-03-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.004,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-03-25/2019-03-31"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.192,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-04-01/2019-04-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": -0.05,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-04-08/2019-04-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.201,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-04-15/2019-04-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-04-22/2019-04-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.93,
+    "r±1": 0.22,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-04-29/2019-05-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-05-06/2019-05-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.153,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-05-13/2019-05-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.069,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-05-20/2019-05-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.125,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-05-27/2019-06-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": 0.056,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-06-03/2019-06-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.075,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-06-10/2019-06-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.077,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-06-17/2019-06-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.055,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-06-24/2019-06-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.162,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-07-01/2019-07-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.155,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-07-08/2019-07-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.978,
+    "r±1": 0.144,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-07-15/2019-07-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.892,
+    "r±1": -0.034,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2019-07-22/2019-07-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": 0.132,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-07-29/2019-08-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.002,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-08-05/2019-08-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.11,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-08-12/2019-08-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.03,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-08-19/2019-08-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.027,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-08-26/2019-09-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-02/2019-09-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.09,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-09/2019-09-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-16/2019-09-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.126,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-23/2019-09-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.072,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-30/2019-10-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-10-07/2019-10-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.137,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-10-14/2019-10-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.986,
+    "r±1": 0.127,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-10-21/2019-10-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.989,
+    "r±1": 0.048,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-10-28/2019-11-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.071,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-11-04/2019-11-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": -0.119,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-11-11/2019-11-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-11-18/2019-11-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.054,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-11-25/2019-12-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.197,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-12-02/2019-12-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.058,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-12-09/2019-12-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": -0.157,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-12-16/2019-12-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.706,
+    "r±1": -0.193,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2019-12-23/2019-12-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.039,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-12-30/2020-01-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.148,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-01-06/2020-01-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.174,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-01-13/2020-01-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.019,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-01-20/2020-01-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.106,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-01-27/2020-02-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.053,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-02-03/2020-02-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.035,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-02-10/2020-02-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-02-17/2020-02-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-02-24/2020-03-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.091,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-03-02/2020-03-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.982,
+    "r±1": 0.151,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-03-09/2020-03-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.044,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-03-16/2020-03-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.989,
+    "r±1": -0.037,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-03-23/2020-03-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.066,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-03-30/2020-04-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.941,
+    "r±1": 0.156,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-04-13/2020-04-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.005,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-04-20/2020-04-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.955,
+    "r±1": 0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-04-27/2020-05-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-05-04/2020-05-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.133,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-05-11/2020-05-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.057,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-05-18/2020-05-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": 0.12,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-05-25/2020-05-31"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.074,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-06-01/2020-06-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": 0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-06-08/2020-06-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.103,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-06-15/2020-06-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.038,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-06-22/2020-06-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.17,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-06-29/2020-07-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.027,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-07-06/2020-07-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-07-13/2020-07-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.218,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-07-20/2020-07-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.958,
+    "r±1": 0.063,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-07-27/2020-08-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.03,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-08-03/2020-08-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.023,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-08-10/2020-08-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.219,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-08-17/2020-08-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.064,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-08-24/2020-08-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.139,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-08-31/2020-09-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.071,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-09-07/2020-09-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.025,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-09-14/2020-09-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.92,
+    "r±1": 0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-09-21/2020-09-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.007,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-09-28/2020-10-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.97,
+    "r±1": 0.054,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-10-05/2020-10-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-10-12/2020-10-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": 0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-10-19/2020-10-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.981,
+    "r±1": 0.074,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-10-26/2020-11-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-02/2020-11-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.07,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-09/2020-11-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-16/2020-11-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": -0.111,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-23/2020-11-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.987,
+    "r±1": -0.052,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-30/2020-12-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.031,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-12-07/2020-12-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.035,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-12-14/2020-12-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.235,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-12-21/2020-12-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-12-28/2021-01-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.096,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-01-04/2021-01-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.048,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-01-11/2021-01-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.984,
+    "r±1": -0.053,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-01-18/2021-01-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.981,
+    "r±1": -0.075,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-01-25/2021-01-31"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.03,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-02-01/2021-02-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.045,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-02-08/2021-02-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.158,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-02-15/2021-02-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.093,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-02-22/2021-02-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.023,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-01/2021-03-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.062,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-08/2021-03-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.017,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-15/2021-03-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.032,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-22/2021-03-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.0,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-29/2021-04-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.985,
+    "r±1": 0.049,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-04-05/2021-04-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.106,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-04-12/2021-04-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.043,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-04-19/2021-04-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.983,
+    "r±1": 0.005,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-04-26/2021-05-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.052,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-03/2021-05-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.035,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-10/2021-05-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.058,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-17/2021-05-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-24/2021-05-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": 0.166,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-31/2021-06-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.125,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-06-07/2021-06-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.987,
+    "r±1": 0.029,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-06-14/2021-06-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.116,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-06-21/2021-06-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.058,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-06-28/2021-07-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.019,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-07-05/2021-07-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-07-12/2021-07-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.978,
+    "r±1": -0.001,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-07-19/2021-07-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.961,
+    "r±1": 0.207,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-07-26/2021-08-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": -0.24,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-08-02/2021-08-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.139,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-08-09/2021-08-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.134,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-08-16/2021-08-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.985,
+    "r±1": 0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-08-23/2021-08-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.983,
+    "r±1": -0.085,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-08-30/2021-09-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.108,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-09-06/2021-09-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.112,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-09-13/2021-09-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.03,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-09-20/2021-09-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.007,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-09-27/2021-10-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.083,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-10-04/2021-10-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": -0.053,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-10-11/2021-10-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.961,
+    "r±1": 0.023,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-10-18/2021-10-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.969,
+    "r±1": 0.034,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-10-25/2021-10-31"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.026,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-11-01/2021-11-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.026,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-11-08/2021-11-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": -0.088,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-11-15/2021-11-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-11-22/2021-11-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.028,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-11-29/2021-12-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.085,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-12-06/2021-12-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.156,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-12-13/2021-12-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.149,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-12-20/2021-12-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.024,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-12-27/2022-01-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.087,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-01-03/2022-01-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-01-10/2022-01-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.989,
+    "r±1": 0.045,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-01-17/2022-01-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.978,
+    "r±1": -0.001,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-01-24/2022-01-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.974,
+    "r±1": -0.106,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-01-31/2022-02-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.126,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-02-07/2022-02-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-02-14/2022-02-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.104,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-02-21/2022-02-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.035,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-02-28/2022-03-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-03-07/2022-03-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.982,
+    "r±1": 0.037,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-03-14/2022-03-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.065,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-03-21/2022-03-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-03-28/2022-04-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.051,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-04-04/2022-04-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.053,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-04-11/2022-04-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.06,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-04-18/2022-04-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.988,
+    "r±1": -0.112,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-04-25/2022-05-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.085,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-05-02/2022-05-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.057,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-05-09/2022-05-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.001,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-05-16/2022-05-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.989,
+    "r±1": 0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-05-23/2022-05-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.138,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-05-30/2022-06-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.001,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-06-06/2022-06-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.166,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-06-13/2022-06-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.225,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-06-20/2022-06-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-06-27/2022-07-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.067,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-07-04/2022-07-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.98,
+    "r±1": -0.015,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-07-11/2022-07-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.989,
+    "r±1": 0.026,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-07-18/2022-07-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.943,
+    "r±1": 0.122,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-07-25/2022-07-31"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-08-01/2022-08-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.02,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-08-08/2022-08-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.988,
+    "r±1": -0.052,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-08-15/2022-08-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.22,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-08-22/2022-08-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.03,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-08-29/2022-09-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.075,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-09-05/2022-09-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.101,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-09-12/2022-09-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.246,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-09-19/2022-09-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.118,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-09-26/2022-10-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.113,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-10-03/2022-10-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.068,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-10-10/2022-10-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.988,
+    "r±1": 0.085,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-10-17/2022-10-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.005,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-10-24/2022-10-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-10-31/2022-11-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.064,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-11-07/2022-11-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.035,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-11-14/2022-11-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.044,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-11-21/2022-11-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.0,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-11-28/2022-12-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.015,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-12-05/2022-12-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.904,
+    "r±1": 0.315,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-12-12/2022-12-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.034,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-12-19/2022-12-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.005,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-12-26/2023-01-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.084,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-02/2023-01-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.222,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-09/2023-01-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.056,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-16/2023-01-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.983,
+    "r±1": -0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-23/2023-01-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.979,
+    "r±1": 0.086,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-30/2023-02-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.184,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-02-06/2023-02-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.104,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-02-13/2023-02-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.973,
+    "r±1": 0.103,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-02-20/2023-02-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-02-27/2023-03-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.13,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-03-06/2023-03-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.103,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-03-13/2023-03-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.075,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-03-20/2023-03-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-03-27/2023-04-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": 0.125,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-04-03/2023-04-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.14,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-04-10/2023-04-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.065,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-04-17/2023-04-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.088,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-04-24/2023-04-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.981,
+    "r±1": 0.105,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-05-01/2023-05-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.1,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-05-08/2023-05-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": 0.139,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-05-15/2023-05-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.78,
+    "r±1": -0.004,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2023-05-22/2023-05-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.082,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-05-29/2023-06-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.122,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-06-05/2023-06-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.082,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-06-12/2023-06-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.028,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-06-19/2023-06-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": 0.023,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-06-26/2023-07-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.98,
+    "r±1": 0.117,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-03/2023-07-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.102,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-10/2023-07-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.088,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-17/2023-07-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.11,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-24/2023-07-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.972,
+    "r±1": 0.06,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-31/2023-08-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.108,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-08-07/2023-08-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": 0.138,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-08-14/2023-08-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.928,
+    "r±1": 0.049,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-08-21/2023-08-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.107,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-08-28/2023-09-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.093,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-09-04/2023-09-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.109,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-09-11/2023-09-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.037,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-09-18/2023-09-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.028,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-09-25/2023-10-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.032,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-02/2023-10-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.182,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-09/2023-10-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.045,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-16/2023-10-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.988,
+    "r±1": 0.075,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-23/2023-10-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": -0.202,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-30/2023-11-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.058,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-11-06/2023-11-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.006,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-11-13/2023-11-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.182,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-11-20/2023-11-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": -0.045,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-11-27/2023-12-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.133,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-12-04/2023-12-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": -0.07,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-12-11/2023-12-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": 0.14,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-12-18/2023-12-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.027,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-12-25/2023-12-31"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": 0.052,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-01/2024-01-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-08/2024-01-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.055,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-15/2024-01-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.985,
+    "r±1": -0.097,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-22/2024-01-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.931,
+    "r±1": 0.034,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-29/2024-02-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.086,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-02-05/2024-02-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.085,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-02-12/2024-02-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.818,
+    "r±1": 0.107,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2024-02-19/2024-02-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": 0.118,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-02-26/2024-03-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.134,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-03-04/2024-03-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.109,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-03-11/2024-03-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-03-18/2024-03-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.992,
+    "r±1": 0.067,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-03-25/2024-03-31"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.223,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-01/2024-04-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.022,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-08/2024-04-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.149,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-15/2024-04-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": 0.034,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-22/2024-04-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.972,
+    "r±1": 0.039,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-29/2024-05-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.1,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-05-06/2024-05-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": -0.043,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-05-13/2024-05-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-05-20/2024-05-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.98,
+    "r±1": 0.23,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-05-27/2024-06-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.131,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-06-03/2024-06-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.884,
+    "r±1": -0.002,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2024-06-10/2024-06-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": -0.01,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-06-17/2024-06-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": -0.012,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-06-24/2024-06-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": 0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-01/2024-07-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.143,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-08/2024-07-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.916,
+    "r±1": -0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-15/2024-07-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.067,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-22/2024-07-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.986,
+    "r±1": -0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-29/2024-08-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.981,
+    "r±1": 0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-08-05/2024-08-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.98,
+    "r±1": -0.081,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-08-12/2024-08-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.263,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-08-19/2024-08-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.954,
+    "r±1": 0.128,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-08-26/2024-09-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.983,
+    "r±1": 0.083,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-09-02/2024-09-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.137,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-09-09/2024-09-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.25,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-09-16/2024-09-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-09-23/2024-09-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.033,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-09-30/2024-10-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.055,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-10-07/2024-10-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.135,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-10-14/2024-10-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.068,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-10-21/2024-10-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.98,
+    "r±1": -0.077,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-10-28/2024-11-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": -0.038,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-11-04/2024-11-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.987,
+    "r±1": 0.029,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-11-11/2024-11-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.981,
+    "r±1": -0.101,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-11-18/2024-11-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.995,
+    "r±1": 0.106,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-11-25/2024-12-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.986,
+    "r±1": 0.026,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-12-02/2024-12-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.973,
+    "r±1": 0.152,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-12-09/2024-12-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": 0.31,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-12-16/2024-12-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.127,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-12-23/2024-12-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-12-30/2025-01-05"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.066,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-01-06/2025-01-12"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.029,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-01-13/2025-01-19"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.94,
+    "r±1": -0.16,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-01-20/2025-01-26"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.985,
+    "r±1": 0.035,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-01-27/2025-02-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.961,
+    "r±1": 0.055,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-02-03/2025-02-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.993,
+    "r±1": 0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-02-10/2025-02-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.104,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-02-17/2025-02-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": -0.059,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-02-24/2025-03-02"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-03-03/2025-03-09"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.973,
+    "r±1": -0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-03-10/2025-03-16"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.97,
+    "r±1": 0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-03-17/2025-03-23"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.986,
+    "r±1": 0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-03-24/2025-03-30"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.852,
+    "r±1": -0.105,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2025-03-31/2025-04-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.057,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-04-07/2025-04-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.98,
+    "r±1": -0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-04-14/2025-04-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": 0.059,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-04-21/2025-04-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.989,
+    "r±1": -0.002,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-04-28/2025-05-04"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.944,
+    "r±1": -0.131,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-05-05/2025-05-11"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.885,
+    "r±1": -0.086,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2025-05-12/2025-05-18"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.862,
+    "r±1": -0.055,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2025-05-19/2025-05-25"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.894,
+    "r±1": -0.041,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2025-05-26/2025-06-01"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.971,
+    "r±1": -0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-06-02/2025-06-08"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.972,
+    "r±1": 0.06,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-06-09/2025-06-15"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.939,
+    "r±1": -0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-06-16/2025-06-22"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.996,
+    "r±1": 0.083,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-06-23/2025-06-29"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.99,
+    "r±1": 0.192,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-06-30/2025-07-06"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.1,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-07-07/2025-07-13"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.231,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-07-14/2025-07-20"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.999,
+    "r±1": -0.072,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-07-21/2025-07-27"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": -0.024,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-07-28/2025-08-03"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.989,
+    "r±1": 0.084,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-08-04/2025-08-10"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.695,
+    "r±1": -0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2025-08-11/2025-08-17"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.913,
+    "r±1": 0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-08-18/2025-08-24"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.974,
+    "r±1": -0.116,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-08-25/2025-08-31"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.997,
+    "r±1": 0.182,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-09-01/2025-09-07"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.991,
+    "r±1": -0.109,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-09-08/2025-09-14"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.173,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-09-15/2025-09-21"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.998,
+    "r±1": -0.241,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-09-22/2025-09-28"
+   },
+   {
+    "kural": "Europe/Athens",
+    "r0": 0.994,
+    "r±1": -0.094,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2025-09-29/2025-10-05"
+   }
+  ]
+ },
+ "NQ": {
+  "dosya": "~/Desktop/Trading Projeleri/nasdaq/NQ_5Years_8_11_2024.csv",
+  "tf_dk": 5,
+  "ham_bar": 329458,
+  "hafta": 259,
+  "kabul_hafta": 245,
+  "kurallar": {
+   "Europe/Berlin kapanış": 111,
+   "America/New_York kapanış": 98,
+   "UTC+1 kapanış": 36
+  },
+  "kabul_bar": 311786,
+  "kabul_bar_%": 94.64,
+  "donemler": [
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.989,
+    "r±1": -0.02,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-08-12/2019-08-18"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.99,
+    "r±1": 0.11,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-08-19/2019-08-25"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.98,
+    "r±1": 0.02,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-08-26/2019-09-01"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.928,
+    "r±1": -0.015,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-02/2019-09-08"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.957,
+    "r±1": 0.023,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-09/2019-09-15"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.98,
+    "r±1": -0.056,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-16/2019-09-22"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.904,
+    "r±1": 0.034,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-23/2019-09-29"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.95,
+    "r±1": 0.0,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-09-30/2019-10-06"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.97,
+    "r±1": 0.05,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-10-07/2019-10-13"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.982,
+    "r±1": 0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-10-14/2019-10-20"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.969,
+    "r±1": -0.001,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-10-21/2019-10-27"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.961,
+    "r±1": -0.059,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-10-28/2019-11-03"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.977,
+    "r±1": 0.025,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-11-04/2019-11-10"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.967,
+    "r±1": -0.074,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-11-11/2019-11-17"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.935,
+    "r±1": 0.007,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-11-18/2019-11-24"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.981,
+    "r±1": 0.037,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-11-25/2019-12-01"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.976,
+    "r±1": 0.046,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-12-02/2019-12-08"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.667,
+    "r±1": -0.037,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2019-12-09/2019-12-15"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.987,
+    "r±1": -0.055,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-12-16/2019-12-22"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.99,
+    "r±1": 0.093,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-12-23/2019-12-29"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.989,
+    "r±1": -0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2019-12-30/2020-01-05"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-01-06/2020-01-12"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.015,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-01-13/2020-01-19"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.994,
+    "r±1": -0.087,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-01-20/2020-01-26"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.992,
+    "r±1": -0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-01-27/2020-02-02"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": -0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-02-03/2020-02-09"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": -0.019,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-02-10/2020-02-16"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": -0.06,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-02-17/2020-02-23"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": -0.024,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-02-24/2020-03-01"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": -0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-03-02/2020-03-08"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.573,
+    "r±1": 0.01,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 60,
+    "kabul": false,
+    "hafta": "2020-03-09/2020-03-15"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.956,
+    "r±1": -0.053,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-03-16/2020-03-22"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.944,
+    "r±1": 0.0,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-03-23/2020-03-29"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.985,
+    "r±1": -0.032,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-03-30/2020-04-05"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.978,
+    "r±1": 0.038,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-04-06/2020-04-12"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.94,
+    "r±1": -0.035,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-04-13/2020-04-19"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.987,
+    "r±1": -0.001,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-04-20/2020-04-26"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.94,
+    "r±1": -0.032,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-04-27/2020-05-03"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.964,
+    "r±1": -0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-05-04/2020-05-10"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.942,
+    "r±1": 0.025,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-05-11/2020-05-17"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.982,
+    "r±1": 0.004,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-05-18/2020-05-24"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.953,
+    "r±1": -0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-05-25/2020-05-31"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.973,
+    "r±1": 0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-06-01/2020-06-07"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.674,
+    "r±1": 0.002,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2020-06-08/2020-06-14"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.976,
+    "r±1": -0.032,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-06-15/2020-06-21"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.976,
+    "r±1": 0.096,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-06-22/2020-06-28"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.982,
+    "r±1": 0.011,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-06-29/2020-07-05"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.969,
+    "r±1": -0.02,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-07-06/2020-07-12"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.97,
+    "r±1": 0.026,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-07-13/2020-07-19"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.946,
+    "r±1": 0.004,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-07-20/2020-07-26"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.942,
+    "r±1": 0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-07-27/2020-08-02"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.975,
+    "r±1": -0.064,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-08-03/2020-08-09"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.973,
+    "r±1": -0.054,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-08-10/2020-08-16"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.984,
+    "r±1": -0.033,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-08-17/2020-08-23"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.895,
+    "r±1": -0.057,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2020-08-24/2020-08-30"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.979,
+    "r±1": -0.011,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 1,
+    "kabul": true,
+    "hafta": "2020-08-31/2020-09-06"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.983,
+    "r±1": -0.081,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-09-07/2020-09-13"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.985,
+    "r±1": 0.035,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 1,
+    "kabul": true,
+    "hafta": "2020-09-14/2020-09-20"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.991,
+    "r±1": 0.041,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-09-21/2020-09-27"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.991,
+    "r±1": 0.099,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-09-28/2020-10-04"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.943,
+    "r±1": 0.037,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-10-05/2020-10-11"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.966,
+    "r±1": 0.027,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-10-12/2020-10-18"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.984,
+    "r±1": -0.006,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-10-19/2020-10-25"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.958,
+    "r±1": -0.075,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-10-26/2020-11-01"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.986,
+    "r±1": 0.053,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-02/2020-11-08"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.973,
+    "r±1": 0.058,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-09/2020-11-15"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.977,
+    "r±1": -0.01,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-16/2020-11-22"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.923,
+    "r±1": 0.05,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-23/2020-11-29"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.947,
+    "r±1": -0.015,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-11-30/2020-12-06"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.964,
+    "r±1": -0.101,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-12-07/2020-12-13"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.961,
+    "r±1": -0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-12-14/2020-12-20"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.917,
+    "r±1": 0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-12-21/2020-12-27"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.982,
+    "r±1": -0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2020-12-28/2021-01-03"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.944,
+    "r±1": 0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-01-04/2021-01-10"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.988,
+    "r±1": 0.012,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-01-11/2021-01-17"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.975,
+    "r±1": 0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-01-18/2021-01-24"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.931,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-01-25/2021-01-31"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.933,
+    "r±1": -0.03,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-02-01/2021-02-07"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.979,
+    "r±1": -0.07,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-02-08/2021-02-14"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.92,
+    "r±1": 0.049,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-02-15/2021-02-21"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.948,
+    "r±1": 0.136,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-02-22/2021-02-28"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.99,
+    "r±1": -0.062,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-01/2021-03-07"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.959,
+    "r±1": -0.054,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-08/2021-03-14"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.98,
+    "r±1": 0.052,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-15/2021-03-21"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.964,
+    "r±1": 0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-22/2021-03-28"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.974,
+    "r±1": -0.062,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-03-29/2021-04-04"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.963,
+    "r±1": -0.01,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-04-05/2021-04-11"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.99,
+    "r±1": -0.01,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-04-12/2021-04-18"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.932,
+    "r±1": 0.074,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-04-19/2021-04-25"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.932,
+    "r±1": 0.075,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-04-26/2021-05-02"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.941,
+    "r±1": -0.039,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-03/2021-05-09"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.93,
+    "r±1": 0.041,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-10/2021-05-16"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.945,
+    "r±1": 0.012,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-17/2021-05-23"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.968,
+    "r±1": 0.019,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-24/2021-05-30"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.969,
+    "r±1": 0.002,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-05-31/2021-06-06"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.951,
+    "r±1": 0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-06-07/2021-06-13"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.97,
+    "r±1": -0.032,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-06-14/2021-06-20"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.985,
+    "r±1": 0.006,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-06-21/2021-06-27"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.985,
+    "r±1": -0.09,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-06-28/2021-07-04"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.926,
+    "r±1": -0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-07-05/2021-07-11"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.907,
+    "r±1": -0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-07-12/2021-07-18"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.961,
+    "r±1": -0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-07-19/2021-07-25"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.938,
+    "r±1": -0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-07-26/2021-08-01"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.881,
+    "r±1": 0.047,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2021-08-02/2021-08-08"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.983,
+    "r±1": -0.002,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-08-09/2021-08-15"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.905,
+    "r±1": 0.071,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-08-16/2021-08-22"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.96,
+    "r±1": 0.093,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-08-23/2021-08-29"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.972,
+    "r±1": 0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-08-30/2021-09-05"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.982,
+    "r±1": -0.087,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-09-06/2021-09-12"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.946,
+    "r±1": 0.003,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-09-13/2021-09-19"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.952,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-09-20/2021-09-26"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.969,
+    "r±1": 0.055,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-09-27/2021-10-03"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.996,
+    "r±1": -0.011,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-10-04/2021-10-10"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.964,
+    "r±1": -0.027,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-10-11/2021-10-17"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.951,
+    "r±1": -0.056,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-10-18/2021-10-24"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.92,
+    "r±1": 0.039,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-10-25/2021-10-31"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.995,
+    "r±1": -0.033,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-11-01/2021-11-07"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.996,
+    "r±1": 0.019,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-11-08/2021-11-14"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.864,
+    "r±1": -0.049,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2021-11-15/2021-11-21"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.868,
+    "r±1": 0.022,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2021-11-22/2021-11-28"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.975,
+    "r±1": 0.07,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-11-29/2021-12-05"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.984,
+    "r±1": 0.028,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-12-06/2021-12-12"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.941,
+    "r±1": 0.079,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-12-13/2021-12-19"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.946,
+    "r±1": -0.025,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-12-20/2021-12-26"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.989,
+    "r±1": -0.017,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2021-12-27/2022-01-02"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.987,
+    "r±1": 0.046,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-01-03/2022-01-09"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.858,
+    "r±1": -0.032,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2022-01-10/2022-01-16"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.985,
+    "r±1": -0.014,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-01-17/2022-01-23"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.961,
+    "r±1": -0.031,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-01-24/2022-01-30"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.962,
+    "r±1": -0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-01-31/2022-02-06"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.961,
+    "r±1": -0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-02-07/2022-02-13"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.988,
+    "r±1": 0.033,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-02-14/2022-02-20"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.963,
+    "r±1": -0.044,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-02-21/2022-02-27"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.961,
+    "r±1": 0.058,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-02-28/2022-03-06"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.984,
+    "r±1": 0.007,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-03-07/2022-03-13"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.948,
+    "r±1": 0.026,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 1,
+    "kabul": true,
+    "hafta": "2022-03-14/2022-03-20"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.913,
+    "r±1": 0.036,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-03-21/2022-03-27"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.929,
+    "r±1": -0.029,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 2,
+    "kabul": true,
+    "hafta": "2022-03-28/2022-04-03"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.957,
+    "r±1": 0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 1,
+    "kabul": true,
+    "hafta": "2022-04-04/2022-04-10"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.97,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 1,
+    "kabul": true,
+    "hafta": "2022-04-11/2022-04-17"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.944,
+    "r±1": 0.014,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-04-18/2022-04-24"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.977,
+    "r±1": 0.089,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-04-25/2022-05-01"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.97,
+    "r±1": 0.102,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 3,
+    "kabul": true,
+    "hafta": "2022-05-02/2022-05-08"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.948,
+    "r±1": 0.05,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 2,
+    "kabul": true,
+    "hafta": "2022-05-09/2022-05-15"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.906,
+    "r±1": -0.063,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-05-16/2022-05-22"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.965,
+    "r±1": 0.022,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 1,
+    "kabul": true,
+    "hafta": "2022-05-23/2022-05-29"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.921,
+    "r±1": 0.011,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 1,
+    "kabul": true,
+    "hafta": "2022-05-30/2022-06-05"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.962,
+    "r±1": -0.023,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-06-06/2022-06-12"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.987,
+    "r±1": 0.025,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-06-13/2022-06-19"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.935,
+    "r±1": 0.066,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-06-20/2022-06-26"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.916,
+    "r±1": 0.023,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-06-27/2022-07-03"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.981,
+    "r±1": -0.105,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-07-04/2022-07-10"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.96,
+    "r±1": 0.042,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-07-11/2022-07-17"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.972,
+    "r±1": -0.01,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-07-18/2022-07-24"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.896,
+    "r±1": 0.004,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2022-07-25/2022-07-31"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.976,
+    "r±1": -0.007,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-08-01/2022-08-07"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.953,
+    "r±1": -0.024,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-08-08/2022-08-14"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.875,
+    "r±1": 0.007,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2022-08-15/2022-08-21"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.981,
+    "r±1": -0.142,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-08-22/2022-08-28"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.988,
+    "r±1": 0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-08-29/2022-09-04"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.548,
+    "r±1": 0.068,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2022-09-05/2022-09-11"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.97,
+    "r±1": 0.07,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-09-12/2022-09-18"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.982,
+    "r±1": -0.156,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-09-19/2022-09-25"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.982,
+    "r±1": -0.012,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-09-26/2022-10-02"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.965,
+    "r±1": 0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-10-03/2022-10-09"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.988,
+    "r±1": -0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 1,
+    "kabul": true,
+    "hafta": "2022-10-10/2022-10-16"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.961,
+    "r±1": 0.048,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-10-17/2022-10-23"
+   },
+   {
+    "kural": "UTC+1 kapanış",
+    "r0": 0.973,
+    "r±1": -0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-10-24/2022-10-30"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.993,
+    "r±1": 0.023,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-10-31/2022-11-06"
+   },
+   {
+    "kural": "Europe/Berlin kapanış",
+    "r0": 0.991,
+    "r±1": -0.084,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-11-21/2022-11-27"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.803,
+    "r±1": 0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2022-11-28/2022-12-04"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.126,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-12-05/2022-12-11"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.023,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-12-12/2022-12-18"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.994,
+    "r±1": 0.038,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-12-19/2022-12-25"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.018,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2022-12-26/2023-01-01"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": 0.028,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-02/2023-01-08"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": -0.037,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-09/2023-01-15"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.994,
+    "r±1": -0.038,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-16/2023-01-22"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.001,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-23/2023-01-29"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": 0.037,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-01-30/2023-02-05"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.038,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-02-06/2023-02-12"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": -0.011,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-02-13/2023-02-19"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.978,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-02-20/2023-02-26"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.084,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-02-27/2023-03-05"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": 0.065,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-03-06/2023-03-12"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": -0.069,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-03-13/2023-03-19"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": 0.101,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-03-20/2023-03-26"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.041,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-03-27/2023-04-02"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": -0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-04-03/2023-04-09"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-04-10/2023-04-16"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.062,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-04-17/2023-04-23"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": -0.09,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-04-24/2023-04-30"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.985,
+    "r±1": -0.011,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-05-01/2023-05-07"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": 0.017,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-05-08/2023-05-14"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.994,
+    "r±1": -0.006,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-05-15/2023-05-21"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.843,
+    "r±1": 0.014,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2023-05-22/2023-05-28"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.011,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-05-29/2023-06-04"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": 0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-06-05/2023-06-11"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.994,
+    "r±1": 0.044,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-06-12/2023-06-18"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.029,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-06-19/2023-06-25"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-06-26/2023-07-02"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.993,
+    "r±1": 0.028,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-03/2023-07-09"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.07,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-10/2023-07-16"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": -0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-17/2023-07-23"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.016,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-24/2023-07-30"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.978,
+    "r±1": 0.0,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-07-31/2023-08-06"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": -0.013,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-08-07/2023-08-13"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": -0.064,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-08-14/2023-08-20"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.936,
+    "r±1": 0.021,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-08-21/2023-08-27"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": 0.026,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-08-28/2023-09-03"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": -0.015,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-09-04/2023-09-10"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": -0.007,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-09-11/2023-09-17"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.034,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-09-18/2023-09-24"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": 0.039,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-09-25/2023-10-01"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.999,
+    "r±1": -0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-02/2023-10-08"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": -0.007,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-09/2023-10-15"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": 0.028,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-16/2023-10-22"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.993,
+    "r±1": -0.069,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-23/2023-10-29"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": -0.031,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-10-30/2023-11-05"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": -0.033,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-11-06/2023-11-12"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-11-13/2023-11-19"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": 0.004,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-11-20/2023-11-26"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": -0.06,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-11-27/2023-12-03"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.066,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-12-04/2023-12-10"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": -0.055,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-12-11/2023-12-17"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.991,
+    "r±1": -0.001,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-12-18/2023-12-24"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": 0.004,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2023-12-25/2023-12-31"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": 0.046,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-01/2024-01-07"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-08/2024-01-14"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.008,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-15/2024-01-21"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.987,
+    "r±1": -0.028,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-22/2024-01-28"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.946,
+    "r±1": 0.025,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-01-29/2024-02-04"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": -0.005,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-02-05/2024-02-11"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.998,
+    "r±1": 0.06,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-02-12/2024-02-18"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.861,
+    "r±1": -0.026,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": false,
+    "hafta": "2024-02-19/2024-02-25"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": 0.024,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-02-26/2024-03-03"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": -0.082,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-03-04/2024-03-10"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.988,
+    "r±1": 0.052,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-03-11/2024-03-17"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": -0.088,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-03-18/2024-03-24"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.992,
+    "r±1": 0.009,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-03-25/2024-03-31"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.994,
+    "r±1": -0.074,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-01/2024-04-07"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.994,
+    "r±1": 0.033,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-08/2024-04-14"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.995,
+    "r±1": -0.043,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-15/2024-04-21"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.972,
+    "r±1": 0.038,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-22/2024-04-28"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.971,
+    "r±1": 0.022,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-04-29/2024-05-05"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.986,
+    "r±1": 0.012,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-05-06/2024-05-12"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.996,
+    "r±1": -0.073,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-05-13/2024-05-19"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.958,
+    "r±1": 0.061,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-05-20/2024-05-26"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.988,
+    "r±1": 0.051,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-05-27/2024-06-02"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.994,
+    "r±1": -0.041,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-06-03/2024-06-09"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.948,
+    "r±1": -0.04,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-06-10/2024-06-16"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.994,
+    "r±1": 0.011,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-06-17/2024-06-23"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.997,
+    "r±1": -0.02,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-06-24/2024-06-30"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.993,
+    "r±1": -0.098,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-01/2024-07-07"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.992,
+    "r±1": 0.079,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-08/2024-07-14"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.943,
+    "r±1": -0.08,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-15/2024-07-21"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.982,
+    "r±1": 0.056,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-22/2024-07-28"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.987,
+    "r±1": -0.015,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-07-29/2024-08-04"
+   },
+   {
+    "kural": "America/New_York kapanış",
+    "r0": 0.964,
+    "r±1": -0.086,
+    "en_iyi_gecikme": 0,
+    "seans_disi_bar": 0,
+    "kabul": true,
+    "hafta": "2024-08-05/2024-08-11"
+   }
+  ]
+ }
+}

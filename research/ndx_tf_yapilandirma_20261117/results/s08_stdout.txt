@@ -1,0 +1,54 @@
+EET30 {'dosya': '~/Desktop/Trading Projeleri/nasdaq/nasdaq100_30min_full.csv', 'tf_dk': 30, 'ham_bar': 103693, 'hafta': 463, 'kabul_hafta': 425, 'kurallar': {'Europe/Athens': 425}, 'kabul_bar': 95493, 'kabul_bar_%': 92.09}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.869, 'r±1': -0.101, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-01-02/2017-01-08'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.748, 'r±1': -0.064, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-01-23/2017-01-29'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.807, 'r±1': -0.008, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-01-30/2017-02-05'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.862, 'r±1': 0.031, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-02-06/2017-02-12'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.869, 'r±1': 0.075, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-03-27/2017-04-02'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.467, 'r±1': -0.044, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-04-24/2017-04-30'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.856, 'r±1': -0.148, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-05-01/2017-05-07'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.868, 'r±1': 0.02, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-05-22/2017-05-28'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.87, 'r±1': 0.112, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-05-29/2017-06-04'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.866, 'r±1': 0.001, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-06-19/2017-06-25'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.838, 'r±1': 0.158, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-07-03/2017-07-09'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.825, 'r±1': 0.043, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-07-17/2017-07-23'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.812, 'r±1': 0.28, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-07-24/2017-07-30'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.832, 'r±1': 0.038, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-07-31/2017-08-06'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.894, 'r±1': 0.071, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-08-14/2017-08-20'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.89, 'r±1': 0.166, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-08-28/2017-09-03'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.852, 'r±1': -0.013, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-09-11/2017-09-17'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.799, 'r±1': 0.006, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-10-23/2017-10-29'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.878, 'r±1': -0.005, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-10-30/2017-11-05'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.87, 'r±1': 0.128, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-11-13/2017-11-19'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.881, 'r±1': 0.019, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-12-04/2017-12-10'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.84, 'r±1': 0.039, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-12-18/2017-12-24'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.885, 'r±1': 0.01, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2018-01-29/2018-02-04'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.874, 'r±1': 0.135, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2018-02-19/2018-02-25'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.839, 'r±1': -0.028, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2018-03-05/2018-03-11'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.801, 'r±1': 0.061, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2018-04-09/2018-04-15'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.529, 'r±1': 0.166, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2018-12-24/2018-12-30'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.857, 'r±1': 0.185, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2018-12-31/2019-01-06'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.892, 'r±1': -0.034, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2019-07-22/2019-07-28'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.706, 'r±1': -0.193, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2019-12-23/2019-12-29'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.78, 'r±1': -0.004, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2023-05-22/2023-05-28'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.818, 'r±1': 0.107, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2024-02-19/2024-02-25'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.884, 'r±1': -0.002, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2024-06-10/2024-06-16'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.852, 'r±1': -0.105, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-03-31/2025-04-06'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.885, 'r±1': -0.086, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-05-12/2025-05-18'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.862, 'r±1': -0.055, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-05-19/2025-05-25'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.894, 'r±1': -0.041, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-05-26/2025-06-01'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.695, 'r±1': -0.009, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-08-11/2025-08-17'}
+NQ {'dosya': '~/Desktop/Trading Projeleri/nasdaq/NQ_5Years_8_11_2024.csv', 'tf_dk': 5, 'ham_bar': 329458, 'hafta': 259, 'kabul_hafta': 245, 'kurallar': {'Europe/Berlin kapanış': 111, 'America/New_York kapanış': 98, 'UTC+1 kapanış': 36}, 'kabul_bar': 311786, 'kabul_bar_%': 94.64}
+   red hafta {'kural': 'America/New_York kapanış', 'r0': 0.667, 'r±1': -0.037, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2019-12-09/2019-12-15'}
+   red hafta {'kural': 'Europe/Berlin kapanış', 'r0': 0.573, 'r±1': 0.01, 'en_iyi_gecikme': 0, 'seans_disi_bar': 60, 'kabul': False, 'hafta': '2020-03-09/2020-03-15'}
+   red hafta {'kural': 'UTC+1 kapanış', 'r0': 0.674, 'r±1': 0.002, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2020-06-08/2020-06-14'}
+   red hafta {'kural': 'UTC+1 kapanış', 'r0': 0.895, 'r±1': -0.057, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2020-08-24/2020-08-30'}
+   red hafta {'kural': 'Europe/Berlin kapanış', 'r0': 0.881, 'r±1': 0.047, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2021-08-02/2021-08-08'}
+   red hafta {'kural': 'Europe/Berlin kapanış', 'r0': 0.864, 'r±1': -0.049, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2021-11-15/2021-11-21'}
+   red hafta {'kural': 'Europe/Berlin kapanış', 'r0': 0.868, 'r±1': 0.022, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2021-11-22/2021-11-28'}
+   red hafta {'kural': 'Europe/Berlin kapanış', 'r0': 0.858, 'r±1': -0.032, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2022-01-10/2022-01-16'}
+   red hafta {'kural': 'Europe/Berlin kapanış', 'r0': 0.896, 'r±1': 0.004, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2022-07-25/2022-07-31'}
+   red hafta {'kural': 'Europe/Berlin kapanış', 'r0': 0.875, 'r±1': 0.007, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2022-08-15/2022-08-21'}
+   red hafta {'kural': 'Europe/Berlin kapanış', 'r0': 0.548, 'r±1': 0.068, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2022-09-05/2022-09-11'}
+   red hafta {'kural': 'America/New_York kapanış', 'r0': 0.803, 'r±1': 0.013, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2022-11-28/2022-12-04'}
+   red hafta {'kural': 'America/New_York kapanış', 'r0': 0.843, 'r±1': 0.014, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2023-05-22/2023-05-28'}
+   red hafta {'kural': 'America/New_York kapanış', 'r0': 0.861, 'r±1': -0.026, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2024-02-19/2024-02-25'}

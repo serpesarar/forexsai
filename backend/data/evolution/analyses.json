@@ -1050,14 +1050,14 @@
  },
  {
   "id": "ndx_tf_yapilandirma",
-  "name": "NASDAQ 2 dk / 3 dk / 90 dk / 210 dk mum üretimi + bağımsız uyum doğrulaması (DUKA 2018-26, MT5 NAS100 2018-26, USTEC 2026)",
+  "name": "NASDAQ 2/3/90/210 dk mum üretimi — 5 besleme (DUKA 2016-26, MT5 2018-26, USTEC, EET30 2016-25, NQ vadeli 2019-24), bilgisayardaki tüm dosyalar",
   "kind": "script",
   "command": "zsh research/ndx_tf_yapilandirma_20261117/calistir.sh",
   "cwd": ".",
   "category": "data",
-  "what_it_does": "Diskteki 55 NASDAQ mum dosyasını sınıflar (DOSYA_HUKUMLERI.md): üç besleme (Dukascopy, Pepperstone NAS100, önceki broker USTEC) karıştırılmadan; MT5/USTEC sunucu saati NY+7 → UTC; kopyalar gün gün MT5 yerli M5/M15/M30 ile birebir sınanır, kabul günleri katılır; kutudan taze NAS100 çekimi (calistir/arac_nas100_mum_export.py). NY 17:00 çapalı günlük sıfırlamalı ızgarada 2/3/90/210 dk mum (210 son bar 14:00–17:00). Bağımsız doğrulayıcı 108 kontrol (kaynaktan yeniden hesap, bölüntü, 2m↔3m↔90m↔210m↔gün, MT5 yerli M5/M15/M30/H1, saat ekseni) hepsi %100. Fitil: kaynak sahte tik yok; Dukascopy eksik dakikası fitili kesebildiği için DUKA mumlarına fitil_durumu bayrağı (90m'de 375 şüpheli). Bulgu: 2026-05-06 öncesi panel candle_cache'i NAS100 değil USTEC.",
+  "what_it_does": "Proje + ev dizinindeki (~/Downloads, ~/Desktop/Trading Projeleri, ~/dukascopy_us100…) tüm NASDAQ dosyalarını sınıflar (DOSYA_HUKUMLERI.md). Beş besleme karıştırılmadan: Dukascopy (1m + M1/M30 dışa aktarımları, 2025 tikleri, ham bi5), Pepperstone NAS100 (terminal + kutudan taze + gün gün doğrulanmış kopyalar), USTEC, EET30 (MT broker 30m, Athens) ve NQ vadeli 5m (haftalık saat kalibrasyonu). NY 17:00 çapalı günlük sıfırlamalı 2/3/90/210 dk. Bağımsız doğrulayıcı 140/140 (%100 birebir); reddedilen 1.097 kopya gününün hepsi kapsandı. DUKA'ya fitil_durumu bayrağı (eksik dakika).",
   "output": "research/ndx_tf_yapilandirma_20261117/RAPOR.md",
   "needs_backend": false,
-  "est_runtime": "~4 dk"
+  "est_runtime": "~25 dk (s10 dış envanter büyük CSV'leri okur)"
  }
 ]

@@ -1,0 +1,23 @@
+{
+ "dosya": 304,
+ "hukum_dagilimi": {
+  "mum değil (ad: model/sinyal/olay/rapor/temel veri)": 145,
+  "türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz)": 54,
+  "DUKA kopya": 40,
+  "mum değil (OHLC sütunu/zaman yok)": 27,
+  "türetilemez (240 dk: 2/3/90/210 bundan kurulamaz)": 10,
+  "türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA": 9,
+  "NQ_5Years türevi (yeniden örneklenmiş; ham dosyanın karışık saat eksenini taşır)": 4,
+  "arşiv/biçim dışı": 3,
+  "çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 100072, DUKA ile eşit %100.0)": 2,
+  "çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 70, DUKA ile eşit %92.9)": 2,
+  "projedeki backend/models/%80nasdaq_meta_lgb_v2.pkl dosyasının birebir kopyası (md5)": 1,
+  "projedeki analiz_paketi_2026-07-09/prices/NDX_INDX_1m_son_14gun.csv dosyasının birebir kopyası (md5)": 1,
+  "ANA KAYNAK: NQ beslemesi (haftalık kalibre, reddedilen haftalar s08'de)": 1,
+  "ANA KAYNAK: EET30 beslemesi (haftalık kalibre, reddedilen haftalar s08'de)": 1,
+  "türetilemez (10080 dk: 2/3/90/210 bundan kurulamaz)": 1,
+  "türetilemez (44640 dk: 2/3/90/210 bundan kurulamaz)": 1,
+  "çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 70, DUKA ile eşit %100.0)": 1,
+  "projedeki nasdaq_1m_candle_cache_2026-02-10_2026-08-29/nasdaq_1m_candle_cache_TAM_2026-02-10_2026-08-29.csv dosyasının birebir kopyası (md5)": 1
+ }
+}

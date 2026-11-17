@@ -244,25 +244,75 @@ def load_out(feed: str) -> dict[int, pd.DataFrame]:
     return {tf: pd.read_parquet(BASE / f"out/{feed}/NDX_{feed}_{tf}m.parquet") for tf in (2, 3, 90, 210)}
 
 
-def check_1m_feed(feed: str, src: pd.DataFrame, f: dict[int, pd.DataFrame]) -> Cal:
-    cal = Cal(np.r_[src["t"].to_numpy(), np.concatenate([v["t"].to_numpy() for v in f.values()])])
+def check_1m_feed(feed: str, src: pd.DataFrame, f: dict[int, pd.DataFrame],
+                  extra_src: dict[str, pd.DataFrame] | None = None) -> Cal:
+    """V1 + V2 (mumun kaynak_tf'sine göre doğru kaynaktan) + V3. extra_src: kaynak_tf → kaynak çerçevesi."""
+    srcs = {"1m": src, **(extra_src or {})}
+    cal = Cal(np.r_[np.concatenate([v["t"].to_numpy() for v in srcs.values()]),
+                    np.concatenate([v["t"].to_numpy() for v in f.values()])])
     print(f"──── {feed}")
     for tf, df in f.items():
         v1_format(df, tf, cal, f"{feed} {tf}m")
-        v2_from_source(df, src, cal, f"{feed} {tf}m←1m")
-    v3_hierarchy(feed, f, src, cal)
+        for k in df["kaynak_tf"].unique():
+            v2_from_source(df[df["kaynak_tf"] == k].reset_index(drop=True), srcs[k], cal, f"{feed} {tf}m←{k}")
+    if 2 in f:
+        v3_hierarchy(feed, f, src, cal)
     return cal
+
+
+def v3_coarse(feed: str, src: pd.DataFrame, f: dict[int, pd.DataFrame], cal: Cal) -> None:
+    """Yalnız 90/210 üretilen beslemeler: 90m×7 = 210m×3 ve kaynak→gün = 90m/210m→gün."""
+    def up(df: pd.DataFrame, b: int) -> pd.DataFrame:
+        return regroup(df, cal.block(df["t"].to_numpy(), b))
+    compare(up(f[90], 630), up(f[210], 630), f"V3 {feed} 90m×7 = 210m×3 (630 dk blok + 180 kuyruk)")
+    day = up(src, 1440)
+    for tf in (90, 210):
+        compare(day, up(f[tf], 1440), f"V3 {feed} {tf}m→gün = kaynak→gün")
+
+
+def v7_duka_export_agreement(duka: pd.DataFrame, m30x: pd.DataFrame, cal: Cal) -> None:
+    """Dukascopy M30 dışa aktarımı (2 ondalık) = 1 dk'dan kurulan 30 dk mı? (yuvarlama payı 0,011)"""
+    built = regroup(duka, cal.block(duka["t"].to_numpy(), 30))
+    m = built.merge(m30x, on="t", suffixes=("_a", "_b"))
+    d = np.abs(np.column_stack([m[f"{c}_a"] - m[f"{c}_b"] for c in ("open", "high", "low", "close")])).max(axis=1)
+    ok = d <= 0.011
+    deeper = ((m["high_b"] > m["high_a"] + 0.011) | (m["low_b"] < m["low_a"] - 0.011)) & ~ok
+    r = {"ortak": int(len(m)), "esit_%": round(100 * float(ok.mean()), 3), "farkli": int((~ok).sum()),
+         "farklilarda_disaktarim_fitili_daha_uzun": int(deeper.sum())}
+    REP["V7 DUKA M30 dışa aktarım ↔ 1m→30m"] = r
+    if r["esit_%"] < 99.9:
+        FAIL.append("V7 DUKA M30 dışa aktarım")
+    print("V7 DUKA M30 dışa aktarım ↔ 1m→30m:", r)
+
+
+def v8_duka_tail(duka: pd.DataFrame, m1: pd.DataFrame, t_from: int) -> None:
+    """Dukascopy'nin ana dosya sonrası kuyruğu (ham bi5) ikinci beslemeyle (MT5 M1) aynı saat ekseninde mi?"""
+    d = duka[duka["t"] > t_from]
+    v5_feeds(d[["t", "close"]], m1[["t", "close"]], 1, "DUKA kuyruk (11-13/15)↔MT5 M1")
 
 
 def main() -> None:
     duka = K.load_duka_1m()
+    m30x, _ = U.drop_closed_hour(K.load_duka_m30_export())
     fd = load_out("DUKA")
-    check_1m_feed("DUKA", duka, fd)
+    cal = check_1m_feed("DUKA", duka, fd, {"M30_disaktarim": m30x})
     v6_wick_flags(fd)
+    v7_duka_export_agreement(duka, m30x, cal)
 
     us, _ = U.drop_closed_hour(U.ustec_1m())
     fu = load_out("USTEC")
     check_1m_feed("USTEC", us, fu)
+
+    ext: dict[str, dict[int, pd.DataFrame]] = {}
+    for feed, stf in U.EXTRA_FEEDS:
+        p = BASE / f"out/ek/{feed}_kalibre.parquet"
+        if not p.exists():
+            continue
+        src, _ = U.drop_closed_hour(pd.read_parquet(p)[K.COLS])
+        f = {tf: pd.read_parquet(BASE / f"out/{feed}/NDX_{feed}_{tf}m.parquet") for tf in (90, 210)}
+        ext[feed] = f
+        c = check_1m_feed(feed, src, f, {f"{stf}m": src})
+        v3_coarse(feed, src, f, c)
 
     print("──── MT5")
     srcs = U.mt5_sources()
@@ -284,11 +334,15 @@ def main() -> None:
     v3_hierarchy("MT5", fm_m1, m1_all, calm)
     v4_mt5(srcs, fm, calm)
 
-    print("──── V5")
+    print("──── V5 / V8")
     for tf in (90, 210):
         v5_feeds(fd[tf], fm[tf], tf, "DUKA↔MT5")
         v5_feeds(fd[tf], fu[tf], tf, "DUKA↔USTEC")
         v5_feeds(fu[tf], fm[tf], tf, "USTEC↔MT5")
+        for feed, f in ext.items():
+            v5_feeds(fd[tf], f[tf], tf, f"DUKA↔{feed}")
+            v5_feeds(f[tf], fm[tf], tf, f"{feed}↔MT5")
+    v8_duka_tail(duka, m1_all, int(pd.read_parquet(K.DUKA_1M, columns=["t"])["t"].max()))
 
     REP["SONUC"] = {"zorunlu_basarisiz": FAIL, "gecti": not FAIL}
     (BASE / "results/s04_dogrulama.json").write_text(json.dumps(REP, indent=1, ensure_ascii=False, default=str))

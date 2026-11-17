@@ -1,30 +1,35 @@
 ──── DUKA
-V1 DUKA 2m                        {'n': 1483937, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 0.091}
-V2 DUKA 2m←1m bölüntü: aralıkta 2964405 kaynak bar, mumlara düşen 2964405, n_alt eşit True
-V2 DUKA 2m←1m kaynaktan yeniden hesap                                    1483937 ortak  birebir %100.0  max_fark 0.0
-V1 DUKA 3m                        {'n': 988730, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 0.145}
-V2 DUKA 3m←1m bölüntü: aralıkta 2964405 kaynak bar, mumlara düşen 2964405, n_alt eşit True
-V2 DUKA 3m←1m kaynaktan yeniden hesap                                     988730 ortak  birebir %100.0  max_fark 0.0
-V1 DUKA 90m                       {'n': 35733, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 3.896}
-V2 DUKA 90m←1m bölüntü: aralıkta 2964292 kaynak bar, mumlara düşen 2964292, n_alt eşit True
-V2 DUKA 90m←1m kaynaktan yeniden hesap                                     35733 ortak  birebir %100.0  max_fark 0.0
-V1 DUKA 210m                      {'n': 15734, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 2201, 'kuyruk_dk': 180, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 8.014}
-V2 DUKA 210m←1m bölüntü: aralıkta 2964262 kaynak bar, mumlara düşen 2964262, n_alt eşit True
-V2 DUKA 210m←1m kaynaktan yeniden hesap                                    15734 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 2m→6m = 3m→6m                                                     495580 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 2m→90m = 90m dosyası                                               35733 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 3m→90m = 90m dosyası                                               35733 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 2m→210m = 210m dosyası                                             15734 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 3m→210m = 210m dosyası                                             15734 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 90m×7 = 210m×3 (630 dk blok + 180 kuyruk)                           6771 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 2m→gün = kaynak→gün                                                 2288 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 3m→gün = kaynak→gün                                                 2288 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 90m→gün = kaynak→gün                                                2288 ortak  birebir %100.0  max_fark 0.0
-V3 DUKA 210m→gün = kaynak→gün                                               2287 ortak  birebir %100.0  max_fark 0.0
-V6 DUKA 2m fitil_durumu: {'tutarli': True, 'tam': 1482585, 'eksik_dakika_teyitsiz': 1274, 'eksik_dakika_supheli': 72, 'eksik_dakika_teyitli': 6}
-V6 DUKA 3m fitil_durumu: {'tutarli': True, 'tam': 987300, 'eksik_dakika_teyitsiz': 1348, 'eksik_dakika_supheli': 65, 'eksik_dakika_teyitli': 17}
-V6 DUKA 90m fitil_durumu: {'tutarli': True, 'tam': 34341, 'eksik_dakika_teyitli': 772, 'eksik_dakika_supheli': 375, 'eksik_dakika_teyitsiz': 245}
-V6 DUKA 210m fitil_durumu: {'tutarli': True, 'tam': 14473, 'eksik_dakika_teyitli': 833, 'eksik_dakika_teyitsiz': 220, 'eksik_dakika_supheli': 208}
+V1 DUKA 2m                        {'n': 1492333, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 0.091}
+V2 DUKA 2m←1m bölüntü: aralıkta 2981177 kaynak bar, mumlara düşen 2981177, n_alt eşit True
+V2 DUKA 2m←1m kaynaktan yeniden hesap                                    1492333 ortak  birebir %100.0  max_fark 0.0
+V1 DUKA 3m                        {'n': 994326, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 0.145}
+V2 DUKA 3m←1m bölüntü: aralıkta 2981177 kaynak bar, mumlara düşen 2981177, n_alt eşit True
+V2 DUKA 3m←1m kaynaktan yeniden hesap                                     994326 ortak  birebir %100.0  max_fark 0.0
+V1 DUKA 90m                       {'n': 40381, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 3.504}
+V2 DUKA 90m←M30_disaktarim bölüntü: aralıkta 12935 kaynak bar, mumlara düşen 12935, n_alt eşit True
+V2 DUKA 90m←M30_disaktarim kaynaktan yeniden hesap                          4494 ortak  birebir %100.0  max_fark 0.0
+V2 DUKA 90m←1m bölüntü: aralıkta 2981064 kaynak bar, mumlara düşen 2981064, n_alt eşit True
+V2 DUKA 90m←1m kaynaktan yeniden hesap                                     35887 ortak  birebir %100.0  max_fark 0.0
+V1 DUKA 210m                      {'n': 18028, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 2649, 'kuyruk_dk': 180, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 9.674}
+V2 DUKA 210m←M30_disaktarim bölüntü: aralıkta 12935 kaynak bar, mumlara düşen 12935, n_alt eşit True
+V2 DUKA 210m←M30_disaktarim kaynaktan yeniden hesap                         2249 ortak  birebir %100.0  max_fark 0.0
+V2 DUKA 210m←1m bölüntü: aralıkta 2981034 kaynak bar, mumlara düşen 2981034, n_alt eşit True
+V2 DUKA 210m←1m kaynaktan yeniden hesap                                    15779 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 2m→6m = 3m→6m                                                     498388 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 2m→90m = 90m dosyası                                               35887 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 3m→90m = 90m dosyası                                               35887 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 2m→210m = 210m dosyası                                             15779 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 3m→210m = 210m dosyası                                             15779 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 90m×7 = 210m×3 (630 dk blok + 180 kuyruk)                           8132 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 2m→gün = kaynak→gün                                                 2290 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 3m→gün = kaynak→gün                                                 2290 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 90m→gün = kaynak→gün                                                2290 ortak  birebir %100.0  max_fark 0.0
+V3 DUKA 210m→gün = kaynak→gün                                               2289 ortak  birebir %100.0  max_fark 0.0
+V6 DUKA 2m fitil_durumu: {'tutarli': True, 'tam': 1490972, 'eksik_dakika_teyitsiz': 1283, 'eksik_dakika_supheli': 72, 'eksik_dakika_teyitli': 6}
+V6 DUKA 3m fitil_durumu: {'tutarli': True, 'tam': 992886, 'eksik_dakika_teyitsiz': 1358, 'eksik_dakika_supheli': 65, 'eksik_dakika_teyitli': 17}
+V6 DUKA 90m fitil_durumu: {'tutarli': True, 'tam': 38966, 'eksik_dakika_teyitli': 975, 'eksik_dakika_supheli': 353, 'eksik_dakika_teyitsiz': 87}
+V6 DUKA 210m fitil_durumu: {'tutarli': True, 'tam': 16284, 'eksik_dakika_teyitli': 1100, 'eksik_dakika_teyitsiz': 358, 'eksik_dakika_supheli': 286}
+V7 DUKA M30 dışa aktarım ↔ 1m→30m: {'ortak': 86755, 'esit_%': 99.955, 'farkli': 39, 'farklilarda_disaktarim_fitili_daha_uzun': 9}
 ──── USTEC
 V1 USTEC 2m                       {'n': 59575, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 0.017}
 V2 USTEC 2m←1m bölüntü: aralıkta 119140 kaynak bar, mumlara düşen 119140, n_alt eşit True
@@ -48,6 +53,26 @@ V3 USTEC 2m→gün = kaynak→gün                                              
 V3 USTEC 3m→gün = kaynak→gün                                                  86 ortak  birebir %100.0  max_fark 0.0
 V3 USTEC 90m→gün = kaynak→gün                                                 86 ortak  birebir %100.0  max_fark 0.0
 V3 USTEC 210m→gün = kaynak→gün                                                86 ortak  birebir %100.0  max_fark 0.0
+──── EET30
+V1 EET30 90m                      {'n': 33299, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 0.622}
+V2 EET30 90m←30m bölüntü: aralıkta 95484 kaynak bar, mumlara düşen 95484, n_alt eşit True
+V2 EET30 90m←30m kaynaktan yeniden hesap                                   33299 ortak  birebir %100.0  max_fark 0.0
+V1 EET30 210m                     {'n': 14586, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 2024, 'kuyruk_dk': 180, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 1.447}
+V2 EET30 210m←30m bölüntü: aralıkta 95484 kaynak bar, mumlara düşen 95484, n_alt eşit True
+V2 EET30 210m←30m kaynaktan yeniden hesap                                  14586 ortak  birebir %100.0  max_fark 0.0
+V3 EET30 90m×7 = 210m×3 (630 dk blok + 180 kuyruk)                          6215 ortak  birebir %100.0  max_fark 0.0
+V3 EET30 90m→gün = kaynak→gün                                               2097 ortak  birebir %100.0  max_fark 0.0
+V3 EET30 210m→gün = kaynak→gün                                              2097 ortak  birebir %100.0  max_fark 0.0
+──── NQ
+V1 NQ 90m                         {'n': 18627, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 6.759}
+V2 NQ 90m←5m bölüntü: aralıkta 311786 kaynak bar, mumlara düşen 311786, n_alt eşit True
+V2 NQ 90m←5m kaynaktan yeniden hesap                                       18627 ortak  birebir %100.0  max_fark 0.0
+V1 NQ 210m                        {'n': 8234, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 1027, 'kuyruk_dk': 180, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 13.809}
+V2 NQ 210m←5m bölüntü: aralıkta 311786 kaynak bar, mumlara düşen 311786, n_alt eşit True
+V2 NQ 210m←5m kaynaktan yeniden hesap                                       8234 ortak  birebir %100.0  max_fark 0.0
+V3 NQ 90m×7 = 210m×3 (630 dk blok + 180 kuyruk)                             3435 ortak  birebir %100.0  max_fark 0.0
+V3 NQ 90m→gün = kaynak→gün                                                  1204 ortak  birebir %100.0  max_fark 0.0
+V3 NQ 210m→gün = kaynak→gün                                                 1204 ortak  birebir %100.0  max_fark 0.0
 ──── MT5
 V1 MT5 2m                         {'n': 94645, 'sira_duplike': 0, 'ohlc_ihlal': 0, 'nan': 0, 'izgara_disi': 0, 'gune_tasan': 0, 'sure_hatali': 0, 'kisa_kuyruk_bar': 0, 'kuyruk_dk': 0, 'fazla_alt_bar': 0, 'eksik_alt_bar_%': 0.146}
 V2 MT5 2m←M1(+kopya) bölüntü: aralıkta 189152 kaynak bar, mumlara düşen 189152, n_alt eşit True
@@ -103,12 +128,21 @@ V4 MT5 210m: M1'den = M5'den                                                 892
 V4 MT5 210m: M5'den = M15'den                                               2592 ortak  birebir %100.0  max_fark 0.0
 V4 MT5 210m: M15'den = M30'den                                              7669 ortak  birebir %100.0  max_fark 0.0
 V4 MT5 210m: M1'den = M30'den                                                892 ortak  birebir %100.0  max_fark 0.0
-──── V5
-V5 DUKA↔MT5 90m: {'gecikme_bar→r': {-3: 0.0008, -2: -0.0096, -1: -0.0006, 0: 0.9769, 1: 0.011, 2: -0.0042, 3: -0.0058}, 'en_iyi': 0, 'ortak': 34630, 'seviye_farki_medyan': -1.02, 'seviye_farki_IQR': 3.9}
+──── V5 / V8
+V5 DUKA↔MT5 90m: {'gecikme_bar→r': {-3: 0.0009, -2: -0.0098, -1: -0.0006, 0: 0.9774, 1: 0.0107, 2: -0.0045, 3: -0.0057}, 'en_iyi': 0, 'ortak': 34784, 'seviye_farki_medyan': -1.03, 'seviye_farki_IQR': 3.93}
 V5 DUKA↔USTEC 90m: {'gecikme_bar→r': {-3: -0.0074, -2: 0.0076, -1: 0.0349, 0: 0.9889, 1: 0.0428, 2: 0.013, 3: -0.0065}, 'en_iyi': 0, 'ortak': 1373, 'seviye_farki_medyan': 0.19, 'seviye_farki_IQR': 2.39}
 V5 USTEC↔MT5 90m: {'gecikme_bar→r': {-3: -0.0014, -2: 0.0077, -1: 0.0356, 0: 0.9994, 1: 0.0385, 2: 0.0093, 3: -0.0044}, 'en_iyi': 0, 'ortak': 1384, 'seviye_farki_medyan': -7.4, 'seviye_farki_IQR': 22.9}
-V5 DUKA↔MT5 210m: {'gecikme_bar→r': {-3: 0.0169, -2: 0.0208, -1: -0.005, 0: 0.9773, 1: -0.006, 2: 0.0198, 3: 0.0193}, 'en_iyi': 0, 'ortak': 15209, 'seviye_farki_medyan': -1.03, 'seviye_farki_IQR': 4.32}
+V5 DUKA↔EET30 90m: {'gecikme_bar→r': {-3: 0.0006, -2: -0.0092, -1: 0.0075, 0: 0.9381, 1: 0.0058, 2: -0.0081, 3: -0.0066}, 'en_iyi': 0, 'ortak': 31845, 'seviye_farki_medyan': -3.96, 'seviye_farki_IQR': 8.27}
+V5 EET30↔MT5 90m: {'gecikme_bar→r': {-3: -0.004, -2: -0.0101, -1: -0.0077, 0: 0.9472, 1: 0.0027, 2: -0.0099, 3: -0.0024}, 'en_iyi': 0, 'ortak': 29283, 'seviye_farki_medyan': 2.4, 'seviye_farki_IQR': 8.4}
+V5 DUKA↔NQ 90m: {'gecikme_bar→r': {-3: 0.0017, -2: -0.0347, -1: -0.0084, 0: 0.9453, 1: -0.0063, 2: -0.0167, 3: -0.008}, 'en_iyi': 0, 'ortak': 18589, 'seviye_farki_medyan': -1391.98, 'seviye_farki_IQR': 316.51}
+V5 NQ↔MT5 90m: {'gecikme_bar→r': {-3: -0.0034, -2: -0.0176, -1: -0.0203, 0: 0.9492, 1: -0.012, 2: -0.0317, 3: 0.0008}, 'en_iyi': 0, 'ortak': 18590, 'seviye_farki_medyan': 1391.2, 'seviye_farki_IQR': 318.84}
+V5 DUKA↔MT5 210m: {'gecikme_bar→r': {-3: 0.0171, -2: 0.0209, -1: -0.0051, 0: 0.9778, 1: -0.0063, 2: 0.0198, 3: 0.0197}, 'en_iyi': 0, 'ortak': 15254, 'seviye_farki_medyan': -1.03, 'seviye_farki_IQR': 4.38}
 V5 DUKA↔USTEC 210m: {'gecikme_bar→r': {-3: 0.0594, -2: -0.0477, -1: 0.0135, 0: 0.9893, 1: 0.0217, 2: -0.0362, 3: 0.0519}, 'en_iyi': 0, 'ortak': 601, 'seviye_farki_medyan': 0.25, 'seviye_farki_IQR': 2.56}
 V5 USTEC↔MT5 210m: {'gecikme_bar→r': {-3: 0.0514, -2: -0.0479, -1: 0.0187, 0: 0.9995, 1: 0.0197, 2: -0.0449, 3: 0.047}, 'en_iyi': 0, 'ortak': 606, 'seviye_farki_medyan': -7.95, 'seviye_farki_IQR': 23.05}
+V5 DUKA↔EET30 210m: {'gecikme_bar→r': {-3: 0.0038, -2: 0.0205, -1: -0.0064, 0: 0.9418, 1: -0.0147, 2: 0.037, 3: -0.0023}, 'en_iyi': 0, 'ortak': 14109, 'seviye_farki_medyan': -3.93, 'seviye_farki_IQR': 8.49}
+V5 EET30↔MT5 210m: {'gecikme_bar→r': {-3: -0.0014, -2: 0.0359, -1: -0.0123, 0: 0.9514, 1: -0.0072, 2: 0.0263, 3: 0.0128}, 'en_iyi': 0, 'ortak': 12825, 'seviye_farki_medyan': 2.3, 'seviye_farki_IQR': 8.3}
+V5 DUKA↔NQ 210m: {'gecikme_bar→r': {-3: -0.0021, -2: 0.0353, -1: -0.0323, 0: 0.9374, 1: -0.0278, 2: 0.0312, 3: 0.007}, 'en_iyi': 0, 'ortak': 8223, 'seviye_farki_medyan': -1391.8, 'seviye_farki_IQR': 308.81}
+V5 NQ↔MT5 210m: {'gecikme_bar→r': {-3: 0.0066, -2: 0.0356, -1: -0.0234, 0: 0.9414, 1: -0.0307, 2: 0.0378, 3: 0.0079}, 'en_iyi': 0, 'ortak': 8221, 'seviye_farki_medyan': 1391.3, 'seviye_farki_IQR': 309.6}
+V5 DUKA kuyruk (11-13/15)↔MT5 M1 1m: {'gecikme_bar→r': {-3: -0.0161, -2: -0.0188, -1: -0.0196, 0: 0.9975, 1: -0.0222, 2: -0.017, 3: -0.0152}, 'en_iyi': 0, 'ortak': 1335, 'seviye_farki_medyan': 9.02, 'seviye_farki_IQR': 2.63}
 
 ZORUNLU KONTROLLER: HEPSİ GEÇTİ

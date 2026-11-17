@@ -1,0 +1,73 @@
+~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD15_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD1_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD30_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD5_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD60_analyzed.csv türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA
+~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD1.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD15.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD30.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD5.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD60.csv türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA
+~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD1.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD15.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD30.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD5.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD60.csv türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA
+~/Desktop/Trading Projeleri/melih2/trading_ai/fundamentals/USATECHIDXUSD_M1.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/melih2/trading_ai/merged/USATECHIDXUSD1_multi_timeframe.csv DUKA kopya — yeni gün yok
+~/Desktop/Trading Projeleri/nasdaq/nasdaq60_merged.csv NQ_5Years türevi (yeniden örneklenmiş; ham dosyanın karışık saat eksenini taşır) — yeni veri yok
+~/Desktop/Trading Projeleri/nasdaq/nasdaq_5m_H1_part.csv NQ_5Years türevi (yeniden örneklenmiş; ham dosyanın karışık saat eksenini taşır) — yeni veri yok
+~/Desktop/Trading Projeleri/nasdaq/nasdaq_5m_M30_part.csv NQ_5Years türevi (yeniden örneklenmiş; ham dosyanın karışık saat eksenini taşır) — yeni veri yok
+~/Desktop/Trading Projeleri/nasdaq/nasdaq_M30_merged.csv NQ_5Years türevi (yeniden örneklenmiş; ham dosyanın karışık saat eksenini taşır) — yeni veri yok
+~/Desktop/Uygulama Projeleri/PROJELER/EKSIKLER/USATECHIDXUSD_M1.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/NASDAQ/fundamental_data/USATECHIDXUSD_M1.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD15_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD1_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD30_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD5_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD60_analyzed.csv türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD15_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD1_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD30_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD5_analyzed.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD60_analyzed.csv türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD1.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD15.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD30.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD5.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD60.csv türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD1.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD15.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD30.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD5.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD60.csv türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/fundamentals/USATECHIDXUSD_M1.csv DUKA kopya — yeni gün yok
+~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/merged/USATECHIDXUSD1_multi_timeframe.csv DUKA kopya — yeni gün yok
+~/Downloads/USATECHIDXUSD1.csv DUKA kopya — yeni gün yok
+~/Downloads/USATECHIDXUSD15.csv DUKA kopya — yeni gün yok
+~/Downloads/USATECHIDXUSD30.csv DUKA kopya — yeni gün yok
+~/Downloads/USATECHIDXUSD5.csv DUKA kopya — yeni gün yok
+~/Downloads/USATECHIDXUSD60.csv türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA
+~/Downloads/USATECHIDXUSD_H1.csv türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA
+~/Downloads/USATECHIDXUSD_M1-2.csv DUKA kopya — yeni gün yok
+~/Downloads/USATECHIDXUSD_M1.csv DUKA kopya — yeni gün yok
+hukum
+mum değil (ad: model/sinyal/olay/rapor/temel veri)                                                                                              145
+türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz)                                                                                               54
+DUKA kopya                                                                                                                                       40
+mum değil (OHLC sütunu/zaman yok)                                                                                                                27
+türetilemez (240 dk: 2/3/90/210 bundan kurulamaz)                                                                                                10
+türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA                                                                                        9
+NQ_5Years türevi (yeniden örneklenmiş; ham dosyanın karışık saat eksenini taşır)                                                                  4
+arşiv/biçim dışı                                                                                                                                  3
+çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 100072, DUKA ile eşit %100.0)                                       2
+çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 70, DUKA ile eşit %92.9)                                            2
+projedeki backend/models/%80nasdaq_meta_lgb_v2.pkl dosyasının birebir kopyası (md5)                                                               1
+projedeki analiz_paketi_2026-07-09/prices/NDX_INDX_1m_son_14gun.csv dosyasının birebir kopyası (md5)                                              1
+ANA KAYNAK: NQ beslemesi (haftalık kalibre, reddedilen haftalar s08'de)                                                                           1
+ANA KAYNAK: EET30 beslemesi (haftalık kalibre, reddedilen haftalar s08'de)                                                                        1
+türetilemez (10080 dk: 2/3/90/210 bundan kurulamaz)                                                                                               1
+türetilemez (44640 dk: 2/3/90/210 bundan kurulamaz)                                                                                               1
+çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 70, DUKA ile eşit %100.0)                                           1
+projedeki nasdaq_1m_candle_cache_2026-02-10_2026-08-29/nasdaq_1m_candle_cache_TAM_2026-02-10_2026-08-29.csv dosyasının birebir kopyası (md5)      1
+Name: count, dtype: int64

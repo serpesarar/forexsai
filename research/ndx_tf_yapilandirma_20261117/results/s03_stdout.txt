@@ -3,66 +3,68 @@
  "DUKA": {
   "atilan_kapali_saat_bari": 0,
   "2m": {
-   "n": 1483937,
+   "n": 1492333,
    "bas": "2018-01-02 07:06:00+00:00",
    "bit": "2026-11-15 23:58:00+00:00",
    "tam_%": 99.91,
    "kaynak_tf": {
-    "1m": 1483937
+    "1m": 1492333
    },
    "fitil_durumu": {
-    "tam": 1482585,
-    "eksik_dakika_teyitsiz": 1274,
+    "tam": 1490972,
+    "eksik_dakika_teyitsiz": 1283,
     "eksik_dakika_supheli": 72,
     "eksik_dakika_teyitli": 6
    },
    "dosya": "out/DUKA/NDX_DUKA_2m.parquet"
   },
   "3m": {
-   "n": 988730,
+   "n": 994326,
    "bas": "2018-01-02 07:06:00+00:00",
    "bit": "2026-11-15 23:57:00+00:00",
    "tam_%": 99.86,
    "kaynak_tf": {
-    "1m": 988730
+    "1m": 994326
    },
    "fitil_durumu": {
-    "tam": 987300,
-    "eksik_dakika_teyitsiz": 1348,
+    "tam": 992886,
+    "eksik_dakika_teyitsiz": 1358,
     "eksik_dakika_supheli": 65,
     "eksik_dakika_teyitli": 17
    },
    "dosya": "out/DUKA/NDX_DUKA_3m.parquet"
   },
   "90m": {
-   "n": 35733,
-   "bas": "2018-01-02 08:30:00+00:00",
+   "n": 40381,
+   "bas": "2016-03-31 18:00:00+00:00",
    "bit": "2026-11-15 22:00:00+00:00",
-   "tam_%": 96.1,
+   "tam_%": 96.5,
    "kaynak_tf": {
-    "1m": 35733
+    "1m": 35887,
+    "M30_disaktarim": 4494
    },
    "fitil_durumu": {
-    "tam": 34341,
-    "eksik_dakika_teyitli": 772,
-    "eksik_dakika_supheli": 375,
-    "eksik_dakika_teyitsiz": 245
+    "tam": 38966,
+    "eksik_dakika_teyitli": 975,
+    "eksik_dakika_supheli": 353,
+    "eksik_dakika_teyitsiz": 87
    },
    "dosya": "out/DUKA/NDX_DUKA_90m.parquet"
   },
   "210m": {
-   "n": 15734,
-   "bas": "2018-01-02 08:30:00+00:00",
+   "n": 18028,
+   "bas": "2016-03-31 18:00:00+00:00",
    "bit": "2026-11-13 19:00:00+00:00",
-   "tam_%": 91.99,
+   "tam_%": 90.33,
    "kaynak_tf": {
-    "1m": 15734
+    "1m": 15779,
+    "M30_disaktarim": 2249
    },
    "fitil_durumu": {
-    "tam": 14473,
-    "eksik_dakika_teyitli": 833,
-    "eksik_dakika_teyitsiz": 220,
-    "eksik_dakika_supheli": 208
+    "tam": 16284,
+    "eksik_dakika_teyitli": 1100,
+    "eksik_dakika_teyitsiz": 358,
+    "eksik_dakika_supheli": 286
    },
    "dosya": "out/DUKA/NDX_DUKA_210m.parquet"
   }
@@ -183,6 +185,52 @@
     "1m": 606
    },
    "dosya": "out/USTEC/NDX_USTEC_210m.parquet"
+  }
+ },
+ "EET30": {
+  "atilan_kapali_saat_bari": 7,
+  "90m": {
+   "n": 33299,
+   "bas": "2016-11-15 05:30:00+00:00",
+   "bit": "2025-10-01 03:00:00+00:00",
+   "tam_%": 99.38,
+   "kaynak_tf": {
+    "30m": 33299
+   },
+   "dosya": "out/EET30/NDX_EET30_90m.parquet"
+  },
+  "210m": {
+   "n": 14586,
+   "bas": "2016-11-15 05:00:00+00:00",
+   "bit": "2025-10-01 00:30:00+00:00",
+   "tam_%": 98.55,
+   "kaynak_tf": {
+    "30m": 14586
+   },
+   "dosya": "out/EET30/NDX_EET30_210m.parquet"
+  }
+ },
+ "NQ": {
+  "atilan_kapali_saat_bari": 0,
+  "90m": {
+   "n": 18627,
+   "bas": "2019-08-11 21:00:00+00:00",
+   "bit": "2024-08-09 19:30:00+00:00",
+   "tam_%": 93.24,
+   "kaynak_tf": {
+    "5m": 18627
+   },
+   "dosya": "out/NQ/NDX_NQ_90m.parquet"
+  },
+  "210m": {
+   "n": 8234,
+   "bas": "2019-08-11 21:00:00+00:00",
+   "bit": "2024-08-09 18:00:00+00:00",
+   "tam_%": 86.19,
+   "kaynak_tf": {
+    "5m": 8234
+   },
+   "dosya": "out/NQ/NDX_NQ_210m.parquet"
   }
  }
 }
