@@ -5236,5 +5236,16 @@
     "source": "session",
     "created_at": "2026-11-16T23:18:24.836385+00:00",
     "updated_at": "2026-11-16T23:18:24.836497+00:00"
+  },
+  {
+    "id": "bl_b75290fdcb",
+    "title": "IG-04 izi: aşağı boşluk ∧ VIX<18,4 açılış yönünde devam",
+    "detail": "12/12 komşu iki dönemde artı (10:15→12:00 +11,7/+10,6 bp); ayrı ön kayıt + bağımsız veri (broker NAS100/US500/GER40 M30 ya da Duka 2010-17) ile dondurulmuş sınama, ORB×VIX ile çakışma kontrolü",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-17T03:07:00.133819+00:00",
+    "updated_at": "2026-11-17T03:07:00.133972+00:00"
   }
 ]
