@@ -5247,5 +5247,27 @@
     "source": "session",
     "created_at": "2026-11-17T03:07:00.133819+00:00",
     "updated_at": "2026-11-17T03:07:00.133972+00:00"
+  },
+  {
+    "id": "bl_a5058d423f",
+    "title": "akntrade sıralı okuma (AK-03) gölge kaydı",
+    "detail": "1H iğne kapandıktan sonra 15m ikinci süpürme + CHoCH/FVG; 9 yılda 39 işlem +0,41R, P 0,965; yılda ~4 olay — gölge loglayıcı ya da başka endeks 1m verisiyle bağımsız sınama",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-17T03:27:50.665914+00:00",
+    "updated_at": "2026-11-17T03:27:50.666527+00:00"
+  },
+  {
+    "id": "bl_b92403531a",
+    "title": "NDX 5m güçlü itki sonrası devam izi (FB-04)",
+    "detail": "S≥6 ATR yukarı itki, NY seansı, itki anında AL, SL itki dibi, TP 1,618 uzantı, 300 bar: Duka NDX 2018-26 +0,064R n 5.440 üç dönemde artı ama broker US500/US30/US2000/GER40'a taşınmadı. Yeni bağımsız veri (Duka US500/US30 1m 2018+) gelirse dondurulmuş hâliyle sına; TK-05 ile çakışmayı ölç",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-17T03:36:48.198508+00:00",
+    "updated_at": "2026-11-17T03:36:48.198696+00:00"
   }
 ]

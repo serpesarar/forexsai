@@ -1,0 +1,54 @@
+{
+ "E50-RT1": {
+  "n": 39,
+  "ortR": 0.408,
+  "medyan": 0.527,
+  "en_buyuk_cikinca": 0.3,
+  "ayna": 0.054,
+  "plasebo_ort": 0.002,
+  "plasebo_yuzdelik": 100.0,
+  "sp15": 0.315,
+  "tekpoz": 0.408,
+  "yil_basi_islem": 4.4,
+  "yillar_arti": "6/9"
+ },
+ "E1-RT1": {
+  "n": 43,
+  "ortR": 0.332,
+  "medyan": 0.552,
+  "en_buyuk_cikinca": 0.236,
+  "ayna": 0.035,
+  "plasebo_ort": 0.081,
+  "plasebo_yuzdelik": 96.0,
+  "sp15": 0.276,
+  "tekpoz": 0.332,
+  "yil_basi_islem": 4.8,
+  "yillar_arti": "6/9"
+ },
+ "E50-RT2": {
+  "n": 39,
+  "ortR": 0.601,
+  "medyan": -1.0,
+  "en_buyuk_cikinca": 0.356,
+  "ayna": 0.211,
+  "plasebo_ort": 0.201,
+  "plasebo_yuzdelik": 99.5,
+  "sp15": 0.385,
+  "tekpoz": 0.601,
+  "yil_basi_islem": 4.4,
+  "yillar_arti": "7/9"
+ },
+ "E50-R1": {
+  "n": 39,
+  "ortR": 0.232,
+  "medyan": 1.0,
+  "en_buyuk_cikinca": 0.211,
+  "ayna": -0.231,
+  "plasebo_ort": -0.105,
+  "plasebo_yuzdelik": 100.0,
+  "sp15": 0.137,
+  "tekpoz": 0.232,
+  "yil_basi_islem": 4.4,
+  "yillar_arti": "6/9"
+ }
+}

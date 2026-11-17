@@ -1,0 +1,215 @@
+{
+ "P1": {
+  "tanim": [
+   "K1K2n",
+   "C53",
+   "E1",
+   "RT1"
+  ],
+  "birlesik": {
+   "n": 215,
+   "ortR": -0.1859,
+   "isabet_%": 36.3,
+   "P": 0.0098
+  },
+  "donem": {
+   "A": {
+    "n": 69,
+    "ortR": -0.256,
+    "isabet_%": 31.9,
+    "P": 0.0458
+   },
+   "B": {
+    "n": 79,
+    "ortR": -0.1233,
+    "isabet_%": 38.0,
+    "P": 0.1818
+   },
+   "C": {
+    "n": 67,
+    "ortR": -0.1876,
+    "isabet_%": 38.8,
+    "P": 0.0672
+   }
+  },
+  "ayna_ortR": 0.0242,
+  "plasebo_ort": -0.2257,
+  "plasebo_yuzdelik": 83.0,
+  "spread1.5": {
+   "n": 213,
+   "ortR": -0.1914,
+   "isabet_%": 36.6,
+   "P": 0.009
+  },
+  "tek_poz": {
+   "n": 215,
+   "ortR": -0.1859,
+   "isabet_%": 36.3,
+   "P": 0.0098
+  },
+  "SAT": {
+   "n": 120,
+   "ortR": -0.2476,
+   "isabet_%": 33.3,
+   "P": 0.0116
+  },
+  "AL": {
+   "n": 95,
+   "ortR": -0.108,
+   "isabet_%": 40.0,
+   "P": 0.1852
+  },
+  "olcutler": {
+   "1_ABC_hepsi>0": false,
+   "2_P>=0.95": false,
+   "3_ayna_plasebo": false,
+   "4_spread1.5>0": false,
+   "5_tek_poz>0": false,
+   "6_n>=150": true
+  },
+  "holm": false,
+  "sinif": "X"
+ },
+ "P2": {
+  "tanim": [
+   "K1K2n",
+   "C53",
+   "E50",
+   "RT1"
+  ],
+  "birlesik": {
+   "n": 193,
+   "ortR": -0.1842,
+   "isabet_%": 34.2,
+   "P": 0.0178
+  },
+  "donem": {
+   "A": {
+    "n": 61,
+    "ortR": -0.2247,
+    "isabet_%": 31.1,
+    "P": 0.0852
+   },
+   "B": {
+    "n": 72,
+    "ortR": -0.166,
+    "isabet_%": 34.7,
+    "P": 0.1342
+   },
+   "C": {
+    "n": 60,
+    "ortR": -0.165,
+    "isabet_%": 36.7,
+    "P": 0.1278
+   }
+  },
+  "ayna_ortR": -0.0269,
+  "plasebo_ort": -0.2459,
+  "plasebo_yuzdelik": 88.5,
+  "spread1.5": {
+   "n": 188,
+   "ortR": -0.216,
+   "isabet_%": 33.0,
+   "P": 0.0084
+  },
+  "tek_poz": {
+   "n": 193,
+   "ortR": -0.1842,
+   "isabet_%": 34.2,
+   "P": 0.0178
+  },
+  "SAT": {
+   "n": 105,
+   "ortR": -0.2785,
+   "isabet_%": 29.5,
+   "P": 0.0106
+  },
+  "AL": {
+   "n": 88,
+   "ortR": -0.0717,
+   "isabet_%": 39.8,
+   "P": 0.2914
+  },
+  "olcutler": {
+   "1_ABC_hepsi>0": false,
+   "2_P>=0.95": false,
+   "3_ayna_plasebo": false,
+   "4_spread1.5>0": false,
+   "5_tek_poz>0": false,
+   "6_n>=150": true
+  },
+  "holm": false,
+  "sinif": "X"
+ },
+ "P3": {
+  "tanim": [
+   "K1K2n",
+   "C53",
+   "E50",
+   "RT2"
+  ],
+  "birlesik": {
+   "n": 193,
+   "ortR": -0.2065,
+   "isabet_%": 26.9,
+   "P": 0.0218
+  },
+  "donem": {
+   "A": {
+    "n": 61,
+    "ortR": -0.1237,
+    "isabet_%": 29.5,
+    "P": 0.2448
+   },
+   "B": {
+    "n": 72,
+    "ortR": -0.2134,
+    "isabet_%": 25.0,
+    "P": 0.124
+   },
+   "C": {
+    "n": 60,
+    "ortR": -0.2825,
+    "isabet_%": 26.7,
+    "P": 0.0406
+   }
+  },
+  "ayna_ortR": -0.0325,
+  "plasebo_ort": -0.2454,
+  "plasebo_yuzdelik": 77.0,
+  "spread1.5": {
+   "n": 188,
+   "ortR": -0.2297,
+   "isabet_%": 26.1,
+   "P": 0.0146
+  },
+  "tek_poz": {
+   "n": 193,
+   "ortR": -0.2065,
+   "isabet_%": 26.9,
+   "P": 0.0218
+  },
+  "SAT": {
+   "n": 105,
+   "ortR": -0.4073,
+   "isabet_%": 21.0,
+   "P": 0.0016
+  },
+  "AL": {
+   "n": 88,
+   "ortR": 0.0331,
+   "isabet_%": 34.1,
+   "P": 0.5804
+  },
+  "olcutler": {
+   "1_ABC_hepsi>0": false,
+   "2_P>=0.95": false,
+   "3_ayna_plasebo": false,
+   "4_spread1.5>0": false,
+   "5_tek_poz>0": false,
+   "6_n>=150": true
+  },
+  "holm": false,
+  "sinif": "X"
+ }
+}

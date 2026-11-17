@@ -1035,5 +1035,17 @@
   "output": "research/mum_anatomi_1m_20261117/RAPOR.md",
   "needs_backend": false,
   "est_runtime": "~1 dk"
+ },
+ {
+  "id": "fibo_altin_bolge",
+  "name": "AKN TRADE altın bölge Fibonacci (0,5–0,618) + yutan mum — NDX, DAX, XAU 6 TF, ızgara, bağımsız piyasa",
+  "kind": "script",
+  "command": "cd research/fibo_altin_bolge_20261116/src && cc -O3 -shared -fPIC -o fb_resolve.dylib fb_resolve.c && python3 run_primary.py && python3 run_grid.py && python3 an_grid.py && python3 run_ek1.py && python3 run_ek2.py && python3 duka_pull.py DAX XAU CAC STOXX && zsh pipeline_sym.sh DAX ek3 && zsh pipeline_sym.sh XAU ek3 && python3 run_ek3b.py",
+  "cwd": ".",
+  "category": "validation",
+  "what_it_does": "Güçlü itki → 0,5–0,618 geri çekilme → yutan mum kuralını Duka NDX 1m 2018-26'da 1m–4h, iki yön, seans/saat/gün kırılımıyla sınar; 233k hücre ızgara + eşlenik plasebo, dondurulmuş adaylar broker GER40/XAU/petrol/US500'de, VIX rejimi, 18 endeks günlük. Hüküm X; NDX artısı Fib değil itki devamı (E144). EK-3 (2026-11-17): aynı batarya Duka DAX ve XAU 1m 2018-26'da (ızgara iki piyasada da plasebonun altında, adaylar bağımsızda eksi → X; E145); EK-3b DAX Avrupa ailesi CAC 40 / Euro Stoxx 50'de.",
+  "output": "research/fibo_altin_bolge_20261116/RAPOR.md",
+  "needs_backend": false,
+  "est_runtime": "~3 dk/piyasa + Dukascopy indirme (~30 dk/sembol, sunucu kısıtlı)"
  }
 ]

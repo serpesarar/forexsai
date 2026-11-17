@@ -1,0 +1,164 @@
+{
+ "plato": {
+  "komsu": 192,
+  "TEST_ve_KOR_arti_oran": 0.15104166666666666,
+  "uc_donem_arti_oran": 0.140625,
+  "bolge_bazinda": {
+   "altin": 0.266,
+   "cok_sig": 0.047,
+   "sig382": 0.141
+  },
+  "tp_bazinda": {
+   "2R": 0.146,
+   "H": 0.042,
+   "x1272": 0.188,
+   "x1618": 0.229
+  },
+  "oruntu_bazinda": {
+   "eng": 0.135,
+   "none": 0.167
+  }
+ },
+ "fib_katkisi": {
+  "KESIF": {
+   "C1": {
+    "n": 747,
+    "gun": 539,
+    "ortR": 0.0768,
+    "t": 1.53,
+    "medyan": -1.0,
+    "tp_oran": 0.402,
+    "sl_oran": 0.506,
+    "basabas": 0.411,
+    "topR": 57.3,
+    "P": 0.94
+   },
+   "itki_aninda": {
+    "n": 2553,
+    "gun": 772,
+    "ortR": 0.0585,
+    "t": 1.89,
+    "medyan": 0.387,
+    "tp_oran": 0.489,
+    "sl_oran": 0.376,
+    "basabas": 0.512,
+    "topR": 149.4,
+    "P": 0.971
+   },
+   "fark": 0.0182,
+   "fark_P": 0.6155
+  },
+  "TEST": {
+   "C1": {
+    "n": 472,
+    "gun": 340,
+    "ortR": 0.1354,
+    "t": 2.15,
+    "medyan": -0.047,
+    "tp_oran": 0.407,
+    "sl_oran": 0.487,
+    "basabas": 0.407,
+    "topR": 63.9,
+    "P": 0.988
+   },
+   "itki_aninda": {
+    "n": 1543,
+    "gun": 466,
+    "ortR": 0.0909,
+    "t": 2.16,
+    "medyan": 0.313,
+    "tp_oran": 0.471,
+    "sl_oran": 0.373,
+    "basabas": 0.506,
+    "topR": 140.3,
+    "P": 0.98
+   },
+   "fark": 0.0445,
+   "fark_P": 0.732
+  },
+  "KOR": {
+   "C1": {
+    "n": 374,
+    "gun": 281,
+    "ortR": 0.092,
+    "t": 1.26,
+    "medyan": -0.535,
+    "tp_oran": 0.39,
+    "sl_oran": 0.481,
+    "basabas": 0.413,
+    "topR": 34.4,
+    "P": 0.891
+   },
+   "itki_aninda": {
+    "n": 1344,
+    "gun": 434,
+    "ortR": 0.0428,
+    "t": 0.89,
+    "medyan": 0.149,
+    "tp_oran": 0.442,
+    "sl_oran": 0.394,
+    "basabas": 0.514,
+    "topR": 57.5,
+    "P": 0.796
+   },
+   "fark": 0.0492,
+   "fark_P": 0.727
+  },
+  "TUM": {
+   "C1": {
+    "n": 1593,
+    "gun": 1160,
+    "ortR": 0.0977,
+    "t": 2.82,
+    "medyan": -0.623,
+    "tp_oran": 0.401,
+    "sl_oran": 0.495,
+    "basabas": 0.41,
+    "topR": 155.7,
+    "P": 0.995
+   },
+   "itki_aninda": {
+    "n": 5440,
+    "gun": 1672,
+    "ortR": 0.0638,
+    "t": 2.87,
+    "medyan": 0.309,
+    "tp_oran": 0.472,
+    "sl_oran": 0.38,
+    "basabas": 0.511,
+    "topR": 347.2,
+    "P": 0.997
+   },
+   "fark": 0.0339,
+   "fark_P": 0.8045
+  }
+ },
+ "us_bilgi": {
+  "US30": {
+   "basla": "2025-06-12",
+   "n": 262,
+   "gun": 191,
+   "ortR": 0.0634,
+   "t": 0.69,
+   "medyan": -1.0,
+   "tp_oran": 0.378,
+   "sl_oran": 0.504,
+   "basabas": 0.398,
+   "topR": 16.6,
+   "P": 0.739
+  },
+  "US2000": {
+   "basla": "2025-06-12",
+   "n": 255,
+   "gun": 188,
+   "ortR": 0.0565,
+   "t": 0.63,
+   "medyan": -1.0,
+   "tp_oran": 0.357,
+   "sl_oran": 0.522,
+   "basabas": 0.396,
+   "topR": 14.4,
+   "P": 0.733
+  }
+ }
+}

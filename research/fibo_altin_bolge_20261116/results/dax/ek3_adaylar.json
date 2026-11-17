@@ -1,0 +1,57 @@
+{
+ "meta": {
+  "uygun_hucre": 369,
+  "plasebo_uc_donem_arti": 1316,
+  "gercek_uc_donem_arti": 794
+ },
+ "adaylar": [
+  {
+   "tf": "15m",
+   "side": 1,
+   "pattern": "eng",
+   "zone": "altin",
+   "sl": "inv",
+   "tp": "x1272",
+   "hold": 300,
+   "smin": 3.0,
+   "spmin": 0.0,
+   "filt": "ses:AVRUPA",
+   "min_t": 1.09,
+   "R_KESIF": 0.1457,
+   "R_TEST": 0.1733,
+   "R_KOR": 0.1678
+  },
+  {
+   "tf": "5m",
+   "side": 1,
+   "pattern": "none",
+   "zone": "altin",
+   "sl": "L",
+   "tp": "x1272",
+   "hold": 300,
+   "smin": 4.0,
+   "spmin": 0.5,
+   "filt": "gun:3",
+   "min_t": 0.99,
+   "R_KESIF": 0.0983,
+   "R_TEST": 0.1055,
+   "R_KOR": 0.1237
+  },
+  {
+   "tf": "15m",
+   "side": 1,
+   "pattern": "none",
+   "zone": "sig382",
+   "sl": "L",
+   "tp": "x1272",
+   "hold": 300,
+   "smin": 6.0,
+   "spmin": 0.0,
+   "filt": "gun:2",
+   "min_t": 0.85,
+   "R_KESIF": 0.1047,
+   "R_TEST": 0.1202,
+   "R_KOR": 0.0932
+  }
+ ]
+}
