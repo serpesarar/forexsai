@@ -111,6 +111,7 @@ def slim(it: dict, tag: str) -> dict:
         "type": it.get("script_type"), "access": it.get("script_access"), "picked": it.get("is_picked"),
         "author": (it.get("user") or {}).get("username"), "url": it.get("chart_url"),
         "symbol": (it.get("symbol") or {}).get("name"), "tag": tag,
+        "script_id_part": it.get("script_id_part"), "version": it.get("version"),
     }
 
 
@@ -161,6 +162,9 @@ if __name__ == "__main__":
         r = probe(feeds, name)
         print(sum(1 for v in r.values() if v), "akış var;", sum(min(v, FEED_CAP) for v in r.values()), "kayıt (tavanlı)")
         print(sorted(r.items(), key=lambda x: -x[1]))
+    elif mode == "crawl-ids":                      # kaynak indirme için script_id_part'lı yeniden tarama
+        crawl(42, "tag_totals.json", "ids_tags.jsonl")
+        crawl(42, "search_totals.json", "ids_search.jsonl")
     elif mode == "crawl-search":
         crawl(int(sys.argv[2]) if len(sys.argv) > 2 else 42, "search_totals.json", "scripts_search.jsonl")
     else:

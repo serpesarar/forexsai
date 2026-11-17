@@ -63,6 +63,34 @@
       ],
       "cwd": "frontend",
       "port": 3012
+    },
+    {
+      "name": "newsfeed-test-backend",
+      "runtimeExecutable": ".venv/bin/python",
+      "runtimeArgs": [
+        "research/github_haber_sekil_20261104/degerlendirme/newsfeed_test_server.py"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "backend-nom-test",
+      "runtimeExecutable": "../.venv/bin/python",
+      "runtimeArgs": [
+        "-c",
+        "from dotenv import load_dotenv;load_dotenv('.env');import uvicorn;from fastapi import FastAPI;from fastapi.middleware.cors import CORSMiddleware;from routers.nom_router import router;app=FastAPI();app.add_middleware(CORSMiddleware,allow_origins=['*'],allow_methods=['*'],allow_headers=['*']);app.include_router(router);uvicorn.run(app,host='127.0.0.1',port=8081)"
+      ],
+      "cwd": "backend",
+      "port": 8081
+    },
+    {
+      "name": "frontend-nom-test",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "NEXT_PUBLIC_API_URL=http://localhost:8081 exec npm run dev -- -p 3013"
+      ],
+      "cwd": "frontend",
+      "port": 3013
     }
   ]
 }

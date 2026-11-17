@@ -1,4 +1,4 @@
-# GÇM — sonuç tabloları (otomatik)
+# GÇM — sonuç tabloları (otomatik, ana kütüphane)
 
 Kapsama: 133 gösterge, 353 durum, 55 aile → topluluk scriptlerinin %93.2'i (boost ağırlıklı %95.0).
 
@@ -6,11 +6,11 @@ Kapsama: 133 gösterge, 353 durum, 55 aile → topluluk scriptlerinin %93.2'i (b
 
 | Sembol | Seçilen | Kanıtlı | Boş beklenti (q99) | Doğr. geçen / ters | Kasa geçen / ters | Keşifte seçimden sağ |
 |---|---:|---:|---:|---:|---:|---:|
-| DAX | 852 | **4** | 2.13 (6) | 50 / 26 | 32 / 36 | 1 |
+| DAX | 1212 | **4** | 3.03 (8) | 72 / 47 | 42 / 58 | 1 |
 | NDX | 1260 | **2** | 3.15 (8) | 67 / 43 | 63 / 37 | 7 |
-| USOIL | 1050 | **6** | 2.62 (7) | 57 / 45 | 48 / 33 | 2 |
-| XAU | 1050 | **1** | 2.62 (7) | 64 / 44 | 57 / 42 | 4 |
-| TUMU | 4212 | **13** | 10.53 (19) | 238 / 158 | 200 / 148 | 14 |
+| USOIL | 1230 | **6** | 3.08 (8) | 65 / 51 | 53 / 40 | 2 |
+| XAU | 1230 | **2** | 3.08 (8) | 74 / 49 | 73 / 51 | 7 |
+| TUMU | 4932 | **14** | 12.33 (21) | 278 / 190 | 231 / 186 | 17 |
 
 Hücre biçimi: **kanıtlı** · D doğrulama geçen/ters-anlamlı · K kasa geçen/ters-anlamlı · ε seçim eşiği (plasebo max|z| %95). Her hücrede 30 kombinasyon seçildi; tesadüfen her birinin geçmesi ≈ %5.
 
@@ -81,6 +81,8 @@ Hücre biçimi: **kanıtlı** · D doğrulama geçen/ters-anlamlı · K kasa ge�
 
 | TF \ h | 1 | 2 | 4 | 8 | 16 | 32 |
 |---|---|---|---|---|---|---|
+| 1m | **0** · D 2/1 · K 0/3 · ε 5.68 | **0** · D 4/0 · K 0/3 · ε 5.82 | **0** · D 3/2 · K 2/0 · ε 6.0 | **0** · D 2/0 · K 2/1 · ε 5.5 | **0** · D 5/0 · K 0/2 · ε 5.38 | **0** · D 0/2 · K 4/2 · ε 5.62 |
+| 5m | **0** · D 0/9 · K 0/8 · ε 5.39 | **0** · D 3/1 · K 1/1 · ε 5.55 | **0** · D 0/2 · K 0/0 · ε 5.16 | **0** · D 0/3 · K 1/2 · ε 5.1 | **0** · D 3/1 · K 0/0 · ε 4.52 | **0** · D 0/0 · K 0/0 · ε 3.78 |
 | 15m | **0** · D 0/3 · K 4/2 · ε 5.61 | **2** · D 3/3 · K 4/0 · ε 5.7 | **0** · D 3/4 · K 1/5 · ε 5.65 | **0** · D 3/2 · K 0/4 · ε 5.73 | **0** · D 2/0 · K 1/1 · ε 5.34 | **0** · D 0/1 · K 0/1 · ε 4.7 |
 | 30m | **1** · D 2/1 · K 2/0 · ε 5.43 | **0** · D 1/0 · K 0/3 · ε 5.53 | **0** · D 4/4 · K 3/2 · ε 5.56 | **0** · D 3/1 · K 2/2 · ε 5.53 | **0** · D 0/0 · K 0/1 · ε 5.44 | **0** · D 0/0 · K 0/0 · ε 4.83 |
 | 1h | **0** · D 3/1 · K 0/2 · ε 5.44 | **0** · D 3/0 · K 2/1 · ε 5.64 | **0** · D 0/1 · K 0/1 · ε 5.6 | **0** · D 3/0 · K 1/0 · ε 5.16 | **0** · D 2/0 · K 0/0 · ε 4.87 | **0** · D 0/0 · K 0/0 · ε 3.98 |
@@ -91,6 +93,18 @@ Hücre biçimi: **kanıtlı** · D doğrulama geçen/ters-anlamlı · K kasa ge�
 
 | TF | h | AUC kasa | AUC taban | fark | en emin %10 isabet | taban | fark | bağımsız n | z |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1m | 1 | 0.507 | 0.504 | +0.003 | 0.515 | 0.500 | +0.015 | 2704 | +1.57 |
+| 1m | 2 | 0.501 | 0.500 | +0.000 | 0.494 | 0.498 | -0.005 | 1856 | -0.40 |
+| 1m | 4 | 0.504 | 0.500 | +0.004 | 0.490 | 0.496 | -0.006 | 943 | -0.37 |
+| 1m | 8 | 0.501 | 0.506 | -0.005 | 0.498 | 0.498 | +0.001 | 445 | +0.02 |
+| 1m | 16 | 0.490 | 0.494 | -0.004 | 0.487 | 0.492 | -0.005 | 344 | -0.18 |
+| 1m | 32 | 0.502 | 0.490 | +0.012 | 0.508 | 0.493 | +0.015 | 188 | +0.41 |
+| 5m | 1 | 0.503 | 0.498 | +0.006 | 0.503 | 0.499 | +0.004 | 568 | +0.20 |
+| 5m | 2 | 0.508 | 0.504 | +0.004 | 0.507 | 0.498 | +0.009 | 312 | +0.32 |
+| 5m | 4 | 0.507 | 0.495 | +0.011 | 0.494 | 0.497 | -0.003 | 193 | -0.08 |
+| 5m | 8 | 0.500 | 0.486 | +0.014 | 0.500 | 0.496 | +0.004 | 148 | +0.10 |
+| 5m | 16 | 0.513 | 0.470 | +0.043 | 0.538 | 0.500 | +0.038 | 105 | +0.78 |
+| 5m | 32 | 0.506 | 0.496 | +0.009 | 0.512 | 0.515 | -0.003 | 52 | -0.05 |
 | 15m | 1 | 0.503 | 0.496 | +0.007 | 0.505 | 0.501 | +0.004 | 1645 | +0.32 |
 | 15m | 2 | 0.499 | 0.498 | +0.002 | 0.521 | 0.506 | +0.014 | 872 | +0.85 |
 | 15m | 4 | 0.499 | 0.497 | +0.001 | 0.508 | 0.505 | +0.004 | 665 | +0.19 |
@@ -128,6 +142,7 @@ Hücre biçimi: **kanıtlı** · D doğrulama geçen/ters-anlamlı · K kasa ge�
 
 | TF \ h | 1 | 2 | 4 | 8 | 16 | 32 |
 |---|---|---|---|---|---|---|
+| 1m | **0** · D 3/0 · K 2/1 · ε 5.55 | **0** · D 1/0 · K 1/0 · ε 5.49 | **1** · D 2/0 · K 4/3 · ε 5.69 | **0** · D 1/2 · K 3/1 · ε 5.57 | **0** · D 2/2 · K 1/4 · ε 5.39 | **0** · D 1/1 · K 5/0 · ε 5.15 |
 | 5m | **0** · D 5/0 · K 1/3 · ε 5.75 | **0** · D 4/4 · K 3/1 · ε 5.61 | **0** · D 1/3 · K 1/0 · ε 5.73 | **0** · D 1/0 · K 0/2 · ε 5.43 | **0** · D 2/0 · K 0/2 · ε 5.18 | **0** · D 0/1 · K 1/0 · ε 5.08 |
 | 15m | **0** · D 3/0 · K 2/3 · ε 5.54 | **0** · D 2/1 · K 1/0 · ε 5.36 | **0** · D 0/1 · K 0/2 · ε 5.43 | **0** · D 2/0 · K 0/2 · ε 5.39 | **0** · D 2/0 · K 2/1 · ε 5.39 | **0** · D 3/1 · K 0/0 · ε 4.85 |
 | 30m | **1** · D 4/1 · K 5/4 · ε 5.74 | **0** · D 1/0 · K 2/2 · ε 5.37 | **0** · D 4/2 · K 2/1 · ε 5.37 | **0** · D 1/2 · K 3/1 · ε 5.57 | **0** · D 4/1 · K 1/1 · ε 5.09 | **0** · D 0/2 · K 0/3 · ε 4.56 |
@@ -139,6 +154,12 @@ Hücre biçimi: **kanıtlı** · D doğrulama geçen/ters-anlamlı · K kasa ge�
 
 | TF | h | AUC kasa | AUC taban | fark | en emin %10 isabet | taban | fark | bağımsız n | z |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1m | 1 | 0.527 | 0.499 | +0.028 | 0.521 | 0.498 | +0.023 | 2387 | +2.23 |
+| 1m | 2 | 0.520 | 0.499 | +0.021 | 0.527 | 0.496 | +0.031 | 1412 | +2.36 |
+| 1m | 4 | 0.507 | 0.501 | +0.006 | 0.509 | 0.500 | +0.009 | 863 | +0.52 |
+| 1m | 8 | 0.504 | 0.499 | +0.005 | 0.532 | 0.502 | +0.030 | 425 | +1.23 |
+| 1m | 16 | 0.520 | 0.497 | +0.024 | 0.549 | 0.501 | +0.048 | 303 | +1.68 |
+| 1m | 32 | 0.515 | 0.500 | +0.015 | 0.520 | 0.495 | +0.025 | 195 | +0.69 |
 | 5m | 1 | 0.510 | 0.500 | +0.010 | 0.519 | 0.491 | +0.028 | 1738 | +2.35 |
 | 5m | 2 | 0.511 | 0.503 | +0.009 | 0.515 | 0.489 | +0.025 | 988 | +1.60 |
 | 5m | 4 | 0.515 | 0.501 | +0.014 | 0.513 | 0.489 | +0.024 | 525 | +1.10 |
@@ -182,6 +203,7 @@ Hücre biçimi: **kanıtlı** · D doğrulama geçen/ters-anlamlı · K kasa ge�
 
 | TF \ h | 1 | 2 | 4 | 8 | 16 | 32 |
 |---|---|---|---|---|---|---|
+| 1m | **0** · D 2/1 · K 0/1 · ε 5.82 | **0** · D 1/3 · K 0/1 · ε 5.73 | **0** · D 1/0 · K 0/3 · ε 5.64 | **0** · D 1/1 · K 0/1 · ε 5.86 | **0** · D 2/1 · K 3/0 · ε 5.93 | **0** · D 1/0 · K 2/1 · ε 5.68 |
 | 5m | **0** · D 1/2 · K 0/0 · ε 5.75 | **0** · D 1/1 · K 1/1 · ε 5.55 | **0** · D 6/0 · K 0/3 · ε 5.29 | **0** · D 5/0 · K 0/1 · ε 5.42 | **0** · D 1/0 · K 1/0 · ε 5.32 | **0** · D 0/0 · K 2/1 · ε 4.87 |
 | 15m | **0** · D 1/3 · K 0/0 · ε 5.32 | **0** · D 1/3 · K 1/0 · ε 5.24 | **0** · D 1/0 · K 2/2 · ε 5.77 | **1** · D 3/0 · K 2/0 · ε 5.47 | **0** · D 0/0 · K 0/1 · ε 5.08 | **0** · D 0/1 · K 0/0 · ε 4.87 |
 | 30m | **0** · D 1/4 · K 1/4 · ε 5.31 | **0** · D 1/3 · K 2/2 · ε 5.42 | **0** · D 0/0 · K 4/1 · ε 5.34 | **0** · D 3/1 · K 0/1 · ε 5.56 | **1** · D 5/0 · K 1/0 · ε 5.1 | **0** · D 1/0 · K 3/0 · ε 5.14 |
@@ -193,6 +215,12 @@ Hücre biçimi: **kanıtlı** · D doğrulama geçen/ters-anlamlı · K kasa ge�
 
 | TF | h | AUC kasa | AUC taban | fark | en emin %10 isabet | taban | fark | bağımsız n | z |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1m | 1 | 0.512 | 0.502 | +0.010 | 0.524 | 0.499 | +0.025 | 4257 | +3.18 |
+| 1m | 2 | 0.513 | 0.507 | +0.006 | 0.503 | 0.498 | +0.005 | 2259 | +0.44 |
+| 1m | 4 | 0.506 | 0.511 | -0.006 | 0.513 | 0.497 | +0.016 | 1356 | +1.15 |
+| 1m | 8 | 0.506 | 0.516 | -0.009 | 0.495 | 0.500 | -0.004 | 675 | -0.22 |
+| 1m | 16 | 0.506 | 0.512 | -0.006 | 0.518 | 0.501 | +0.017 | 575 | +0.81 |
+| 1m | 32 | 0.508 | 0.516 | -0.009 | 0.500 | 0.505 | -0.005 | 278 | -0.16 |
 | 5m | 1 | 0.519 | 0.504 | +0.015 | 0.535 | 0.502 | +0.032 | 1689 | +2.65 |
 | 5m | 2 | 0.511 | 0.510 | +0.002 | 0.509 | 0.504 | +0.005 | 882 | +0.29 |
 | 5m | 4 | 0.511 | 0.518 | -0.007 | 0.518 | 0.510 | +0.008 | 569 | +0.37 |
@@ -232,31 +260,33 @@ Hücre biçimi: **kanıtlı** · D doğrulama geçen/ters-anlamlı · K kasa ge�
 
 ## Tekrarlanma (tüm TF × sembol)
 
-Doğrulamayı geçen **238** kombinasyon, kaynak hücreleri dışındaki **18091** (sembol, TF, h) hücresinde aynı tanım ve aynı yönle yeniden ölçüldü (her bölmede n ≥ n_min/4 olan hücreler).
-- KASA bölmesinde aynı yönde anlamlı (z ≥ 1,645): **894**, ters yönde anlamlı: **736** (boş beklenti her biri ≈ %5 → ≈ 905).
-- Tüm dönem (üç bölme birleşik z) aynı yönde anlamlı: **1342**, ters: **655**.
+Tekrarlanma ölçümünün kapsadığı (sembol, TF) hücreleri (ufuk sayısı): DAX 15m (6), DAX 1d (6), DAX 1h (6), DAX 1m (6), DAX 30m (6), DAX 4h (6), DAX 5m (6), NDX 15m (6), NDX 1d (6), NDX 1h (6), NDX 1m (6), NDX 30m (6), NDX 4h (6), NDX 5m (6), USOIL 15m (6), USOIL 1d (6), USOIL 1h (6), USOIL 1m (6), USOIL 30m (6), USOIL 4h (6), USOIL 5m (6), XAU 15m (6), XAU 1d (6), XAU 1h (6), XAU 1m (6), XAU 30m (6), XAU 4h (6), XAU 5m (6)
+
+Doğrulamayı geçen **278** kombinasyon, kaynak hücreleri dışındaki **25047** (sembol, TF, h) hücresinde aynı tanım ve aynı yönle yeniden ölçüldü (her bölmede n ≥ n_min/4 olan hücreler).
+- KASA bölmesinde aynı yönde anlamlı (z ≥ 1,645): **1314**, ters yönde anlamlı: **1126** (boş beklenti her biri ≈ %5 → ≈ 1252).
+- Tüm dönem (üç bölme birleşik z) aynı yönde anlamlı: **1794**, ters: **992**.
 
 En çok tekrarlayan 15 aday (KASA'da aynı yön anlamlı hücre sayısına göre):
 
 | Kaynak | Kombinasyon | Yön | Kanıtlı | Hücre | KASA aynı / ters | Tüm dönem aynı / ters |
 |---|---|---|---|---:|---:|---:|
-| NDX 1d h=8 | `T:HEIKIN:strong+ & R:CKSTOP:brk+ & S:STOCH14:kd+` | BUY |  | 123 | 13 / 7 | 16 / 3 |
-| DAX 15m h=4 | `T:STOCHRSI:kd+ & R:FISHER9:sig- & S:AO:color-` | BUY |  | 82 | 12 / 1 | 10 / 0 |
-| NDX 4h h=32 | `T:BOS2:brk- & R:T3_5:px- & S:KAMA10:slope-` | BUY |  | 123 | 12 / 4 | 5 / 5 |
-| USOIL 1h h=32 | `T:AO:color+ & S:DMI14:di+ & S:SMA50:slope+` | BUY |  | 125 | 12 / 5 | 5 / 2 |
-| USOIL 4h h=8 | `T:SWINGLEG:leg- & R:AC:zero+ & S:PSAR:dir+` | BUY |  | 117 | 11 / 1 | 9 / 0 |
-| NDX 5m h=32 | `T:SWEEP2:rej- & S:TWAP:px- & S:DEMA20:slope+` | SELL |  | 81 | 11 / 2 | 7 / 4 |
-| XAU 5m h=2 | `T:HEIKIN:color- & S:LSMA25:px+ & R:AC:zero+` | BUY |  | 72 | 11 / 0 | 4 / 2 |
-| XAU 30m h=2 | `T:PIVOT:p- & S:MCG14:px+ & S:DMI14:di+` | SELL |  | 100 | 11 / 5 | 3 / 3 |
-| DAX 4h h=4 | `T:T3_5:px+ & R:LSMA25:px+ & S:RVIG:sig-` | BUY |  | 114 | 10 / 3 | 16 / 0 |
-| DAX 4h h=4 | `T:FISHER9:sig+ & R:LSMA25:px+ & S:SSL10:dir-` | BUY |  | 102 | 10 / 6 | 11 / 4 |
-| USOIL 1h h=2 | `T:TEMA20:px+ & S:LRCH100:slope- & S:SSMOOTH10:slope-` | BUY | evet | 114 | 10 / 0 | 11 / 0 |
-| DAX 4h h=4 | `T:DEMA20:px+ & S:SMA50:slope- & S:RANGEFILT:dir-` | BUY | evet | 120 | 10 / 1 | 10 / 2 |
-| NDX 1d h=4 | `T:CKSTOP:brk+ & R:STOCH14:kd+ & R:ALMA9:slope+` | BUY |  | 118 | 10 / 4 | 10 / 4 |
-| USOIL 1h h=1 | `T:ZLEMA20:px+ & S:HALFTREND:dir+ & R:KALMAN:px+` | BUY | evet | 120 | 10 / 8 | 10 / 5 |
-| USOIL 1h h=2 | `T:TEMA20:px+ & S:HMA21:px- & R:SSMOOTH10:slope-` | BUY |  | 70 | 10 / 3 | 8 / 5 |
+| NDX 1d h=8 | `T:HEIKIN:strong+ & R:CKSTOP:brk+ & S:STOCH14:kd+` | BUY |  | 146 | 14 / 9 | 18 / 4 |
+| DAX 15m h=4 | `T:STOCHRSI:kd+ & R:FISHER9:sig- & S:AO:color-` | BUY |  | 103 | 14 / 1 | 11 / 0 |
+| NDX 4h h=32 | `T:BOS2:brk- & R:T3_5:px- & S:KAMA10:slope-` | BUY |  | 146 | 14 / 4 | 10 / 5 |
+| DAX 4h h=4 | `T:T3_5:px+ & R:STOCH14:kd+ & S:RANGEFILT:dir-` | BUY |  | 148 | 13 / 4 | 11 / 6 |
+| USOIL 15m h=8 | `T:ROOFING:zero- & S:SMA20:slope+ & R:NWENV:slope-` | BUY |  | 105 | 13 / 4 | 11 / 7 |
+| DAX 1m h=2 | `T:LAGRSI:zone+ & R:RSI2:mid- & S:ST10_3:dir+` | SELL |  | 114 | 13 / 8 | 9 / 7 |
+| USOIL 1h h=2 | `T:TEMA20:px+ & S:HMA21:px- & R:SSMOOTH10:slope-` | BUY |  | 89 | 13 / 3 | 9 / 6 |
+| DAX 1m h=2 | `T:LAGRSI:zone+ & R:ALMA9:px- & S:COPPOCK:zero+` | SELL |  | 111 | 13 / 7 | 5 / 7 |
+| USOIL 4h h=8 | `T:SWINGLEG:leg- & R:AC:zero+ & S:PSAR:dir+` | BUY |  | 140 | 12 / 3 | 9 / 3 |
+| USOIL 1h h=32 | `T:AO:color+ & S:DMI14:di+ & S:SMA50:slope+` | BUY |  | 148 | 12 / 8 | 5 / 3 |
+| XAU 5m h=1 | `T:AROON25:dom- & S:BOS2:brk- & S:Z50:ext-` | BUY |  | 49 | 12 / 4 | 5 / 6 |
+| XAU 5m h=2 | `T:HEIKIN:color- & S:LSMA25:px+ & R:AC:zero+` | BUY |  | 93 | 12 / 0 | 4 / 4 |
+| DAX 4h h=4 | `T:T3_5:px+ & R:LSMA25:px+ & S:RVIG:sig-` | BUY |  | 137 | 11 / 3 | 16 / 1 |
+| DAX 4h h=4 | `T:DEMA20:px+ & S:SMA50:slope- & S:RANGEFILT:dir-` | BUY | evet | 143 | 11 / 1 | 10 / 2 |
+| USOIL 5m h=8 | `T:ZLEMA20:slope- & S:TRENDLINE:brk- & S:TRIX15:sig-` | BUY |  | 93 | 11 / 5 | 9 / 2 |
 
-## Kanıtlı adaylar (13)
+## Kanıtlı adaylar (14)
 
 | Sembol | TF | h | Kombinasyon | Yön | Keşif z | Doğr. z | Kasa z | Kasa isabet / taban | Kasa getiri bp / maliyet |
 |---|---|---:|---|---|---:|---:|---:|---|---|
@@ -266,6 +296,7 @@ En çok tekrarlayan 15 aday (KASA'da aynı yön anlamlı hücre sayısına göre
 | DAX | 15m | 2 | `T:UTBOT:dir+ & R:BOP14:zero+ & S:TWAP:px-` | SELL | 4.36 | 1.93 | 1.96 | 0.611 / 0.491 (n 72) | 3.7 / 0.5 |
 | DAX | 30m | 1 | `T:UTBOT:dir- & R:KAMA10:px+ & R:WMA20:slope-` | SELL | 4.19 | 1.95 | 1.76 | 0.592 / 0.500 (n 71) | 3.7 / 0.5 |
 | DAX | 4h | 4 | `T:DEMA20:px+ & S:SMA50:slope- & S:RANGEFILT:dir-` | BUY | 4.18 | 1.70 | 3.12 | 0.745 / 0.538 (n 51) | 37.1 / 0.5 |
+| XAU | 1m | 4 | `T:OUTSIDE:dir- & S:MOM10:strong- & S:SMA50:px-` | BUY | 4.44 | 1.75 | 1.78 | 0.523 / 0.483 (n 149) | 0.7 / 0.6 |
 | XAU | 30m | 1 | `T:SWINGLEG:leg+ & R:ROUNDNUM:near+ & S:TSI:zero+` | SELL | 4.19 | 2.37 | 1.82 | 0.595 / 0.491 (n 131) | 2.6 / 0.6 |
 | USOIL | 15m | 8 | `T:CHANDELIER:dir- & S:SWINGLEG:leg+ & S:STRUCT5:trend-` | BUY | 4.41 | 1.89 | 2.74 | 0.554 / 0.520 (n 74) | 26.7 / 3.6 |
 | USOIL | 30m | 16 | `T:COPPOCK:zero- & R:TSI:sig- & S:BOP14:zero-` | BUY | 3.78 | 1.79 | 2.19 | 0.652 / 0.515 (n 66) | 37.5 / 4.5 |
