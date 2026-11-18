@@ -2,7 +2,7 @@
 
 Ön kayıt: [PROTOCOL.md](PROTOCOL.md). Kod: `src/kk.py`, veri çekimi `src/duka_pull.py` (UK100, JPN225).
 
-## Sonuç: küresel değil (Avrupa 0/3). UK100 ve JPN225 bekleniyor; C/X ayrımını onlar belirleyecek.
+## Sonuç: K1 küresel değil (0/5) → X; K3 yalnız UK100'de taşındı → C
 Kurallar değiştirilmeden yerel nakit kapanışında: kapanışta AL, ertesi gün aynı saatte çık.
 
 | endeks | K1 tetik vs taban (n) | ESKİ | YENİ | K3 tetik vs taban (n) | YENİ K3 |
@@ -17,5 +17,8 @@ Kurallar değiştirilmeden yerel nakit kapanışında: kapanışta AL, ertesi g�
 - Havuz: K1 −9,8 vs −1,6 (P 0,21); K3 −0,2 vs −2,6 (P 0,59).
 - **Ne anlama geliyor:** korku gecesi ABD hisse endekslerine özgü. ABD'nin dört endeksinde var (GI-02), altında ve Avrupa'da yok. Mekanizma
   ABD'ye özgü bir akış. Kapanış müzayedesi penceresi değil (GN-02); korkunun genişliği (GN-03) ve kaynağı (GN-08) da değil.
-- **Bekleyen:** UK100 (16:30 Londra) ve JPN225 (15:00 Tokyo) Dukascopy çekimi sunucu sınırlaması yüzünden sürüyor. Ön kayıtta küresel B için
-  ≥ 3/5 endeks gerekiyordu, artık ulaşılamaz. İkisi de taşınırsa "bölgesel iz C", taşınmazsa X.
+- **UK100 ve JPN225 (tamamlandı):**
+  - UK100 K1 +2,6 vs −2,6 (YENİ −2,3), taşınmadı. UK100 K3 +18,1 vs −4,0 (ESKİ +24,5, YENİ +11,9, P 0,988), taşındı.
+    Londra kapanışı 16:30 = ABD sabahı 11:30; ABD seansı içinde kalıyor, bu yüzden ABD akışının bir yansıması olabilir.
+  - JPN225 K1 −2,7 vs +0,5 (ESKİ +24,7, YENİ −24,8), K3 −1,2: taşınmadı.
+  - Havuz: K1 −6,6 vs −1,3 (P 0,29) → **X**; K3 +2,6 vs −2,2 (P 0,71), 1/5 → **C**.
