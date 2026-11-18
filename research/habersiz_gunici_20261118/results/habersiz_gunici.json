@@ -1,0 +1,426 @@
+{
+ "e0.006_x16": {
+  "NDX_DUKA_habersiz": {
+   "ESKI": {
+    "n": 135,
+    "ort": -5.4,
+    "taban": 2.4
+   },
+   "YENI": {
+    "n": 210,
+    "ort": 7.2,
+    "taban": 3.3
+   },
+   "TUM": {
+    "n": 345,
+    "ort": 2.3,
+    "taban": 2.9
+   },
+   "P": 0.4578
+  },
+  "NDX_DUKA_olay": {
+   "ESKI": {
+    "n": 25,
+    "ort": -1.6,
+    "taban": -5.8
+   },
+   "YENI": {
+    "n": 54,
+    "ort": -14.1,
+    "taban": -4.1
+   },
+   "TUM": {
+    "n": 79,
+    "ort": -10.1,
+    "taban": -4.9
+   }
+  },
+  "US30_habersiz": {
+   "ESKI": {
+    "n": 84,
+    "ort": -4.9,
+    "taban": 0.2
+   },
+   "YENI": {
+    "n": 72,
+    "ort": 23.2,
+    "taban": 1.8
+   },
+   "TUM": {
+    "n": 156,
+    "ort": 8.1,
+    "taban": 1.1
+   }
+  },
+  "US30_olay": {
+   "ESKI": {
+    "n": 11,
+    "ort": -72.2,
+    "taban": -8.5
+   },
+   "YENI": {
+    "n": 31,
+    "ort": -21.0,
+    "taban": -3.6
+   },
+   "TUM": {
+    "n": 42,
+    "ort": -34.4,
+    "taban": -5.6
+   }
+  },
+  "US2000_habersiz": {
+   "ESKI": {
+    "n": 177,
+    "ort": 5.2,
+    "taban": -3.0
+   },
+   "YENI": {
+    "n": 221,
+    "ort": 8.2,
+    "taban": -0.4
+   },
+   "TUM": {
+    "n": 398,
+    "ort": 6.9,
+    "taban": -1.5
+   }
+  },
+  "US2000_olay": {
+   "ESKI": {
+    "n": 31,
+    "ort": -10.7,
+    "taban": -7.2
+   },
+   "YENI": {
+    "n": 65,
+    "ort": -23.2,
+    "taban": -8.2
+   },
+   "TUM": {
+    "n": 96,
+    "ort": -19.2,
+    "taban": -7.8
+   }
+  },
+  "hukum": "X"
+ },
+ "e0.006_xn16": {
+  "NDX_DUKA_habersiz": {
+   "ESKI": {
+    "n": 135,
+    "ort": 25.8,
+    "taban": 12.1
+   },
+   "YENI": {
+    "n": 210,
+    "ort": 30.4,
+    "taban": 8.7
+   },
+   "TUM": {
+    "n": 345,
+    "ort": 28.6,
+    "taban": 10.2
+   },
+   "P": 0.9364
+  },
+  "NDX_DUKA_olay": {
+   "ESKI": {
+    "n": 25,
+    "ort": -64.2,
+    "taban": -9.0
+   },
+   "YENI": {
+    "n": 54,
+    "ort": -63.8,
+    "taban": -12.2
+   },
+   "TUM": {
+    "n": 79,
+    "ort": -63.9,
+    "taban": -10.8
+   }
+  },
+  "US30_habersiz": {
+   "ESKI": {
+    "n": 84,
+    "ort": 8.5,
+    "taban": 4.9
+   },
+   "YENI": {
+    "n": 72,
+    "ort": 49.4,
+    "taban": 3.5
+   },
+   "TUM": {
+    "n": 156,
+    "ort": 27.3,
+    "taban": 4.0
+   }
+  },
+  "US30_olay": {
+   "ESKI": {
+    "n": 11,
+    "ort": -331.3,
+    "taban": -19.2
+   },
+   "YENI": {
+    "n": 31,
+    "ort": -47.3,
+    "taban": -9.4
+   },
+   "TUM": {
+    "n": 42,
+    "ort": -121.7,
+    "taban": -13.4
+   }
+  },
+  "US2000_habersiz": {
+   "ESKI": {
+    "n": 177,
+    "ort": 23.5,
+    "taban": 2.0
+   },
+   "YENI": {
+    "n": 221,
+    "ort": 17.5,
+    "taban": 0.3
+   },
+   "TUM": {
+    "n": 398,
+    "ort": 20.1,
+    "taban": 1.0
+   }
+  },
+  "US2000_olay": {
+   "ESKI": {
+    "n": 31,
+    "ort": -96.1,
+    "taban": -16.7
+   },
+   "YENI": {
+    "n": 65,
+    "ort": -51.8,
+    "taban": -14.2
+   },
+   "TUM": {
+    "n": 96,
+    "ort": -66.1,
+    "taban": -15.2
+   }
+  },
+  "hukum": "C+"
+ },
+ "e0.01_x16": {
+  "NDX_DUKA_habersiz": {
+   "ESKI": {
+    "n": 34,
+    "ort": -23.1,
+    "taban": 2.4
+   },
+   "YENI": {
+    "n": 52,
+    "ort": 28.4,
+    "taban": 3.3
+   },
+   "TUM": {
+    "n": 86,
+    "ort": 8.0,
+    "taban": 2.9
+   },
+   "P": 0.5814
+  },
+  "NDX_DUKA_olay": {
+   "ESKI": {
+    "n": 4,
+    "ort": -39.7,
+    "taban": -5.8
+   },
+   "YENI": {
+    "n": 14,
+    "ort": -56.6,
+    "taban": -4.1
+   },
+   "TUM": {
+    "n": 18,
+    "ort": -52.8,
+    "taban": -4.9
+   }
+  },
+  "US30_habersiz": {
+   "ESKI": {
+    "n": 24,
+    "ort": 14.2,
+    "taban": 0.2
+   },
+   "YENI": {
+    "n": 9,
+    "ort": 74.4,
+    "taban": 1.8
+   },
+   "TUM": {
+    "n": 33,
+    "ort": 30.6,
+    "taban": 1.1
+   }
+  },
+  "US30_olay": {
+   "ESKI": {
+    "n": 3,
+    "ort": -36.6,
+    "taban": -8.5
+   },
+   "YENI": {
+    "n": 7,
+    "ort": -88.0,
+    "taban": -3.6
+   },
+   "TUM": {
+    "n": 10,
+    "ort": -72.6,
+    "taban": -5.6
+   }
+  },
+  "US2000_habersiz": {
+   "ESKI": {
+    "n": 61,
+    "ort": 23.9,
+    "taban": -3.0
+   },
+   "YENI": {
+    "n": 50,
+    "ort": 21.9,
+    "taban": -0.4
+   },
+   "TUM": {
+    "n": 111,
+    "ort": 23.0,
+    "taban": -1.5
+   }
+  },
+  "US2000_olay": {
+   "ESKI": {
+    "n": 11,
+    "ort": -16.2,
+    "taban": -7.2
+   },
+   "YENI": {
+    "n": 26,
+    "ort": -23.3,
+    "taban": -8.2
+   },
+   "TUM": {
+    "n": 37,
+    "ort": -21.2,
+    "taban": -7.8
+   }
+  },
+  "hukum": "X"
+ },
+ "e0.01_xn16": {
+  "NDX_DUKA_habersiz": {
+   "ESKI": {
+    "n": 34,
+    "ort": 37.4,
+    "taban": 12.1
+   },
+   "YENI": {
+    "n": 52,
+    "ort": 98.3,
+    "taban": 8.7
+   },
+   "TUM": {
+    "n": 86,
+    "ort": 74.3,
+    "taban": 10.2
+   },
+   "P": 0.983
+  },
+  "NDX_DUKA_olay": {
+   "ESKI": {
+    "n": 4,
+    "ort": -179.1,
+    "taban": -9.0
+   },
+   "YENI": {
+    "n": 14,
+    "ort": -110.4,
+    "taban": -12.2
+   },
+   "TUM": {
+    "n": 18,
+    "ort": -125.7,
+    "taban": -10.8
+   }
+  },
+  "US30_habersiz": {
+   "ESKI": {
+    "n": 24,
+    "ort": -1.9,
+    "taban": 4.9
+   },
+   "YENI": {
+    "n": 9,
+    "ort": 119.1,
+    "taban": 3.5
+   },
+   "TUM": {
+    "n": 33,
+    "ort": 31.1,
+    "taban": 4.0
+   }
+  },
+  "US30_olay": {
+   "ESKI": {
+    "n": 3,
+    "ort": -148.2,
+    "taban": -19.2
+   },
+   "YENI": {
+    "n": 7,
+    "ort": -130.3,
+    "taban": -9.4
+   },
+   "TUM": {
+    "n": 10,
+    "ort": -135.7,
+    "taban": -13.4
+   }
+  },
+  "US2000_habersiz": {
+   "ESKI": {
+    "n": 61,
+    "ort": 35.5,
+    "taban": 2.0
+   },
+   "YENI": {
+    "n": 50,
+    "ort": 71.5,
+    "taban": 0.3
+   },
+   "TUM": {
+    "n": 111,
+    "ort": 51.7,
+    "taban": 1.0
+   }
+  },
+  "US2000_olay": {
+   "ESKI": {
+    "n": 11,
+    "ort": -240.3,
+    "taban": -16.7
+   },
+   "YENI": {
+    "n": 26,
+    "ort": -72.2,
+    "taban": -14.2
+   },
+   "TUM": {
+    "n": 37,
+    "ort": -122.2,
+    "taban": -15.2
+   }
+  },
+  "hukum": "C+"
+ }
+}

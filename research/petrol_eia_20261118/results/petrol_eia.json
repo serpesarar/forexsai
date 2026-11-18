@@ -1,0 +1,78 @@
+{
+ "e0.005_s1430": {
+  "ESKI": {
+   "n": 90,
+   "devam": -16.0,
+   "kontrol": 4.6
+  },
+  "YENI": {
+   "n": 102,
+   "devam": 1.6,
+   "kontrol": 10.8
+  },
+  "P_devam": 0.3215,
+  "TUM": {
+   "n": 192,
+   "devam": -6.7,
+   "kontrol": 8.2
+  },
+  "hukum": "X dönüş"
+ },
+ "e0.005_n1430": {
+  "ESKI": {
+   "n": 87,
+   "devam": 41.1,
+   "kontrol": -33.2
+  },
+  "YENI": {
+   "n": 98,
+   "devam": -10.5,
+   "kontrol": -5.4
+  },
+  "P_devam": 0.7174,
+  "TUM": {
+   "n": 185,
+   "devam": 13.8,
+   "kontrol": -16.8
+  },
+  "hukum": "X devam"
+ },
+ "e0.01_s1430": {
+  "ESKI": {
+   "n": 33,
+   "devam": 5.4,
+   "kontrol": 11.9
+  },
+  "YENI": {
+   "n": 34,
+   "devam": 34.9,
+   "kontrol": 11.9
+  },
+  "P_devam": 0.7574,
+  "TUM": {
+   "n": 67,
+   "devam": 20.3,
+   "kontrol": 11.9
+  },
+  "hukum": "C devam"
+ },
+ "e0.01_n1430": {
+  "ESKI": {
+   "n": 33,
+   "devam": 28.9,
+   "kontrol": -99.9
+  },
+  "YENI": {
+   "n": 33,
+   "devam": 36.4,
+   "kontrol": -47.0
+  },
+  "P_devam": 0.8062,
+  "TUM": {
+   "n": 66,
+   "devam": 32.7,
+   "kontrol": -69.0
+  },
+  "hukum": "C devam"
+ }
+}
