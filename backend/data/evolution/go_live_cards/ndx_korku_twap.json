@@ -102,6 +102,32 @@
  "fitil_ortusme_%": 30.0,
  "verdict": "SHADOW",
  "sinif": "B",
- "verdict_gerekce": "ESKİ 96 hücrelik şans-üstü ızgaradan seçildi; YENİ Bonferroni, üç bağımsız besleme, fitilden bağımsızlık, s×1,5 ve n geçti. Stopsuz ~24 sa tutuş. Canlı kararı kullanıcıda.",
- "kanit": "research/korku_gece_20261118/RAPOR.md"
+ "verdict_gerekce": "ESKİ 96 hücrelik şans-üstü ızgaradan seçildi; YENİ Bonferroni, üç bağımsız besleme, fitilden bağımsızlık, s×1,5 ve n geçti. Stopsuz ~24 sa tutuş. Canlı kararı kullanıcıda. Taşıma (GI-02): kural değiştirilmeden US30 +31,4, US2000 +31,4, US500 +22,9 bp (taban ≈0), iki dönemde artı → ABD hisse endekslerinde genel; altında yok.",
+ "kanit": "research/korku_gece_20261118/RAPOR.md",
+ "tasima_MT5_seçimsiz": {
+  "US30": {
+   "n": 160,
+   "tetik": 31.4,
+   "taban": -1.4,
+   "P": 0.977
+  },
+  "US2000": {
+   "n": 233,
+   "tetik": 31.4,
+   "taban": -3.9,
+   "P": 0.993
+  },
+  "US500_2021+": {
+   "n": 117,
+   "tetik": 22.9,
+   "taban": 0.6,
+   "P": 0.933
+  },
+  "XAUUSD": {
+   "n": 59,
+   "tetik": 6.1,
+   "taban": 2.7,
+   "P": 0.564
+  }
+ }
 }
