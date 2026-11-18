@@ -5412,5 +5412,16 @@
     "source": "session",
     "created_at": "2026-11-18T19:27:57.275326+00:00",
     "updated_at": "2026-11-18T19:27:57.275593+00:00"
+  },
+  {
+    "id": "bl_fca854cab2",
+    "title": "Haftalık korku W2 ileri izleme",
+    "detail": "YK-03 C+: hafta ≤ −%3 → Cuma 16:00 AL, sonraki hafta sonu çık; kör 3 endeks +96…+110 ama ESKİ ≈ taban, en kötü −1.216; gölge ≥ 30 yeni hafta",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T20:19:33.807803+00:00",
+    "updated_at": "2026-11-18T20:19:33.807935+00:00"
   }
 ]

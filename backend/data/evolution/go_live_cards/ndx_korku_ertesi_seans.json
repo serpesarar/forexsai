@@ -1,0 +1,39 @@
+{
+ "scope": "ndx_korku_ertesi_seans",
+ "tarih": "2026-11-18",
+ "aciklama": "K1 korku gecesi (16:00 TWAP ≥%0,5 altı ∧ son saat aşağı) → ertesi işlem günü 09:30 AL, 16:00 sat; gece riski yok",
+ "kanit": "research/korku_ertesi_seans_20261118/ (PROTOCOL + RAPOR); defter §2.80 YK-08",
+ "checks": {
+  "1_hacim": {
+   "n": 251,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "ort_bp": 37.0,
+   "P_EV_pozitif": 1.0,
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "ilk_yari": 46.6,
+   "ikinci_yari": 27.5,
+   "gecti": true
+  },
+  "4_surtunme": {
+   "spread_x1_5_ort": 34.2,
+   "gecti": true
+  },
+  "5_icra": {
+   "iyimser_spreadsiz": 35.6,
+   "gercek": 34.9,
+   "fark": 0.74,
+   "gecti": true
+  },
+  "6_tek_pozisyon": {
+   "not": "günde en çok bir işlem, aynı gün kapanır",
+   "gecti": true
+  }
+ },
+ "kart_6_6": 6,
+ "verdict": "SHADOW",
+ "sinif": "B (gün içi parça; X1 ile korelasyon 0,79 — ayrı kol değil, gece tutamayan için alternatif)"
+}
