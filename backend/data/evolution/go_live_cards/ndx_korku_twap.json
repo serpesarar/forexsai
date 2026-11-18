@@ -184,5 +184,20 @@
    }
   },
   "not": "İşlem başına +25 bp, isabet %60→%77, ama günlük Sharpe yalnız +0,12; NQ, US30 ve US2000'de Sharpe artmıyor, maxDD ~%35 kötü. Canlı kart değişmedi; XP gölge alternatif."
+ },
+ "uzun_donem_vekil_1993_2017": {
+  "tarih": "2026-11-18",
+  "kanit": "research/k1_ayi_cagi_20261118/",
+  "ozet": "Günlük vekil V1 (2018-26 K1 örtüşmesi %88, QQQ fark +37) 1993-2017 ayı çağları dahil 23/24 hücre artı; QQQ 99-02 +48, 08-09 +62,5 bp fark; maxDD büyük (QQQ 99-02 −3.459 bp)"
+ },
+ "doz_ardisik_GN05": {
+  "hukum": "B (1993-2017 vekil teyidi)",
+  "kural": "K1 ∧ (dün K1 ∨ dün nakit ≤ −%1) → lot ×1,5 (öneri, gölge)",
+  "QQQ_1993_2017": "+52,7 vs +10,0 bp"
+ },
+ "veto_olay_gunu_ZA04": {
+  "hukum": "B (2008-17 vekil teyidi)",
+  "kural": "CPI/NFP/FOMC/JH günü K1 → açma veya lot ½ (öneri, gölge)",
+  "QQQ_2008_17": "olay fark −41,3 vs habersiz +36,2"
  }
 }

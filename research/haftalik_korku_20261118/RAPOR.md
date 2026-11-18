@@ -12,3 +12,13 @@
   ESKİ'de tabanı ancak geçiyor (2020 Mart −1.216 bp) ve P 0,93 → C+.
 - VE-01 (ters VIX eğrisi, 5 gün) ve BG-01 (büyük geri çekilme) ile aynı aile: çok günlü korkuda uzun durmak. Kuyruk riski ortak sorun.
 - W1'in Pazartesi kazancı K1 Cuma'larından geliyor; K1'siz W1 haftaları eksi.
+
+## EK-1 — bağımsız eski dönem (günlük ETF 1993/1999 → 2017): W2 çöktü → **X**
+| ETF | n | ort | taban | fark | 99–02 | 08–09 | 10–17 |
+|---|---|---|---|---|---|---|---|
+| QQQ | 130 | −13,8 | +6,5 | **−20,3** | −38 | −82 | +74 |
+| SPY | 82 | +8,7 | +1,8 | +6,8 | +36 | −83 | +31 |
+| DIA | 80 | +12,0 | −1,4 | +13,4 | +65 | −99 | +50 |
+| IWM | 103 | −24,1 | +5,6 | −29,7 | −13 | −95 | 0 |
+Haftalık korku alımı 2008–09'da dört ETF'te de sert eksi; QQQ/IWM'de toplamda eksi. YK-03'teki artı 2010 sonrası boğa çağına özgü (E73).
+Günlük korku gecesi ise aynı dönemde sağlam (`k1_ayi_cagi_20261118`).

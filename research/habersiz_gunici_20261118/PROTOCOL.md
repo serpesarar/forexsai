@@ -13,3 +13,10 @@ sınadı (X); yeni tanım haber ayrımı.
 Habersiz grupta NDX Duka ESKİ ve YENİ'de ikisinde de ort > 0 ∧ > taban ∧ tüm dönem P ≥ 0,975 (2 eşik × 2 çıkış = 4 hücre, Bonferroni
 0,05/4 → 0,9875); kör MT5 US30 ve US2000 (M30, giriş sonraki bar açılışı) habersiz grupta ort > taban → B. P hariç → C+.
 Yalnız NDX → C. Değilse X. Olay grubu bilgi olarak raporlanır.
+
+## EK-1 — Bağımsız eski dönem ve besleme teyidi (ZA-05 sonuçları görüldükten sonra; kural ve parametreler değiştirilmeden)
+- **Bağımsız dönem:** Dukascopy NDX M30 2016-04 → 2017-12 + EET30 2016-11 → 2017-12 (Duka 1m'den önce; bu soruda hiç bakılmadı).
+- **Besleme teyidi (veri sağlamlığı, bağımsız kanıt değil):** MT5 NAS100 M30 2018 →, NQ 5m 2019–24, MT5 US500 M30 2021 →.
+- Hücre: e %0,6 ve %1, ertesi 16:00 çıkışı, habersiz grup; taban aynı (rastgele 30 dk bar).
+- **Yükseltme ölçütü:** 2016–17'de iki beslemenin ikisinde de ort > taban (n küçük, işaret yeter) ∧ MT5 NAS100 ve NQ'da ort > taban
+  → ZA-05 B'ye yükselir (P eşiği orijinal veride 0,983 kaldığı için "B (bağımsız dönem teyitli)" yazılır). 2016–17'de eksi → C+ kalır.

@@ -5434,5 +5434,16 @@
     "source": "session",
     "created_at": "2026-11-18T20:37:12.484940+00:00",
     "updated_at": "2026-11-18T20:37:12.485055+00:00"
+  },
+  {
+    "id": "bl_96f6b8ba0d",
+    "title": "Korku gecesi doz/veto kararı",
+    "detail": "UD-02/UD-03 B: canlı K1 kuralına art arda gece lot ×1,5 ve makro olay günü açma/lot ½ eklenmesi — gölge etiketle ileri izleme, canlı karar kullanıcıda",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T21:22:10.319221+00:00",
+    "updated_at": "2026-11-18T21:22:10.319331+00:00"
   }
 ]

@@ -16,3 +16,10 @@ K1 gün ölçeğinde B (§2.71). Bir üst ölçek sınanmadı. BG ailesi (zirved
 ## Ölçüt
 NDX Duka ESKİ ve YENİ'de ikisinde de ort > 0 ∧ > taban; tüm dönem P ≥ 1 − 0,05/4 = 0,9875; kör MT5 NAS100, US30, US2000'de ort > taban.
 Hepsi → B; P hariç hepsi → C+; yalnız iki dönem → C; değilse X. Bilgi: K1 haftasonlarıyla örtüşme (W1 ∧ ¬K1(F) ayrıca).
+
+## EK-1 — Bağımsız eski dönem: günlük ETF 1993/1999 → 2017 (YK-03 sonuçları görüldükten sonra, tek hücre, seçimsiz)
+W2 (hafta getirisi ≤ −%3, haftanın son işlem günü kapanışından ölçülür) → o kapanışta AL, sonraki haftanın son kapanışında çık.
+Veri: `qs03_akis_takvim_20261111/data/` QQQ (1999-03 →), SPY (1993 →), DIA, IWM; **dönem 1993/1999 → 2017-12** (Duka/MT5 dönemiyle
+örtüşmez). Maliyet: 2 bp + CFD finansmanı `lib.FIN_BP_PER_DAY` × takvim günü (taban da öder). Taban: tüm haftalar.
+Ölçüt: QQQ'da ort > taban ∧ > 0, hafta-bootstrap P(fark) ≥ 0,95; SPY/DIA/IWM'nin ≥ 2'sinde fark > 0 → W2 **B**'ye yükselir.
+Değilse C+ kalır (ya da her şey ters ise X). Bilgi: alt dönemler 1999–2002 / 2003–2007 / 2008–2009 / 2010–2017, en kötü hafta.

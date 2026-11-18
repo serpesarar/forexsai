@@ -16,3 +16,8 @@ Habersiz gün (CPI/NFP/FOMC/JH yok), 10:00–15:30 arası ilk 30 dk bar ≤ −e
   K1'e dönüşen günlerde erken almak −16 bp (fiyat kapanışa kadar düşüyor). Yapı büyük ölçüde K1'den bağımsız. K1 girişte bilinmediği
   için filtre olarak kullanılamaz.
 - **Öneri:** gölge etiketi ve ileri ölçüm. Olay günlerinde kesinlikle açılmamalı.
+
+## EK-1 — bağımsız eski dönem ve besleme teyidi
+- 2016–17 (Duka M30 + EET30): düşük oynaklık, olay yok denecek kadar az (n 10 / 2; %1'de n 1 / 0). Bilgi vermiyor → **C+ kalır**.
+- Besleme teyidi güçlü: habersiz %1 düşüş → ertesi 16:00 MT5 NAS100 +73,8 (n 88), NQ +92,5 (22), US500 +148 (16); taban +4…+8.
+  Olay günü aynı işlem her beslemede eksi (−26…−126). Olay günü SAT ayrı ön kayıtla sınandı: `olay_sat_20261118` (C+).

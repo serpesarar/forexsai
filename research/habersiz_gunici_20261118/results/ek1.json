@@ -1,0 +1,116 @@
+{
+ "DUKA_M30_2016_17": {
+  "e0.006_habersiz": {
+   "n": 10,
+   "ort": -7.9,
+   "taban": 1.7
+  },
+  "e0.006_olay": {
+   "n": 2,
+   "ort": -1.4,
+   "taban": 11.8
+  },
+  "e0.01_habersiz": {
+   "n": 1,
+   "ort": 42.0,
+   "taban": 1.7
+  },
+  "e0.01_olay": {
+   "n": 0,
+   "ort": null,
+   "taban": 11.8
+  }
+ },
+ "EET30_2016_17": {
+  "e0.006_habersiz": {
+   "n": 2,
+   "ort": -13.4,
+   "taban": 21.0
+  },
+  "e0.006_olay": {
+   "n": 2,
+   "ort": -1.8,
+   "taban": 11.2
+  },
+  "e0.01_habersiz": {
+   "n": 0,
+   "ort": null,
+   "taban": 21.0
+  },
+  "e0.01_olay": {
+   "n": 0,
+   "ort": null,
+   "taban": 11.2
+  }
+ },
+ "MT5_NAS100": {
+  "e0.006_habersiz": {
+   "n": 337,
+   "ort": 26.7,
+   "taban": 7.8
+  },
+  "e0.006_olay": {
+   "n": 79,
+   "ort": -66.3,
+   "taban": -8.4
+  },
+  "e0.01_habersiz": {
+   "n": 88,
+   "ort": 73.8,
+   "taban": 7.8
+  },
+  "e0.01_olay": {
+   "n": 18,
+   "ort": -126.0,
+   "taban": -8.4
+  }
+ },
+ "NQ_5m": {
+  "e0.006_habersiz": {
+   "n": 129,
+   "ort": 32.9,
+   "taban": 5.4
+  },
+  "e0.006_olay": {
+   "n": 19,
+   "ort": -25.8,
+   "taban": -3.8
+  },
+  "e0.01_habersiz": {
+   "n": 22,
+   "ort": 92.5,
+   "taban": 5.4
+  },
+  "e0.01_olay": {
+   "n": 5,
+   "ort": -103.7,
+   "taban": -3.8
+  }
+ },
+ "MT5_US500": {
+  "e0.006_habersiz": {
+   "n": 119,
+   "ort": 47.0,
+   "taban": 4.3
+  },
+  "e0.006_olay": {
+   "n": 32,
+   "ort": -75.1,
+   "taban": -12.5
+  },
+  "e0.01_habersiz": {
+   "n": 16,
+   "ort": 148.3,
+   "taban": 4.3
+  },
+  "e0.01_olay": {
+   "n": 9,
+   "ort": -68.5,
+   "taban": -12.5
+  }
+ },
+ "hukum": {
+  "e0.006": "C+ kalır",
+  "e0.01": "C+ kalır"
+ }
+}
