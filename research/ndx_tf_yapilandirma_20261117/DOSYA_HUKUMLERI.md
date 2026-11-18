@@ -86,10 +86,10 @@ Toplam 1097 reddedilen gün; her biri son çıktılardan birinde kapsanıyor:
 
 | Çözüm | Gün |
 |---|---|
-| MT5_1dk_birlesiminde_tam (2/3/90/210 o günden) | 534 |
+| MT5_1dk_birlesiminde_tam (2/3/90/210 o günden) | 678 |
 | USTEC_beslemesinde (json birebir) | 360 |
-| MT5_90/210_yerli_barlardan (2/3 dk yok: o gün NAS100 1 dk yok) | 147 |
 | USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti) | 56 |
+| MT5_90/210_yerli_barlardan (2/3 dk yok: o gün NAS100 1 dk yok) | 3 |
 
 Kapsanmayan gün: **0**. Gün gün liste: `results/s09_red_gun_cozumu.csv`.
 
@@ -101,6 +101,27 @@ Kapsanmayan gün: **0**. Gün gün liste: `results/s09_red_gun_cozumu.csv`.
 | NQ | ~/Desktop/Trading Projeleri/nasdaq/NQ_5Years_8_11_2024.csv | 5m | 245/259 | %94.64 | Europe/Berlin kapanış 111, America/New_York kapanış 98, UTC+1 kapanış 36 |
 
 Reddedilen haftaların tamamında en iyi gecikme 0 (saat doğru) ama r < 0,90 (ince veri / iki ürün farkı); ölçüt gevşetilmedi. Hafta hafta liste: `results/s08_ek_besleme.json`.
+
+## Kutudaki MT5 geçmiş dosyaları `history/NAS100/<YIL>.hcc` (`s12`, salt okuma)
+
+Terminal 100.000 bar sınırı yüzünden copy_rates son ~100 günü veriyordu; diskteki yıl dosyaları ayrıştırıldı (MqlRates, 60 bayt). Gün kabulü: o gün için en ince yerli MT5 barıyla (M5 → M15 → M30 → H1) birebir **ve** gerçekten M1 (medyan aralık 60 sn, dakika ≥ yerli kapsamın %80'i). 2026.hcc terminal kilidinde, okunamadı.
+
+| Yıl | ayrıştırılan bar | sınanan gün | kabul gün | M1 olmayan (H1/D1 kaydı) | referans |
+|---|---|---|---|---|---|
+| 2009 | 209 | 209 | 0 | 209 | {'60': 209} |
+| 2010 | 84 | 84 | 0 | 84 | {'60': 84} |
+| 2016 | 4,943 | 216 | 0 | 216 | {'60': 216} |
+| 2017 | 193,639 | 257 | 131 | 112 | {'60': 257} |
+| 2018 | 345,595 | 257 | 249 | 0 | {'30': 164, '60': 93} |
+| 2019 | 347,791 | 257 | 257 | 0 | {'30': 257} |
+| 2020 | 348,123 | 259 | 258 | 1 | {'30': 259} |
+| 2021 | 352,536 | 259 | 259 | 0 | {'30': 259} |
+| 2022 | 353,562 | 258 | 257 | 0 | {'30': 156, '15': 102} |
+| 2023 | 352,754 | 258 | 258 | 0 | {'15': 258} |
+| 2024 | 354,295 | 259 | 259 | 0 | {'15': 259} |
+| 2025 | 352,033 | 258 | 257 | 0 | {'5': 147, '15': 111} |
+
+Toplam kabul edilen M1: 2,964,439 bar.
 
 ## Proje dışı (ev dizini) NASDAQ adlı dosyalar (`s10`)
 

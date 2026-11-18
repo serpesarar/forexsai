@@ -62,13 +62,27 @@ def mt5_sources() -> dict[str, pd.DataFrame]:
     }
 
 
+HCC_M1 = OUT / "ek/mt5_hcc_m1.parquet"  # s12: kutudaki MT5 yıl dosyalarından, yerli M30'la gün gün doğrulanmış M1
+
+
 def mt5_m1_with_copies(m1: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
-    """Terminal M1 + doğrulanmış kopya günleri. Dönüş: birleşik M1 ve 'terminalde yok' maskesi."""
-    if not EXT_M1.exists():
+    """Terminal M1 + MT5 geçmiş dosyaları (s12) + doğrulanmış kopya günleri. Ortak barlar birebir olmak zorunda.
+    Dönüş: birleşik M1 ve 'terminalin copy_rates'inde yok' maskesi."""
+    parts = [m1]
+    for p in (HCC_M1, EXT_M1):
+        if p.exists():
+            parts.append(pd.read_parquet(p)[K.COLS])
+    if len(parts) == 1:
         return m1, np.zeros(len(m1), bool)
-    ext = pd.read_parquet(EXT_M1)[K.COLS]
-    merged = union([m1, ext], "MT5 M1 + kopya günleri")
+    merged = union(parts, "MT5 M1 + geçmiş dosyaları + kopya günleri")
     return merged, ~merged["t"].isin(m1["t"]).to_numpy()
+
+
+def hcc_keys(tf: int) -> pd.Series:
+    if not HCC_M1.exists():
+        return pd.Series(dtype=np.int64)
+    h, _ = drop_closed_hour(pd.read_parquet(HCC_M1)[K.COLS])
+    return M.aggregate(h, 1, tf)["t"]
 
 
 def ustec_1m() -> pd.DataFrame:
@@ -163,6 +177,7 @@ def main() -> None:
         a = a[covered(a, m1_all, 1)].reset_index(drop=True)
         copy_keys = M.aggregate(m1_all[is_copy].reset_index(drop=True), 1, tf)["t"] if is_copy.any() else []
         a.loc[a["t"].isin(copy_keys), "kaynak_tf"] = "M1_kopya"
+        a.loc[a["t"].isin(hcc_keys(tf)) & (a["kaynak_tf"] == "M1_kopya"), "kaynak_tf"] = "M1_gecmis"
         mt5_out[tf] = a
     for tf in (90, 210):
         parts, taken = [], np.array([], dtype=np.int64)

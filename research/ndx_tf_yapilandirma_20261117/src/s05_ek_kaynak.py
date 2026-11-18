@@ -127,7 +127,7 @@ def regroup(df: pd.DataFrame, tf: int) -> pd.DataFrame:
 # ── MT5 ailesi gün sınaması ────────────────────────────────────────────────────
 def day_verdicts(cand: pd.DataFrame, tf: int, natives: dict[int, pd.DataFrame]) -> pd.DataFrame:
     """Gün başına: hangi yerli TF'ye karşı, kaç bar, hepsi birebir mi."""
-    ref_tf = next((r for r in (5, 15, 30) if r >= tf and r % tf == 0
+    ref_tf = next((r for r in (5, 15, 30, 60) if r in natives and len(natives[r]) and r >= tf and r % tf == 0
                    and natives[r]["t"].min() <= cand["t"].max() and natives[r]["t"].max() >= cand["t"].min()), None)
     if ref_tf is None:
         return pd.DataFrame()

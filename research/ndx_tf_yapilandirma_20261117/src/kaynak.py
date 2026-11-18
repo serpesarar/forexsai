@@ -114,7 +114,50 @@ def load_duka_1m(extend: bool = True, export: bool = True) -> pd.DataFrame:
         if len(m) == 0 or float(diff.max()) > EXPORT_TOL:
             raise AssertionError(f"Dukascopy M1 dışa aktarımı ana dosyayla ayrışıyor (max {diff.max() if len(m) else 'çakışma yok'})")
         d = _finish(pd.concat([d, e[~e["t"].isin(d["t"])]], ignore_index=True))
+    if export and DUKA_2025_BI5.exists():
+        d = _union_checked(d, _bi5_folder(DUKA_2025_BI5), "Dukascopy 2025 günlük 1 dk (yeniden indirilen)",
+                           allow_superset=True)
     return d
+
+
+UNION_LOG: dict[str, dict] = {}
+
+
+DUKA_2025_BI5 = Path(__file__).resolve().parents[1] / "out/duka_m1_2025"  # s11 (kullanıcı onayıyla indirildi)
+
+
+def _bi5_folder(folder: Path) -> pd.DataFrame:
+    """Klasördeki YYYYMMDD_BID.bi5 günleri — ana dosyayla AYNI temizlik (data_layer.load_bi5_range: R1/R2/R3)."""
+    import datetime as _dt
+    import importlib
+    sys.path.insert(0, str(ROOT / "research/nom_20261113/src"))
+    DL = importlib.import_module("data_layer")
+    days = sorted(p.name[:8] for p in folder.glob("*_BID.bi5"))
+    if not days:
+        return pd.DataFrame(columns=COLS)
+    a = _dt.date(int(days[0][:4]), int(days[0][4:6]), int(days[0][6:]))
+    b = _dt.date(int(days[-1][:4]), int(days[-1][4:6]), int(days[-1][6:]))
+    x, _ = DL.load_bi5_range(folder, a, b, "duka_bi5_2025_yeniden")
+    return _finish(x[["t", "open", "high", "low", "close"]].copy())
+
+
+def _union_checked(d: pd.DataFrame, extra: pd.DataFrame, name: str, allow_superset: bool = False) -> pd.DataFrame:
+    """Ortak dakikalar birebir olmalı. allow_superset: Dukascopy'nin RESMİ 1 dk mumu, bizim eksik tik indirmesinden
+    kurulan mumu tamamen kapsıyorsa (aynı açılış, tepe ≥, dip ≤) resmi mum geçer — tik indirmesi o dakikada eksikti."""
+    m = extra.merge(d, on="t", suffixes=("_e", "_d"))
+    replace_t = np.array([], dtype=np.int64)
+    if len(m):
+        diff = np.abs(m[["open_e", "high_e", "low_e", "close_e"]].to_numpy() - m[["open_d", "high_d", "low_d", "close_d"]].to_numpy()).max(axis=1)
+        bad = diff > EXPORT_TOL
+        if bad.any():
+            b = m[bad]
+            sup = (np.abs(b.open_e - b.open_d) <= EXPORT_TOL) & (b.high_e >= b.high_d - EXPORT_TOL) & (b.low_e <= b.low_d + EXPORT_TOL)
+            if not allow_superset or not sup.all():
+                raise AssertionError(f"{name} ana dosyayla {int(bad.sum())} dakikada ayrışıyor (max {diff.max():.3f})")
+            replace_t = b["t"].to_numpy()
+    UNION_LOG[name] = {"ortak": int(len(m)), "eklenen": int((~extra["t"].isin(d["t"])).sum()), "resmi_mumla_degisen": int(len(replace_t))}
+    d = d[~d["t"].isin(replace_t)]
+    return _finish(pd.concat([d, extra[~extra["t"].isin(d["t"])]], ignore_index=True))
 
 
 def load_duka_m30_export() -> pd.DataFrame:

@@ -35,6 +35,24 @@ def _ek_besleme() -> list[str]:
     return L
 
 
+def _hcc() -> list[str]:
+    p = BASE / "results/s12_hcc.json"
+    if not p.exists():
+        return []
+    r = json.loads(p.read_text())
+    L = ["", "## Kutudaki MT5 geçmiş dosyaları `history/NAS100/<YIL>.hcc` (`s12`, salt okuma)", "",
+         "Terminal 100.000 bar sınırı yüzünden copy_rates son ~100 günü veriyordu; diskteki yıl dosyaları ayrıştırıldı (MqlRates, "
+         "60 bayt). Gün kabulü: o gün için en ince yerli MT5 barıyla (M5 → M15 → M30 → H1) birebir **ve** gerçekten M1 "
+         "(medyan aralık 60 sn, dakika ≥ yerli kapsamın %80'i). 2026.hcc terminal kilidinde, okunamadı.", "",
+         "| Yıl | ayrıştırılan bar | sınanan gün | kabul gün | M1 olmayan (H1/D1 kaydı) | referans |", "|---|---|---|---|---|---|"]
+    for y, v in r.items():
+        if not isinstance(v, dict) or not v.get("bar"):
+            continue
+        L.append(f"| {y} | {v['bar']:,} | {v.get('sinanan_gun', 0)} | {v.get('kabul_gun', 0)} | {v.get('m1_olmayan_gun', 0)} | {v.get('ref')} |")
+    L += ["", f"Toplam kabul edilen M1: {r.get('toplam_kabul_bar', 0):,} bar."]
+    return L
+
+
 def _dis_envanter() -> list[str]:
     p = BASE / "results/s10_dis_envanter.csv"
     if not p.exists():
@@ -99,7 +117,7 @@ def main() -> None:
           "", "## Türetilemez / mum değil", "", "| Dosya | Neden |", "|---|---|"]
     for k, v in e["turetilemez"].items():
         L.append(f"| {k} | {v} — 2/3 dk ancak 1 dk'dan, 90/210 dk 60'ın katı değil |")
-    L += _red_cozum() + _ek_besleme() + _dis_envanter()
+    L += _red_cozum() + _ek_besleme() + _hcc() + _dis_envanter()
     (BASE / "DOSYA_HUKUMLERI.md").write_text("\n".join(L) + "\n")
     print(len(L), "satır")
 
