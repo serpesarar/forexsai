@@ -1,0 +1,78 @@
+{
+ "None": {
+  "ESKI": {
+   "n": 118,
+   "ort": 58.5,
+   "isabet": 0.636,
+   "sharpe_islem": 0.28,
+   "en_kotu": -477.9,
+   "ort_saat": 34.4
+  },
+  "YENI": {
+   "n": 169,
+   "ort": 48.0,
+   "isabet": 0.609,
+   "sharpe_islem": 0.245,
+   "en_kotu": -612.5,
+   "ort_saat": 33.9
+  }
+ },
+ "0.003": {
+  "ESKI": {
+   "n": 118,
+   "ort": 10.4,
+   "isabet": 0.915,
+   "sharpe_islem": 0.141,
+   "en_kotu": -477.9,
+   "ort_saat": 15.1
+  },
+  "YENI": {
+   "n": 169,
+   "ort": 9.4,
+   "isabet": 0.888,
+   "sharpe_islem": 0.125,
+   "en_kotu": -612.5,
+   "ort_saat": 17.1
+  }
+ },
+ "0.005": {
+  "ESKI": {
+   "n": 118,
+   "ort": 21.4,
+   "isabet": 0.856,
+   "sharpe_islem": 0.259,
+   "en_kotu": -477.9,
+   "ort_saat": 20.3
+  },
+  "YENI": {
+   "n": 169,
+   "ort": 17.5,
+   "isabet": 0.84,
+   "sharpe_islem": 0.193,
+   "en_kotu": -612.5,
+   "ort_saat": 21.5
+  }
+ },
+ "0.008": {
+  "ESKI": {
+   "n": 118,
+   "ort": 32.3,
+   "isabet": 0.78,
+   "sharpe_islem": 0.325,
+   "en_kotu": -477.9,
+   "ort_saat": 25.5
+  },
+  "YENI": {
+   "n": 169,
+   "ort": 25.3,
+   "isabet": 0.769,
+   "sharpe_islem": 0.231,
+   "en_kotu": -612.5,
+   "ort_saat": 25.3
+  }
+ },
+ "hukum": {
+  "TP'sizden iyi (iki dönem)": [],
+  "sinif": "X"
+ }
+}

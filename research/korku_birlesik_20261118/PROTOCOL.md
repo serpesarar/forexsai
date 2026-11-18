@@ -49,3 +49,12 @@ sürümü).
 - Ölçüler: yıllık getiri, Sharpe (günlük → √252), maxDD, kollar arası korelasyon (ortak aktif günlerde, E118).
 - **Ölçüt:** U eklenince Sharpe ESKİ'de ve YENİ'de ikisinde de artar ∧ maxDD %20'den fazla kötüleşmez → "portföye eklenmeli" önerisi.
 - Not: KSG ve U çok örtüşür. U eklenirken KSG ile aynı gece çift pozisyon olmaması için KSG'nin U'lu geceleri U'ya devredilir.
+
+## EK-1 (2026-11-18, sonuçlardan önce) — kısa TP'li korku gecesi
+
+Kullanıcı: "kısa TP'li işlemler". Çift teyitli korku gecesinde (S ≥ 2) 16:00 AL:
+- TP ∈ {+%0,3, +%0,5, +%0,8} (bid yolu 1m), stop yok, ertesi 16:00 zaman çıkışı; taban TP yok.
+- 2 dönem (ESKİ / YENİ) × 4 = 8 hücre, seçim yok.
+
+Ölçüler: ort bp, isabet, işlem başına Sharpe, ortalama tutuş süresi, en kötü. TP'li bir sürüm iki dönemde de TP'siz sürümden daha
+yüksek işlem başına Sharpe veriyorsa "kısa TP'li korku gecesi" taktiği C+. Seçim yapılmadığı için tek başına B olamaz.

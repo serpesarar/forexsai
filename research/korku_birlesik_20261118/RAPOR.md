@@ -45,3 +45,17 @@ yüksek. Tümünü eklemek Sharpe'ı düşürüyor. Çift teyitli sürüm düş�
 **En verimli kullanım yeni kol açmak değil, doz:**
 - korku gecesi ∧ (ters VIX eğrisi ya da C3b) olduğunda mevcut kolların (C3b / KSG) lotunu büyütmek,
 - tek tetikli korku gecesinde pozisyon açmamak.
+
+## EK-1 — kısa TP'li korku gecesi (S ≥ 2): X
+
+| çıkış | ESKİ | YENİ | isabet | işlem başına Sharpe (ESKİ / YENİ) | ort tutuş |
+|---|---|---|---|---|---|
+| TP yok (ertesi 16:00) | +58,5 bp | +48,0 | %61–64 | 0,280 / 0,245 | 34 sa |
+| TP %0,8 | +32,3 | +25,3 | %77–78 | 0,325 / 0,231 | 25 sa |
+| TP %0,5 | +21,4 | +17,5 | %84–86 | 0,259 / 0,193 | 21 sa |
+| TP %0,3 | +10,4 | +9,4 | %89–92 | 0,141 / 0,125 | 16 sa |
+
+- Kısa TP isabeti %90'a çıkarıyor ama ortalamayı beşte birine indiriyor.
+- En kötü işlem değişmiyor (−612 bp): kötü geceler TP'ye hiç ulaşmıyor.
+- Hiçbir TP iki dönemde birden TP'sizden yüksek Sharpe vermiyor.
+- **Korku gecesinin kazancı toparlanmanın kuyruğunda.** Erken TP onu kesiyor. "Braket ≠ zaman" (§3-5) yeniden.
