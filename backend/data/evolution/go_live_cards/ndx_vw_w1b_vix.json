@@ -1,0 +1,110 @@
+{
+ "scope": "ndx_vw_w1b_vix",
+ "aciklama": "NDX 3,5 sa alt fitil ≥ %0,50 ∧ üst ≤ alt/2 (NY 17:00 ızgarası) → mum kapanışından sonra 96 adet 15m içinde ikinci dip (fraktal, L1'in −%0,25…+%0,40'ı, boyun ≥ L1+%0,30) teyidinde AL; 2 günlük tepeden düşüş ≥ %1,5; dünkü VIX ≥ 18,4; stop min(L1,L2)−%0,10, TP 2R, çıkış ertesi işlem günü NY 16:00.",
+ "tarih": "2026-11-17T23:07:54",
+ "ana_olcum": "Dukascopy NDX 1m 2018-01 → 2026-11, giriş sonraki 1m açılışı + spread, TP/SL 1m'de, aynı bar → stop",
+ "olay": 235,
+ "gun": 206,
+ "wr": 43.8,
+ "ort_R": 0.238,
+ "en_iyi_5_haric": 0.199,
+ "yillar": {
+  "2018": 0.611,
+  "2019": -0.022,
+  "2020": 0.431,
+  "2021": -0.376,
+  "2022": 0.276,
+  "2023": 0.392,
+  "2024": 0.778,
+  "2025": -0.052,
+  "2026": -0.245
+ },
+ "KESIF": {
+  "n": 90,
+  "ort_R": 0.312
+ },
+ "TEST": {
+  "n": 145,
+  "gun": 130,
+  "mean": 0.192,
+  "median": -1.0,
+  "hit": 0.421,
+  "P_kume": 0.949,
+  "mean15": 0.1752,
+  "h1": 0.2101,
+  "h2": 0.1742,
+  "bp": 16.25,
+  "ex_top5": 0.1264,
+  "yil": {
+   "2021": -0.506,
+   "2022": 0.276,
+   "2023": 0.392,
+   "2024": 0.778,
+   "2025": -0.052,
+   "2026": -0.245
+  }
+ },
+ "MT5_bagimsiz": {
+  "n": 100,
+  "gun": 88,
+  "mean": 0.1213,
+  "median": -1.0,
+  "hit": 0.4,
+  "P_kume": 0.82,
+  "mean15": 0.1077,
+  "h1": 0.3586,
+  "h2": -0.116,
+  "bp": 9.67,
+  "ex_top5": 0.0219,
+  "yil": {
+   "2022": 0.437,
+   "2023": 0.361,
+   "2024": 0.442,
+   "2025": -0.141,
+   "2026": -0.373
+  }
+ },
+ "plasebo_fark_P": 0.9855,
+ "checks": {
+  "1_hacim": {
+   "deger": 235,
+   "esik": "≥150",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "ortR +0.238 P 0.993",
+   "esik": "ortR>0 ve P≥%90",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "ilk +0.279 son +0.197",
+   "esik": "ikisi ≥0",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "spread×1,5 +0.222",
+   "esik": ">0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "iyimser +0.253 vs gerçek +0.238",
+   "esik": "fark < 0,5×|gerçek|",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "tek pozisyon +0.229 (n 210)",
+   "esik": ">0",
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "verdict": "RED",
+ "verdict_gerekce": "KEŞİF'te 720 hücrelik şans düzeyindeki ızgaradan seçildi (plasebo yüzdeliği %80); kör TEST +0,192R ama küme P %94,9 < Bonferroni %98; MT5 +0,121R; 2025–26 iki beslemede eksi; başka endekslere taşınmadı (1/4). Tam-örneklem kart seçim yanlılığı taşır.  EK-4 (2026-11-18): kural değiştirilmeden DAX Dukascopy 1m 2018–26'da −0,015R (n 190, P 0,44, iki yarı −0,04/+0,01, plasebodan P 0,78) → bağımsız piyasada doğrulanmadı, aile kapandı.",
+ "kanit": "research/vw_dip_20261117/RAPOR.md",
+ "dax_dogrulama": {
+  "n": 190,
+  "ort_R": -0.0153,
+  "P_kume": 0.441,
+  "gecti": false
+ }
+}

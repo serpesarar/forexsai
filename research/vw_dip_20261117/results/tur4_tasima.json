@@ -1,0 +1,100 @@
+{
+ "GER40": {
+  "aralik": [
+   "2022-03-25 19:15:00",
+   "2026-11-05 07:45:00"
+  ],
+  "a210_olay": 214,
+  "W1b": 137,
+  "ON_KAYITLI_tur3_en_iyi_KESIF": {
+   "n": 104,
+   "mean": 0.0527,
+   "mean15": 0.0332,
+   "P_kume": 0.647,
+   "hit": 0.365
+  },
+  "EK_bilgi_W1b_VIX_D1": {
+   "n": 84,
+   "mean": -0.0108,
+   "mean15": -0.0323,
+   "P_kume": 0.481,
+   "hit": 0.357
+  }
+ },
+ "US500": {
+  "aralik": [
+   "2025-06-12 06:50:00",
+   "2026-11-13 21:45:00"
+  ],
+  "a210_olay": 44,
+  "W1b": 22,
+  "ON_KAYITLI_tur3_en_iyi_KESIF": {
+   "n": 12,
+   "mean": 0.1916,
+   "mean15": 0.1799,
+   "P_kume": 0.658,
+   "hit": 0.417
+  },
+  "EK_bilgi_W1b_VIX_D1": {
+   "n": 6,
+   "mean": -0.5633,
+   "mean15": -0.573,
+   "P_kume": 0.061,
+   "hit": 0.167
+  }
+ },
+ "US30": {
+  "aralik": [
+   "2025-06-12 06:05:00",
+   "2026-11-13 21:45:00"
+  ],
+  "a210_olay": 36,
+  "W1b": 19,
+  "ON_KAYITLI_tur3_en_iyi_KESIF": {
+   "n": 9,
+   "mean": 0.2817,
+   "mean15": 0.2727,
+   "P_kume": 0.609,
+   "hit": 0.444
+  },
+  "EK_bilgi_W1b_VIX_D1": {
+   "n": 4,
+   "mean": 0.1792,
+   "mean15": 0.1715,
+   "P_kume": 0.602,
+   "hit": 0.5
+  }
+ },
+ "US2000": {
+  "aralik": [
+   "2025-06-12 06:20:00",
+   "2026-11-13 21:45:00"
+  ],
+  "a210_olay": 104,
+  "W1b": 48,
+  "ON_KAYITLI_tur3_en_iyi_KESIF": {
+   "n": 42,
+   "mean": 0.1153,
+   "mean15": 0.0929,
+   "P_kume": 0.672,
+   "hit": 0.405
+  },
+  "EK_bilgi_W1b_VIX_D1": {
+   "n": 24,
+   "mean": -0.1797,
+   "mean15": -0.2026,
+   "P_kume": 0.274,
+   "hit": 0.333
+  }
+ },
+ "havuz_ON_KAYITLI_tur3_en_iyi_KESIF": {
+  "n": 167,
+  "mean": 0.0908,
+  "artı_sembol": "4/4"
+ },
+ "havuz_EK_bilgi_W1b_VIX_D1": {
+  "n": 118,
+  "mean": -0.0668,
+  "artı_sembol": "1/4"
+ }
+}

@@ -1,0 +1,107 @@
+{
+ "duka": {
+  "n_fitil": 183,
+  "fitil": 28.557,
+  "fitilsiz": 1.905,
+  "P_fark": 0.9958
+ },
+ "c_oynaklik_plasebo": {
+  "rng_esik_%": 1.068,
+  "n_oynak": 154,
+  "oynak_ort": 8.75,
+  "fitil_ort": 28.56,
+  "P": 0.9283
+ },
+ "c_gecti": true,
+ "d_kart": {
+  "1_hacim": {
+   "deger": 183,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "+28.6 bp P 1.000",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "+20.4 / +36.6",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "spread×1,5 +27.9 bp",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "16:00 +28.6 vs 16:01 +25.8 bp",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "gecede tek işlem (yapısal)",
+   "gecti": true
+  }
+ },
+ "d_gecti": true,
+ "yillar": {
+  "2018": -6.4,
+  "2019": 2.3,
+  "2020": 39.3,
+  "2021": 21.3,
+  "2022": 15.0,
+  "2023": 42.6,
+  "2024": 80.6,
+  "2025": 30.9,
+  "2026": 58.7
+ },
+ "NAS100": {
+  "n_fitil": 149,
+  "fitil": 38.37,
+  "fitilsiz": 3.726,
+  "P_fark": 0.9992,
+  "aralik": [
+   "2018-05-14",
+   "2026-11-02"
+  ],
+  "n_ksg": 836
+ },
+ "US500": {
+  "n_fitil": 36,
+  "fitil": -9.206,
+  "fitilsiz": 3.718,
+  "P_fark": 0.2092,
+  "aralik": [
+   "2021-01-05",
+   "2026-11-02"
+  ],
+  "n_ksg": 564
+ },
+ "US30": {
+  "n_fitil": 63,
+  "fitil": 25.199,
+  "fitilsiz": -0.425,
+  "P_fark": 0.9503,
+  "aralik": [
+   "2018-07-09",
+   "2026-11-02"
+  ],
+  "n_ksg": 843
+ },
+ "US2000": {
+  "n_fitil": 186,
+  "fitil": 14.288,
+  "fitilsiz": 6.71,
+  "P_fark": 0.7802,
+  "aralik": [
+   "2018-05-16",
+   "2026-11-03"
+  ],
+  "n_ksg": 868
+ },
+ "a_gecti": true,
+ "b_havuz": {
+  "artı_fark": "2/3",
+  "fitil": 13.73,
+  "fitilsiz": 3.12,
+  "P": 0.8858
+ },
+ "b_gecti": false,
+ "hukum": "C+"
+}

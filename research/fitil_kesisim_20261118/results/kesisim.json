@@ -1,0 +1,162 @@
+{
+ "C3b|6h": {
+  "olcu": "net_bp",
+  "n_fitil": 32,
+  "n_fitilsiz": 100,
+  "fitil_ort": 77.1351,
+  "fitilsiz_ort": 65.1866,
+  "taban_ort": 68.0832,
+  "ESKI": {
+   "n_fitil": 17,
+   "fitil": 61.8883,
+   "fitilsiz": 58.3863
+  },
+  "YENI": {
+   "n_fitil": 15,
+   "fitil": 94.4148,
+   "fitilsiz": 68.6897
+  },
+  "P_fark": 0.6042,
+  "gecti": false
+ },
+ "C3b|24h": {
+  "olcu": "net_bp",
+  "n_fitil": 40,
+  "n_fitilsiz": 92,
+  "fitil_ort": 105.4398,
+  "fitilsiz_ort": 51.8412,
+  "taban_ort": 68.0832,
+  "ESKI": {
+   "n_fitil": 19,
+   "fitil": 75.4322,
+   "fitilsiz": 50.1257
+  },
+  "YENI": {
+   "n_fitil": 21,
+   "fitil": 132.5896,
+   "fitilsiz": 52.7561
+  },
+  "P_fark": 0.9297,
+  "gecti": false
+ },
+ "ORBxVIX|6h": {
+  "olcu": "R",
+  "n_fitil": 113,
+  "n_fitilsiz": 628,
+  "fitil_ort": 0.0208,
+  "fitilsiz_ort": 0.2315,
+  "taban_ort": 0.1993,
+  "ESKI": {
+   "n_fitil": 58,
+   "fitil": 0.1051,
+   "fitilsiz": 0.2436
+  },
+  "YENI": {
+   "n_fitil": 55,
+   "fitil": -0.0681,
+   "fitilsiz": 0.2215
+  },
+  "P_fark": 0.0805,
+  "gecti": false
+ },
+ "ORBxVIX|24h": {
+  "olcu": "R",
+  "n_fitil": 254,
+  "n_fitilsiz": 487,
+  "fitil_ort": 0.1178,
+  "fitilsiz_ort": 0.2419,
+  "taban_ort": 0.1993,
+  "ESKI": {
+   "n_fitil": 117,
+   "fitil": 0.0354,
+   "fitilsiz": 0.3165
+  },
+  "YENI": {
+   "n_fitil": 137,
+   "fitil": 0.1881,
+   "fitilsiz": 0.1783
+  },
+  "P_fark": 0.1588,
+  "gecti": false
+ },
+ "KSG|6h": {
+  "olcu": "net_bp",
+  "n_fitil": 183,
+  "n_fitilsiz": 895,
+  "fitil_ort": 28.5571,
+  "fitilsiz_ort": 1.9047,
+  "taban_ort": 6.4291,
+  "ESKI": {
+   "n_fitil": 82,
+   "fitil": 22.9077,
+   "fitilsiz": 3.4314
+  },
+  "YENI": {
+   "n_fitil": 101,
+   "fitil": 33.1437,
+   "fitilsiz": 0.6427
+  },
+  "P_fark": 0.9958,
+  "gecti": true
+ },
+ "KSG|24h": {
+  "olcu": "net_bp",
+  "n_fitil": 214,
+  "n_fitilsiz": 864,
+  "fitil_ort": 22.9195,
+  "fitilsiz_ort": 2.3447,
+  "taban_ort": 6.4291,
+  "ESKI": {
+   "n_fitil": 98,
+   "fitil": 15.6096,
+   "fitilsiz": 4.4689
+  },
+  "YENI": {
+   "n_fitil": 116,
+   "fitil": 29.0951,
+   "fitilsiz": 0.6051
+  },
+  "P_fark": 0.9888,
+  "gecti": true
+ },
+ "CAPREV|6h": {
+  "olcu": "R",
+  "n_fitil": 15,
+  "n_fitilsiz": 88,
+  "fitil_ort": 0.5035,
+  "fitilsiz_ort": 0.2393,
+  "taban_ort": 0.2778,
+  "ESKI": {
+   "n_fitil": 6,
+   "fitil": 0.2253,
+   "fitilsiz": 0.036
+  },
+  "YENI": {
+   "n_fitil": 9,
+   "fitil": 0.689,
+   "fitilsiz": 0.3613
+  },
+  "P_fark": 0.7133,
+  "gecti": false
+ },
+ "CAPREV|24h": {
+  "olcu": "R",
+  "n_fitil": 41,
+  "n_fitilsiz": 62,
+  "fitil_ort": 0.4256,
+  "fitilsiz_ort": 0.1801,
+  "taban_ort": 0.2778,
+  "ESKI": {
+   "n_fitil": 20,
+   "fitil": 0.175,
+   "fitilsiz": -0.0506
+  },
+  "YENI": {
+   "n_fitil": 21,
+   "fitil": 0.6643,
+   "fitilsiz": 0.282
+  },
+  "P_fark": 0.8442,
+  "gecti": false
+ }
+}

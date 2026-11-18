@@ -1,0 +1,274 @@
+{
+ "veri_sonu_ny": "2026-11-17 20:36:00-05:00",
+ "pencereler": {
+  "ANA (son 6 mum)": {
+   "islemler": [
+    {
+     "kural": "S1",
+     "yön": "AL",
+     "giriş": "14:00",
+     "giriş_fiyat": 26879.9,
+     "çıkış": "14:15",
+     "çıkış_fiyat": 26960.5,
+     "neden": "tp",
+     "net_bp": 30.0,
+     "R": null,
+     "sonuç": "KAZANDI"
+    },
+    {
+     "kural": "S2",
+     "yön": "AL",
+     "giriş": "14:15",
+     "giriş_fiyat": 26962.2,
+     "çıkış": "14:25",
+     "çıkış_fiyat": 26895.8,
+     "neden": "stop",
+     "net_bp": -24.6,
+     "R": -1.0,
+     "sonuç": "KAYBETTİ"
+    },
+    {
+     "kural": "S3",
+     "yön": "SAT",
+     "giriş": "14:15",
+     "giriş_fiyat": 26961.2,
+     "çıkış": "14:20",
+     "çıkış_fiyat": 26920.1,
+     "neden": "tp",
+     "net_bp": 15.3,
+     "R": 1.3,
+     "sonuç": "KAZANDI"
+    }
+   ],
+   "ozet": {
+    "S1": {
+     "n": 1,
+     "kazanan": 1,
+     "toplam_bp": 30.0
+    },
+    "S2": {
+     "n": 1,
+     "kazanan": 0,
+     "toplam_bp": -24.6
+    },
+    "S3": {
+     "n": 1,
+     "kazanan": 1,
+     "toplam_bp": 15.3
+    }
+   }
+  },
+  "W14 (tüm 14 mum — sizin çiziminiz)": {
+   "islemler": [
+    {
+     "kural": "S1",
+     "yön": "AL",
+     "giriş": "14:00",
+     "giriş_fiyat": 26879.9,
+     "çıkış": "14:15",
+     "çıkış_fiyat": 26960.5,
+     "neden": "tp",
+     "net_bp": 30.0,
+     "R": null,
+     "sonuç": "KAZANDI"
+    },
+    {
+     "kural": "S2",
+     "yön": "AL",
+     "giriş": "14:15",
+     "giriş_fiyat": 26962.2,
+     "çıkış": "15:01",
+     "çıkış_fiyat": 26778.9,
+     "neden": "stop",
+     "net_bp": -68.0,
+     "R": -1.0,
+     "sonuç": "KAYBETTİ"
+    },
+    {
+     "kural": "S3",
+     "yön": "SAT",
+     "giriş": "14:15",
+     "giriş_fiyat": 26961.2,
+     "çıkış": "14:50",
+     "çıkış_fiyat": 26849.4,
+     "neden": "tp",
+     "net_bp": 41.5,
+     "R": 1.12,
+     "sonuç": "KAZANDI"
+    },
+    {
+     "kural": "S4",
+     "yön": "SAT",
+     "giriş": "14:30",
+     "giriş_fiyat": 26886.4,
+     "çıkış": "15:01",
+     "çıkış_fiyat": 26778.9,
+     "neden": "tp",
+     "net_bp": 40.0,
+     "R": 0.62,
+     "sonuç": "KAZANDI"
+    },
+    {
+     "kural": "S2",
+     "yön": "AL",
+     "giriş": "15:15",
+     "giriş_fiyat": 26814.9,
+     "çıkış": "15:22",
+     "çıkış_fiyat": 26863.2,
+     "neden": "tp",
+     "net_bp": 18.0,
+     "R": 1.34,
+     "sonuç": "KAZANDI"
+    },
+    {
+     "kural": "S2",
+     "yön": "AL",
+     "giriş": "15:30",
+     "giriş_fiyat": 26855.7,
+     "çıkış": "15:33",
+     "çıkış_fiyat": 26904.0,
+     "neden": "tp",
+     "net_bp": 18.0,
+     "R": 0.63,
+     "sonuç": "KAZANDI"
+    },
+    {
+     "kural": "S2",
+     "yön": "AL",
+     "giriş": "15:45",
+     "giriş_fiyat": 26898.2,
+     "çıkış": "15:59",
+     "çıkış_fiyat": 26946.6,
+     "neden": "tp",
+     "net_bp": 18.0,
+     "R": 0.41,
+     "sonuç": "KAZANDI"
+    },
+    {
+     "kural": "S4",
+     "yön": "SAT",
+     "giriş": "15:45",
+     "giriş_fiyat": 26897.2,
+     "çıkış": "16:03",
+     "çıkış_fiyat": 27060.9,
+     "neden": "stop",
+     "net_bp": -60.9,
+     "R": -1.0,
+     "sonuç": "KAYBETTİ"
+    },
+    {
+     "kural": "S2",
+     "yön": "AL",
+     "giriş": "16:00",
+     "giriş_fiyat": 27001.6,
+     "çıkış": "16:03",
+     "çıkış_fiyat": 27050.2,
+     "neden": "tp",
+     "net_bp": 18.0,
+     "R": 0.22,
+     "sonuç": "KAZANDI"
+    },
+    {
+     "kural": "S3",
+     "yön": "SAT",
+     "giriş": "16:00",
+     "giriş_fiyat": 27000.6,
+     "çıkış": "16:03",
+     "çıkış_fiyat": 27060.9,
+     "neden": "stop",
+     "net_bp": -22.3,
+     "R": -1.0,
+     "sonuç": "KAYBETTİ"
+    },
+    {
+     "kural": "S2",
+     "yön": "AL",
+     "giriş": "16:15",
+     "giriş_fiyat": 27008.7,
+     "çıkış": "16:21",
+     "çıkış_fiyat": 27057.3,
+     "neden": "tp",
+     "net_bp": 18.0,
+     "R": 0.21,
+     "sonuç": "KAZANDI"
+    },
+    {
+     "kural": "S3",
+     "yön": "SAT",
+     "giriş": "16:15",
+     "giriş_fiyat": 27007.7,
+     "çıkış": "16:21",
+     "çıkış_fiyat": 27060.9,
+     "neden": "stop",
+     "net_bp": -19.7,
+     "R": -1.0,
+     "sonuç": "KAYBETTİ"
+    }
+   ],
+   "ozet": {
+    "S1": {
+     "n": 1,
+     "kazanan": 1,
+     "toplam_bp": 30.0
+    },
+    "S2": {
+     "n": 6,
+     "kazanan": 5,
+     "toplam_bp": 22.0
+    },
+    "S3": {
+     "n": 3,
+     "kazanan": 1,
+     "toplam_bp": -0.6
+    },
+    "S4": {
+     "n": 2,
+     "kazanan": 1,
+     "toplam_bp": -20.9
+    }
+   }
+  }
+ },
+ "gecmis": [
+  {
+   "kural": "S1",
+   "işlem": 232,
+   "win_rate": 51.7,
+   "ort_kazanç": 19.43,
+   "ort_kayıp": -20.77,
+   "başabaş_wr": 51.7,
+   "beklenti": 0.025,
+   "birim": "bp"
+  },
+  {
+   "kural": "S2",
+   "işlem": 92,
+   "win_rate": 57.6,
+   "ort_kazanç": 0.92,
+   "ort_kayıp": -1.0,
+   "başabaş_wr": 52.0,
+   "beklenti": 0.108,
+   "birim": "R"
+  },
+  {
+   "kural": "S3",
+   "işlem": 57,
+   "win_rate": 22.8,
+   "ort_kazanç": 2.03,
+   "ort_kayıp": -1.0,
+   "başabaş_wr": 33.0,
+   "beklenti": -0.308,
+   "birim": "R"
+  },
+  {
+   "kural": "S4",
+   "işlem": 27,
+   "win_rate": 59.3,
+   "ort_kazanç": 0.47,
+   "ort_kayıp": -1.0,
+   "başabaş_wr": 68.1,
+   "beklenti": -0.13,
+   "birim": "R"
+  }
+ ]
+}

@@ -1,0 +1,153 @@
+{
+ "scope": "ndx_ksg_fitil",
+ "aciklama": "Fitilli KSG: NDX son nakit saati (15:00→16:00) aşağı ∧ son 6 saat içinde kapanmış bir 1h mumda alt fitil ≥ fiyatın %0,50'si ve üst fitil ≤ alt/2 → 16:00'da AL, ertesi işlem günü 09:30'da çık. Mevcut canlı KSG'nin alt kümesi (doz/filtre adayı).",
+ "tarih": "2026-11-18T08:23:03",
+ "ana_olcum": "Dukascopy NDX 1m 2018-01 → 2026-11 (lib.load_m1), giriş 16:00 açılışı + spread, çıkış 09:30 açılışı, gecelik finansman",
+ "olay": 183,
+ "ort_bp": 28.557,
+ "fitilsiz_ort_bp": 1.905,
+ "P_fark": 0.9958,
+ "yillar": {
+  "2018": -6.4,
+  "2019": 2.3,
+  "2020": 39.3,
+  "2021": 21.3,
+  "2022": 15.0,
+  "2023": 42.6,
+  "2024": 80.6,
+  "2025": 30.9,
+  "2026": 58.7
+ },
+ "checks": {
+  "1_hacim": {
+   "deger": 183,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "+28.6 bp P 1.000",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "+20.4 / +36.6",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "spread×1,5 +27.9 bp",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "16:00 +28.6 vs 16:01 +25.8 bp",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "gecede tek işlem (yapısal)",
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "bagimsiz_besleme_MT5_NAS100": {
+  "n_fitil": 149,
+  "fitil": 38.37,
+  "fitilsiz": 3.726,
+  "P_fark": 0.9992,
+  "aralik": [
+   "2018-05-14",
+   "2026-11-02"
+  ],
+  "n_ksg": 836
+ },
+ "oynaklik_plasebosu": {
+  "rng_esik_%": 1.068,
+  "n_oynak": 154,
+  "oynak_ort": 8.75,
+  "fitil_ort": 28.56,
+  "P": 0.9283
+ },
+ "bagimsiz_piyasa": {
+  "US500_2021+": {
+   "n_fitil": 36,
+   "fitil": -9.206,
+   "fitilsiz": 3.718,
+   "P_fark": 0.2092,
+   "aralik": [
+    "2021-01-05",
+    "2026-11-02"
+   ],
+   "n_ksg": 564
+  },
+  "US30": {
+   "n_fitil": 63,
+   "fitil": 25.199,
+   "fitilsiz": -0.425,
+   "P_fark": 0.9503,
+   "aralik": [
+    "2018-07-09",
+    "2026-11-02"
+   ],
+   "n_ksg": 843
+  },
+  "US2000": {
+   "n_fitil": 186,
+   "fitil": 14.288,
+   "fitilsiz": 6.71,
+   "P_fark": 0.7802,
+   "aralik": [
+    "2018-05-16",
+    "2026-11-03"
+   ],
+   "n_ksg": 868
+  },
+  "havuz": {
+   "artı_fark": "2/3",
+   "fitil": 13.73,
+   "fitilsiz": 3.12,
+   "P": 0.8858
+  }
+ },
+ "vix_kirilimi_bp": {
+  "<18,4": {
+   "fitilli": 33.4,
+   "fitilsiz": 0.2,
+   "n": 46
+  },
+  "18,4–25": {
+   "fitilli": 20.9,
+   "fitilsiz": -0.4,
+   "n": 57
+  },
+  "≥25": {
+   "fitilli": 31.3,
+   "fitilsiz": 15.3,
+   "n": 80
+  }
+ },
+ "verdict": "SHADOW",
+ "sinif": "C+",
+ "verdict_gerekce": "Ön kayıtlı 8 hücrelik kesişimde Bonferroni'yi geçti (P 0,996); MT5 bağımsız beslemede +38,4 vs +3,7 bp (P 0,999); oynaklık plasebosundan iyi (P 0,93); her VIX bandında fitilli > fitilsiz; kart 6/6. Başka ABD endekslerine genellemede havuz P 0,886 < 0,90 (US500 2021+ n 36 eksi) → ön kayıt hükmü C+. Canlı KSG'nin içinde doz/öncelik adayı; canlı kararı kullanıcıda. EK-2: EET30 (başka broker) +33,7 vs +4,4 bp (P 0,995, 7/8 yıl), NQ +26,4 vs +8,4 (5/5 yıl), havuz P 0,997; 2016–17'de olay yok (n 2) → ön kayıt gereği C+ kalır.",
+ "kanit": "research/fitil_kesisim_20261118/RAPOR.md",
+ "EK2_dokunulmamis_veri": {
+  "EET30_2016_25": {
+   "n": 131,
+   "fitilli": 33.7,
+   "fitilsiz": 4.4,
+   "P": 0.995,
+   "yil_arti": "7/8"
+  },
+  "NQ_2019_24": {
+   "n": 67,
+   "fitilli": 26.4,
+   "fitilsiz": 8.4,
+   "P": 0.896,
+   "yil_arti": "5/5"
+  },
+  "DUKA_M30_2016_17": {
+   "n": 2,
+   "not": "2016-17 sakin; EET30'da da 0 olay → dönem sınanamıyor"
+  },
+  "havuz": {
+   "fitilli": 30.3,
+   "fitilsiz": 5.4,
+   "P": 0.997
+  }
+ }
+}
