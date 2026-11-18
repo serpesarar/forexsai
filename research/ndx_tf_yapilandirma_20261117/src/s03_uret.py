@@ -89,6 +89,28 @@ def ustec_1m() -> pd.DataFrame:
     return union([K.load_ustec_json(p) for p in K.USTEC_JSON], "USTEC")
 
 
+def full_days(src: pd.DataFrame, src_tf: int) -> set:
+    """Kaynağın baştan sona kapsadığı işlem günleri (verinin ilk/son günü yarımsa hariç)."""
+    d0, mins = M.day_minute(src["t"].to_numpy())
+    g = pd.DataFrame({"d": d0, "m": mins}).groupby("d")["m"].agg(["min", "max"])
+    days = set(g.index)
+    first, last = g.index.min(), g.index.max()
+    if g.loc[first, "min"] > M.CLOSED_UNTIL_MIN:  # ilk gün 18:00 açılışından sonra başlıyorsa yarım
+        days.discard(first)
+    if g.loc[last, "max"] + src_tf < M.DAY_MIN - DAY_END_SLACK_MIN:
+        days.discard(last)
+    return days
+
+
+def assign_days(srcs: dict[str, pd.DataFrame], order) -> dict:
+    """Gün → kaynak adı: sıradaki (en ince) kaynak o günü tam kapsıyorsa o."""
+    out: dict = {}
+    for name, stf in order:
+        for d in full_days(srcs[name], stf):
+            out.setdefault(d, name)
+    return out
+
+
 def drop_closed_hour(src: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     """NY 17:00–17:59 barı varsa (günlük ara) sayılır ve atılır — işlem yok, dolgu barıdır."""
     _, mins = M.day_minute(src["t"].to_numpy())
@@ -179,13 +201,18 @@ def main() -> None:
         a.loc[a["t"].isin(copy_keys), "kaynak_tf"] = "M1_kopya"
         a.loc[a["t"].isin(hcc_keys(tf)) & (a["kaynak_tf"] == "M1_kopya"), "kaynak_tf"] = "M1_gecmis"
         mt5_out[tf] = a
+    coarse = dict(srcs)
+    if HCC_M1.exists():  # en düşük öncelik: yerli M30'un başladığı 2018-05 öncesini (2017-06 →) doldurur
+        coarse["M1_gecmis"], _ = drop_closed_hour(pd.read_parquet(HCC_M1)[K.COLS])
+    order = MT5_COARSE + ((("M1_gecmis", 1),) if "M1_gecmis" in coarse else ())
+    day_src = assign_days(coarse, order)  # her işlem günü TEK kaynaktan: o günü baştan sona kapsayan en ince
     for tf in (90, 210):
-        parts, taken = [], np.array([], dtype=np.int64)
-        for name, stf in MT5_COARSE:
-            a = M.aggregate(srcs[name], stf, tf, name, M.CLOSED["MT5"])
-            a = a[covered(a, srcs[name], stf) & ~a["t"].isin(taken)]
-            parts.append(a)
-            taken = np.r_[taken, a["t"].to_numpy()]
+        parts = []
+        for name, stf in order:
+            a = M.aggregate(coarse[name], stf, tf, name, M.CLOSED["MT5"])
+            a = a[covered(a, coarse[name], stf)]
+            d0, _ = M.day_minute(a["t"].to_numpy())
+            parts.append(a[pd.Series(d0).map(day_src).to_numpy() == name])
         mt5_out[tf] = pd.concat(parts).sort_values("t").reset_index(drop=True)
     for tf, a in mt5_out.items():
         meta["MT5"][f"{tf}m"] = summary(a) | {"dosya": save(a, "MT5", tf)}

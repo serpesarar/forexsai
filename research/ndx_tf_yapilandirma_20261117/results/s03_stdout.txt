@@ -3,31 +3,31 @@
  "DUKA": {
   "atilan_kapali_saat_bari": 0,
   "2m": {
-   "n": 1492731,
+   "n": 1494565,
    "bas": "2018-01-02 07:06:00+00:00",
    "bit": "2026-11-15 23:58:00+00:00",
    "tam_%": 99.91,
    "kaynak_tf": {
-    "1m": 1492731
+    "1m": 1494565
    },
    "fitil_durumu": {
-    "tam": 1491371,
-    "eksik_dakika_supheli": 879,
+    "tam": 1493204,
+    "eksik_dakika_supheli": 880,
     "eksik_dakika_teyitli": 365,
     "eksik_dakika_teyitsiz": 116
    },
    "dosya": "out/DUKA/NDX_DUKA_2m.parquet"
   },
   "3m": {
-   "n": 994591,
+   "n": 995813,
    "bas": "2018-01-02 07:06:00+00:00",
    "bit": "2026-11-15 23:57:00+00:00",
    "tam_%": 99.86,
    "kaynak_tf": {
-    "1m": 994591
+    "1m": 995813
    },
    "fitil_durumu": {
-    "tam": 993152,
+    "tam": 994374,
     "eksik_dakika_supheli": 827,
     "eksik_dakika_teyitli": 507,
     "eksik_dakika_teyitsiz": 105
@@ -35,36 +35,36 @@
    "dosya": "out/DUKA/NDX_DUKA_3m.parquet"
   },
   "90m": {
-   "n": 40385,
+   "n": 40414,
    "bas": "2016-03-31 18:00:00+00:00",
    "bit": "2026-11-15 22:00:00+00:00",
-   "tam_%": 96.53,
+   "tam_%": 96.6,
    "kaynak_tf": {
-    "1m": 35891,
+    "1m": 35920,
     "M30_disaktarim": 4494
    },
    "fitil_durumu": {
-    "tam": 38982,
-    "eksik_dakika_teyitli": 968,
-    "eksik_dakika_supheli": 348,
-    "eksik_dakika_teyitsiz": 87
+    "tam": 39040,
+    "eksik_dakika_teyitli": 881,
+    "eksik_dakika_supheli": 470,
+    "eksik_dakika_teyitsiz": 23
    },
    "dosya": "out/DUKA/NDX_DUKA_90m.parquet"
   },
   "210m": {
-   "n": 18028,
+   "n": 18034,
    "bas": "2016-03-31 18:00:00+00:00",
    "bit": "2026-11-13 19:00:00+00:00",
-   "tam_%": 90.38,
+   "tam_%": 90.52,
    "kaynak_tf": {
-    "1m": 15779,
+    "1m": 15785,
     "M30_disaktarim": 2249
    },
    "fitil_durumu": {
-    "tam": 16294,
-    "eksik_dakika_teyitli": 1094,
-    "eksik_dakika_teyitsiz": 358,
-    "eksik_dakika_supheli": 282
+    "tam": 16324,
+    "eksik_dakika_teyitli": 1088,
+    "eksik_dakika_supheli": 384,
+    "eksik_dakika_teyitsiz": 238
    },
    "dosya": "out/DUKA/NDX_DUKA_210m.parquet"
   }
@@ -120,28 +120,30 @@
    "dosya": "out/MT5/NDX_MT5_3m.parquet"
   },
   "90m": {
-   "n": 34985,
-   "bas": "2018-05-14 13:30:00+00:00",
-   "bit": "2026-11-17 17:30:00+00:00",
-   "tam_%": 99.18,
+   "n": 38348,
+   "bas": "2017-06-08 21:00:00+00:00",
+   "bit": "2026-11-16 20:30:00+00:00",
+   "tam_%": 96.15,
    "kaynak_tf": {
-    "M30": 17419,
-    "M15": 11611,
-    "M5": 3884,
-    "M1": 2071
+    "M30": 17414,
+    "M15": 11620,
+    "M5": 3876,
+    "M1_gecmis": 3382,
+    "M1": 2056
    },
    "dosya": "out/MT5/NDX_MT5_90m.parquet"
   },
   "210m": {
-   "n": 15303,
-   "bas": "2018-05-14 14:30:00+00:00",
-   "bit": "2026-11-17 15:30:00+00:00",
-   "tam_%": 98.14,
+   "n": 16809,
+   "bas": "2017-06-08 21:00:00+00:00",
+   "bit": "2026-11-16 19:00:00+00:00",
+   "tam_%": 93.28,
    "kaynak_tf": {
-    "M30": 7621,
-    "M15": 5077,
-    "M5": 1700,
-    "M1": 905
+    "M30": 7619,
+    "M15": 5081,
+    "M5": 1696,
+    "M1_gecmis": 1514,
+    "M1": 899
    },
    "dosya": "out/MT5/NDX_MT5_210m.parquet"
   }

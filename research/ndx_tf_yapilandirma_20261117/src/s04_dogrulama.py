@@ -319,6 +319,10 @@ def main() -> None:
     for k in list(srcs):
         srcs[k], _ = U.drop_closed_hour(srcs[k])
     m1_all, _ = U.mt5_m1_with_copies(srcs["M1"])
+    if U.HCC_M1.exists():
+        srcs_v2 = dict(srcs, M1_gecmis=U.drop_closed_hour(pd.read_parquet(U.HCC_M1)[K.COLS])[0])
+    else:
+        srcs_v2 = srcs
     fm = load_out("MT5")
     calm = Cal(np.r_[srcs["M30"]["t"].to_numpy(), m1_all["t"].to_numpy(),
                      np.concatenate([v["t"].to_numpy() for v in fm.values()])])
@@ -328,7 +332,7 @@ def main() -> None:
             v2_from_source(df, m1_all, calm, f"MT5 {tf}m←M1(+kopya)")
             continue
         for k in df["kaynak_tf"].unique():
-            v2_from_source(df[df["kaynak_tf"] == k].reset_index(drop=True), srcs[k], calm, f"MT5 {tf}m←{k}")
+            v2_from_source(df[df["kaynak_tf"] == k].reset_index(drop=True), srcs_v2[k], calm, f"MT5 {tf}m←{k}")
     fm_m1 = {tf: (v[v["kaynak_tf"] == "M1"].reset_index(drop=True) if tf in (90, 210) else v) for tf, v in fm.items()}
     fm_m1["tam_dosya"] = fm
     v3_hierarchy("MT5", fm_m1, m1_all, calm)

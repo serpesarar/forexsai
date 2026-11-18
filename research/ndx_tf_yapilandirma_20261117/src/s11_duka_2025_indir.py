@@ -16,7 +16,10 @@ from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[1] / "out/duka_m1_2025"
 URL = "https://datafeed.dukascopy.com/datafeed/USATECHIDXUSD/{y}/{m:02d}/{d:02d}/BID_candles_min_1.bi5"
-PACE_S, MAX_BLOCK_S = 4.0, 5400  # sunucu sık istekte engelliyor (2026-11-17 ilk deneme 35 günde kesildi)
+import os
+PACE_S = float(os.getenv("DUKA_PACE_S", "4.0"))          # sunucu sık istekte engelliyor (ilk deneme 35 günde kesildi)
+MAX_BLOCK_S = int(os.getenv("DUKA_MAX_BLOCK_S", "5400"))
+FIXED_WAIT_S = int(os.getenv("DUKA_FIXED_WAIT_S", "0"))  # >0: 503'te sabit bekleme
 
 
 def main() -> None:
@@ -49,8 +52,9 @@ def main() -> None:
             except Exception as ex:  # noqa: BLE001 — ağ hatası: bekle, yeniden dene
                 code = type(ex).__name__
             print(time.strftime("%H:%M:%S"), "blocked", code, x, "wait", wait, flush=True)
-            time.sleep(wait)
-            blocked += wait
+            w = FIXED_WAIT_S or wait
+            time.sleep(w)
+            blocked += w
             wait = min(wait * 2, 600)
             if blocked >= MAX_BLOCK_S:
                 sys.exit(f"vazgeçildi; {i - 1} gün indi")

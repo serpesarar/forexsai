@@ -5280,5 +5280,49 @@
     "source": "session",
     "created_at": "2026-11-17T20:17:27.381564+00:00",
     "updated_at": "2026-11-17T20:53:06.832565+00:00"
+  },
+  {
+    "id": "bl_34038572c1",
+    "title": "NDX 210m çekiç S1 izi (F21-07) bağımsız sınama",
+    "detail": "v3 tanımı (3,5 sa alt fitil ≥%0,50, üst ≤ alt/2, alt ≥ gövde + MT5 H4 teyidi) → kapanışta AL TP %0,30 / 30 dk: Duka +0,02 bp, MT5 +3,1 bp P 0,91. Tanımı değiştirmeden 2016-18 (EET30/Duka M30 + H4) ve ileri gölge kayıtla sına; n≥150 ve P≥%90 olmadan kart yok",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T01:00:54.942463+00:00",
+    "updated_at": "2026-11-18T01:00:54.942583+00:00"
+  },
+  {
+    "id": "bl_fd4574a728",
+    "title": "NDX W1b ∧ VIX ileri gölge kaydı (VW-05)",
+    "detail": "3,5 sa alt fitil (≥%0,50, üst ≤ alt/2) sonrası ikinci dip teyidi ∧ 2 gün tepesinden ≥%1,5 düşüş ∧ dünkü VIX ≥18,4 → AL, stop iki dip −%0,10, TP 2R, ertesi gün 16:00. Kör TEST +0,19R ama Bonferroni ve 2025–26 düştü. İşlem açmadan canlı kayıt; ≥30–50 olayda tanım değiştirmeden değerlendir",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T04:09:00.290177+00:00",
+    "updated_at": "2026-11-18T04:09:00.290331+00:00"
+  },
+  {
+    "id": "bl_4544155855",
+    "title": "Dukascopy 2025 1 dk yeniden indirmesini tamamla",
+    "detail": "research/ndx_tf_yapilandirma_20261117/src/s11_duka_2025_indir.py (DUKA_FIXED_WAIT_S=900); sunucu 503 veriyor, 109/~310 gün indi; bitince calistir.sh ile mumları yeniden üret, şüpheli DUKA fitilleri düşer",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T08:17:12.789468+00:00",
+    "updated_at": "2026-11-18T08:17:12.789631+00:00"
+  },
+  {
+    "id": "bl_1ab3767731",
+    "title": "MT5 2026.hcc'yi oku (2026-01→05-06 NAS100 M1)",
+    "detail": "kutuda terminal dosyayı kilitliyor; terminal kapalıyken (bakım penceresi) calistir/arac_mt5_gecmis_liste.py --yukle + s12",
+    "category": "wiring",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T08:17:12.794763+00:00",
+    "updated_at": "2026-11-18T08:17:12.794769+00:00"
   }
 ]

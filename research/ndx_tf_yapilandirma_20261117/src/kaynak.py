@@ -121,6 +121,8 @@ def load_duka_1m(extend: bool = True, export: bool = True) -> pd.DataFrame:
 
 
 UNION_LOG: dict[str, dict] = {}
+REPLACED: list[str] = []          # resmi mumla değiştirilen dakikalar (UTC)
+OFFICIAL_MAX_SHARE = 0.001        # resmi mum ↔ tik kurgusu ayrışması ortak dakikaların ‰1'ini aşamaz
 
 
 DUKA_2025_BI5 = Path(__file__).resolve().parents[1] / "out/duka_m1_2025"  # s11 (kullanıcı onayıyla indirildi)
@@ -142,8 +144,8 @@ def _bi5_folder(folder: Path) -> pd.DataFrame:
 
 
 def _union_checked(d: pd.DataFrame, extra: pd.DataFrame, name: str, allow_superset: bool = False) -> pd.DataFrame:
-    """Ortak dakikalar birebir olmalı. allow_superset: Dukascopy'nin RESMİ 1 dk mumu, bizim eksik tik indirmesinden
-    kurulan mumu tamamen kapsıyorsa (aynı açılış, tepe ≥, dip ≤) resmi mum geçer — tik indirmesi o dakikada eksikti."""
+    """Ortak dakikalar birebir olmalı. allow_superset (yalnız Dukascopy'nin resmi 1 dk mumu için): ayrışan dakikada
+    resmi mum geçer (ana 2025 dosyası eksik tik indirmesinden kurulmuştu), ayrışma ortak dakikaların ‰1'ini aşmamak şartıyla."""
     m = extra.merge(d, on="t", suffixes=("_e", "_d"))
     replace_t = np.array([], dtype=np.int64)
     if len(m):
@@ -151,10 +153,12 @@ def _union_checked(d: pd.DataFrame, extra: pd.DataFrame, name: str, allow_supers
         bad = diff > EXPORT_TOL
         if bad.any():
             b = m[bad]
-            sup = (np.abs(b.open_e - b.open_d) <= EXPORT_TOL) & (b.high_e >= b.high_d - EXPORT_TOL) & (b.low_e <= b.low_d + EXPORT_TOL)
-            if not allow_superset or not sup.all():
+            # Resmi Dukascopy 1 dk mumu, bizim (eksik/sınır tikli) tik kurgumuzdan yetkili; ama ayrışma ‰1'i aşarsa
+            # yanlış dosya/saat ekseni şüphesi → dur.
+            if not allow_superset or bad.mean() > OFFICIAL_MAX_SHARE:
                 raise AssertionError(f"{name} ana dosyayla {int(bad.sum())} dakikada ayrışıyor (max {diff.max():.3f})")
             replace_t = b["t"].to_numpy()
+            REPLACED.extend(pd.to_datetime(replace_t, unit="s").strftime("%Y-%m-%d %H:%M").tolist())
     UNION_LOG[name] = {"ortak": int(len(m)), "eklenen": int((~extra["t"].isin(d["t"])).sum()), "resmi_mumla_degisen": int(len(replace_t))}
     d = d[~d["t"].isin(replace_t)]
     return _finish(pd.concat([d, extra[~extra["t"].isin(d["t"])]], ignore_index=True))
