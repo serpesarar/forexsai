@@ -1,0 +1,107 @@
+{
+ "scope": "ndx_korku_twap",
+ "tarih": "2026-11-18T09:10:30",
+ "aciklama": "NDX 16:00 fiyatı 09:30'dan beri TWAP'ın ≥ %0,5 altında ∧ 15:00→16:00 aşağı → 16:00 AL, ertesi işlem günü 16:00 çık (stopsuz).",
+ "ana_olcum": "Dukascopy NDX 1m 2018-01 → 2026-11, giriş 16:00 açılışı + spread, çıkış ertesi 16:00 açılışı, finansman",
+ "olay": 250,
+ "ort_bp": 53.2,
+ "checks": {
+  "1_hacim": {
+   "deger": 250,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "+53.2 bp P 1.000",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "+54.9 / +51.6",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "+52.6",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "16:00 +53.2 vs 16:01 +49.5",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "tek pozisyon +49.6 (n 221)",
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "risk": {
+  "std_bp": 199.7,
+  "en_kotu_bp": -612.5,
+  "kotu_yuzde5_bp": -198.8,
+  "medyan_bp": 44.4,
+  "isabet": 0.6,
+  "en_iyi_5_haric_bp": 37.5,
+  "maxDD_bp": -841.1,
+  "yillar": {
+   "2018": 32.0,
+   "2019": 21.7,
+   "2020": 111.5,
+   "2021": 28.4,
+   "2022": 45.8,
+   "2023": 10.0,
+   "2024": 49.5,
+   "2025": 64.0,
+   "2026": 86.0
+  }
+ },
+ "YENI": {
+  "n": 147,
+  "tetik": 44.090177763411894,
+  "taban": -1.3450130809526695,
+  "fark": 45.43519084436456,
+  "t": 2.661628616798241,
+  "s15": 43.44363945029284,
+  "P": 0.9965
+ },
+ "fitilsiz_geceler": {
+  "n": 175,
+  "tetik": 42.826477813534375,
+  "taban": -7.3010238844772815,
+  "fark": 50.127501698011656,
+  "t": 3.712850572755979,
+  "s15": 42.19132428302696,
+  "P": 1.0
+ },
+ "beslemeler": {
+  "MT5": {
+   "n": 232,
+   "tetik": 48.52899039013689,
+   "taban": 0.2169893370586491,
+   "fark": 48.31200105307824,
+   "t": 3.4066206966055574,
+   "s15": 47.592145670242736,
+   "P": 0.99975
+  },
+  "EET30": {
+   "n": 221,
+   "tetik": 51.56927385021292,
+   "taban": -0.08777125991964739,
+   "fark": 51.65704511013257,
+   "t": 3.5021382075168077,
+   "s15": 50.213612402836915,
+   "P": 1.0
+  },
+  "NQ": {
+   "n": 115,
+   "tetik": 44.435681540374794,
+   "taban": 8.440598166830675,
+   "fark": 35.99508337354412,
+   "t": 2.29462190722023,
+   "s15": 44.252423218544486,
+   "P": 0.99025
+  }
+ },
+ "fitil_ortusme_%": 30.0,
+ "verdict": "SHADOW",
+ "sinif": "B",
+ "verdict_gerekce": "ESKİ 96 hücrelik şans-üstü ızgaradan seçildi; YENİ Bonferroni, üç bağımsız besleme, fitilden bağımsızlık, s×1,5 ve n geçti. Stopsuz ~24 sa tutuş. Canlı kararı kullanıcıda.",
+ "kanit": "research/korku_gece_20261118/RAPOR.md"
+}
