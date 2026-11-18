@@ -1,0 +1,221 @@
+[
+ {
+  "hucre": [
+   "B",
+   0.1,
+   "16:00"
+  ],
+  "YENI": {
+   "aile": "B",
+   "e": 0.1,
+   "cikis": "16:00",
+   "n": 91,
+   "tetik": 41.6,
+   "taban": 48.2,
+   "fark": -6.6,
+   "t": -0.18,
+   "s15": 40.9,
+   "isabet": 0.604,
+   "P": 0.4345
+  },
+  "TUM": {
+   "aile": "B",
+   "e": 0.1,
+   "cikis": "16:00",
+   "n": 160,
+   "tetik": 65.4,
+   "taban": 31.5,
+   "fark": 33.9,
+   "t": 1.25,
+   "s15": 64.8,
+   "isabet": 0.631,
+   "P": 0.8982
+  },
+  "beslemeler": {
+   "MT5_2m": {
+    "aile": "B",
+    "e": 0.1,
+    "cikis": "16:00",
+    "n": 162,
+    "tetik": 56.2,
+    "taban": 33.0,
+    "fark": 23.2,
+    "t": 0.91,
+    "s15": 55.0,
+    "isabet": 0.599,
+    "P": 0.8203
+   },
+   "NQ_5m": {
+    "aile": "B",
+    "e": 0.1,
+    "cikis": "16:00",
+    "n": 73,
+    "tetik": 48.6,
+    "taban": 37.2,
+    "fark": 11.5,
+    "t": 0.4,
+    "s15": 48.4,
+    "isabet": 0.603,
+    "P": 0.662
+   }
+  },
+  "K1_disi": null,
+  "olcut": {
+   "1_yeni": false,
+   "2_beslemeler": true,
+   "3_K1_bagimsiz": true,
+   "4_surtunme": true
+  },
+  "hukum": "X"
+ },
+ {
+  "hucre": [
+   "B",
+   0.2,
+   "16:00"
+  ],
+  "YENI": {
+   "aile": "B",
+   "e": 0.2,
+   "cikis": "16:00",
+   "n": 64,
+   "tetik": 42.7,
+   "taban": 45.2,
+   "fark": -2.4,
+   "t": -0.08,
+   "s15": 42.1,
+   "isabet": 0.562,
+   "P": 0.4755
+  },
+  "TUM": {
+   "aile": "B",
+   "e": 0.2,
+   "cikis": "16:00",
+   "n": 121,
+   "tetik": 72.3,
+   "taban": 35.3,
+   "fark": 36.9,
+   "t": 1.46,
+   "s15": 71.6,
+   "isabet": 0.62,
+   "P": 0.9265
+  },
+  "beslemeler": {
+   "MT5_2m": {
+    "aile": "B",
+    "e": 0.2,
+    "cikis": "16:00",
+    "n": 128,
+    "tetik": 65.1,
+    "taban": 30.3,
+    "fark": 34.8,
+    "t": 1.43,
+    "s15": 64.0,
+    "isabet": 0.602,
+    "P": 0.9153
+   },
+   "NQ_5m": {
+    "aile": "B",
+    "e": 0.2,
+    "cikis": "16:00",
+    "n": 51,
+    "tetik": 41.6,
+    "taban": 46.7,
+    "fark": -5.1,
+    "t": -0.17,
+    "s15": 41.4,
+    "isabet": 0.549,
+    "P": 0.4273
+   }
+  },
+  "K1_disi": null,
+  "olcut": {
+   "1_yeni": false,
+   "2_beslemeler": false,
+   "3_K1_bagimsiz": true,
+   "4_surtunme": true
+  },
+  "hukum": "X"
+ },
+ {
+  "hucre": [
+   "A",
+   0.3,
+   "09:30"
+  ],
+  "YENI": {
+   "aile": "A",
+   "e": 0.3,
+   "cikis": "09:30",
+   "n": 78,
+   "tetik": 18.7,
+   "taban": -2.7,
+   "fark": 21.3,
+   "t": 1.68,
+   "s15": 17.9,
+   "isabet": 0.603,
+   "P": 0.9507
+  },
+  "TUM": {
+   "aile": "A",
+   "e": 0.3,
+   "cikis": "09:30",
+   "n": 136,
+   "tetik": 30.5,
+   "taban": -1.8,
+   "fark": 32.3,
+   "t": 2.67,
+   "s15": 29.8,
+   "isabet": 0.632,
+   "P": 0.9955
+  },
+  "beslemeler": {
+   "MT5_2m": {
+    "aile": "A",
+    "e": 0.3,
+    "cikis": "09:30",
+    "n": 143,
+    "tetik": 25.5,
+    "taban": -0.2,
+    "fark": 25.6,
+    "t": 2.3,
+    "s15": 24.4,
+    "isabet": 0.629,
+    "P": 0.9875
+   },
+   "NQ_5m": {
+    "aile": "A",
+    "e": 0.3,
+    "cikis": "09:30",
+    "n": 66,
+    "tetik": 29.0,
+    "taban": -0.5,
+    "fark": 29.4,
+    "t": 2.05,
+    "s15": 28.8,
+    "isabet": 0.636,
+    "P": 0.975
+   }
+  },
+  "K1_disi": {
+   "aile": "A",
+   "e": 0.3,
+   "cikis": "09:30",
+   "n": 57,
+   "tetik": 17.1,
+   "taban": -2.5,
+   "fark": 19.6,
+   "t": 1.11,
+   "s15": 16.4,
+   "isabet": 0.632,
+   "P": 0.8742
+  },
+  "olcut": {
+   "1_yeni": false,
+   "2_beslemeler": true,
+   "3_K1_bagimsiz": false,
+   "4_surtunme": true
+  },
+  "hukum": "X"
+ }
+]

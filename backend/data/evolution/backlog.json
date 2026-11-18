@@ -5390,5 +5390,16 @@
     "source": "session",
     "created_at": "2026-11-18T18:53:27.832880+00:00",
     "updated_at": "2026-11-18T18:53:27.833026+00:00"
+  },
+  {
+    "id": "bl_0bf6cfa637",
+    "title": "Ardışık korku gecesi lot dozu ileri izleme",
+    "detail": "GN-05 C+: K1 ∧ dünkü korku (K1 veya nakit ≤−%1) kör 3/3 endeks +58 vs +23 bp, en kötü −290 vs −1.140; canlı K1'e gölge etiket + ≥30 yeni gece sonra lot ×1,5–2 kararı",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T19:23:44.425072+00:00",
+    "updated_at": "2026-11-18T19:23:44.425211+00:00"
   }
 ]

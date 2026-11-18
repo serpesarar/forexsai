@@ -1,0 +1,182 @@
+[
+ {
+  "hucre": {
+   "G": "G2",
+   "esik": 0.3,
+   "T": "03:00",
+   "cikis": "D1_16:00"
+  },
+  "ESKI": {
+   "n": 70,
+   "tetik": 43.6,
+   "taban": 10.7,
+   "P": 0.9157
+  },
+  "YENI": {
+   "n": 102,
+   "tetik": -14.7,
+   "taban": 5.9,
+   "fark": -20.6,
+   "t": -0.89,
+   "s15": -15.8,
+   "isabet": 0.461,
+   "en_kotu": -577.6,
+   "P": 0.1803
+  },
+  "TUM": {
+   "n": 172,
+   "tetik": 9.0,
+   "taban": 7.9,
+   "fark": 1.1,
+   "t": 0.07,
+   "s15": 7.9,
+   "isabet": 0.523,
+   "en_kotu": -577.6,
+   "P": 0.529
+  },
+  "S_prev_0": {
+   "n": 111,
+   "tetik": -16.3,
+   "taban": -0.7,
+   "fark": -15.6,
+   "t": -0.78,
+   "s15": -17.3,
+   "isabet": 0.495,
+   "en_kotu": -577.6,
+   "P": 0.2157
+  },
+  "beslemeler": {
+   "MT5": {
+    "n": 161,
+    "tetik": 11.4,
+    "taban": 7.0,
+    "fark": 4.4,
+    "t": 0.25,
+    "s15": 10.3,
+    "isabet": 0.528,
+    "en_kotu": -577.3,
+    "P": 0.6037
+   },
+   "EET30": {
+    "n": 135,
+    "tetik": -0.6,
+    "taban": 7.2,
+    "fark": -7.8,
+    "t": -0.39,
+    "s15": -2.0,
+    "isabet": 0.504,
+    "en_kotu": -581.7,
+    "P": 0.3403
+   },
+   "NQ": {
+    "n": 84,
+    "tetik": -10.9,
+    "taban": 10.5,
+    "fark": -21.4,
+    "t": -0.74,
+    "s15": -11.1,
+    "isabet": 0.405,
+    "en_kotu": -862.0,
+    "P": 0.2273
+   }
+  },
+  "olcut": {
+   "1_yeni": false,
+   "2_beslemeler": false,
+   "3_korkudan_bagimsiz": false,
+   "4_surtunme": false,
+   "5_hacim": true
+  },
+  "hukum": "X"
+ },
+ {
+  "hucre": {
+   "G": "G2",
+   "esik": 0.3,
+   "T": "08:00",
+   "cikis": "09:30"
+  },
+  "ESKI": {
+   "n": 104,
+   "tetik": 5.1,
+   "taban": -1.3,
+   "P": 0.9257
+  },
+  "YENI": {
+   "n": 155,
+   "tetik": -1.9,
+   "taban": -3.0,
+   "fark": 1.1,
+   "t": 0.29,
+   "s15": -3.1,
+   "isabet": 0.503,
+   "en_kotu": -141.7,
+   "P": 0.6193
+  },
+  "TUM": {
+   "n": 259,
+   "tetik": 0.9,
+   "taban": -2.3,
+   "fark": 3.2,
+   "t": 1.1,
+   "s15": -0.2,
+   "isabet": 0.51,
+   "en_kotu": -141.7,
+   "P": 0.8587
+  },
+  "S_prev_0": {
+   "n": 183,
+   "tetik": -3.1,
+   "taban": -3.0,
+   "fark": -0.1,
+   "t": -0.05,
+   "s15": -4.2,
+   "isabet": 0.481,
+   "en_kotu": -130.6,
+   "P": 0.4803
+  },
+  "beslemeler": {
+   "MT5": {
+    "n": 256,
+    "tetik": 0.8,
+    "taban": -1.6,
+    "fark": 2.4,
+    "t": 0.81,
+    "s15": -0.2,
+    "isabet": 0.512,
+    "en_kotu": -138.8,
+    "P": 0.7903
+   },
+   "EET30": {
+    "n": 218,
+    "tetik": 0.1,
+    "taban": -2.2,
+    "fark": 2.3,
+    "t": 0.7,
+    "s15": -1.3,
+    "isabet": 0.5,
+    "en_kotu": -198.8,
+    "P": 0.7623
+   },
+   "NQ": {
+    "n": 132,
+    "tetik": 3.2,
+    "taban": -1.7,
+    "fark": 5.0,
+    "t": 1.15,
+    "s15": 3.1,
+    "isabet": 0.53,
+    "en_kotu": -125.7,
+    "P": 0.8757
+   }
+  },
+  "olcut": {
+   "1_yeni": false,
+   "2_beslemeler": true,
+   "3_korkudan_bagimsiz": false,
+   "4_surtunme": false,
+   "5_hacim": true
+  },
+  "hukum": "X"
+ }
+]

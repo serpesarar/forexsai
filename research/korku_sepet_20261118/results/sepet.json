@@ -1,0 +1,91 @@
+{
+ "tek_NAS100": {
+  "TUM": {
+   "sharpe": 1.267,
+   "yillik": 6.87,
+   "maxDD": -4.1
+  },
+  "ESKI": {
+   "sharpe": 1.494,
+   "yillik": 8.56,
+   "maxDD": -3.31
+  },
+  "YENI": {
+   "sharpe": 1.096,
+   "yillik": 5.69,
+   "maxDD": -4.1
+  }
+ },
+ "sepet_3": {
+  "TUM": {
+   "sharpe": 1.067,
+   "yillik": 4.82,
+   "maxDD": -3.96
+  },
+  "ESKI": {
+   "sharpe": 1.158,
+   "yillik": 6.14,
+   "maxDD": -3.52
+  },
+  "YENI": {
+   "sharpe": 1.006,
+   "yillik": 3.9,
+   "maxDD": -3.96
+  }
+ },
+ "bilgi_2021_sonrasi": {
+  "tek": {
+   "sharpe": 1.01,
+   "yillik": 5.05,
+   "maxDD": -4.1
+  },
+  "sepet_3": {
+   "sharpe": 0.922,
+   "yillik": 3.44,
+   "maxDD": -3.96
+  },
+  "sepet_4": {
+   "sharpe": 0.852,
+   "yillik": 3.29,
+   "maxDD": -3.86
+  }
+ },
+ "korelasyon_ortak_gun": {
+  "NAS100": {
+   "NAS100": 1.0,
+   "US30": 0.88,
+   "US2000": 0.86,
+   "US500": 0.96
+  },
+  "US30": {
+   "NAS100": 0.88,
+   "US30": 1.0,
+   "US2000": 0.9,
+   "US500": 0.97
+  },
+  "US2000": {
+   "NAS100": 0.86,
+   "US30": 0.9,
+   "US2000": 1.0,
+   "US500": 0.91
+  },
+  "US500": {
+   "NAS100": 0.96,
+   "US30": 0.97,
+   "US2000": 0.91,
+   "US500": 1.0
+  }
+ },
+ "tetik_sayisi": {
+  "NAS100": 234,
+  "US30": 162,
+  "US2000": 234,
+  "US500": 117
+ },
+ "katki_toplam": {
+  "NAS100": 19.1,
+  "US30": 8.9,
+  "US2000": 12.2
+ },
+ "hukum": "X"
+}
