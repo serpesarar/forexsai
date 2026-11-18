@@ -5401,5 +5401,16 @@
     "source": "session",
     "created_at": "2026-11-18T19:23:44.425072+00:00",
     "updated_at": "2026-11-18T19:23:44.425211+00:00"
+  },
+  {
+    "id": "bl_6581080743",
+    "title": "GN-06 UK100/JPN225 sonucu",
+    "detail": "korku_kuresel_20261118: duka_pull.py UK100 JPN225 bitince python src/kk.py; ≥1 taşınırsa C (bölgesel iz), yoksa X; defter GN-06 + RAPOR güncelle",
+    "category": "experiment",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T19:27:57.275326+00:00",
+    "updated_at": "2026-11-18T19:27:57.275593+00:00"
   }
 ]
