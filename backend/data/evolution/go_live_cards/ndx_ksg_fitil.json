@@ -122,8 +122,8 @@
   }
  },
  "verdict": "SHADOW",
- "sinif": "C+",
- "verdict_gerekce": "Ön kayıtlı 8 hücrelik kesişimde Bonferroni'yi geçti (P 0,996); MT5 bağımsız beslemede +38,4 vs +3,7 bp (P 0,999); oynaklık plasebosundan iyi (P 0,93); her VIX bandında fitilli > fitilsiz; kart 6/6. Başka ABD endekslerine genellemede havuz P 0,886 < 0,90 (US500 2021+ n 36 eksi) → ön kayıt hükmü C+. Canlı KSG'nin içinde doz/öncelik adayı; canlı kararı kullanıcıda. EK-2: EET30 (başka broker) +33,7 vs +4,4 bp (P 0,995, 7/8 yıl), NQ +26,4 vs +8,4 (5/5 yıl), havuz P 0,997; 2016–17'de olay yok (n 2) → ön kayıt gereği C+ kalır.",
+ "sinif": "B",
+ "verdict_gerekce": "Ön kayıtlı 8 hücrelik kesişimde Bonferroni'yi geçti (P 0,996); MT5 bağımsız beslemede +38,4 vs +3,7 bp (P 0,999); oynaklık plasebosundan iyi (P 0,93); her VIX bandında fitilli > fitilsiz; kart 6/6. Başka ABD endekslerine genellemede havuz P 0,886 < 0,90 (US500 2021+ n 36 eksi) → ön kayıt hükmü C+. Canlı KSG'nin içinde doz/öncelik adayı; canlı kararı kullanıcıda. EK-2: EET30 (başka broker) +33,7 vs +4,4 bp (P 0,995, 7/8 yıl), NQ +26,4 vs +8,4 (5/5 yıl), havuz P 0,997; 2016–17'de olay yok (n 2) → ön kayıt gereği C+ kalır. FG-02 (2026-11-18, bağımsız motor, ön kayıtlı doğrulama): YENİ +31,4 vs +1,1 bp P 0,998; MT5 +31,3/+2,2, EET30 +31,8/+3,6, NQ +27,5/+6,9 → B. Genişletilmiş hâli ndx_ksg_fitil_genis.json.",
  "kanit": "research/fitil_kesisim_20261118/RAPOR.md",
  "EK2_dokunulmamis_veri": {
   "EET30_2016_25": {

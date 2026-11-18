@@ -1,0 +1,152 @@
+{
+ "scope": "ndx_ksg_fitil_genis",
+ "aciklama": "Geniş fitilli KSG: son 12 sa içinde kapanmış bir NY-hizalı 2h mumda alt fitil ≥ fiyatın %0,50'si ∧ üst ≤ alt/2, ve 15:00→15:30 getirisi < 0 → 15:30'da AL (ask), ertesi işlem günü 16:00 açılışında çık. Stopsuz zaman işlemi.",
+ "tarih": "2026-11-18T08:49:56",
+ "ana_olcum": "Dukascopy NDX 1m 2018-01 → 2026-11 (lib.load_m1), giriş 15:30 açılışı + spread, çıkış ertesi 16:00 açılışı, gecelik finansman",
+ "olay": 215,
+ "ort_bp": 51.8,
+ "fitilsiz_taban_bp": -0.28594517554892157,
+ "yillar": {
+  "2018": {
+   "n": 19,
+   "bp": 42.2
+  },
+  "2019": {
+   "n": 10,
+   "bp": 116.6
+  },
+  "2020": {
+   "n": 47,
+   "bp": 74.8
+  },
+  "2021": {
+   "n": 24,
+   "bp": 24.9
+  },
+  "2022": {
+   "n": 40,
+   "bp": 15.2
+  },
+  "2023": {
+   "n": 16,
+   "bp": 39.1
+  },
+  "2024": {
+   "n": 15,
+   "bp": 47.9
+  },
+  "2025": {
+   "n": 22,
+   "bp": 85.8
+  },
+  "2026": {
+   "n": 22,
+   "bp": 55.1
+  }
+ },
+ "risk": {
+  "std_bp": 204.3,
+  "en_kotu_bp": -632.8,
+  "en_iyi_bp": 1141.7,
+  "medyan_bp": 40.4,
+  "isabet": 0.637,
+  "en_iyi_5_haric_bp": 34.0,
+  "kotu_yuzde5_bp": -234.6,
+  "kumulatif_maxDD_bp": -1153.4
+ },
+ "checks": {
+  "1_hacim": {
+   "deger": 215,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "+51.8 bp, ay-blok P 1.000",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "+52.0 / +51.6",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "spread×1,5 +51.1",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "15:30 +51.8 vs 15:31 +47.0",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "tek pozisyon +39.6 (n 189)",
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "secim": "ESKİ 2018-21'de 324 hücrelik ızgaradan (plasebo üstü) seçildi; YENİ 2021-26 kör +41,1 vs −0,6 bp P 0,988 (Bonferroni 0,98 geçti)",
+ "bagimsiz": {
+  "MT5": {
+   "n": 215,
+   "n_taban": 815,
+   "fitil": 45.3092324052594,
+   "taban": 1.0241864722899279,
+   "fark": 44.285045932969474,
+   "t": 2.994095412738172,
+   "s15": 44.37429555291123,
+   "P": 0.99975,
+   "yil_basi": 25.840325765054292,
+   "yil": {
+    "2018": 9.7,
+    "2019": 97.0,
+    "2020": 75.3,
+    "2021": 34.7,
+    "2022": 7.6,
+    "2023": 38.0,
+    "2024": 31.5,
+    "2025": 81.9,
+    "2026": 36.5
+   }
+  },
+  "EET30": {
+   "n": 180,
+   "n_taban": 779,
+   "fitil": 50.54829907775317,
+   "taban": 1.3840341616206184,
+   "fark": 49.16426491613255,
+   "t": 2.6622621935946045,
+   "s15": 49.20057250011866,
+   "P": 0.99775,
+   "yil_basi": 24.642053973013496,
+   "yil": {
+    "2018": 20.2,
+    "2019": 62.2,
+    "2020": 87.5,
+    "2021": 26.5,
+    "2022": 9.7,
+    "2023": 44.9,
+    "2024": 33.0,
+    "2025": 147.8
+   }
+  },
+  "NQ": {
+   "n": 68,
+   "n_taban": 377,
+   "fitil": 47.10202327032483,
+   "taban": 9.138808850454305,
+   "fark": 37.963214419870525,
+   "t": 1.7426062880043924,
+   "s15": 46.910328672168774,
+   "P": 0.95775,
+   "yil_basi": 15.02540834845735,
+   "yil": {
+    "2020": 50.6,
+    "2021": 48.4,
+    "2022": 66.8,
+    "2023": 35.2,
+    "2024": 12.2
+   }
+  }
+ },
+ "verdict": "SHADOW",
+ "sinif": "B",
+ "verdict_gerekce": "Ön kayıtlı genişletme ölçütlerinin hepsi geçti (YENİ Bonferroni, MT5+EET30+NQ her biri fitilli>0 ve >taban, s×1,5, n≥150). DAX'a taşınmıyor (G7 −22,7 bp) → ABD/NDX'e özgü. Stopsuz ~24 sa tutuş: risk bölümüne bak. Canlı kararı kullanıcıda.",
+ "kanit": "research/fitil_gece_20261118/RAPOR.md"
+}
