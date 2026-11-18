@@ -5445,5 +5445,16 @@
     "source": "session",
     "created_at": "2026-11-18T21:22:10.319221+00:00",
     "updated_at": "2026-11-18T21:22:10.319331+00:00"
+  },
+  {
+    "id": "bl_2a6b0d2d63",
+    "title": "NASDAQ habersiz/olay sert hareket gölge etiketi",
+    "detail": "§3-40: NDX 30 dk ≥%0,6 hareket — habersiz günde ertesi 16:00 AL (ZA-05 + NQ-06 H-b, ikisi C+), olay gününde uzun açmama / SAT (UD-07, NQ-06 H-a C+); bot/panelde gölge etiketiyle ileri ölçüm",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T21:40:54.950949+00:00",
+    "updated_at": "2026-11-18T21:40:54.951090+00:00"
   }
 ]

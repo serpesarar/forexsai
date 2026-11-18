@@ -1,0 +1,470 @@
+{
+ "G_e0.006_x16": {
+  "NDX_DUKA_olay": {
+   "ESKI": {
+    "n": 16,
+    "ort": 5.7,
+    "taban": -3.7
+   },
+   "YENI": {
+    "n": 35,
+    "ort": -6.0,
+    "taban": -9.0
+   },
+   "TUM": {
+    "n": 51,
+    "ort": -2.3,
+    "taban": -6.8,
+    "P": 0.5998
+   }
+  },
+  "NDX_DUKA_habersiz": {
+   "ESKI": {
+    "n": 88,
+    "ort": -15.0,
+    "taban": 0.4
+   },
+   "YENI": {
+    "n": 166,
+    "ort": 21.9,
+    "taban": 0.8
+   },
+   "TUM": {
+    "n": 254,
+    "ort": 9.1,
+    "taban": 0.6
+   }
+  },
+  "MT5_olay": {
+   "ESKI": {
+    "n": 16,
+    "ort": -4.7,
+    "taban": -11.9
+   },
+   "YENI": {
+    "n": 34,
+    "ort": -4.7,
+    "taban": -4.2
+   },
+   "TUM": {
+    "n": 50,
+    "ort": -4.7,
+    "taban": -7.4
+   }
+  },
+  "MT5_habersiz": {
+   "ESKI": {
+    "n": 86,
+    "ort": -20.7,
+    "taban": -0.4
+   },
+   "YENI": {
+    "n": 165,
+    "ort": 19.4,
+    "taban": 2.4
+   },
+   "TUM": {
+    "n": 251,
+    "ort": 5.7,
+    "taban": 1.2
+   }
+  },
+  "NQ_olay": {
+   "ESKI": {
+    "n": 2,
+    "ort": -5.4,
+    "taban": -0.8
+   },
+   "YENI": {
+    "n": 15,
+    "ort": 31.3,
+    "taban": 11.3
+   },
+   "TUM": {
+    "n": 17,
+    "ort": 27.0,
+    "taban": 6.9
+   }
+  },
+  "NQ_habersiz": {
+   "ESKI": {
+    "n": 33,
+    "ort": -34.8,
+    "taban": -3.9
+   },
+   "YENI": {
+    "n": 56,
+    "ort": 2.6,
+    "taban": -0.4
+   },
+   "TUM": {
+    "n": 89,
+    "ort": -11.3,
+    "taban": -1.9
+   }
+  },
+  "hukum": "X"
+ },
+ "G_e0.006_xn16": {
+  "NDX_DUKA_olay": {
+   "ESKI": {
+    "n": 16,
+    "ort": -114.1,
+    "taban": -7.0
+   },
+   "YENI": {
+    "n": 35,
+    "ort": -50.6,
+    "taban": -17.3
+   },
+   "TUM": {
+    "n": 51,
+    "ort": -70.6,
+    "taban": -13.0,
+    "P": 0.0553
+   }
+  },
+  "NDX_DUKA_habersiz": {
+   "ESKI": {
+    "n": 88,
+    "ort": 25.2,
+    "taban": 10.2
+   },
+   "YENI": {
+    "n": 166,
+    "ort": 54.6,
+    "taban": 6.2
+   },
+   "TUM": {
+    "n": 254,
+    "ort": 44.4,
+    "taban": 7.9
+   }
+  },
+  "MT5_olay": {
+   "ESKI": {
+    "n": 16,
+    "ort": -122.3,
+    "taban": -15.0
+   },
+   "YENI": {
+    "n": 34,
+    "ort": -53.3,
+    "taban": -12.1
+   },
+   "TUM": {
+    "n": 50,
+    "ort": -75.4,
+    "taban": -13.3
+   }
+  },
+  "MT5_habersiz": {
+   "ESKI": {
+    "n": 86,
+    "ort": 14.4,
+    "taban": 9.0
+   },
+   "YENI": {
+    "n": 165,
+    "ort": 49.0,
+    "taban": 7.9
+   },
+   "TUM": {
+    "n": 251,
+    "ort": 37.2,
+    "taban": 8.4
+   }
+  },
+  "NQ_olay": {
+   "ESKI": {
+    "n": 2,
+    "ort": -957.3,
+    "taban": -31.3
+   },
+   "YENI": {
+    "n": 15,
+    "ort": -11.5,
+    "taban": 17.5
+   },
+   "TUM": {
+    "n": 17,
+    "ort": -122.8,
+    "taban": -0.3
+   }
+  },
+  "NQ_habersiz": {
+   "ESKI": {
+    "n": 33,
+    "ort": 34.9,
+    "taban": 12.7
+   },
+   "YENI": {
+    "n": 56,
+    "ort": -0.1,
+    "taban": -0.7
+   },
+   "TUM": {
+    "n": 89,
+    "ort": 12.9,
+    "taban": 4.9
+   }
+  },
+  "hukum": "X"
+ },
+ "G_e0.01_x16": {
+  "NDX_DUKA_olay": {
+   "ESKI": {
+    "n": 5,
+    "ort": 51.0,
+    "taban": -3.7
+   },
+   "YENI": {
+    "n": 12,
+    "ort": -24.0,
+    "taban": -9.0
+   },
+   "TUM": {
+    "n": 17,
+    "ort": -1.9,
+    "taban": -6.8,
+    "P": 0.5627
+   }
+  },
+  "NDX_DUKA_habersiz": {
+   "ESKI": {
+    "n": 29,
+    "ort": 24.4,
+    "taban": 0.4
+   },
+   "YENI": {
+    "n": 25,
+    "ort": 23.0,
+    "taban": 0.8
+   },
+   "TUM": {
+    "n": 54,
+    "ort": 23.7,
+    "taban": 0.6
+   }
+  },
+  "MT5_olay": {
+   "ESKI": {
+    "n": 5,
+    "ort": 50.7,
+    "taban": -11.9
+   },
+   "YENI": {
+    "n": 13,
+    "ort": -20.7,
+    "taban": -4.2
+   },
+   "TUM": {
+    "n": 18,
+    "ort": -0.9,
+    "taban": -7.4
+   }
+  },
+  "MT5_habersiz": {
+   "ESKI": {
+    "n": 27,
+    "ort": 16.3,
+    "taban": -0.4
+   },
+   "YENI": {
+    "n": 24,
+    "ort": 46.8,
+    "taban": 2.4
+   },
+   "TUM": {
+    "n": 51,
+    "ort": 30.7,
+    "taban": 1.2
+   }
+  },
+  "NQ_olay": {
+   "ESKI": {
+    "n": 1,
+    "ort": -29.0,
+    "taban": -0.8
+   },
+   "YENI": {
+    "n": 8,
+    "ort": -2.8,
+    "taban": 11.3
+   },
+   "TUM": {
+    "n": 9,
+    "ort": -5.7,
+    "taban": 6.9
+   }
+  },
+  "NQ_habersiz": {
+   "ESKI": {
+    "n": 10,
+    "ort": 0.1,
+    "taban": -3.9
+   },
+   "YENI": {
+    "n": 9,
+    "ort": -36.3,
+    "taban": -0.4
+   },
+   "TUM": {
+    "n": 19,
+    "ort": -17.1,
+    "taban": -1.9
+   }
+  },
+  "hukum": "X"
+ },
+ "G_e0.01_xn16": {
+  "NDX_DUKA_olay": {
+   "ESKI": {
+    "n": 5,
+    "ort": -250.6,
+    "taban": -7.0
+   },
+   "YENI": {
+    "n": 12,
+    "ort": -137.4,
+    "taban": -17.3
+   },
+   "TUM": {
+    "n": 17,
+    "ort": -170.7,
+    "taban": -13.0,
+    "P": 0.0208
+   }
+  },
+  "NDX_DUKA_habersiz": {
+   "ESKI": {
+    "n": 29,
+    "ort": 48.8,
+    "taban": 10.2
+   },
+   "YENI": {
+    "n": 25,
+    "ort": 41.4,
+    "taban": 6.2
+   },
+   "TUM": {
+    "n": 54,
+    "ort": 45.4,
+    "taban": 7.9
+   }
+  },
+  "MT5_olay": {
+   "ESKI": {
+    "n": 5,
+    "ort": -252.0,
+    "taban": -15.0
+   },
+   "YENI": {
+    "n": 13,
+    "ort": -128.5,
+    "taban": -12.1
+   },
+   "TUM": {
+    "n": 18,
+    "ort": -162.8,
+    "taban": -13.3
+   }
+  },
+  "MT5_habersiz": {
+   "ESKI": {
+    "n": 27,
+    "ort": 32.9,
+    "taban": 9.0
+   },
+   "YENI": {
+    "n": 24,
+    "ort": 60.8,
+    "taban": 7.9
+   },
+   "TUM": {
+    "n": 51,
+    "ort": 46.0,
+    "taban": 8.4
+   }
+  },
+  "NQ_olay": {
+   "ESKI": {
+    "n": 1,
+    "ort": -311.1,
+    "taban": -31.3
+   },
+   "YENI": {
+    "n": 8,
+    "ort": -77.8,
+    "taban": 17.5
+   },
+   "TUM": {
+    "n": 9,
+    "ort": -103.7,
+    "taban": -0.3
+   }
+  },
+  "NQ_habersiz": {
+   "ESKI": {
+    "n": 10,
+    "ort": -5.6,
+    "taban": 12.7
+   },
+   "YENI": {
+    "n": 9,
+    "ort": -34.5,
+    "taban": -0.7
+   },
+   "TUM": {
+    "n": 19,
+    "ort": -19.3,
+    "taban": 4.9
+   }
+  },
+  "hukum": "X"
+ },
+ "D_k1.0": {
+  "08-15": {
+   "n": 62,
+   "ort": -15.6,
+   "taban": -21.1,
+   "habersiz": -5.3
+  },
+  "16-21": {
+   "n": 44,
+   "ort": -3.5,
+   "taban": -3.5,
+   "habersiz": -14.0
+  },
+  "22-26": {
+   "n": 38,
+   "ort": -13.7,
+   "taban": -10.3,
+   "habersiz": 1.1
+  },
+  "P": 0.554,
+  "hukum": "X"
+ },
+ "D_k1.5": {
+  "08-15": {
+   "n": 29,
+   "ort": -11.1,
+   "taban": -21.1,
+   "habersiz": -17.8
+  },
+  "16-21": {
+   "n": 22,
+   "ort": -3.6,
+   "taban": -3.5,
+   "habersiz": -41.9
+  },
+  "22-26": {
+   "n": 21,
+   "ort": 0.6,
+   "taban": -10.3,
+   "habersiz": 5.9
+  },
+  "P": 0.6774,
+  "hukum": "X"
+ }
+}

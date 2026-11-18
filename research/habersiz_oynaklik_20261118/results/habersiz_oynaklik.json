@@ -1,0 +1,580 @@
+{
+ "QQQ": {
+  "1999_2007": {
+   "habersiz_tum": {
+    "n": 224,
+    "ort": 27.6,
+    "taban": -2.2,
+    "fark": 29.8,
+    "yukari_gun": 4.8,
+    "asagi_gun": 41.0
+   },
+   "habersiz_V1_haric": {
+    "n": 111,
+    "ort": -15.8,
+    "taban": -10.0,
+    "fark": -5.8,
+    "yukari_gun": 4.8,
+    "asagi_gun": -77.0,
+    "P": 0.4081
+   },
+   "hepsi_tum": {
+    "n": 224,
+    "ort": 27.6,
+    "taban": -2.2,
+    "fark": 29.8,
+    "yukari_gun": 4.8,
+    "asagi_gun": 41.0
+   },
+   "hepsi_V1_haric": {
+    "n": 111,
+    "ort": -15.8,
+    "taban": -10.0,
+    "fark": -5.8,
+    "yukari_gun": 4.8,
+    "asagi_gun": -77.0,
+    "P": 0.4081
+   }
+  },
+  "2008_2017": {
+   "habersiz_tum": {
+    "n": 282,
+    "ort": 2.7,
+    "taban": 3.1,
+    "fark": -0.4,
+    "yukari_gun": -12.6,
+    "asagi_gun": 10.4
+   },
+   "habersiz_V1_haric": {
+    "n": 157,
+    "ort": -10.1,
+    "taban": -1.7,
+    "fark": -8.4,
+    "yukari_gun": -12.6,
+    "asagi_gun": -6.3,
+    "P": 0.2669
+   },
+   "olay_tum": {
+    "n": 44,
+    "ort": -31.4,
+    "taban": -14.6,
+    "fark": -16.8,
+    "yukari_gun": -31.2,
+    "asagi_gun": -31.6
+   },
+   "olay_V1_haric": {
+    "n": 32,
+    "ort": -19.7,
+    "taban": -9.8,
+    "fark": -10.0,
+    "yukari_gun": -31.2,
+    "asagi_gun": -0.7,
+    "P": 0.3891
+   },
+   "hepsi_tum": {
+    "n": 326,
+    "ort": -1.9,
+    "taban": 0.9,
+    "fark": -2.8,
+    "yukari_gun": -15.8,
+    "asagi_gun": 5.6
+   },
+   "hepsi_V1_haric": {
+    "n": 189,
+    "ort": -11.7,
+    "taban": -2.7,
+    "fark": -9.0,
+    "yukari_gun": -15.8,
+    "asagi_gun": -5.4,
+    "P": 0.2376
+   }
+  },
+  "2018_2026": {
+   "habersiz_tum": {
+    "n": 258,
+    "ort": 13.5,
+    "taban": 5.4,
+    "fark": 8.0,
+    "yukari_gun": -28.5,
+    "asagi_gun": 37.1
+   },
+   "habersiz_V1_haric": {
+    "n": 143,
+    "ort": -20.5,
+    "taban": -0.5,
+    "fark": -20.0,
+    "yukari_gun": -28.5,
+    "asagi_gun": -5.6,
+    "P": 0.1072
+   },
+   "olay_tum": {
+    "n": 55,
+    "ort": -16.3,
+    "taban": -8.5,
+    "fark": -7.8,
+    "yukari_gun": -63.1,
+    "asagi_gun": 8.4
+   },
+   "olay_V1_haric": {
+    "n": 29,
+    "ort": -40.0,
+    "taban": -10.4,
+    "fark": -29.7,
+    "yukari_gun": -63.1,
+    "asagi_gun": 3.8,
+    "P": 0.2279
+   },
+   "hepsi_tum": {
+    "n": 313,
+    "ort": 8.2,
+    "taban": 3.7,
+    "fark": 4.5,
+    "yukari_gun": -34.4,
+    "asagi_gun": 32.0
+   },
+   "hepsi_V1_haric": {
+    "n": 172,
+    "ort": -23.8,
+    "taban": -1.6,
+    "fark": -22.1,
+    "yukari_gun": -34.4,
+    "asagi_gun": -4.0,
+    "P": 0.0651
+   }
+  }
+ },
+ "SPY": {
+  "1999_2007": {
+   "habersiz_tum": {
+    "n": 266,
+    "ort": 10.8,
+    "taban": -3.2,
+    "fark": 14.0,
+    "yukari_gun": 5.7,
+    "asagi_gun": 14.0
+   },
+   "habersiz_V1_haric": {
+    "n": 147,
+    "ort": -1.8,
+    "taban": -5.3,
+    "fark": 3.5,
+    "yukari_gun": 5.7,
+    "asagi_gun": -18.9,
+    "P": 0.6266
+   },
+   "hepsi_tum": {
+    "n": 266,
+    "ort": 10.8,
+    "taban": -3.2,
+    "fark": 14.0,
+    "yukari_gun": 5.7,
+    "asagi_gun": 14.0
+   },
+   "hepsi_V1_haric": {
+    "n": 147,
+    "ort": -1.8,
+    "taban": -5.3,
+    "fark": 3.5,
+    "yukari_gun": 5.7,
+    "asagi_gun": -18.9,
+    "P": 0.6266
+   }
+  },
+  "2008_2017": {
+   "habersiz_tum": {
+    "n": 287,
+    "ort": 8.9,
+    "taban": 1.2,
+    "fark": 7.7,
+    "yukari_gun": -2.4,
+    "asagi_gun": 15.2
+   },
+   "habersiz_V1_haric": {
+    "n": 179,
+    "ort": -1.3,
+    "taban": -1.8,
+    "fark": 0.5,
+    "yukari_gun": -2.4,
+    "asagi_gun": 0.1,
+    "P": 0.5025
+   },
+   "olay_tum": {
+    "n": 52,
+    "ort": -34.6,
+    "taban": -18.5,
+    "fark": -16.1,
+    "yukari_gun": -55.2,
+    "asagi_gun": -19.6
+   },
+   "olay_V1_haric": {
+    "n": 39,
+    "ort": -37.6,
+    "taban": -13.2,
+    "fark": -24.4,
+    "yukari_gun": -55.2,
+    "asagi_gun": -14.9,
+    "P": 0.2117
+   },
+   "hepsi_tum": {
+    "n": 339,
+    "ort": 2.2,
+    "taban": -1.3,
+    "fark": 3.5,
+    "yukari_gun": -11.7,
+    "asagi_gun": 10.3
+   },
+   "hepsi_V1_haric": {
+    "n": 218,
+    "ort": -7.8,
+    "taban": -3.2,
+    "fark": -4.6,
+    "yukari_gun": -11.7,
+    "asagi_gun": -2.7,
+    "P": 0.3264
+   }
+  },
+  "2018_2026": {
+   "habersiz_tum": {
+    "n": 272,
+    "ort": 4.0,
+    "taban": 2.7,
+    "fark": 1.2,
+    "yukari_gun": -30.1,
+    "asagi_gun": 29.7
+   },
+   "habersiz_V1_haric": {
+    "n": 185,
+    "ort": -16.0,
+    "taban": -0.4,
+    "fark": -15.6,
+    "yukari_gun": -30.1,
+    "asagi_gun": 8.3,
+    "P": 0.0887
+   },
+   "olay_tum": {
+    "n": 73,
+    "ort": -35.6,
+    "taban": -11.2,
+    "fark": -24.4,
+    "yukari_gun": -79.8,
+    "asagi_gun": -17.7
+   },
+   "olay_V1_haric": {
+    "n": 40,
+    "ort": -35.4,
+    "taban": -5.5,
+    "fark": -29.9,
+    "yukari_gun": -79.8,
+    "asagi_gun": 13.6,
+    "P": 0.103
+   },
+   "hepsi_tum": {
+    "n": 345,
+    "ort": -4.4,
+    "taban": 1.0,
+    "fark": -5.4,
+    "yukari_gun": -37.7,
+    "asagi_gun": 17.8
+   },
+   "hepsi_V1_haric": {
+    "n": 225,
+    "ort": -19.5,
+    "taban": -1.0,
+    "fark": -18.4,
+    "yukari_gun": -37.7,
+    "asagi_gun": 9.4,
+    "P": 0.0346
+   }
+  }
+ },
+ "DIA": {
+  "1999_2007": {
+   "habersiz_tum": {
+    "n": 264,
+    "ort": 7.1,
+    "taban": -2.4,
+    "fark": 9.5,
+    "yukari_gun": 12.7,
+    "asagi_gun": 3.7
+   },
+   "habersiz_V1_haric": {
+    "n": 143,
+    "ort": 6.4,
+    "taban": -4.8,
+    "fark": 11.1,
+    "yukari_gun": 12.7,
+    "asagi_gun": -7.5,
+    "P": 0.8501
+   },
+   "hepsi_tum": {
+    "n": 264,
+    "ort": 7.1,
+    "taban": -2.4,
+    "fark": 9.5,
+    "yukari_gun": 12.7,
+    "asagi_gun": 3.7
+   },
+   "hepsi_V1_haric": {
+    "n": 143,
+    "ort": 6.4,
+    "taban": -4.8,
+    "fark": 11.1,
+    "yukari_gun": 12.7,
+    "asagi_gun": -7.5,
+    "P": 0.8501
+   }
+  },
+  "2008_2017": {
+   "habersiz_tum": {
+    "n": 277,
+    "ort": 7.3,
+    "taban": 0.5,
+    "fark": 6.8,
+    "yukari_gun": 2.0,
+    "asagi_gun": 10.5
+   },
+   "habersiz_V1_haric": {
+    "n": 176,
+    "ort": -1.7,
+    "taban": -2.9,
+    "fark": 1.2,
+    "yukari_gun": 2.0,
+    "asagi_gun": -6.8,
+    "P": 0.5279
+   },
+   "olay_tum": {
+    "n": 53,
+    "ort": -39.6,
+    "taban": -14.0,
+    "fark": -25.6,
+    "yukari_gun": -43.7,
+    "asagi_gun": -35.7
+   },
+   "olay_V1_haric": {
+    "n": 44,
+    "ort": -33.3,
+    "taban": -11.3,
+    "fark": -22.0,
+    "yukari_gun": -43.7,
+    "asagi_gun": -18.3,
+    "P": 0.1944
+   },
+   "hepsi_tum": {
+    "n": 330,
+    "ort": -0.2,
+    "taban": -1.3,
+    "fark": 1.1,
+    "yukari_gun": -7.2,
+    "asagi_gun": 4.3
+   },
+   "hepsi_V1_haric": {
+    "n": 220,
+    "ort": -8.0,
+    "taban": -4.0,
+    "fark": -4.0,
+    "yukari_gun": -7.2,
+    "asagi_gun": -9.1,
+    "P": 0.3506
+   }
+  },
+  "2018_2026": {
+   "habersiz_tum": {
+    "n": 250,
+    "ort": -2.1,
+    "taban": 1.0,
+    "fark": -3.1,
+    "yukari_gun": -32.3,
+    "asagi_gun": 19.8
+   },
+   "habersiz_V1_haric": {
+    "n": 166,
+    "ort": -23.7,
+    "taban": -2.2,
+    "fark": -21.5,
+    "yukari_gun": -32.3,
+    "asagi_gun": -8.9,
+    "P": 0.0439
+   },
+   "olay_tum": {
+    "n": 65,
+    "ort": -62.3,
+    "taban": -11.2,
+    "fark": -51.0,
+    "yukari_gun": -102.2,
+    "asagi_gun": -45.8
+   },
+   "olay_V1_haric": {
+    "n": 37,
+    "ort": -69.6,
+    "taban": -1.4,
+    "fark": -68.2,
+    "yukari_gun": -102.2,
+    "asagi_gun": -35.1,
+    "P": 0.0057
+   },
+   "hepsi_tum": {
+    "n": 315,
+    "ort": -14.5,
+    "taban": -0.6,
+    "fark": -14.0,
+    "yukari_gun": -43.0,
+    "asagi_gun": 4.0
+   },
+   "hepsi_V1_haric": {
+    "n": 203,
+    "ort": -32.1,
+    "taban": -2.1,
+    "fark": -30.0,
+    "yukari_gun": -43.0,
+    "asagi_gun": -14.9,
+    "P": 0.0047
+   }
+  }
+ },
+ "IWM": {
+  "1999_2007": {
+   "habersiz_tum": {
+    "n": 222,
+    "ort": 0.3,
+    "taban": -1.0,
+    "fark": 1.4,
+    "yukari_gun": 8.1,
+    "asagi_gun": -4.4
+   },
+   "habersiz_V1_haric": {
+    "n": 103,
+    "ort": 9.7,
+    "taban": -2.7,
+    "fark": 12.4,
+    "yukari_gun": 8.1,
+    "asagi_gun": 16.5,
+    "P": 0.8203
+   },
+   "hepsi_tum": {
+    "n": 222,
+    "ort": 0.3,
+    "taban": -1.0,
+    "fark": 1.4,
+    "yukari_gun": 8.1,
+    "asagi_gun": -4.4
+   },
+   "hepsi_V1_haric": {
+    "n": 103,
+    "ort": 9.7,
+    "taban": -2.7,
+    "fark": 12.4,
+    "yukari_gun": 8.1,
+    "asagi_gun": 16.5,
+    "P": 0.8203
+   }
+  },
+  "2008_2017": {
+   "habersiz_tum": {
+    "n": 261,
+    "ort": 16.5,
+    "taban": 2.1,
+    "fark": 14.4,
+    "yukari_gun": -2.7,
+    "asagi_gun": 27.0
+   },
+   "habersiz_V1_haric": {
+    "n": 147,
+    "ort": -5.6,
+    "taban": -5.2,
+    "fark": -0.4,
+    "yukari_gun": -2.7,
+    "asagi_gun": -10.4,
+    "P": 0.4951
+   },
+   "olay_tum": {
+    "n": 41,
+    "ort": -56.8,
+    "taban": -18.5,
+    "fark": -38.3,
+    "yukari_gun": -80.4,
+    "asagi_gun": -40.0
+   },
+   "olay_V1_haric": {
+    "n": 24,
+    "ort": -50.4,
+    "taban": -14.5,
+    "fark": -35.9,
+    "yukari_gun": -80.4,
+    "asagi_gun": 22.4,
+    "P": 0.1754
+   },
+   "hepsi_tum": {
+    "n": 302,
+    "ort": 6.6,
+    "taban": -0.4,
+    "fark": 7.0,
+    "yukari_gun": -14.8,
+    "asagi_gun": 18.6
+   },
+   "hepsi_V1_haric": {
+    "n": 171,
+    "ort": -11.9,
+    "taban": -6.4,
+    "fark": -5.5,
+    "yukari_gun": -14.8,
+    "asagi_gun": -6.7,
+    "P": 0.3427
+   }
+  },
+  "2018_2026": {
+   "habersiz_tum": {
+    "n": 221,
+    "ort": -1.8,
+    "taban": 1.0,
+    "fark": -2.9,
+    "yukari_gun": -27.6,
+    "asagi_gun": 14.3
+   },
+   "habersiz_V1_haric": {
+    "n": 125,
+    "ort": -29.2,
+    "taban": -4.8,
+    "fark": -24.4,
+    "yukari_gun": -27.6,
+    "asagi_gun": -32.4,
+    "P": 0.1182
+   },
+   "olay_tum": {
+    "n": 64,
+    "ort": -52.8,
+    "taban": -12.1,
+    "fark": -40.7,
+    "yukari_gun": -10.1,
+    "asagi_gun": -76.7
+   },
+   "olay_V1_haric": {
+    "n": 30,
+    "ort": -27.5,
+    "taban": -8.3,
+    "fark": -19.3,
+    "yukari_gun": -10.1,
+    "asagi_gun": -84.9,
+    "P": 0.3006
+   },
+   "hepsi_tum": {
+    "n": 285,
+    "ort": -13.3,
+    "taban": -0.6,
+    "fark": -12.6,
+    "yukari_gun": -23.9,
+    "asagi_gun": -6.8
+   },
+   "hepsi_V1_haric": {
+    "n": 155,
+    "ort": -28.8,
+    "taban": -5.2,
+    "fark": -23.7,
+    "yukari_gun": -23.9,
+    "asagi_gun": -40.2,
+    "P": 0.0906
+   }
+  }
+ },
+ "hukum_habersiz": "X",
+ "hukum_olay": "C+"
+}
