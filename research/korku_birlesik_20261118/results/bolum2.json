@@ -1,0 +1,87 @@
+{
+ "H1_ters_egri": {
+  "n": 64,
+  "ile": 119.2,
+  "olmadan": 18.2,
+  "P": 0.996,
+  "ESKI": {
+   "n": 39,
+   "ile": 97.6,
+   "olmadan": 15.5
+  },
+  "YENI": {
+   "n": 25,
+   "ile": 152.8,
+   "olmadan": 19.9
+  },
+  "sinif": "B"
+ },
+ "H2_vix18": {
+  "n": 331,
+  "ile": 38.0,
+  "olmadan": 17.8,
+  "P": 0.931,
+  "ESKI": {
+   "n": 146,
+   "ile": 41.7,
+   "olmadan": 5.5
+  },
+  "YENI": {
+   "n": 185,
+   "ile": 35.0,
+   "olmadan": 24.3
+  },
+  "sinif": "C+"
+ },
+ "H3_c3b": {
+  "n": 101,
+  "ile": 66.8,
+  "olmadan": 22.0,
+  "P": 0.983,
+  "ESKI": {
+   "n": 33,
+   "ile": 71.9,
+   "olmadan": 23.1
+  },
+  "YENI": {
+   "n": 68,
+   "ile": 64.3,
+   "olmadan": 21.1
+  },
+  "sinif": "B"
+ },
+ "H4_cuma": {
+  "n": 94,
+  "ile": 20.2,
+  "olmadan": 33.3,
+  "P": 0.246,
+  "ESKI": {
+   "n": 35,
+   "ile": 7.6,
+   "olmadan": 35.6
+  },
+  "YENI": {
+   "n": 59,
+   "ile": 27.7,
+   "olmadan": 31.7
+  },
+  "sinif": "X"
+ },
+ "H5_ay_sonu": {
+  "n": 88,
+  "ile": 52.6,
+  "olmadan": 26.3,
+  "P": 0.917,
+  "ESKI": {
+   "n": 41,
+   "ile": 65.9,
+   "olmadan": 22.3
+  },
+  "YENI": {
+   "n": 47,
+   "ile": 41.0,
+   "olmadan": 29.0
+  },
+  "sinif": "C+"
+ }
+}

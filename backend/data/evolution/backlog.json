@@ -5368,5 +5368,16 @@
     "source": "session",
     "created_at": "2026-11-18T14:11:24.914055+00:00",
     "updated_at": "2026-11-18T14:11:24.914059+00:00"
+  },
+  {
+    "id": "bl_02fa157649",
+    "title": "Canlı doz kuralı: C3b/KSG lotunu korku gecesi ∧ (ters VIX eğrisi",
+    "detail": "C3b) gecelerinde artır (KB-03)",
+    "category": "B kesişimler: korku∧ters eğri +119 bp (n 64), korku∧C3b +67 (n 101). Ön kayıtlı doz sınaması (portföy Sharpe/maxDD, lot 1,5× / 2×) ve gölge etiketi; karar kullanıcıda",
+    "priority": "decision",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T15:54:28.235793+00:00",
+    "updated_at": "2026-11-18T15:54:28.235934+00:00"
   }
 ]

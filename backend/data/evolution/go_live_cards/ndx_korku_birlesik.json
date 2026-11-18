@@ -1,0 +1,408 @@
+{
+ "scope": "ndx_korku_birlesik",
+ "tarih": "2026-11-18T10:54:28",
+ "aciklama": "Korku gecesi birleşik kural ve taktikler: skor S = {2h fitil∧KSG, TWAP altı∧KSG, son saat ≤−%0,3, aralık≥%2∧açılış altı∧KSG} sayısı; 16:00 AL, ertesi 16:00. Taktikler: S≥2 (çift teyit), ters VIX eğrisi / C3b ile doz artırma, felaket stopu yok.",
+ "dukascopy": {
+  "U": {
+   "ESKI": {
+    "n": 208,
+    "ort": 30.9,
+    "sd": 188.3,
+    "sharpe_islem": 0.164,
+    "en_kotu": -477.9,
+    "isabet": 0.611
+   },
+   "YENI": {
+    "n": 301,
+    "ort": 30.9,
+    "sd": 172.9,
+    "sharpe_islem": 0.179,
+    "en_kotu": -612.5,
+    "isabet": 0.565
+   },
+   "TUM": {
+    "n": 509,
+    "ort": 30.9,
+    "sd": 179.3,
+    "sharpe_islem": 0.172,
+    "en_kotu": -612.5,
+    "isabet": 0.583
+   },
+   "taban_S0": {
+    "n": 1593,
+    "ort": -4.2,
+    "sd": 139.1,
+    "sharpe_islem": -0.03,
+    "en_kotu": -1262.5,
+    "isabet": 0.537
+   }
+  },
+  "doz": {
+   "ESKI": {
+    "S1": {
+     "n": 90,
+     "ort": -5.3,
+     "sd": 152.0,
+     "sharpe_islem": -0.035,
+     "en_kotu": -466.7,
+     "isabet": 0.578
+    },
+    "S2": {
+     "n": 62,
+     "ort": 35.7,
+     "sd": 145.8,
+     "sharpe_islem": 0.245,
+     "en_kotu": -290.9,
+     "isabet": 0.597
+    },
+    "S3": {
+     "n": 56,
+     "ort": 83.6,
+     "sd": 257.1,
+     "sharpe_islem": 0.325,
+     "en_kotu": -477.9,
+     "isabet": 0.679
+    }
+   },
+   "YENI": {
+    "S1": {
+     "n": 132,
+     "ort": 9.0,
+     "sd": 135.2,
+     "sharpe_islem": 0.066,
+     "en_kotu": -264.4,
+     "isabet": 0.508
+    },
+    "S2": {
+     "n": 84,
+     "ort": 54.0,
+     "sd": 173.6,
+     "sharpe_islem": 0.311,
+     "en_kotu": -461.9,
+     "isabet": 0.631
+    },
+    "S3": {
+     "n": 85,
+     "ort": 42.1,
+     "sd": 215.1,
+     "sharpe_islem": 0.196,
+     "en_kotu": -612.5,
+     "isabet": 0.588
+    }
+   }
+  },
+  "stop": {
+   "ESKI": {
+    "bp_yok": {
+     "n": 208,
+     "ort": 30.9,
+     "sd": 188.3,
+     "sharpe_islem": 0.164,
+     "en_kotu": -477.9,
+     "isabet": 0.611
+    },
+    "bp_2": {
+     "n": 208,
+     "ort": 18.0,
+     "sd": 170.8,
+     "sharpe_islem": 0.105,
+     "en_kotu": -405.2,
+     "isabet": 0.572
+    },
+    "bp_3": {
+     "n": 208,
+     "ort": 20.7,
+     "sd": 180.6,
+     "sharpe_islem": 0.114,
+     "en_kotu": -405.2,
+     "isabet": 0.596
+    },
+    "bp_4": {
+     "n": 208,
+     "ort": 21.2,
+     "sd": 183.8,
+     "sharpe_islem": 0.115,
+     "en_kotu": -411.6,
+     "isabet": 0.601
+    }
+   },
+   "YENI": {
+    "bp_yok": {
+     "n": 301,
+     "ort": 30.9,
+     "sd": 172.9,
+     "sharpe_islem": 0.179,
+     "en_kotu": -612.5,
+     "isabet": 0.565
+    },
+    "bp_2": {
+     "n": 301,
+     "ort": 14.2,
+     "sd": 161.7,
+     "sharpe_islem": 0.088,
+     "en_kotu": -498.6,
+     "isabet": 0.532
+    },
+    "bp_3": {
+     "n": 301,
+     "ort": 24.3,
+     "sd": 174.7,
+     "sharpe_islem": 0.139,
+     "en_kotu": -498.6,
+     "isabet": 0.551
+    },
+    "bp_4": {
+     "n": 301,
+     "ort": 28.5,
+     "sd": 174.7,
+     "sharpe_islem": 0.163,
+     "en_kotu": -498.6,
+     "isabet": 0.558
+    }
+   }
+  }
+ },
+ "beslemeler": {
+  "MT5": {
+   "ESKI": {
+    "n": 202,
+    "ort": 29.6,
+    "sd": 186.4,
+    "sharpe_islem": 0.159,
+    "en_kotu": -478.2,
+    "isabet": 0.599
+   },
+   "YENI": {
+    "n": 300,
+    "ort": 30.5,
+    "sd": 173.2,
+    "sharpe_islem": 0.176,
+    "en_kotu": -622.8,
+    "isabet": 0.56
+   },
+   "TUM": {
+    "n": 502,
+    "ort": 30.1,
+    "sd": 178.7,
+    "sharpe_islem": 0.169,
+    "en_kotu": -622.8,
+    "isabet": 0.576
+   },
+   "taban_S0": {
+    "n": 1587,
+    "ort": -4.3,
+    "sd": 139.2,
+    "sharpe_islem": -0.031,
+    "en_kotu": -1242.5,
+    "isabet": 0.539
+   }
+  },
+  "EET30": {
+   "ESKI": {
+    "n": 218,
+    "ort": 33.2,
+    "sd": 190.7,
+    "sharpe_islem": 0.174,
+    "en_kotu": -482.2,
+    "isabet": 0.606
+   },
+   "YENI": {
+    "n": 239,
+    "ort": 27.6,
+    "sd": 192.8,
+    "sharpe_islem": 0.143,
+    "en_kotu": -981.9,
+    "isabet": 0.544
+   },
+   "TUM": {
+    "n": 457,
+    "ort": 30.3,
+    "sd": 191.8,
+    "sharpe_islem": 0.158,
+    "en_kotu": -981.9,
+    "isabet": 0.573
+   },
+   "taban_S0": {
+    "n": 1491,
+    "ort": -3.7,
+    "sd": 141.5,
+    "sharpe_islem": -0.026,
+    "en_kotu": -1259.4,
+    "isabet": 0.543
+   }
+  },
+  "NQ": {
+   "ESKI": {
+    "n": 80,
+    "ort": 46.8,
+    "sd": 162.0,
+    "sharpe_islem": 0.289,
+    "en_kotu": -362.6,
+    "isabet": 0.65
+   },
+   "YENI": {
+    "n": 131,
+    "ort": 33.2,
+    "sd": 134.3,
+    "sharpe_islem": 0.247,
+    "en_kotu": -270.1,
+    "isabet": 0.557
+   },
+   "TUM": {
+    "n": 211,
+    "ort": 38.4,
+    "sd": 145.6,
+    "sharpe_islem": 0.264,
+    "en_kotu": -362.6,
+    "isabet": 0.592
+   },
+   "taban_S0": {
+    "n": 672,
+    "ort": -6.2,
+    "sd": 139.6,
+    "sharpe_islem": -0.044,
+    "en_kotu": -1619.0,
+    "isabet": 0.531
+   }
+  }
+ },
+ "kesisimler": {
+  "H1_ters_egri": {
+   "n": 64,
+   "ile": 119.2,
+   "olmadan": 18.2,
+   "P": 0.996,
+   "ESKI": {
+    "n": 39,
+    "ile": 97.6,
+    "olmadan": 15.5
+   },
+   "YENI": {
+    "n": 25,
+    "ile": 152.8,
+    "olmadan": 19.9
+   },
+   "sinif": "B"
+  },
+  "H2_vix18": {
+   "n": 331,
+   "ile": 38.0,
+   "olmadan": 17.8,
+   "P": 0.931,
+   "ESKI": {
+    "n": 146,
+    "ile": 41.7,
+    "olmadan": 5.5
+   },
+   "YENI": {
+    "n": 185,
+    "ile": 35.0,
+    "olmadan": 24.3
+   },
+   "sinif": "C+"
+  },
+  "H3_c3b": {
+   "n": 101,
+   "ile": 66.8,
+   "olmadan": 22.0,
+   "P": 0.983,
+   "ESKI": {
+    "n": 33,
+    "ile": 71.9,
+    "olmadan": 23.1
+   },
+   "YENI": {
+    "n": 68,
+    "ile": 64.3,
+    "olmadan": 21.1
+   },
+   "sinif": "B"
+  },
+  "H4_cuma": {
+   "n": 94,
+   "ile": 20.2,
+   "olmadan": 33.3,
+   "P": 0.246,
+   "ESKI": {
+    "n": 35,
+    "ile": 7.6,
+    "olmadan": 35.6
+   },
+   "YENI": {
+    "n": 59,
+    "ile": 27.7,
+    "olmadan": 31.7
+   },
+   "sinif": "X"
+  },
+  "H5_ay_sonu": {
+   "n": 88,
+   "ile": 52.6,
+   "olmadan": 26.3,
+   "P": 0.917,
+   "ESKI": {
+    "n": 41,
+    "ile": 65.9,
+    "olmadan": 22.3
+   },
+   "YENI": {
+    "n": 47,
+    "ile": 41.0,
+    "olmadan": 29.0
+   },
+   "sinif": "C+"
+  }
+ },
+ "portfoy": {
+  "canli_4_kol": {
+   "TUM": {
+    "yillik_risk_birimi": 2624.1,
+    "sharpe": 1.54,
+    "maxDD": -1657.4
+   },
+   "ESKI": {
+    "yillik_risk_birimi": 2383.1,
+    "sharpe": 1.38,
+    "maxDD": -1657.4
+   },
+   "YENI": {
+    "yillik_risk_birimi": 2808.4,
+    "sharpe": 1.66,
+    "maxDD": -1635.9
+   }
+  },
+  "canli_+_U": {
+   "TUM": {
+    "yillik_risk_birimi": 2760.8,
+    "sharpe": 1.45,
+    "maxDD": -1725.4
+   },
+   "ESKI": {
+    "yillik_risk_birimi": 2490.0,
+    "sharpe": 1.42,
+    "maxDD": -1725.4
+   },
+   "YENI": {
+    "yillik_risk_birimi": 2967.9,
+    "sharpe": 1.48,
+    "maxDD": -1660.6
+   }
+  }
+ },
+ "portfoy_korelasyon_U": {
+  "C3b": 0.66,
+  "ORBxVIX": 0.58,
+  "CAPREV": 0.91,
+  "KSG": NaN,
+  "U": 1.0
+ },
+ "verdict": "SHADOW",
+ "sinif": {
+  "S>=2": "C+",
+  "+ters_VIX_egrisi": "B",
+  "+C3b": "B",
+  "stop": "kullanma"
+ },
+ "verdict_gerekce": "Birleşik kural tek başına portföye eklenince Sharpe artmıyor (canlı kollarla yüksek korelasyon). Değer: mevcut C3b/KSG'de doz artırma (ters eğri, C3b kesişimi B) ve tek tetikli gecede açmama. Canlı kararı kullanıcıda.",
+ "kanit": "research/korku_birlesik_20261118/RAPOR.md"
+}

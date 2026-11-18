@@ -1,0 +1,654 @@
+{
+ "DUKA": {
+  "U": {
+   "ESKI": {
+    "n": 208,
+    "ort": 30.9,
+    "sd": 188.3,
+    "sharpe_islem": 0.164,
+    "en_kotu": -477.9,
+    "isabet": 0.611
+   },
+   "YENI": {
+    "n": 301,
+    "ort": 30.9,
+    "sd": 172.9,
+    "sharpe_islem": 0.179,
+    "en_kotu": -612.5,
+    "isabet": 0.565
+   },
+   "TUM": {
+    "n": 509,
+    "ort": 30.9,
+    "sd": 179.3,
+    "sharpe_islem": 0.172,
+    "en_kotu": -612.5,
+    "isabet": 0.583
+   },
+   "taban_S0": {
+    "n": 1593,
+    "ort": -4.2,
+    "sd": 139.1,
+    "sharpe_islem": -0.03,
+    "en_kotu": -1262.5,
+    "isabet": 0.537
+   }
+  },
+  "doz": {
+   "ESKI": {
+    "S1": {
+     "n": 90,
+     "ort": -5.3,
+     "sd": 152.0,
+     "sharpe_islem": -0.035,
+     "en_kotu": -466.7,
+     "isabet": 0.578
+    },
+    "S2": {
+     "n": 62,
+     "ort": 35.7,
+     "sd": 145.8,
+     "sharpe_islem": 0.245,
+     "en_kotu": -290.9,
+     "isabet": 0.597
+    },
+    "S3": {
+     "n": 56,
+     "ort": 83.6,
+     "sd": 257.1,
+     "sharpe_islem": 0.325,
+     "en_kotu": -477.9,
+     "isabet": 0.679
+    }
+   },
+   "YENI": {
+    "S1": {
+     "n": 132,
+     "ort": 9.0,
+     "sd": 135.2,
+     "sharpe_islem": 0.066,
+     "en_kotu": -264.4,
+     "isabet": 0.508
+    },
+    "S2": {
+     "n": 84,
+     "ort": 54.0,
+     "sd": 173.6,
+     "sharpe_islem": 0.311,
+     "en_kotu": -461.9,
+     "isabet": 0.631
+    },
+    "S3": {
+     "n": 85,
+     "ort": 42.1,
+     "sd": 215.1,
+     "sharpe_islem": 0.196,
+     "en_kotu": -612.5,
+     "isabet": 0.588
+    }
+   }
+  },
+  "stop": {
+   "ESKI": {
+    "bp_yok": {
+     "n": 208,
+     "ort": 30.9,
+     "sd": 188.3,
+     "sharpe_islem": 0.164,
+     "en_kotu": -477.9,
+     "isabet": 0.611
+    },
+    "bp_2": {
+     "n": 208,
+     "ort": 18.0,
+     "sd": 170.8,
+     "sharpe_islem": 0.105,
+     "en_kotu": -405.2,
+     "isabet": 0.572
+    },
+    "bp_3": {
+     "n": 208,
+     "ort": 20.7,
+     "sd": 180.6,
+     "sharpe_islem": 0.114,
+     "en_kotu": -405.2,
+     "isabet": 0.596
+    },
+    "bp_4": {
+     "n": 208,
+     "ort": 21.2,
+     "sd": 183.8,
+     "sharpe_islem": 0.115,
+     "en_kotu": -411.6,
+     "isabet": 0.601
+    }
+   },
+   "YENI": {
+    "bp_yok": {
+     "n": 301,
+     "ort": 30.9,
+     "sd": 172.9,
+     "sharpe_islem": 0.179,
+     "en_kotu": -612.5,
+     "isabet": 0.565
+    },
+    "bp_2": {
+     "n": 301,
+     "ort": 14.2,
+     "sd": 161.7,
+     "sharpe_islem": 0.088,
+     "en_kotu": -498.6,
+     "isabet": 0.532
+    },
+    "bp_3": {
+     "n": 301,
+     "ort": 24.3,
+     "sd": 174.7,
+     "sharpe_islem": 0.139,
+     "en_kotu": -498.6,
+     "isabet": 0.551
+    },
+    "bp_4": {
+     "n": 301,
+     "ort": 28.5,
+     "sd": 174.7,
+     "sharpe_islem": 0.163,
+     "en_kotu": -498.6,
+     "isabet": 0.558
+    }
+   }
+  }
+ },
+ "MT5": {
+  "U": {
+   "ESKI": {
+    "n": 202,
+    "ort": 29.6,
+    "sd": 186.4,
+    "sharpe_islem": 0.159,
+    "en_kotu": -478.2,
+    "isabet": 0.599
+   },
+   "YENI": {
+    "n": 300,
+    "ort": 30.5,
+    "sd": 173.2,
+    "sharpe_islem": 0.176,
+    "en_kotu": -622.8,
+    "isabet": 0.56
+   },
+   "TUM": {
+    "n": 502,
+    "ort": 30.1,
+    "sd": 178.7,
+    "sharpe_islem": 0.169,
+    "en_kotu": -622.8,
+    "isabet": 0.576
+   },
+   "taban_S0": {
+    "n": 1587,
+    "ort": -4.3,
+    "sd": 139.2,
+    "sharpe_islem": -0.031,
+    "en_kotu": -1242.5,
+    "isabet": 0.539
+   }
+  },
+  "doz": {
+   "ESKI": {
+    "S1": {
+     "n": 93,
+     "ort": -2.1,
+     "sd": 146.1,
+     "sharpe_islem": -0.014,
+     "en_kotu": -472.5,
+     "isabet": 0.581
+    },
+    "S2": {
+     "n": 55,
+     "ort": 19.3,
+     "sd": 139.3,
+     "sharpe_islem": 0.138,
+     "en_kotu": -323.3,
+     "isabet": 0.564
+    },
+    "S3": {
+     "n": 54,
+     "ort": 94.5,
+     "sd": 259.8,
+     "sharpe_islem": 0.364,
+     "en_kotu": -478.2,
+     "isabet": 0.667
+    }
+   },
+   "YENI": {
+    "S1": {
+     "n": 137,
+     "ort": 20.0,
+     "sd": 136.9,
+     "sharpe_islem": 0.146,
+     "en_kotu": -270.9,
+     "isabet": 0.526
+    },
+    "S2": {
+     "n": 82,
+     "ort": 38.6,
+     "sd": 173.9,
+     "sharpe_islem": 0.222,
+     "en_kotu": -465.5,
+     "isabet": 0.598
+    },
+    "S3": {
+     "n": 81,
+     "ort": 40.1,
+     "sd": 220.1,
+     "sharpe_islem": 0.182,
+     "en_kotu": -622.8,
+     "isabet": 0.58
+    }
+   }
+  },
+  "stop": {
+   "ESKI": {
+    "bp_yok": {
+     "n": 202,
+     "ort": 29.6,
+     "sd": 186.4,
+     "sharpe_islem": 0.159,
+     "en_kotu": -478.2,
+     "isabet": 0.599
+    },
+    "bp_2": {
+     "n": 202,
+     "ort": 13.5,
+     "sd": 164.3,
+     "sharpe_islem": 0.082,
+     "en_kotu": -347.8,
+     "isabet": 0.554
+    },
+    "bp_3": {
+     "n": 202,
+     "ort": 19.3,
+     "sd": 178.3,
+     "sharpe_islem": 0.108,
+     "en_kotu": -347.8,
+     "isabet": 0.584
+    },
+    "bp_4": {
+     "n": 202,
+     "ort": 19.7,
+     "sd": 182.0,
+     "sharpe_islem": 0.108,
+     "en_kotu": -407.0,
+     "isabet": 0.589
+    }
+   },
+   "YENI": {
+    "bp_yok": {
+     "n": 300,
+     "ort": 30.5,
+     "sd": 173.2,
+     "sharpe_islem": 0.176,
+     "en_kotu": -622.8,
+     "isabet": 0.56
+    },
+    "bp_2": {
+     "n": 300,
+     "ort": 11.4,
+     "sd": 160.9,
+     "sharpe_islem": 0.071,
+     "en_kotu": -354.2,
+     "isabet": 0.523
+    },
+    "bp_3": {
+     "n": 300,
+     "ort": 24.0,
+     "sd": 174.1,
+     "sharpe_islem": 0.138,
+     "en_kotu": -354.2,
+     "isabet": 0.547
+    },
+    "bp_4": {
+     "n": 300,
+     "ort": 27.6,
+     "sd": 175.6,
+     "sharpe_islem": 0.157,
+     "en_kotu": -405.3,
+     "isabet": 0.553
+    }
+   }
+  }
+ },
+ "EET30": {
+  "U": {
+   "ESKI": {
+    "n": 218,
+    "ort": 33.2,
+    "sd": 190.7,
+    "sharpe_islem": 0.174,
+    "en_kotu": -482.2,
+    "isabet": 0.606
+   },
+   "YENI": {
+    "n": 239,
+    "ort": 27.6,
+    "sd": 192.8,
+    "sharpe_islem": 0.143,
+    "en_kotu": -981.9,
+    "isabet": 0.544
+   },
+   "TUM": {
+    "n": 457,
+    "ort": 30.3,
+    "sd": 191.8,
+    "sharpe_islem": 0.158,
+    "en_kotu": -981.9,
+    "isabet": 0.573
+   },
+   "taban_S0": {
+    "n": 1491,
+    "ort": -3.7,
+    "sd": 141.5,
+    "sharpe_islem": -0.026,
+    "en_kotu": -1259.4,
+    "isabet": 0.543
+   }
+  },
+  "doz": {
+   "ESKI": {
+    "S1": {
+     "n": 97,
+     "ort": -0.2,
+     "sd": 152.2,
+     "sharpe_islem": -0.001,
+     "en_kotu": -478.6,
+     "isabet": 0.577
+    },
+    "S2": {
+     "n": 61,
+     "ort": 20.9,
+     "sd": 130.3,
+     "sharpe_islem": 0.161,
+     "en_kotu": -292.7,
+     "isabet": 0.59
+    },
+    "S3": {
+     "n": 60,
+     "ort": 99.6,
+     "sd": 266.5,
+     "sharpe_islem": 0.374,
+     "en_kotu": -482.2,
+     "isabet": 0.667
+    }
+   },
+   "YENI": {
+    "S1": {
+     "n": 101,
+     "ort": 13.3,
+     "sd": 183.0,
+     "sharpe_islem": 0.073,
+     "en_kotu": -981.9,
+     "isabet": 0.515
+    },
+    "S2": {
+     "n": 71,
+     "ort": 42.8,
+     "sd": 179.6,
+     "sharpe_islem": 0.238,
+     "en_kotu": -461.2,
+     "isabet": 0.592
+    },
+    "S3": {
+     "n": 67,
+     "ort": 33.2,
+     "sd": 217.6,
+     "sharpe_islem": 0.153,
+     "en_kotu": -356.0,
+     "isabet": 0.537
+    }
+   }
+  },
+  "stop": {
+   "ESKI": {
+    "bp_yok": {
+     "n": 218,
+     "ort": 33.2,
+     "sd": 190.7,
+     "sharpe_islem": 0.174,
+     "en_kotu": -482.2,
+     "isabet": 0.606
+    },
+    "bp_2": {
+     "n": 218,
+     "ort": 18.4,
+     "sd": 172.2,
+     "sharpe_islem": 0.107,
+     "en_kotu": -510.1,
+     "isabet": 0.569
+    },
+    "bp_3": {
+     "n": 218,
+     "ort": 23.1,
+     "sd": 184.7,
+     "sharpe_islem": 0.125,
+     "en_kotu": -510.1,
+     "isabet": 0.596
+    },
+    "bp_4": {
+     "n": 218,
+     "ort": 23.7,
+     "sd": 187.5,
+     "sharpe_islem": 0.126,
+     "en_kotu": -510.1,
+     "isabet": 0.601
+    }
+   },
+   "YENI": {
+    "bp_yok": {
+     "n": 239,
+     "ort": 27.6,
+     "sd": 192.8,
+     "sharpe_islem": 0.143,
+     "en_kotu": -981.9,
+     "isabet": 0.544
+    },
+    "bp_2": {
+     "n": 239,
+     "ort": 6.1,
+     "sd": 192.2,
+     "sharpe_islem": 0.032,
+     "en_kotu": -1490.2,
+     "isabet": 0.51
+    },
+    "bp_3": {
+     "n": 239,
+     "ort": 19.1,
+     "sd": 206.9,
+     "sharpe_islem": 0.093,
+     "en_kotu": -1490.2,
+     "isabet": 0.531
+    },
+    "bp_4": {
+     "n": 239,
+     "ort": 23.8,
+     "sd": 207.6,
+     "sharpe_islem": 0.115,
+     "en_kotu": -1490.2,
+     "isabet": 0.54
+    }
+   }
+  }
+ },
+ "NQ": {
+  "U": {
+   "ESKI": {
+    "n": 80,
+    "ort": 46.8,
+    "sd": 162.0,
+    "sharpe_islem": 0.289,
+    "en_kotu": -362.6,
+    "isabet": 0.65
+   },
+   "YENI": {
+    "n": 131,
+    "ort": 33.2,
+    "sd": 134.3,
+    "sharpe_islem": 0.247,
+    "en_kotu": -270.1,
+    "isabet": 0.557
+   },
+   "TUM": {
+    "n": 211,
+    "ort": 38.4,
+    "sd": 145.6,
+    "sharpe_islem": 0.264,
+    "en_kotu": -362.6,
+    "isabet": 0.592
+   },
+   "taban_S0": {
+    "n": 672,
+    "ort": -6.2,
+    "sd": 139.6,
+    "sharpe_islem": -0.044,
+    "en_kotu": -1619.0,
+    "isabet": 0.531
+   }
+  },
+  "doz": {
+   "ESKI": {
+    "S1": {
+     "n": 34,
+     "ort": 26.9,
+     "sd": 125.1,
+     "sharpe_islem": 0.215,
+     "en_kotu": -320.5,
+     "isabet": 0.647
+    },
+    "S2": {
+     "n": 29,
+     "ort": 35.6,
+     "sd": 131.0,
+     "sharpe_islem": 0.272,
+     "en_kotu": -263.3,
+     "isabet": 0.621
+    },
+    "S3": {
+     "n": 17,
+     "ort": 105.9,
+     "sd": 241.6,
+     "sharpe_islem": 0.438,
+     "en_kotu": -362.6,
+     "isabet": 0.706
+    }
+   },
+   "YENI": {
+    "S1": {
+     "n": 58,
+     "ort": 15.6,
+     "sd": 132.0,
+     "sharpe_islem": 0.118,
+     "en_kotu": -201.9,
+     "isabet": 0.5
+    },
+    "S2": {
+     "n": 40,
+     "ort": 59.7,
+     "sd": 122.6,
+     "sharpe_islem": 0.487,
+     "en_kotu": -185.4,
+     "isabet": 0.65
+    },
+    "S3": {
+     "n": 33,
+     "ort": 32.0,
+     "sd": 146.3,
+     "sharpe_islem": 0.219,
+     "en_kotu": -270.1,
+     "isabet": 0.545
+    }
+   }
+  },
+  "stop": {
+   "ESKI": {
+    "bp_yok": {
+     "n": 80,
+     "ort": 46.8,
+     "sd": 162.0,
+     "sharpe_islem": 0.289,
+     "en_kotu": -362.6,
+     "isabet": 0.65
+    },
+    "bp_2": {
+     "n": 80,
+     "ort": 38.7,
+     "sd": 165.8,
+     "sharpe_islem": 0.233,
+     "en_kotu": -201.8,
+     "isabet": 0.625
+    },
+    "bp_3": {
+     "n": 80,
+     "ort": 38.1,
+     "sd": 171.6,
+     "sharpe_islem": 0.222,
+     "en_kotu": -301.8,
+     "isabet": 0.637
+    },
+    "bp_4": {
+     "n": 80,
+     "ort": 46.3,
+     "sd": 163.3,
+     "sharpe_islem": 0.284,
+     "en_kotu": -401.8,
+     "isabet": 0.65
+    }
+   },
+   "YENI": {
+    "bp_yok": {
+     "n": 131,
+     "ort": 33.2,
+     "sd": 134.3,
+     "sharpe_islem": 0.247,
+     "en_kotu": -270.1,
+     "isabet": 0.557
+    },
+    "bp_2": {
+     "n": 131,
+     "ort": 22.7,
+     "sd": 137.9,
+     "sharpe_islem": 0.165,
+     "en_kotu": -201.8,
+     "isabet": 0.542
+    },
+    "bp_3": {
+     "n": 131,
+     "ort": 28.6,
+     "sd": 135.3,
+     "sharpe_islem": 0.211,
+     "en_kotu": -301.8,
+     "isabet": 0.55
+    },
+    "bp_4": {
+     "n": 131,
+     "ort": 33.2,
+     "sd": 134.3,
+     "sharpe_islem": 0.247,
+     "en_kotu": -270.1,
+     "isabet": 0.557
+    }
+   }
+  }
+ },
+ "hukum": {
+  "doz_tekduze": false,
+  "doz_S3>S1": true,
+  "doz_sinif": "C+",
+  "stop_gecen": [],
+  "onerilen_stop": "bp_yok",
+  "beslemeler_U_arti": {
+   "MT5": true,
+   "EET30": true,
+   "NQ": true
+  }
+ }
+}
