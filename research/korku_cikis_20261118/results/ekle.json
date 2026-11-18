@@ -1,0 +1,162 @@
+{
+ "DUKA:K1": {
+  "cikis": "XP",
+  "ESKI": {
+   "ilk_n": 91,
+   "ilk_ort": 88.7,
+   "ek_n": 11,
+   "ek_ort": 104.4,
+   "sharpe_tek": 1.734,
+   "sharpe_ekli": 1.706
+  },
+  "YENI": {
+   "ilk_n": 117,
+   "ilk_ort": 68.9,
+   "ek_n": 27,
+   "ek_ort": 118.3,
+   "sharpe_tek": 1.354,
+   "sharpe_ekli": 1.545
+  },
+  "gecer": false
+ },
+ "DUKA:U2": {
+  "cikis": "XP",
+  "ESKI": {
+   "ilk_n": 100,
+   "ilk_ort": 80.1,
+   "ek_n": 16,
+   "ek_ort": 83.4,
+   "sharpe_tek": 1.674,
+   "sharpe_ekli": 1.611
+  },
+  "YENI": {
+   "ilk_n": 131,
+   "ilk_ort": 75.2,
+   "ek_n": 30,
+   "ek_ort": 90.2,
+   "sharpe_tek": 1.595,
+   "sharpe_ekli": 1.592
+  },
+  "gecer": false
+ },
+ "MT5:K1": {
+  "cikis": "XP",
+  "ESKI": {
+   "ilk_n": 82,
+   "ilk_ort": 81.4,
+   "ek_n": 8,
+   "ek_ort": 82.0,
+   "sharpe_tek": 1.498,
+   "sharpe_ekli": 1.436
+  },
+  "YENI": {
+   "ilk_n": 113,
+   "ilk_ort": 66.8,
+   "ek_n": 24,
+   "ek_ort": 112.1,
+   "sharpe_tek": 1.283,
+   "sharpe_ekli": 1.439
+  },
+  "gecer": false
+ },
+ "MT5:U2": {
+  "cikis": "XP",
+  "ESKI": {
+   "ilk_n": 95,
+   "ilk_ort": 78.1,
+   "ek_n": 13,
+   "ek_ort": 82.7,
+   "sharpe_tek": 1.601,
+   "sharpe_ekli": 1.528
+  },
+  "YENI": {
+   "ilk_n": 126,
+   "ilk_ort": 72.1,
+   "ek_n": 28,
+   "ek_ort": 81.9,
+   "sharpe_tek": 1.471,
+   "sharpe_ekli": 1.457
+  },
+  "gecer": false
+ },
+ "EET30:K1": {
+  "cikis": "XP",
+  "ESKI": {
+   "ilk_n": 90,
+   "ilk_ort": 86.1,
+   "ek_n": 12,
+   "ek_ort": 241.9,
+   "sharpe_tek": 1.472,
+   "sharpe_ekli": 1.493
+  },
+  "YENI": {
+   "ilk_n": 93,
+   "ilk_ort": 63.0,
+   "ek_n": 21,
+   "ek_ort": 104.2,
+   "sharpe_tek": 1.255,
+   "sharpe_ekli": 1.423
+  },
+  "gecer": true
+ },
+ "EET30:U2": {
+  "cikis": "XP",
+  "ESKI": {
+   "ilk_n": 100,
+   "ilk_ort": 80.2,
+   "ek_n": 19,
+   "ek_ort": 169.3,
+   "sharpe_tek": 1.472,
+   "sharpe_ekli": 1.513
+  },
+  "YENI": {
+   "ilk_n": 103,
+   "ilk_ort": 74.2,
+   "ek_n": 26,
+   "ek_ort": 78.5,
+   "sharpe_tek": 1.514,
+   "sharpe_ekli": 1.494
+  },
+  "gecer": false
+ },
+ "NQ:K1": {
+  "cikis": "XP",
+  "ESKI": {
+   "ilk_n": 38,
+   "ilk_ort": 38.7,
+   "ek_n": 4,
+   "ek_ort": 259.4,
+   "sharpe_tek": 0.564,
+   "sharpe_ekli": 0.79
+  },
+  "YENI": {
+   "ilk_n": 59,
+   "ilk_ort": 48.9,
+   "ek_n": 13,
+   "ek_ort": 72.2,
+   "sharpe_tek": 1.392,
+   "sharpe_ekli": 1.286
+  },
+  "gecer": false
+ },
+ "NQ:U2": {
+  "cikis": "XP",
+  "ESKI": {
+   "ilk_n": 41,
+   "ilk_ort": 40.5,
+   "ek_n": 4,
+   "ek_ort": 176.3,
+   "sharpe_tek": 0.627,
+   "sharpe_ekli": 0.759
+  },
+  "YENI": {
+   "ilk_n": 58,
+   "ilk_ort": 63.9,
+   "ek_n": 14,
+   "ek_ort": 110.5,
+   "sharpe_tek": 1.698,
+   "sharpe_ekli": 1.658
+  },
+  "gecer": false
+ }
+}

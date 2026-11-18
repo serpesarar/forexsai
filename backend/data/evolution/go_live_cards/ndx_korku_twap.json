@@ -129,5 +129,60 @@
    "taban": 2.7,
    "P": 0.564
   }
+ },
+ "cikis_alternatifi_XP": {
+  "tarih": "2026-11-18",
+  "kural": "ilk yükselen 16:00 kapanışında çık (d+1…d+5 içinde 16:00 > önceki 16:00; yoksa d+5)",
+  "kanit": "research/korku_cikis_20261118/ (PROTOCOL + RAPOR)",
+  "hukum": "B (ön kayıt 4/4) — EK-1 ile zayıfladı",
+  "YENI_XP": {
+   "n": 117,
+   "ort": 68.9,
+   "fark": 62.4,
+   "P": 0.998,
+   "sharpe": 1.354,
+   "maxDD": -1132.4,
+   "en_kotu": -782.9,
+   "isabet": 0.744,
+   "ort_gun": 1.66
+  },
+  "YENI_X1": {
+   "n": 147,
+   "ort": 44.1,
+   "fark": 47.2,
+   "sharpe": 1.231,
+   "maxDD": -841.1,
+   "en_kotu": -612.5,
+   "isabet": 0.565
+  },
+  "beslemeler": {
+   "MT5": {
+    "XP_sharpe": 1.375,
+    "X1_sharpe": 1.219
+   },
+   "EET30": {
+    "XP_sharpe": 1.371,
+    "X1_sharpe": 1.295
+   },
+   "NQ": {
+    "XP_sharpe": 0.944,
+    "X1_sharpe": 1.48
+   }
+  },
+  "tasima_US_endeksleri": {
+   "US30": {
+    "XP_sharpe": 0.695,
+    "X1_sharpe": 0.725
+   },
+   "US2000": {
+    "XP_sharpe": 0.797,
+    "X1_sharpe": 0.822
+   },
+   "US500": {
+    "XP_sharpe": 0.921,
+    "X1_sharpe": 0.627
+   }
+  },
+  "not": "İşlem başına +25 bp, isabet %60→%77, ama günlük Sharpe yalnız +0,12; NQ, US30 ve US2000'de Sharpe artmıyor, maxDD ~%35 kötü. Canlı kart değişmedi; XP gölge alternatif."
  }
 }

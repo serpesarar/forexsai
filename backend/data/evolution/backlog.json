@@ -5379,5 +5379,16 @@
     "source": "session",
     "created_at": "2026-11-18T15:54:28.235793+00:00",
     "updated_at": "2026-11-18T15:54:28.235934+00:00"
+  },
+  {
+    "id": "bl_23b96228c8",
+    "title": "Korku gecesi çıkışı X1 mi XP mi",
+    "detail": "KC-01: XP isabet %77 ve işlem başına +25 bp ama Sharpe +0,12, maxDD %35 kötü, NQ/US30/US2000'de Sharpe artmıyor; canlıya geçiş kullanıcı kararı",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T18:53:27.832880+00:00",
+    "updated_at": "2026-11-18T18:53:27.833026+00:00"
   }
 ]
