@@ -1059,5 +1059,29 @@
   "output": "research/ndx_tf_yapilandirma_20261117/RAPOR.md",
   "needs_backend": false,
   "est_runtime": "~25 dk (s10 dış envanter büyük CSV'leri okur)"
+ },
+ {
+  "id": "ndx_fitil210_15m",
+  "name": "NASDAQ 3,5 sa alt fitil ≥ %0,50 → 4 işlem kuralı (S1 AL TP %0,30/30 dk; S2–S4 15m ana gövde seviyeleri)",
+  "kind": "script",
+  "command": "zsh research/fitil210_15m_20261117/calistir.sh",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "Kullanıcı fikri: 210m (NY 17:00 çapalı) alt fitil ≥ fiyatın %0,50'si; S1 kapanışta AL TP %0,30 30 dk; ana mum = son 6×15m en büyük kırmızı gövde; S2 bölge içi kapanışta AL TP %0,18 SL gövde altı; S3 %48 üstü SAT TP %25 SL üst; S4 %50 üst fitil reddi SAT TP alt SL üst. Duka 1m 2018-26 + kutu MT5 M15 bağımsız, eşli plasebo, 16 varyant, sentetik birim testi, 17 Kas yeniden üretimi, SVG grafikler. Sonuç: dördü de X (defter §2.65 F21-01…05).",
+  "output": "research/fitil210_15m_20261117/RAPOR.md",
+  "needs_backend": false,
+  "est_runtime": "~20 sn"
+ },
+ {
+  "id": "ndx_vw_dip",
+  "name": "NASDAQ V/W dip sistemi — 4 ön kayıtlı tur kâr kapısı araması (giriş/TP/zaman/bağlam)",
+  "kind": "script",
+  "command": "zsh research/vw_dip_20261117/calistir.sh",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "3,5 sa fitil ve genel düşüş dibi çapalı V/W girişleri (fitil kapanışı, tepe kırılımı, gövde geri alımı, ikinci dip teyidi, boyun kırılımı/geri-testi) × TP/zaman/düşüş/VIX ızgarası; seçim KEŞİF 2018-21, ızgara plasebosu, birikimli Bonferroni, kör TEST 2021-26, MT5 bağımsız, GER40/US500/US30/US2000 taşıma, kart. Sonuç: geçen yok; W1b ∧ VIX ≥18,4 C+ SHADOW.",
+  "output": "research/vw_dip_20261117/RAPOR.md",
+  "needs_backend": false,
+  "est_runtime": "~20 dk"
  }
 ]

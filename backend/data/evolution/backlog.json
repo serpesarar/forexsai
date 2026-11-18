@@ -5324,5 +5324,49 @@
     "source": "session",
     "created_at": "2026-11-18T08:17:12.794763+00:00",
     "updated_at": "2026-11-18T08:17:12.794769+00:00"
+  },
+  {
+    "id": "bl_64b7f27c78",
+    "title": "Fitilli KSG canlı doz kararı (FK-02)",
+    "detail": "KSG zaten canlı (lot 0,5). Fitilli gecelerde (son 6 sa içinde 1h alt fitil ≥%0,50, üst ≤ alt/2) +28,6 bp vs fitilsiz +1,9; MT5 bağımsız teyitli, C+. Seçenek: fitilli gecede lot artışı (VIX25 dozu gibi) ya da yalnız fitilli KSG. Önce gölge etiketi (bot loguna fitil bayrağı), karar kullanıcıda",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T13:23:03.480372+00:00",
+    "updated_at": "2026-11-18T13:23:03.480504+00:00"
+  },
+  {
+    "id": "bl_fc7537e05b",
+    "title": "Geniş fitilli KSG felaket stopu + lot (FG-03)",
+    "detail": "B kuralı stopsuz ~24 sa: en kötü −633 bp, σ 204. Ön kayıtlı sına: felaket stopu (2/3/4 × ATR veya %2/%3) beklentiyi korur mu; portföyde KSG/C3b ile korelasyon ve lot (risk %0,25–0,5). Sonra gölge",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T13:50:50.082671+00:00",
+    "updated_at": "2026-11-18T13:50:50.082794+00:00"
+  },
+  {
+    "id": "bl_a3cb47bd6e",
+    "title": "Korku gecesi portföyü: tek pozisyon + felaket stopu (KG-02/03, FG-03)",
+    "detail": "Fitilli KSG (geniş), K1 TWAP altı, K3 son saat aynı gecelerde örtüşüyor; ön kayıtlı: birleşik tek-pozisyon kuralı (öncelik K1>fitil>K3), felaket stopu, lot/risk, mevcut canlı KSG/C3b ile korelasyon. Sonra gölge",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T14:11:24.910807+00:00",
+    "updated_at": "2026-11-18T14:11:24.910982+00:00"
+  },
+  {
+    "id": "bl_4fcdd35098",
+    "title": "Coşku aynası doğrulaması (KG-05)",
+    "detail": "2h büyük üst fitil ∧ 15:00→15:30 yukarı → 15:30 SAT ertesi 16:00 +11,8 bp (n 127) — §3-2'ye ters iz; ön kayıtlı ESKİ/YENİ + beslemeler",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-18T14:11:24.914055+00:00",
+    "updated_at": "2026-11-18T14:11:24.914059+00:00"
   }
 ]
