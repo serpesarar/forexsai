@@ -1,0 +1,174 @@
+{
+ "scope": "ndx_vix_ters_egri_5g",
+ "tarih": "2026-11-18T10:34:30",
+ "aciklama": "Dünkü kapanışta VIX ≥ VIX3M (ters vade eğrisi) → bugün NDX 09:30 AL, 5. işlem günü (d+4) 16:00 çık. Stopsuz 5 günlük tutuş.",
+ "ana_olcum": "Dukascopy NDX 1m 2018-01 → 2026-11, giriş 09:30 açılışı + spread, çıkış d+4 16:00 açılışı, finansman",
+ "tum_sinyaller": {
+  "n": 163,
+  "ort_bp": 111.8,
+  "medyan_bp": 142.7,
+  "isabet": 0.613,
+  "en_kotu_bp": -1578.3,
+  "std_bp": 441.5,
+  "en_iyi_5_haric_bp": 84.6,
+  "maxDD_bp": -7300.9,
+  "yillar": {
+   "2018": {
+    "n": 32,
+    "bp": 22.7
+   },
+   "2019": {
+    "n": 14,
+    "bp": 220.1
+   },
+   "2020": {
+    "n": 52,
+    "bp": 104.4
+   },
+   "2021": {
+    "n": 2,
+    "bp": 258.1
+   },
+   "2022": {
+    "n": 15,
+    "bp": 70.5
+   },
+   "2024": {
+    "n": 9,
+    "bp": 389.7
+   },
+   "2025": {
+    "n": 27,
+    "bp": 117.2
+   },
+   "2026": {
+    "n": 12,
+    "bp": 62.5
+   }
+  }
+ },
+ "tek_pozisyon": {
+  "n": 55,
+  "ort_bp": 74.6,
+  "medyan_bp": 172.8,
+  "isabet": 0.6,
+  "en_kotu_bp": -1578.3,
+  "std_bp": 457.6,
+  "en_iyi_5_haric_bp": 13.9,
+  "maxDD_bp": -2981.7,
+  "yillar": {
+   "2018": {
+    "n": 9,
+    "bp": -37.4
+   },
+   "2019": {
+    "n": 6,
+    "bp": 189.7
+   },
+   "2020": {
+    "n": 13,
+    "bp": -2.4
+   },
+   "2021": {
+    "n": 2,
+    "bp": 258.1
+   },
+   "2022": {
+    "n": 6,
+    "bp": 234.3
+   },
+   "2024": {
+    "n": 4,
+    "bp": 400.1
+   },
+   "2025": {
+    "n": 8,
+    "bp": -88.7
+   },
+   "2026": {
+    "n": 7,
+    "bp": 74.6
+   }
+  }
+ },
+ "epizot": 37,
+ "checks": {
+  "1_hacim": {
+   "deger": "163 işlem / 55 tek pozisyon / 37 epizot",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "tek poz +74.6 bp P 0.903",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "+6.4 / +140.4",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "+73.9",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "09:30 +74.6 vs 09:31 +85.5",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "tek pozisyon +74.6 (n 55)",
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "YENI": {
+  "n": 64,
+  "tetik": 137.87580362641913,
+  "taban": 6.3027728610718095,
+  "fark": 131.5730307653473,
+  "t": 2.5571670093819625,
+  "s15": 136.96519837949015,
+  "P": 0.99475
+ },
+ "beslemeler": {
+  "MT5": {
+   "n": 160,
+   "tetik": 96.25763996615504,
+   "taban": 16.55260913078023,
+   "fark": 79.70503083537481,
+   "t": 2.21247794115057,
+   "s15": 95.0512053138558,
+   "P": 0.98675
+  },
+  "EET30": {
+   "n": 140,
+   "tetik": 102.6669755728314,
+   "taban": 17.529630069670578,
+   "fark": 85.13734550316083,
+   "t": 1.9714572711319127,
+   "s15": 101.05296721787447,
+   "P": 0.977
+  },
+  "NQ": {
+   "n": 60,
+   "tetik": 76.00627129472724,
+   "taban": 16.347774134222412,
+   "fark": 59.65849716050483,
+   "t": 0.8669777563975425,
+   "s15": 75.77472348573471,
+   "P": 0.8165
+  }
+ },
+ "K1_ortusme": 0.301,
+ "K1_disi": {
+  "n": 114,
+  "tetik": 98.7319454818031,
+  "taban": 14.40664289309783,
+  "fark": 84.32530258870527,
+  "t": 2.1457133721051,
+  "s15": 97.95872635811129,
+  "P": 0.9825
+ },
+ "verdict": "SHADOW",
+ "sinif": "C+",
+ "verdict_gerekce": "Ön kayıt ölçütleri (YENİ kör +137,9 vs +6,3 bp P 0,995, MT5/EET30/NQ, n 163) B diyor; ama tek pozisyonda yalnız 55 işlem / 37 bağımsız epizot, en iyi 5 hariç +13,9 bp, en kötü −1.578 bp, birikimli maxDD −2.982 bp (−%30), 2018/2020/2025 eksi → kuyruk riski kabul edilemez; sınıf C+'ya indirildi. Canlıya uygun değil; ancak felaket stoplu / küçük lotlu bir sürüm ön kayıtla ayrıca sınanabilir.",
+ "kanit": "research/vix_egri_20261118/RAPOR.md"
+}
