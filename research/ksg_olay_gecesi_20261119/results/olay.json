@@ -1,0 +1,1158 @@
+{
+ "S": {
+  "MT5_NAS100": {
+   "TUM": {
+    "n": 2101,
+    "n_O": 480,
+    "ort_O": 10.0,
+    "ort_degil": -2.0,
+    "D_TUM": 12.0,
+    "P_D_TUM": 0.995,
+    "D_yeni": 7.7,
+    "bilesen": {
+     "fomc": {
+      "n": 67,
+      "ort": 29.0
+     },
+     "cpi": {
+      "n": 99,
+      "ort": 12.5
+     },
+     "nfp": {
+      "n": 95,
+      "ort": -4.8
+     },
+     "bil": {
+      "n": 297,
+      "ort": 12.4
+     }
+    },
+    "n_KSG": 1041,
+    "n_KSG_O": 242,
+    "KSG_O": 22.4,
+    "KSG_degil_O": 2.8,
+    "D_KSG": 19.6,
+    "P_D_KSG": 0.998,
+    "D_KSGdegil": 4.1,
+    "DiD": 15.4,
+    "P_DiD": 0.945,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 35,
+      "ort": 37.4
+     },
+     "cpi": {
+      "n": 49,
+      "ort": 34.8
+     },
+     "nfp": {
+      "n": 46,
+      "ort": -1.8
+     },
+     "bil": {
+      "n": 154,
+      "ort": 24.7
+     }
+    }
+   },
+   "KESIF": {
+    "n": 855,
+    "n_O": 191,
+    "ort_O": 8.2,
+    "ort_degil": 0.9,
+    "D_TUM": 7.3,
+    "P_D_TUM": 0.913,
+    "D_yeni": 4.7,
+    "bilesen": {
+     "fomc": {
+      "n": 26,
+      "ort": 28.5
+     },
+     "cpi": {
+      "n": 40,
+      "ort": 5.3
+     },
+     "nfp": {
+      "n": 39,
+      "ort": -0.7
+     },
+     "bil": {
+      "n": 117,
+      "ort": 8.3
+     }
+    },
+    "n_KSG": 434,
+    "n_KSG_O": 95,
+    "KSG_O": 23.0,
+    "KSG_degil_O": 3.2,
+    "D_KSG": 19.8,
+    "P_D_KSG": 0.976,
+    "D_KSGdegil": -4.9,
+    "DiD": 24.6,
+    "P_DiD": 0.93,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 15,
+      "ort": 45.9
+     },
+     "cpi": {
+      "n": 20,
+      "ort": 30.0
+     },
+     "nfp": {
+      "n": 12,
+      "ort": -15.1
+     },
+     "bil": {
+      "n": 63,
+      "ort": 22.5
+     }
+    }
+   },
+   "TEST": {
+    "n": 1246,
+    "n_O": 289,
+    "ort_O": 11.2,
+    "ort_degil": -4.1,
+    "D_TUM": 15.2,
+    "P_D_TUM": 0.984,
+    "D_yeni": 9.8,
+    "bilesen": {
+     "fomc": {
+      "n": 41,
+      "ort": 29.3
+     },
+     "cpi": {
+      "n": 59,
+      "ort": 17.3
+     },
+     "nfp": {
+      "n": 56,
+      "ort": -7.7
+     },
+     "bil": {
+      "n": 180,
+      "ort": 15.1
+     }
+    },
+    "n_KSG": 607,
+    "n_KSG_O": 147,
+    "KSG_O": 22.0,
+    "KSG_degil_O": 2.5,
+    "D_KSG": 19.5,
+    "P_D_KSG": 0.975,
+    "D_KSGdegil": 10.1,
+    "DiD": 9.4,
+    "P_DiD": 0.787,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 20,
+      "ort": 30.9
+     },
+     "cpi": {
+      "n": 29,
+      "ort": 38.2
+     },
+     "nfp": {
+      "n": 34,
+      "ort": 2.9
+     },
+     "bil": {
+      "n": 91,
+      "ort": 26.2
+     }
+    }
+   },
+   "hafta_gunu_esli": {
+    "KSG_O": 22.4,
+    "esli_taban": 2.7,
+    "fark": 19.7
+   },
+   "doz": {
+    "KESIF": {
+     "taban": 1.085,
+     "doz": 1.114
+    },
+    "TEST": {
+     "taban": 0.739,
+     "doz": 0.834
+    }
+   }
+  },
+  "DUKA_NDX": {
+   "TUM": {
+    "n": 2061,
+    "n_O": 473,
+    "ort_O": 9.3,
+    "ort_degil": -3.4,
+    "D_TUM": 12.7,
+    "P_D_TUM": 0.996,
+    "D_yeni": 8.6,
+    "bilesen": {
+     "fomc": {
+      "n": 66,
+      "ort": 28.7
+     },
+     "cpi": {
+      "n": 97,
+      "ort": 10.9
+     },
+     "nfp": {
+      "n": 95,
+      "ort": -4.8
+     },
+     "bil": {
+      "n": 293,
+      "ort": 11.9
+     }
+    },
+    "n_KSG": 1020,
+    "n_KSG_O": 242,
+    "KSG_O": 21.7,
+    "KSG_degil_O": 1.4,
+    "D_KSG": 20.3,
+    "P_D_KSG": 0.997,
+    "D_KSGdegil": 4.3,
+    "DiD": 16.0,
+    "P_DiD": 0.936,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 35,
+      "ort": 38.0
+     },
+     "cpi": {
+      "n": 48,
+      "ort": 33.5
+     },
+     "nfp": {
+      "n": 49,
+      "ort": 1.1
+     },
+     "bil": {
+      "n": 153,
+      "ort": 23.4
+     }
+    }
+   },
+   "KESIF": {
+    "n": 857,
+    "n_O": 191,
+    "ort_O": 7.6,
+    "ort_degil": -1.0,
+    "D_TUM": 8.6,
+    "P_D_TUM": 0.936,
+    "D_yeni": 5.9,
+    "bilesen": {
+     "fomc": {
+      "n": 26,
+      "ort": 28.2
+     },
+     "cpi": {
+      "n": 40,
+      "ort": 4.4
+     },
+     "nfp": {
+      "n": 39,
+      "ort": -1.9
+     },
+     "bil": {
+      "n": 117,
+      "ort": 7.6
+     }
+    },
+    "n_KSG": 436,
+    "n_KSG_O": 95,
+    "KSG_O": 22.6,
+    "KSG_degil_O": 1.9,
+    "D_KSG": 20.7,
+    "P_D_KSG": 0.987,
+    "D_KSGdegil": -3.3,
+    "DiD": 24.0,
+    "P_DiD": 0.932,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 15,
+      "ort": 45.4
+     },
+     "cpi": {
+      "n": 20,
+      "ort": 28.9
+     },
+     "nfp": {
+      "n": 13,
+      "ort": -7.0
+     },
+     "bil": {
+      "n": 62,
+      "ort": 21.2
+     }
+    }
+   },
+   "TEST": {
+    "n": 1204,
+    "n_O": 282,
+    "ort_O": 10.5,
+    "ort_degil": -5.1,
+    "D_TUM": 15.6,
+    "P_D_TUM": 0.983,
+    "D_yeni": 10.5,
+    "bilesen": {
+     "fomc": {
+      "n": 40,
+      "ort": 29.1
+     },
+     "cpi": {
+      "n": 57,
+      "ort": 15.5
+     },
+     "nfp": {
+      "n": 56,
+      "ort": -6.8
+     },
+     "bil": {
+      "n": 176,
+      "ort": 14.7
+     }
+    },
+    "n_KSG": 584,
+    "n_KSG_O": 147,
+    "KSG_O": 21.0,
+    "KSG_degil_O": 0.9,
+    "D_KSG": 20.1,
+    "P_D_KSG": 0.974,
+    "D_KSGdegil": 9.6,
+    "DiD": 10.5,
+    "P_DiD": 0.79,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 20,
+      "ort": 32.3
+     },
+     "cpi": {
+      "n": 28,
+      "ort": 36.8
+     },
+     "nfp": {
+      "n": 36,
+      "ort": 4.1
+     },
+     "bil": {
+      "n": 91,
+      "ort": 24.9
+     }
+    }
+   }
+  },
+  "MT5_US500": {
+   "TUM": {
+    "n": 1609,
+    "n_O": 368,
+    "ort_O": 6.4,
+    "ort_degil": -1.1,
+    "D_TUM": 7.5,
+    "P_D_TUM": 0.963,
+    "D_yeni": 4.7,
+    "bilesen": {
+     "fomc": {
+      "n": 52,
+      "ort": 16.0
+     },
+     "cpi": {
+      "n": 76,
+      "ort": 9.9
+     },
+     "nfp": {
+      "n": 72,
+      "ort": 3.1
+     },
+     "bil": {
+      "n": 228,
+      "ort": 8.4
+     }
+    },
+    "n_KSG": 791,
+    "n_KSG_O": 188,
+    "KSG_O": 8.7,
+    "KSG_degil_O": 1.2,
+    "D_KSG": 7.4,
+    "P_D_KSG": 0.9,
+    "D_KSGdegil": 7.4,
+    "DiD": 0.0,
+    "P_DiD": 0.512,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 27,
+      "ort": 11.7
+     },
+     "cpi": {
+      "n": 37,
+      "ort": 26.9
+     },
+     "nfp": {
+      "n": 42,
+      "ort": 6.9
+     },
+     "bil": {
+      "n": 114,
+      "ort": 6.1
+     }
+    }
+   },
+   "KESIF": {
+    "n": 364,
+    "n_O": 79,
+    "ort_O": 4.3,
+    "ort_degil": 7.9,
+    "D_TUM": -3.6,
+    "P_D_TUM": 0.373,
+    "D_yeni": -6.6,
+    "bilesen": {
+     "fomc": {
+      "n": 11,
+      "ort": 16.5
+     },
+     "cpi": {
+      "n": 17,
+      "ort": 6.0
+     },
+     "nfp": {
+      "n": 16,
+      "ort": 24.0
+     },
+     "bil": {
+      "n": 48,
+      "ort": 0.6
+     }
+    },
+    "n_KSG": 190,
+    "n_KSG_O": 45,
+    "KSG_O": 10.5,
+    "KSG_degil_O": 5.9,
+    "D_KSG": 4.6,
+    "P_D_KSG": 0.698,
+    "D_KSGdegil": -13.9,
+    "DiD": 18.5,
+    "P_DiD": 0.938,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 8,
+      "ort": 25.6
+     },
+     "cpi": {
+      "n": 10,
+      "ort": 26.4
+     },
+     "nfp": {
+      "n": 6,
+      "ort": 44.0
+     },
+     "bil": {
+      "n": 28,
+      "ort": -5.9
+     }
+    }
+   },
+   "TEST": {
+    "n": 1245,
+    "n_O": 289,
+    "ort_O": 7.0,
+    "ort_degil": -3.7,
+    "D_TUM": 10.8,
+    "P_D_TUM": 0.989,
+    "D_yeni": 8.0,
+    "bilesen": {
+     "fomc": {
+      "n": 41,
+      "ort": 15.9
+     },
+     "cpi": {
+      "n": 59,
+      "ort": 11.1
+     },
+     "nfp": {
+      "n": 56,
+      "ort": -2.9
+     },
+     "bil": {
+      "n": 180,
+      "ort": 10.5
+     }
+    },
+    "n_KSG": 601,
+    "n_KSG_O": 143,
+    "KSG_O": 8.1,
+    "KSG_degil_O": -0.2,
+    "D_KSG": 8.3,
+    "P_D_KSG": 0.864,
+    "D_KSGdegil": 13.0,
+    "DiD": -4.7,
+    "P_DiD": 0.296,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 19,
+      "ort": 5.8
+     },
+     "cpi": {
+      "n": 27,
+      "ort": 27.0
+     },
+     "nfp": {
+      "n": 36,
+      "ort": 0.7
+     },
+     "bil": {
+      "n": 86,
+      "ort": 10.0
+     }
+    }
+   }
+  },
+  "MT5_US30": {
+   "TUM": {
+    "n": 2073,
+    "n_O": 474,
+    "ort_O": 3.9,
+    "ort_degil": -2.5,
+    "D_TUM": 6.4,
+    "P_D_TUM": 0.965,
+    "D_yeni": 5.9,
+    "bilesen": {
+     "fomc": {
+      "n": 66,
+      "ort": 9.7
+     },
+     "cpi": {
+      "n": 98,
+      "ort": 2.4
+     },
+     "nfp": {
+      "n": 93,
+      "ort": 4.7
+     },
+     "bil": {
+      "n": 294,
+      "ort": 5.6
+     }
+    },
+    "n_KSG": 1050,
+    "n_KSG_O": 235,
+    "KSG_O": 6.5,
+    "KSG_degil_O": -1.3,
+    "D_KSG": 7.8,
+    "P_D_KSG": 0.955,
+    "D_KSGdegil": 5.1,
+    "DiD": 2.7,
+    "P_DiD": 0.672,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 34,
+      "ort": 9.5
+     },
+     "cpi": {
+      "n": 48,
+      "ort": 13.1
+     },
+     "nfp": {
+      "n": 41,
+      "ort": 9.5
+     },
+     "bil": {
+      "n": 146,
+      "ort": 3.7
+     }
+    }
+   },
+   "KESIF": {
+    "n": 828,
+    "n_O": 185,
+    "ort_O": 5.7,
+    "ort_degil": 0.0,
+    "D_TUM": 5.7,
+    "P_D_TUM": 0.8,
+    "D_yeni": 5.7,
+    "bilesen": {
+     "fomc": {
+      "n": 25,
+      "ort": 16.7
+     },
+     "cpi": {
+      "n": 39,
+      "ort": -2.1
+     },
+     "nfp": {
+      "n": 37,
+      "ort": 15.3
+     },
+     "bil": {
+      "n": 114,
+      "ort": 5.3
+     }
+    },
+    "n_KSG": 430,
+    "n_KSG_O": 94,
+    "KSG_O": 14.5,
+    "KSG_degil_O": 1.2,
+    "D_KSG": 13.2,
+    "P_D_KSG": 0.945,
+    "D_KSGdegil": -1.9,
+    "DiD": 15.1,
+    "P_DiD": 0.912,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 16,
+      "ort": 18.8
+     },
+     "cpi": {
+      "n": 20,
+      "ort": 21.5
+     },
+     "nfp": {
+      "n": 11,
+      "ort": 22.2
+     },
+     "bil": {
+      "n": 59,
+      "ort": 5.2
+     }
+    }
+   },
+   "TEST": {
+    "n": 1245,
+    "n_O": 289,
+    "ort_O": 2.8,
+    "ort_degil": -4.2,
+    "D_TUM": 6.9,
+    "P_D_TUM": 0.969,
+    "D_yeni": 6.0,
+    "bilesen": {
+     "fomc": {
+      "n": 41,
+      "ort": 5.5
+     },
+     "cpi": {
+      "n": 59,
+      "ort": 5.4
+     },
+     "nfp": {
+      "n": 56,
+      "ort": -2.2
+     },
+     "bil": {
+      "n": 180,
+      "ort": 5.9
+     }
+    },
+    "n_KSG": 620,
+    "n_KSG_O": 141,
+    "KSG_O": 1.2,
+    "KSG_degil_O": -3.1,
+    "D_KSG": 4.3,
+    "P_D_KSG": 0.779,
+    "D_KSGdegil": 9.5,
+    "DiD": -5.2,
+    "P_DiD": 0.226,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 18,
+      "ort": 1.2
+     },
+     "cpi": {
+      "n": 28,
+      "ort": 7.1
+     },
+     "nfp": {
+      "n": 30,
+      "ort": 4.8
+     },
+     "bil": {
+      "n": 87,
+      "ort": 2.6
+     }
+    }
+   }
+  },
+  "MT5_US2000": {
+   "TUM": {
+    "n": 2099,
+    "n_O": 479,
+    "ort_O": 6.7,
+    "ort_degil": -0.9,
+    "D_TUM": 7.6,
+    "P_D_TUM": 0.947,
+    "D_yeni": 5.6,
+    "bilesen": {
+     "fomc": {
+      "n": 67,
+      "ort": 15.2
+     },
+     "cpi": {
+      "n": 99,
+      "ort": 9.8
+     },
+     "nfp": {
+      "n": 95,
+      "ort": 8.8
+     },
+     "bil": {
+      "n": 296,
+      "ort": 7.7
+     }
+    },
+    "n_KSG": 1058,
+    "n_KSG_O": 261,
+    "KSG_O": 14.9,
+    "KSG_degil_O": 6.0,
+    "D_KSG": 8.9,
+    "P_D_KSG": 0.941,
+    "D_KSGdegil": 4.5,
+    "DiD": 4.4,
+    "P_DiD": 0.697,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 39,
+      "ort": 19.9
+     },
+     "cpi": {
+      "n": 51,
+      "ort": 34.3
+     },
+     "nfp": {
+      "n": 48,
+      "ort": 16.1
+     },
+     "bil": {
+      "n": 164,
+      "ort": 13.9
+     }
+    }
+   },
+   "KESIF": {
+    "n": 854,
+    "n_O": 190,
+    "ort_O": 4.9,
+    "ort_degil": 3.9,
+    "D_TUM": 1.0,
+    "P_D_TUM": 0.561,
+    "D_yeni": 3.8,
+    "bilesen": {
+     "fomc": {
+      "n": 26,
+      "ort": 12.9
+     },
+     "cpi": {
+      "n": 40,
+      "ort": -9.5
+     },
+     "nfp": {
+      "n": 39,
+      "ort": 29.3
+     },
+     "bil": {
+      "n": 116,
+      "ort": 5.4
+     }
+    },
+    "n_KSG": 441,
+    "n_KSG_O": 107,
+    "KSG_O": 14.8,
+    "KSG_degil_O": 14.3,
+    "D_KSG": 0.5,
+    "P_D_KSG": 0.506,
+    "D_KSGdegil": -1.2,
+    "DiD": 1.7,
+    "P_DiD": 0.548,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 13,
+      "ort": 25.6
+     },
+     "cpi": {
+      "n": 22,
+      "ort": 12.4
+     },
+     "nfp": {
+      "n": 18,
+      "ort": 53.2
+     },
+     "bil": {
+      "n": 70,
+      "ort": 9.8
+     }
+    }
+   },
+   "TEST": {
+    "n": 1245,
+    "n_O": 289,
+    "ort_O": 7.9,
+    "ort_degil": -4.3,
+    "D_TUM": 12.2,
+    "P_D_TUM": 0.976,
+    "D_yeni": 6.9,
+    "bilesen": {
+     "fomc": {
+      "n": 41,
+      "ort": 16.7
+     },
+     "cpi": {
+      "n": 59,
+      "ort": 22.9
+     },
+     "nfp": {
+      "n": 56,
+      "ort": -5.4
+     },
+     "bil": {
+      "n": 180,
+      "ort": 9.3
+     }
+    },
+    "n_KSG": 617,
+    "n_KSG_O": 154,
+    "KSG_O": 15.0,
+    "KSG_degil_O": 0.1,
+    "D_KSG": 15.0,
+    "P_D_KSG": 0.984,
+    "D_KSGdegil": 8.1,
+    "DiD": 6.9,
+    "P_DiD": 0.766,
+    "KSG_bilesen": {
+     "fomc": {
+      "n": 26,
+      "ort": 17.1
+     },
+     "cpi": {
+      "n": 29,
+      "ort": 50.8
+     },
+     "nfp": {
+      "n": 30,
+      "ort": -6.1
+     },
+     "bil": {
+      "n": 94,
+      "ort": 17.0
+     }
+    }
+   }
+  }
+ },
+ "U1": {
+  "DUKA_M30_2016_17": {
+   "n": 357,
+   "n_O": 91,
+   "ort_O": 1.7,
+   "ort_degil": -0.7,
+   "D_TUM": 2.4,
+   "P_D_TUM": 0.664,
+   "D_yeni": 0.2,
+   "bilesen": {
+    "fomc": {
+     "n": 11,
+     "ort": 12.0
+    },
+    "cpi": {
+     "n": 16,
+     "ort": 6.9
+    },
+    "nfp": {
+     "n": 18,
+     "ort": 6.6
+    },
+    "bil": {
+     "n": 60,
+     "ort": 0.7
+    }
+   },
+   "n_KSG": 154,
+   "n_KSG_O": 36,
+   "KSG_O": 1.9,
+   "KSG_degil_O": 0.6,
+   "D_KSG": 1.3,
+   "P_D_KSG": 0.575,
+   "D_KSGdegil": 3.4,
+   "DiD": -2.1,
+   "P_DiD": 0.422,
+   "KSG_bilesen": {
+    "fomc": {
+     "n": 3,
+     "ort": 19.2
+    },
+    "cpi": {
+     "n": 8,
+     "ort": 7.1
+    },
+    "nfp": {
+     "n": 5,
+     "ort": 1.2
+    },
+    "bil": {
+     "n": 24,
+     "ort": 3.2
+    }
+   },
+   "aralik": [
+    "2016-03-31",
+    "2017-09-01"
+   ],
+   "doz": {
+    "taban": 0.255,
+    "doz": 0.287
+   }
+  },
+  "EET30": {
+   "n": 139,
+   "n_O": 28,
+   "ort_O": 5.3,
+   "ort_degil": -3.5,
+   "D_TUM": 8.8,
+   "P_D_TUM": 0.959,
+   "D_yeni": 5.3,
+   "bilesen": {
+    "fomc": {
+     "n": 4,
+     "ort": 11.4
+    },
+    "cpi": {
+     "n": 10,
+     "ort": 12.7
+    },
+    "nfp": {
+     "n": 4,
+     "ort": -1.8
+    },
+    "bil": {
+     "n": 14,
+     "ort": 0.5
+    }
+   },
+   "n_KSG": 54,
+   "n_KSG_O": 10,
+   "KSG_O": 11.4,
+   "KSG_degil_O": -3.0,
+   "D_KSG": 14.4,
+   "P_D_KSG": 0.984,
+   "D_KSGdegil": 5.8,
+   "DiD": 8.6,
+   "P_DiD": 0.751,
+   "KSG_bilesen": {
+    "fomc": {
+     "n": 1,
+     "ort": 1.1
+    },
+    "cpi": {
+     "n": 4,
+     "ort": 22.4
+    },
+    "nfp": {
+     "n": 1,
+     "ort": -0.7
+    },
+    "bil": {
+     "n": 5,
+     "ort": 6.6
+    }
+   },
+   "aralik": [
+    "2016-11-15",
+    "2017-10-19"
+   ]
+  }
+ },
+ "U2": {
+  "QQQ": {
+   "n": 2617,
+   "n_O": 603,
+   "ort_O": 4.4,
+   "ort_degil": -2.0,
+   "D_TUM": 6.3,
+   "P_D_TUM": 0.975,
+   "D_yeni": 4.6,
+   "bilesen": {
+    "fomc": {
+     "n": 83,
+     "ort": 19.0
+    },
+    "cpi": {
+     "n": 124,
+     "ort": -0.1
+    },
+    "nfp": {
+     "n": 122,
+     "ort": 4.9
+    },
+    "bil": {
+     "n": 352,
+     "ort": 4.9
+    }
+   },
+   "yarilar": {
+    "ilk": 5.0,
+    "ikinci": 7.4
+   },
+   "yarilar_yeni": {
+    "ilk": -1.2,
+    "ikinci": 9.5
+   }
+  },
+  "SPY": {
+   "n": 2617,
+   "n_O": 603,
+   "ort_O": 1.1,
+   "ort_degil": -3.2,
+   "D_TUM": 4.3,
+   "P_D_TUM": 0.886,
+   "D_yeni": 2.6,
+   "bilesen": {
+    "fomc": {
+     "n": 83,
+     "ort": 16.4
+    },
+    "cpi": {
+     "n": 124,
+     "ort": -1.6
+    },
+    "nfp": {
+     "n": 122,
+     "ort": 2.2
+    },
+    "bil": {
+     "n": 352,
+     "ort": 0.1
+    }
+   },
+   "yarilar": {
+    "ilk": 5.9,
+    "ikinci": 2.8
+   },
+   "yarilar_yeni": {
+    "ilk": 0.3,
+    "ikinci": 4.4
+   }
+  },
+  "DIA": {
+   "n": 2617,
+   "n_O": 603,
+   "ort_O": 0.4,
+   "ort_degil": -2.9,
+   "D_TUM": 3.3,
+   "P_D_TUM": 0.822,
+   "D_yeni": 2.1,
+   "bilesen": {
+    "fomc": {
+     "n": 83,
+     "ort": 12.9
+    },
+    "cpi": {
+     "n": 124,
+     "ort": -2.2
+    },
+    "nfp": {
+     "n": 122,
+     "ort": 2.9
+    },
+    "bil": {
+     "n": 352,
+     "ort": -0.8
+    }
+   },
+   "yarilar": {
+    "ilk": 5.6,
+    "ikinci": 1.1
+   },
+   "yarilar_yeni": {
+    "ilk": 1.2,
+    "ikinci": 2.6
+   }
+  },
+  "IWM": {
+   "n": 2617,
+   "n_O": 603,
+   "ort_O": 2.2,
+   "ort_degil": -2.6,
+   "D_TUM": 4.8,
+   "P_D_TUM": 0.892,
+   "D_yeni": 3.5,
+   "bilesen": {
+    "fomc": {
+     "n": 83,
+     "ort": 17.2
+    },
+    "cpi": {
+     "n": 124,
+     "ort": -3.7
+    },
+    "nfp": {
+     "n": 122,
+     "ort": 3.1
+    },
+    "bil": {
+     "n": 352,
+     "ort": 2.3
+    }
+   },
+   "yarilar": {
+    "ilk": 6.9,
+    "ikinci": 2.8
+   },
+   "yarilar_yeni": {
+    "ilk": 1.5,
+    "ikinci": 5.2
+   }
+  },
+  "havuz": {
+   "D_TUM": 4.7,
+   "P_D_TUM": 0.903,
+   "D_yeni": 3.2,
+   "P_D_yeni": 0.753,
+   "yarilar": {
+    "ilk": 5.8,
+    "ikinci": 3.5
+   }
+  }
+ },
+ "U3": {
+  "QQQ": {
+   "n_bil": 138,
+   "bil": -6.8,
+   "diger": 0.2,
+   "D": -7.0
+  },
+  "SPY": {
+   "n_bil": 138,
+   "bil": -3.3,
+   "diger": -1.7,
+   "D": -1.6
+  },
+  "DIA": {
+   "n_bil": 138,
+   "bil": -3.0,
+   "diger": -2.3,
+   "D": -0.7
+  },
+  "IWM": {
+   "n_bil": 138,
+   "bil": -4.5,
+   "diger": 3.0,
+   "D": -7.5
+  }
+ },
+ "kontrol_canli_ksg_ortusme": {
+  "canli": 1046,
+  "jenerik_ksg": 1041,
+  "ortak": 1040
+ },
+ "havuz_S_MT5_U1_Duka": {
+  "DiD": 13.0,
+  "P_DiD": 0.93,
+  "D_KSG": 17.2
+ },
+ "hukum": {
+  "H1": "B",
+  "H2": "X",
+  "h1_U1_pozitif": true,
+  "h1_doz": true,
+  "h2_U2_etf_pozitif": "4/4",
+  "h2_yeni_pozitif": "4/4",
+  "h2_kor": "3/3"
+ }
+}

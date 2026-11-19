@@ -1133,5 +1133,15 @@
   "category": "research",
   "what_it_does": "K1 + OPEX + XP paketinde TWAP eşiği gevşetmelerinin yalnız eklenen işlemlerini (MT5 4 endeks + Duka) ve günlük V1 vekiliyle 37 sektör/sanayi ETF ve mega-cap hissede korku gecesini (endeksle aynı gün / yeni gün / haberli) ölçer; eşit riskli portföy etkisi ve kutuda sembol erişimi.",
   "output": "research/korku_evren_20261119/RAPOR.md"
+ },
+ {
+  "id": "ksg_olay_gecesi",
+  "name": "KSG × olay öncesi gece bileşiği (FOMC ∨ CPI/NFP ∨ bilanço)",
+  "kind": "script",
+  "command": "cd research/ksg_olay_gecesi_20261119/src && python3 olay.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "KSG gecelerinde ve tüm gecelerde olay öncesi gece bileşiğinin farkını, E116 fark-farkını, hafta günü eşli tabanı ve ×1,5 doz Sharpe'ını ölçer; görülmüş 2018–26 (MT5/Duka/kör), dokunulmamış Duka M30 + EET30 2016–17 ve günlük ETF vekili 2002–18.",
+  "output": "research/ksg_olay_gecesi_20261119/RAPOR.md"
  }
 ]
