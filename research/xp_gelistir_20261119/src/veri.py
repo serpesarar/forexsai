@@ -36,11 +36,13 @@ def daily_frame(b: pd.DataFrame, step: int) -> pd.DataFrame:
     return dp
 
 
-def build(b: pd.DataFrame, step: int, name: str) -> pd.DataFrame:
+def entry_features(b: pd.DataFrame, step: int, ev: set | None = None) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series]:
+    """Gün başına 16:00 NY'de bilinen özellikler + K1 bayrağı (çıkışı belli olmayan son sinyaller dahil).
+    `ev` verilmezse araştırma olay takvimi (R.event_days) kullanılır; ileri gölge kendi takvimini geçer."""
     dp = daily_frame(b, step)
     cal = R.trading_calendar()
     k, a = R.cycle(cal)
-    ev = R.event_days()
+    ev = R.event_days() if ev is None else ev
     vr = EK.vix_ratio()
     vix = pd.read_parquet(ROOT / "research/qs03_akis_takvim_20261111/data/VIX.parquet")
     if isinstance(vix.columns, pd.MultiIndex):
@@ -88,6 +90,12 @@ def build(b: pd.DataFrame, step: int, name: str) -> pd.DataFrame:
     feats["K1"] = k1
     feats["K1_dun"] = k1.shift(1).fillna(False).astype(bool)
     feats["K1_son10"] = k1.shift(1).rolling(10, min_periods=1).sum()
+    return dp, feats, k1
+
+
+def build(b: pd.DataFrame, step: int, name: str, ev: set | None = None) -> pd.DataFrame:
+    dp, feats, k1 = entry_features(b, step, ev)
+    p = dp.o960
     # işlemler + yol
     t, o, h, l, sp = b.t.values, b.o.values, b.h.values, b.l.values, b.sp.values
     tol = 300 if step == 60 else step

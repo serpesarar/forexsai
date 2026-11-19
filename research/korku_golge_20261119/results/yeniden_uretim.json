@@ -1,0 +1,220 @@
+{
+ "veto_gbm": {
+  "MT5_HAVUZ": {
+   "n": 454,
+   "veto_n": 80,
+   "veto_ort": -1.8,
+   "kalan_ort": 76.2,
+   "taban_ort": 62.5,
+   "kar_orani": 1.005,
+   "zarar_orani": 0.719,
+   "veto_kaybeden_%": 40.0,
+   "P_veto_ort_eksi": 0.525
+  },
+  "DUKA_NDX": {
+   "n": 147,
+   "veto_n": 16,
+   "veto_ort": -23.6,
+   "kalan_ort": 90.4,
+   "taban_ort": 78.0,
+   "kar_orani": 1.033,
+   "zarar_orani": 0.831,
+   "veto_kaybeden_%": 56.2,
+   "P_veto_ort_eksi": 0.709
+  },
+  "piyasa": {
+   "MT5_NAS100": {
+    "n": 141,
+    "veto_n": 17,
+    "veto_ort": -13.7,
+    "kalan_ort": 87.5,
+    "taban_ort": 75.3,
+    "kar_orani": 1.022,
+    "zarar_orani": 0.826,
+    "veto_kaybeden_%": 52.9,
+    "P_veto_ort_eksi": 0.647
+   },
+   "MT5_US500": {
+    "n": 99,
+    "veto_n": 20,
+    "veto_ort": 50.0,
+    "kalan_ort": 82.1,
+    "taban_ort": 75.6,
+    "kar_orani": 0.866,
+    "zarar_orani": 0.795,
+    "veto_kaybeden_%": 30.0,
+    "P_veto_ort_eksi": 0.033
+   },
+   "MT5_US30": {
+    "n": 87,
+    "veto_n": 16,
+    "veto_ort": 18.8,
+    "kalan_ort": 46.0,
+    "taban_ort": 41.0,
+    "kar_orani": 0.916,
+    "zarar_orani": 0.864,
+    "veto_kaybeden_%": 25.0,
+    "P_veto_ort_eksi": 0.238
+   },
+   "MT5_US2000": {
+    "n": 127,
+    "veto_n": 27,
+    "veto_ort": -44.9,
+    "kalan_ort": 79.1,
+    "taban_ort": 52.8,
+    "kar_orani": 1.181,
+    "zarar_orani": 0.505,
+    "veto_kaybeden_%": 48.1,
+    "P_veto_ort_eksi": 0.898
+   }
+  }
+ },
+ "veto_kanal": {
+  "MT5_HAVUZ": {
+   "n": 454,
+   "veto_n": 119,
+   "veto_ort": 1.8,
+   "kalan_ort": 84.0,
+   "taban_ort": 62.5,
+   "kar_orani": 0.992,
+   "zarar_orani": 0.57,
+   "veto_kaybeden_%": 34.5,
+   "P_veto_ort_eksi": 0.489
+  },
+  "DUKA_NDX": {
+   "n": 147,
+   "veto_n": 34,
+   "veto_ort": 6.5,
+   "kalan_ort": 99.5,
+   "taban_ort": 78.0,
+   "kar_orani": 0.981,
+   "zarar_orani": 0.582,
+   "veto_kaybeden_%": 35.3,
+   "P_veto_ort_eksi": 0.433
+  },
+  "piyasa": {
+   "MT5_NAS100": {
+    "n": 141,
+    "veto_n": 26,
+    "veto_ort": -10.8,
+    "kalan_ort": 94.8,
+    "taban_ort": 75.3,
+    "kar_orani": 1.026,
+    "zarar_orani": 0.609,
+    "veto_kaybeden_%": 38.5,
+    "P_veto_ort_eksi": 0.572
+   },
+   "MT5_US500": {
+    "n": 99,
+    "veto_n": 33,
+    "veto_ort": 20.5,
+    "kalan_ort": 103.1,
+    "taban_ort": 75.6,
+    "kar_orani": 0.909,
+    "zarar_orani": 0.446,
+    "veto_kaybeden_%": 33.3,
+    "P_veto_ort_eksi": 0.23
+   },
+   "MT5_US30": {
+    "n": 87,
+    "veto_n": 34,
+    "veto_ort": -8.3,
+    "kalan_ort": 72.6,
+    "taban_ort": 41.0,
+    "kar_orani": 1.079,
+    "zarar_orani": 0.438,
+    "veto_kaybeden_%": 35.3,
+    "P_veto_ort_eksi": 0.627
+   },
+   "MT5_US2000": {
+    "n": 127,
+    "veto_n": 26,
+    "veto_ort": 4.0,
+    "kalan_ort": 65.3,
+    "taban_ort": 52.8,
+    "kar_orani": 0.984,
+    "zarar_orani": 0.649,
+    "veto_kaybeden_%": 30.8,
+    "P_veto_ort_eksi": 0.489
+   }
+  }
+ },
+ "veto": {
+  "MT5_HAVUZ": {
+   "n": 454,
+   "veto_n": 160,
+   "veto_ort": 7.9,
+   "kalan_ort": 92.2,
+   "taban_ort": 62.5,
+   "kar_orani": 0.956,
+   "zarar_orani": 0.46,
+   "veto_kaybeden_%": 35.6,
+   "P_veto_ort_eksi": 0.361
+  },
+  "DUKA_NDX": {
+   "n": 147,
+   "veto_n": 39,
+   "veto_ort": 5.6,
+   "kalan_ort": 104.1,
+   "taban_ort": 78.0,
+   "kar_orani": 0.981,
+   "zarar_orani": 0.574,
+   "veto_kaybeden_%": 38.5,
+   "P_veto_ort_eksi": 0.423
+  },
+  "piyasa": {
+   "MT5_NAS100": {
+    "n": 141,
+    "veto_n": 34,
+    "veto_ort": 1.6,
+    "kalan_ort": 98.7,
+    "taban_ort": 75.3,
+    "kar_orani": 0.995,
+    "zarar_orani": 0.594,
+    "veto_kaybeden_%": 41.2,
+    "P_veto_ort_eksi": 0.465
+   },
+   "MT5_US500": {
+    "n": 99,
+    "veto_n": 43,
+    "veto_ort": 30.1,
+    "kalan_ort": 110.5,
+    "taban_ort": 75.6,
+    "kar_orani": 0.827,
+    "zarar_orani": 0.336,
+    "veto_kaybeden_%": 32.6,
+    "P_veto_ort_eksi": 0.108
+   },
+   "MT5_US30": {
+    "n": 87,
+    "veto_n": 40,
+    "veto_ort": 3.0,
+    "kalan_ort": 73.3,
+    "taban_ort": 41.0,
+    "kar_orani": 0.966,
+    "zarar_orani": 0.431,
+    "veto_kaybeden_%": 32.5,
+    "P_veto_ort_eksi": 0.46
+   },
+   "MT5_US2000": {
+    "n": 127,
+    "veto_n": 43,
+    "veto_ort": -4.9,
+    "kalan_ort": 82.3,
+    "taban_ort": 52.8,
+    "kar_orani": 1.032,
+    "zarar_orani": 0.394,
+    "veto_kaybeden_%": 37.2,
+    "P_veto_ort_eksi": 0.576
+   }
+  }
+ },
+ "kapi": {
+  "gbm_80_1005_0719": true,
+  "birlesik_160_0956_046": true
+ },
+ "auc": {
+  "kesif_oof": 0.594,
+  "test_mt5": 0.615
+ }
+}

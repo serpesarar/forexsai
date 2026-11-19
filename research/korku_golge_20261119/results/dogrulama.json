@@ -1,0 +1,15 @@
+{
+ "arastirma_islem": 754,
+ "eslesen": 754,
+ "eksik": 0,
+ "karar_uyusma": 1.0,
+ "maks_dp": 0.022481159859937344,
+ "farkli_karar": [],
+ "sinyal_ama_islem_yok": 17,
+ "islem_tablosu": {
+  "ayni": 764,
+  "yalniz_eski": 0,
+  "yalniz_yeni": 5,
+  "maks_dnet": 0.0
+ }
+}

@@ -1103,5 +1103,15 @@
   "category": "research",
   "what_it_does": "117 giriş anı özelliği (30 dk/1 sa göstergeler, uyumsuzluk, tik hacmi, formasyon, S/R, regresyon kanalı, düşüş yapısı, piyasalar arası) ile kaybeden/kazanan ayrımı: permütasyonlu tek tek tarama, kümeleme, ikili kesişim ve modeller; donmuş eşiklerle TEST ve Duka NDX vetosu.",
   "output": "research/xp_kaybeden_20261119/RAPOR.md"
+ },
+ {
+  "id": "korku_golge_etiket",
+  "name": "Korku gecesi K1: kanal ∪ GBM vetosu ileri gölge etiketi",
+  "kind": "script",
+  "command": "python3 research/korku_golge_20261119/src/tazele.py hepsi && python3 research/korku_golge_20261119/src/etiketle.py kos",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "Kutudan MT5 M30 ve yfinance VIX/QQQ'yu sona ekler; yeni K1 sinyallerine dondurulmuş KEŞİF GBM'i ve 1 sa kanal z80 eşiğiyle veto etiketi yazar (veto/emir yok), çıkışı belli olanların sonucunu doldurur, ön kayıtlı ölçüte göre durum raporlar.",
+  "output": "research/korku_golge_20261119/results/golge_rapor.json"
  }
 ]

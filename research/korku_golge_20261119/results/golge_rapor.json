@@ -1,0 +1,28 @@
+{
+ "sonuclu": 1,
+ "bekleyen": 0,
+ "taban_ort": -316.2,
+ "veto": {
+  "veto_n": 1,
+  "veto_ort": -316.2,
+  "kalan_ort": null,
+  "kar_x": -0.0,
+  "zarar_x": -0.0
+ },
+ "veto_kanal": {
+  "veto_n": 0,
+  "veto_ort": null,
+  "kalan_ort": -316.2,
+  "kar_x": 1.0,
+  "zarar_x": 1.0
+ },
+ "veto_gbm": {
+  "veto_n": 1,
+  "veto_ort": -316.2,
+  "kalan_ort": null,
+  "kar_x": -0.0,
+  "zarar_x": -0.0
+ },
+ "yon_tutan_piyasa": "0/0",
+ "hukum": "erken (≥40 sonuçlu ve ≥8 vetolu işlem gerekir)"
+}

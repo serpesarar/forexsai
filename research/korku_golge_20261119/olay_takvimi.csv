@@ -1,0 +1,11 @@
+# İleri gölge olay takvimi (CPI, NFP, FOMC karar günü). Kaynak: bls.gov/schedule/2026/11_sched_list.htm, 12_sched_list.htm,
+# bls.gov/schedule/news_release/cpi.htm, empsit.htm (okundu 2026-11-19); federalreserve.gov/monetarypolicy/fomccalendars.htm.
+# kapsam_sonu'ndan sonraki günler etiketlenmez (olay bilinmiyor). 2027 FOMC takvimi 2026-11-12'de revize edildi, eklenmedi.
+# Yeni yıl eklerken kapsam_sonu satırını da ilerlet.
+olay,tarih
+kapsam_sonu,2026-12-31
+NFP,2026-11-06
+CPI,2026-11-10
+NFP,2026-12-04
+FOMC,2026-12-09
+CPI,2026-12-10

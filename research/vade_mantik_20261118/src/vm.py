@@ -14,8 +14,7 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "research/son4_20261118/src"))
 sys.path.insert(0, str(ROOT / "research/korku_genislik_20261118/src"))
 import ox  # noqa: E402
-import ek3_veto as E3  # noqa: E402
-import gn  # noqa: E402
+import gn  # noqa: E402  (ek3_veto kullanılmıyordu; içe aktarılınca kendini koşup results/ek3_veto.json'u yeniden yazıyordu)
 
 V, G, KD = ox.V, ox.G, ox.KD
 HERE = Path(__file__).resolve().parents[1]
