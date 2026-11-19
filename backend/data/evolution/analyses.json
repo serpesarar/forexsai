@@ -1113,5 +1113,15 @@
   "category": "research",
   "what_it_does": "Kutudan MT5 M30 ve yfinance VIX/QQQ'yu sona ekler; yeni K1 sinyallerine dondurulmuş KEŞİF GBM'i ve 1 sa kanal z80 eşiğiyle veto etiketi yazar (veto/emir yok), çıkışı belli olanların sonucunu doldurur, ön kayıtlı ölçüte göre durum raporlar.",
   "output": "research/korku_golge_20261119/results/golge_rapor.json"
+ },
+ {
+  "id": "xp_paket_ayrim",
+  "name": "Korku gecesi paketi: kaybeden/kazanan ayrımı (çok TF kanal + ta bataryası + ETF vekili)",
+  "kind": "script",
+  "command": "cd research/xp_paket_ayrim_20261119/src && python3 motor.py kos && python3 tur1.py && python3 tur23.py && python3 tur4.py kur && python3 tur4.py kos",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "K1 + OPEX + XP paket işlemlerinde 6 zaman diliminde regresyon kanalları ve ta kütüphanesinin 86 göstergesi (giriş anına çapalı, sızıntı testli), 1993–2017 ETF V1 vekilinde öğrenilen günlük/haftalık imzanın kör sınaması, yol şekli kNN ve çapraz varlık; tek tek permütasyonlu tarama, kümeleme, L1/GBM/LightGBM sınıflandırma ve regresyon.",
+  "output": "research/xp_paket_ayrim_20261119/RAPOR.md"
  }
 ]

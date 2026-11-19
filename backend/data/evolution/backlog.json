@@ -5478,5 +5478,16 @@
     "source": "session",
     "created_at": "2026-11-19T19:35:10.564552+00:00",
     "updated_at": "2026-11-19T19:35:10.564724+00:00"
+  },
+  {
+    "id": "bl_c38d30c89c",
+    "title": "Korku gecesi kaybedeni için yeni bilgi kaynağı",
+    "detail": "XA-01…04 aynı fiyat/hacim verisinde tavan AUC 0,60–0,64. Ayrışma ancak yeni kaynakla: NQ/ES gece seansı yolu (16:00 sonrası değil, giriş öncesi Asya/Avrupa), gün içi genişlik/TICK, opsiyon GEX/0DTE, emir akışı. Önce hangi verinin erişilebilir olduğuna bak.",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T20:04:07.335831+00:00",
+    "updated_at": "2026-11-19T20:04:07.336010+00:00"
   }
 ]

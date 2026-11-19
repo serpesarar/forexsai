@@ -1,0 +1,631 @@
+{
+ "veri": {
+  "egitim": 412,
+  "egitim_kaybeden": 92,
+  "test_paket": 495,
+  "ozellik": 668
+ },
+ "yeni_aile_tek": {
+  "Y_knn": {
+   "kesif_auc": 0.532,
+   "test_auc": 0.517
+  },
+  "C_GER40_gun": {
+   "kesif_auc": 0.508,
+   "test_auc": 0.482
+  },
+  "C_GER40_seans": {
+   "kesif_auc": 0.586,
+   "test_auc": 0.462
+  },
+  "C_GER40_sonsaat": {
+   "kesif_auc": 0.679,
+   "test_auc": 0.541
+  },
+  "C_XAUUSD_gun": {
+   "kesif_auc": 0.528,
+   "test_auc": 0.486
+  },
+  "C_XAUUSD_seans": {
+   "kesif_auc": 0.497,
+   "test_auc": 0.484
+  },
+  "C_XAUUSD_sonsaat": {
+   "kesif_auc": 0.53,
+   "test_auc": 0.427
+  },
+  "C_SpotCrude_gun": {
+   "kesif_auc": 0.479,
+   "test_auc": 0.462
+  },
+  "C_SpotCrude_seans": {
+   "kesif_auc": 0.389,
+   "test_auc": 0.458
+  },
+  "C_SpotCrude_sonsaat": {
+   "kesif_auc": 0.547,
+   "test_auc": 0.385
+  }
+ },
+ "l1_C_oof": {
+  "0.005": 0.5,
+  "0.01": 0.5,
+  "0.02": 0.5,
+  "0.05": 0.496,
+  "0.1": 0.499,
+  "0.3": 0.54,
+  "1.0": 0.564
+ },
+ "l1_lojistik": {
+  "kesif_oof_auc": 0.564,
+  "TEST": {
+   "piyasa": {
+    "MT5_NAS100": {
+     "auc": 0.535,
+     "n": 116,
+     "veto_n": 25,
+     "veto_ort": 118.0,
+     "kalan_ort": 83.7,
+     "taban_ort": 91.1,
+     "kar_x": 0.721,
+     "zarar_x": 0.862,
+     "veto_kaybeden_%": 16.0,
+     "P_veto_ort_eksi": 0.001
+    },
+    "MT5_US500": {
+     "auc": 0.446,
+     "n": 83,
+     "veto_n": 37,
+     "veto_ort": 89.1,
+     "kalan_ort": 89.9,
+     "taban_ort": 89.5,
+     "kar_x": 0.556,
+     "zarar_x": 0.604,
+     "veto_kaybeden_%": 13.5,
+     "P_veto_ort_eksi": 0.0
+    },
+    "MT5_US30": {
+     "auc": 0.612,
+     "n": 72,
+     "veto_n": 7,
+     "veto_ort": 78.4,
+     "kalan_ort": 46.7,
+     "taban_ort": 49.8,
+     "kar_x": 0.847,
+     "zarar_x": 0.996,
+     "veto_kaybeden_%": 14.3,
+     "P_veto_ort_eksi": 0.002
+    },
+    "MT5_US2000": {
+     "auc": 0.638,
+     "n": 103,
+     "veto_n": 19,
+     "veto_ort": 55.2,
+     "kalan_ort": 59.3,
+     "taban_ort": 58.6,
+     "kar_x": 0.826,
+     "zarar_x": 0.753,
+     "veto_kaybeden_%": 36.8,
+     "P_veto_ort_eksi": 0.149
+    },
+    "DUKA_NDX": {
+     "auc": 0.55,
+     "n": 121,
+     "veto_n": 27,
+     "veto_ort": 114.4,
+     "kalan_ort": 92.7,
+     "taban_ort": 97.6,
+     "kar_x": 0.738,
+     "zarar_x": 0.87,
+     "veto_kaybeden_%": 18.5,
+     "P_veto_ort_eksi": 0.0
+    }
+   },
+   "MT5_HAVUZ": {
+    "auc": 0.549,
+    "n": 374,
+    "veto_n": 88,
+    "veto_ort": 89.1,
+    "kalan_ort": 69.1,
+    "taban_ort": 73.8,
+    "kar_x": 0.716,
+    "zarar_x": 0.813,
+    "veto_kaybeden_%": 19.3,
+    "P_veto_ort_eksi": 0.004
+   },
+   "DUKA_NDX": {
+    "auc": 0.55,
+    "n": 121,
+    "veto_n": 27,
+    "veto_ort": 114.4,
+    "kalan_ort": 92.7,
+    "taban_ort": 97.6,
+    "kar_x": 0.738,
+    "zarar_x": 0.87,
+    "veto_kaybeden_%": 18.5,
+    "P_veto_ort_eksi": 0.0
+   },
+   "yon_tutan": 2,
+   "auc_ust_055": 2,
+   "hukum": {
+    "ayrisma": false,
+    "veto": "X"
+   }
+  },
+  "katsayi": {
+   "XK_m30_ema_ayi_dizilim": -1.627,
+   "W_trend_visual_ichimoku_b": 1.421,
+   "D_trend_vortex_ind_pos": -1.316,
+   "XK_F_son30_aralik_atr": -1.286,
+   "m30_momentum_kama": -1.238,
+   "h2_trend_stc": -1.223,
+   "Y_6": 1.149,
+   "m30_volume_vwap": -1.093,
+   "XK_X_yayilim": 1.033,
+   "m30_k100_gen": 0.883,
+   "Y_knn": 0.882,
+   "h2_trend_mass_index": -0.858,
+   "h1_trend_aroon_up": 0.85,
+   "Y_4": -0.848,
+   "m30_momentum_stoch_signal": -0.803
+  }
+ },
+ "gbm": {
+  "kesif_oof_auc": 0.562,
+  "TEST": {
+   "piyasa": {
+    "MT5_NAS100": {
+     "auc": 0.631,
+     "n": 116,
+     "veto_n": 13,
+     "veto_ort": 98.8,
+     "kalan_ort": 90.1,
+     "taban_ort": 91.1,
+     "kar_x": 0.878,
+     "zarar_x": 0.928,
+     "veto_kaybeden_%": 30.8,
+     "P_veto_ort_eksi": 0.023
+    },
+    "MT5_US500": {
+     "auc": 0.546,
+     "n": 83,
+     "veto_n": 20,
+     "veto_ort": 90.7,
+     "kalan_ort": 89.2,
+     "taban_ort": 89.5,
+     "kar_x": 0.756,
+     "zarar_x": 0.834,
+     "veto_kaybeden_%": 20.0,
+     "P_veto_ort_eksi": 0.006
+    },
+    "MT5_US30": {
+     "auc": 0.587,
+     "n": 72,
+     "veto_n": 14,
+     "veto_ort": 45.7,
+     "kalan_ort": 50.7,
+     "taban_ort": 49.8,
+     "kar_x": 0.822,
+     "zarar_x": 0.84,
+     "veto_kaybeden_%": 21.4,
+     "P_veto_ort_eksi": 0.101
+    },
+    "MT5_US2000": {
+     "auc": 0.613,
+     "n": 103,
+     "veto_n": 23,
+     "veto_ort": -17.6,
+     "kalan_ort": 80.5,
+     "taban_ort": 58.6,
+     "kar_x": 1.067,
+     "zarar_x": 0.526,
+     "veto_kaybeden_%": 47.8,
+     "P_veto_ort_eksi": 0.66
+    },
+    "DUKA_NDX": {
+     "auc": 0.657,
+     "n": 121,
+     "veto_n": 13,
+     "veto_ort": 115.2,
+     "kalan_ort": 95.4,
+     "taban_ort": 97.6,
+     "kar_x": 0.873,
+     "zarar_x": 0.965,
+     "veto_kaybeden_%": 23.1,
+     "P_veto_ort_eksi": 0.004
+    }
+   },
+   "MT5_HAVUZ": {
+    "auc": 0.6,
+    "n": 374,
+    "veto_n": 70,
+    "veto_ort": 47.6,
+    "kalan_ort": 79.9,
+    "taban_ort": 73.8,
+    "kar_x": 0.879,
+    "zarar_x": 0.755,
+    "veto_kaybeden_%": 31.4,
+    "P_veto_ort_eksi": 0.095
+   },
+   "DUKA_NDX": {
+    "auc": 0.657,
+    "n": 121,
+    "veto_n": 13,
+    "veto_ort": 115.2,
+    "kalan_ort": 95.4,
+    "taban_ort": 97.6,
+    "kar_x": 0.873,
+    "zarar_x": 0.965,
+    "veto_kaybeden_%": 23.1,
+    "P_veto_ort_eksi": 0.004
+   },
+   "yon_tutan": 2,
+   "auc_ust_055": 3,
+   "hukum": {
+    "ayrisma": false,
+    "veto": "X"
+   }
+  },
+  "onem": {
+   "C_GER40_sonsaat": 0.0888,
+   "C_SpotCrude_seans": 0.0782,
+   "h2_trend_mass_index": 0.0471,
+   "XK_F_son30_aralik_atr": 0.0435,
+   "h2_momentum_uo": 0.035,
+   "W_trend_adx_pos": 0.0281,
+   "XK_vix": 0.0269,
+   "h4_k20_z": 0.026,
+   "XK_H_dusus_bacagi_oran": 0.0244,
+   "m30_k20_r2": 0.0231,
+   "h2_momentum_stoch_rsi_d": 0.022,
+   "h2_trend_adx": 0.02,
+   "Y_4": 0.0161,
+   "XK_T_1sa_z": 0.0159,
+   "Y_10": 0.0153
+  }
+ },
+ "lgbm": {
+  "kesif_oof_auc": 0.595,
+  "TEST": {
+   "piyasa": {
+    "MT5_NAS100": {
+     "auc": 0.581,
+     "n": 116,
+     "veto_n": 20,
+     "veto_ort": 72.4,
+     "kalan_ort": 95.0,
+     "taban_ort": 91.1,
+     "kar_x": 0.863,
+     "zarar_x": 0.837,
+     "veto_kaybeden_%": 25.0,
+     "P_veto_ort_eksi": 0.056
+    },
+    "MT5_US500": {
+     "auc": 0.66,
+     "n": 83,
+     "veto_n": 17,
+     "veto_ort": 71.4,
+     "kalan_ort": 94.2,
+     "taban_ort": 89.5,
+     "kar_x": 0.837,
+     "zarar_x": 0.815,
+     "veto_kaybeden_%": 29.4,
+     "P_veto_ort_eksi": 0.016
+    },
+    "MT5_US30": {
+     "auc": 0.647,
+     "n": 72,
+     "veto_n": 25,
+     "veto_ort": -6.9,
+     "kalan_ort": 79.9,
+     "taban_ort": 49.8,
+     "kar_x": 1.048,
+     "zarar_x": 0.4,
+     "veto_kaybeden_%": 36.0,
+     "P_veto_ort_eksi": 0.551
+    },
+    "MT5_US2000": {
+     "auc": 0.614,
+     "n": 103,
+     "veto_n": 38,
+     "veto_ort": 3.4,
+     "kalan_ort": 90.8,
+     "taban_ort": 58.6,
+     "kar_x": 0.979,
+     "zarar_x": 0.421,
+     "veto_kaybeden_%": 44.7,
+     "P_veto_ort_eksi": 0.441
+    },
+    "DUKA_NDX": {
+     "auc": 0.564,
+     "n": 121,
+     "veto_n": 19,
+     "veto_ort": 97.8,
+     "kalan_ort": 97.5,
+     "taban_ort": 97.6,
+     "kar_x": 0.843,
+     "zarar_x": 0.832,
+     "veto_kaybeden_%": 26.3,
+     "P_veto_ort_eksi": 0.043
+    }
+   },
+   "MT5_HAVUZ": {
+    "auc": 0.628,
+    "n": 374,
+    "veto_n": 100,
+    "veto_ort": 26.1,
+    "kalan_ort": 91.2,
+    "taban_ort": 73.8,
+    "kar_x": 0.905,
+    "zarar_x": 0.605,
+    "veto_kaybeden_%": 36.0,
+    "P_veto_ort_eksi": 0.211
+   },
+   "DUKA_NDX": {
+    "auc": 0.564,
+    "n": 121,
+    "veto_n": 19,
+    "veto_ort": 97.8,
+    "kalan_ort": 97.5,
+    "taban_ort": 97.6,
+    "kar_x": 0.843,
+    "zarar_x": 0.832,
+    "veto_kaybeden_%": 26.3,
+    "P_veto_ort_eksi": 0.043
+   },
+   "yon_tutan": 4,
+   "auc_ust_055": 4,
+   "hukum": {
+    "ayrisma": false,
+    "veto": "C"
+   }
+  },
+  "onem": {
+   "C_SpotCrude_seans": 43,
+   "XK_F_son30_aralik_atr": 39,
+   "h2_momentum_uo": 38,
+   "XK_bosluk": 34,
+   "C_GER40_sonsaat": 29,
+   "h2_trend_mass_index": 27,
+   "XK_U_h1_macd_fark": 17,
+   "Y_4": 15,
+   "Y_7": 15,
+   "Y_2": 14,
+   "Y_6": 12,
+   "h1_trend_kst_sig": 11,
+   "XK_opex_k": 11,
+   "XK_vix": 10,
+   "m30_k100_r2": 10
+  }
+ },
+ "gbm_reg": {
+  "kesif_oof_auc": 0.554,
+  "kesif_oof_spearman": 0.269,
+  "TEST": {
+   "piyasa": {
+    "MT5_NAS100": {
+     "auc": 0.574,
+     "n": 116,
+     "veto_n": 17,
+     "veto_ort": 127.0,
+     "kalan_ort": 85.0,
+     "taban_ort": 91.1,
+     "kar_x": 0.796,
+     "zarar_x": 0.955,
+     "veto_kaybeden_%": 17.6,
+     "P_veto_ort_eksi": 0.0
+    },
+    "MT5_US500": {
+     "auc": 0.66,
+     "n": 83,
+     "veto_n": 23,
+     "veto_ort": 53.5,
+     "kalan_ort": 103.3,
+     "taban_ort": 89.5,
+     "kar_x": 0.834,
+     "zarar_x": 0.694,
+     "veto_kaybeden_%": 30.4,
+     "P_veto_ort_eksi": 0.024
+    },
+    "MT5_US30": {
+     "auc": 0.508,
+     "n": 72,
+     "veto_n": 20,
+     "veto_ort": 45.5,
+     "kalan_ort": 51.4,
+     "taban_ort": 49.8,
+     "kar_x": 0.746,
+     "zarar_x": 0.787,
+     "veto_kaybeden_%": 20.0,
+     "P_veto_ort_eksi": 0.057
+    },
+    "MT5_US2000": {
+     "auc": 0.593,
+     "n": 103,
+     "veto_n": 24,
+     "veto_ort": 11.3,
+     "kalan_ort": 72.9,
+     "taban_ort": 58.6,
+     "kar_x": 0.955,
+     "zarar_x": 0.688,
+     "veto_kaybeden_%": 41.7,
+     "P_veto_ort_eksi": 0.398
+    },
+    "DUKA_NDX": {
+     "auc": 0.587,
+     "n": 121,
+     "veto_n": 16,
+     "veto_ort": 116.7,
+     "kalan_ort": 94.6,
+     "taban_ort": 97.6,
+     "kar_x": 0.842,
+     "zarar_x": 0.95,
+     "veto_kaybeden_%": 25.0,
+     "P_veto_ort_eksi": 0.0
+    }
+   },
+   "MT5_HAVUZ": {
+    "auc": 0.595,
+    "n": 374,
+    "veto_n": 84,
+    "veto_ort": 54.4,
+    "kalan_ort": 79.5,
+    "taban_ort": 73.8,
+    "kar_x": 0.834,
+    "zarar_x": 0.794,
+    "veto_kaybeden_%": 28.6,
+    "P_veto_ort_eksi": 0.032
+   },
+   "DUKA_NDX": {
+    "auc": 0.587,
+    "n": 121,
+    "veto_n": 16,
+    "veto_ort": 116.7,
+    "kalan_ort": 94.6,
+    "taban_ort": 97.6,
+    "kar_x": 0.842,
+    "zarar_x": 0.95,
+    "veto_kaybeden_%": 25.0,
+    "P_veto_ort_eksi": 0.0
+   },
+   "yon_tutan": 3,
+   "auc_ust_055": 3,
+   "hukum": {
+    "ayrisma": false,
+    "veto": "X"
+   }
+  },
+  "onem": {
+   "m30_psar_uz": 0.0738,
+   "h4_k20_gen": 0.0551,
+   "h4_volatility_bbw": 0.0521,
+   "m30_momentum_kama": 0.0458,
+   "h1_volatility_kcw": 0.0389,
+   "C_GER40_sonsaat": 0.0312,
+   "h2_trend_mass_index": 0.031,
+   "C_SpotCrude_seans": 0.0278,
+   "D_momentum_tsi": 0.0261,
+   "XK_vix": 0.0202,
+   "h4_k20_z": 0.0189,
+   "Y_22": 0.0177,
+   "Y_10": 0.0176,
+   "XK_F_son30_govde": 0.0174,
+   "h4_trend_visual_ichimoku_b": 0.0171
+  }
+ },
+ "lgbm_reg": {
+  "kesif_oof_auc": 0.544,
+  "kesif_oof_spearman": 0.264,
+  "TEST": {
+   "piyasa": {
+    "MT5_NAS100": {
+     "auc": 0.603,
+     "n": 116,
+     "veto_n": 16,
+     "veto_ort": 54.4,
+     "kalan_ort": 97.0,
+     "taban_ort": 91.1,
+     "kar_x": 0.918,
+     "zarar_x": 0.837,
+     "veto_kaybeden_%": 37.5,
+     "P_veto_ort_eksi": 0.142
+    },
+    "MT5_US500": {
+     "auc": 0.7,
+     "n": 83,
+     "veto_n": 10,
+     "veto_ort": 100.6,
+     "kalan_ort": 88.0,
+     "taban_ort": 89.5,
+     "kar_x": 0.865,
+     "zarar_x": 0.995,
+     "veto_kaybeden_%": 30.0,
+     "P_veto_ort_eksi": 0.001
+    },
+    "MT5_US30": {
+     "auc": 0.643,
+     "n": 72,
+     "veto_n": 21,
+     "veto_ort": -10.3,
+     "kalan_ort": 74.5,
+     "taban_ort": 49.8,
+     "kar_x": 1.06,
+     "zarar_x": 0.474,
+     "veto_kaybeden_%": 42.9,
+     "P_veto_ort_eksi": 0.559
+    },
+    "MT5_US2000": {
+     "auc": 0.619,
+     "n": 103,
+     "veto_n": 34,
+     "veto_ort": 9.3,
+     "kalan_ort": 82.8,
+     "taban_ort": 58.6,
+     "kar_x": 0.948,
+     "zarar_x": 0.568,
+     "veto_kaybeden_%": 41.2,
+     "P_veto_ort_eksi": 0.403
+    },
+    "DUKA_NDX": {
+     "auc": 0.584,
+     "n": 121,
+     "veto_n": 16,
+     "veto_ort": 69.3,
+     "kalan_ort": 101.9,
+     "taban_ort": 97.6,
+     "kar_x": 0.906,
+     "zarar_x": 0.836,
+     "veto_kaybeden_%": 31.2,
+     "P_veto_ort_eksi": 0.093
+    }
+   },
+   "MT5_HAVUZ": {
+    "auc": 0.644,
+    "n": 374,
+    "veto_n": 81,
+    "veto_ort": 24.4,
+    "kalan_ort": 87.5,
+    "taban_ort": 73.8,
+    "kar_x": 0.928,
+    "zarar_x": 0.695,
+    "veto_kaybeden_%": 39.5,
+    "P_veto_ort_eksi": 0.294
+   },
+   "DUKA_NDX": {
+    "auc": 0.584,
+    "n": 121,
+    "veto_n": 16,
+    "veto_ort": 69.3,
+    "kalan_ort": 101.9,
+    "taban_ort": 97.6,
+    "kar_x": 0.906,
+    "zarar_x": 0.836,
+    "veto_kaybeden_%": 31.2,
+    "P_veto_ort_eksi": 0.093
+   },
+   "yon_tutan": 3,
+   "auc_ust_055": 4,
+   "hukum": {
+    "ayrisma": false,
+    "veto": "C"
+   }
+  },
+  "onem": {
+   "Y_22": 26,
+   "C_GER40_sonsaat": 21,
+   "C_SpotCrude_seans": 19,
+   "h1_volatility_kcw": 19,
+   "h4_k20_z": 18,
+   "XK_U_h1_macd_fark": 17,
+   "h4_volatility_bbw": 16,
+   "D_momentum_tsi": 15,
+   "XK_S_d250dip_uz": 14,
+   "Y_knn": 14,
+   "h2_trend_adx": 13,
+   "XK_F_son30_aralik_atr": 13,
+   "m30_momentum_kama": 12,
+   "m30_psar_uz": 11,
+   "h2_momentum_uo": 10
+  }
+ }
+}
