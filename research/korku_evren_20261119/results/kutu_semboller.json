@@ -1,0 +1,349 @@
+{
+ "hesap": [
+  "(gizlendi)",
+  "Pepperstone-Demo"
+ ],
+ "toplam_sembol": 1731,
+ "bulunan": {
+  "AMD": [
+   [
+    "AMD.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\AMD.US-24",
+    1.0,
+    4
+   ],
+   [
+    "AMD.US",
+    "Markets\\Stocks\\USA\\AMD.US",
+    1.0,
+    4
+   ],
+   [
+    "AMD.US-PERP",
+    "Markets\\Perp CFDs\\Stocks\\AMD.US-PERP",
+    1.0,
+    4
+   ]
+  ],
+  "AMZN": [
+   [
+    "AMZN.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\AMZN.US-24",
+    1.0,
+    4
+   ],
+   [
+    "AMZN.US",
+    "Markets\\Stocks\\USA\\AMZN.US",
+    1.0,
+    4
+   ]
+  ],
+  "AAPL": [
+   [
+    "AAPL.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\AAPL.US-24",
+    1.0,
+    4
+   ],
+   [
+    "AAPL.US",
+    "Markets\\Stocks\\USA\\AAPL.US",
+    1.0,
+    4
+   ]
+  ],
+  "XOM": [
+   [
+    "XOM.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\XOM.US-24",
+    1.0,
+    4
+   ],
+   [
+    "XOM.US",
+    "Markets\\Stocks\\USA\\XOM.US",
+    1.0,
+    4
+   ]
+  ],
+  "JPM": [
+   [
+    "JPM.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\JPM.US-24",
+    1.0,
+    1
+   ],
+   [
+    "JPM.US",
+    "Markets\\Stocks\\USA\\JPM.US",
+    1.0,
+    1
+   ]
+  ],
+  "JNJ": [
+   [
+    "JNJ.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\JNJ.US-24",
+    1.0,
+    4
+   ],
+   [
+    "JNJ.US",
+    "Markets\\Stocks\\USA\\JNJ.US",
+    1.0,
+    4
+   ]
+  ],
+  "META": [
+   [
+    "META.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\META.US-24",
+    1.0,
+    4
+   ],
+   [
+    "META.US",
+    "Markets\\Stocks\\USA\\META.US",
+    1.0,
+    4
+   ]
+  ],
+  "MSFT": [
+   [
+    "MSFT.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\MSFT.US-24",
+    1.0,
+    4
+   ],
+   [
+    "MSFT.US",
+    "Markets\\Stocks\\USA\\MSFT.US",
+    1.0,
+    4
+   ]
+  ],
+  "NVDA": [
+   [
+    "NVDA.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\NVDA.US-24",
+    1.0,
+    4
+   ],
+   [
+    "NVDA.US",
+    "Markets\\Stocks\\USA\\NVDA.US",
+    1.0,
+    4
+   ],
+   [
+    "NVDA.US-PERP",
+    "Markets\\Perp CFDs\\Stocks\\NVDA.US-PERP",
+    1.0,
+    4
+   ]
+  ],
+  "NFLX": [
+   [
+    "NFLX.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\NFLX.US-24",
+    1.0,
+    4
+   ],
+   [
+    "NFLX.US",
+    "Markets\\Stocks\\USA\\NFLX.US",
+    1.0,
+    4
+   ]
+  ],
+  "ORCL": [
+   [
+    "ORCL.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\ORCL.US-24",
+    1.0,
+    4
+   ],
+   [
+    "ORCL.US",
+    "Markets\\Stocks\\USA\\ORCL.US",
+    1.0,
+    4
+   ]
+  ],
+  "TSLA": [
+   [
+    "TSLA.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\TSLA.US-24",
+    1.0,
+    4
+   ],
+   [
+    "TSLA.US",
+    "Markets\\Stocks\\USA\\TSLA.US",
+    1.0,
+    4
+   ],
+   [
+    "TSLA.US-PERP",
+    "Markets\\Perp CFDs\\Stocks\\TSLA.US-PERP",
+    1.0,
+    4
+   ]
+  ],
+  "UNH": [
+   [
+    "UNH.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\UNH.US-24",
+    1.0,
+    4
+   ],
+   [
+    "UNH.US",
+    "Markets\\Stocks\\USA\\UNH.US",
+    1.0,
+    4
+   ]
+  ],
+  "WMT": [
+   [
+    "WMT.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\WMT.US-24",
+    1.0,
+    4
+   ],
+   [
+    "WMT.US",
+    "Markets\\Stocks\\USA\\WMT.US",
+    1.0,
+    4
+   ]
+  ],
+  "GOOGL": [
+   [
+    "GOOGL.US",
+    "Markets\\Stocks\\USA\\GOOGL.US",
+    1.0,
+    4
+   ],
+   [
+    "GOOGL.US-PERP",
+    "Markets\\Perp CFDs\\Stocks\\GOOGL.US-PERP",
+    1.0,
+    4
+   ]
+  ],
+  "AVGO": [
+   [
+    "AVGO.US",
+    "Markets\\Stocks\\USA\\AVGO.US",
+    1.0,
+    4
+   ],
+   [
+    "AVGO.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\AVGO.US-24",
+    1.0,
+    4
+   ]
+  ],
+  "COST": [
+   [
+    "COST.US",
+    "Markets\\Stocks\\USA\\COST.US",
+    1.0,
+    4
+   ],
+   [
+    "COST.US-24",
+    "Markets\\Stocks\\USA\\24 Hour\\COST.US-24",
+    1.0,
+    4
+   ]
+  ],
+  "QQQ": [
+   [
+    "QQQ.US",
+    "Markets\\Stocks\\USA\\QQQ.US",
+    1.0,
+    4
+   ]
+  ],
+  "SPY": [
+   [
+    "SPY.US",
+    "Markets\\ETFs\\SPY.US",
+    1.0,
+    4
+   ]
+  ],
+  "XBI": [
+   [
+    "XBI.US",
+    "Markets\\ETFs\\XBI.US",
+    1.0,
+    4
+   ]
+  ],
+  "XLE": [
+   [
+    "XLE.US",
+    "Markets\\ETFs\\XLE.US",
+    1.0,
+    4
+   ]
+  ],
+  "XHB": [
+   [
+    "XHB.US",
+    "Markets\\ETFs\\XHB.US",
+    1.0,
+    4
+   ]
+  ],
+  "XLI": [
+   [
+    "XLI.US",
+    "Markets\\ETFs\\XLI.US",
+    1.0,
+    4
+   ]
+  ],
+  "MDY": [
+   [
+    "MDY.US",
+    "Markets\\ETFs\\MDY.US",
+    1.0,
+    4
+   ]
+  ],
+  "XRT": [
+   [
+    "XRT.US",
+    "Markets\\ETFs\\XRT.US",
+    1.0,
+    1
+   ]
+  ],
+  "KRE": [
+   [
+    "KRE.US",
+    "Markets\\ETFs\\KRE.US",
+    1.0,
+    4
+   ]
+  ]
+ },
+ "bulunamayan": [
+  "XLK",
+  "XLF",
+  "XLV",
+  "XLY",
+  "XLP",
+  "XLB",
+  "XLU",
+  "SMH",
+  "IBB",
+  "RSP"
+ ]
+}

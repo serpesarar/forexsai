@@ -1123,5 +1123,15 @@
   "category": "research",
   "what_it_does": "K1 + OPEX + XP paket işlemlerinde 6 zaman diliminde regresyon kanalları ve ta kütüphanesinin 86 göstergesi (giriş anına çapalı, sızıntı testli), 1993–2017 ETF V1 vekilinde öğrenilen günlük/haftalık imzanın kör sınaması, yol şekli kNN ve çapraz varlık; tek tek permütasyonlu tarama, kümeleme, L1/GBM/LightGBM sınıflandırma ve regresyon.",
   "output": "research/xp_paket_ayrim_20261119/RAPOR.md"
+ },
+ {
+  "id": "korku_evren_genisleme",
+  "name": "Korku gecesi genişletme: eşik gevşetme (T30) + sektör/sanayi ETF + mega-cap hisse",
+  "kind": "script",
+  "command": "cd research/korku_evren_20261119/src && python3 indir.py && python3 evren.py && python3 esik.py && python3 doz.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "K1 + OPEX + XP paketinde TWAP eşiği gevşetmelerinin yalnız eklenen işlemlerini (MT5 4 endeks + Duka) ve günlük V1 vekiliyle 37 sektör/sanayi ETF ve mega-cap hissede korku gecesini (endeksle aynı gün / yeni gün / haberli) ölçer; eşit riskli portföy etkisi ve kutuda sembol erişimi.",
+  "output": "research/korku_evren_20261119/RAPOR.md"
  }
 ]
