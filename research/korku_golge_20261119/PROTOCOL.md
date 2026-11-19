@@ -74,3 +74,21 @@ Değerlendirme en erken **≥ 40 sonuçlu ileri işlem ve ≥ 8 vetolu işlem** 
 - **Yan etki giderildi:** `vade_mantik_20261118/src/vm.py` kullanmadığı `ek3_veto`'yu içe aktarıyordu; o modül içe aktarılınca kendini
   koşup `son4_20261118/results/ek3_veto.json`'u yeniden yazıyordu (tazelenen veriyle sayıları değişti). İçe aktarma kaldırıldı, dosya
   HEAD'e geri alındı; `rapor.py test` 11/11.
+
+## EK-2 (2026-11-19, eksiklik tamamlama; ileri sayımı ve dondurulan nesneleri değiştirmez)
+- **Araştırma olay takvimi tamamlandı (E148):** `xau_best_days_20261015/makro/03_calendar.py` + `cpi_dates.txt` + `nfp_dates.txt`'e
+  FOMC 2026-07-29, 09-16, 10-28, 12-09; CPI 2026-10-14, 11-10, 12-10; NFP 2026-11-06, 12-04; Jackson Hole 2026-08-28 ve 2027'nin
+  CPI/NFP/FOMC günleri eklendi (BLS 2026 aylık takvimleri, BLS CPI/istihdam takvimleri, Fed takvimi ve 2026-11-12 basın bülteni,
+  Kansas City Fed). 2027 FOMC geçici: Aralık toplantısı 16-17 Kasım'a alındı, 26-27 Ekim'de karar açıklanmayacak (listede yok).
+  Yalnız ekleme: eski 613 satır aynı, 41 satır yeni.
+- **Tek kaynak:** ileri etiketleyici olayları araştırma takviminden okur; `olay_takvimi.csv` yalnız kapsam sonunu tutar (2027-07-31,
+  Jackson Hole 2027 henüz ilan edilmedi). `rapor.py CAL_END` de 2027-07-31'e çekildi; ikisi farklıysa etiketleyici uyarır ve küçüğünü kullanır.
+- **Etki (`results/olay_takvimi_etki.json`, veri 2026-11-05'te kesik):** düzeltilen günlere 6 TEST işlemi düşüyor, hepsi kazanan
+  (07-29 FOMC beş beslemede +119…+330 bp; 09-16 US30 +58). Kapı 06 "olay günü vetosu" Duka NDX +61,1 → +59,8 bp, vetolanan ort
+  +20,1 → +27,9, P 0,94 → 0,87; MT5 NAS100 +56,7 → +55,3. Kör piyasalarda vetolananlar hâlâ eksi (US30 −31,5, US2000 −50,3,
+  US500 −6,0). Hüküm aynı (koşullu, NASDAQ'ta zayıf). Önerilen paket (K1 + OPEX + XP) olay vetosu içermez, sayıları değişmez.
+  Dondurulan GBM etkilenmez (KEŞİF ≤ 2021); düzeltilmiş takvimle ham barlardan yine 754/754 karar aynı.
+- **Erteleme kuralı (etiketleyici açığı):** sinyal günü kapanıştan hemen sonra koşulursa günlük dış veri (QQQ günlük hacmi, VIX/VIX3M
+  önceki kapanış) henüz olmayabilir; boş değer medyanla dolar ve etiket bir kez yazıldığı için düzeltilemezdi. Artık bu sütunlardan
+  biri boşsa sinyal ertelenir, sonraki koşumda etiketlenir. Tarihsel 461 TEST sinyalinde bu sütunlar hiç boş değil.
+- **Tek komut:** `python3 src/etiketle.py guncelle` = `tazele.py hepsi` + `etiketle.py kos`.

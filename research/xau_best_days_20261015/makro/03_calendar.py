@@ -23,10 +23,16 @@ FOMC_1626 = """2016-01-27 2016-03-16 2016-04-27 2016-06-15 2016-07-27 2016-09-21
 2023-02-01 2023-03-22 2023-05-03 2023-06-14 2023-07-26 2023-09-20 2023-11-01 2023-12-13
 2024-01-31 2024-03-20 2024-05-01 2024-06-12 2024-07-31 2024-09-18 2024-11-07 2024-12-18
 2025-01-29 2025-03-19 2025-05-07 2025-06-18 2025-07-30 2025-09-17 2025-10-29 2025-12-10
-2026-01-28 2026-03-18 2026-04-29 2026-06-17""".split()
+2026-01-28 2026-03-18 2026-04-29 2026-06-17 2026-07-29 2026-09-16 2026-10-28 2026-12-09
+2027-01-27 2027-03-17 2027-04-28 2027-06-09 2027-07-28 2027-09-15 2027-11-17""".split()
+# 2026-11-19 eklendi (E148): 2026 ikinci yarısı federalreserve.gov/monetarypolicy/fomccalendars.htm; 2027 geçici takvim
+# federalreserve.gov/newsevents/pressreleases/monetary20261112a.htm (Aralık toplantısı 16-17 Kasım'a alındı; 26-27 Ekim
+# toplantısı strateji tartışması, karar açıklanmayacak → listede yok). Takvim geçicidir, bir önceki toplantıda teyit edilir.
+# Kapsam sonu (ileri kullanımda bu tarihten sonrası etiketlenmez): research/korku_golge_20261119/olay_takvimi.csv.
+# CPI/NFP/FOMC 2027 sonuna kadar biliniyor; Jackson Hole 2027 tarihi henüz yok → kapsam 2027-07-31.
 CPI = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "cpi_dates.txt")).read().split()
 NFP = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "nfp_dates.txt")).read().split()
-JH = "2008-08-22 2009-08-21 2010-08-27 2011-08-26 2012-08-31 2014-08-22 2015-08-28 2016-08-26 2017-08-25 2018-08-24 2019-08-23 2020-08-27 2021-08-27 2022-08-26 2023-08-25 2024-08-23 2025-08-22".split()
+JH = "2008-08-22 2009-08-21 2010-08-27 2011-08-26 2012-08-31 2014-08-22 2015-08-28 2016-08-26 2017-08-25 2018-08-24 2019-08-23 2020-08-27 2021-08-27 2022-08-26 2023-08-25 2024-08-23 2025-08-22 2026-08-28".split()  # 2026: 27-29 Ağu, başkan açılış konuşması Cuma (kansascityfed.org)
 rows = []
 for dd in FOMC_0815 + FOMC_1626:
     hm = "14:00" if dd >= "2013-03-20" else "14:15"

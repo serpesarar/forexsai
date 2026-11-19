@@ -1,11 +1,8 @@
-# İleri gölge olay takvimi (CPI, NFP, FOMC karar günü). Kaynak: bls.gov/schedule/2026/11_sched_list.htm, 12_sched_list.htm,
-# bls.gov/schedule/news_release/cpi.htm, empsit.htm (okundu 2026-11-19); federalreserve.gov/monetarypolicy/fomccalendars.htm.
-# kapsam_sonu'ndan sonraki günler etiketlenmez (olay bilinmiyor). 2027 FOMC takvimi 2026-11-12'de revize edildi, eklenmedi.
-# Yeni yıl eklerken kapsam_sonu satırını da ilerlet.
+# İleri gölge olay takviminin KAPSAM SONU. Olay tarihlerinin tek kaynağı araştırma takvimi:
+# research/xau_best_days_20261015/makro/03_calendar.py (+ cpi_dates.txt, nfp_dates.txt) → out/calendar.csv (R.event_days).
+# 2026-11-19 (E148): 2026 ikinci yarısı ve 2027 CPI/NFP/FOMC eklendi (bls.gov/schedule/2026/*, bls.gov/schedule/news_release/cpi.htm,
+# empsit.htm; federalreserve.gov fomccalendars + monetary20261112a). Jackson Hole 2027 tarihi henüz yok → kapsam 2027-07-31.
+# Kapsamı ilerletmek için önce takvime yeni olayları ekle, 03_calendar.py'yi koş, sonra bu satırı ve rapor.py CAL_END'i aynı tarihe çek.
+# İsteğe bağlı: araştırma takviminde olmayan ek olaylar "olay,tarih" satırı olarak buraya yazılabilir (birleşimi kullanılır).
 olay,tarih
-kapsam_sonu,2026-12-31
-NFP,2026-11-06
-CPI,2026-11-10
-NFP,2026-12-04
-FOMC,2026-12-09
-CPI,2026-12-10
+kapsam_sonu,2027-07-31

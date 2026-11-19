@@ -3,6 +3,7 @@
 python etiketle.py dogrula   # ham barlardan tüm tarihsel işlemleri yeniden etiketle, araştırma tablosuyla birebir kıyasla
 python etiketle.py kos       # ileri sinyalleri (d ≥ ileri_baslangic) deftere ekle, belli olan sonuçları doldur
 python etiketle.py rapor     # defterin ön kayıtlı ölçütlere göre durumu
+python etiketle.py guncelle  # tek komut: kutudan M30 + yfinance makro tazele (tazele.py hepsi), sonra kos
 
 Özellikler `xp_kaybeden_20261119/src/ozellik.py` ve `xp_gelistir_20261119/src/veri.py` ile AYNI kodla hesaplanır.
 """
@@ -38,13 +39,21 @@ GBM = joblib.load(MODEL / "gbm_kesif.joblib")
 PRIM = ["MT5_NAS100", "MT5_US500", "MT5_US30", "MT5_US2000"]
 ETIKET = ["p_gbm", "z80", "veto_gbm", "veto_kanal", "veto"]
 SONUC = ["cikis", "tutus_gun", "net"]
+GEREKLI = ["vix", "vix_deg", "vix_vix3m", "qqq_hacim_oran"]   # ileri etiketten önce dolu olmalı
 
 
 def forward_events() -> tuple[set, pd.Timestamp]:
     c = pd.read_csv(HERE / "olay_takvimi.csv", comment="#")
     end = pd.Timestamp(c[c.olay == "kapsam_sonu"].tarih.iloc[0])
     ev = set(pd.to_datetime(c[c.olay != "kapsam_sonu"].tarih))
-    return ev | VR.R.event_days(), end
+    if VR.R.CAL_END != end:
+        print(f"UYARI: kapsam sonu {end.date()} ≠ rapor.py CAL_END {VR.R.CAL_END.date()} — ikisi aynı tarihe çekilmeli")
+    end = min(end, VR.R.CAL_END)
+    ev = ev | VR.R.event_days()
+    last = max(VR.R.event_days())
+    if last < end - pd.Timedelta(days=60):
+        print(f"UYARI: takvimdeki son olay {last.date()} kapsam sonundan ({end.date()}) çok önce — takvim eksik olabilir")
+    return ev, end
 
 
 def load_bars() -> dict[str, pd.DataFrame]:
@@ -123,6 +132,12 @@ def kos() -> None:
     if cov.any():
         print("olay takvimi kapsamı dışında, etiketlenmedi:", sorted(L[cov].d.dt.date.unique()))
     L = L[~cov]
+    # Günlük dış veri (VIX d−1, VIX/VIX3M d−1, QQQ d hacmi) henüz yoksa etiket medyanla dolar ve bir daha düzeltilemez → ertele
+    eksik = L[GEREKLI].isna().any(axis=1)
+    if eksik.any():
+        print("dış veri eksik, ertelendi (sonraki koşumda etiketlenir):",
+              sorted({f"{b}@{d.date()}" for b, d in zip(L[eksik].besleme, L[eksik].d)}))
+    L = L[~eksik]
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     D = pd.read_csv(DEFTER, parse_dates=["d", "cikis"]) if DEFTER.exists() else pd.DataFrame(columns=["besleme", "d", "etiket_zamani", "model_sha256"] + ETIKET + SONUC)
     have = set(zip(D.besleme, pd.to_datetime(D.d)))
@@ -184,5 +199,14 @@ def rapor() -> dict:
     return out
 
 
+def guncelle() -> None:
+    """Veriyi tazele (kutu M30 salt-okuma + yfinance), sonra ileri etiketleri yaz. Tazeleme ayrı süreçte koşar:
+    özellik modülleri veriyi içe aktarma anında okumaz, ama temiz durum için kos da yeni süreçte çalıştırılır."""
+    import subprocess
+    here = Path(__file__).resolve().parent
+    subprocess.run([sys.executable, str(here / "tazele.py"), "hepsi"], check=True)
+    subprocess.run([sys.executable, str(here / "etiketle.py"), "kos"], check=True)
+
+
 if __name__ == "__main__":
-    {"dogrula": dogrula, "kos": kos, "rapor": rapor}[sys.argv[1]]()
+    {"dogrula": dogrula, "kos": kos, "rapor": rapor, "guncelle": guncelle}[sys.argv[1]]()

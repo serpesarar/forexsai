@@ -52,7 +52,7 @@ artifact `CsNW68azHXJwRPLPwcLKx1` (kapı karnesi). Komut: `cd research/son_rapor
 | 03 | **Önerilen paket: K1 + OPEX vetosu + XP** | 24,3 | **%83** | **+103,1** | −285 | −801 | 9/9 | **önerilen** (MT5: %80, +95,6, −814) |
 | 04 | Korku ertesi seansı (09:30→16:00, gece yok) | 29,5 | %61 | +37,0 | −220 | −623 | 9/9 | onay (B, kart 6/6) |
 | 05 | Art arda korku dozu ×1,5 | 29,6 | %60 | +64,8 | −279 | −905 | 9/9 | onay (kör 3/3) |
-| 06 | Olay günü vetosu | 25,0 | %62 | +61,1 | −257 | −841 | 9/9 | koşullu: NASDAQ'ta zayıf, kör 3/3 güçlü |
+| 06 | Olay günü vetosu (takvim düzeltmesiyle, E148) | 24,9 | %62 | +59,8 (eski +61,1) | −257 | −841 | 9/9 | koşullu: NASDAQ'ta zayıf (P 0,87), kör 3/3 güçlü |
 | 07 | Vade sonrası 3–7. gün dozu ×1,5 | 29,6 | %60 | +63,7 | −282 | −786 | 9/9 | zayıf (B−) |
 | 08 | Korku ∧ ters VIX eğrisi dozu ×1,5 | 29,6 | %60 | +68,8 | −296 | −1.147 | 9/9 | onay (+173 vs +32, kör 3/3) |
 | 09 | Korku ∧ C3b aynı gün dozu ×1,5 | 29,6 | %60 | +65,2 | −284 | −1.199 | 9/9 | zayıf (tekrar etmedi) |

@@ -33,7 +33,9 @@ FIN = V.FIN
 HERE = Path(__file__).resolve().parents[1]
 RES = HERE / "results"
 EVENTS = ("CPI", "NFP", "FOMC", "JH")
-CAL_END = pd.Timestamp("2026-10-02")
+# Olay takviminin kapsam sonu. 2026-11-19 (E148): takvim FOMC'de 2026-06-17'de bitiyordu (07-29 ve 09-16 kaçıyordu);
+# FOMC/CPI/NFP/JH tamamlandı, kapsam research/korku_golge_20261119/olay_takvimi.csv ile aynı.
+CAL_END = pd.Timestamp("2027-07-31")
 
 
 # ---------------- takvim ----------------

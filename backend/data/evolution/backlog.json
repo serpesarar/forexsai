@@ -5460,12 +5460,23 @@
   {
     "id": "bl_00fc2245ad",
     "title": "Korku gecesi kanal∪GBM vetosu ileri gölge",
-    "detail": "1 sa kanal z80 alt %20 ∪ GBM en riskli %15 vetosu TEST'te kâr ×0,956 zarar ×0,46 ama birleşim sonradan kuruldu; 2026-11 sonrası yeni K1 işlemlerinde gölge etiket olarak izlenmeli (≥40 işlem) | 2026-11-19: donduruldu ve ileri gölgeye kondu (research/korku_golge_20261119/, yeniden üretim birebir). Periyodik: `tazele.py hepsi` → `etiketle.py kos`. Ölçüt ≥40 sonuçlu + ≥8 vetolu (≈5 ay). Olay takvimi kapsamı 2026-12-31: yeni yıl için olay_takvimi.csv uzatılmalı.",
+    "detail": "1 sa kanal z80 alt %20 ∪ GBM en riskli %15 vetosu TEST'te kâr ×0,956 zarar ×0,46 ama birleşim sonradan kuruldu; 2026-11 sonrası yeni K1 işlemlerinde gölge etiket olarak izlenmeli (≥40 işlem) | 2026-11-19: donduruldu ve ileri gölgeye kondu (research/korku_golge_20261119/, yeniden üretim birebir). Periyodik: `tazele.py hepsi` → `etiketle.py kos`. Ölçüt ≥40 sonuçlu + ≥8 vetolu (≈5 ay). Tek komut: `etiketle.py guncelle`. Olay takvimi kapsamı 2027-07-31 (E148 düzeltildi).",
     "category": "experiment",
     "priority": "medium",
     "status": "in_progress",
     "source": "session",
     "created_at": "2026-11-19T18:58:36.367022+00:00",
-    "updated_at": "2026-11-19T19:30:00+00:00"
+    "updated_at": "2026-11-19T20:10:00+00:00"
+  },
+  {
+    "id": "bl_a8578bd84d",
+    "title": "Olay takvimi kapsamını 2027-07-31 sonrasına uzat",
+    "detail": "Jackson Hole 2027 tarihi KC Fed'de ilan edilince 03_calendar.py JH listesine ekle, 03_calendar.py koş, olay_takvimi.csv kapsam_sonu ve rapor.py CAL_END'i aynı tarihe çek; 2028 CPI/NFP/FOMC için de aynı adım",
+    "category": "wiring",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T19:35:10.564552+00:00",
+    "updated_at": "2026-11-19T19:35:10.564724+00:00"
   }
 ]
