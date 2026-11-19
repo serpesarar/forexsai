@@ -1,0 +1,686 @@
+{
+ "A": {
+  "dilim_ort": {
+   "kazanan": {
+    "AH": 5.4,
+    "ASYA": 30.0,
+    "AVRUPA": 18.2,
+    "VERI": 10.2
+   },
+   "kaybeden": {
+    "AH": -6.2,
+    "ASYA": -23.1,
+    "AVRUPA": -20.6,
+    "VERI": -10.4
+   },
+   "tum": {
+    "AH": 0.3,
+    "ASYA": 6.7,
+    "AVRUPA": 1.2,
+    "VERI": 1.2
+   }
+  },
+  "kaybeden_en_eksi_dilim_payi": {
+   "ASYA": 0.385,
+   "AVRUPA": 0.361,
+   "VERI": 0.168,
+   "AH": 0.085
+  },
+  "kaybeden_tipleri": [
+   {
+    "tip": 0,
+    "n": 343,
+    "ort_net": -54.3,
+    "AH": -0.7,
+    "ASYA": -4.8,
+    "AVRUPA": -34.3,
+    "VERI": -11.9
+   },
+   {
+    "tip": 1,
+    "n": 114,
+    "ort_net": -89.4,
+    "AH": -22.6,
+    "ASYA": -78.4,
+    "AVRUPA": 20.6,
+    "VERI": -5.9
+   }
+  ],
+  "grup_tablosu": [
+   {
+    "grup": "vix3=VIX düşük",
+    "n": 349,
+    "KESIF": {
+     "n": 150,
+     "ort": -3.1,
+     "kaybeden_%": 48.0
+    },
+    "TEST": {
+     "n": 199,
+     "ort": 1.4,
+     "kaybeden_%": 47.7
+    }
+   },
+   {
+    "grup": "vix3=VIX orta",
+    "n": 348,
+    "KESIF": {
+     "n": 120,
+     "ort": -5.1,
+     "kaybeden_%": 46.7
+    },
+    "TEST": {
+     "n": 228,
+     "ort": 15.1,
+     "kaybeden_%": 37.7
+    }
+   },
+   {
+    "grup": "vix3=VIX yüksek",
+    "n": 349,
+    "KESIF": {
+     "n": 169,
+     "ort": 24.9,
+     "kaybeden_%": 36.1
+    },
+    "TEST": {
+     "n": 180,
+     "ort": 3.8,
+     "kaybeden_%": 48.3
+    }
+   },
+   {
+    "grup": "son3=son saat derin",
+    "n": 349,
+    "KESIF": {
+     "n": 149,
+     "ort": 17.1,
+     "kaybeden_%": 38.9
+    },
+    "TEST": {
+     "n": 200,
+     "ort": 10.3,
+     "kaybeden_%": 44.5
+    }
+   },
+   {
+    "grup": "son3=son saat orta",
+    "n": 348,
+    "KESIF": {
+     "n": 141,
+     "ort": 2.6,
+     "kaybeden_%": 44.7
+    },
+    "TEST": {
+     "n": 207,
+     "ort": 2.1,
+     "kaybeden_%": 43.5
+    }
+   },
+   {
+    "grup": "son3=son saat hafif",
+    "n": 349,
+    "KESIF": {
+     "n": 149,
+     "ort": 1.4,
+     "kaybeden_%": 45.6
+    },
+    "TEST": {
+     "n": 200,
+     "ort": 9.5,
+     "kaybeden_%": 44.5
+    }
+   },
+   {
+    "grup": "gun=Friday",
+    "n": 204,
+    "KESIF": {
+     "n": 78,
+     "ort": -6.5,
+     "kaybeden_%": 51.3
+    },
+    "TEST": {
+     "n": 126,
+     "ort": 1.6,
+     "kaybeden_%": 46.0
+    }
+   },
+   {
+    "grup": "gun=Monday",
+    "n": 191,
+    "KESIF": {
+     "n": 77,
+     "ort": 12.1,
+     "kaybeden_%": 35.1
+    },
+    "TEST": {
+     "n": 114,
+     "ort": 14.1,
+     "kaybeden_%": 44.7
+    }
+   },
+   {
+    "grup": "gun=Thursday",
+    "n": 210,
+    "KESIF": {
+     "n": 81,
+     "ort": 5.8,
+     "kaybeden_%": 42.0
+    },
+    "TEST": {
+     "n": 129,
+     "ort": -0.6,
+     "kaybeden_%": 46.5
+    }
+   },
+   {
+    "grup": "gun=Tuesday",
+    "n": 220,
+    "KESIF": {
+     "n": 103,
+     "ort": 14.1,
+     "kaybeden_%": 38.8
+    },
+    "TEST": {
+     "n": 117,
+     "ort": 12.7,
+     "kaybeden_%": 35.9
+    }
+   },
+   {
+    "grup": "gun=Wednesday",
+    "n": 221,
+    "KESIF": {
+     "n": 100,
+     "ort": 7.8,
+     "kaybeden_%": 48.0
+    },
+    "TEST": {
+     "n": 121,
+     "ort": 9.8,
+     "kaybeden_%": 47.1
+    }
+   },
+   {
+    "grup": "ertesi sabah CPI/NFP",
+    "n": 95,
+    "KESIF": {
+     "n": 32,
+     "ort": 13.1,
+     "kaybeden_%": 31.2
+    },
+    "TEST": {
+     "n": 63,
+     "ort": 19.1,
+     "kaybeden_%": 33.3
+    }
+   },
+   {
+    "grup": "değil: ertesi sabah CPI/NFP",
+    "n": 951,
+    "KESIF": {
+     "n": 407,
+     "ort": 6.6,
+     "kaybeden_%": 44.0
+    },
+    "TEST": {
+     "n": 544,
+     "ort": 5.9,
+     "kaybeden_%": 45.4
+    }
+   },
+   {
+    "grup": "ertesi gün FOMC",
+    "n": 35,
+    "KESIF": {
+     "n": 15,
+     "ort": 45.9,
+     "kaybeden_%": 20.0
+    },
+    "TEST": {
+     "n": 20,
+     "ort": 30.9,
+     "kaybeden_%": 25.0
+    }
+   },
+   {
+    "grup": "değil: ertesi gün FOMC",
+    "n": 1011,
+    "KESIF": {
+     "n": 424,
+     "ort": 5.7,
+     "kaybeden_%": 43.9
+    },
+    "TEST": {
+     "n": 587,
+     "ort": 6.4,
+     "kaybeden_%": 44.8
+    }
+   },
+   {
+    "grup": "KORKU-T30 gecesi",
+    "n": 308,
+    "KESIF": {
+     "n": 124,
+     "ort": 24.8,
+     "kaybeden_%": 35.5
+    },
+    "TEST": {
+     "n": 184,
+     "ort": 10.9,
+     "kaybeden_%": 42.4
+    }
+   },
+   {
+    "grup": "değil: KORKU-T30 gecesi",
+    "n": 738,
+    "KESIF": {
+     "n": 315,
+     "ort": 0.1,
+     "kaybeden_%": 46.0
+    },
+    "TEST": {
+     "n": 423,
+     "ort": 5.6,
+     "kaybeden_%": 44.9
+    }
+   },
+   {
+    "grup": "bilanço gecesi",
+    "n": 154,
+    "KESIF": {
+     "n": 63,
+     "ort": 22.5,
+     "kaybeden_%": 38.1
+    },
+    "TEST": {
+     "n": 91,
+     "ort": 26.2,
+     "kaybeden_%": 30.8
+    }
+   },
+   {
+    "grup": "değil: bilanço gecesi",
+    "n": 892,
+    "KESIF": {
+     "n": 376,
+     "ort": 4.5,
+     "kaybeden_%": 43.9
+    },
+    "TEST": {
+     "n": 516,
+     "ort": 3.9,
+     "kaybeden_%": 46.5
+    }
+   },
+   {
+    "grup": "vadeye 0–2",
+    "n": 158,
+    "KESIF": {
+     "n": 73,
+     "ort": -2.9,
+     "kaybeden_%": 49.3
+    },
+    "TEST": {
+     "n": 85,
+     "ort": 2.2,
+     "kaybeden_%": 49.4
+    }
+   },
+   {
+    "grup": "değil: vadeye 0–2",
+    "n": 888,
+    "KESIF": {
+     "n": 366,
+     "ort": 9.1,
+     "kaybeden_%": 41.8
+    },
+    "TEST": {
+     "n": 522,
+     "ort": 8.1,
+     "kaybeden_%": 43.3
+    }
+   }
+  ]
+ },
+ "B": {
+  "MT5_NAS100": {
+   "KESIF": {
+    "n_bilanco": 63,
+    "bilanco": 22.5,
+    "bilancosuz": 4.5,
+    "fark": 18.0,
+    "P_fark_arti": 0.884
+   },
+   "TEST": {
+    "n_bilanco": 91,
+    "bilanco": 26.2,
+    "bilancosuz": 3.9,
+    "fark": 22.3,
+    "P_fark_arti": 0.994
+   },
+   "TUM": {
+    "n_bilanco": 154,
+    "bilanco": 24.7,
+    "bilancosuz": 4.2,
+    "fark": 20.5,
+    "P_fark_arti": 0.996
+   }
+  },
+  "DUKA_NDX": {
+   "KESIF": {
+    "n_bilanco": 66,
+    "bilanco": 24.7,
+    "bilancosuz": 3.6,
+    "fark": 21.0,
+    "P_fark_arti": 0.928
+   },
+   "TEST": {
+    "n_bilanco": 91,
+    "bilanco": 24.9,
+    "bilancosuz": 2.0,
+    "fark": 22.9,
+    "P_fark_arti": 0.993
+   },
+   "TUM": {
+    "n_bilanco": 157,
+    "bilanco": 24.8,
+    "bilancosuz": 2.8,
+    "fark": 22.1,
+    "P_fark_arti": 0.998
+   }
+  },
+  "MT5_US500": {
+   "KESIF": {
+    "n_bilanco": 28,
+    "bilanco": -5.9,
+    "bilancosuz": 9.3,
+    "fark": -15.2,
+    "P_fark_arti": 0.07
+   },
+   "TEST": {
+    "n_bilanco": 86,
+    "bilanco": 10.0,
+    "bilancosuz": 0.4,
+    "fark": 9.7,
+    "P_fark_arti": 0.933
+   },
+   "TUM": {
+    "n_bilanco": 114,
+    "bilanco": 6.1,
+    "bilancosuz": 2.5,
+    "fark": 3.6,
+    "P_fark_arti": 0.743
+   }
+  },
+  "MT5_US30": {
+   "KESIF": {
+    "n_bilanco": 59,
+    "bilanco": 5.2,
+    "bilancosuz": 4.0,
+    "fark": 1.3,
+    "P_fark_arti": 0.516
+   },
+   "TEST": {
+    "n_bilanco": 87,
+    "bilanco": 2.6,
+    "bilancosuz": -2.9,
+    "fark": 5.5,
+    "P_fark_arti": 0.833
+   },
+   "TUM": {
+    "n_bilanco": 146,
+    "bilanco": 3.7,
+    "bilancosuz": -0.1,
+    "fark": 3.7,
+    "P_fark_arti": 0.718
+   }
+  },
+  "MT5_US2000": {
+   "KESIF": {
+    "n_bilanco": 70,
+    "bilanco": 9.8,
+    "bilancosuz": 15.2,
+    "fark": -5.5,
+    "P_fark_arti": 0.334
+   },
+   "TEST": {
+    "n_bilanco": 94,
+    "bilanco": 17.0,
+    "bilancosuz": 1.4,
+    "fark": 15.6,
+    "P_fark_arti": 0.982
+   },
+   "TUM": {
+    "n_bilanco": 164,
+    "bilanco": 13.9,
+    "bilancosuz": 7.2,
+    "fark": 6.7,
+    "P_fark_arti": 0.822
+   }
+  },
+  "hukum": "B"
+ },
+ "C": {
+  "hucreler": {
+   "kes|20:00|50": {
+    "kesif_fark": -4.08,
+    "tetik_%": 5.0
+   },
+   "kar_al|20:00|50": {
+    "kesif_fark": -2.45,
+    "tetik_%": 5.9
+   },
+   "kes|20:00|100": {
+    "kesif_fark": -2.58,
+    "tetik_%": 1.6
+   },
+   "kar_al|20:00|100": {
+    "kesif_fark": -0.49,
+    "tetik_%": 1.1
+   },
+   "kes|20:00|150": {
+    "kesif_fark": -1.83,
+    "tetik_%": 0.7
+   },
+   "kar_al|20:00|150": {
+    "kesif_fark": -0.43,
+    "tetik_%": 0.7
+   },
+   "kes|00:00|50": {
+    "kesif_fark": -3.9,
+    "tetik_%": 11.6
+   },
+   "kar_al|00:00|50": {
+    "kesif_fark": 0.03,
+    "tetik_%": 15.5
+   },
+   "kes|00:00|100": {
+    "kesif_fark": -1.71,
+    "tetik_%": 3.9
+   },
+   "kar_al|00:00|100": {
+    "kesif_fark": -0.58,
+    "tetik_%": 3.9
+   },
+   "kes|00:00|150": {
+    "kesif_fark": -2.62,
+    "tetik_%": 1.1
+   },
+   "kar_al|00:00|150": {
+    "kesif_fark": 0.17,
+    "tetik_%": 1.8
+   },
+   "kes|03:00|50": {
+    "kesif_fark": -0.95,
+    "tetik_%": 13.9
+   },
+   "kar_al|03:00|50": {
+    "kesif_fark": 1.54,
+    "tetik_%": 20.0
+   },
+   "kes|03:00|100": {
+    "kesif_fark": -0.26,
+    "tetik_%": 4.8
+   },
+   "kar_al|03:00|100": {
+    "kesif_fark": -1.33,
+    "tetik_%": 5.5
+   },
+   "kes|03:00|150": {
+    "kesif_fark": -0.02,
+    "tetik_%": 1.6
+   },
+   "kar_al|03:00|150": {
+    "kesif_fark": -0.83,
+    "tetik_%": 2.1
+   },
+   "kes|06:00|50": {
+    "kesif_fark": -1.57,
+    "tetik_%": 16.4
+   },
+   "kar_al|06:00|50": {
+    "kesif_fark": 2.37,
+    "tetik_%": 20.5
+   },
+   "kes|06:00|100": {
+    "kesif_fark": -1.59,
+    "tetik_%": 7.3
+   },
+   "kar_al|06:00|100": {
+    "kesif_fark": 1.13,
+    "tetik_%": 8.4
+   },
+   "kes|06:00|150": {
+    "kesif_fark": -0.79,
+    "tetik_%": 3.2
+   },
+   "kar_al|06:00|150": {
+    "kesif_fark": 0.18,
+    "tetik_%": 3.9
+   }
+  },
+  "secilen": [
+   "kar_al|06:00|50",
+   "kar_al|03:00|50"
+  ],
+  "kar_al|06:00|50": {
+   "MT5_NAS100": {
+    "n": 607,
+    "taban": 7.25,
+    "kural": 6.32,
+    "fark": -0.93,
+    "P": 0.173,
+    "sharpe": {
+     "taban": 0.895,
+     "kural": 0.82
+    }
+   },
+   "DUKA_NDX": {
+    "n": 579,
+    "taban": 5.64,
+    "kural": 4.72,
+    "fark": -0.92,
+    "P": 0.194,
+    "sharpe": {
+     "taban": 0.688,
+     "kural": 0.607
+    }
+   },
+   "MT5_US500": {
+    "n": 790,
+    "taban": 3.02,
+    "kural": 3.91,
+    "fark": 0.89,
+    "P": 0.962,
+    "sharpe": {
+     "taban": 0.507,
+     "kural": 0.661
+    }
+   },
+   "MT5_US30": {
+    "n": 1050,
+    "taban": 0.46,
+    "kural": 0.84,
+    "fark": 0.38,
+    "P": 0.722,
+    "sharpe": {
+     "taban": 0.072,
+     "kural": 0.136
+    }
+   },
+   "MT5_US2000": {
+    "n": 1060,
+    "taban": 8.24,
+    "kural": 9.23,
+    "fark": 0.99,
+    "P": 0.84,
+    "sharpe": {
+     "taban": 0.992,
+     "kural": 1.156
+    }
+   },
+   "kor": "3/3",
+   "hukum": "X"
+  },
+  "kar_al|03:00|50": {
+   "MT5_NAS100": {
+    "n": 607,
+    "taban": 7.25,
+    "kural": 7.45,
+    "fark": 0.2,
+    "P": 0.564,
+    "sharpe": {
+     "taban": 0.895,
+     "kural": 0.986
+    }
+   },
+   "DUKA_NDX": {
+    "n": 579,
+    "taban": 5.64,
+    "kural": 6.38,
+    "fark": 0.75,
+    "P": 0.733,
+    "sharpe": {
+     "taban": 0.688,
+     "kural": 0.826
+    }
+   },
+   "MT5_US500": {
+    "n": 790,
+    "taban": 3.02,
+    "kural": 3.45,
+    "fark": 0.43,
+    "P": 0.693,
+    "sharpe": {
+     "taban": 0.507,
+     "kural": 0.607
+    }
+   },
+   "MT5_US30": {
+    "n": 1050,
+    "taban": 0.46,
+    "kural": 0.61,
+    "fark": 0.15,
+    "P": 0.562,
+    "sharpe": {
+     "taban": 0.072,
+     "kural": 0.103
+    }
+   },
+   "MT5_US2000": {
+    "n": 1060,
+    "taban": 8.24,
+    "kural": 7.75,
+    "fark": -0.49,
+    "P": 0.351,
+    "sharpe": {
+     "taban": 0.992,
+     "kural": 1.044
+    }
+   },
+   "kor": "2/3",
+   "hukum": "X"
+  }
+ }
+}

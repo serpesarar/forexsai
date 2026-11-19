@@ -5500,5 +5500,16 @@
     "source": "session",
     "created_at": "2026-11-19T20:48:23.573192+00:00",
     "updated_at": "2026-11-19T21:30:00+00:00"
+  },
+  {
+    "id": "bl_1e21cd65c7",
+    "title": "KSG bilanço gecesi gölge etiketi",
+    "detail": "KD-02: KSG ∧ mega-cap bilanço gecesi +24,7 vs +4,2 bp ama KSG'ye özgü kısım P 0,86, doz ×2 KEŞİF'te Sharpe düşürüyor. ksg_live'a lot değiştirmeyen 'bilanço gecesi' bayrağı yaz (kural_canli_olaylar), n≥40'ta ileri ölç; ayrıca 'olay öncesi gece' bileşiği (FOMC ∨ CPI/NFP ∨ bilanço) için ön kayıtlı sınama",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T22:20:33.758946+00:00",
+    "updated_at": "2026-11-19T22:20:33.759074+00:00"
   }
 ]
