@@ -1,0 +1,1270 @@
+{
+ "CS": {
+  "petrol_up_h1": {
+   "yon": -1,
+   "QQQ": {
+    "KESIF": {
+     "n": 200,
+     "ort": 2.6,
+     "plasebo": -6.3,
+     "fark": 8.9,
+     "yuzdelik": 0.731,
+     "isabet": 0.505,
+     "en_kotu": -817.3
+    },
+    "TEST": {
+     "n": 58,
+     "ort": -3.2,
+     "plasebo": -3.3,
+     "fark": 0.1,
+     "yuzdelik": 0.499,
+     "isabet": 0.431,
+     "en_kotu": -331.7
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 200,
+     "ort": -1.9,
+     "plasebo": -4.9,
+     "fark": 3.0,
+     "yuzdelik": 0.602,
+     "isabet": 0.465,
+     "en_kotu": -908.0
+    },
+    "TEST": {
+     "n": 58,
+     "ort": 0.1,
+     "plasebo": -4.1,
+     "fark": 4.2,
+     "yuzdelik": 0.603,
+     "isabet": 0.466,
+     "en_kotu": -311.9
+    }
+   }
+  },
+  "petrol_up_h5": {
+   "yon": 1,
+   "QQQ": {
+    "KESIF": {
+     "n": 151,
+     "ort": 23.9,
+     "plasebo": 2.8,
+     "fark": 21.0,
+     "yuzdelik": 0.7425,
+     "isabet": 0.57,
+     "en_kotu": -1623.1
+    },
+    "TEST": {
+     "n": 41,
+     "ort": 3.6,
+     "plasebo": -3.3,
+     "fark": 7.0,
+     "yuzdelik": 0.5605,
+     "isabet": 0.585,
+     "en_kotu": -1159.9
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 151,
+     "ort": 30.5,
+     "plasebo": -2.4,
+     "fark": 32.9,
+     "yuzdelik": 0.926,
+     "isabet": 0.603,
+     "en_kotu": -1390.3
+    },
+    "TEST": {
+     "n": 41,
+     "ort": 1.2,
+     "plasebo": -0.8,
+     "fark": 2.0,
+     "yuzdelik": 0.5225,
+     "isabet": 0.512,
+     "en_kotu": -860.6
+    }
+   }
+  },
+  "petrol_dn_h1": {
+   "yon": 1,
+   "QQQ": {
+    "KESIF": {
+     "n": 201,
+     "ort": 12.7,
+     "plasebo": -1.4,
+     "fark": 14.1,
+     "yuzdelik": 0.856,
+     "isabet": 0.537,
+     "en_kotu": -920.7
+    },
+    "TEST": {
+     "n": 59,
+     "ort": -7.0,
+     "plasebo": -2.0,
+     "fark": -4.9,
+     "yuzdelik": 0.396,
+     "isabet": 0.475,
+     "en_kotu": -652.6
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 201,
+     "ort": 17.7,
+     "plasebo": -2.7,
+     "fark": 20.4,
+     "yuzdelik": 0.9695,
+     "isabet": 0.587,
+     "en_kotu": -960.5
+    },
+    "TEST": {
+     "n": 59,
+     "ort": -7.8,
+     "plasebo": -1.8,
+     "fark": -6.0,
+     "yuzdelik": 0.3475,
+     "isabet": 0.508,
+     "en_kotu": -589.2
+    }
+   }
+  },
+  "petrol_dn_h5": {
+   "yon": 1,
+   "QQQ": {
+    "KESIF": {
+     "n": 151,
+     "ort": 10.9,
+     "plasebo": 4.7,
+     "fark": 6.1,
+     "yuzdelik": 0.585,
+     "isabet": 0.57,
+     "en_kotu": -1905.6
+    },
+    "TEST": {
+     "n": 45,
+     "ort": 38.0,
+     "plasebo": 3.7,
+     "fark": 34.3,
+     "yuzdelik": 0.7525,
+     "isabet": 0.556,
+     "en_kotu": -855.3
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 151,
+     "ort": 29.1,
+     "plasebo": -2.9,
+     "fark": 32.0,
+     "yuzdelik": 0.911,
+     "isabet": 0.589,
+     "en_kotu": -1905.2
+    },
+    "TEST": {
+     "n": 45,
+     "ort": 26.4,
+     "plasebo": 1.8,
+     "fark": 24.6,
+     "yuzdelik": 0.7505,
+     "isabet": 0.533,
+     "en_kotu": -664.6
+    }
+   }
+  },
+  "altin_up_h1": {
+   "yon": -1,
+   "QQQ": {
+    "KESIF": {
+     "n": 163,
+     "ort": -1.5,
+     "plasebo": -5.6,
+     "fark": 4.1,
+     "yuzdelik": 0.6155,
+     "isabet": 0.472,
+     "en_kotu": -817.3
+    },
+    "TEST": {
+     "n": 52,
+     "ort": 3.6,
+     "plasebo": -6.5,
+     "fark": 10.1,
+     "yuzdelik": 0.6765,
+     "isabet": 0.5,
+     "en_kotu": -362.0
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 163,
+     "ort": 3.4,
+     "plasebo": -4.5,
+     "fark": 7.9,
+     "yuzdelik": 0.748,
+     "isabet": 0.479,
+     "en_kotu": -908.0
+    },
+    "TEST": {
+     "n": 52,
+     "ort": -2.4,
+     "plasebo": -6.1,
+     "fark": 3.6,
+     "yuzdelik": 0.5915,
+     "isabet": 0.519,
+     "en_kotu": -270.1
+    }
+   }
+  },
+  "altin_up_h5": {
+   "yon": 1,
+   "QQQ": {
+    "KESIF": {
+     "n": 140,
+     "ort": 17.0,
+     "plasebo": 1.5,
+     "fark": 15.5,
+     "yuzdelik": 0.6975,
+     "isabet": 0.507,
+     "en_kotu": -1095.8
+    },
+    "TEST": {
+     "n": 34,
+     "ort": 41.1,
+     "plasebo": 14.2,
+     "fark": 26.9,
+     "yuzdelik": 0.6955,
+     "isabet": 0.559,
+     "en_kotu": -545.5
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 140,
+     "ort": 21.5,
+     "plasebo": -3.7,
+     "fark": 25.2,
+     "yuzdelik": 0.8565,
+     "isabet": 0.521,
+     "en_kotu": -1073.9
+    },
+    "TEST": {
+     "n": 34,
+     "ort": 18.2,
+     "plasebo": 9.7,
+     "fark": 8.5,
+     "yuzdelik": 0.573,
+     "isabet": 0.559,
+     "en_kotu": -432.8
+    }
+   }
+  },
+  "altin_dn_h1": {
+   "yon": 1,
+   "QQQ": {
+    "KESIF": {
+     "n": 174,
+     "ort": 13.4,
+     "plasebo": -0.4,
+     "fark": 13.8,
+     "yuzdelik": 0.87,
+     "isabet": 0.511,
+     "en_kotu": -478.1
+    },
+    "TEST": {
+     "n": 54,
+     "ort": 32.3,
+     "plasebo": 0.3,
+     "fark": 32.1,
+     "yuzdelik": 0.945,
+     "isabet": 0.611,
+     "en_kotu": -350.9
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 174,
+     "ort": 5.1,
+     "plasebo": -1.7,
+     "fark": 6.8,
+     "yuzdelik": 0.737,
+     "isabet": 0.552,
+     "en_kotu": -548.3
+    },
+    "TEST": {
+     "n": 54,
+     "ort": 14.6,
+     "plasebo": 0.1,
+     "fark": 14.5,
+     "yuzdelik": 0.838,
+     "isabet": 0.556,
+     "en_kotu": -274.0
+    }
+   }
+  },
+  "altin_dn_h5": {
+   "yon": 1,
+   "QQQ": {
+    "KESIF": {
+     "n": 138,
+     "ort": 29.7,
+     "plasebo": 4.8,
+     "fark": 24.9,
+     "yuzdelik": 0.82,
+     "isabet": 0.565,
+     "en_kotu": -1437.4
+    },
+    "TEST": {
+     "n": 44,
+     "ort": 39.8,
+     "plasebo": 11.5,
+     "fark": 28.3,
+     "yuzdelik": 0.744,
+     "isabet": 0.614,
+     "en_kotu": -684.0
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 138,
+     "ort": 24.2,
+     "plasebo": -1.7,
+     "fark": 25.9,
+     "yuzdelik": 0.86,
+     "isabet": 0.587,
+     "en_kotu": -1905.2
+    },
+    "TEST": {
+     "n": 44,
+     "ort": 29.1,
+     "plasebo": 9.6,
+     "fark": 19.5,
+     "yuzdelik": 0.7345,
+     "isabet": 0.591,
+     "en_kotu": -407.8
+    }
+   }
+  },
+  "dolar_up_h1": {
+   "yon": -1,
+   "QQQ": {
+    "KESIF": {
+     "n": 142,
+     "ort": 17.5,
+     "plasebo": -4.9,
+     "fark": 22.4,
+     "yuzdelik": 0.911,
+     "isabet": 0.577,
+     "en_kotu": -1218.5
+    },
+    "TEST": {
+     "n": 17,
+     "ort": -36.9,
+     "plasebo": -1.4,
+     "fark": -35.5,
+     "yuzdelik": 0.176,
+     "isabet": 0.471,
+     "en_kotu": -265.6
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 179,
+     "ort": 7.4,
+     "plasebo": -5.3,
+     "fark": 12.8,
+     "yuzdelik": 0.898,
+     "isabet": 0.547,
+     "en_kotu": -1454.0
+    },
+    "TEST": {
+     "n": 17,
+     "ort": -19.6,
+     "plasebo": -2.6,
+     "fark": -17.1,
+     "yuzdelik": 0.2725,
+     "isabet": 0.471,
+     "en_kotu": -253.7
+    }
+   },
+   "NDX_1985_1999": {
+    "n": 119,
+    "ort": -35.6,
+    "plasebo": -10.4,
+    "fark": -25.2,
+    "yuzdelik": 0.017,
+    "isabet": 0.378,
+    "en_kotu": -1031.5
+   }
+  },
+  "dolar_up_h5": {
+   "yon": -1,
+   "QQQ": {
+    "KESIF": {
+     "n": 119,
+     "ort": 9.1,
+     "plasebo": -17.4,
+     "fark": 26.5,
+     "yuzdelik": 0.769,
+     "isabet": 0.471,
+     "en_kotu": -1299.2
+    },
+    "TEST": {
+     "n": 15,
+     "ort": -49.7,
+     "plasebo": 0.0,
+     "fark": -49.8,
+     "yuzdelik": 0.2825,
+     "isabet": 0.533,
+     "en_kotu": -856.5
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 152,
+     "ort": -20.6,
+     "plasebo": -17.7,
+     "fark": -2.9,
+     "yuzdelik": 0.4525,
+     "isabet": 0.414,
+     "en_kotu": -1376.6
+    },
+    "TEST": {
+     "n": 15,
+     "ort": -26.6,
+     "plasebo": -6.7,
+     "fark": -19.9,
+     "yuzdelik": 0.387,
+     "isabet": 0.6,
+     "en_kotu": -640.3
+    }
+   },
+   "NDX_1985_1999": {
+    "n": 96,
+    "ort": -57.8,
+    "plasebo": -45.0,
+    "fark": -12.9,
+    "yuzdelik": 0.331,
+    "isabet": 0.427,
+    "en_kotu": -560.3
+   }
+  },
+  "dolar_dn_h1": {
+   "yon": -1,
+   "QQQ": {
+    "KESIF": {
+     "n": 138,
+     "ort": 15.1,
+     "plasebo": -4.5,
+     "fark": 19.6,
+     "yuzdelik": 0.878,
+     "isabet": 0.457,
+     "en_kotu": -1006.8
+    },
+    "TEST": {
+     "n": 25,
+     "ort": 13.0,
+     "plasebo": 0.4,
+     "fark": 12.6,
+     "yuzdelik": 0.6425,
+     "isabet": 0.48,
+     "en_kotu": -264.5
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 173,
+     "ort": 11.7,
+     "plasebo": -5.5,
+     "fark": 17.2,
+     "yuzdelik": 0.9475,
+     "isabet": 0.509,
+     "en_kotu": -519.4
+    },
+    "TEST": {
+     "n": 25,
+     "ort": 6.2,
+     "plasebo": -1.8,
+     "fark": 8.0,
+     "yuzdelik": 0.616,
+     "isabet": 0.44,
+     "en_kotu": -262.2
+    }
+   },
+   "NDX_1985_1999": {
+    "n": 125,
+    "ort": -6.7,
+    "plasebo": -11.3,
+    "fark": 4.6,
+    "yuzdelik": 0.641,
+    "isabet": 0.432,
+    "en_kotu": -949.3
+   }
+  },
+  "dolar_dn_h5": {
+   "yon": -1,
+   "QQQ": {
+    "KESIF": {
+     "n": 120,
+     "ort": 15.8,
+     "plasebo": -20.5,
+     "fark": 36.3,
+     "yuzdelik": 0.844,
+     "isabet": 0.492,
+     "en_kotu": -2073.9
+    },
+    "TEST": {
+     "n": 20,
+     "ort": -120.9,
+     "plasebo": 1.3,
+     "fark": -122.2,
+     "yuzdelik": 0.057,
+     "isabet": 0.3,
+     "en_kotu": -881.6
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 151,
+     "ort": 7.3,
+     "plasebo": -21.2,
+     "fark": 28.5,
+     "yuzdelik": 0.91,
+     "isabet": 0.477,
+     "en_kotu": -1083.9
+    },
+    "TEST": {
+     "n": 20,
+     "ort": -101.8,
+     "plasebo": -5.0,
+     "fark": -96.8,
+     "yuzdelik": 0.057,
+     "isabet": 0.25,
+     "en_kotu": -687.0
+    }
+   },
+   "NDX_1985_1999": {
+    "n": 105,
+    "ort": -72.3,
+    "plasebo": -50.3,
+    "fark": -22.0,
+    "yuzdelik": 0.248,
+    "isabet": 0.486,
+    "en_kotu": -1277.4
+   }
+  },
+  "faiz_up_h1": {
+   "yon": -1,
+   "QQQ": {
+    "KESIF": {
+     "n": 212,
+     "ort": 14.7,
+     "plasebo": -5.2,
+     "fark": 19.8,
+     "yuzdelik": 0.9255,
+     "isabet": 0.481,
+     "en_kotu": -505.6
+    },
+    "TEST": {
+     "n": 77,
+     "ort": 7.4,
+     "plasebo": -3.8,
+     "fark": 11.2,
+     "yuzdelik": 0.742,
+     "isabet": 0.519,
+     "en_kotu": -362.0
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 273,
+     "ort": 16.1,
+     "plasebo": -4.6,
+     "fark": 20.7,
+     "yuzdelik": 0.99,
+     "isabet": 0.451,
+     "en_kotu": -385.9
+    },
+    "TEST": {
+     "n": 77,
+     "ort": 10.6,
+     "plasebo": -4.2,
+     "fark": 14.8,
+     "yuzdelik": 0.8785,
+     "isabet": 0.571,
+     "en_kotu": -270.1
+    }
+   },
+   "NDX_1985_1999": {
+    "n": 154,
+    "ort": -10.6,
+    "plasebo": -9.3,
+    "fark": -1.3,
+    "yuzdelik": 0.4585,
+    "isabet": 0.435,
+    "en_kotu": -494.1
+   }
+  },
+  "faiz_up_h5": {
+   "yon": 1,
+   "QQQ": {
+    "KESIF": {
+     "n": 168,
+     "ort": 16.7,
+     "plasebo": 4.1,
+     "fark": 12.6,
+     "yuzdelik": 0.6475,
+     "isabet": 0.577,
+     "en_kotu": -2000.4
+    },
+    "TEST": {
+     "n": 59,
+     "ort": -9.0,
+     "plasebo": 5.3,
+     "fark": -14.3,
+     "yuzdelik": 0.367,
+     "isabet": 0.525,
+     "en_kotu": -699.4
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 219,
+     "ort": -0.8,
+     "plasebo": -0.1,
+     "fark": -0.7,
+     "yuzdelik": 0.4845,
+     "isabet": 0.598,
+     "en_kotu": -1738.5
+    },
+    "TEST": {
+     "n": 59,
+     "ort": -6.5,
+     "plasebo": 3.2,
+     "fark": -9.7,
+     "yuzdelik": 0.3795,
+     "isabet": 0.508,
+     "en_kotu": -587.9
+    }
+   },
+   "NDX_1985_1999": {
+    "n": 123,
+    "ort": 43.2,
+    "plasebo": 22.3,
+    "fark": 20.8,
+    "yuzdelik": 0.76,
+    "isabet": 0.602,
+    "en_kotu": -1196.1
+   }
+  },
+  "faiz_dn_h1": {
+   "yon": 1,
+   "QQQ": {
+    "KESIF": {
+     "n": 185,
+     "ort": 21.0,
+     "plasebo": -1.6,
+     "fark": 22.6,
+     "yuzdelik": 0.9345,
+     "isabet": 0.568,
+     "en_kotu": -701.9
+    },
+    "TEST": {
+     "n": 53,
+     "ort": -1.3,
+     "plasebo": 0.7,
+     "fark": -1.9,
+     "yuzdelik": 0.471,
+     "isabet": 0.547,
+     "en_kotu": -624.8
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 249,
+     "ort": 20.3,
+     "plasebo": -1.2,
+     "fark": 21.5,
+     "yuzdelik": 0.9945,
+     "isabet": 0.522,
+     "en_kotu": -788.2
+    },
+    "TEST": {
+     "n": 53,
+     "ort": -11.8,
+     "plasebo": -0.9,
+     "fark": -10.9,
+     "yuzdelik": 0.2435,
+     "isabet": 0.453,
+     "en_kotu": -589.2
+    }
+   },
+   "NDX_1985_1999": {
+    "n": 147,
+    "ort": 28.8,
+    "plasebo": 5.0,
+    "fark": 23.8,
+    "yuzdelik": 0.981,
+    "isabet": 0.599,
+    "en_kotu": -536.9
+   }
+  },
+  "faiz_dn_h5": {
+   "yon": 1,
+   "QQQ": {
+    "KESIF": {
+     "n": 150,
+     "ort": 20.8,
+     "plasebo": 6.0,
+     "fark": 14.7,
+     "yuzdelik": 0.6875,
+     "isabet": 0.527,
+     "en_kotu": -1268.1
+    },
+    "TEST": {
+     "n": 41,
+     "ort": 24.0,
+     "plasebo": 19.0,
+     "fark": 5.1,
+     "yuzdelik": 0.5375,
+     "isabet": 0.61,
+     "en_kotu": -1001.0
+    }
+   },
+   "SPY": {
+    "KESIF": {
+     "n": 208,
+     "ort": 16.9,
+     "plasebo": 4.2,
+     "fark": 12.8,
+     "yuzdelik": 0.757,
+     "isabet": 0.519,
+     "en_kotu": -1268.0
+    },
+    "TEST": {
+     "n": 41,
+     "ort": 7.3,
+     "plasebo": 9.1,
+     "fark": -1.8,
+     "yuzdelik": 0.471,
+     "isabet": 0.585,
+     "en_kotu": -921.0
+    }
+   },
+   "NDX_1985_1999": {
+    "n": 122,
+    "ort": 35.1,
+    "plasebo": 36.9,
+    "fark": -1.7,
+    "yuzdelik": 0.464,
+    "isabet": 0.541,
+    "en_kotu": -1459.1
+   }
+  }
+ },
+ "AR": {
+  "QQQ_AR1_SAT_h1": {
+   "KESIF": {
+    "n": 197,
+    "ort": -1.9,
+    "plasebo": 2.5,
+    "fark": -4.5,
+    "yuzdelik": 0.4015,
+    "isabet": 0.518,
+    "en_kotu": -1044.4
+   },
+   "TEST": {
+    "n": 43,
+    "ort": 16.6,
+    "plasebo": 6.8,
+    "fark": 9.8,
+    "yuzdelik": 0.64,
+    "isabet": 0.488,
+    "en_kotu": -372.9
+   }
+  },
+  "QQQ_AR2_AL_h1": {
+   "KESIF": {
+    "n": 170,
+    "ort": 28.1,
+    "plasebo": -0.6,
+    "fark": 28.7,
+    "yuzdelik": 0.954,
+    "isabet": 0.588,
+    "en_kotu": -548.0
+   },
+   "TEST": {
+    "n": 36,
+    "ort": 20.6,
+    "plasebo": 3.2,
+    "fark": 17.4,
+    "yuzdelik": 0.772,
+    "isabet": 0.556,
+    "en_kotu": -241.1
+   }
+  },
+  "QQQ_AR1_SAT_h5": {
+   "KESIF": {
+    "n": 123,
+    "ort": -7.1,
+    "plasebo": 22.0,
+    "fark": -29.1,
+    "yuzdelik": 0.2705,
+    "isabet": 0.447,
+    "en_kotu": -1473.5
+   },
+   "TEST": {
+    "n": 29,
+    "ort": 38.3,
+    "plasebo": 38.2,
+    "fark": 0.1,
+    "yuzdelik": 0.4945,
+    "isabet": 0.448,
+    "en_kotu": -700.6
+   }
+  },
+  "QQQ_AR2_AL_h5": {
+   "KESIF": {
+    "n": 125,
+    "ort": 29.7,
+    "plasebo": 12.3,
+    "fark": 17.4,
+    "yuzdelik": 0.698,
+    "isabet": 0.552,
+    "en_kotu": -1130.9
+   },
+   "TEST": {
+    "n": 29,
+    "ort": 43.1,
+    "plasebo": 26.4,
+    "fark": 16.7,
+    "yuzdelik": 0.6415,
+    "isabet": 0.586,
+    "en_kotu": -703.7
+   }
+  },
+  "SPY_AR1_SAT_h1": {
+   "KESIF": {
+    "n": 135,
+    "ort": 19.0,
+    "plasebo": -1.6,
+    "fark": 20.6,
+    "yuzdelik": 0.911,
+    "isabet": 0.437,
+    "en_kotu": -694.9
+   },
+   "TEST": {
+    "n": 25,
+    "ort": 24.4,
+    "plasebo": 2.1,
+    "fark": 22.3,
+    "yuzdelik": 0.7835,
+    "isabet": 0.52,
+    "en_kotu": -311.9
+   }
+  },
+  "SPY_AR2_AL_h1": {
+   "KESIF": {
+    "n": 93,
+    "ort": 29.3,
+    "plasebo": 2.2,
+    "fark": 27.1,
+    "yuzdelik": 0.982,
+    "isabet": 0.634,
+    "en_kotu": -425.5
+   },
+   "TEST": {
+    "n": 11,
+    "ort": 40.3,
+    "plasebo": 2.2,
+    "fark": 38.1,
+    "yuzdelik": 0.917,
+    "isabet": 0.636,
+    "en_kotu": -55.9
+   }
+  },
+  "SPY_AR1_SAT_h5": {
+   "KESIF": {
+    "n": 90,
+    "ort": -49.4,
+    "plasebo": 2.9,
+    "fark": -52.3,
+    "yuzdelik": 0.066,
+    "isabet": 0.344,
+    "en_kotu": -1049.1
+   },
+   "TEST": {
+    "n": 18,
+    "ort": -55.1,
+    "plasebo": 13.7,
+    "fark": -68.8,
+    "yuzdelik": 0.1565,
+    "isabet": 0.5,
+    "en_kotu": -515.4
+   }
+  },
+  "SPY_AR2_AL_h5": {
+   "KESIF": {
+    "n": 79,
+    "ort": 75.8,
+    "plasebo": 18.7,
+    "fark": 57.1,
+    "yuzdelik": 0.982,
+    "isabet": 0.608,
+    "en_kotu": -520.7
+   },
+   "TEST": {
+    "n": 11,
+    "ort": 113.7,
+    "plasebo": 18.0,
+    "fark": 95.7,
+    "yuzdelik": 0.9505,
+    "isabet": 0.727,
+    "en_kotu": -135.2
+   }
+  },
+  "NDX_1985_1999_AR1_SAT_h1": {
+   "n": 37,
+   "ort": -78.9,
+   "plasebo": -5.9,
+   "fark": -73.0,
+   "yuzdelik": 0.0005,
+   "isabet": 0.27,
+   "en_kotu": -489.1
+  },
+  "NDX_1985_1999_AR2_AL_h1": {
+   "n": 110,
+   "ort": 33.9,
+   "plasebo": 10.1,
+   "fark": 23.8,
+   "yuzdelik": 0.937,
+   "isabet": 0.6,
+   "en_kotu": -545.5
+  },
+  "NDX_1985_1999_AR1_SAT_h5": {
+   "n": 31,
+   "ort": -151.7,
+   "plasebo": -23.1,
+   "fark": -128.6,
+   "yuzdelik": 0.0155,
+   "isabet": 0.355,
+   "en_kotu": -973.5
+  },
+  "NDX_1985_1999_AR2_AL_h5": {
+   "n": 81,
+   "ort": 74.7,
+   "plasebo": 54.2,
+   "fark": 20.5,
+   "yuzdelik": 0.6815,
+   "isabet": 0.654,
+   "en_kotu": -2245.7
+  }
+ },
+ "VM": {
+  "QQQ": {
+   "1990s": {
+    "al_tut": {
+     "yillik_%": 103.1,
+     "sharpe": 2.43,
+     "maxDD_%": -11.9,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 122.9,
+     "sharpe": 2.48,
+     "maxDD_%": -11.9,
+     "ort_w": 1.09
+    },
+    "ters_oynaklik": {
+     "yillik_%": 111.2,
+     "sharpe": 2.47,
+     "maxDD_%": -11.9,
+     "ort_w": 1.04
+    }
+   },
+   "2000s": {
+    "al_tut": {
+     "yillik_%": -6.4,
+     "sharpe": -0.02,
+     "maxDD_%": -83.0,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": -13.9,
+     "sharpe": -0.16,
+     "maxDD_%": -94.4,
+     "ort_w": 1.29
+    },
+    "ters_oynaklik": {
+     "yillik_%": -9.1,
+     "sharpe": -0.1,
+     "maxDD_%": -89.4,
+     "ort_w": 1.12
+    }
+   },
+   "2010s": {
+    "al_tut": {
+     "yillik_%": 17.9,
+     "sharpe": 1.04,
+     "maxDD_%": -22.8,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 16.4,
+     "sharpe": 0.84,
+     "maxDD_%": -21.4,
+     "ort_w": 1.32
+    },
+    "ters_oynaklik": {
+     "yillik_%": 17.0,
+     "sharpe": 0.97,
+     "maxDD_%": -19.8,
+     "ort_w": 1.16
+    }
+   },
+   "2020_2021": {
+    "al_tut": {
+     "yillik_%": 39.2,
+     "sharpe": 1.29,
+     "maxDD_%": -28.6,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 59.3,
+     "sharpe": 1.55,
+     "maxDD_%": -22.2,
+     "ort_w": 1.56
+    },
+    "ters_oynaklik": {
+     "yillik_%": 41.8,
+     "sharpe": 1.48,
+     "maxDD_%": -15.7,
+     "ort_w": 1.25
+    }
+   },
+   "TEST": {
+    "al_tut": {
+     "yillik_%": 11.8,
+     "sharpe": 0.6,
+     "maxDD_%": -35.1,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 18.7,
+     "sharpe": 0.78,
+     "maxDD_%": -31.8,
+     "ort_w": 1.27
+    },
+    "ters_oynaklik": {
+     "yillik_%": 16.2,
+     "sharpe": 0.78,
+     "maxDD_%": -30.6,
+     "ort_w": 1.1
+    }
+   }
+  },
+  "SPY": {
+   "1990s": {
+    "al_tut": {
+     "yillik_%": 21.3,
+     "sharpe": 1.33,
+     "maxDD_%": -19.0,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 17.9,
+     "sharpe": 1.02,
+     "maxDD_%": -21.9,
+     "ort_w": 1.17
+    },
+    "ters_oynaklik": {
+     "yillik_%": 18.3,
+     "sharpe": 1.17,
+     "maxDD_%": -19.5,
+     "ort_w": 1.05
+    }
+   },
+   "2000s": {
+    "al_tut": {
+     "yillik_%": -1.0,
+     "sharpe": 0.07,
+     "maxDD_%": -55.2,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": -6.1,
+     "sharpe": -0.14,
+     "maxDD_%": -74.7,
+     "ort_w": 1.27
+    },
+    "ters_oynaklik": {
+     "yillik_%": -2.4,
+     "sharpe": -0.01,
+     "maxDD_%": -61.5,
+     "ort_w": 1.12
+    }
+   },
+   "2010s": {
+    "al_tut": {
+     "yillik_%": 13.5,
+     "sharpe": 0.93,
+     "maxDD_%": -19.3,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 11.5,
+     "sharpe": 0.71,
+     "maxDD_%": -21.1,
+     "ort_w": 1.39
+    },
+    "ters_oynaklik": {
+     "yillik_%": 11.4,
+     "sharpe": 0.79,
+     "maxDD_%": -17.7,
+     "ort_w": 1.19
+    }
+   },
+   "2020_2021": {
+    "al_tut": {
+     "yillik_%": 23.3,
+     "sharpe": 0.93,
+     "maxDD_%": -33.7,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 47.1,
+     "sharpe": 1.56,
+     "maxDD_%": -18.6,
+     "ort_w": 1.63
+    },
+    "ters_oynaklik": {
+     "yillik_%": 32.0,
+     "sharpe": 1.44,
+     "maxDD_%": -14.7,
+     "ort_w": 1.3
+    }
+   },
+   "TEST": {
+    "al_tut": {
+     "yillik_%": 11.2,
+     "sharpe": 0.7,
+     "maxDD_%": -24.5,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 9.7,
+     "sharpe": 0.57,
+     "maxDD_%": -19.8,
+     "ort_w": 1.32
+    },
+    "ters_oynaklik": {
+     "yillik_%": 9.7,
+     "sharpe": 0.63,
+     "maxDD_%": -20.5,
+     "ort_w": 1.13
+    }
+   }
+  },
+  "NDX": {
+   "1990s": {
+    "al_tut": {
+     "yillik_%": 32.3,
+     "sharpe": 1.29,
+     "maxDD_%": -32.9,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 30.0,
+     "sharpe": 1.08,
+     "maxDD_%": -29.6,
+     "ort_w": 1.15
+    },
+    "ters_oynaklik": {
+     "yillik_%": 29.1,
+     "sharpe": 1.18,
+     "maxDD_%": -26.8,
+     "ort_w": 1.02
+    }
+   },
+   "2000s": {
+    "al_tut": {
+     "yillik_%": -6.7,
+     "sharpe": -0.02,
+     "maxDD_%": -82.9,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": -12.1,
+     "sharpe": -0.11,
+     "maxDD_%": -92.9,
+     "ort_w": 1.28
+    },
+    "ters_oynaklik": {
+     "yillik_%": -7.9,
+     "sharpe": -0.05,
+     "maxDD_%": -88.0,
+     "ort_w": 1.12
+    }
+   },
+   "2010s": {
+    "al_tut": {
+     "yillik_%": 16.8,
+     "sharpe": 0.98,
+     "maxDD_%": -23.0,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 14.7,
+     "sharpe": 0.77,
+     "maxDD_%": -23.1,
+     "ort_w": 1.32
+    },
+    "ters_oynaklik": {
+     "yillik_%": 15.7,
+     "sharpe": 0.91,
+     "maxDD_%": -20.1,
+     "ort_w": 1.16
+    }
+   },
+   "2020_2021": {
+    "al_tut": {
+     "yillik_%": 38.4,
+     "sharpe": 1.25,
+     "maxDD_%": -28.0,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 57.7,
+     "sharpe": 1.51,
+     "maxDD_%": -22.3,
+     "ort_w": 1.56
+    },
+    "ters_oynaklik": {
+     "yillik_%": 40.8,
+     "sharpe": 1.44,
+     "maxDD_%": -16.1,
+     "ort_w": 1.25
+    }
+   },
+   "TEST": {
+    "al_tut": {
+     "yillik_%": 11.3,
+     "sharpe": 0.57,
+     "maxDD_%": -35.6,
+     "ort_w": 1.0
+    },
+    "ters_varyans": {
+     "yillik_%": 17.9,
+     "sharpe": 0.75,
+     "maxDD_%": -32.6,
+     "ort_w": 1.27
+    },
+    "ters_oynaklik": {
+     "yillik_%": 15.6,
+     "sharpe": 0.75,
+     "maxDD_%": -31.2,
+     "ort_w": 1.09
+    }
+   }
+  }
+ }
+}
