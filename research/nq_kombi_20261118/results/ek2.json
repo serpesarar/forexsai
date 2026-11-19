@@ -1,0 +1,116 @@
+{
+ "QQQ_K1_cekisme_VIXust": {
+  "n": 271,
+  "n_degil": 602,
+  "ile": 55.6,
+  "olmadan": 19.7,
+  "fark": 35.9,
+  "P": 0.9617
+ },
+ "QQQ_K1_cekisme_VIXalt": {
+  "n": 83,
+  "n_degil": 212,
+  "ile": 10.5,
+  "olmadan": 0.8,
+  "fark": 9.7,
+  "P": 0.7415
+ },
+ "QQQ_K1_cekisme_ardisik": {
+  "n": 95,
+  "n_degil": 158,
+  "ile": 104.0,
+  "olmadan": 9.5,
+  "fark": 94.5,
+  "P": 0.9895
+ },
+ "QQQ_K1_cekisme_tekil": {
+  "n": 259,
+  "n_degil": 656,
+  "ile": 23.4,
+  "olmadan": 16.0,
+  "fark": 7.4,
+  "P": 0.6737
+ },
+ "QQQ_K1_cekisme_tum": {
+  "n": 354,
+  "n_degil": 814,
+  "ile": 45.0,
+  "olmadan": 14.8,
+  "fark": 30.3,
+  "P": 0.9665
+ },
+ "QQQ_K1_yalniz_gece": {
+  "n": 172,
+  "n_degil": 996,
+  "ile": 36.4,
+  "olmadan": 21.8,
+  "fark": 14.6,
+  "P": 0.7895
+ },
+ "QQQ_K1_yalniz_gunici_satis": {
+  "n": 445,
+  "n_degil": 724,
+  "ile": 40.8,
+  "olmadan": 13.4,
+  "fark": 27.4,
+  "P": 0.964
+ },
+ "QQQ_K1_cekisme_yil_arti": "21/27",
+ "SPY_K1_cekisme_VIXust": {
+  "n": 281,
+  "n_degil": 550,
+  "ile": 36.6,
+  "olmadan": 4.2,
+  "fark": 32.3,
+  "P": 0.9882
+ },
+ "SPY_K1_cekisme_VIXalt": {
+  "n": 62,
+  "n_degil": 116,
+  "ile": -2.6,
+  "olmadan": 3.8,
+  "fark": -6.4,
+  "P": 0.3235
+ },
+ "SPY_K1_cekisme_ardisik": {
+  "n": 77,
+  "n_degil": 109,
+  "ile": 42.5,
+  "olmadan": 13.8,
+  "fark": 28.7,
+  "P": 0.7885
+ },
+ "SPY_K1_cekisme_tekil": {
+  "n": 266,
+  "n_degil": 557,
+  "ile": 25.7,
+  "olmadan": 2.3,
+  "fark": 23.4,
+  "P": 0.975
+ },
+ "SPY_K1_cekisme_tum": {
+  "n": 343,
+  "n_degil": 666,
+  "ile": 29.5,
+  "olmadan": 4.2,
+  "fark": 25.3,
+  "P": 0.979
+ },
+ "SPY_K1_yalniz_gece": {
+  "n": 168,
+  "n_degil": 841,
+  "ile": 23.5,
+  "olmadan": 10.6,
+  "fark": 12.9,
+  "P": 0.8253
+ },
+ "SPY_K1_yalniz_gunici_satis": {
+  "n": 446,
+  "n_degil": 563,
+  "ile": 28.7,
+  "olmadan": 0.1,
+  "fark": 28.6,
+  "P": 0.991
+ },
+ "SPY_K1_cekisme_yil_arti": "25/32"
+}

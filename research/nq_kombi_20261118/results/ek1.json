@@ -1,0 +1,186 @@
+{
+ "a_QQQ_C3b_VP1_VIXust": {
+  "n": 88,
+  "n_degil": 139,
+  "ile": 102.2,
+  "olmadan": 39.2,
+  "fark": 62.9,
+  "P": 0.98
+ },
+ "a_QQQ_C3b_VP1_VIXalt": {
+  "n": 38,
+  "n_degil": 100,
+  "ile": 27.0,
+  "olmadan": 2.2,
+  "fark": 24.8,
+  "P": 0.8417
+ },
+ "a_SPY_C3b_VP1_VIXust": {
+  "n": 121,
+  "n_degil": 130,
+  "ile": 66.7,
+  "olmadan": 38.9,
+  "fark": 27.7,
+  "P": 0.8748
+ },
+ "a_SPY_C3b_VP1_VIXalt": {
+  "n": 43,
+  "n_degil": 78,
+  "ile": 20.8,
+  "olmadan": 4.1,
+  "fark": 16.7,
+  "P": 0.7997
+ },
+ "b_NDX9000_C3b_VP1": {
+  "n": 30,
+  "n_degil": 133,
+  "ile": -1.1,
+  "olmadan": 83.2,
+  "fark": -84.3,
+  "P": 0.025
+ },
+ "b_NDX9000_C3b_VPdusuk": {
+  "n": 44,
+  "n_degil": 119,
+  "ile": 116.9,
+  "olmadan": 49.4,
+  "fark": 67.5,
+  "P": 0.9087
+ },
+ "b_NDX9000_K1_VP1": {
+  "n": 87,
+  "n_degil": 524,
+  "ile": -17.7,
+  "olmadan": 2.9,
+  "fark": -20.6,
+  "P": 0.192
+ },
+ "b_NDX9000_K1_VPdusuk": {
+  "n": 212,
+  "n_degil": 399,
+  "ile": -6.3,
+  "olmadan": 3.3,
+  "fark": -9.6,
+  "P": 0.3297
+ },
+ "b_SPY9300_C3b_VP1": {
+  "n": 36,
+  "n_degil": 66,
+  "ile": 45.7,
+  "olmadan": 53.0,
+  "fark": -7.3,
+  "P": 0.3942
+ },
+ "b_SPY9300_C3b_VPdusuk": {
+  "n": 11,
+  "n_degil": 91,
+  "ile": 151.7,
+  "olmadan": 38.2,
+  "fark": 113.5,
+  "P": 0.9942
+ },
+ "b_SPY9300_C3b_cekisme": {
+  "n": 38,
+  "n_degil": 64,
+  "ile": 75.4,
+  "olmadan": 35.6,
+  "fark": 39.8,
+  "P": 0.9293
+ },
+ "b_SPY9300_K1_VP1": {
+  "n": 57,
+  "n_degil": 175,
+  "ile": 4.0,
+  "olmadan": 14.8,
+  "fark": -10.8,
+  "P": 0.3565
+ },
+ "b_SPY9300_K1_VPdusuk": {
+  "n": 47,
+  "n_degil": 185,
+  "ile": 14.6,
+  "olmadan": 11.5,
+  "fark": 3.1,
+  "P": 0.5407
+ },
+ "b_SPY9300_K1_cekisme": {
+  "n": 95,
+  "n_degil": 137,
+  "ile": 29.0,
+  "olmadan": 0.4,
+  "fark": 28.6,
+  "P": 0.9193
+ },
+ "b_SPY9300_ES_VP1": {
+  "n": 57,
+  "n_degil": 175,
+  "ile": 1.8,
+  "olmadan": 7.2,
+  "fark": -5.4,
+  "P": 0.425
+ },
+ "b_SPY9300_ES_VPdusuk": {
+  "n": 47,
+  "n_degil": 185,
+  "ile": 13.2,
+  "olmadan": 4.0,
+  "fark": 9.2,
+  "P": 0.61
+ },
+ "b_SPY9300_ES_cekisme": {
+  "n": 95,
+  "n_degil": 137,
+  "ile": 23.8,
+  "olmadan": -6.6,
+  "fark": 30.4,
+  "P": 0.9303
+ },
+ "c_QQQ_C3b_VPdusuk_tum": {
+  "n": 44,
+  "n_degil": 321,
+  "ile": -16.0,
+  "olmadan": 51.1,
+  "fark": -67.1,
+  "P": 0.0377
+ },
+ "c_QQQ_K1_VPdusuk_tum": {
+  "n": 201,
+  "n_degil": 791,
+  "ile": 3.2,
+  "olmadan": 29.0,
+  "fark": -25.8,
+  "P": 0.055
+ },
+ "c_QQQ_ES_VPdusuk_tum": {
+  "n": 201,
+  "n_degil": 791,
+  "ile": 6.2,
+  "olmadan": 20.4,
+  "fark": -14.3,
+  "P": 0.1487
+ },
+ "c_SPY_C3b_VPdusuk_tum": {
+  "n": 32,
+  "n_degil": 340,
+  "ile": 102.1,
+  "olmadan": 32.6,
+  "fark": 69.5,
+  "P": 0.886
+ },
+ "c_SPY_K1_VPdusuk_tum": {
+  "n": 147,
+  "n_degil": 629,
+  "ile": 5.8,
+  "olmadan": 14.8,
+  "fark": -9.0,
+  "P": 0.3455
+ },
+ "c_SPY_ES_VPdusuk_tum": {
+  "n": 147,
+  "n_degil": 629,
+  "ile": 12.3,
+  "olmadan": 13.0,
+  "fark": -0.7,
+  "P": 0.4828
+ }
+}

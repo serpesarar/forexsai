@@ -1,0 +1,66 @@
+{
+ "QQQ_r20_eksi": {
+  "n": 294,
+  "n_degil": 475,
+  "ile": 41.2,
+  "olmadan": 13.4,
+  "fark": 27.8,
+  "P": 0.9163
+ },
+ "QQQ_r20_arti": {
+  "n": 60,
+  "n_degil": 339,
+  "ile": 63.8,
+  "olmadan": 16.7,
+  "fark": 47.1,
+  "P": 0.9878
+ },
+ "QQQ_SMA200_alti": {
+  "n": 178,
+  "n_degil": 392,
+  "ile": 60.3,
+  "olmadan": 23.9,
+  "fark": 36.4,
+  "P": 0.8938
+ },
+ "QQQ_SMA200_ustu": {
+  "n": 176,
+  "n_degil": 422,
+  "ile": 29.6,
+  "olmadan": 6.3,
+  "fark": 23.3,
+  "P": 0.945
+ },
+ "SPY_r20_eksi": {
+  "n": 279,
+  "n_degil": 393,
+  "ile": 25.5,
+  "olmadan": 4.4,
+  "fark": 21.1,
+  "P": 0.9115
+ },
+ "SPY_r20_arti": {
+  "n": 64,
+  "n_degil": 273,
+  "ile": 46.9,
+  "olmadan": 3.8,
+  "fark": 43.1,
+  "P": 0.9992
+ },
+ "SPY_SMA200_alti": {
+  "n": 164,
+  "n_degil": 336,
+  "ile": 24.6,
+  "olmadan": 7.2,
+  "fark": 17.4,
+  "P": 0.7792
+ },
+ "SPY_SMA200_ustu": {
+  "n": 179,
+  "n_degil": 330,
+  "ile": 34.0,
+  "olmadan": 1.1,
+  "fark": 32.8,
+  "P": 0.9995
+ }
+}

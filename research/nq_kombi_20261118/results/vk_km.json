@@ -1,0 +1,816 @@
+{
+ "VK": {
+  "VK01_NDX_1990_2000": {
+   "n": 367,
+   "net": 75.3,
+   "ham_tetik": 128.0,
+   "taban": 205.9,
+   "fark_yonlu": -77.9,
+   "P": 0.2432,
+   "isabet": 0.504,
+   "yil_arti": "7/9"
+  },
+  "VK01_NDX_1990_2000_h5": {
+   "n": 367,
+   "net": 38.9,
+   "ham_tetik": 53.6,
+   "taban": 49.5,
+   "fark_yonlu": 4.1,
+   "P": 0.643,
+   "isabet": 0.58,
+   "yil_arti": "6/9"
+  },
+  "VK02_SPY": {
+   "5": {
+    "KESIF": {
+     "n": 1503,
+     "net": 31.4,
+     "ham_tetik": 46.1,
+     "taban": 22.8,
+     "fark_yonlu": 23.3,
+     "P": 0.9742,
+     "isabet": 0.59,
+     "yil_arti": "24/28"
+    },
+    "TEST": {
+     "n": 241,
+     "net": 34.5,
+     "ham_tetik": 49.1,
+     "taban": 24.2,
+     "fark_yonlu": 25.0,
+     "P": 0.846,
+     "isabet": 0.56,
+     "yil_arti": "4/6"
+    }
+   },
+   "20": {
+    "KESIF": {
+     "n": 1503,
+     "net": 91.4,
+     "ham_tetik": 144.3,
+     "taban": 90.3,
+     "fark_yonlu": 54.1,
+     "P": 0.9303,
+     "isabet": 0.661,
+     "yil_arti": "21/28"
+    },
+    "TEST": {
+     "n": 236,
+     "net": 105.6,
+     "ham_tetik": 158.0,
+     "taban": 97.6,
+     "fark_yonlu": 60.4,
+     "P": 0.7712,
+     "isabet": 0.64,
+     "yil_arti": "6/6"
+    }
+   }
+  },
+  "VK03_QQQ": {
+   "KESIF": {
+    "n": 88,
+    "ort": 41.5,
+    "isabet": 0.591,
+    "en_kotu": -1512.6,
+    "plasebo_ort": 79.7,
+    "yuzdelik": 0.251
+   },
+   "TEST": {
+    "n": 24,
+    "ort": 33.8,
+    "isabet": 0.458,
+    "en_kotu": -1006.7,
+    "plasebo_ort": 103.5,
+    "yuzdelik": 0.2705
+   }
+  },
+  "VK03_NDX_VIX_1990_2000": {
+   "n": 31,
+   "ort": 336.9,
+   "isabet": 0.71,
+   "en_kotu": -766.9,
+   "plasebo_ort": 227.3,
+   "yuzdelik": 0.8235
+  },
+  "VK03_SPY": {
+   "KESIF": {
+    "n": 143,
+    "ort": 50.6,
+    "isabet": 0.629,
+    "en_kotu": -3095.6,
+    "plasebo_ort": 34.9,
+    "yuzdelik": 0.6585
+   },
+   "TEST": {
+    "n": 23,
+    "ort": 104.8,
+    "isabet": 0.565,
+    "en_kotu": -622.3,
+    "plasebo_ort": 55.5,
+    "yuzdelik": 0.7165
+   }
+  },
+  "VK04_ufuk_fark": {
+   "KESIF_h1": 9.3,
+   "TEST_h1": 3.4,
+   "KESIF_h5": 35.6,
+   "TEST_h5": 29.1,
+   "KESIF_h10": 65.1,
+   "TEST_h10": 54.9,
+   "KESIF_h20": 114.6,
+   "TEST_h20": 98.7,
+   "KESIF_h40": 186.5,
+   "TEST_h40": 196.3,
+   "KESIF_h60": 274.8,
+   "TEST_h60": 316.1
+  },
+  "VK05": {
+   "TUM_2003_VP1_zamanlama": {
+    "yillik_%": 10.2,
+    "sharpe": 0.64,
+    "maxDD_%": -57.0,
+    "maruz_%": 58.1
+   },
+   "TUM_2003_al_tut": {
+    "yillik_%": 15.7,
+    "sharpe": 0.78,
+    "maxDD_%": -53.4,
+    "maruz_%": 100.0
+   },
+   "KESIF_2003_VP1_zamanlama": {
+    "yillik_%": 9.2,
+    "sharpe": 0.58,
+    "maxDD_%": -57.0,
+    "maruz_%": 58.4
+   },
+   "KESIF_2003_al_tut": {
+    "yillik_%": 16.7,
+    "sharpe": 0.84,
+    "maxDD_%": -53.4,
+    "maruz_%": 100.0
+   },
+   "TEST_VP1_zamanlama": {
+    "yillik_%": 13.9,
+    "sharpe": 0.92,
+    "maxDD_%": -13.6,
+    "maruz_%": 57.0
+   },
+   "TEST_al_tut": {
+    "yillik_%": 11.8,
+    "sharpe": 0.6,
+    "maxDD_%": -35.1,
+    "maruz_%": 100.0
+   }
+  }
+ },
+ "KM01": {
+  "QQQ_C3b_B1_VP1": {
+   "KESIF": {
+    "n": 104,
+    "n_degil": 180,
+    "ile": 76.4,
+    "olmadan": 20.1,
+    "fark": 56.3,
+    "P": 0.989
+   },
+   "TEST": {
+    "n": 22,
+    "n_degil": 59,
+    "ile": 94.2,
+    "olmadan": 34.8,
+    "fark": 59.4,
+    "P": 0.9513
+   }
+  },
+  "QQQ_C3b_B2_VPdusuk": {
+   "KESIF": {
+    "n": 32,
+    "n_degil": 252,
+    "ile": -17.6,
+    "olmadan": 48.1,
+    "fark": -65.7,
+    "P": 0.0853
+   },
+   "TEST": {
+    "n": 12,
+    "n_degil": 69,
+    "ile": -11.8,
+    "olmadan": 61.9,
+    "fark": -73.7,
+    "P": 0.1663
+   }
+  },
+  "QQQ_C3b_B3_cekisme": {
+   "KESIF": {
+    "n": 75,
+    "n_degil": 227,
+    "ile": 48.2,
+    "olmadan": 40.2,
+    "fark": 8.0,
+    "P": 0.563
+   },
+   "TEST": {
+    "n": 13,
+    "n_degil": 68,
+    "ile": 86.0,
+    "olmadan": 44.3,
+    "fark": 41.7,
+    "P": 0.883
+   }
+  },
+  "QQQ_C3b_B4_dar": {
+   "KESIF": {
+    "n": 10,
+    "n_degil": 91,
+    "ile": 20.5,
+    "olmadan": 36.7,
+    "fark": -16.2,
+    "P": 0.3192
+   },
+   "TEST": {
+    "n": 10,
+    "n_degil": 71,
+    "ile": 40.5,
+    "olmadan": 52.4,
+    "fark": -12.0,
+    "P": 0.413
+   }
+  },
+  "QQQ_C3b_B5_kredi_zayif": {
+   "KESIF": {
+    "n": 70,
+    "n_degil": 109,
+    "ile": 51.2,
+    "olmadan": 29.6,
+    "fark": 21.6,
+    "P": 0.698
+   },
+   "TEST": {
+    "n": 25,
+    "n_degil": 56,
+    "ile": 101.6,
+    "olmadan": 28.4,
+    "fark": 73.2,
+    "P": 0.9065
+   }
+  },
+  "QQQ_C3b_B6_VIX18": {
+   "KESIF": {
+    "n": 188,
+    "n_degil": 114,
+    "ile": 63.1,
+    "olmadan": 7.7,
+    "fark": 55.3,
+    "P": 0.9938
+   },
+   "TEST": {
+    "n": 57,
+    "n_degil": 24,
+    "ile": 66.1,
+    "olmadan": 15.0,
+    "fark": 51.2,
+    "P": 0.9113
+   }
+  },
+  "QQQ_K1_B1_VP1": {
+   "KESIF": {
+    "n": 190,
+    "n_degil": 582,
+    "ile": 35.7,
+    "olmadan": 18.8,
+    "fark": 16.9,
+    "P": 0.8538
+   },
+   "TEST": {
+    "n": 43,
+    "n_degil": 177,
+    "ile": 44.7,
+    "olmadan": 22.4,
+    "fark": 22.3,
+    "P": 0.8013
+   }
+  },
+  "QQQ_K1_B2_VPdusuk": {
+   "KESIF": {
+    "n": 158,
+    "n_degil": 614,
+    "ile": 17.2,
+    "olmadan": 24.4,
+    "fark": -7.3,
+    "P": 0.3432
+   },
+   "TEST": {
+    "n": 43,
+    "n_degil": 177,
+    "ile": -47.9,
+    "olmadan": 44.9,
+    "fark": -92.8,
+    "P": 0.001
+   }
+  },
+  "QQQ_K1_B3_cekisme": {
+   "KESIF": {
+    "n": 260,
+    "n_degil": 613,
+    "ile": 48.6,
+    "olmadan": 14.9,
+    "fark": 33.7,
+    "P": 0.9708
+   },
+   "TEST": {
+    "n": 66,
+    "n_degil": 154,
+    "ile": 50.2,
+    "olmadan": 16.7,
+    "fark": 33.6,
+    "P": 0.936
+   }
+  },
+  "QQQ_K1_B4_dar": {
+   "KESIF": {
+    "n": 46,
+    "n_degil": 186,
+    "ile": 36.9,
+    "olmadan": 25.2,
+    "fark": 11.7,
+    "P": 0.6727
+   },
+   "TEST": {
+    "n": 29,
+    "n_degil": 191,
+    "ile": 3.9,
+    "olmadan": 30.2,
+    "fark": -26.3,
+    "P": 0.1363
+   }
+  },
+  "QQQ_K1_B5_kredi_zayif": {
+   "KESIF": {
+    "n": 178,
+    "n_degil": 262,
+    "ile": 51.3,
+    "olmadan": 16.0,
+    "fark": 35.3,
+    "P": 0.9557
+   },
+   "TEST": {
+    "n": 65,
+    "n_degil": 155,
+    "ile": 49.9,
+    "olmadan": 17.0,
+    "fark": 32.8,
+    "P": 0.862
+   }
+  },
+  "QQQ_K1_B6_VIX18": {
+   "KESIF": {
+    "n": 641,
+    "n_degil": 232,
+    "ile": 34.6,
+    "olmadan": -1.6,
+    "fark": 36.2,
+    "P": 1.0
+   },
+   "TEST": {
+    "n": 160,
+    "n_degil": 59,
+    "ile": 26.7,
+    "olmadan": 28.6,
+    "fark": -1.9,
+    "P": 0.453
+   }
+  },
+  "QQQ_ES_B1_VP1": {
+   "KESIF": {
+    "n": 190,
+    "n_degil": 582,
+    "ile": 31.0,
+    "olmadan": 14.0,
+    "fark": 17.0,
+    "P": 0.912
+   },
+   "TEST": {
+    "n": 43,
+    "n_degil": 177,
+    "ile": 21.6,
+    "olmadan": 13.7,
+    "fark": 7.9,
+    "P": 0.646
+   }
+  },
+  "QQQ_ES_B2_VPdusuk": {
+   "KESIF": {
+    "n": 158,
+    "n_degil": 614,
+    "ile": 13.8,
+    "olmadan": 19.3,
+    "fark": -5.5,
+    "P": 0.3605
+   },
+   "TEST": {
+    "n": 43,
+    "n_degil": 177,
+    "ile": -21.8,
+    "olmadan": 24.3,
+    "fark": -46.1,
+    "P": 0.0335
+   }
+  },
+  "QQQ_ES_B3_cekisme": {
+   "KESIF": {
+    "n": 260,
+    "n_degil": 613,
+    "ile": 32.0,
+    "olmadan": 16.8,
+    "fark": 15.2,
+    "P": 0.8337
+   },
+   "TEST": {
+    "n": 66,
+    "n_degil": 154,
+    "ile": 35.2,
+    "olmadan": 6.7,
+    "fark": 28.5,
+    "P": 0.9245
+   }
+  },
+  "QQQ_ES_B4_dar": {
+   "KESIF": {
+    "n": 46,
+    "n_degil": 186,
+    "ile": 35.1,
+    "olmadan": 23.7,
+    "fark": 11.4,
+    "P": 0.708
+   },
+   "TEST": {
+    "n": 29,
+    "n_degil": 191,
+    "ile": -5.3,
+    "olmadan": 18.4,
+    "fark": -23.7,
+    "P": 0.162
+   }
+  },
+  "QQQ_ES_B5_kredi_zayif": {
+   "KESIF": {
+    "n": 178,
+    "n_degil": 262,
+    "ile": 44.5,
+    "olmadan": 9.0,
+    "fark": 35.5,
+    "P": 0.9838
+   },
+   "TEST": {
+    "n": 65,
+    "n_degil": 155,
+    "ile": 46.6,
+    "olmadan": 2.1,
+    "fark": 44.4,
+    "P": 0.954
+   }
+  },
+  "QQQ_ES_B6_VIX18": {
+   "KESIF": {
+    "n": 641,
+    "n_degil": 232,
+    "ile": 28.6,
+    "olmadan": 1.2,
+    "fark": 27.4,
+    "P": 0.9965
+   },
+   "TEST": {
+    "n": 160,
+    "n_degil": 59,
+    "ile": 21.7,
+    "olmadan": -0.4,
+    "fark": 22.2,
+    "P": 0.9025
+   }
+  },
+  "SPY_C3b_B1_VP1": {
+   "KESIF": {
+    "n": 131,
+    "n_degil": 162,
+    "ile": 50.0,
+    "olmadan": 21.9,
+    "fark": 28.1,
+    "P": 0.9147
+   },
+   "TEST": {
+    "n": 33,
+    "n_degil": 46,
+    "ile": 73.1,
+    "olmadan": 39.9,
+    "fark": 33.3,
+    "P": 0.9237
+   }
+  },
+  "SPY_C3b_B2_VPdusuk": {
+   "KESIF": {
+    "n": 25,
+    "n_degil": 268,
+    "ile": 111.8,
+    "olmadan": 27.3,
+    "fark": 84.5,
+    "P": 0.8728
+   },
+   "TEST": {
+    "n": 7,
+    "n_degil": 72,
+    "ile": 67.4,
+    "olmadan": 52.4,
+    "fark": 15.0,
+    "P": 0.6172
+   }
+  },
+  "SPY_C3b_B3_cekisme": {
+   "KESIF": {
+    "n": 82,
+    "n_degil": 211,
+    "ile": 53.3,
+    "olmadan": 27.1,
+    "fark": 26.2,
+    "P": 0.853
+   },
+   "TEST": {
+    "n": 17,
+    "n_degil": 63,
+    "ile": 50.6,
+    "olmadan": 52.1,
+    "fark": -1.4,
+    "P": 0.4868
+   }
+  },
+  "SPY_C3b_B4_dar": {
+   "KESIF": {
+    "n": 69,
+    "n_degil": 161,
+    "ile": 77.7,
+    "olmadan": 17.3,
+    "fark": 60.5,
+    "P": 0.9677
+   },
+   "TEST": {
+    "n": 10,
+    "n_degil": 70,
+    "ile": 53.2,
+    "olmadan": 51.6,
+    "fark": 1.7,
+    "P": 0.5222
+   }
+  },
+  "SPY_C3b_B5_kredi_zayif": {
+   "KESIF": {
+    "n": 72,
+    "n_degil": 108,
+    "ile": 72.5,
+    "olmadan": 24.5,
+    "fark": 48.0,
+    "P": 0.9143
+   },
+   "TEST": {
+    "n": 24,
+    "n_degil": 56,
+    "ile": 70.4,
+    "olmadan": 43.8,
+    "fark": 26.6,
+    "P": 0.8722
+   }
+  },
+  "SPY_C3b_B6_VIX18": {
+   "KESIF": {
+    "n": 192,
+    "n_degil": 101,
+    "ile": 49.0,
+    "olmadan": 6.9,
+    "fark": 42.1,
+    "P": 0.9915
+   },
+   "TEST": {
+    "n": 59,
+    "n_degil": 20,
+    "ile": 63.1,
+    "olmadan": 26.1,
+    "fark": 37.1,
+    "P": 0.952
+   }
+  },
+  "SPY_K1_B1_VP1": {
+   "KESIF": {
+    "n": 213,
+    "n_degil": 427,
+    "ile": 19.3,
+    "olmadan": 8.5,
+    "fark": 10.8,
+    "P": 0.7595
+   },
+   "TEST": {
+    "n": 40,
+    "n_degil": 96,
+    "ile": 57.4,
+    "olmadan": 1.5,
+    "fark": 55.9,
+    "P": 0.965
+   }
+  },
+  "SPY_K1_B2_VPdusuk": {
+   "KESIF": {
+    "n": 121,
+    "n_degil": 519,
+    "ile": 7.8,
+    "olmadan": 13.1,
+    "fark": -5.3,
+    "P": 0.4305
+   },
+   "TEST": {
+    "n": 26,
+    "n_degil": 110,
+    "ile": -3.6,
+    "olmadan": 23.0,
+    "fark": -26.6,
+    "P": 0.2582
+   }
+  },
+  "SPY_K1_B3_cekisme": {
+   "KESIF": {
+    "n": 206,
+    "n_degil": 434,
+    "ile": 28.8,
+    "olmadan": 4.2,
+    "fark": 24.6,
+    "P": 0.9227
+   },
+   "TEST": {
+    "n": 42,
+    "n_degil": 95,
+    "ile": 34.0,
+    "olmadan": 9.6,
+    "fark": 24.5,
+    "P": 0.8385
+   }
+  },
+  "SPY_K1_B4_dar": {
+   "KESIF": {
+    "n": 170,
+    "n_degil": 286,
+    "ile": 17.0,
+    "olmadan": 17.4,
+    "fark": -0.5,
+    "P": 0.493
+   },
+   "TEST": {
+    "n": 17,
+    "n_degil": 120,
+    "ile": -6.4,
+    "olmadan": 20.4,
+    "fark": -26.8,
+    "P": 0.1492
+   }
+  },
+  "SPY_K1_B5_kredi_zayif": {
+   "KESIF": {
+    "n": 160,
+    "n_degil": 196,
+    "ile": 15.3,
+    "olmadan": 17.8,
+    "fark": -2.5,
+    "P": 0.4605
+   },
+   "TEST": {
+    "n": 42,
+    "n_degil": 95,
+    "ile": 38.8,
+    "olmadan": 7.4,
+    "fark": 31.4,
+    "P": 0.809
+   }
+  },
+  "SPY_K1_B6_VIX18": {
+   "KESIF": {
+    "n": 523,
+    "n_degil": 117,
+    "ile": 14.7,
+    "olmadan": 0.3,
+    "fark": 14.5,
+    "P": 0.8848
+   },
+   "TEST": {
+    "n": 110,
+    "n_degil": 26,
+    "ile": 19.2,
+    "olmadan": 12.8,
+    "fark": 6.4,
+    "P": 0.5978
+   }
+  },
+  "SPY_ES_B1_VP1": {
+   "KESIF": {
+    "n": 213,
+    "n_degil": 427,
+    "ile": 19.4,
+    "olmadan": 8.3,
+    "fark": 11.2,
+    "P": 0.82
+   },
+   "TEST": {
+    "n": 40,
+    "n_degil": 96,
+    "ile": 46.7,
+    "olmadan": 4.5,
+    "fark": 42.2,
+    "P": 0.9117
+   }
+  },
+  "SPY_ES_B2_VPdusuk": {
+   "KESIF": {
+    "n": 121,
+    "n_degil": 519,
+    "ile": 12.9,
+    "olmadan": 11.7,
+    "fark": 1.2,
+    "P": 0.528
+   },
+   "TEST": {
+    "n": 26,
+    "n_degil": 110,
+    "ile": 9.2,
+    "olmadan": 18.7,
+    "fark": -9.5,
+    "P": 0.3633
+   }
+  },
+  "SPY_ES_B3_cekisme": {
+   "KESIF": {
+    "n": 206,
+    "n_degil": 434,
+    "ile": 19.1,
+    "olmadan": 8.6,
+    "fark": 10.6,
+    "P": 0.7695
+   },
+   "TEST": {
+    "n": 42,
+    "n_degil": 95,
+    "ile": 29.1,
+    "olmadan": 10.5,
+    "fark": 18.6,
+    "P": 0.7987
+   }
+  },
+  "SPY_ES_B4_dar": {
+   "KESIF": {
+    "n": 170,
+    "n_degil": 286,
+    "ile": 13.8,
+    "olmadan": 14.9,
+    "fark": -1.0,
+    "P": 0.4738
+   },
+   "TEST": {
+    "n": 17,
+    "n_degil": 120,
+    "ile": -1.1,
+    "olmadan": 18.6,
+    "fark": -19.7,
+    "P": 0.2335
+   }
+  },
+  "SPY_ES_B5_kredi_zayif": {
+   "KESIF": {
+    "n": 160,
+    "n_degil": 196,
+    "ile": 15.7,
+    "olmadan": 12.9,
+    "fark": 2.8,
+    "P": 0.567
+   },
+   "TEST": {
+    "n": 42,
+    "n_degil": 95,
+    "ile": 43.3,
+    "olmadan": 4.2,
+    "fark": 39.1,
+    "P": 0.8718
+   }
+  },
+  "SPY_ES_B6_VIX18": {
+   "KESIF": {
+    "n": 523,
+    "n_degil": 117,
+    "ile": 14.8,
+    "olmadan": -0.8,
+    "fark": 15.7,
+    "P": 0.9415
+   },
+   "TEST": {
+    "n": 110,
+    "n_degil": 26,
+    "ile": 20.6,
+    "olmadan": 1.2,
+    "fark": 19.4,
+    "P": 0.8475
+   }
+  }
+ }
+}
