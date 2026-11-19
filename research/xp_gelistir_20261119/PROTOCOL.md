@@ -81,3 +81,20 @@ Not: seçim TEST'i gördükten sonra yapıldığı için geçse bile en fazla C+
 KEŞİF'ten dondurulan lot (Duka ×1,39, MT5 ×1,22) ile TEST: Duka kâr ×0,81 / zarar ×0,40 / kötü10 ×0,52 / DD ×0,52; MT5 kâr ×0,75 /
 zarar ×0,38 / DD ×0,44. Kör US500/US30/US2000 kâr×/zarar× oranı 0,84–1,11 (iyileşme yok). → Hedefe en yakın sonuç ama kâr %19–25 eksik
 ve kör piyasalarda tutmuyor: C (NDX'e özgü, ileri gölge gerekir).
+
+## EK-7 (2026-11-19) — tutuşu UZATMAK (önce yalnız kısaltma denenmişti)
+XP kuralı aynı (ilk yükselen 16:00 kapanışı), ama en geç çıkış H ∈ {5 (taban), 7, 10, 15, 20} işlem günü. Varyant BE: ilk 5 günde XP,
+5. günden sonra hâlâ zarardaysa 16:00 kapanışı giriş fiyatının üstüne çıkınca (başabaş) ya da H'de çık. Finansman gün başına düşülür.
+Seçim KEŞİF (dört ayrı piyasa ortalaması: kâr× ≥ 1 iken zarar× en küçük), TEST'te ölçüt aynı: Duka + MT5 kâr× ≥ 1,0 ve zarar× ≤ 0,5;
+kör ≥ 2/3'te kâr× ≥ 0,9 ve zarar× ≤ 0,6.
+
+## EK-7b (2026-11-19) — tanım düzeltmesi (ilk koşu sonuçsuz: işlemlerin yalnız ~%1'i 5. güne kadar tutuluyor)
+Zararın kaynağı: XP ilk yükselen kapanışta **giriş fiyatının altındayken de** çıkıyor (ölü kedi sıçramasında zararı kesinleştiriyor).
+Yeni kural BE: ilk yükselen 16:00 kapanışında yalnız kapanış ≥ giriş ise çık; değilse kapanış ilk kez ≥ giriş olunca ya da en geç H işlem
+günü sonunda çık; H ∈ {5, 10, 15, 20, 40}. Finansman gün başına. Seçim KEŞİF (dört piyasa ortalaması), ölçüt aynı (TEST kâr× ≥ 1,0,
+zarar× ≤ 0,5; kör ≥ 2/3).
+
+## EK-7b sonucu
+KEŞİF (4 piyasa ort.): BE40 kâr ×1,42, zarar ×0,41 → seçildi. TEST: Duka kâr ×0,98 zarar ×1,28 DD ×3,09; MT5 ×0,85 / ×1,52 / ×3,73;
+kör US500 ×0,99 / ×1,25, US30 ×0,70 / ×1,48, US2000 ×1,61 / ×0,84 → X. Zarardaki pozisyonu haftalarca tutmak 2022 ayısında felaket.
+Sonuçlar H'ye göre ve dönemler arasında ters dönüyor (birkaç kriz işlemi belirleyici); TEST'te iyi görünen BE10 KEŞİF'te zayıftı.

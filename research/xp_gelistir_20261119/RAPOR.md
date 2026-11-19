@@ -45,3 +45,8 @@ oynaklık gecelerinde; lotu orada küçültmek kazancı, sakin günlerde büyüt
 | Kör US500 / US30 / US2000 | 0,36 / 0,60 / 0,33 | 0,43 / 0,54 / 0,36 | — | — |
 NASDAQ'ta zarar yarıdan fazla düşüyor ama kâr %19–25 eksik; kör piyasalarda kâr/zarar oranı iyileşmiyor (0,84–1,11) → **C**, hedef
 tutmadı. Birleşim TEST görüldükten sonra seçildiği için ancak ileriye dönük gölgede doğrulanabilir.
+
+## EK-7 — tutuşu uzatmak / "zarardayken satma, başabaşı bekle"
+XP ilk yükselen kapanışta giriş altındayken de çıkıyor; bunun yerine başabaşa kadar en çok H gün (5–40) beklemek. KEŞİF'te BE40 hedefi
+geçti (kâr ×1,42, zarar ×0,41), **TEST'te çöktü** (NDX kâr ×0,85–0,98, zarar ×1,28–1,52, en büyük düşüş ×3,1–3,7; 2022 ayısı).
+**Onuncu yol da hedefi tutmadı.**

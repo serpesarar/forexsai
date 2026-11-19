@@ -1611,6 +1611,7 @@ FOMC tarihleri 1994–2007 Fed tarihsel sayfalarından (`data/fomc_1994_2007.csv
 | XG-07 | 2026-11-19 | Derin felaket stopu XP tutuşunda (−200…−600 bp, yol en düşüğü) ± 4'lü veto ± kademe (EK-4) | Zarar ×1,2–2,0 her piyasada iki dönemde (kesilenler sonradan kazanıyordu); stop + P4 zarar ×0,29–0,44, kâr ×0,27–0,61 | X |
 | XG-08 | 2026-11-19 | İşlem başı oynaklığa göre lot (1/rv20, 1/VIX; ölçek KEŞİF'te kâr = taban) (EK-5) | TEST zarar ×1,07–1,97, en kötü işlem büyüyor | X |
 | XG-09 | 2026-11-19 | 4'lü veto + −400 bp felaket stopu + KEŞİF'ten dondurulan lot ×1,2–1,4 (EK-6; birleşim TEST'i gördükten sonra seçildi) | NDX TEST kâr ×0,75–0,81, zarar ×0,38–0,40, DD ×0,44–0,52; kör US kâr/zarar oranı 0,84–1,11 | C (hedefe en yakın, NDX'e özgü, ileri gölge) |
+| XG-10 | 2026-11-19 | Zarardayken çıkmama: ilk yükselen kapanışta yalnız kârdaysa çık, değilse başabaş ya da en geç H gün (5–40) (EK-7b) | KEŞİF BE40 kâr ×1,42 zarar ×0,41 (seçildi) → TEST NDX kâr ×0,85–0,98, zarar ×1,28–1,52, DD ×3,1–3,7; H'ye göre ve dönemler arasında ters | X |
 
 ## 3. Meta-dersler (kalıcı ilkeler)
 
