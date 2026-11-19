@@ -1,0 +1,43 @@
+{
+ "scope": "ndx_vade_sonrasi_korku_dozu",
+ "tarih": "2026-11-18",
+ "aciklama": "DOZ: son aylık OPEX'ten sonraki 3.–7. işlem günü (vade sonrası Çarşamba → ertesi Salı) açılan korku dönüşü uzunları (K1, C3b) ×1,5",
+ "kanit": "research/vade_mantik_20261118/ (PROTOCOL EK-2, RAPOR); defter §2.93 MX-04",
+ "checks": {
+  "1_hacim": {
+   "n": 957,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "havuz_fark_z": 0.105,
+   "P_arti": 0.9986,
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "ilk_yari_z": 0.181,
+   "ikinci_yari_z": 0.021,
+   "not": "ikinci yarıda zayıf (P 0,66)",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "not": "doz mevcut işlemi büyütür; spread ≈ 1 bp, fark +12…+59 bp",
+   "gecti": true
+  },
+  "5_icra": {
+   "gunici_K1_5_besleme": "4/5 artı (US500 −1)",
+   "gecti": true
+  },
+  "6_tek_pozisyon": {
+   "not": "yeni işlem açmaz, lot çarpanı",
+   "gecti": true
+  }
+ },
+ "ek": {
+  "bagimsiz_donem_C3b_NDX_1985_1999": "+22,6 bp (n 56)",
+  "TOM_disi": "+0,075z P 0,978",
+  "kitap_veto_doz": "K1 QQQ Sharpe 0,95 → 1,06; Duka gün içi 1,04 → 1,01"
+ },
+ "kart_6_6": 6,
+ "verdict": "SHADOW",
+ "sinif": "B− (doz; ikinci yarı zayıf, canlıya bağlama kullanıcı kararı)"
+}

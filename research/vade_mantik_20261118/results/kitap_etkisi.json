@@ -1,0 +1,147 @@
+{
+ "a18p_veto_disi": {
+  "n": 216,
+  "fark_z": 0.081,
+  "P_eksi": 0.1074
+ },
+ "K1gi_DUKA_NDX": {
+  "taban": {
+   "top_bp": 13797.0,
+   "islem": 252,
+   "ort": 54.7,
+   "yil_sharpe": 1.04
+  },
+  "veto": {
+   "top_bp": 14495.0,
+   "islem": 207,
+   "ort": 70.0,
+   "yil_sharpe": 0.98
+  },
+  "veto_doz": {
+   "top_bp": 16743.0,
+   "islem": 207,
+   "ort": 80.9,
+   "yil_sharpe": 1.01
+  }
+ },
+ "K1gi_MT5_NAS100": {
+  "taban": {
+   "top_bp": 11799.0,
+   "islem": 234,
+   "ort": 50.4,
+   "yil_sharpe": 0.9
+  },
+  "veto": {
+   "top_bp": 12210.0,
+   "islem": 192,
+   "ort": 63.6,
+   "yil_sharpe": 0.84
+  },
+  "veto_doz": {
+   "top_bp": 14050.0,
+   "islem": 192,
+   "ort": 73.2,
+   "yil_sharpe": 0.85
+  }
+ },
+ "K1gi_MT5_US500": {
+  "taban": {
+   "top_bp": 4013.0,
+   "islem": 146,
+   "ort": 27.5,
+   "yil_sharpe": 0.97
+  },
+  "veto": {
+   "top_bp": 4512.0,
+   "islem": 122,
+   "ort": 37.0,
+   "yil_sharpe": 1.02
+  },
+  "veto_doz": {
+   "top_bp": 4994.0,
+   "islem": 122,
+   "ort": 40.9,
+   "yil_sharpe": 1.06
+  }
+ },
+ "K1gi_MT5_US30": {
+  "taban": {
+   "top_bp": 5382.0,
+   "islem": 162,
+   "ort": 33.2,
+   "yil_sharpe": 0.57
+  },
+  "veto": {
+   "top_bp": 5942.0,
+   "islem": 136,
+   "ort": 43.7,
+   "yil_sharpe": 0.58
+  },
+  "veto_doz": {
+   "top_bp": 7133.0,
+   "islem": 136,
+   "ort": 52.4,
+   "yil_sharpe": 0.61
+  }
+ },
+ "K1gi_MT5_US2000": {
+  "taban": {
+   "top_bp": 7641.0,
+   "islem": 234,
+   "ort": 32.7,
+   "yil_sharpe": 0.79
+  },
+  "veto": {
+   "top_bp": 8042.0,
+   "islem": 191,
+   "ort": 42.1,
+   "yil_sharpe": 0.87
+  },
+  "veto_doz": {
+   "top_bp": 10339.0,
+   "islem": 191,
+   "ort": 54.1,
+   "yil_sharpe": 0.93
+  }
+ },
+ "K1_QQQ": {
+  "taban": {
+   "top_bp": 31259.0,
+   "islem": 1251,
+   "ort": 25.0,
+   "yil_sharpe": 0.95
+  },
+  "veto": {
+   "top_bp": 35979.0,
+   "islem": 1049,
+   "ort": 34.3,
+   "yil_sharpe": 1.04
+  },
+  "veto_doz": {
+   "top_bp": 42534.0,
+   "islem": 1049,
+   "ort": 40.5,
+   "yil_sharpe": 1.06
+  }
+ },
+ "C3b_QQQ": {
+  "taban": {
+   "top_bp": 21319.0,
+   "islem": 415,
+   "ort": 51.4,
+   "yil_sharpe": 0.77
+  },
+  "veto": {
+   "top_bp": 22004.0,
+   "islem": 356,
+   "ort": 61.8,
+   "yil_sharpe": 0.84
+  },
+  "veto_doz": {
+   "top_bp": 25162.0,
+   "islem": 356,
+   "ort": 70.7,
+   "yil_sharpe": 0.82
+  }
+ }
+}

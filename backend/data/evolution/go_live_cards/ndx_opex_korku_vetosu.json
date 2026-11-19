@@ -1,7 +1,7 @@
 {
  "scope": "ndx_opex_korku_vetosu",
  "tarih": "2026-11-18",
- "aciklama": "VETO: aylık OPEX haftasının Çarşamba ve Perşembe günü açılacak korku dönüşü uzunları (K1 korku gecesi, ertesi seans ES, C3b/C3 RSI2) AÇMA. OPEX Cuma girişleri uzantı (C). ORB×VIX uzun kolu aynı pencerede C+ (ayrı karar).",
+ "aciklama": "VETO: aylık OPEX haftasının Çarşamba, Perşembe ve vade Cuma'sı (k = 0…2 işlem günü kala) açılacak korku dönüşü uzunları (K1 korku gecesi, ertesi seans ES, C3b/C3 RSI2) AÇMA. ORB×VIX uzun kolu aynı pencerede C+ (ayrı karar).",
  "kanit": "research/son4_20261118/ (PROTOCOL EK-2…7, RAPOR); defter §2.91 SV-01",
  "checks": {
   "1_hacim": {
@@ -41,7 +41,11 @@
   "haftanin_gunu_kontrolu": "OPEX dışı Çar/Per'e göre 8/8 set eksi",
   "canli_kitap_Duka_2018_26": "C3B −106 bp (ESKİ −134 / YENİ −102), C3 −61 bp",
   "KSG_etkisiz": "sıradan gece tutuşu farksız → etki korku dönüşüne özgü",
-  "vade_sonrasi_doz": "X"
+  "vade_sonrasi_doz": "X",
+  "MX01_vade_cuma_k0": "vade Cuma'sı girişleri 8/8 set eksi, havuz −0,23z P 0,9996 (research/vade_mantik_20261118)",
+  "MX02_ceyreklik": "çeyreklik ≈ aylık (−0,29z ikisi)",
+  "MX03_yabanci": "yerel vadeli 6 yabancı endekste yok → ABD OPEX'ine özgü",
+  "kitap_etkisi": "K1 QQQ 27 y yıllık Sharpe 0,95 → 1,04; gün içi NDX 9 y 1,04 → 0,98 (işlem başı +%28)"
  },
  "kart_6_6": 5,
  "verdict": "SHADOW",
