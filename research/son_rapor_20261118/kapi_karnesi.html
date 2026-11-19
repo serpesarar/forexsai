@@ -76,6 +76,36 @@ ul{margin:0;padding-left:20px;display:grid;gap:6px;max-width:72ch}
   </section>
 
   <section>
+    <div class="eyebrow">Tek tablo · 14 kapının hepsi, aynı ölçülerle</div>
+    <h2>Her kapı uygulandığında kural ne kazandırır, ne kaybettirir</h2>
+    <p class="lead">NASDAQ, 2018-04 → 2026-11. Değerler Duka · MT5 (ikisi aynıysa tek değer). Dozlu satırlarda dozlanan işlem 1,5 lotla sayılır; bu yüzden en kötü işlem de 1,5 kat büyür.</p>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>#</th><th>Kapı (uygulanmış kural)</th><th>İşlem / yıl</th><th>Kazanan</th><th>Ort. bp</th><th>En kötü işlem</th><th>Ortalama kötü (en kötü %10)</th><th>En büyük düşüş</th><th>Artı yıl</th><th>Karar</th></tr></thead>
+        <tbody>
+          <tr><td>—</td><td>Taban: korku gecesi K1 (kapısız)</td><td>29,6 · 28,0</td><td>%60 · %59</td><td>+55 · +50</td><td class="neg">−613 · −623</td><td class="neg">−251 · −262</td><td class="neg">−841 · −842</td><td>9/9</td><td>referans</td></tr>
+          <tr><td>1</td><td><b>Önerilen paket</b>: K1 + OPEX vetosu + XP</td><td>24,3 · 23,0</td><td>%83 · %80</td><td>+103 · +96</td><td class="neg">−783 · −786</td><td class="neg">−285 · −298</td><td class="neg">−801 · −814</td><td>9/9</td><td><span class="pill ok">Onay</span></td></tr>
+          <tr><td>2</td><td>OPEX korku vetosu</td><td>24,3 · 23,0</td><td>%65 · %63</td><td>+70 · +64</td><td class="neg">−613 · −623</td><td class="neg">−254 · −262</td><td class="neg">−745 · −779</td><td>9/9</td><td><span class="pill ok">Onay</span></td></tr>
+          <tr><td>3</td><td>"İlk yükselen kapanışta çık" (XP)</td><td>29,6 · 28,0</td><td>%79 · %77</td><td>+85 · +80</td><td class="neg">−783 · −786</td><td class="neg">−304 · −317</td><td class="neg">−1.106 · −1.122</td><td>9/9</td><td><span class="pill ok">Onay</span><small>US2000 hariç</small></td></tr>
+          <tr><td>4</td><td>Korku ertesi seansı (gece yok)</td><td>29,5 · 28,0</td><td>%61 · %60</td><td>+37 · +32</td><td class="neg">−610 · −607</td><td class="neg">−220 · −224</td><td class="neg">−623 · −619</td><td>9/9</td><td><span class="pill ok">Onay</span></td></tr>
+          <tr><td>5</td><td>Art arda korku dozu ×1,5</td><td>29,6 · 28,0</td><td>%60 · %59</td><td>+65 · +59</td><td class="neg">−613 · −623</td><td class="neg">−279 · −291</td><td class="neg">−905 · −907</td><td>9/9</td><td><span class="pill ok">Onay</span></td></tr>
+          <tr><td>6</td><td>Korku ∧ ters VIX eğrisi dozu ×1,5</td><td>29,6 · 28,0</td><td>%60 · %59</td><td>+69 · +65</td><td class="neg">−919 · −934</td><td class="neg">−296 · −310</td><td class="neg">−1.147 · −1.153</td><td>9/9</td><td><span class="pill ok">Onay</span><small>kuyruk riski artar</small></td></tr>
+          <tr><td>7</td><td>K3 son saat korkusu</td><td>37,6 · 37,4</td><td>%60 · %57</td><td>+39 · +35</td><td class="neg">−613 · −623</td><td class="neg">−277 · −275</td><td class="neg">−1.260 · −1.265</td><td>9/9</td><td><span class="pill ok">Onay</span></td></tr>
+          <tr><td>8</td><td>Geniş fitilli KSG</td><td>25,5 · 25,8</td><td>%63 · %61</td><td>+50 · +45</td><td class="neg">−633 · −643</td><td class="neg">−289 · −299</td><td class="neg">−1.153 · −1.209</td><td>9/9</td><td><span class="pill ok">Onay</span></td></tr>
+          <tr><td>9</td><td>Referans fitilli KSG</td><td>21,5 · 21,8</td><td>%63 · %64</td><td>+28 · +31</td><td class="neg">−402 · −401</td><td class="neg">−212 · −205</td><td class="neg">−687 · −591</td><td>8/9</td><td><span class="pill ok">Onay</span><small>yalnız NASDAQ</small></td></tr>
+          <tr><td>10</td><td>KSG OPEX vetosu (taban KSG: 97 işlem/yıl, +9,5 bp, düşüş −1.067 · −898)</td><td>85,3 · 86,3</td><td>%58 · %59</td><td>+11 · +11</td><td class="neg">−346 · −344</td><td class="neg">−151 · −150</td><td class="neg">−971 · −714</td><td>7/9</td><td><span class="pill ok">Onay</span></td></tr>
+          <tr><td>11</td><td>C3b + OPEX vetosu (taban C3b: 15/yıl, %77, +68 bp)</td><td>12,9</td><td>%80</td><td>+83</td><td class="neg">−684</td><td class="neg">−249</td><td class="neg">−796</td><td>9/9</td><td><span class="pill ok">Onay</span></td></tr>
+          <tr><td>12</td><td>Olay günü vetosu</td><td>25,0 · 23,7</td><td>%62 · %62</td><td>+61 · +57</td><td class="neg">−613 · −623</td><td class="neg">−257 · −270</td><td class="neg">−841 · −842</td><td>9/9 · 8/9</td><td><span class="pill weak">Koşullu</span><small>NASDAQ dışında güçlü</small></td></tr>
+          <tr><td>13</td><td>Vade sonrası 3.–7. gün dozu ×1,5</td><td>29,6 · 28,0</td><td>%60 · %59</td><td>+64 · +58</td><td class="neg">−631 · −638</td><td class="neg">−282 · −295</td><td class="neg">−786 · −799</td><td>9/9</td><td><span class="pill weak">Zayıf</span></td></tr>
+          <tr><td>14</td><td>Korku ∧ C3b aynı gün dozu ×1,5</td><td>29,6 · 28,0</td><td>%60 · %59</td><td>+65 · +61</td><td class="neg">−919 · −934</td><td class="neg">−284 · −297</td><td class="neg">−1.199 · −1.204</td><td>9/9</td><td><span class="pill weak">Zayıf</span></td></tr>
+          <tr><td>15</td><td>NDX korkusu → Avrupa (DAX+CAC+STOXX, aynı gece 3 işlem)</td><td>78 (26 gece)</td><td>%55</td><td>+15</td><td class="neg">−441</td><td class="neg">−190</td><td class="neg">−3.184</td><td>5/9</td><td><span class="pill weak">Önerilmez</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead">Satır 1 kapı değil, önerilen birleşim; 14 kapı satır 2–15'tir. Korku gecesi ailesinin satırları (1–9, 12–14) aynı günlere düşer: bunlar ayrı ayrı toplanmaz, aynı gece tek pozisyon açılır.</p>
+  </section>
+
+  <section>
     <div class="eyebrow">Kapı kapı sonuç</div>
     <h2>Her kapı tek başına, kuralın kendisiyle kıyas</h2>
     <div class="tablebox">
