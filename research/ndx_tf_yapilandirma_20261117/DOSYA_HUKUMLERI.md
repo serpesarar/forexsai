@@ -20,7 +20,7 @@
 | research/nom_20261113/data/ndx_1m_v1.parquet | 2,929,896 | %100.0 | 0 (0 bar) |
 | research/nom_20261113/data/ndx_1m_v3.parquet | 2,959,922 | %90.129 (2018: %4.31) | 1 (1 bar; 2017-12-31) |
 | research/yon_lab_20261114/data/ndx_1m_v2.parquet | 1,680,535 | %100.0 | 0 (0 bar) |
-| research/haber_derin_20261105/data/NDX_1m.parquet | 902,747 | %100.0 | 0 (0 bar) |
+| research/haber_derin_20261105/data/NDX_1m.parquet | 902,747 | %99.999 | 0 (0 bar) |
 | research/nom_20261113/data/histdata_ndx_1m.parquet | 1,329,571 | %78.025 (2018: %4.31) | 1 (1 bar; 2017-12-31) |
 | research/fibo_altin_bolge_20261116/cache/ndx_1m.npz | 2,963,071 | satır satır aynı: False | — |
 
@@ -86,9 +86,7 @@ Toplam 1097 reddedilen gün; her biri son çıktılardan birinde kapsanıyor:
 
 | Çözüm | Gün |
 |---|---|
-| MT5_1dk_birlesiminde_tam (2/3/90/210 o günden) | 678 |
-| USTEC_beslemesinde (json birebir) | 360 |
-| USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti) | 56 |
+| MT5_1dk_birlesiminde_tam (2/3/90/210 o günden) | 1094 |
 | MT5_90/210_yerli_barlardan (2/3 dk yok: o gün NAS100 1 dk yok) | 3 |
 
 Kapsanmayan gün: **0**. Gün gün liste: `results/s09_red_gun_cozumu.csv`.
@@ -97,7 +95,7 @@ Kapsanmayan gün: **0**. Gün gün liste: `results/s09_red_gun_cozumu.csv`.
 
 | Besleme | Dosya | TF | hafta kabul | bar kabul | kural(lar) |
 |---|---|---|---|---|---|
-| EET30 | ~/Desktop/Trading Projeleri/nasdaq/nasdaq100_30min_full.csv | 30m | 425/463 | %92.09 | Europe/Athens 425 |
+| EET30 | ~/Desktop/Trading Projeleri/nasdaq/nasdaq100_30min_full.csv | 30m | 428/463 | %92.75 | Europe/Athens 428 |
 | NQ | ~/Desktop/Trading Projeleri/nasdaq/NQ_5Years_8_11_2024.csv | 5m | 245/259 | %94.64 | Europe/Berlin kapanış 111, America/New_York kapanış 98, UTC+1 kapanış 36 |
 
 Reddedilen haftaların tamamında en iyi gecikme 0 (saat doğru) ama r < 0,90 (ince veri / iki ürün farkı); ölçüt gevşetilmedi. Hafta hafta liste: `results/s08_ek_besleme.json`.
@@ -120,8 +118,9 @@ Terminal 100.000 bar sınırı yüzünden copy_rates son ~100 günü veriyordu; 
 | 2023 | 352,754 | 258 | 258 | 0 | {'15': 258} |
 | 2024 | 354,295 | 259 | 259 | 0 | {'15': 259} |
 | 2025 | 352,033 | 258 | 257 | 0 | {'5': 147, '15': 111} |
+| 2026 | 314,072 | 228 | 224 | 0 | {'5': 228} |
 
-Toplam kabul edilen M1: 2,964,439 bar.
+Toplam kabul edilen M1: 3,271,250 bar.
 
 ## Proje dışı (ev dizini) NASDAQ adlı dosyalar (`s10`)
 
@@ -155,41 +154,41 @@ Toplam kabul edilen M1: 2,964,439 bar.
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/NAS100_USD_1D_multi_analyzed.csv | 1.9 | 1440m | 2006-08-01 → 2025-10-05 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD1440_analyzed.csv | 1.8 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD1440_multi_analyzed.csv | 1.2 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD15_analyzed.csv | 56.9 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD15_analyzed.csv | 56.9 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9996 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD15_multi_analyzed.csv | 38.4 | 1440m | 2021-04-27 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD1_analyzed.csv | 57.0 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD1_multi_analyzed.csv | 38.4 | 1440m | 2025-06-19 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD240_analyzed.csv | 10.2 | 240m | 2013-05-22 → 2025-10-06 |  | türetilemez (240 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD240_multi_analyzed.csv | 6.9 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD30_analyzed.csv | 56.5 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD30_analyzed.csv | 56.5 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9998 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD30_multi_analyzed.csv | 38.1 | 1440m | 2016-03-31 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD5_analyzed.csv | 56.5 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 1.0 · 99.98 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD5_analyzed.csv | 56.5 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.98 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD5_multi_analyzed.csv | 38.2 | 1440m | 2024-04-10 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD60_analyzed.csv | 37.0 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 1.0 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD60_analyzed.csv | 37.0 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD60_multi_analyzed.csv | 24.9 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/analyzed/USATECHIDXUSD_multi_analyzed.csv | 6.4 | 1m |  | DUKA · nan · nan · 100.0 | çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 70, DUKA ile eşit %100.0) — yeni veri yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/NAS100_USD_1D.csv | 0.2 | 1440m | 2006-08-01 → 2025-10-05 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD1.csv | 5.7 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD1440.csv | 0.2 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD15.csv | 5.8 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD15.csv | 5.8 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9996 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD240.csv | 1.0 | 240m | 2013-05-22 → 2025-10-06 |  | türetilemez (240 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD30.csv | 5.7 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.97 | DUKA kopya — yeni gün yok |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD5.csv | 5.7 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 1.0 · 99.98 | DUKA kopya — yeni gün yok |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD60.csv | 3.7 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 1.0 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD30.csv | 5.7 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9998 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD5.csv | 5.7 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.98 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/cleaned_data/USATECHIDXUSD60.csv | 3.7 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/data/NAS100_USD_1D.csv | 0.2 | 1440m | 2006-08-01 → 2025-10-05 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/data/NAS100_USD_FULL.csv | 0.0 |  |  |  | mum değil (OHLC sütunu/zaman yok) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD1.csv | 5.5 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD1440.csv | 0.2 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD15.csv | 5.6 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD15.csv | 5.6 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9996 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD240.csv | 1.0 | 240m | 2013-05-22 → 2025-10-06 |  | türetilemez (240 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD30.csv | 5.4 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.97 | DUKA kopya — yeni gün yok |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD5.csv | 5.5 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 1.0 · 99.98 | DUKA kopya — yeni gün yok |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD60.csv | 3.5 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 1.0 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD30.csv | 5.4 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9998 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD5.csv | 5.5 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.98 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/data/USATECHIDXUSD60.csv | 3.5 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/fundamentals/USATECHIDXUSD_H1.csv | 2.9 |  |  |  | mum değil (OHLC sütunu/zaman yok) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/fundamentals/USATECHIDXUSD_M1-2.csv | 6.7 |  |  |  | mum değil (OHLC sütunu/zaman yok) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/fundamentals/USATECHIDXUSD_M1.csv | 5.9 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/fundamentals/USEPUFEARINDX.csv | 0.0 |  |  |  | mum değil (ad: model/sinyal/olay/rapor/temel veri) |
-| ~/Desktop/Trading Projeleri/melih2/trading_ai/merged/USATECHIDXUSD1_multi_timeframe.csv | 5.8 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Trading Projeleri/melih2/trading_ai/merged/USATECHIDXUSD1_multi_timeframe.csv | 5.8 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9996 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/merged/USATECHIDXUSD_multi_timeframe.csv | 79.4 | 1m |  | DUKA · nan · nan · 100.0 | çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 100072, DUKA ile eşit %100.0) — yeni veri yok |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/models/NAS100_USD_1D_analyzed_model.pkl | 3.1 |  |  |  | mum değil (ad: model/sinyal/olay/rapor/temel veri) |
 | ~/Desktop/Trading Projeleri/melih2/trading_ai/models/NAS100_USD_1D_model.pkl | 13.9 |  |  |  | mum değil (ad: model/sinyal/olay/rapor/temel veri) |
@@ -348,58 +347,58 @@ Toplam kabul edilen M1: 2,964,439 bar.
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/NAS100_USD_1D_multi_analyzed.csv | 22.4 | 1440m | 2006-08-01 → 2025-10-05 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD1440_analyzed.csv | 14.9 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD1440_multi_analyzed.csv | 14.4 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD15_analyzed.csv | 449.2 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9975 · 99.77 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD15_analyzed.csv | 449.2 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9974 · 99.77 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD15_multi_analyzed.csv | 425.7 | 1440m | 2021-04-27 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD1_analyzed.csv | 445.3 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 0.9984 · 99.8 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD1_multi_analyzed.csv | 422.3 | 1440m | 2025-06-19 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD240_analyzed.csv | 85.9 | 240m | 2013-05-22 → 2025-10-06 |  | türetilemez (240 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD240_multi_analyzed.csv | 81.7 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD30_analyzed.csv | 454.0 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9992 · 99.77 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD30_analyzed.csv | 454.0 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9991 · 99.77 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD30_multi_analyzed.csv | 430.5 | 1440m | 2016-03-31 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD5_analyzed.csv | 445.3 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9925 · 99.78 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD5_analyzed.csv | 445.3 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9922 · 99.78 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD5_multi_analyzed.csv | 421.7 | 1440m | 2024-04-10 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD60_analyzed.csv | 306.9 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.8 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD60_analyzed.csv | 306.9 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9998 · 99.8 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD60_multi_analyzed.csv | 291.6 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed/USATECHIDXUSD_multi_analyzed.csv | 9.1 | 1m |  | DUKA · nan · nan · 92.86 | çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 70, DUKA ile eşit %92.9) — yeni veri yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/NAS100_USD_1D_analyzed.csv | 23.3 | 1440m | 2006-08-01 → 2025-10-05 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/NAS100_USD_1D_multi_analyzed.csv | 22.4 | 1440m | 2006-08-01 → 2025-10-05 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD1440_analyzed.csv | 14.9 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD1440_multi_analyzed.csv | 14.4 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD15_analyzed.csv | 449.2 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9975 · 99.77 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD15_analyzed.csv | 449.2 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9974 · 99.77 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD15_multi_analyzed.csv | 425.7 | 1440m | 2021-04-27 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD1_analyzed.csv | 445.3 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 0.9984 · 99.8 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD1_multi_analyzed.csv | 422.3 | 1440m | 2025-06-19 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD240_analyzed.csv | 85.9 | 240m | 2013-05-22 → 2025-10-06 |  | türetilemez (240 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD240_multi_analyzed.csv | 81.7 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD30_analyzed.csv | 454.0 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9992 · 99.77 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD30_analyzed.csv | 454.0 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9991 · 99.77 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD30_multi_analyzed.csv | 430.5 | 1440m | 2016-03-31 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD5_analyzed.csv | 445.3 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9925 · 99.78 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD5_analyzed.csv | 445.3 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9922 · 99.78 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD5_multi_analyzed.csv | 421.7 | 1440m | 2024-04-10 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD60_analyzed.csv | 306.9 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.8 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD60_analyzed.csv | 306.9 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9998 · 99.8 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD60_multi_analyzed.csv | 291.6 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/analyzed 2/USATECHIDXUSD_multi_analyzed.csv | 9.1 | 1m |  | DUKA · nan · nan · 92.86 | çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 70, DUKA ile eşit %92.9) — yeni veri yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/NAS100_USD_1D.csv | 0.2 | 1440m | 2006-08-01 → 2025-10-05 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD1.csv | 5.7 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD1440.csv | 0.2 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD15.csv | 5.8 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD15.csv | 5.8 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9996 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD240.csv | 1.0 | 240m | 2013-05-22 → 2025-10-06 |  | türetilemez (240 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD30.csv | 5.7 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.97 | DUKA kopya — yeni gün yok |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD5.csv | 5.7 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 1.0 · 99.98 | DUKA kopya — yeni gün yok |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD60.csv | 3.7 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 1.0 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD30.csv | 5.7 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9998 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD5.csv | 5.7 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.98 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/cleaned_data/USATECHIDXUSD60.csv | 3.7 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/NAS100_USD_1D.csv | 0.2 | 1440m | 2006-08-01 → 2025-10-05 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/NAS100_USD_FULL.csv | 0.0 |  |  |  | mum değil (OHLC sütunu/zaman yok) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD1.csv | 5.5 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD1440.csv | 0.2 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD15.csv | 5.6 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD15.csv | 5.6 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9996 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD240.csv | 1.0 | 240m | 2013-05-22 → 2025-10-06 |  | türetilemez (240 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD30.csv | 5.4 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.97 | DUKA kopya — yeni gün yok |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD5.csv | 5.5 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 1.0 · 99.98 | DUKA kopya — yeni gün yok |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD60.csv | 3.5 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 1.0 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD30.csv | 5.4 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9998 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD5.csv | 5.5 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.98 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/data/USATECHIDXUSD60.csv | 3.5 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/fundamentals/USATECHIDXUSD_H1.csv | 2.9 |  |  |  | mum değil (OHLC sütunu/zaman yok) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/fundamentals/USATECHIDXUSD_M1-2.csv | 6.7 |  |  |  | mum değil (OHLC sütunu/zaman yok) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/fundamentals/USATECHIDXUSD_M1.csv | 5.9 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/fundamentals/USEPUFEARINDX.csv | 0.0 |  |  |  | mum değil (ad: model/sinyal/olay/rapor/temel veri) |
-| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/merged/USATECHIDXUSD1_multi_timeframe.csv | 5.8 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/merged/USATECHIDXUSD1_multi_timeframe.csv | 5.8 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9996 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/merged/USATECHIDXUSD_multi_timeframe.csv | 79.4 | 1m |  | DUKA · nan · nan · 100.0 | çok-TF geniş birleşik tablo (Dukascopy dışa aktarımlarından; dolu 1 dk satırı 100072, DUKA ile eşit %100.0) — yeni veri yok |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/models/NAS100_USD_1D_analyzed_model.pkl | 3.1 |  |  |  | mum değil (ad: model/sinyal/olay/rapor/temel veri) |
 | ~/Desktop/Uygulama Projeleri/PROJELER/trading_ai/models/NAS100_USD_1D_model.pkl | 13.9 |  |  |  | mum değil (ad: model/sinyal/olay/rapor/temel veri) |
@@ -433,13 +432,13 @@ Toplam kabul edilen M1: 2,964,439 bar.
 | ~/Downloads/INDX_LIST_OF_SYMBOLS.csv | 0.1 |  |  |  | mum değil (ad: model/sinyal/olay/rapor/temel veri) |
 | ~/Downloads/USATECHIDXUSD1.csv | 5.6 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Downloads/USATECHIDXUSD1440.csv | 0.2 | 1440m | 2013-05-22 → 2025-10-06 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Downloads/USATECHIDXUSD15.csv | 5.7 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Downloads/USATECHIDXUSD15.csv | 5.7 | 15m | 2021-04-27 → 2025-10-06 | DUKA · UTC · 0.9996 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Downloads/USATECHIDXUSD240.csv | 1.0 | 240m | 2013-05-22 → 2025-10-06 |  | türetilemez (240 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Downloads/USATECHIDXUSD30.csv | 5.5 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.97 | DUKA kopya — yeni gün yok |
+| ~/Downloads/USATECHIDXUSD30.csv | 5.5 | 30m | 2016-03-31 → 2025-10-06 | DUKA · UTC · 0.9998 · 99.97 | DUKA kopya — yeni gün yok |
 | ~/Downloads/USATECHIDXUSD30_FIXED_V2.csv | 231.7 | 1440m | 2016-03-31 → 2021-07-13 |  | türetilemez (1440 dk: 2/3/90/210 bundan kurulamaz) |
-| ~/Downloads/USATECHIDXUSD5.csv | 5.6 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 1.0 · 99.98 | DUKA kopya — yeni gün yok |
-| ~/Downloads/USATECHIDXUSD60.csv | 3.6 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 1.0 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
-| ~/Downloads/USATECHIDXUSD_H1.csv | 4.3 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 1.0 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
+| ~/Downloads/USATECHIDXUSD5.csv | 5.6 | 5m | 2024-04-10 → 2025-10-06 | DUKA · UTC · 0.9997 · 99.98 | DUKA kopya — yeni gün yok |
+| ~/Downloads/USATECHIDXUSD60.csv | 3.6 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
+| ~/Downloads/USATECHIDXUSD_H1.csv | 4.3 | 60m | 2013-05-22 → 2025-10-06 | DUKA · UTC · 0.9999 · 99.95 | türetilemez (60 dk: 90/210 bunun katı değil) · kimlik DUKA |
 | ~/Downloads/USATECHIDXUSD_M1-2.csv | 6.8 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Downloads/USATECHIDXUSD_M1.csv | 6.0 | 1m | 2025-06-19 → 2025-10-06 | DUKA · UTC · 1.0 · 100.0 | DUKA kopya — yeni gün yok |
 | ~/Downloads/USEPUFEARINDX.csv | 0.0 |  |  |  | mum değil (ad: model/sinyal/olay/rapor/temel veri) |

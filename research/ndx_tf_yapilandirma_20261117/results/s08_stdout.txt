@@ -1,4 +1,4 @@
-EET30 {'dosya': '~/Desktop/Trading Projeleri/nasdaq/nasdaq100_30min_full.csv', 'tf_dk': 30, 'ham_bar': 103693, 'hafta': 463, 'kabul_hafta': 425, 'kurallar': {'Europe/Athens': 425}, 'kabul_bar': 95493, 'kabul_bar_%': 92.09}
+EET30 {'dosya': '~/Desktop/Trading Projeleri/nasdaq/nasdaq100_30min_full.csv', 'tf_dk': 30, 'ham_bar': 103693, 'hafta': 463, 'kabul_hafta': 428, 'kurallar': {'Europe/Athens': 428}, 'kabul_bar': 96175, 'kabul_bar_%': 92.75}
    red hafta {'kural': 'Europe/Athens', 'r0': 0.869, 'r±1': -0.101, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-01-02/2017-01-08'}
    red hafta {'kural': 'Europe/Athens', 'r0': 0.748, 'r±1': -0.064, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-01-23/2017-01-29'}
    red hafta {'kural': 'Europe/Athens', 'r0': 0.807, 'r±1': -0.008, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2017-01-30/2017-02-05'}
@@ -32,10 +32,7 @@ EET30 {'dosya': '~/Desktop/Trading Projeleri/nasdaq/nasdaq100_30min_full.csv', '
    red hafta {'kural': 'Europe/Athens', 'r0': 0.78, 'r±1': -0.004, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2023-05-22/2023-05-28'}
    red hafta {'kural': 'Europe/Athens', 'r0': 0.818, 'r±1': 0.107, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2024-02-19/2024-02-25'}
    red hafta {'kural': 'Europe/Athens', 'r0': 0.884, 'r±1': -0.002, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2024-06-10/2024-06-16'}
-   red hafta {'kural': 'Europe/Athens', 'r0': 0.852, 'r±1': -0.105, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-03-31/2025-04-06'}
-   red hafta {'kural': 'Europe/Athens', 'r0': 0.885, 'r±1': -0.086, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-05-12/2025-05-18'}
-   red hafta {'kural': 'Europe/Athens', 'r0': 0.862, 'r±1': -0.055, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-05-19/2025-05-25'}
-   red hafta {'kural': 'Europe/Athens', 'r0': 0.894, 'r±1': -0.041, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-05-26/2025-06-01'}
+   red hafta {'kural': 'Europe/Athens', 'r0': 0.854, 'r±1': -0.117, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-03-31/2025-04-06'}
    red hafta {'kural': 'Europe/Athens', 'r0': 0.695, 'r±1': -0.009, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2025-08-11/2025-08-17'}
 NQ {'dosya': '~/Desktop/Trading Projeleri/nasdaq/NQ_5Years_8_11_2024.csv', 'tf_dk': 5, 'ham_bar': 329458, 'hafta': 259, 'kabul_hafta': 245, 'kurallar': {'Europe/Berlin kapanış': 111, 'America/New_York kapanış': 98, 'UTC+1 kapanış': 36}, 'kabul_bar': 311786, 'kabul_bar_%': 94.64}
    red hafta {'kural': 'America/New_York kapanış', 'r0': 0.667, 'r±1': -0.037, 'en_iyi_gecikme': 0, 'seans_disi_bar': 0, 'kabul': False, 'hafta': '2019-12-09/2019-12-15'}

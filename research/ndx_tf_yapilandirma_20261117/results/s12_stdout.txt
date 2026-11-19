@@ -1,0 +1,19 @@
+2008 {'bar': 0, 'bas': 'NaT', 'bit': 'NaT', 'sinanan_gun': 0, 'kabul_gun': 0, 'ref': None, 'kabul_bar': 0, 'atilan_kapali_saat_kaydi': 103, 'm1_olmayan_gun': 0}
+2009 {'bar': 209, 'bas': '2009-03-11 14:00:00', 'bit': '2009-12-30 15:00:00', 'sinanan_gun': 209, 'kabul_gun': 0, 'ref': {60: 209}, 'kabul_bar': 0, 'atilan_kapali_saat_kaydi': 255, 'm1_olmayan_gun': 209}
+2010 {'bar': 84, 'bas': '2010-01-03 15:00:00', 'bit': '2010-04-19 18:00:00', 'sinanan_gun': 84, 'kabul_gun': 0, 'ref': {60: 84}, 'kabul_bar': 0, 'atilan_kapali_saat_kaydi': 307, 'm1_olmayan_gun': 84}
+2011 {'bar': 0, 'bas': 'NaT', 'bit': 'NaT', 'sinanan_gun': 0, 'kabul_gun': 0, 'ref': None, 'kabul_bar': 0, 'atilan_kapali_saat_kaydi': 307, 'm1_olmayan_gun': 0}
+2012 {'bar': 0, 'bas': 'NaT', 'bit': 'NaT', 'sinanan_gun': 0, 'kabul_gun': 0, 'ref': None, 'kabul_bar': 0, 'atilan_kapali_saat_kaydi': 311, 'm1_olmayan_gun': 0}
+2013 {'bar': 0, 'bas': 'NaT', 'bit': 'NaT', 'sinanan_gun': 0, 'kabul_gun': 0, 'ref': None, 'kabul_bar': 0, 'atilan_kapali_saat_kaydi': 273, 'm1_olmayan_gun': 0}
+2014 {'bar': 0, 'bas': 'NaT', 'bit': 'NaT', 'sinanan_gun': 0, 'kabul_gun': 0, 'ref': None, 'kabul_bar': 0, 'atilan_kapali_saat_kaydi': 259, 'm1_olmayan_gun': 0}
+2015 {'bar': 0, 'bas': 'NaT', 'bit': 'NaT', 'sinanan_gun': 0, 'kabul_gun': 0, 'ref': None, 'kabul_bar': 0, 'atilan_kapali_saat_kaydi': 259, 'm1_olmayan_gun': 0}
+2016 {'bar': 4943, 'bas': '2016-03-02 05:00:00', 'bit': '2016-12-30 21:00:00', 'sinanan_gun': 216, 'kabul_gun': 0, 'ref': {60: 216}, 'kabul_bar': 0, 'atilan_kapali_saat_kaydi': 258, 'm1_olmayan_gun': 216}
+2017 {'bar': 193639, 'bas': '2017-01-02 23:00:00', 'bit': '2017-12-29 21:54:00', 'sinanan_gun': 257, 'kabul_gun': 131, 'ref': {60: 257}, 'kabul_bar': 172226, 'atilan_kapali_saat_kaydi': 1053, 'm1_olmayan_gun': 112}
+2018 {'bar': 345595, 'bas': '2018-01-02 00:00:00', 'bit': '2018-12-31 21:58:00', 'sinanan_gun': 257, 'kabul_gun': 249, 'ref': {30: 164, 60: 93}, 'kabul_bar': 334574, 'atilan_kapali_saat_kaydi': 556, 'm1_olmayan_gun': 0}
+2019 {'bar': 347791, 'bas': '2019-01-01 23:00:00', 'bit': '2019-12-31 21:58:00', 'sinanan_gun': 257, 'kabul_gun': 257, 'ref': {30: 257}, 'kabul_bar': 347791, 'atilan_kapali_saat_kaydi': 257, 'm1_olmayan_gun': 0}
+2020 {'bar': 348123, 'bas': '2020-01-01 23:00:00', 'bit': '2020-12-31 21:58:00', 'sinanan_gun': 259, 'kabul_gun': 258, 'ref': {30: 259}, 'kabul_bar': 347426, 'atilan_kapali_saat_kaydi': 259, 'm1_olmayan_gun': 1}
+2021 {'bar': 352536, 'bas': '2021-01-03 23:00:00', 'bit': '2021-12-31 21:54:00', 'sinanan_gun': 259, 'kabul_gun': 259, 'ref': {30: 259}, 'kabul_bar': 352536, 'atilan_kapali_saat_kaydi': 259, 'm1_olmayan_gun': 0}
+2022 {'bar': 353562, 'bas': '2022-01-02 23:00:00', 'bit': '2022-12-30 21:54:00', 'sinanan_gun': 258, 'kabul_gun': 257, 'ref': {30: 156, 15: 102}, 'kabul_bar': 352183, 'atilan_kapali_saat_kaydi': 258, 'm1_olmayan_gun': 0}
+2023 {'bar': 352754, 'bas': '2023-01-02 23:00:00', 'bit': '2023-12-29 21:25:00', 'sinanan_gun': 258, 'kabul_gun': 258, 'ref': {15: 258}, 'kabul_bar': 352754, 'atilan_kapali_saat_kaydi': 258, 'm1_olmayan_gun': 0}
+2024 {'bar': 354295, 'bas': '2024-01-01 23:00:00', 'bit': '2024-12-31 19:55:00', 'sinanan_gun': 259, 'kabul_gun': 259, 'ref': {15: 259}, 'kabul_bar': 354295, 'atilan_kapali_saat_kaydi': 259, 'm1_olmayan_gun': 0}
+2025 {'bar': 352033, 'bas': '2025-01-01 23:00:00', 'bit': '2025-12-31 19:54:00', 'sinanan_gun': 258, 'kabul_gun': 257, 'ref': {5: 147, 15: 111}, 'kabul_bar': 350654, 'atilan_kapali_saat_kaydi': 258, 'm1_olmayan_gun': 0}
+2026 {'bar': 314072, 'bas': '2026-01-01 23:00:00', 'bit': '2026-11-19 05:05:00', 'sinanan_gun': 228, 'kabul_gun': 224, 'ref': {5: 228}, 'kabul_bar': 306811, 'atilan_kapali_saat_kaydi': 230, 'm1_olmayan_gun': 0}

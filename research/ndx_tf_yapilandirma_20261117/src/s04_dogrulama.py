@@ -320,7 +320,7 @@ def main() -> None:
         srcs[k], _ = U.drop_closed_hour(srcs[k])
     m1_all, _ = U.mt5_m1_with_copies(srcs["M1"])
     if U.HCC_M1.exists():
-        srcs_v2 = dict(srcs, M1_gecmis=U.drop_closed_hour(pd.read_parquet(U.HCC_M1)[K.COLS])[0])
+        srcs_v2 = dict(srcs, M1_gecmis=U.drop_closed_hour(U.drop_hcc_snapshots(pd.read_parquet(U.HCC_M1)[K.COLS], srcs["M1"]))[0])
     else:
         srcs_v2 = srcs
     fm = load_out("MT5")

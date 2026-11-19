@@ -1,9 +1,7 @@
 {
  "red_gun_toplam": 1097,
  "cozum_dagilimi": {
-  "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 678,
-  "USTEC_beslemesinde (json birebir)": 360,
-  "USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti)": 56,
+  "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 1094,
   "MT5_90/210_yerli_barlardan (2/3 dk yok: o gün NAS100 1 dk yok)": 3
  },
  "dosya_bazinda": {
@@ -22,27 +20,20 @@
    "MT5_90/210_yerli_barlardan (2/3 dk yok: o gün NAS100 1 dk yok)": 1
   },
   "backend/data/candle_history/NDX_5m.npz": {
-   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 154,
-   "MT5_90/210_yerli_barlardan (2/3 dk yok: o gün NAS100 1 dk yok)": 1,
-   "USTEC_beslemesinde (json birebir)": 61,
-   "USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti)": 1
+   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 216,
+   "MT5_90/210_yerli_barlardan (2/3 dk yok: o gün NAS100 1 dk yok)": 1
   },
   "backend/data/nom_cache/ndx_1m.parquet": {
-   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 25,
-   "USTEC_beslemesinde (json birebir)": 33,
-   "USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti)": 1
+   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 59
   },
   "bot_live_audit/bars/NDX.INDX_5m.json": {
    "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 9
   },
   "nasdaq_1m_candle_cache_2026-02-10_2026-08-29/nasdaq_1m_candle_cache_TAM_2026-02-10_2026-08-29.csv": {
-   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 21,
-   "USTEC_beslemesinde (json birebir)": 43,
-   "USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti)": 19
+   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 83
   },
   "ndx_reflex_engine/data/ustec_1m_2026.parquet": {
-   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 37,
-   "USTEC_beslemesinde (json birebir)": 62
+   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 99
   },
   "output/islem_otopsi/_cache/NDX_INDX_1m_raw.parquet": {
    "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 67
@@ -54,9 +45,7 @@
    "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 30
   },
   "research/fcr_ilk_mum_20261027/data/cache_NDX_1m.parquet": {
-   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 30,
-   "USTEC_beslemesinde (json birebir)": 43,
-   "USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti)": 19
+   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 92
   },
   "research/next_candidates/bars_NDX_INDX_1m.csv": {
    "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 15
@@ -74,18 +63,13 @@
    "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 17
   },
   "sr_rejection_research/data/NDX.INDX_1m.json": {
-   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 35,
-   "USTEC_beslemesinde (json birebir)": 62
+   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 97
   },
   "sr_rejection_research/data/NDX.INDX_30m.json": {
-   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 35,
-   "USTEC_beslemesinde (json birebir)": 34,
-   "USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti)": 1
+   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 70
   },
   "sr_rejection_research/data/NDX.INDX_5m.json": {
-   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 35,
-   "USTEC_beslemesinde (json birebir)": 22,
-   "USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti)": 15
+   "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 72
   }
  },
  "kapsanmadi_ornek": []

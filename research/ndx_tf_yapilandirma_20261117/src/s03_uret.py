@@ -65,13 +65,35 @@ def mt5_sources() -> dict[str, pd.DataFrame]:
 HCC_M1 = OUT / "ek/mt5_hcc_m1.parquet"  # s12: kutudaki MT5 yıl dosyalarından, yerli M30'la gün gün doğrulanmış M1
 
 
+HCC_SNAPSHOT_MAX_SHARE = 0.001  # ortak barların en çok binde biri 'yarım anlık görüntü' olabilir; fazlası → dur
+HCC_SNAPSHOTS: list[dict] = []
+
+
+def drop_hcc_snapshots(h: pd.DataFrame, m1: pd.DataFrame) -> pd.DataFrame:
+    """2026.hcc (terminal açıkken kopyalandı) bazı dakikaları YARIM tutuyor: açılış aynı, bar terminal barının içinde,
+    tik hacmi düşük — dakika bitmeden diske yazılmış anlık görüntü (ölçüldü 2026-11-19: 172.804 ortak barın 7'si,
+    çoğu seansın ilk dakikası). Bu koşulların HEPSİ tutarsa terminalin copy_rates barı esas alınır; tutmazsa union durur."""
+    m = h.merge(m1, on="t", suffixes=("_h", "_m"))
+    if not len(m):
+        return h
+    px = ["open", "high", "low", "close"]
+    diff = np.abs(m[[c + "_h" for c in px]].to_numpy() - m[[c + "_m" for c in px]].to_numpy()).max(axis=1) > 1e-9
+    b = m[diff]
+    snap = ((b.open_h - b.open_m).abs() < 1e-9) & (b.high_h <= b.high_m + 1e-9) & (b.low_h >= b.low_m - 1e-9) & (b.vol_h < b.vol_m)
+    if not snap.all() or diff.mean() > HCC_SNAPSHOT_MAX_SHARE:
+        return h  # union kendi hatasını verir
+    HCC_SNAPSHOTS.extend(b.assign(zaman=pd.to_datetime(b.t, unit="s").astype(str))[["zaman", "vol_h", "vol_m"]].to_dict("records"))
+    return h[~h["t"].isin(b["t"])]
+
+
 def mt5_m1_with_copies(m1: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
     """Terminal M1 + MT5 geçmiş dosyaları (s12) + doğrulanmış kopya günleri. Ortak barlar birebir olmak zorunda.
     Dönüş: birleşik M1 ve 'terminalin copy_rates'inde yok' maskesi."""
     parts = [m1]
     for p in (HCC_M1, EXT_M1):
         if p.exists():
-            parts.append(pd.read_parquet(p)[K.COLS])
+            x = pd.read_parquet(p)[K.COLS]
+            parts.append(drop_hcc_snapshots(x, m1) if p == HCC_M1 else x)
     if len(parts) == 1:
         return m1, np.zeros(len(m1), bool)
     merged = union(parts, "MT5 M1 + geçmiş dosyaları + kopya günleri")
@@ -193,6 +215,7 @@ def main() -> None:
                                       "bit": str(pd.to_datetime(srcs[k].t.iloc[-1], unit="s"))}
     m1_all, is_copy = mt5_m1_with_copies(srcs["M1"])
     meta["MT5"]["kopya_gun_bar"] = int(is_copy.sum())
+    meta["MT5"]["hcc_yarim_anlik_goruntu"] = list(HCC_SNAPSHOTS)  # terminal barı esas alındı
     mt5_out: dict[int, pd.DataFrame] = {}
     for tf in (2, 3):
         a = M.aggregate(m1_all, 1, tf, "M1", M.CLOSED["MT5"])
@@ -203,7 +226,7 @@ def main() -> None:
         mt5_out[tf] = a
     coarse = dict(srcs)
     if HCC_M1.exists():  # en düşük öncelik: yerli M30'un başladığı 2018-05 öncesini (2017-06 →) doldurur
-        coarse["M1_gecmis"], _ = drop_closed_hour(pd.read_parquet(HCC_M1)[K.COLS])
+        coarse["M1_gecmis"], _ = drop_closed_hour(drop_hcc_snapshots(pd.read_parquet(HCC_M1)[K.COLS], srcs["M1"]))
     order = MT5_COARSE + ((("M1_gecmis", 1),) if "M1_gecmis" in coarse else ())
     day_src = assign_days(coarse, order)  # her işlem günü TEK kaynaktan: o günü baştan sona kapsayan en ince
     for tf in (90, 210):

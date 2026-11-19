@@ -80,7 +80,7 @@ backend/data/candle_history/NDX_30m.npz {'tf_dk': 30, 'n': 62179, 'damga': 'utc'
   "research/haber_derin_20261105/data/NDX_1m.parquet": {
    "n": 902749,
    "ortak": 902747,
-   "birebir_%": 100.0,
+   "birebir_%": 99.999,
    "yila_gore_birebir_%": {
     "2024": 100.0,
     "2025": 100.0,

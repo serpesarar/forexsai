@@ -5306,24 +5306,24 @@
   {
     "id": "bl_4544155855",
     "title": "Dukascopy 2025 1 dk yeniden indirmesini tamamla",
-    "detail": "research/ndx_tf_yapilandirma_20261117/src/s11_duka_2025_indir.py (DUKA_FIXED_WAIT_S=900); sunucu 503 veriyor, 109/~310 gün indi; bitince calistir.sh ile mumları yeniden üret, şüpheli DUKA fitilleri düşer",
+    "detail": "research/ndx_tf_yapilandirma_20261117/src/s11_duka_2025_indir.py (DUKA_FIXED_WAIT_S=900); sunucu 503 veriyor, 109/~310 gün indi; bitince calistir.sh ile mumları yeniden üret, şüpheli DUKA fitilleri düşer | ÇÖZÜLDÜ 2026-11-19: 313/313 gün indi, +17.150 dk; şüpheli DUKA 90m 470→404, 210m 384→330; 144/144 kontrol",
     "category": "wiring",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-11-18T08:17:12.789468+00:00",
-    "updated_at": "2026-11-18T08:17:12.789631+00:00"
+    "updated_at": "2026-11-19T06:50:54.569906+00:00"
   },
   {
     "id": "bl_1ab3767731",
     "title": "MT5 2026.hcc'yi oku (2026-01→05-06 NAS100 M1)",
-    "detail": "kutuda terminal dosyayı kilitliyor; terminal kapalıyken (bakım penceresi) calistir/arac_mt5_gecmis_liste.py --yukle + s12",
+    "detail": "kutuda terminal dosyayı kilitliyor; terminal kapalıyken (bakım penceresi) calistir/arac_mt5_gecmis_liste.py --yukle + s12 | ÇÖZÜLDÜ 2026-11-19: kullanıcı onayıyla terminal ~21 sn kapatıldı (calistir/arac_hcc_kapat_kopyala.py); 224/228 gün yerli M5'le birebir; MT5 2m 1.580.500→1.642.087",
     "category": "wiring",
     "priority": "low",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-11-18T08:17:12.794763+00:00",
-    "updated_at": "2026-11-18T08:17:12.794769+00:00"
+    "updated_at": "2026-11-19T06:50:54.569906+00:00"
   },
   {
     "id": "bl_64b7f27c78",

@@ -1,9 +1,7 @@
 {
  "red_gun_toplam": 1097,
  "cozum_dagilimi": {
-  "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 678,
-  "USTEC_beslemesinde (json birebir)": 360,
-  "USTEC_beslemesinde + MT5_90/210 (kopya kaymış/eksikti)": 56,
+  "MT5_1dk_birlesiminde_tam (2/3/90/210 o günden)": 1094,
   "MT5_90/210_yerli_barlardan (2/3 dk yok: o gün NAS100 1 dk yok)": 3
  },
  "kapsanmadi_ornek": []

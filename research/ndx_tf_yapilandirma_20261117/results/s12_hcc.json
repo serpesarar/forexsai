@@ -224,5 +224,18 @@
   "atilan_kapali_saat_kaydi": 258,
   "m1_olmayan_gun": 0
  },
- "toplam_kabul_bar": 2964439
+ "2026": {
+  "bar": 314072,
+  "bas": "2026-01-01 23:00:00",
+  "bit": "2026-11-19 05:05:00",
+  "sinanan_gun": 228,
+  "kabul_gun": 224,
+  "ref": {
+   "5": 228
+  },
+  "kabul_bar": 306811,
+  "atilan_kapali_saat_kaydi": 230,
+  "m1_olmayan_gun": 0
+ },
+ "toplam_kabul_bar": 3271250
 }

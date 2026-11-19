@@ -17,7 +17,7 @@ Yeniden üretim: `zsh research/ndx_tf_yapilandirma_20261117/calistir.sh`. Çıkt
 
 | Besleme | Ne | Kaynaklar | Üretilen | Kapsam |
 |---|---|---|---|---|
-| **DUKA** | Dukascopy USATECHIDXUSD BID (spot endeks CFD) | ana 1 dk dosyası + ham bi5 kuyruğu + **`~/Downloads/USATECHIDXUSD_M1.csv`** (16.772 ek dakika) + **`~/Downloads/USATECHIDXUSD30.csv`** (2016–17) + **Dukascopy'den yeniden indirilen 2025 resmi 1 dk mumları** (onayınla; şimdiye kadar 109 gün, +4.282 dk) | 2/3 dk: 1 dk'dan · 90/210 dk: 1 dk'dan, 2018 öncesi M30 dışa aktarımından | 2/3 dk 2018-01 → 2026-11-15 · 90/210 dk **2016-03-31** → 2026-11-15 |
+| **DUKA** | Dukascopy USATECHIDXUSD BID (spot endeks CFD) | ana 1 dk dosyası + ham bi5 kuyruğu + **`~/Downloads/USATECHIDXUSD_M1.csv`** (16.772 ek dakika) + **`~/Downloads/USATECHIDXUSD30.csv`** (2016–17) + **Dukascopy'den yeniden indirilen 2025 resmi 1 dk mumları** (onayınla; 313 günün hepsi, +17.150 dk) | 2/3 dk: 1 dk'dan · 90/210 dk: 1 dk'dan, 2018 öncesi M30 dışa aktarımından | 2/3 dk 2018-01 → 2026-11-15 · 90/210 dk **2016-03-31** → 2026-11-15 |
 | **MT5** | Pepperstone NAS100 (bot/kutu) | 4 eski M1 dosyası + 2026-11-17'de kutudan taze M1–H1 + **kutudaki MT5 yıl geçmiş dosyaları (`history/NAS100/*.hcc`, salt okuma)** + gün gün doğrulanmış 125 kopya günü | 2/3 dk: M1'den · 90/210 dk: her işlem günü o günü tam kapsayan en ince kaynaktan (M1 > M5 > M15 > M30 > geçmiş M1) | 2/3 dk **2017-06-08** → 2026-11-17 · 90/210 dk **2017-06-08** → 2026-11-16 |
 | **USTEC** | önceki broker hesabı | `1MDATA/` + `RECOVER/mt5_ustec_1m_bars.json` | 2/3/90/210 dk 1 dk'dan | 2026-02-10 → 06-12 |
 | **EET30** | başka bir MT broker'ı, 30 dk | **`~/Desktop/Trading Projeleri/nasdaq/nasdaq100_30min_full.csv`** | 90/210 dk (2/3 dk 30 dk'dan kurulamaz) | 2016-11-15 → 2025-10-01 |
@@ -79,21 +79,23 @@ yani gerçek haber hareketi. Hiçbir veri değiştirilmedi.
 **b) Dukascopy'nin eksik dakikası.** Her DUKA mumuna `fitil_durumu` sütunu eklendi. Eksik dakikalı mum, aynı penceredeki MT5 →
 USTEC → EET30 → NQ mumuyla (ilk bulunan) seviye farkı düzeltilerek kıyaslanır. Sapma karşı mumun aralığının %20'sini aşıyorsa
 `eksik_dakika_supheli` olur. MT5 M1 artık 2017'den geldiği için çok daha fazla mum gerçekten sınanabildi; teyitsiz 2 dk mum
-1.283'ten 116'ya indi:
+1.283'ten 113'e indi:
 
 | DUKA | tam | teyitli | **şüpheli** | teyitsiz (karşı besleme yok) |
 |---|---|---|---|---|
-| 2m | 1.493.204 | 365 | 880 | 116 |
-| 3m | 994.374 | 507 | 827 | 105 |
-| 90m | 39.040 | 881 | **470** | 23 |
-| 210m | 16.324 | 1.088 | **384** | 238 |
+| 2m | 1.499.549 | 367 | 881 | 113 |
+| 3m | 998.603 | 508 | 830 | 102 |
+| 90m | 39.238 | 847 | **404** | 24 |
+| 210m | 16.441 | 1.043 | **330** | 238 |
 
 **Onarım (onayınla).** 2025'in tik indirmesinde işlem saatlerinde 626 saat tamamen boştu, yani indirme hatası. Dukascopy'nin
 resmi 2025 1 dk mumları yeniden indiriliyor (`src/s11_duka_2025_indir.py`).
-- Şu ana kadar 109 gün indi: +4.282 dakika eklendi.
-- Resmi mum, ana dosyayla yalnız 6 dakikada ayrıştı (‰0,05). Ayrışma ‰1'i aşarsa üretim durur.
-- Dukascopy sunucusu sık istekte 503 dönüyor; indirici 15 dk bekleyerek sürüyor. Bitince `calistir.sh` yeni günleri kendiliğinden
-  katar.
+- İndirme tamamlandı (2026-11-19): 313 günün hepsi geldi, +17.150 dakika eklendi. Şüpheli 90 dk mum 470'ten 404'e, 210 dk
+  384'ten 330'a indi.
+- Resmi mum, ana dosyayla 323.406 ortak dakikanın yalnız 8'inde ayrıştı (‰0,025); bu dakikalarda resmi mum esas alındı.
+  Ayrışma ‰1'i aşarsa üretim durur.
+- Dukascopy sunucusu sık istekte 503 dönüyor; indirici (`src/s11_duka_2025_indir.py`) bekleyip kaldığı yerden sürer. Ağ
+  gerektirdiği için `calistir.sh`'ye girmez.
 
 **Onarılamayanlar.** Kalan şüpheli mumların önemli kısmı Dukascopy'nin o dakikalarda gerçekten hiç kaydı olmadığı anlara düşüyor.
 Örnek: 2026-03-23 11:06–11:15 UTC ham dosyada düz, sıfır hacimli barlar. Hiçbir indirme bunları onarmaz. **Fitilin kesin doğru
@@ -130,14 +132,20 @@ dosyaları M1 değil H1/D1 kaydı tutuyor ve bunlar yerli H1 ile kendiliğinden 
 | 2017 | 131 / 257 (112 gün M1 değil) |
 | 2018 | 249 / 257 |
 | 2019–2025 | 1.805 / 1.808 |
-| 2026 | dosya terminal kilidinde, okunamadı |
+| 2026 | 224 / 228 (terminal onayınla ~21 sn kapatılıp kopyalandı, 2026-11-19) |
+
+**2026.hcc'nin yarım dakikaları.** Terminalin kendi `copy_rates` dökümüyle örtüşen 172.804 dakikanın 7'si ayrıştı (‰0,04). Yedisinde de
+açılış aynı, `.hcc` barı terminal barının içinde ve tik hacmi düşük: dakika bitmeden diske yazılmış anlık görüntü, çoğu seansın ilk
+dakikası. Bu dakikalarda terminal barı esas alındı (`drop_hcc_snapshots`). Bu dört koşuldan biri tutmazsa ya da oran ‰1'i aşarsa
+üretim durur. Liste `results/s03_uretim.json` → `MT5.hcc_yarim_anlik_goruntu`. Terminal dökümünün olmadığı 2026-01 → 05-06
+döneminde aynı oranda (birkaç dakika) yakalanamayan yarım dakika kalmış olabilir. Bu dakikalar yine de yerli M5 sınamasını geçti.
 
 ## 5. Çıktılar — `research/ndx_tf_yapilandirma_20261117/out/<BESLEME>/NDX_<BESLEME>_<tf>m.{parquet,csv.gz}` (git dışı)
 
 | Besleme | 2m | 3m | 90m | 210m |
 |---|---|---|---|---|
-| DUKA | 1.494.565 (2018-01 → 2026-11-15) | 995.813 | 40.414 (2016-03 → 2026-11-15) | 18.034 |
-| MT5 | 1.580.500 (**2017-06-08** → 2026-11-17) | 1.054.061 | 38.348 (**2017-06-08** → 2026-11-16) | 16.809 |
+| DUKA | 1.500.910 (2018-01 → 2026-11-15) | 1.000.043 | 40.513 (2016-03 → 2026-11-15) | 18.052 |
+| MT5 | 1.642.087 (**2017-06-08** → 2026-11-17) | 1.095.127 | 38.348 (**2017-06-08** → 2026-11-16) | 16.809 |
 | USTEC | 59.575 (2026-02-10 → 06-12) | 39.718 | 1.384 | 606 |
 | EET30 | — | — | 33.299 (2016-11 → 2025-10) | 14.586 |
 | NQ | — | — | 18.627 (2019-08 → 2024-08) | 8.234 |
@@ -159,9 +167,7 @@ hepsi son çıktılardan birinde kapsanıyor; kapsanmayan gün yok:
 
 | Kapsam | Gün |
 |---|---|
-| MT5 1 dk birleşiminde tam | 678 |
-| USTEC'te birebir | 360 |
-| USTEC + MT5 90/210 | 56 |
+| MT5 1 dk birleşiminde tam | 1.094 (2026.hcc okununca USTEC'e kalan 416 gün de buraya geçti) |
 | MT5 90/210 yerli barlardan | 3 (panel `candle_history` 5 dk kopyası) |
 
 **Ev dizini (304 dosya):**
@@ -177,17 +183,14 @@ hepsi son çıktılardan birinde kapsanıyor; kapsanmayan gün yok:
 | arşiv | 3 |
 | **ana kaynak: EET30, NQ** | 2 |
 
-**Kutu (MT5 terminali):** `history/NAS100/2008…2025.hcc` ayrıştırıldı (yukarıda); 2026.hcc kilitli.
+**Kutu (MT5 terminali):** `history/NAS100/2008…2026.hcc` ayrıştırıldı (yukarıda).
 
 ## 7. Sınırlar (veri yok ya da matematiksel olarak imkânsız — üretim hatası değil)
 
 - **EET30 (30 dk) ve NQ (5 dk) dosyalarından 2/3 dk mum kurulamaz.** 2 ve 3 dakikalık mum ancak 1 dakikalık veriden kurulur; 30 dk
   ya da 5 dk mumun içindeki dakika hareketi dosyada yok. Uydurmak, fitillerin doğruluğunu bozardı. Bu iki besleme yalnız 90/210 dk
   verir. Aynı dönemin 2/3 dk'sı MT5 (2017-06 →) ve DUKA (2018-01 →) dosyalarında var.
-- **MT5 NAS100 1 dk, 2017-06 öncesinde diskte yok.** Kutudaki dosyalar o yıllarda yalnız H1/D1 tutuyor. **2026-01 → 05-06 arası
-  NAS100 1 dk ise 2026.hcc'de duruyor ama terminal dosyayı kilitli tutuyor.** Bu dönemin 90/210 dk'sı MT5 yerli M5/M15/M30'dan,
-  2/3 dk'sı DUKA'dan var. Kilitli dosya terminal kapatılarak okunabilir; canlı bot terminali olduğu için kapatmadım.
+- **MT5 NAS100 1 dk, 2017-06 öncesinde diskte yok.** Kutudaki dosyalar o yıllarda yalnız H1/D1 tutuyor. 2026-01 → 05-06
+  boşluğu 2026.hcc okunarak kapandı (her ay ~14–15 bin 2 dk mum).
 - **DUKA 2026-11-16/17** ham dosyada boş.
-- **Dukascopy 2025 yeniden indirmesi** sunucu engeli yüzünden henüz tamamlanmadı (109/~310 gün). Kalan günler indikçe
-  `calistir.sh` onları katar.
 - **Kalibrasyonda reddedilen haftalar** (EET30 %8, NQ %5,4) kullanılmadı; liste `results/s08_ek_besleme.json`.
