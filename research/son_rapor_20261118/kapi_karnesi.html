@@ -1,0 +1,127 @@
+<title>NASDAQ Kapı Karnesi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Düzen: tek kolon rapor; üstte önerilen paket, altta kapı kapı tablo, en altta test ve uyarılar */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --fg:#17202b; --muted:#5b6675; --line:#dde2e8;
+  --accent:#1f5fbf; --good:#1d7a46; --good-bg:#e5f3ea; --warn:#9a6200; --warn-bg:#fbf0dc; --bad:#b3261e;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161d; --panel:#18202a; --fg:#e7ebf0; --muted:#9aa6b5; --line:#2a3542;
+  --accent:#7fb0ff; --good:#6fd39a; --good-bg:#16301f; --warn:#f0bf6a; --warn-bg:#33270f; --bad:#ff8a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161d; --panel:#18202a; --fg:#e7ebf0; --muted:#9aa6b5; --line:#2a3542;
+  --accent:#7fb0ff; --good:#6fd39a; --good-bg:#16301f; --warn:#f0bf6a; --warn-bg:#33270f; --bad:#ff8a80; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:980px;margin:0 auto;padding-block:32px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+h1,h2{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:30px;line-height:1.15}
+h2{font-size:20px}
+p{margin:0;max-width:68ch}
+.lead{color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+section{display:grid;gap:14px}
+.pkg{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:16px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.tile{display:grid;gap:2px}
+.tile b{font-family:var(--display);font-size:24px;font-variant-numeric:tabular-nums}
+.tile span{font-size:13px;color:var(--muted)}
+.tile.neg b{color:var(--bad)}
+.tablebox{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;min-width:860px;font-size:13.5px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top;font-variant-numeric:tabular-nums}
+th{font-weight:600;color:var(--muted);font-size:12px;text-align:right;background:var(--panel);position:sticky;top:0}
+td:first-child,th:first-child,td:nth-child(2),th:nth-child(2){text-align:left}
+td small{display:block;color:var(--muted);font-size:12px}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.ok{background:var(--good-bg);color:var(--good)}
+.weak{background:var(--warn-bg);color:var(--warn)}
+.neg{color:var(--bad)}
+.mono{font-family:var(--mono)}
+ul{margin:0;padding-left:20px;display:grid;gap:6px;max-width:72ch}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:8px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.cols>*{min-width:0}
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <div class="eyebrow">NAS100 · Dukascopy + MT5 · 2018-04 → 2026-11 · uçtan uca yeniden sınama</div>
+    <h1>NASDAQ Kapı Karnesi</h1>
+    <p class="lead">Bu sohbette bulunan onaylanabilir 8 kapı tek bir test düzeneğinde baştan kuruldu, iki ayrı veri kaynağında çalıştırıldı. 6'sı onaylandı, 2'si bu dönemde zayıf kaldı. Rakamlar işlem başı <b>bp</b> (1 bp = %0,01; NAS100 25.000 iken 1 bp ≈ 2,5 puan), lottan bağımsız, spread ve gecelik finansman düşülmüş.</p>
+  </header>
+
+  <section>
+    <div class="eyebrow">Önerilen paket</div>
+    <div class="pkg">
+      <div style="display:grid;gap:6px">
+        <h2>Korku gecesi + OPEX vetosu + "ilk yükselen kapanışta çık"</h2>
+        <p class="lead">Gün sonu satış baskısı olan günde 16:00'da al; aylık opsiyon vadesine 0–2 işlem günü kalmışsa açma; ilk yükselen 16:00 kapanışında sat (en geç 5 gün). Değerler Duka · MT5.</p>
+      </div>
+      <div class="tiles">
+        <div class="tile"><b>23–24</b><span>işlem / yıl</span></div>
+        <div class="tile"><b>%80–83</b><span>kazanan işlem</span></div>
+        <div class="tile"><b>+96…+103</b><span>ortalama bp / işlem</span></div>
+        <div class="tile neg"><b>−783…−786</b><span>en kötü tek işlem (bp)</span></div>
+        <div class="tile neg"><b>−285…−298</b><span>en kötü %10'un ortalaması (bp)</span></div>
+        <div class="tile neg"><b>−801…−814</b><span>en büyük art arda düşüş (bp)</span></div>
+        <div class="tile"><b>9 / 9</b><span>artıda kapanan yıl</span></div>
+        <div class="tile"><b>1,5 gün</b><span>ortalama tutuş</span></div>
+      </div>
+      <p class="lead">Kurala hiç dokunulmamış hâline göre: isabet %60 → %81, işlem başı ortalama +55 → +103 bp, toplam kazanç %55 fazla, işlem sayısı %18 az. Bedeli: tutuş uzadığı için en kötü tek işlem −613'ten −783 bp'ye büyüyor.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Kapı kapı sonuç</div>
+    <h2>Her kapı tek başına, kuralın kendisiyle kıyas</h2>
+    <div class="tablebox">
+      <table>
+        <thead><tr>
+          <th>Kapı</th><th>Ne yapar</th><th>İşlem / yıl</th><th>Kazanan</th><th>Ort. bp</th><th>En kötü</th><th>En kötü %10 ort.</th><th>En büyük düşüş</th><th>Karar</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><b>Taban: korku gecesi (K1)</b><small>referans</small></td><td>16:00 TWAP'ın %0,5 altı ∧ son saat aşağı → 16:00 al → ertesi 16:00 sat</td><td>28–30</td><td>%59–60</td><td>+50…+55</td><td class="neg">−613…−623</td><td class="neg">−251…−262</td><td class="neg">−841…−842</td><td>—</td></tr>
+          <tr><td><b>OPEX korku vetosu</b><small>SV-01</small></td><td>Vadeye 0–2 gün kala korku alımı açma</td><td>23–24</td><td>%63–65</td><td>+64…+70</td><td class="neg">−613…−623</td><td class="neg">−254…−262</td><td class="neg">−745…−779</td><td><span class="pill ok">Onay</span><small>vetolananlar −16 / −10 bp, P 0,996–0,9998</small></td></tr>
+          <tr><td><b>"İlk yükselen kapanışta çık"</b><small>KC-01 XP</small></td><td>Ertesi 16:00 yerine ilk yükselen 16:00 kapanışında sat (≤ 5 gün)</td><td>28–30</td><td>%77–79</td><td>+80…+85</td><td class="neg">−783…−786</td><td class="neg">−304…−317</td><td class="neg">−1.106…−1.122</td><td><span class="pill ok">Onay</span><small>en büyük iyileştirme, en kötü işlem büyür</small></td></tr>
+          <tr><td><b>Korku ertesi seansı</b><small>YK-08</small></td><td>Gece tutmadan: ertesi gün 09:30 al → 16:00 sat</td><td>28–30</td><td>%60–61</td><td>+32…+37</td><td class="neg">−607…−610</td><td class="neg">−220…−224</td><td class="neg">−619…−623</td><td><span class="pill ok">Onay</span><small>gece riski istemeyene; getiri daha düşük</small></td></tr>
+          <tr><td><b>Art arda korku dozu</b><small>GN-05</small></td><td>Dün de korku günü (ya da dün ≤ −%1) ise lot ×1,5</td><td>28–30</td><td>%59–60</td><td>+59…+65</td><td class="neg">−613…−623</td><td class="neg">−279…−291</td><td class="neg">−905…−907</td><td><span class="pill ok">Onay</span><small>dozlu işlemler +73…+86 vs +44…+45 bp</small></td></tr>
+          <tr><td><b>KSG OPEX vetosu</b><small>GX-05</small></td><td>Canlı KSG gecesini vadeye 0–2 gün kala açma</td><td>85–86</td><td>%58–59</td><td>+11</td><td class="neg">−344…−346</td><td class="neg">−150…−151</td><td class="neg">−714…−971</td><td><span class="pill ok">Onay</span><small>orta güç (P 0,86–0,91); düşüşü %9–20 küçültür</small></td></tr>
+          <tr><td><b>C3b + OPEX vetosu</b><small>SV-01, RSI2 kuralı</small></td><td>RSI2 &lt; 10 alımını vadeye 0–2 gün kala açma</td><td>13</td><td>%80</td><td>+83</td><td class="neg">−684</td><td class="neg">−249</td><td class="neg">−796</td><td><span class="pill ok">Onay</span><small>vetolananlar −21 bp, P 0,999 (taban +68)</small></td></tr>
+          <tr><td><b>Olay günü vetosu</b><small>ZA-04</small></td><td>CPI/NFP/FOMC/Jackson Hole gününde korku alımı açma</td><td>24–25</td><td>%62</td><td>+57…+61</td><td class="neg">−613…−623</td><td class="neg">−257…−270</td><td class="neg">−841…−842</td><td><span class="pill weak">Zayıf</span><small>NDX'te vetolananlar hâlâ artı (+16…+20); kanıt başka endekslerden</small></td></tr>
+          <tr><td><b>Vade sonrası 3.–7. gün dozu</b><small>MX-04</small></td><td>Son vadeden 3–7 gün sonra korku alımı lot ×1,5</td><td>23–24</td><td>%63–65</td><td>+73…+81</td><td class="neg">−631…−638</td><td class="neg">−291…−302</td><td class="neg">−786…−913</td><td><span class="pill weak">Zayıf</span><small>bu dönemde dozlu işlemler ortalamadan farksız (+65…+73)</small></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="lead">"En kötü %10 ort." = en kötü onda bir işlemin ortalaması: kötü bir gecede tipik olarak ne kaybedildiği. "En büyük düşüş" = art arda kayıpların en derin toplamı (bp toplamı; lot ×1 varsayımı).</p>
+  </section>
+
+  <section class="cols">
+    <div class="note">
+      <h2>Hepsi birden açılırsa</h2>
+      <p>Korku gecesi + iki veto + iki doz (tavan ×2): yılda 20–21 işlem, kazanan %66–68, ortalama +96…+106 bp. Ama dozlar riski de büyütüyor: en büyük düşüş Duka −809, MT5 −1.069 bp, en kötü %10 ortalaması −316…−330 bp. Risk başına getiri önerilen paketten <b>kötü</b>. Dozları önce gölgede izlemek daha doğru.</p>
+    </div>
+    <div class="note">
+      <h2>Çalıştığından nasıl emin olundu</h2>
+      <ul>
+        <li>11 birim testinin 11'i geçti: vade günleri (Kasım 2026, Aralık 2025, Mart 2024), İyi Cuma kayması (Nisan 2022), "vadeye kalan gün" ve "vadeden geçen gün" sayacı, FOMC günü, takvim kesilince geçmiş kararların değişmemesi.</li>
+        <li>Test bir hata yakaladı ve düzeltildi: takvim veriden üretildiği için gelecekteki vade günleri eksikti. Canlıda vade takvimi önceden bilinir; takvim artık NYSE iş günleriyle ileriye uzanıyor.</li>
+        <li>Her kapı yalnız giriş anında bilinen bilgiye bakıyor: takvim (önceden bilinir) ve dünkü fiyat. Çıkışa bağlı etiket yok (E147).</li>
+        <li>İki bağımsız fiyat kaynağı (Dukascopy, MT5 broker) aynı sonucu veriyor.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="note">
+    <h2>Dikkat</h2>
+    <ul>
+      <li>Hepsi geçmiş veri. Gün içi sınama 2018-04 → 2026-11 (yaklaşık 9 yıl); OPEX vetosunun 1985–1999 ^NDX ve 5 ayrı piyasa kanıtı daha önceki turlardan.</li>
+      <li>Hiçbir kapı canlı bota bağlı değil. Kartlar gölgede: <span class="mono">ndx_opex_korku_vetosu</span>, <span class="mono">ndx_ksg_opex_vetosu</span>, <span class="mono">ndx_vade_sonrasi_korku_dozu</span>, <span class="mono">ndx_korku_ertesi_seans</span>.</li>
+      <li>"İlk yükselen kapanışta çık" tutuşu uzatır; hafta sonunu aşan pozisyon olabilir. En kötü tek işlem ≈ −%7,8.</li>
+      <li>Önerilen sıra: önce OPEX vetoları (risk azaltır, işlem siler), sonra XP çıkışı, dozlar en son ve gölgede.</li>
+    </ul>
+  </section>
+</div>

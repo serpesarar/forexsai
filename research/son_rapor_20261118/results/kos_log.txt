@@ -1,0 +1,67 @@
+/Users/melihcanodacioglu/Desktop/panel/research/son_rapor_20261118/src/rapor.py:92: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  t["K1_dun"] = t.K1.shift(1).fillna(False).astype(bool)
+/Users/melihcanodacioglu/Desktop/panel/research/son_rapor_20261118/src/rapor.py:92: FutureWarning: Downcasting object dtype arrays on .fillna, .ffill, .bfill is deprecated and will change in a future version. Call result.infer_objects(copy=False) instead. To opt-in to the future behavior, set `pd.set_option('future.no_silent_downcasting', True)`
+  t["K1_dun"] = t.K1.shift(1).fillna(False).astype(bool)
+C3b_QQQ_exante {'n_ic': 39, 'ic': -8.8, 'dis': 57.6, 'fark': -66.4, 'P_fark_eksi': 0.9904}
+C3b_QQQ_exante_son5 {'n_ic': 10, 'ic': -38.8, 'dis': 63.6, 'fark': -102.4, 'P_fark_eksi': 0.973}
+C3b_NDX_1985_1999_exante {'n_ic': 21, 'ic': -222.7, 'dis': 17.2, 'fark': -239.9, 'P_fark_eksi': 0.9998}
+K1_gunici_DUKA_NDX {'n_ic': 33, 'ic': -22.8, 'dis': 66.4, 'fark': -89.3, 'P_fark_eksi': 0.9998}
+K1_gunici_MT5_NAS100 {'n_ic': 30, 'ic': -16.9, 'dis': 60.3, 'fark': -77.3, 'P_fark_eksi': 0.9952}
+K1_gunici_MT5_US500 {'n_ic': 19, 'ic': -8.0, 'dis': 32.8, 'fark': -40.8, 'P_fark_eksi': 0.923}
+K1_gunici_MT5_US30 {'n_ic': 21, 'ic': -30.1, 'dis': 42.6, 'fark': -72.7, 'P_fark_eksi': 0.9944}
+K1_gunici_MT5_US2000 {'n_ic': 32, 'ic': -12.9, 'dis': 39.9, 'fark': -52.8, 'P_fark_eksi': 0.9638}
+K1_gunici_havuz_z {'n_ic': 135, 'fark_z': -0.343, 'P_fark_eksi': 1.0}
+BİRİM TESTLERİ: {'gecti': True, 'kontroller': {'OPEX_2026_11_20': True, 'OPEX_2025_12_19': True, 'OPEX_2024_03_15': True, 'OPEX_IyiCuma_2022_04_14': True, 'k_2026_11_18_eq_2': True, 'k_2026_11_19_eq_1': True, 'k_2026_11_20_eq_0': True, 'a_2025_12_24_eq_3': True, 'a_2026_10_21_eq_3': True, 'olay_2024_09_18_FOMC': True, 'sizinti_takvim_kesme_ayni': True}}
+
+===== DUKA_NDX_2018_2026
+  K1_taban: {'islem': 252, 'yilda': 29.6, 'isabet_%': 60.3, 'ort_bp': 54.7, 'medyan_bp': 46.0, 'toplam_bp': 13797.0, 'en_kotu_bp': -612.5, 'en_kotu_%10_ort_bp': -250.8, 'en_iyi_bp': 1164.0, 'maks_dusus_bp': -841.0, 'en_kotu_yil_bp': 301.0, 'islem_basi_kalite': 0.274, 'arti_yil': '9/9', 'yil_sharpe': 1.04}
+  G1_ertesi_seans: {'islem': 251, 'yilda': 29.5, 'isabet_%': 60.6, 'ort_bp': 37.0, 'medyan_bp': 35.4, 'toplam_bp': 9292.0, 'en_kotu_bp': -609.9, 'en_kotu_%10_ort_bp': -219.6, 'en_iyi_bp': 1182.6, 'maks_dusus_bp': -623.0, 'en_kotu_yil_bp': 110.0, 'islem_basi_kalite': 0.225, 'arti_yil': '9/9', 'yil_sharpe': 1.07}
+  G2_ardisik_doz: {'islem': 252, 'yilda': 29.6, 'isabet_%': 60.3, 'ort_bp': 64.8, 'medyan_bp': 47.7, 'toplam_bp': 16333.0, 'en_kotu_bp': -612.5, 'en_kotu_%10_ort_bp': -279.0, 'en_iyi_bp': 1420.4, 'maks_dusus_bp': -905.0, 'en_kotu_yil_bp': 233.0, 'islem_basi_kalite': 0.282, 'arti_yil': '9/9', 'yil_sharpe': 1.05}
+  G2_ardisik_ic_ort: 86.0
+  G2_ardisik_dis_ort: 45.2
+  G3_olay_vetosu: {'islem': 213, 'yilda': 25.0, 'isabet_%': 62.0, 'ort_bp': 61.1, 'medyan_bp': 46.9, 'toplam_bp': 13011.0, 'en_kotu_bp': -612.5, 'en_kotu_%10_ort_bp': -257.3, 'en_iyi_bp': 1164.0, 'maks_dusus_bp': -841.0, 'en_kotu_yil_bp': 65.0, 'islem_basi_kalite': 0.293, 'arti_yil': '9/9', 'yil_sharpe': 0.87}
+  G3_vetolanan_ort: 20.1
+  G3_P: 0.941
+  G4_XP_cikis: {'islem': 252, 'yilda': 29.6, 'isabet_%': 78.6, 'ort_bp': 84.6, 'medyan_bp': 83.6, 'toplam_bp': 21330.0, 'en_kotu_bp': -782.9, 'en_kotu_%10_ort_bp': -303.8, 'en_iyi_bp': 1164.0, 'maks_dusus_bp': -1106.0, 'en_kotu_yil_bp': 197.0, 'islem_basi_kalite': 0.41, 'arti_yil': '9/9', 'yil_sharpe': 1.32}
+  G4_ort_tutus_gun: 1.52
+  G5_OPEX_veto_K1: {'islem': 207, 'yilda': 24.3, 'isabet_%': 65.2, 'ort_bp': 70.0, 'medyan_bp': 57.5, 'toplam_bp': 14495.0, 'en_kotu_bp': -612.5, 'en_kotu_%10_ort_bp': -253.7, 'en_iyi_bp': 1164.0, 'maks_dusus_bp': -745.0, 'en_kotu_yil_bp': 406.0, 'islem_basi_kalite': 0.337, 'arti_yil': '9/9', 'yil_sharpe': 0.98}
+  G5_vetolanan_ort: -15.5
+  G5_P: 0.9998
+  G5_OPEX_veto_ES: {'islem': 206, 'yilda': 24.2, 'isabet_%': 64.1, 'ort_bp': 49.5, 'medyan_bp': 42.7, 'toplam_bp': 10196.0, 'en_kotu_bp': -334.5, 'en_kotu_%10_ort_bp': -201.1, 'en_iyi_bp': 1182.6, 'maks_dusus_bp': -540.0, 'en_kotu_yil_bp': 128.0, 'islem_basi_kalite': 0.305, 'arti_yil': '9/9', 'yil_sharpe': 1.04}
+  G6_vade_sonrasi_doz_K1: {'islem': 207, 'yilda': 24.3, 'isabet_%': 65.2, 'ort_bp': 80.9, 'medyan_bp': 70.0, 'toplam_bp': 16743.0, 'en_kotu_bp': -630.7, 'en_kotu_%10_ort_bp': -291.3, 'en_iyi_bp': 1164.0, 'maks_dusus_bp': -786.0, 'en_kotu_yil_bp': 646.0, 'islem_basi_kalite': 0.342, 'arti_yil': '9/9', 'yil_sharpe': 1.01}
+  G6_doz_icinde_ort: 72.5
+  K1_TUM_KAPILAR: {'islem': 177, 'yilda': 20.8, 'isabet_%': 67.8, 'ort_bp': 106.1, 'medyan_bp': 77.2, 'toplam_bp': 18787.0, 'en_kotu_bp': -630.7, 'en_kotu_%10_ort_bp': -316.2, 'en_iyi_bp': 1420.4, 'maks_dusus_bp': -809.0, 'en_kotu_yil_bp': 461.0, 'islem_basi_kalite': 0.386, 'arti_yil': '9/9', 'yil_sharpe': 0.9}
+  KSG_taban: {'islem': 836, 'yilda': 97.4, 'isabet_%': 56.7, 'ort_bp': 9.5, 'medyan_bp': 10.4, 'toplam_bp': 7918.0, 'en_kotu_bp': -346.3, 'en_kotu_%10_ort_bp': -152.1, 'en_iyi_bp': 597.4, 'maks_dusus_bp': -1067.0, 'en_kotu_yil_bp': -261.0, 'islem_basi_kalite': 0.107, 'arti_yil': '7/9', 'yil_sharpe': 0.76}
+  G7_KSG_OPEX_veto: {'islem': 732, 'yilda': 85.3, 'isabet_%': 58.1, 'ort_bp': 11.0, 'medyan_bp': 11.3, 'toplam_bp': 8049.0, 'en_kotu_bp': -346.3, 'en_kotu_%10_ort_bp': -151.1, 'en_iyi_bp': 597.4, 'maks_dusus_bp': -971.0, 'en_kotu_yil_bp': -262.0, 'islem_basi_kalite': 0.123, 'arti_yil': '7/9', 'yil_sharpe': 0.77}
+  G7_vetolanan_ort: -1.3
+  G7_P: 0.9088
+
+===== MT5_NAS100_2018_2026
+  K1_taban: {'islem': 234, 'yilda': 28.0, 'isabet_%': 59.4, 'ort_bp': 50.4, 'medyan_bp': 43.3, 'toplam_bp': 11799.0, 'en_kotu_bp': -622.8, 'en_kotu_%10_ort_bp': -261.7, 'en_iyi_bp': 1181.1, 'maks_dusus_bp': -842.0, 'en_kotu_yil_bp': 141.0, 'islem_basi_kalite': 0.246, 'arti_yil': '9/9', 'yil_sharpe': 0.9}
+  G1_ertesi_seans: {'islem': 234, 'yilda': 28.0, 'isabet_%': 60.3, 'ort_bp': 31.6, 'medyan_bp': 30.2, 'toplam_bp': 7404.0, 'en_kotu_bp': -607.1, 'en_kotu_%10_ort_bp': -224.2, 'en_iyi_bp': 1199.4, 'maks_dusus_bp': -619.0, 'en_kotu_yil_bp': 98.0, 'islem_basi_kalite': 0.192, 'arti_yil': '9/9', 'yil_sharpe': 0.88}
+  G2_ardisik_doz: {'islem': 234, 'yilda': 28.0, 'isabet_%': 59.4, 'ort_bp': 58.9, 'medyan_bp': 43.6, 'toplam_bp': 13773.0, 'en_kotu_bp': -622.8, 'en_kotu_%10_ort_bp': -291.2, 'en_iyi_bp': 1392.0, 'maks_dusus_bp': -907.0, 'en_kotu_yil_bp': 82.0, 'islem_basi_kalite': 0.252, 'arti_yil': '9/9', 'yil_sharpe': 0.91}
+  G2_ardisik_ic_ort: 73.1
+  G2_ardisik_dis_ort: 43.6
+  G3_olay_vetosu: {'islem': 198, 'yilda': 23.7, 'isabet_%': 61.6, 'ort_bp': 56.7, 'medyan_bp': 44.3, 'toplam_bp': 11220.0, 'en_kotu_bp': -622.8, 'en_kotu_%10_ort_bp': -270.3, 'en_iyi_bp': 1181.1, 'maks_dusus_bp': -842.0, 'en_kotu_yil_bp': -92.0, 'islem_basi_kalite': 0.266, 'arti_yil': '8/9', 'yil_sharpe': 0.78}
+  G3_vetolanan_ort: 16.1
+  G3_P: 0.922
+  G4_XP_cikis: {'islem': 234, 'yilda': 28.0, 'isabet_%': 76.9, 'ort_bp': 79.7, 'medyan_bp': 76.4, 'toplam_bp': 18639.0, 'en_kotu_bp': -786.1, 'en_kotu_%10_ort_bp': -317.4, 'en_iyi_bp': 1181.1, 'maks_dusus_bp': -1122.0, 'en_kotu_yil_bp': 41.0, 'islem_basi_kalite': 0.378, 'arti_yil': '9/9', 'yil_sharpe': 1.21}
+  G4_ort_tutus_gun: 1.53
+  G5_OPEX_veto_K1: {'islem': 192, 'yilda': 23.0, 'isabet_%': 63.0, 'ort_bp': 63.6, 'medyan_bp': 50.0, 'toplam_bp': 12210.0, 'en_kotu_bp': -622.8, 'en_kotu_%10_ort_bp': -262.3, 'en_iyi_bp': 1181.1, 'maks_dusus_bp': -779.0, 'en_kotu_yil_bp': 161.0, 'islem_basi_kalite': 0.298, 'arti_yil': '9/9', 'yil_sharpe': 0.84}
+  G5_vetolanan_ort: -9.8
+  G5_P: 0.9956
+  G5_OPEX_veto_ES: {'islem': 192, 'yilda': 23.0, 'isabet_%': 63.0, 'ort_bp': 44.0, 'medyan_bp': 38.8, 'toplam_bp': 8455.0, 'en_kotu_bp': -343.5, 'en_kotu_%10_ort_bp': -202.7, 'en_iyi_bp': 1199.4, 'maks_dusus_bp': -648.0, 'en_kotu_yil_bp': 54.0, 'islem_basi_kalite': 0.267, 'arti_yil': '9/9', 'yil_sharpe': 0.86}
+  G6_vade_sonrasi_doz_K1: {'islem': 192, 'yilda': 23.0, 'isabet_%': 63.0, 'ort_bp': 73.2, 'medyan_bp': 60.2, 'toplam_bp': 14050.0, 'en_kotu_bp': -638.3, 'en_kotu_%10_ort_bp': -302.1, 'en_iyi_bp': 1181.1, 'maks_dusus_bp': -913.0, 'en_kotu_yil_bp': 152.0, 'islem_basi_kalite': 0.303, 'arti_yil': '9/9', 'yil_sharpe': 0.85}
+  G6_doz_icinde_ort: 64.6
+  K1_TUM_KAPILAR: {'islem': 165, 'yilda': 19.8, 'isabet_%': 66.1, 'ort_bp': 95.7, 'medyan_bp': 69.1, 'toplam_bp': 15798.0, 'en_kotu_bp': -638.3, 'en_kotu_%10_ort_bp': -329.9, 'en_iyi_bp': 1392.0, 'maks_dusus_bp': -1069.0, 'en_kotu_yil_bp': 27.0, 'islem_basi_kalite': 0.346, 'arti_yil': '9/9', 'yil_sharpe': 0.78}
+  KSG_taban: {'islem': 836, 'yilda': 98.7, 'isabet_%': 57.7, 'ort_bp': 9.9, 'medyan_bp': 10.6, 'toplam_bp': 8277.0, 'en_kotu_bp': -343.7, 'en_kotu_%10_ort_bp': -149.7, 'en_iyi_bp': 570.0, 'maks_dusus_bp': -898.0, 'en_kotu_yil_bp': -203.0, 'islem_basi_kalite': 0.113, 'arti_yil': '7/9', 'yil_sharpe': 0.8}
+  G7_KSG_OPEX_veto: {'islem': 731, 'yilda': 86.3, 'isabet_%': 58.8, 'ort_bp': 11.1, 'medyan_bp': 11.4, 'toplam_bp': 8080.0, 'en_kotu_bp': -343.7, 'en_kotu_%10_ort_bp': -149.5, 'en_iyi_bp': 570.0, 'maks_dusus_bp': -714.0, 'en_kotu_yil_bp': -192.0, 'islem_basi_kalite': 0.125, 'arti_yil': '7/9', 'yil_sharpe': 0.82}
+  G7_vetolanan_ort: 1.9
+  G7_P: 0.861
+
+===== C3b_DUKA
+  taban: {'islem': 132, 'yilda': 15.1, 'isabet_%': 77.3, 'ort_bp': 68.1, 'medyan_bp': 79.6, 'toplam_bp': 8987.0, 'en_kotu_bp': -683.5, 'en_kotu_%10_ort_bp': -274.4, 'en_iyi_bp': 782.4, 'maks_dusus_bp': -796.0, 'en_kotu_yil_bp': 115.0, 'islem_basi_kalite': 0.395, 'arti_yil': '9/9', 'yil_sharpe': 1.57}
+  G5_OPEX_veto: {'islem': 113, 'yilda': 12.9, 'isabet_%': 79.6, 'ort_bp': 83.1, 'medyan_bp': 92.3, 'toplam_bp': 9387.0, 'en_kotu_bp': -683.5, 'en_kotu_%10_ort_bp': -249.3, 'en_iyi_bp': 782.4, 'maks_dusus_bp': -796.0, 'en_kotu_yil_bp': 182.0, 'islem_basi_kalite': 0.487, 'arti_yil': '9/9', 'yil_sharpe': 1.59}
+  G5_vetolanan_ort: -21.0
+  G5_P: 0.9986
+  G5_G6_veto_doz: {'islem': 113, 'yilda': 12.9, 'isabet_%': 79.6, 'ort_bp': 95.2, 'medyan_bp': 99.6, 'toplam_bp': 10762.0, 'en_kotu_bp': -683.5, 'en_kotu_%10_ort_bp': -266.5, 'en_iyi_bp': 782.4, 'maks_dusus_bp': -919.0, 'en_kotu_yil_bp': 345.0, 'islem_basi_kalite': 0.51, 'arti_yil': '9/9', 'yil_sharpe': 1.66}
