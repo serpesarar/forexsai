@@ -51,7 +51,7 @@ ul{margin:0;padding-left:20px;display:grid;gap:6px;max-width:72ch}
   <header style="display:grid;gap:10px">
     <div class="eyebrow">NAS100 · Dukascopy + MT5 · 2018-04 → 2026-11 · uçtan uca yeniden sınama</div>
     <h1>NASDAQ Kapı Karnesi</h1>
-    <p class="lead">Bu sohbette bulunan onaylanabilir 8 kapı tek bir test düzeneğinde baştan kuruldu, iki ayrı veri kaynağında çalıştırıldı. 6'sı onaylandı, 2'si bu dönemde zayıf kaldı. Rakamlar işlem başı <b>bp</b> (1 bp = %0,01; NAS100 25.000 iken 1 bp ≈ 2,5 puan), lottan bağımsız, spread ve gecelik finansman düşülmüş.</p>
+    <p class="lead">Bu sohbette bulunan onaylanabilir 8 kapı tek bir test düzeneğinde baştan kuruldu; NASDAQ'ta iki veri kaynağında, kör US500/US30/US2000'de ve 1985'e uzanan günlük geçmişte çalıştırıldı. 6'sı NASDAQ'ta onaylandı; olay günü vetosu NASDAQ dışında onaylandı; vade sonrası dozu karışık kaldı. Rakamlar işlem başı <b>bp</b> (1 bp = %0,01; NAS100 25.000 iken 1 bp ≈ 2,5 puan), lottan bağımsız, spread ve gecelik finansman düşülmüş.</p>
   </header>
 
   <section>
@@ -91,12 +91,33 @@ ul{margin:0;padding-left:20px;display:grid;gap:6px;max-width:72ch}
           <tr><td><b>Art arda korku dozu</b><small>GN-05</small></td><td>Dün de korku günü (ya da dün ≤ −%1) ise lot ×1,5</td><td>28–30</td><td>%59–60</td><td>+59…+65</td><td class="neg">−613…−623</td><td class="neg">−279…−291</td><td class="neg">−905…−907</td><td><span class="pill ok">Onay</span><small>dozlu işlemler +73…+86 vs +44…+45 bp</small></td></tr>
           <tr><td><b>KSG OPEX vetosu</b><small>GX-05</small></td><td>Canlı KSG gecesini vadeye 0–2 gün kala açma</td><td>85–86</td><td>%58–59</td><td>+11</td><td class="neg">−344…−346</td><td class="neg">−150…−151</td><td class="neg">−714…−971</td><td><span class="pill ok">Onay</span><small>orta güç (P 0,86–0,91); düşüşü %9–20 küçültür</small></td></tr>
           <tr><td><b>C3b + OPEX vetosu</b><small>SV-01, RSI2 kuralı</small></td><td>RSI2 &lt; 10 alımını vadeye 0–2 gün kala açma</td><td>13</td><td>%80</td><td>+83</td><td class="neg">−684</td><td class="neg">−249</td><td class="neg">−796</td><td><span class="pill ok">Onay</span><small>vetolananlar −21 bp, P 0,999 (taban +68)</small></td></tr>
-          <tr><td><b>Olay günü vetosu</b><small>ZA-04</small></td><td>CPI/NFP/FOMC/Jackson Hole gününde korku alımı açma</td><td>24–25</td><td>%62</td><td>+57…+61</td><td class="neg">−613…−623</td><td class="neg">−257…−270</td><td class="neg">−841…−842</td><td><span class="pill weak">Zayıf</span><small>NDX'te vetolananlar hâlâ artı (+16…+20); kanıt başka endekslerden</small></td></tr>
+          <tr><td><b>Olay günü vetosu</b><small>ZA-04</small></td><td>CPI/NFP/FOMC/Jackson Hole gününde korku alımı açma</td><td>24–25</td><td>%62</td><td>+57…+61</td><td class="neg">−613…−623</td><td class="neg">−257…−270</td><td class="neg">−841…−842</td><td><span class="pill weak">NDX'te zayıf</span><small>NDX'te vetolananlar hâlâ artı (+16…+20); US500/US30/US2000'de güçlü (aşağıda)</small></td></tr>
           <tr><td><b>Vade sonrası 3.–7. gün dozu</b><small>MX-04</small></td><td>Son vadeden 3–7 gün sonra korku alımı lot ×1,5</td><td>23–24</td><td>%63–65</td><td>+73…+81</td><td class="neg">−631…−638</td><td class="neg">−291…−302</td><td class="neg">−786…−913</td><td><span class="pill weak">Zayıf</span><small>bu dönemde dozlu işlemler ortalamadan farksız (+65…+73)</small></td></tr>
         </tbody>
       </table>
     </div>
     <p class="lead">"En kötü %10 ort." = en kötü onda bir işlemin ortalaması: kötü bir gecede tipik olarak ne kaybedildiği. "En büyük düşüş" = art arda kayıpların en derin toplamı (bp toplamı; lot ×1 varsayımı).</p>
+  </section>
+
+  <section>
+    <div class="eyebrow">Aynı düzenek, başka piyasalar ve uzun geçmiş</div>
+    <h2>Kapılar NASDAQ dışında ve 1985'ten beri tutuyor mu</h2>
+    <p class="lead">Hücrelerde: vetolanan ya da dozlanan işlemlerin ortalaması → kalanlarla kıyas. Veto için vetolananın eksi olması, doz için dozlanının ortalamadan iyi olması beklenir. MT5 broker, kör (bu piyasalarda hiçbir şey seçilmedi).</p>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Kapı</th><th>Ölçü</th><th>US500 2018–26</th><th>US30 2018–26</th><th>US2000 2018–26</th><th>Uzun geçmiş</th><th>Sonuç</th></tr></thead>
+        <tbody>
+          <tr><td><b>OPEX korku vetosu</b></td><td>vetolanan K1 ort. bp</td><td class="neg">−20,8 (P 0,98)</td><td class="neg">−21,5 (P 0,99)</td><td class="neg">−9,3 (P 0,97)</td><td>C3b QQQ 1999–2026 <span class="neg">−11,6</span> (P 0,999) · ^NDX 1985–99 <span class="neg">−176</span> (P 0,999)</td><td><span class="pill ok">Tutuyor</span></td></tr>
+          <tr><td><b>KSG OPEX vetosu</b></td><td>vetolanan KSG ort. bp</td><td class="neg">−10,6 (P 0,98)</td><td class="neg">−6,0 (P 0,93)</td><td class="neg">−11,4 (P 0,996)</td><td>canlı KSG kitabı Duka <span class="neg">−4,7</span> (P 0,97); düşüş −1.950 → −1.590</td><td><span class="pill ok">Tutuyor</span></td></tr>
+          <tr><td><b>Olay günü vetosu</b></td><td>vetolanan K1 ort. bp</td><td class="neg">−12,8 (P 0,97)</td><td class="neg">−39,1 (P 0,996)</td><td class="neg">−54,5 (P 0,998)</td><td>2008–17 günlük vekil 4/4 ETF (önceki tur)</td><td><span class="pill ok">Tutuyor</span><small>NASDAQ hariç</small></td></tr>
+          <tr><td><b>Art arda korku dozu</b></td><td>dozlu vs dozsuz ort. bp</td><td>+57,8 vs +20,6</td><td>+82,5 vs +23,8</td><td>+50,6 vs +26,3</td><td>1993–2017 vekil 4/4 ETF (önceki tur)</td><td><span class="pill ok">Tutuyor</span></td></tr>
+          <tr><td><b>Korku ertesi seansı</b></td><td>ort. bp · en büyük düşüş</td><td>+20,5 · −580</td><td>+29,2 · −439</td><td>+21,1 · −1.247</td><td>—</td><td><span class="pill ok">Tutuyor</span><small>düşük getiri</small></td></tr>
+          <tr><td><b>"İlk yükselen kapanışta çık"</b></td><td>isabet · en büyük düşüş</td><td>%79 · −569 (taban −757)</td><td>%72 · −885 (taban −1.024)</td><td>%71 · <span class="neg">−2.483 (taban −1.304)</span></td><td>—</td><td><span class="pill weak">US2000'de riskli</span></td></tr>
+          <tr><td><b>Vade sonrası 3.–7. gün dozu</b></td><td>dozlu vs ortalama bp</td><td>+26,8 vs +37,0</td><td>+61,1 vs +43,7</td><td>+76,5 vs +42,1</td><td>C3b QQQ +68,7 vs +61,8 · ^NDX 1985–99 +11 vs +16</td><td><span class="pill weak">Karışık</span></td></tr>
+          <tr><td><b>Önerilen paket</b><small>K1 + OPEX vetosu + XP</small></td><td>işlem/yıl · isabet · ort. · en kötü · düşüş</td><td>18,5 · %83 · +89,6 · −569 · −569</td><td>17,0 · %74 · +68,4 · −534 · −667</td><td>22,6 · %73 · +56,0 · −869 · <span class="neg">−2.692</span></td><td>—</td><td><span class="pill ok">US500/US30 iyi</span><small>US2000'de XP'siz kullan</small></td></tr>
+        </tbody>
+      </table>
+    </div>
   </section>
 
   <section class="cols">

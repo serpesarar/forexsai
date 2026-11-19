@@ -1591,6 +1591,7 @@ FOMC tarihleri 1994–2007 Fed tarihsel sayfalarından (`data/fomc_1994_2007.csv
 | ID | Tarih | Ne denendi | Sonuç | Hüküm |
 |---|---|---|---|---|
 | KK-01 | 2026-11-18 | 8 kapı tek düzenekte (Duka + MT5 2018–26), 11 birim testi (vade/tatil/olay takvimi, sızıntı kesme testi) | Önerilen paket K1 + OPEX vetosu + XP: 23–24 işlem/yıl, %80–83, +96…+103 bp, en kötü −786, en kötü %10 −285…−298, maksDD −801…−814, 9/9 yıl. Onay: SV-01, KC-01 XP, YK-08, GN-05, GX-05, C3b veto. **Zayıf: ZA-04 olay vetosu (NDX'te vetolananlar +16…+20), MX-04 vade sonrası dozu (dozlu ≈ ortalama)**. Hata: veriden üretilen takvimde gelecek vade günleri yoktu → NYSE iş günleriyle uzatıldı | paket önerisi; ZA-04 / MX-04 NDX'te gölge |
+| KK-02 | 2026-11-18 | Aynı düzenek kör US500/US30/US2000 + canlı KSG kitabı + C3b QQQ 1999–2026 / ^NDX 1985–99 | OPEX vetosu kör 3/3 + 1985–99 −176 bp; KSG vetosu kör 3/3 + canlı kitap −4,7; **ZA-04 olay vetosu kör 3/3 güçlü (−13…−55, P ≥ 0,97)**; GN-05 doz 3/3; **XP US2000'de maksDD −1.304 → −2.483**; MX-04 karışık | ZA-04 NDX dışında onay; XP US2000'de kullanılmaz |
 
 ## 3. Meta-dersler (kalıcı ilkeler)
 
