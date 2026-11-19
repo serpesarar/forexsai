@@ -1,0 +1,109 @@
+{
+ "MT5_NAS100": {
+  "gece": 1046,
+  "ort_tum": 7.2,
+  "vetolanan_n": 158,
+  "vetolanan_lot_agirlikli_ort": -1.8,
+  "vetolanan_ham_ort": -0.1,
+  "kalan_ort": 8.5,
+  "P_vetolanan_eksi": 0.512,
+  "yarilar": {
+   "ilk": -1.4,
+   "ikinci": -2.3
+  },
+  "vadeye_gun": {
+   "0": -4.3,
+   "1": 9.5,
+   "2": -4.4,
+   "3": 0.3,
+   "4": 42.1
+  },
+  "dozlu_vetolanan": {
+   "n": 22,
+   "ort": -13.6
+  },
+  "yillar_vetolanan": {
+   "2018": -12.3,
+   "2019": -4.0,
+   "2020": 20.7,
+   "2021": -12.5,
+   "2022": -24.2,
+   "2023": -15.5,
+   "2024": 31.4,
+   "2025": 15.1,
+   "2026": -2.4
+  },
+  "kitap_vetosuz": {
+   "gece_yilda": 119.1,
+   "toplam_bp_yil": 1322.0,
+   "sharpe": 0.875,
+   "maxDD_bp": -2165.0
+  },
+  "kitap_vetolu": {
+   "gece_yilda": 101.1,
+   "toplam_bp_yil": 1359.0,
+   "sharpe": 0.947,
+   "maxDD_bp": -2145.0
+  },
+  "olcut": {
+   "vetolanan_eksi": true,
+   "yarilar": true,
+   "sharpe_dusmuyor": true,
+   "toplam_bp_artar_ya_da_esit": true
+  }
+ },
+ "DUKA_NDX": {
+  "gece": 1034,
+  "ort_tum": 6.1,
+  "vetolanan_n": 155,
+  "vetolanan_lot_agirlikli_ort": -6.6,
+  "vetolanan_ham_ort": -4.5,
+  "kalan_ort": 8.0,
+  "P_vetolanan_eksi": 0.787,
+  "yarilar": {
+   "ilk": -5.5,
+   "ikinci": -8.1
+  },
+  "vadeye_gun": {
+   "0": -7.1,
+   "1": 5.4,
+   "2": -10.3,
+   "3": -2.5,
+   "4": 41.1
+  },
+  "dozlu_vetolanan": {
+   "n": 23,
+   "ort": -21.0
+  },
+  "yillar_vetolanan": {
+   "2018": -12.6,
+   "2019": -5.2,
+   "2020": 8.0,
+   "2021": -13.4,
+   "2022": -24.4,
+   "2023": -16.1,
+   "2024": 27.1,
+   "2025": -3.3,
+   "2026": -6.9
+  },
+  "kitap_vetosuz": {
+   "gece_yilda": 116.5,
+   "toplam_bp_yil": 1166.0,
+   "sharpe": 0.771,
+   "maxDD_bp": -2884.0
+  },
+  "kitap_vetolu": {
+   "gece_yilda": 99.1,
+   "toplam_bp_yil": 1298.0,
+   "sharpe": 0.905,
+   "maxDD_bp": -2443.0
+  },
+  "olcut": {
+   "vetolanan_eksi": true,
+   "yarilar": true,
+   "sharpe_dusmuyor": true,
+   "toplam_bp_artar_ya_da_esit": true
+  }
+ },
+ "hukum": "BAĞLAMA ÖNERİLİR"
+}
