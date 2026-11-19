@@ -1,0 +1,5382 @@
+{
+ "DUKA_NDX": {
+  "TUM": {
+   "n_sinyal": 252,
+   "piyasa": {
+    "ort": 84.6,
+    "toplam": 21330.0,
+    "en_kotu": -782.9,
+    "kotu10": -310.1,
+    "maksDD": -1106.0
+   },
+   "D5": {
+    "seviye_var_%": 59.9,
+    "uzaklik_medyan_bp": 66.2,
+    "W2_B": {
+     "ort": 67.1,
+     "toplam": 16920.0,
+     "en_kotu": -782.9,
+     "kotu10": -280.4,
+     "maksDD": -1277.0
+    },
+    "W2_A": {
+     "ort": 33.3,
+     "toplam": 8396.0,
+     "en_kotu": -430.8,
+     "kotu10": -102.6,
+     "maksDD": -431.0
+    },
+    "W2_YARIM": {
+     "ort": 75.9,
+     "toplam": 19125.0,
+     "en_kotu": -782.9,
+     "kotu10": -294.3,
+     "maksDD": -1077.0
+    },
+    "W1_B": {
+     "ort": 66.3,
+     "toplam": 16702.0,
+     "en_kotu": -782.9,
+     "kotu10": -280.4,
+     "maksDD": -1277.0
+    },
+    "W1_A": {
+     "ort": 32.5,
+     "toplam": 8179.0,
+     "en_kotu": -430.8,
+     "kotu10": -102.6,
+     "maksDD": -431.0
+    },
+    "W1_YARIM": {
+     "ort": 75.5,
+     "toplam": 19016.0,
+     "en_kotu": -782.9,
+     "kotu10": -294.3,
+     "maksDD": -1077.0
+    },
+    "dolum_%": 58.9,
+    "kacan_piyasa_ort": 165.1,
+    "kacan_kazanan_%": 96.8,
+    "hayalet": {
+     "gercek_ort": 67.1,
+     "hayalet_ort": 71.0,
+     "P_gercek_ust": 0.12,
+     "tepki_gercek_%": 55.1,
+     "tepki_n": 89,
+     "tepki_hayalet_%": 50.2,
+     "P_tepki_ust": 0.856
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 39.3,
+    "uzaklik_medyan_bp": 104.5,
+    "W2_B": {
+     "ort": 69.2,
+     "toplam": 17436.0,
+     "en_kotu": -782.9,
+     "kotu10": -289.7,
+     "maksDD": -1349.0
+    },
+    "W2_A": {
+     "ort": 18.9,
+     "toplam": 4752.0,
+     "en_kotu": -234.5,
+     "kotu10": -38.5,
+     "maksDD": -283.0
+    },
+    "W2_YARIM": {
+     "ort": 76.9,
+     "toplam": 19383.0,
+     "en_kotu": -782.9,
+     "kotu10": -298.9,
+     "maksDD": -1135.0
+    },
+    "W1_B": {
+     "ort": 66.9,
+     "toplam": 16862.0,
+     "en_kotu": -782.9,
+     "kotu10": -289.7,
+     "maksDD": -1349.0
+    },
+    "W1_A": {
+     "ort": 16.6,
+     "toplam": 4178.0,
+     "en_kotu": -234.5,
+     "kotu10": -38.5,
+     "maksDD": -283.0
+    },
+    "W1_YARIM": {
+     "ort": 75.8,
+     "toplam": 19096.0,
+     "en_kotu": -782.9,
+     "kotu10": -298.9,
+     "maksDD": -1135.0
+    },
+    "dolum_%": 41.4,
+    "kacan_piyasa_ort": 138.5,
+    "kacan_kazanan_%": 96.6,
+    "hayalet": {
+     "gercek_ort": 69.2,
+     "hayalet_ort": 71.7,
+     "P_gercek_ust": 0.172,
+     "tepki_gercek_%": 56.1,
+     "tepki_n": 41,
+     "tepki_hayalet_%": 52.3,
+     "P_tepki_ust": 0.694
+    }
+   },
+   "D20": {
+    "seviye_var_%": 78.6,
+    "uzaklik_medyan_bp": 51.4,
+    "W2_B": {
+     "ort": 67.4,
+     "toplam": 16974.0,
+     "en_kotu": -751.4,
+     "kotu10": -275.2,
+     "maksDD": -1140.0
+    },
+    "W2_A": {
+     "ort": 40.8,
+     "toplam": 10293.0,
+     "en_kotu": -751.4,
+     "kotu10": -188.9,
+     "maksDD": -751.0
+    },
+    "W2_YARIM": {
+     "ort": 76.0,
+     "toplam": 19152.0,
+     "en_kotu": -767.2,
+     "kotu10": -290.5,
+     "maksDD": -1068.0
+    },
+    "W1_B": {
+     "ort": 66.1,
+     "toplam": 16647.0,
+     "en_kotu": -751.4,
+     "kotu10": -275.2,
+     "maksDD": -1140.0
+    },
+    "W1_A": {
+     "ort": 39.5,
+     "toplam": 9966.0,
+     "en_kotu": -751.4,
+     "kotu10": -188.9,
+     "maksDD": -751.0
+    },
+    "W1_YARIM": {
+     "ort": 75.4,
+     "toplam": 18989.0,
+     "en_kotu": -767.2,
+     "kotu10": -290.5,
+     "maksDD": -1068.0
+    },
+    "dolum_%": 65.7,
+    "kacan_piyasa_ort": 172.4,
+    "kacan_kazanan_%": 98.5,
+    "hayalet": {
+     "gercek_ort": 67.4,
+     "hayalet_ort": 71.2,
+     "P_gercek_ust": 0.132,
+     "tepki_gercek_%": 50.8,
+     "tepki_n": 130,
+     "tepki_hayalet_%": 50.7,
+     "P_tepki_ust": 0.494
+    }
+   },
+   "P5": {
+    "seviye_var_%": 64.7,
+    "uzaklik_medyan_bp": 42.9,
+    "W2_B": {
+     "ort": 72.1,
+     "toplam": 18161.0,
+     "en_kotu": -782.9,
+     "kotu10": -276.1,
+     "maksDD": -1280.0
+    },
+    "W2_A": {
+     "ort": 44.7,
+     "toplam": 11275.0,
+     "en_kotu": -430.8,
+     "kotu10": -136.1,
+     "maksDD": -598.0
+    },
+    "W2_YARIM": {
+     "ort": 78.4,
+     "toplam": 19745.0,
+     "en_kotu": -782.9,
+     "kotu10": -292.1,
+     "maksDD": -1077.0
+    },
+    "W1_B": {
+     "ort": 71.9,
+     "toplam": 18128.0,
+     "en_kotu": -782.9,
+     "kotu10": -276.1,
+     "maksDD": -1280.0
+    },
+    "W1_A": {
+     "ort": 44.6,
+     "toplam": 11243.0,
+     "en_kotu": -430.8,
+     "kotu10": -136.1,
+     "maksDD": -598.0
+    },
+    "W1_YARIM": {
+     "ort": 78.3,
+     "toplam": 19729.0,
+     "en_kotu": -782.9,
+     "kotu10": -292.1,
+     "maksDD": -1077.0
+    },
+    "dolum_%": 68.7,
+    "kacan_piyasa_ort": 188.1,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 72.1,
+     "hayalet_ort": 72.3,
+     "P_gercek_ust": 0.478,
+     "tepki_gercek_%": 56.2,
+     "tepki_n": 112,
+     "tepki_hayalet_%": 52.1,
+     "P_tepki_ust": 0.848
+    }
+   },
+   "P20": {
+    "seviye_var_%": 81.7,
+    "uzaklik_medyan_bp": 31.6,
+    "W2_B": {
+     "ort": 73.9,
+     "toplam": 18611.0,
+     "en_kotu": -756.1,
+     "kotu10": -274.4,
+     "maksDD": -1030.0
+    },
+    "W2_A": {
+     "ort": 52.1,
+     "toplam": 13140.0,
+     "en_kotu": -756.1,
+     "kotu10": -215.1,
+     "maksDD": -756.0
+    },
+    "W2_YARIM": {
+     "ort": 79.2,
+     "toplam": 19970.0,
+     "en_kotu": -769.5,
+     "kotu10": -292.0,
+     "maksDD": -1068.0
+    },
+    "W1_B": {
+     "ort": 73.7,
+     "toplam": 18578.0,
+     "en_kotu": -756.1,
+     "kotu10": -274.4,
+     "maksDD": -1030.0
+    },
+    "W1_A": {
+     "ort": 52.0,
+     "toplam": 13108.0,
+     "en_kotu": -756.1,
+     "kotu10": -215.1,
+     "maksDD": -756.0
+    },
+    "W1_YARIM": {
+     "ort": 79.2,
+     "toplam": 19954.0,
+     "en_kotu": -769.5,
+     "kotu10": -292.0,
+     "maksDD": -1068.0
+    },
+    "dolum_%": 75.2,
+    "kacan_piyasa_ort": 189.3,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 73.9,
+     "hayalet_ort": 72.3,
+     "P_gercek_ust": 0.686,
+     "tepki_gercek_%": 51.0,
+     "tepki_n": 155,
+     "tepki_hayalet_%": 49.9,
+     "P_tepki_ust": 0.63
+    }
+   },
+   "W8": {
+    "seviye_var_%": 67.1,
+    "uzaklik_medyan_bp": 106.9,
+    "W2_B": {
+     "ort": 69.5,
+     "toplam": 17516.0,
+     "en_kotu": -782.9,
+     "kotu10": -259.8,
+     "maksDD": -1014.0
+    },
+    "W2_A": {
+     "ort": 29.5,
+     "toplam": 7430.0,
+     "en_kotu": -430.8,
+     "kotu10": -118.1,
+     "maksDD": -802.0
+    },
+    "W2_YARIM": {
+     "ort": 77.1,
+     "toplam": 19423.0,
+     "en_kotu": -782.9,
+     "kotu10": -283.9,
+     "maksDD": -1035.0
+    },
+    "W1_B": {
+     "ort": 66.4,
+     "toplam": 16738.0,
+     "en_kotu": -782.9,
+     "kotu10": -258.2,
+     "maksDD": -1014.0
+    },
+    "W1_A": {
+     "ort": 26.4,
+     "toplam": 6652.0,
+     "en_kotu": -430.8,
+     "kotu10": -110.6,
+     "maksDD": -802.0
+    },
+    "W1_YARIM": {
+     "ort": 75.5,
+     "toplam": 19034.0,
+     "en_kotu": -782.9,
+     "kotu10": -281.6,
+     "maksDD": -1035.0
+    },
+    "dolum_%": 47.9,
+    "kacan_piyasa_ort": 129.2,
+    "kacan_kazanan_%": 93.2,
+    "hayalet": {
+     "gercek_ort": 69.5,
+     "hayalet_ort": 72.2,
+     "P_gercek_ust": 0.25,
+     "tepki_gercek_%": 49.4,
+     "tepki_n": 81,
+     "tepki_hayalet_%": 49.2,
+     "P_tepki_ust": 0.47
+    }
+   }
+  },
+  "KESIF": {
+   "n_sinyal": 105,
+   "piyasa": {
+    "ort": 94.0,
+    "toplam": 9866.0,
+    "en_kotu": -427.2,
+    "kotu10": -286.2,
+    "maksDD": -797.0
+   },
+   "D5": {
+    "seviye_var_%": 65.7,
+    "uzaklik_medyan_bp": 53.7,
+    "W2_B": {
+     "ort": 80.2,
+     "toplam": 8425.0,
+     "en_kotu": -427.2,
+     "kotu10": -249.3,
+     "maksDD": -768.0
+    },
+    "W2_A": {
+     "ort": 36.7,
+     "toplam": 3851.0,
+     "en_kotu": -340.3,
+     "kotu10": -125.6,
+     "maksDD": -340.0
+    },
+    "W2_YARIM": {
+     "ort": 87.1,
+     "toplam": 9146.0,
+     "en_kotu": -427.2,
+     "kotu10": -265.7,
+     "maksDD": -782.0
+    },
+    "W1_B": {
+     "ort": 79.2,
+     "toplam": 8312.0,
+     "en_kotu": -427.2,
+     "kotu10": -249.3,
+     "maksDD": -768.0
+    },
+    "W1_A": {
+     "ort": 35.6,
+     "toplam": 3738.0,
+     "en_kotu": -340.3,
+     "kotu10": -125.6,
+     "maksDD": -340.0
+    },
+    "W1_YARIM": {
+     "ort": 86.6,
+     "toplam": 9089.0,
+     "en_kotu": -427.2,
+     "kotu10": -265.7,
+     "maksDD": -782.0
+    },
+    "dolum_%": 65.2,
+    "kacan_piyasa_ort": 184.2,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 80.2,
+     "hayalet_ort": 86.8,
+     "P_gercek_ust": 0.142,
+     "tepki_gercek_%": 51.1,
+     "tepki_n": 45,
+     "tepki_hayalet_%": 48.8,
+     "P_tepki_ust": 0.624
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 44.8,
+    "uzaklik_medyan_bp": 100.6,
+    "W2_B": {
+     "ort": 87.2,
+     "toplam": 9159.0,
+     "en_kotu": -427.2,
+     "kotu10": -264.0,
+     "maksDD": -797.0
+    },
+    "W2_A": {
+     "ort": 24.3,
+     "toplam": 2551.0,
+     "en_kotu": -234.5,
+     "kotu10": -40.9,
+     "maksDD": -235.0
+    },
+    "W2_YARIM": {
+     "ort": 90.6,
+     "toplam": 9513.0,
+     "en_kotu": -427.2,
+     "kotu10": -274.7,
+     "maksDD": -797.0
+    },
+    "W1_B": {
+     "ort": 86.0,
+     "toplam": 9028.0,
+     "en_kotu": -427.2,
+     "kotu10": -264.0,
+     "maksDD": -797.0
+    },
+    "W1_A": {
+     "ort": 23.0,
+     "toplam": 2420.0,
+     "en_kotu": -234.5,
+     "kotu10": -40.9,
+     "maksDD": -235.0
+    },
+    "W1_YARIM": {
+     "ort": 90.0,
+     "toplam": 9447.0,
+     "en_kotu": -427.2,
+     "kotu10": -274.7,
+     "maksDD": -797.0
+    },
+    "dolum_%": 48.9,
+    "kacan_piyasa_ort": 126.9,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 87.2,
+     "hayalet_ort": 86.9,
+     "P_gercek_ust": 0.54,
+     "tepki_gercek_%": 56.5,
+     "tepki_n": 23,
+     "tepki_hayalet_%": 49.8,
+     "P_tepki_ust": 0.73
+    }
+   },
+   "D20": {
+    "seviye_var_%": 81.9,
+    "uzaklik_medyan_bp": 46.0,
+    "W2_B": {
+     "ort": 85.9,
+     "toplam": 9022.0,
+     "en_kotu": -396.9,
+     "kotu10": -237.5,
+     "maksDD": -746.0
+    },
+    "W2_A": {
+     "ort": 49.6,
+     "toplam": 5205.0,
+     "en_kotu": -393.8,
+     "kotu10": -174.8,
+     "maksDD": -746.0
+    },
+    "W2_YARIM": {
+     "ort": 89.9,
+     "toplam": 9444.0,
+     "en_kotu": -410.5,
+     "kotu10": -257.0,
+     "maksDD": -772.0
+    },
+    "W1_B": {
+     "ort": 83.8,
+     "toplam": 8799.0,
+     "en_kotu": -396.9,
+     "kotu10": -237.5,
+     "maksDD": -746.0
+    },
+    "W1_A": {
+     "ort": 47.5,
+     "toplam": 4982.0,
+     "en_kotu": -393.8,
+     "kotu10": -174.8,
+     "maksDD": -746.0
+    },
+    "W1_YARIM": {
+     "ort": 88.9,
+     "toplam": 9333.0,
+     "en_kotu": -410.5,
+     "kotu10": -257.0,
+     "maksDD": -772.0
+    },
+    "dolum_%": 72.1,
+    "kacan_piyasa_ort": 190.1,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 85.9,
+     "hayalet_ort": 90.4,
+     "P_gercek_ust": 0.22,
+     "tepki_gercek_%": 51.6,
+     "tepki_n": 62,
+     "tepki_hayalet_%": 49.6,
+     "P_tepki_ust": 0.63
+    }
+   },
+   "P5": {
+    "seviye_var_%": 72.4,
+    "uzaklik_medyan_bp": 41.8,
+    "W2_B": {
+     "ort": 94.4,
+     "toplam": 9909.0,
+     "en_kotu": -427.2,
+     "kotu10": -222.1,
+     "maksDD": -768.0
+    },
+    "W2_A": {
+     "ort": 60.1,
+     "toplam": 6312.0,
+     "en_kotu": -340.3,
+     "kotu10": -160.6,
+     "maksDD": -340.0
+    },
+    "W2_YARIM": {
+     "ort": 94.2,
+     "toplam": 9888.0,
+     "en_kotu": -427.2,
+     "kotu10": -253.4,
+     "maksDD": -782.0
+    },
+    "W1_B": {
+     "ort": 94.4,
+     "toplam": 9909.0,
+     "en_kotu": -427.2,
+     "kotu10": -222.1,
+     "maksDD": -768.0
+    },
+    "W1_A": {
+     "ort": 60.1,
+     "toplam": 6312.0,
+     "en_kotu": -340.3,
+     "kotu10": -160.6,
+     "maksDD": -340.0
+    },
+    "W1_YARIM": {
+     "ort": 94.2,
+     "toplam": 9888.0,
+     "en_kotu": -427.2,
+     "kotu10": -253.4,
+     "maksDD": -782.0
+    },
+    "dolum_%": 75.0,
+    "kacan_piyasa_ort": 191.8,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 94.4,
+     "hayalet_ort": 87.5,
+     "P_gercek_ust": 0.88,
+     "tepki_gercek_%": 49.1,
+     "tepki_n": 57,
+     "tepki_hayalet_%": 49.4,
+     "P_tepki_ust": 0.498
+    }
+   },
+   "P20": {
+    "seviye_var_%": 85.7,
+    "uzaklik_medyan_bp": 33.1,
+    "W2_B": {
+     "ort": 94.4,
+     "toplam": 9910.0,
+     "en_kotu": -393.8,
+     "kotu10": -226.0,
+     "maksDD": -746.0
+    },
+    "W2_A": {
+     "ort": 67.6,
+     "toplam": 7094.0,
+     "en_kotu": -393.8,
+     "kotu10": -205.6,
+     "maksDD": -746.0
+    },
+    "W2_YARIM": {
+     "ort": 94.2,
+     "toplam": 9888.0,
+     "en_kotu": -410.5,
+     "kotu10": -255.7,
+     "maksDD": -772.0
+    },
+    "W1_B": {
+     "ort": 94.4,
+     "toplam": 9910.0,
+     "en_kotu": -393.8,
+     "kotu10": -226.0,
+     "maksDD": -746.0
+    },
+    "W1_A": {
+     "ort": 67.6,
+     "toplam": 7094.0,
+     "en_kotu": -393.8,
+     "kotu10": -205.6,
+     "maksDD": -746.0
+    },
+    "W1_YARIM": {
+     "ort": 94.2,
+     "toplam": 9888.0,
+     "en_kotu": -410.5,
+     "kotu10": -255.7,
+     "maksDD": -772.0
+    },
+    "dolum_%": 77.8,
+    "kacan_piyasa_ort": 184.1,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 94.4,
+     "hayalet_ort": 90.5,
+     "P_gercek_ust": 0.742,
+     "tepki_gercek_%": 47.1,
+     "tepki_n": 70,
+     "tepki_hayalet_%": 50.1,
+     "P_tepki_ust": 0.242
+    }
+   },
+   "W8": {
+    "seviye_var_%": 62.9,
+    "uzaklik_medyan_bp": 110.5,
+    "W2_B": {
+     "ort": 86.4,
+     "toplam": 9074.0,
+     "en_kotu": -396.9,
+     "kotu10": -250.9,
+     "maksDD": -699.0
+    },
+    "W2_A": {
+     "ort": 27.3,
+     "toplam": 2871.0,
+     "en_kotu": -393.8,
+     "kotu10": -140.3,
+     "maksDD": -802.0
+    },
+    "W2_YARIM": {
+     "ort": 90.2,
+     "toplam": 9470.0,
+     "en_kotu": -410.5,
+     "kotu10": -268.2,
+     "maksDD": -737.0
+    },
+    "W1_B": {
+     "ort": 82.3,
+     "toplam": 8641.0,
+     "en_kotu": -396.9,
+     "kotu10": -250.9,
+     "maksDD": -699.0
+    },
+    "W1_A": {
+     "ort": 23.2,
+     "toplam": 2438.0,
+     "en_kotu": -393.8,
+     "kotu10": -140.3,
+     "maksDD": -802.0
+    },
+    "W1_YARIM": {
+     "ort": 88.1,
+     "toplam": 9254.0,
+     "en_kotu": -410.5,
+     "kotu10": -268.2,
+     "maksDD": -737.0
+    },
+    "dolum_%": 48.5,
+    "kacan_piyasa_ort": 114.8,
+    "kacan_kazanan_%": 94.1,
+    "hayalet": {
+     "gercek_ort": 86.4,
+     "hayalet_ort": 92.2,
+     "P_gercek_ust": 0.14,
+     "tepki_gercek_%": 59.4,
+     "tepki_n": 32,
+     "tepki_hayalet_%": 50.1,
+     "P_tepki_ust": 0.894
+    }
+   }
+  },
+  "TEST": {
+   "n_sinyal": 147,
+   "piyasa": {
+    "ort": 78.0,
+    "toplam": 11463.0,
+    "en_kotu": -782.9,
+    "kotu10": -336.3,
+    "maksDD": -1106.0
+   },
+   "D5": {
+    "seviye_var_%": 55.8,
+    "uzaklik_medyan_bp": 75.9,
+    "W2_B": {
+     "ort": 57.8,
+     "toplam": 8494.0,
+     "en_kotu": -782.9,
+     "kotu10": -311.5,
+     "maksDD": -1277.0
+    },
+    "W2_A": {
+     "ort": 30.9,
+     "toplam": 4545.0,
+     "en_kotu": -430.8,
+     "kotu10": -93.4,
+     "maksDD": -431.0
+    },
+    "W2_YARIM": {
+     "ort": 67.9,
+     "toplam": 9979.0,
+     "en_kotu": -782.9,
+     "kotu10": -322.4,
+     "maksDD": -1077.0
+    },
+    "W1_B": {
+     "ort": 57.1,
+     "toplam": 8391.0,
+     "en_kotu": -782.9,
+     "kotu10": -311.5,
+     "maksDD": -1277.0
+    },
+    "W1_A": {
+     "ort": 30.2,
+     "toplam": 4441.0,
+     "en_kotu": -430.8,
+     "kotu10": -93.4,
+     "maksDD": -431.0
+    },
+    "W1_YARIM": {
+     "ort": 67.5,
+     "toplam": 9927.0,
+     "en_kotu": -782.9,
+     "kotu10": -322.4,
+     "maksDD": -1077.0
+    },
+    "dolum_%": 53.7,
+    "kacan_piyasa_ort": 153.0,
+    "kacan_kazanan_%": 94.7,
+    "hayalet": {
+     "gercek_ort": 57.8,
+     "hayalet_ort": 59.3,
+     "P_gercek_ust": 0.348,
+     "tepki_gercek_%": 59.1,
+     "tepki_n": 44,
+     "tepki_hayalet_%": 52.3,
+     "P_tepki_ust": 0.83
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 35.4,
+    "uzaklik_medyan_bp": 136.0,
+    "W2_B": {
+     "ort": 56.3,
+     "toplam": 8277.0,
+     "en_kotu": -782.9,
+     "kotu10": -314.9,
+     "maksDD": -1349.0
+    },
+    "W2_A": {
+     "ort": 15.0,
+     "toplam": 2201.0,
+     "en_kotu": -215.5,
+     "kotu10": -39.6,
+     "maksDD": -283.0
+    },
+    "W2_YARIM": {
+     "ort": 67.1,
+     "toplam": 9870.0,
+     "en_kotu": -782.9,
+     "kotu10": -324.0,
+     "maksDD": -1135.0
+    },
+    "W1_B": {
+     "ort": 53.3,
+     "toplam": 7834.0,
+     "en_kotu": -782.9,
+     "kotu10": -314.9,
+     "maksDD": -1349.0
+    },
+    "W1_A": {
+     "ort": 12.0,
+     "toplam": 1758.0,
+     "en_kotu": -215.5,
+     "kotu10": -39.6,
+     "maksDD": -283.0
+    },
+    "W1_YARIM": {
+     "ort": 65.6,
+     "toplam": 9649.0,
+     "en_kotu": -782.9,
+     "kotu10": -324.0,
+     "maksDD": -1135.0
+    },
+    "dolum_%": 34.6,
+    "kacan_piyasa_ort": 146.7,
+    "kacan_kazanan_%": 94.1,
+    "hayalet": {
+     "gercek_ort": 56.3,
+     "hayalet_ort": 59.6,
+     "P_gercek_ust": 0.174,
+     "tepki_gercek_%": 55.6,
+     "tepki_n": 18,
+     "tepki_hayalet_%": 53.5,
+     "P_tepki_ust": 0.568
+    }
+   },
+   "D20": {
+    "seviye_var_%": 76.2,
+    "uzaklik_medyan_bp": 55.7,
+    "W2_B": {
+     "ort": 54.1,
+     "toplam": 7952.0,
+     "en_kotu": -751.4,
+     "kotu10": -309.6,
+     "maksDD": -1140.0
+    },
+    "W2_A": {
+     "ort": 34.6,
+     "toplam": 5087.0,
+     "en_kotu": -751.4,
+     "kotu10": -205.3,
+     "maksDD": -751.0
+    },
+    "W2_YARIM": {
+     "ort": 66.0,
+     "toplam": 9708.0,
+     "en_kotu": -767.2,
+     "kotu10": -321.5,
+     "maksDD": -1068.0
+    },
+    "W1_B": {
+     "ort": 53.4,
+     "toplam": 7848.0,
+     "en_kotu": -751.4,
+     "kotu10": -309.6,
+     "maksDD": -1140.0
+    },
+    "W1_A": {
+     "ort": 33.9,
+     "toplam": 4983.0,
+     "en_kotu": -751.4,
+     "kotu10": -205.3,
+     "maksDD": -751.0
+    },
+    "W1_YARIM": {
+     "ort": 65.7,
+     "toplam": 9656.0,
+     "en_kotu": -767.2,
+     "kotu10": -321.5,
+     "maksDD": -1068.0
+    },
+    "dolum_%": 60.7,
+    "kacan_piyasa_ort": 162.8,
+    "kacan_kazanan_%": 97.7,
+    "hayalet": {
+     "gercek_ort": 54.1,
+     "hayalet_ort": 56.8,
+     "P_gercek_ust": 0.284,
+     "tepki_gercek_%": 50.0,
+     "tepki_n": 68,
+     "tepki_hayalet_%": 51.2,
+     "P_tepki_ust": 0.388
+    }
+   },
+   "P5": {
+    "seviye_var_%": 59.2,
+    "uzaklik_medyan_bp": 44.6,
+    "W2_B": {
+     "ort": 56.1,
+     "toplam": 8252.0,
+     "en_kotu": -782.9,
+     "kotu10": -320.8,
+     "maksDD": -1280.0
+    },
+    "W2_A": {
+     "ort": 33.8,
+     "toplam": 4963.0,
+     "en_kotu": -430.8,
+     "kotu10": -126.7,
+     "maksDD": -598.0
+    },
+    "W2_YARIM": {
+     "ort": 67.1,
+     "toplam": 9858.0,
+     "en_kotu": -782.9,
+     "kotu10": -328.6,
+     "maksDD": -1077.0
+    },
+    "W1_B": {
+     "ort": 55.9,
+     "toplam": 8220.0,
+     "en_kotu": -782.9,
+     "kotu10": -320.8,
+     "maksDD": -1280.0
+    },
+    "W1_A": {
+     "ort": 33.5,
+     "toplam": 4931.0,
+     "en_kotu": -430.8,
+     "kotu10": -126.7,
+     "maksDD": -598.0
+    },
+    "W1_YARIM": {
+     "ort": 66.9,
+     "toplam": 9842.0,
+     "en_kotu": -782.9,
+     "kotu10": -328.6,
+     "maksDD": -1077.0
+    },
+    "dolum_%": 63.2,
+    "kacan_piyasa_ort": 185.9,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 56.1,
+     "hayalet_ort": 60.4,
+     "P_gercek_ust": 0.118,
+     "tepki_gercek_%": 63.6,
+     "tepki_n": 55,
+     "tepki_hayalet_%": 53.9,
+     "P_tepki_ust": 0.964
+    }
+   },
+   "P20": {
+    "seviye_var_%": 78.9,
+    "uzaklik_medyan_bp": 30.2,
+    "W2_B": {
+     "ort": 59.2,
+     "toplam": 8700.0,
+     "en_kotu": -756.1,
+     "kotu10": -317.2,
+     "maksDD": -1030.0
+    },
+    "W2_A": {
+     "ort": 41.1,
+     "toplam": 6047.0,
+     "en_kotu": -756.1,
+     "kotu10": -229.2,
+     "maksDD": -756.0
+    },
+    "W2_YARIM": {
+     "ort": 68.6,
+     "toplam": 10082.0,
+     "en_kotu": -769.5,
+     "kotu10": -326.8,
+     "maksDD": -1068.0
+    },
+    "W1_B": {
+     "ort": 59.0,
+     "toplam": 8668.0,
+     "en_kotu": -756.1,
+     "kotu10": -317.2,
+     "maksDD": -1030.0
+    },
+    "W1_A": {
+     "ort": 40.9,
+     "toplam": 6014.0,
+     "en_kotu": -756.1,
+     "kotu10": -229.2,
+     "maksDD": -756.0
+    },
+    "W1_YARIM": {
+     "ort": 68.5,
+     "toplam": 10066.0,
+     "en_kotu": -769.5,
+     "kotu10": -326.8,
+     "maksDD": -1068.0
+    },
+    "dolum_%": 73.3,
+    "kacan_piyasa_ort": 192.7,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 59.2,
+     "hayalet_ort": 59.1,
+     "P_gercek_ust": 0.506,
+     "tepki_gercek_%": 54.1,
+     "tepki_n": 85,
+     "tepki_hayalet_%": 50.1,
+     "P_tepki_ust": 0.83
+    }
+   },
+   "W8": {
+    "seviye_var_%": 70.1,
+    "uzaklik_medyan_bp": 102.5,
+    "W2_B": {
+     "ort": 57.4,
+     "toplam": 8442.0,
+     "en_kotu": -782.9,
+     "kotu10": -278.7,
+     "maksDD": -1014.0
+    },
+    "W2_A": {
+     "ort": 31.0,
+     "toplam": 4559.0,
+     "en_kotu": -430.8,
+     "kotu10": -109.8,
+     "maksDD": -431.0
+    },
+    "W2_YARIM": {
+     "ort": 67.7,
+     "toplam": 9953.0,
+     "en_kotu": -782.9,
+     "kotu10": -305.3,
+     "maksDD": -1035.0
+    },
+    "W1_B": {
+     "ort": 55.1,
+     "toplam": 8097.0,
+     "en_kotu": -782.9,
+     "kotu10": -276.4,
+     "maksDD": -1014.0
+    },
+    "W1_A": {
+     "ort": 28.7,
+     "toplam": 4214.0,
+     "en_kotu": -430.8,
+     "kotu10": -97.2,
+     "maksDD": -431.0
+    },
+    "W1_YARIM": {
+     "ort": 66.5,
+     "toplam": 9780.0,
+     "en_kotu": -782.9,
+     "kotu10": -301.1,
+     "maksDD": -1035.0
+    },
+    "dolum_%": 47.6,
+    "kacan_piyasa_ort": 138.3,
+    "kacan_kazanan_%": 92.6,
+    "hayalet": {
+     "gercek_ort": 57.4,
+     "hayalet_ort": 58.5,
+     "P_gercek_ust": 0.414,
+     "tepki_gercek_%": 42.9,
+     "tepki_n": 49,
+     "tepki_hayalet_%": 49.4,
+     "P_tepki_ust": 0.158
+    }
+   }
+  }
+ },
+ "MT5_NAS100": {
+  "TUM": {
+   "n_sinyal": 234,
+   "piyasa": {
+    "ort": 79.7,
+    "toplam": 18639.0,
+    "en_kotu": -786.1,
+    "kotu10": -324.4,
+    "maksDD": -1122.0
+   },
+   "D5": {
+    "seviye_var_%": 58.1,
+    "uzaklik_medyan_bp": 70.2,
+    "W2_B": {
+     "ort": 60.0,
+     "toplam": 14041.0,
+     "en_kotu": -786.1,
+     "kotu10": -293.3,
+     "maksDD": -1282.0
+    },
+    "W2_A": {
+     "ort": 24.0,
+     "toplam": 5612.0,
+     "en_kotu": -435.4,
+     "kotu10": -111.1,
+     "maksDD": -464.0
+    },
+    "W2_YARIM": {
+     "ort": 69.8,
+     "toplam": 16340.0,
+     "en_kotu": -786.1,
+     "kotu10": -308.3,
+     "maksDD": -1131.0
+    },
+    "W1_B": {
+     "ort": 58.1,
+     "toplam": 13603.0,
+     "en_kotu": -786.1,
+     "kotu10": -293.3,
+     "maksDD": -1282.0
+    },
+    "W1_A": {
+     "ort": 22.1,
+     "toplam": 5174.0,
+     "en_kotu": -435.4,
+     "kotu10": -111.1,
+     "maksDD": -464.0
+    },
+    "W1_YARIM": {
+     "ort": 68.9,
+     "toplam": 16121.0,
+     "en_kotu": -786.1,
+     "kotu10": -308.3,
+     "maksDD": -1131.0
+    },
+    "dolum_%": 56.6,
+    "kacan_piyasa_ort": 161.7,
+    "kacan_kazanan_%": 94.9,
+    "hayalet": {
+     "gercek_ort": 60.0,
+     "hayalet_ort": 66.0,
+     "P_gercek_ust": 0.06,
+     "tepki_gercek_%": 57.1,
+     "tepki_n": 77,
+     "tepki_hayalet_%": 51.5,
+     "P_tepki_ust": 0.866
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 36.8,
+    "uzaklik_medyan_bp": 106.9,
+    "W2_B": {
+     "ort": 64.6,
+     "toplam": 15119.0,
+     "en_kotu": -786.1,
+     "kotu10": -303.0,
+     "maksDD": -1353.0
+    },
+    "W2_A": {
+     "ort": 14.6,
+     "toplam": 3418.0,
+     "en_kotu": -236.1,
+     "kotu10": -39.6,
+     "maksDD": -283.0
+    },
+    "W2_YARIM": {
+     "ort": 72.1,
+     "toplam": 16879.0,
+     "en_kotu": -786.1,
+     "kotu10": -312.3,
+     "maksDD": -1122.0
+    },
+    "W1_B": {
+     "ort": 64.1,
+     "toplam": 15011.0,
+     "en_kotu": -786.1,
+     "kotu10": -303.0,
+     "maksDD": -1353.0
+    },
+    "W1_A": {
+     "ort": 14.1,
+     "toplam": 3310.0,
+     "en_kotu": -236.1,
+     "kotu10": -39.6,
+     "maksDD": -283.0
+    },
+    "W1_YARIM": {
+     "ort": 71.9,
+     "toplam": 16825.0,
+     "en_kotu": -786.1,
+     "kotu10": -312.3,
+     "maksDD": -1122.0
+    },
+    "dolum_%": 43.0,
+    "kacan_piyasa_ort": 140.5,
+    "kacan_kazanan_%": 93.9,
+    "hayalet": {
+     "gercek_ort": 64.6,
+     "hayalet_ort": 66.4,
+     "P_gercek_ust": 0.25,
+     "tepki_gercek_%": 51.4,
+     "tepki_n": 37,
+     "tepki_hayalet_%": 52.3,
+     "P_tepki_ust": 0.396
+    }
+   },
+   "D20": {
+    "seviye_var_%": 78.2,
+    "uzaklik_medyan_bp": 53.3,
+    "W2_B": {
+     "ort": 58.6,
+     "toplam": 13710.0,
+     "en_kotu": -756.5,
+     "kotu10": -287.6,
+     "maksDD": -1149.0
+    },
+    "W2_A": {
+     "ort": 30.2,
+     "toplam": 7065.0,
+     "en_kotu": -756.5,
+     "kotu10": -202.2,
+     "maksDD": -757.0
+    },
+    "W2_YARIM": {
+     "ort": 69.1,
+     "toplam": 16175.0,
+     "en_kotu": -771.3,
+     "kotu10": -304.1,
+     "maksDD": -1122.0
+    },
+    "W1_B": {
+     "ort": 57.7,
+     "toplam": 13499.0,
+     "en_kotu": -756.5,
+     "kotu10": -287.6,
+     "maksDD": -1149.0
+    },
+    "W1_A": {
+     "ort": 29.3,
+     "toplam": 6853.0,
+     "en_kotu": -756.5,
+     "kotu10": -202.2,
+     "maksDD": -757.0
+    },
+    "W1_YARIM": {
+     "ort": 68.7,
+     "toplam": 16069.0,
+     "en_kotu": -771.3,
+     "kotu10": -304.1,
+     "maksDD": -1122.0
+    },
+    "dolum_%": 63.9,
+    "kacan_piyasa_ort": 168.4,
+    "kacan_kazanan_%": 98.5,
+    "hayalet": {
+     "gercek_ort": 58.6,
+     "hayalet_ort": 66.4,
+     "P_gercek_ust": 0.016,
+     "tepki_gercek_%": 53.0,
+     "tepki_n": 117,
+     "tepki_hayalet_%": 51.9,
+     "P_tepki_ust": 0.606
+    }
+   },
+   "P5": {
+    "seviye_var_%": 63.2,
+    "uzaklik_medyan_bp": 45.4,
+    "W2_B": {
+     "ort": 65.9,
+     "toplam": 15419.0,
+     "en_kotu": -786.1,
+     "kotu10": -289.2,
+     "maksDD": -1285.0
+    },
+    "W2_A": {
+     "ort": 37.0,
+     "toplam": 8660.0,
+     "en_kotu": -435.4,
+     "kotu10": -143.7,
+     "maksDD": -673.0
+    },
+    "W2_YARIM": {
+     "ort": 72.8,
+     "toplam": 17029.0,
+     "en_kotu": -786.1,
+     "kotu10": -306.2,
+     "maksDD": -1131.0
+    },
+    "W1_B": {
+     "ort": 65.8,
+     "toplam": 15388.0,
+     "en_kotu": -786.1,
+     "kotu10": -289.2,
+     "maksDD": -1285.0
+    },
+    "W1_A": {
+     "ort": 36.9,
+     "toplam": 8629.0,
+     "en_kotu": -435.4,
+     "kotu10": -143.7,
+     "maksDD": -673.0
+    },
+    "W1_YARIM": {
+     "ort": 72.7,
+     "toplam": 17014.0,
+     "en_kotu": -786.1,
+     "kotu10": -306.2,
+     "maksDD": -1131.0
+    },
+    "dolum_%": 67.6,
+    "kacan_piyasa_ort": 177.1,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 65.9,
+     "hayalet_ort": 66.7,
+     "P_gercek_ust": 0.398,
+     "tepki_gercek_%": 57.0,
+     "tepki_n": 100,
+     "tepki_hayalet_%": 52.6,
+     "P_tepki_ust": 0.874
+    }
+   },
+   "P20": {
+    "seviye_var_%": 81.2,
+    "uzaklik_medyan_bp": 33.1,
+    "W2_B": {
+     "ort": 70.9,
+     "toplam": 16595.0,
+     "en_kotu": -760.2,
+     "kotu10": -287.9,
+     "maksDD": -1121.0
+    },
+    "W2_A": {
+     "ort": 48.3,
+     "toplam": 11299.0,
+     "en_kotu": -760.2,
+     "kotu10": -223.8,
+     "maksDD": -762.0
+    },
+    "W2_YARIM": {
+     "ort": 75.3,
+     "toplam": 17617.0,
+     "en_kotu": -773.2,
+     "kotu10": -305.6,
+     "maksDD": -1122.0
+    },
+    "W1_B": {
+     "ort": 70.8,
+     "toplam": 16564.0,
+     "en_kotu": -760.2,
+     "kotu10": -287.9,
+     "maksDD": -1121.0
+    },
+    "W1_A": {
+     "ort": 48.2,
+     "toplam": 11268.0,
+     "en_kotu": -760.2,
+     "kotu10": -223.8,
+     "maksDD": -762.0
+    },
+    "W1_YARIM": {
+     "ort": 75.2,
+     "toplam": 17602.0,
+     "en_kotu": -773.2,
+     "kotu10": -305.6,
+     "maksDD": -1122.0
+    },
+    "dolum_%": 75.3,
+    "kacan_piyasa_ort": 178.2,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 70.9,
+     "hayalet_ort": 67.6,
+     "P_gercek_ust": 0.832,
+     "tepki_gercek_%": 49.7,
+     "tepki_n": 143,
+     "tepki_hayalet_%": 51.4,
+     "P_tepki_ust": 0.288
+    }
+   },
+   "W8": {
+    "seviye_var_%": 67.5,
+    "uzaklik_medyan_bp": 105.5,
+    "W2_B": {
+     "ort": 61.5,
+     "toplam": 14392.0,
+     "en_kotu": -786.1,
+     "kotu10": -275.4,
+     "maksDD": -1030.0
+    },
+    "W2_A": {
+     "ort": 21.9,
+     "toplam": 5113.0,
+     "en_kotu": -435.4,
+     "kotu10": -126.1,
+     "maksDD": -737.0
+    },
+    "W2_YARIM": {
+     "ort": 70.6,
+     "toplam": 16515.0,
+     "en_kotu": -786.1,
+     "kotu10": -298.3,
+     "maksDD": -1050.0
+    },
+    "W1_B": {
+     "ort": 59.0,
+     "toplam": 13815.0,
+     "en_kotu": -786.1,
+     "kotu10": -274.1,
+     "maksDD": -1030.0
+    },
+    "W1_A": {
+     "ort": 19.4,
+     "toplam": 4537.0,
+     "en_kotu": -435.4,
+     "kotu10": -121.0,
+     "maksDD": -737.0
+    },
+    "W1_YARIM": {
+     "ort": 69.3,
+     "toplam": 16227.0,
+     "en_kotu": -786.1,
+     "kotu10": -295.8,
+     "maksDD": -1050.0
+    },
+    "dolum_%": 47.5,
+    "kacan_piyasa_ort": 128.7,
+    "kacan_kazanan_%": 91.6,
+    "hayalet": {
+     "gercek_ort": 61.5,
+     "hayalet_ort": 68.5,
+     "P_gercek_ust": 0.03,
+     "tepki_gercek_%": 50.7,
+     "tepki_n": 75,
+     "tepki_hayalet_%": 52.2,
+     "P_tepki_ust": 0.412
+    }
+   }
+  },
+  "KESIF": {
+   "n_sinyal": 93,
+   "piyasa": {
+    "ort": 86.2,
+    "toplam": 8020.0,
+    "en_kotu": -435.1,
+    "kotu10": -303.3,
+    "maksDD": -807.0
+   },
+   "D5": {
+    "seviye_var_%": 62.4,
+    "uzaklik_medyan_bp": 50.9,
+    "W2_B": {
+     "ort": 71.9,
+     "toplam": 6686.0,
+     "en_kotu": -435.1,
+     "kotu10": -263.8,
+     "maksDD": -774.0
+    },
+    "W2_A": {
+     "ort": 23.7,
+     "toplam": 2200.0,
+     "en_kotu": -339.2,
+     "kotu10": -141.6,
+     "maksDD": -464.0
+    },
+    "W2_YARIM": {
+     "ort": 79.1,
+     "toplam": 7353.0,
+     "en_kotu": -435.1,
+     "kotu10": -281.6,
+     "maksDD": -790.0
+    },
+    "W1_B": {
+     "ort": 71.9,
+     "toplam": 6686.0,
+     "en_kotu": -435.1,
+     "kotu10": -263.8,
+     "maksDD": -774.0
+    },
+    "W1_A": {
+     "ort": 23.7,
+     "toplam": 2200.0,
+     "en_kotu": -339.2,
+     "kotu10": -141.6,
+     "maksDD": -464.0
+    },
+    "W1_YARIM": {
+     "ort": 79.1,
+     "toplam": 7353.0,
+     "en_kotu": -435.1,
+     "kotu10": -281.6,
+     "maksDD": -790.0
+    },
+    "dolum_%": 67.2,
+    "kacan_piyasa_ort": 182.8,
+    "kacan_kazanan_%": 94.7,
+    "hayalet": {
+     "gercek_ort": 71.9,
+     "hayalet_ort": 81.2,
+     "P_gercek_ust": 0.054,
+     "tepki_gercek_%": 56.4,
+     "tepki_n": 39,
+     "tepki_hayalet_%": 46.8,
+     "P_tepki_ust": 0.916
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 43.0,
+    "uzaklik_medyan_bp": 101.1,
+    "W2_B": {
+     "ort": 81.8,
+     "toplam": 7604.0,
+     "en_kotu": -435.1,
+     "kotu10": -279.4,
+     "maksDD": -806.0
+    },
+    "W2_A": {
+     "ort": 22.5,
+     "toplam": 2092.0,
+     "en_kotu": -236.1,
+     "kotu10": -45.6,
+     "maksDD": -236.0
+    },
+    "W2_YARIM": {
+     "ort": 84.0,
+     "toplam": 7812.0,
+     "en_kotu": -435.1,
+     "kotu10": -291.1,
+     "maksDD": -806.0
+    },
+    "W1_B": {
+     "ort": 81.8,
+     "toplam": 7604.0,
+     "en_kotu": -435.1,
+     "kotu10": -279.4,
+     "maksDD": -806.0
+    },
+    "W1_A": {
+     "ort": 22.5,
+     "toplam": 2092.0,
+     "en_kotu": -236.1,
+     "kotu10": -45.6,
+     "maksDD": -236.0
+    },
+    "W1_YARIM": {
+     "ort": 84.0,
+     "toplam": 7812.0,
+     "en_kotu": -435.1,
+     "kotu10": -291.1,
+     "maksDD": -806.0
+    },
+    "dolum_%": 55.0,
+    "kacan_piyasa_ort": 128.8,
+    "kacan_kazanan_%": 94.4,
+    "hayalet": {
+     "gercek_ort": 81.8,
+     "hayalet_ort": 80.6,
+     "P_gercek_ust": 0.604,
+     "tepki_gercek_%": 50.0,
+     "tepki_n": 22,
+     "tepki_hayalet_%": 47.3,
+     "P_tepki_ust": 0.552
+    }
+   },
+   "D20": {
+    "seviye_var_%": 80.6,
+    "uzaklik_medyan_bp": 48.3,
+    "W2_B": {
+     "ort": 72.4,
+     "toplam": 6737.0,
+     "en_kotu": -401.9,
+     "kotu10": -250.2,
+     "maksDD": -741.0
+    },
+    "W2_A": {
+     "ort": 31.9,
+     "toplam": 2963.0,
+     "en_kotu": -401.9,
+     "kotu10": -193.3,
+     "maksDD": -741.0
+    },
+    "W2_YARIM": {
+     "ort": 79.3,
+     "toplam": 7378.0,
+     "en_kotu": -418.5,
+     "kotu10": -271.6,
+     "maksDD": -774.0
+    },
+    "W1_B": {
+     "ort": 71.3,
+     "toplam": 6626.0,
+     "en_kotu": -401.9,
+     "kotu10": -250.2,
+     "maksDD": -741.0
+    },
+    "W1_A": {
+     "ort": 30.7,
+     "toplam": 2853.0,
+     "en_kotu": -401.9,
+     "kotu10": -193.3,
+     "maksDD": -741.0
+    },
+    "W1_YARIM": {
+     "ort": 78.7,
+     "toplam": 7323.0,
+     "en_kotu": -418.5,
+     "kotu10": -271.6,
+     "maksDD": -774.0
+    },
+    "dolum_%": 72.0,
+    "kacan_piyasa_ort": 190.8,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 72.4,
+     "hayalet_ort": 83.3,
+     "P_gercek_ust": 0.048,
+     "tepki_gercek_%": 51.9,
+     "tepki_n": 54,
+     "tepki_hayalet_%": 49.4,
+     "P_tepki_ust": 0.65
+    }
+   },
+   "P5": {
+    "seviye_var_%": 69.9,
+    "uzaklik_medyan_bp": 45.1,
+    "W2_B": {
+     "ort": 91.3,
+     "toplam": 8492.0,
+     "en_kotu": -435.1,
+     "kotu10": -232.9,
+     "maksDD": -774.0
+    },
+    "W2_A": {
+     "ort": 53.2,
+     "toplam": 4952.0,
+     "en_kotu": -339.2,
+     "kotu10": -176.8,
+     "maksDD": -339.0
+    },
+    "W2_YARIM": {
+     "ort": 88.8,
+     "toplam": 8256.0,
+     "en_kotu": -435.1,
+     "kotu10": -267.7,
+     "maksDD": -790.0
+    },
+    "W1_B": {
+     "ort": 91.3,
+     "toplam": 8492.0,
+     "en_kotu": -435.1,
+     "kotu10": -232.9,
+     "maksDD": -774.0
+    },
+    "W1_A": {
+     "ort": 53.2,
+     "toplam": 4952.0,
+     "en_kotu": -339.2,
+     "kotu10": -176.8,
+     "maksDD": -339.0
+    },
+    "W1_YARIM": {
+     "ort": 88.8,
+     "toplam": 8256.0,
+     "en_kotu": -435.1,
+     "kotu10": -267.7,
+     "maksDD": -790.0
+    },
+    "dolum_%": 78.5,
+    "kacan_piyasa_ort": 167.9,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 91.3,
+     "hayalet_ort": 81.3,
+     "P_gercek_ust": 0.966,
+     "tepki_gercek_%": 51.0,
+     "tepki_n": 51,
+     "tepki_hayalet_%": 47.9,
+     "P_tepki_ust": 0.676
+    }
+   },
+   "P20": {
+    "seviye_var_%": 84.9,
+    "uzaklik_medyan_bp": 29.8,
+    "W2_B": {
+     "ort": 92.9,
+     "toplam": 8644.0,
+     "en_kotu": -408.2,
+     "kotu10": -236.4,
+     "maksDD": -762.0
+    },
+    "W2_A": {
+     "ort": 62.9,
+     "toplam": 5848.0,
+     "en_kotu": -408.2,
+     "kotu10": -222.6,
+     "maksDD": -762.0
+    },
+    "W2_YARIM": {
+     "ort": 89.6,
+     "toplam": 8332.0,
+     "en_kotu": -421.6,
+     "kotu10": -269.9,
+     "maksDD": -784.0
+    },
+    "W1_B": {
+     "ort": 92.9,
+     "toplam": 8644.0,
+     "en_kotu": -408.2,
+     "kotu10": -236.4,
+     "maksDD": -762.0
+    },
+    "W1_A": {
+     "ort": 62.9,
+     "toplam": 5848.0,
+     "en_kotu": -408.2,
+     "kotu10": -222.6,
+     "maksDD": -762.0
+    },
+    "W1_YARIM": {
+     "ort": 89.6,
+     "toplam": 8332.0,
+     "en_kotu": -421.6,
+     "kotu10": -269.9,
+     "maksDD": -784.0
+    },
+    "dolum_%": 81.0,
+    "kacan_piyasa_ort": 159.0,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 92.9,
+     "hayalet_ort": 82.8,
+     "P_gercek_ust": 0.958,
+     "tepki_gercek_%": 45.3,
+     "tepki_n": 64,
+     "tepki_hayalet_%": 50.0,
+     "P_tepki_ust": 0.178
+    }
+   },
+   "W8": {
+    "seviye_var_%": 62.4,
+    "uzaklik_medyan_bp": 110.0,
+    "W2_B": {
+     "ort": 75.6,
+     "toplam": 7034.0,
+     "en_kotu": -400.5,
+     "kotu10": -265.0,
+     "maksDD": -715.0
+    },
+    "W2_A": {
+     "ort": 12.7,
+     "toplam": 1178.0,
+     "en_kotu": -400.5,
+     "kotu10": -157.7,
+     "maksDD": -737.0
+    },
+    "W2_YARIM": {
+     "ort": 80.9,
+     "toplam": 7527.0,
+     "en_kotu": -417.8,
+     "kotu10": -284.1,
+     "maksDD": -749.0
+    },
+    "W1_B": {
+     "ort": 73.6,
+     "toplam": 6849.0,
+     "en_kotu": -400.5,
+     "kotu10": -265.0,
+     "maksDD": -715.0
+    },
+    "W1_A": {
+     "ort": 10.7,
+     "toplam": 993.0,
+     "en_kotu": -400.5,
+     "kotu10": -157.7,
+     "maksDD": -737.0
+    },
+    "W1_YARIM": {
+     "ort": 79.9,
+     "toplam": 7435.0,
+     "en_kotu": -417.8,
+     "kotu10": -284.1,
+     "maksDD": -749.0
+    },
+    "dolum_%": 46.6,
+    "kacan_piyasa_ort": 102.0,
+    "kacan_kazanan_%": 90.3,
+    "hayalet": {
+     "gercek_ort": 75.6,
+     "hayalet_ort": 88.6,
+     "P_gercek_ust": 0.01,
+     "tepki_gercek_%": 55.6,
+     "tepki_n": 27,
+     "tepki_hayalet_%": 49.9,
+     "P_tepki_ust": 0.774
+    }
+   }
+  },
+  "TEST": {
+   "n_sinyal": 141,
+   "piyasa": {
+    "ort": 75.3,
+    "toplam": 10619.0,
+    "en_kotu": -786.1,
+    "kotu10": -338.0,
+    "maksDD": -1122.0
+   },
+   "D5": {
+    "seviye_var_%": 55.3,
+    "uzaklik_medyan_bp": 78.8,
+    "W2_B": {
+     "ort": 52.2,
+     "toplam": 7355.0,
+     "en_kotu": -786.1,
+     "kotu10": -311.0,
+     "maksDD": -1282.0
+    },
+    "W2_A": {
+     "ort": 24.2,
+     "toplam": 3412.0,
+     "en_kotu": -435.4,
+     "kotu10": -91.5,
+     "maksDD": -435.0
+    },
+    "W2_YARIM": {
+     "ort": 63.7,
+     "toplam": 8987.0,
+     "en_kotu": -786.1,
+     "kotu10": -323.9,
+     "maksDD": -1131.0
+    },
+    "W1_B": {
+     "ort": 49.1,
+     "toplam": 6917.0,
+     "en_kotu": -786.1,
+     "kotu10": -311.0,
+     "maksDD": -1282.0
+    },
+    "W1_A": {
+     "ort": 21.1,
+     "toplam": 2974.0,
+     "en_kotu": -435.4,
+     "kotu10": -91.5,
+     "maksDD": -435.0
+    },
+    "W1_YARIM": {
+     "ort": 62.2,
+     "toplam": 8768.0,
+     "en_kotu": -786.1,
+     "kotu10": -323.9,
+     "maksDD": -1131.0
+    },
+    "dolum_%": 48.7,
+    "kacan_piyasa_ort": 151.7,
+    "kacan_kazanan_%": 95.0,
+    "hayalet": {
+     "gercek_ort": 52.2,
+     "hayalet_ort": 55.2,
+     "P_gercek_ust": 0.22,
+     "tepki_gercek_%": 57.9,
+     "tepki_n": 38,
+     "tepki_hayalet_%": 54.6,
+     "P_tepki_ust": 0.704
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 32.6,
+    "uzaklik_medyan_bp": 129.8,
+    "W2_B": {
+     "ort": 53.3,
+     "toplam": 7516.0,
+     "en_kotu": -786.1,
+     "kotu10": -315.5,
+     "maksDD": -1353.0
+    },
+    "W2_A": {
+     "ort": 9.4,
+     "toplam": 1326.0,
+     "en_kotu": -217.5,
+     "kotu10": -35.7,
+     "maksDD": -283.0
+    },
+    "W2_YARIM": {
+     "ort": 64.3,
+     "toplam": 9067.0,
+     "en_kotu": -786.1,
+     "kotu10": -325.8,
+     "maksDD": -1122.0
+    },
+    "W1_B": {
+     "ort": 52.5,
+     "toplam": 7407.0,
+     "en_kotu": -786.1,
+     "kotu10": -315.5,
+     "maksDD": -1353.0
+    },
+    "W1_A": {
+     "ort": 8.6,
+     "toplam": 1218.0,
+     "en_kotu": -217.5,
+     "kotu10": -35.7,
+     "maksDD": -283.0
+    },
+    "W1_YARIM": {
+     "ort": 63.9,
+     "toplam": 9013.0,
+     "en_kotu": -786.1,
+     "kotu10": -325.8,
+     "maksDD": -1122.0
+    },
+    "dolum_%": 32.6,
+    "kacan_piyasa_ort": 147.3,
+    "kacan_kazanan_%": 93.5,
+    "hayalet": {
+     "gercek_ort": 53.3,
+     "hayalet_ort": 56.0,
+     "P_gercek_ust": 0.206,
+     "tepki_gercek_%": 53.3,
+     "tepki_n": 15,
+     "tepki_hayalet_%": 56.0,
+     "P_tepki_ust": 0.324
+    }
+   },
+   "D20": {
+    "seviye_var_%": 76.6,
+    "uzaklik_medyan_bp": 61.2,
+    "W2_B": {
+     "ort": 49.5,
+     "toplam": 6974.0,
+     "en_kotu": -756.5,
+     "kotu10": -309.4,
+     "maksDD": -1149.0
+    },
+    "W2_A": {
+     "ort": 29.1,
+     "toplam": 4102.0,
+     "en_kotu": -756.5,
+     "kotu10": -205.9,
+     "maksDD": -757.0
+    },
+    "W2_YARIM": {
+     "ort": 62.4,
+     "toplam": 8796.0,
+     "en_kotu": -771.3,
+     "kotu10": -323.1,
+     "maksDD": -1122.0
+    },
+    "W1_B": {
+     "ort": 48.7,
+     "toplam": 6872.0,
+     "en_kotu": -756.5,
+     "kotu10": -309.4,
+     "maksDD": -1149.0
+    },
+    "W1_A": {
+     "ort": 28.4,
+     "toplam": 4000.0,
+     "en_kotu": -756.5,
+     "kotu10": -205.9,
+     "maksDD": -757.0
+    },
+    "W1_YARIM": {
+     "ort": 62.0,
+     "toplam": 8745.0,
+     "en_kotu": -771.3,
+     "kotu10": -323.1,
+     "maksDD": -1122.0
+    },
+    "dolum_%": 58.3,
+    "kacan_piyasa_ort": 158.0,
+    "kacan_kazanan_%": 97.8,
+    "hayalet": {
+     "gercek_ort": 49.5,
+     "hayalet_ort": 54.8,
+     "P_gercek_ust": 0.116,
+     "tepki_gercek_%": 54.0,
+     "tepki_n": 63,
+     "tepki_hayalet_%": 53.9,
+     "P_tepki_ust": 0.51
+    }
+   },
+   "P5": {
+    "seviye_var_%": 58.9,
+    "uzaklik_medyan_bp": 45.5,
+    "W2_B": {
+     "ort": 49.1,
+     "toplam": 6927.0,
+     "en_kotu": -786.1,
+     "kotu10": -322.7,
+     "maksDD": -1285.0
+    },
+    "W2_A": {
+     "ort": 26.3,
+     "toplam": 3708.0,
+     "en_kotu": -435.4,
+     "kotu10": -118.9,
+     "maksDD": -673.0
+    },
+    "W2_YARIM": {
+     "ort": 62.2,
+     "toplam": 8773.0,
+     "en_kotu": -786.1,
+     "kotu10": -330.4,
+     "maksDD": -1131.0
+    },
+    "W1_B": {
+     "ort": 48.9,
+     "toplam": 6896.0,
+     "en_kotu": -786.1,
+     "kotu10": -322.7,
+     "maksDD": -1285.0
+    },
+    "W1_A": {
+     "ort": 26.1,
+     "toplam": 3677.0,
+     "en_kotu": -435.4,
+     "kotu10": -118.9,
+     "maksDD": -673.0
+    },
+    "W1_YARIM": {
+     "ort": 62.1,
+     "toplam": 8758.0,
+     "en_kotu": -786.1,
+     "kotu10": -330.4,
+     "maksDD": -1131.0
+    },
+    "dolum_%": 59.0,
+    "kacan_piyasa_ort": 180.9,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 49.1,
+     "hayalet_ort": 57.2,
+     "P_gercek_ust": 0.03,
+     "tepki_gercek_%": 63.3,
+     "tepki_n": 49,
+     "tepki_hayalet_%": 56.8,
+     "P_tepki_ust": 0.886
+    }
+   },
+   "P20": {
+    "seviye_var_%": 78.7,
+    "uzaklik_medyan_bp": 33.6,
+    "W2_B": {
+     "ort": 56.4,
+     "toplam": 7951.0,
+     "en_kotu": -760.2,
+     "kotu10": -319.2,
+     "maksDD": -1121.0
+    },
+    "W2_A": {
+     "ort": 38.7,
+     "toplam": 5451.0,
+     "en_kotu": -760.2,
+     "kotu10": -224.6,
+     "maksDD": -760.0
+    },
+    "W2_YARIM": {
+     "ort": 65.9,
+     "toplam": 9285.0,
+     "en_kotu": -773.2,
+     "kotu10": -328.6,
+     "maksDD": -1122.0
+    },
+    "W1_B": {
+     "ort": 56.2,
+     "toplam": 7920.0,
+     "en_kotu": -760.2,
+     "kotu10": -319.2,
+     "maksDD": -1121.0
+    },
+    "W1_A": {
+     "ort": 38.4,
+     "toplam": 5420.0,
+     "en_kotu": -760.2,
+     "kotu10": -224.6,
+     "maksDD": -760.0
+    },
+    "W1_YARIM": {
+     "ort": 65.7,
+     "toplam": 9269.0,
+     "en_kotu": -773.2,
+     "kotu10": -328.6,
+     "maksDD": -1122.0
+    },
+    "dolum_%": 71.2,
+    "kacan_piyasa_ort": 187.1,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 56.4,
+     "hayalet_ort": 57.9,
+     "P_gercek_ust": 0.348,
+     "tepki_gercek_%": 53.2,
+     "tepki_n": 79,
+     "tepki_hayalet_%": 52.7,
+     "P_tepki_ust": 0.514
+    }
+   },
+   "W8": {
+    "seviye_var_%": 70.9,
+    "uzaklik_medyan_bp": 100.1,
+    "W2_B": {
+     "ort": 52.2,
+     "toplam": 7358.0,
+     "en_kotu": -786.1,
+     "kotu10": -281.3,
+     "maksDD": -1030.0
+    },
+    "W2_A": {
+     "ort": 27.9,
+     "toplam": 3935.0,
+     "en_kotu": -435.4,
+     "kotu10": -105.7,
+     "maksDD": -435.0
+    },
+    "W2_YARIM": {
+     "ort": 63.7,
+     "toplam": 8988.0,
+     "en_kotu": -786.1,
+     "kotu10": -307.4,
+     "maksDD": -1050.0
+    },
+    "W1_B": {
+     "ort": 49.4,
+     "toplam": 6966.0,
+     "en_kotu": -786.1,
+     "kotu10": -279.0,
+     "maksDD": -1030.0
+    },
+    "W1_A": {
+     "ort": 25.1,
+     "toplam": 3544.0,
+     "en_kotu": -435.4,
+     "kotu10": -97.4,
+     "maksDD": -435.0
+    },
+    "W1_YARIM": {
+     "ort": 62.4,
+     "toplam": 8793.0,
+     "en_kotu": -786.1,
+     "kotu10": -303.2,
+     "maksDD": -1050.0
+    },
+    "dolum_%": 48.0,
+    "kacan_piyasa_ort": 144.7,
+    "kacan_kazanan_%": 92.3,
+    "hayalet": {
+     "gercek_ort": 52.2,
+     "hayalet_ort": 54.7,
+     "P_gercek_ust": 0.288,
+     "tepki_gercek_%": 47.9,
+     "tepki_n": 48,
+     "tepki_hayalet_%": 53.2,
+     "P_tepki_ust": 0.194
+    }
+   }
+  }
+ },
+ "MT5_US500": {
+  "TUM": {
+   "n_sinyal": 146,
+   "piyasa": {
+    "ort": 76.9,
+    "toplam": 11227.0,
+    "en_kotu": -569.0,
+    "kotu10": -222.0,
+    "maksDD": -569.0
+   },
+   "D5": {
+    "seviye_var_%": 54.8,
+    "uzaklik_medyan_bp": 49.0,
+    "W2_B": {
+     "ort": 67.5,
+     "toplam": 9858.0,
+     "en_kotu": -569.0,
+     "kotu10": -193.4,
+     "maksDD": -569.0
+    },
+    "W2_A": {
+     "ort": 24.7,
+     "toplam": 3600.0,
+     "en_kotu": -187.6,
+     "kotu10": -69.1,
+     "maksDD": -197.0
+    },
+    "W2_YARIM": {
+     "ort": 72.2,
+     "toplam": 10542.0,
+     "en_kotu": -569.0,
+     "kotu10": -203.6,
+     "maksDD": -569.0
+    },
+    "W1_B": {
+     "ort": 67.5,
+     "toplam": 9858.0,
+     "en_kotu": -569.0,
+     "kotu10": -193.4,
+     "maksDD": -569.0
+    },
+    "W1_A": {
+     "ort": 24.7,
+     "toplam": 3600.0,
+     "en_kotu": -187.6,
+     "kotu10": -69.1,
+     "maksDD": -197.0
+    },
+    "W1_YARIM": {
+     "ort": 72.2,
+     "toplam": 10542.0,
+     "en_kotu": -569.0,
+     "kotu10": -203.6,
+     "maksDD": -569.0
+    },
+    "dolum_%": 60.0,
+    "kacan_piyasa_ort": 127.1,
+    "kacan_kazanan_%": 96.9,
+    "hayalet": {
+     "gercek_ort": 67.5,
+     "hayalet_ort": 68.1,
+     "P_gercek_ust": 0.428,
+     "tepki_gercek_%": 54.2,
+     "tepki_n": 48,
+     "tepki_hayalet_%": 50.0,
+     "P_tepki_ust": 0.746
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 37.7,
+    "uzaklik_medyan_bp": 103.2,
+    "W2_B": {
+     "ort": 65.2,
+     "toplam": 9517.0,
+     "en_kotu": -569.0,
+     "kotu10": -195.2,
+     "maksDD": -569.0
+    },
+    "W2_A": {
+     "ort": 11.2,
+     "toplam": 1636.0,
+     "en_kotu": -163.9,
+     "kotu10": -38.6,
+     "maksDD": -164.0
+    },
+    "W2_YARIM": {
+     "ort": 71.0,
+     "toplam": 10372.0,
+     "en_kotu": -569.0,
+     "kotu10": -206.4,
+     "maksDD": -569.0
+    },
+    "W1_B": {
+     "ort": 62.6,
+     "toplam": 9135.0,
+     "en_kotu": -569.0,
+     "kotu10": -195.2,
+     "maksDD": -745.0
+    },
+    "W1_A": {
+     "ort": 8.6,
+     "toplam": 1254.0,
+     "en_kotu": -163.9,
+     "kotu10": -38.6,
+     "maksDD": -314.0
+    },
+    "W1_YARIM": {
+     "ort": 69.7,
+     "toplam": 10181.0,
+     "en_kotu": -569.0,
+     "kotu10": -206.4,
+     "maksDD": -569.0
+    },
+    "dolum_%": 38.2,
+    "kacan_piyasa_ort": 109.1,
+    "kacan_kazanan_%": 94.1,
+    "hayalet": {
+     "gercek_ort": 65.2,
+     "hayalet_ort": 68.5,
+     "P_gercek_ust": 0.142,
+     "tepki_gercek_%": 61.9,
+     "tepki_n": 21,
+     "tepki_hayalet_%": 51.8,
+     "P_tepki_ust": 0.85
+    }
+   },
+   "D20": {
+    "seviye_var_%": 74.7,
+    "uzaklik_medyan_bp": 36.5,
+    "W2_B": {
+     "ort": 62.6,
+     "toplam": 9136.0,
+     "en_kotu": -489.0,
+     "kotu10": -188.3,
+     "maksDD": -489.0
+    },
+    "W2_A": {
+     "ort": 30.4,
+     "toplam": 4441.0,
+     "en_kotu": -489.0,
+     "kotu10": -129.5,
+     "maksDD": -700.0
+    },
+    "W2_YARIM": {
+     "ort": 69.7,
+     "toplam": 10182.0,
+     "en_kotu": -529.0,
+     "kotu10": -201.1,
+     "maksDD": -529.0
+    },
+    "W1_B": {
+     "ort": 62.6,
+     "toplam": 9136.0,
+     "en_kotu": -489.0,
+     "kotu10": -188.3,
+     "maksDD": -489.0
+    },
+    "W1_A": {
+     "ort": 30.4,
+     "toplam": 4441.0,
+     "en_kotu": -489.0,
+     "kotu10": -129.5,
+     "maksDD": -700.0
+    },
+    "W1_YARIM": {
+     "ort": 69.7,
+     "toplam": 10182.0,
+     "en_kotu": -529.0,
+     "kotu10": -201.1,
+     "maksDD": -529.0
+    },
+    "dolum_%": 66.1,
+    "kacan_piyasa_ort": 136.2,
+    "kacan_kazanan_%": 97.3,
+    "hayalet": {
+     "gercek_ort": 62.6,
+     "hayalet_ort": 68.2,
+     "P_gercek_ust": 0.044,
+     "tepki_gercek_%": 52.1,
+     "tepki_n": 71,
+     "tepki_hayalet_%": 49.1,
+     "P_tepki_ust": 0.748
+    }
+   },
+   "P5": {
+    "seviye_var_%": 61.0,
+    "uzaklik_medyan_bp": 35.2,
+    "W2_B": {
+     "ort": 63.9,
+     "toplam": 9329.0,
+     "en_kotu": -569.0,
+     "kotu10": -201.1,
+     "maksDD": -569.0
+    },
+    "W2_A": {
+     "ort": 33.2,
+     "toplam": 4851.0,
+     "en_kotu": -192.5,
+     "kotu10": -96.4,
+     "maksDD": -239.0
+    },
+    "W2_YARIM": {
+     "ort": 70.4,
+     "toplam": 10278.0,
+     "en_kotu": -569.0,
+     "kotu10": -211.6,
+     "maksDD": -569.0
+    },
+    "W1_B": {
+     "ort": 63.1,
+     "toplam": 9214.0,
+     "en_kotu": -569.0,
+     "kotu10": -201.1,
+     "maksDD": -569.0
+    },
+    "W1_A": {
+     "ort": 32.4,
+     "toplam": 4736.0,
+     "en_kotu": -192.5,
+     "kotu10": -96.4,
+     "maksDD": -239.0
+    },
+    "W1_YARIM": {
+     "ort": 70.0,
+     "toplam": 10221.0,
+     "en_kotu": -569.0,
+     "kotu10": -211.6,
+     "maksDD": -569.0
+    },
+    "dolum_%": 66.3,
+    "kacan_piyasa_ort": 142.9,
+    "kacan_kazanan_%": 96.7,
+    "hayalet": {
+     "gercek_ort": 63.9,
+     "hayalet_ort": 66.5,
+     "P_gercek_ust": 0.206,
+     "tepki_gercek_%": 50.8,
+     "tepki_n": 59,
+     "tepki_hayalet_%": 50.4,
+     "P_tepki_ust": 0.508
+    }
+   },
+   "P20": {
+    "seviye_var_%": 77.4,
+    "uzaklik_medyan_bp": 26.6,
+    "W2_B": {
+     "ort": 63.5,
+     "toplam": 9271.0,
+     "en_kotu": -542.5,
+     "kotu10": -199.2,
+     "maksDD": -542.0
+    },
+    "W2_A": {
+     "ort": 38.5,
+     "toplam": 5624.0,
+     "en_kotu": -542.5,
+     "kotu10": -149.8,
+     "maksDD": -753.0
+    },
+    "W2_YARIM": {
+     "ort": 70.2,
+     "toplam": 10249.0,
+     "en_kotu": -555.7,
+     "kotu10": -210.6,
+     "maksDD": -556.0
+    },
+    "W1_B": {
+     "ort": 63.5,
+     "toplam": 9271.0,
+     "en_kotu": -542.5,
+     "kotu10": -199.2,
+     "maksDD": -542.0
+    },
+    "W1_A": {
+     "ort": 38.5,
+     "toplam": 5624.0,
+     "en_kotu": -542.5,
+     "kotu10": -149.8,
+     "maksDD": -753.0
+    },
+    "W1_YARIM": {
+     "ort": 70.2,
+     "toplam": 10249.0,
+     "en_kotu": -555.7,
+     "kotu10": -210.6,
+     "maksDD": -556.0
+    },
+    "dolum_%": 74.3,
+    "kacan_piyasa_ort": 163.5,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 63.5,
+     "hayalet_ort": 69.1,
+     "P_gercek_ust": 0.014,
+     "tepki_gercek_%": 51.8,
+     "tepki_n": 83,
+     "tepki_hayalet_%": 49.1,
+     "P_tepki_ust": 0.802
+    }
+   },
+   "W8": {
+    "seviye_var_%": 77.4,
+    "uzaklik_medyan_bp": 85.2,
+    "W2_B": {
+     "ort": 50.9,
+     "toplam": 7427.0,
+     "en_kotu": -569.0,
+     "kotu10": -181.9,
+     "maksDD": -569.0
+    },
+    "W2_A": {
+     "ort": 23.2,
+     "toplam": 3387.0,
+     "en_kotu": -182.6,
+     "kotu10": -71.1,
+     "maksDD": -200.0
+    },
+    "W2_YARIM": {
+     "ort": 63.9,
+     "toplam": 9327.0,
+     "en_kotu": -569.0,
+     "kotu10": -200.7,
+     "maksDD": -569.0
+    },
+    "W1_B": {
+     "ort": 50.4,
+     "toplam": 7365.0,
+     "en_kotu": -569.0,
+     "kotu10": -181.9,
+     "maksDD": -569.0
+    },
+    "W1_A": {
+     "ort": 22.8,
+     "toplam": 3325.0,
+     "en_kotu": -182.6,
+     "kotu10": -71.1,
+     "maksDD": -200.0
+    },
+    "W1_YARIM": {
+     "ort": 63.7,
+     "toplam": 9296.0,
+     "en_kotu": -569.0,
+     "kotu10": -200.7,
+     "maksDD": -569.0
+    },
+    "dolum_%": 46.9,
+    "kacan_piyasa_ort": 114.7,
+    "kacan_kazanan_%": 93.3,
+    "hayalet": {
+     "gercek_ort": 50.9,
+     "hayalet_ort": 60.8,
+     "P_gercek_ust": 0.014,
+     "tepki_gercek_%": 44.2,
+     "tepki_n": 52,
+     "tepki_hayalet_%": 52.1,
+     "P_tepki_ust": 0.106
+    }
+   }
+  },
+  "KESIF": {
+   "n_sinyal": 46,
+   "piyasa": {
+    "ort": 86.1,
+    "toplam": 3961.0,
+    "en_kotu": -228.3,
+    "kotu10": -192.5,
+    "maksDD": -228.0
+   },
+   "D5": {
+    "seviye_var_%": 67.4,
+    "uzaklik_medyan_bp": 50.0,
+    "W2_B": {
+     "ort": 89.7,
+     "toplam": 4124.0,
+     "en_kotu": -165.5,
+     "kotu10": -107.4,
+     "maksDD": -197.0
+    },
+    "W2_A": {
+     "ort": 26.7,
+     "toplam": 1230.0,
+     "en_kotu": -165.5,
+     "kotu10": -107.4,
+     "maksDD": -197.0
+    },
+    "W2_YARIM": {
+     "ort": 87.9,
+     "toplam": 4043.0,
+     "en_kotu": -190.9,
+     "kotu10": -144.2,
+     "maksDD": -191.0
+    },
+    "W1_B": {
+     "ort": 89.7,
+     "toplam": 4124.0,
+     "en_kotu": -165.5,
+     "kotu10": -107.4,
+     "maksDD": -197.0
+    },
+    "W1_A": {
+     "ort": 26.7,
+     "toplam": 1230.0,
+     "en_kotu": -165.5,
+     "kotu10": -107.4,
+     "maksDD": -197.0
+    },
+    "W1_YARIM": {
+     "ort": 87.9,
+     "toplam": 4043.0,
+     "en_kotu": -190.9,
+     "kotu10": -144.2,
+     "maksDD": -191.0
+    },
+    "dolum_%": 64.5,
+    "kacan_piyasa_ort": 95.3,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 89.7,
+     "hayalet_ort": 88.5,
+     "P_gercek_ust": 0.586,
+     "tepki_gercek_%": 50.0,
+     "tepki_n": 20,
+     "tepki_hayalet_%": 49.8,
+     "P_tepki_ust": 0.438
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 52.2,
+    "uzaklik_medyan_bp": 105.9,
+    "W2_B": {
+     "ort": 86.1,
+     "toplam": 3961.0,
+     "en_kotu": -228.3,
+     "kotu10": -112.7,
+     "maksDD": -228.0
+    },
+    "W2_A": {
+     "ort": 17.1,
+     "toplam": 788.0,
+     "en_kotu": -121.9,
+     "kotu10": -54.4,
+     "maksDD": -122.0
+    },
+    "W2_YARIM": {
+     "ort": 86.1,
+     "toplam": 3961.0,
+     "en_kotu": -228.3,
+     "kotu10": -152.0,
+     "maksDD": -228.0
+    },
+    "W1_B": {
+     "ort": 84.8,
+     "toplam": 3899.0,
+     "en_kotu": -228.3,
+     "kotu10": -112.7,
+     "maksDD": -228.0
+    },
+    "W1_A": {
+     "ort": 15.8,
+     "toplam": 726.0,
+     "en_kotu": -121.9,
+     "kotu10": -54.4,
+     "maksDD": -122.0
+    },
+    "W1_YARIM": {
+     "ort": 85.4,
+     "toplam": 3930.0,
+     "en_kotu": -228.3,
+     "kotu10": -152.0,
+     "maksDD": -228.0
+    },
+    "dolum_%": 45.8,
+    "kacan_piyasa_ort": 81.5,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 86.1,
+     "hayalet_ort": 88.5,
+     "P_gercek_ust": 0.37,
+     "tepki_gercek_%": 63.6,
+     "tepki_n": 11,
+     "tepki_hayalet_%": 54.1,
+     "P_tepki_ust": 0.714
+    }
+   },
+   "D20": {
+    "seviye_var_%": 87.0,
+    "uzaklik_medyan_bp": 31.8,
+    "W2_B": {
+     "ort": 82.1,
+     "toplam": 3778.0,
+     "en_kotu": -175.7,
+     "kotu10": -119.4,
+     "maksDD": -176.0
+    },
+    "W2_A": {
+     "ort": 41.0,
+     "toplam": 1885.0,
+     "en_kotu": -175.7,
+     "kotu10": -119.4,
+     "maksDD": -176.0
+    },
+    "W2_YARIM": {
+     "ort": 84.1,
+     "toplam": 3870.0,
+     "en_kotu": -200.3,
+     "kotu10": -147.6,
+     "maksDD": -200.0
+    },
+    "W1_B": {
+     "ort": 82.1,
+     "toplam": 3778.0,
+     "en_kotu": -175.7,
+     "kotu10": -119.4,
+     "maksDD": -176.0
+    },
+    "W1_A": {
+     "ort": 41.0,
+     "toplam": 1885.0,
+     "en_kotu": -175.7,
+     "kotu10": -119.4,
+     "maksDD": -176.0
+    },
+    "W1_YARIM": {
+     "ort": 84.1,
+     "toplam": 3870.0,
+     "en_kotu": -200.3,
+     "kotu10": -147.6,
+     "maksDD": -200.0
+    },
+    "dolum_%": 70.0,
+    "kacan_piyasa_ort": 111.2,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 82.1,
+     "hayalet_ort": 85.1,
+     "P_gercek_ust": 0.344,
+     "tepki_gercek_%": 48.1,
+     "tepki_n": 27,
+     "tepki_hayalet_%": 46.0,
+     "P_tepki_ust": 0.57
+    }
+   },
+   "P5": {
+    "seviye_var_%": 76.1,
+    "uzaklik_medyan_bp": 34.3,
+    "W2_B": {
+     "ort": 70.1,
+     "toplam": 3222.0,
+     "en_kotu": -192.5,
+     "kotu10": -149.9,
+     "maksDD": -192.0
+    },
+    "W2_A": {
+     "ort": 36.3,
+     "toplam": 1672.0,
+     "en_kotu": -192.5,
+     "kotu10": -149.9,
+     "maksDD": -192.0
+    },
+    "W2_YARIM": {
+     "ort": 78.1,
+     "toplam": 3592.0,
+     "en_kotu": -208.7,
+     "kotu10": -171.2,
+     "maksDD": -209.0
+    },
+    "W1_B": {
+     "ort": 70.1,
+     "toplam": 3222.0,
+     "en_kotu": -192.5,
+     "kotu10": -149.9,
+     "maksDD": -192.0
+    },
+    "W1_A": {
+     "ort": 36.3,
+     "toplam": 1672.0,
+     "en_kotu": -192.5,
+     "kotu10": -149.9,
+     "maksDD": -192.0
+    },
+    "W1_YARIM": {
+     "ort": 78.1,
+     "toplam": 3592.0,
+     "en_kotu": -208.7,
+     "kotu10": -171.2,
+     "maksDD": -209.0
+    },
+    "dolum_%": 71.4,
+    "kacan_piyasa_ort": 168.1,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 70.1,
+     "hayalet_ort": 84.0,
+     "P_gercek_ust": 0.07,
+     "tepki_gercek_%": 56.0,
+     "tepki_n": 25,
+     "tepki_hayalet_%": 49.9,
+     "P_tepki_ust": 0.8
+    }
+   },
+   "P20": {
+    "seviye_var_%": 91.3,
+    "uzaklik_medyan_bp": 23.9,
+    "W2_B": {
+     "ort": 73.3,
+     "toplam": 3371.0,
+     "en_kotu": -192.5,
+     "kotu10": -151.8,
+     "maksDD": -192.0
+    },
+    "W2_A": {
+     "ort": 52.1,
+     "toplam": 2397.0,
+     "en_kotu": -192.5,
+     "kotu10": -151.8,
+     "maksDD": -192.0
+    },
+    "W2_YARIM": {
+     "ort": 79.7,
+     "toplam": 3666.0,
+     "en_kotu": -208.7,
+     "kotu10": -172.2,
+     "maksDD": -209.0
+    },
+    "W1_B": {
+     "ort": 73.3,
+     "toplam": 3371.0,
+     "en_kotu": -192.5,
+     "kotu10": -151.8,
+     "maksDD": -192.0
+    },
+    "W1_A": {
+     "ort": 52.1,
+     "toplam": 2397.0,
+     "en_kotu": -192.5,
+     "kotu10": -151.8,
+     "maksDD": -192.0
+    },
+    "W1_YARIM": {
+     "ort": 79.7,
+     "toplam": 3666.0,
+     "en_kotu": -208.7,
+     "kotu10": -172.2,
+     "maksDD": -209.0
+    },
+    "dolum_%": 78.6,
+    "kacan_piyasa_ort": 183.7,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 73.3,
+     "hayalet_ort": 88.2,
+     "P_gercek_ust": 0.006,
+     "tepki_gercek_%": 56.2,
+     "tepki_n": 32,
+     "tepki_hayalet_%": 46.6,
+     "P_tepki_ust": 0.97
+    }
+   },
+   "W8": {
+    "seviye_var_%": 73.9,
+    "uzaklik_medyan_bp": 88.3,
+    "W2_B": {
+     "ort": 60.9,
+     "toplam": 2801.0,
+     "en_kotu": -228.3,
+     "kotu10": -146.4,
+     "maksDD": -228.0
+    },
+    "W2_A": {
+     "ort": 20.2,
+     "toplam": 927.0,
+     "en_kotu": -150.7,
+     "kotu10": -66.7,
+     "maksDD": -151.0
+    },
+    "W2_YARIM": {
+     "ort": 73.5,
+     "toplam": 3381.0,
+     "en_kotu": -228.3,
+     "kotu10": -165.4,
+     "maksDD": -228.0
+    },
+    "W1_B": {
+     "ort": 59.5,
+     "toplam": 2739.0,
+     "en_kotu": -228.3,
+     "kotu10": -146.4,
+     "maksDD": -228.0
+    },
+    "W1_A": {
+     "ort": 18.8,
+     "toplam": 865.0,
+     "en_kotu": -150.7,
+     "kotu10": -66.7,
+     "maksDD": -151.0
+    },
+    "W1_YARIM": {
+     "ort": 72.8,
+     "toplam": 3350.0,
+     "en_kotu": -228.3,
+     "kotu10": -165.4,
+     "maksDD": -228.0
+    },
+    "dolum_%": 41.2,
+    "kacan_piyasa_ort": 102.7,
+    "kacan_kazanan_%": 95.0,
+    "hayalet": {
+     "gercek_ort": 60.9,
+     "hayalet_ort": 73.8,
+     "P_gercek_ust": 0.072,
+     "tepki_gercek_%": 30.8,
+     "tepki_n": 13,
+     "tepki_hayalet_%": 52.6,
+     "P_tepki_ust": 0.048
+    }
+   }
+  },
+  "TEST": {
+   "n_sinyal": 100,
+   "piyasa": {
+    "ort": 72.7,
+    "toplam": 7266.0,
+    "en_kotu": -569.0,
+    "kotu10": -233.8,
+    "maksDD": -569.0
+   },
+   "D5": {
+    "seviye_var_%": 49.0,
+    "uzaklik_medyan_bp": 48.5,
+    "W2_B": {
+     "ort": 57.3,
+     "toplam": 5733.0,
+     "en_kotu": -569.0,
+     "kotu10": -221.0,
+     "maksDD": -569.0
+    },
+    "W2_A": {
+     "ort": 23.7,
+     "toplam": 2370.0,
+     "en_kotu": -187.6,
+     "kotu10": -53.8,
+     "maksDD": -188.0
+    },
+    "W2_YARIM": {
+     "ort": 65.0,
+     "toplam": 6500.0,
+     "en_kotu": -569.0,
+     "kotu10": -227.4,
+     "maksDD": -569.0
+    },
+    "W1_B": {
+     "ort": 57.3,
+     "toplam": 5733.0,
+     "en_kotu": -569.0,
+     "kotu10": -221.0,
+     "maksDD": -569.0
+    },
+    "W1_A": {
+     "ort": 23.7,
+     "toplam": 2370.0,
+     "en_kotu": -187.6,
+     "kotu10": -53.8,
+     "maksDD": -188.0
+    },
+    "W1_YARIM": {
+     "ort": 65.0,
+     "toplam": 6500.0,
+     "en_kotu": -569.0,
+     "kotu10": -227.4,
+     "maksDD": -569.0
+    },
+    "dolum_%": 57.1,
+    "kacan_piyasa_ort": 143.7,
+    "kacan_kazanan_%": 95.2,
+    "hayalet": {
+     "gercek_ort": 57.3,
+     "hayalet_ort": 58.6,
+     "P_gercek_ust": 0.36,
+     "tepki_gercek_%": 57.1,
+     "tepki_n": 28,
+     "tepki_hayalet_%": 49.6,
+     "P_tepki_ust": 0.828
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 31.0,
+    "uzaklik_medyan_bp": 103.2,
+    "W2_B": {
+     "ort": 55.6,
+     "toplam": 5556.0,
+     "en_kotu": -569.0,
+     "kotu10": -222.5,
+     "maksDD": -569.0
+    },
+    "W2_A": {
+     "ort": 8.5,
+     "toplam": 848.0,
+     "en_kotu": -163.9,
+     "kotu10": -32.2,
+     "maksDD": -164.0
+    },
+    "W2_YARIM": {
+     "ort": 64.1,
+     "toplam": 6411.0,
+     "en_kotu": -569.0,
+     "kotu10": -228.2,
+     "maksDD": -569.0
+    },
+    "W1_B": {
+     "ort": 52.4,
+     "toplam": 5236.0,
+     "en_kotu": -569.0,
+     "kotu10": -222.5,
+     "maksDD": -745.0
+    },
+    "W1_A": {
+     "ort": 5.3,
+     "toplam": 528.0,
+     "en_kotu": -163.9,
+     "kotu10": -32.2,
+     "maksDD": -314.0
+    },
+    "W1_YARIM": {
+     "ort": 62.5,
+     "toplam": 6251.0,
+     "en_kotu": -569.0,
+     "kotu10": -228.2,
+     "maksDD": -569.0
+    },
+    "dolum_%": 32.3,
+    "kacan_piyasa_ort": 126.2,
+    "kacan_kazanan_%": 90.5,
+    "hayalet": {
+     "gercek_ort": 55.6,
+     "hayalet_ort": 59.6,
+     "P_gercek_ust": 0.138,
+     "tepki_gercek_%": 60.0,
+     "tepki_n": 10,
+     "tepki_hayalet_%": 53.4,
+     "P_tepki_ust": 0.646
+    }
+   },
+   "D20": {
+    "seviye_var_%": 69.0,
+    "uzaklik_medyan_bp": 38.2,
+    "W2_B": {
+     "ort": 53.6,
+     "toplam": 5358.0,
+     "en_kotu": -489.0,
+     "kotu10": -211.1,
+     "maksDD": -489.0
+    },
+    "W2_A": {
+     "ort": 25.6,
+     "toplam": 2556.0,
+     "en_kotu": -489.0,
+     "kotu10": -131.0,
+     "maksDD": -700.0
+    },
+    "W2_YARIM": {
+     "ort": 63.1,
+     "toplam": 6312.0,
+     "en_kotu": -529.0,
+     "kotu10": -222.5,
+     "maksDD": -529.0
+    },
+    "W1_B": {
+     "ort": 53.6,
+     "toplam": 5358.0,
+     "en_kotu": -489.0,
+     "kotu10": -211.1,
+     "maksDD": -489.0
+    },
+    "W1_A": {
+     "ort": 25.6,
+     "toplam": 2556.0,
+     "en_kotu": -489.0,
+     "kotu10": -131.0,
+     "maksDD": -700.0
+    },
+    "W1_YARIM": {
+     "ort": 63.1,
+     "toplam": 6312.0,
+     "en_kotu": -529.0,
+     "kotu10": -222.5,
+     "maksDD": -529.0
+    },
+    "dolum_%": 63.8,
+    "kacan_piyasa_ort": 148.1,
+    "kacan_kazanan_%": 96.0,
+    "hayalet": {
+     "gercek_ort": 53.6,
+     "hayalet_ort": 60.5,
+     "P_gercek_ust": 0.02,
+     "tepki_gercek_%": 54.5,
+     "tepki_n": 44,
+     "tepki_hayalet_%": 50.9,
+     "P_tepki_ust": 0.74
+    }
+   },
+   "P5": {
+    "seviye_var_%": 54.0,
+    "uzaklik_medyan_bp": 35.9,
+    "W2_B": {
+     "ort": 61.1,
+     "toplam": 6107.0,
+     "en_kotu": -569.0,
+     "kotu10": -221.6,
+     "maksDD": -569.0
+    },
+    "W2_A": {
+     "ort": 31.8,
+     "toplam": 3179.0,
+     "en_kotu": -187.6,
+     "kotu10": -64.7,
+     "maksDD": -239.0
+    },
+    "W2_YARIM": {
+     "ort": 66.9,
+     "toplam": 6686.0,
+     "en_kotu": -569.0,
+     "kotu10": -227.7,
+     "maksDD": -569.0
+    },
+    "W1_B": {
+     "ort": 59.9,
+     "toplam": 5992.0,
+     "en_kotu": -569.0,
+     "kotu10": -221.6,
+     "maksDD": -569.0
+    },
+    "W1_A": {
+     "ort": 30.6,
+     "toplam": 3064.0,
+     "en_kotu": -187.6,
+     "kotu10": -64.7,
+     "maksDD": -239.0
+    },
+    "W1_YARIM": {
+     "ort": 66.3,
+     "toplam": 6629.0,
+     "en_kotu": -569.0,
+     "kotu10": -227.7,
+     "maksDD": -569.0
+    },
+    "dolum_%": 63.0,
+    "kacan_piyasa_ort": 130.3,
+    "kacan_kazanan_%": 95.0,
+    "hayalet": {
+     "gercek_ort": 61.1,
+     "hayalet_ort": 58.6,
+     "P_gercek_ust": 0.768,
+     "tepki_gercek_%": 47.1,
+     "tepki_n": 34,
+     "tepki_hayalet_%": 50.8,
+     "P_tepki_ust": 0.242
+    }
+   },
+   "P20": {
+    "seviye_var_%": 71.0,
+    "uzaklik_medyan_bp": 27.8,
+    "W2_B": {
+     "ort": 59.0,
+     "toplam": 5900.0,
+     "en_kotu": -542.5,
+     "kotu10": -218.2,
+     "maksDD": -542.0
+    },
+    "W2_A": {
+     "ort": 32.3,
+     "toplam": 3227.0,
+     "en_kotu": -542.5,
+     "kotu10": -141.7,
+     "maksDD": -753.0
+    },
+    "W2_YARIM": {
+     "ort": 65.8,
+     "toplam": 6583.0,
+     "en_kotu": -555.7,
+     "kotu10": -226.0,
+     "maksDD": -556.0
+    },
+    "W1_B": {
+     "ort": 59.0,
+     "toplam": 5900.0,
+     "en_kotu": -542.5,
+     "kotu10": -218.2,
+     "maksDD": -542.0
+    },
+    "W1_A": {
+     "ort": 32.3,
+     "toplam": 3227.0,
+     "en_kotu": -542.5,
+     "kotu10": -141.7,
+     "maksDD": -753.0
+    },
+    "W1_YARIM": {
+     "ort": 65.8,
+     "toplam": 6583.0,
+     "en_kotu": -555.7,
+     "kotu10": -226.0,
+     "maksDD": -556.0
+    },
+    "dolum_%": 71.8,
+    "kacan_piyasa_ort": 154.3,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 59.0,
+     "hayalet_ort": 60.2,
+     "P_gercek_ust": 0.326,
+     "tepki_gercek_%": 49.0,
+     "tepki_n": 51,
+     "tepki_hayalet_%": 50.5,
+     "P_tepki_ust": 0.37
+    }
+   },
+   "W8": {
+    "seviye_var_%": 79.0,
+    "uzaklik_medyan_bp": 85.0,
+    "W2_B": {
+     "ort": 46.3,
+     "toplam": 4626.0,
+     "en_kotu": -569.0,
+     "kotu10": -196.0,
+     "maksDD": -569.0
+    },
+    "W2_A": {
+     "ort": 24.6,
+     "toplam": 2459.0,
+     "en_kotu": -182.6,
+     "kotu10": -72.9,
+     "maksDD": -200.0
+    },
+    "W2_YARIM": {
+     "ort": 59.5,
+     "toplam": 5946.0,
+     "en_kotu": -569.0,
+     "kotu10": -214.8,
+     "maksDD": -569.0
+    },
+    "W1_B": {
+     "ort": 46.3,
+     "toplam": 4626.0,
+     "en_kotu": -569.0,
+     "kotu10": -196.0,
+     "maksDD": -569.0
+    },
+    "W1_A": {
+     "ort": 24.6,
+     "toplam": 2459.0,
+     "en_kotu": -182.6,
+     "kotu10": -72.9,
+     "maksDD": -200.0
+    },
+    "W1_YARIM": {
+     "ort": 59.5,
+     "toplam": 5946.0,
+     "en_kotu": -569.0,
+     "kotu10": -214.8,
+     "maksDD": -569.0
+    },
+    "dolum_%": 49.4,
+    "kacan_piyasa_ort": 120.7,
+    "kacan_kazanan_%": 92.5,
+    "hayalet": {
+     "gercek_ort": 46.3,
+     "hayalet_ort": 54.5,
+     "P_gercek_ust": 0.046,
+     "tepki_gercek_%": 48.7,
+     "tepki_n": 39,
+     "tepki_hayalet_%": 52.5,
+     "P_tepki_ust": 0.266
+    }
+   }
+  }
+ },
+ "MT5_US30": {
+  "TUM": {
+   "n_sinyal": 162,
+   "piyasa": {
+    "ort": 64.3,
+    "toplam": 10414.0,
+    "en_kotu": -534.2,
+    "kotu10": -266.2,
+    "maksDD": -885.0
+   },
+   "D5": {
+    "seviye_var_%": 54.3,
+    "uzaklik_medyan_bp": 49.1,
+    "W2_B": {
+     "ort": 58.2,
+     "toplam": 9426.0,
+     "en_kotu": -501.9,
+     "kotu10": -219.7,
+     "maksDD": -751.0
+    },
+    "W2_A": {
+     "ort": 18.3,
+     "toplam": 2960.0,
+     "en_kotu": -439.4,
+     "kotu10": -117.4,
+     "maksDD": -497.0
+    },
+    "W2_YARIM": {
+     "ort": 61.2,
+     "toplam": 9920.0,
+     "en_kotu": -501.9,
+     "kotu10": -240.0,
+     "maksDD": -818.0
+    },
+    "W1_B": {
+     "ort": 57.3,
+     "toplam": 9285.0,
+     "en_kotu": -501.9,
+     "kotu10": -219.7,
+     "maksDD": -751.0
+    },
+    "W1_A": {
+     "ort": 17.4,
+     "toplam": 2819.0,
+     "en_kotu": -439.4,
+     "kotu10": -117.4,
+     "maksDD": -497.0
+    },
+    "W1_YARIM": {
+     "ort": 60.8,
+     "toplam": 9850.0,
+     "en_kotu": -501.9,
+     "kotu10": -240.0,
+     "maksDD": -818.0
+    },
+    "dolum_%": 60.2,
+    "kacan_piyasa_ort": 124.7,
+    "kacan_kazanan_%": 91.4,
+    "hayalet": {
+     "gercek_ort": 58.2,
+     "hayalet_ort": 63.2,
+     "P_gercek_ust": 0.096,
+     "tepki_gercek_%": 50.9,
+     "tepki_n": 53,
+     "tepki_hayalet_%": 49.5,
+     "P_tepki_ust": 0.566
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 38.9,
+    "uzaklik_medyan_bp": 150.8,
+    "W2_B": {
+     "ort": 64.7,
+     "toplam": 10487.0,
+     "en_kotu": -501.9,
+     "kotu10": -217.9,
+     "maksDD": -707.0
+    },
+    "W2_A": {
+     "ort": 13.7,
+     "toplam": 2223.0,
+     "en_kotu": -405.5,
+     "kotu10": -50.5,
+     "maksDD": -449.0
+    },
+    "W2_YARIM": {
+     "ort": 64.5,
+     "toplam": 10450.0,
+     "en_kotu": -501.9,
+     "kotu10": -234.0,
+     "maksDD": -796.0
+    },
+    "W1_B": {
+     "ort": 65.4,
+     "toplam": 10595.0,
+     "en_kotu": -501.9,
+     "kotu10": -197.8,
+     "maksDD": -721.0
+    },
+    "W1_A": {
+     "ort": 14.4,
+     "toplam": 2331.0,
+     "en_kotu": -180.4,
+     "kotu10": -25.2,
+     "maksDD": -201.0
+    },
+    "W1_YARIM": {
+     "ort": 64.8,
+     "toplam": 10504.0,
+     "en_kotu": -501.9,
+     "kotu10": -221.3,
+     "maksDD": -629.0
+    },
+    "dolum_%": 42.9,
+    "kacan_piyasa_ort": 87.1,
+    "kacan_kazanan_%": 83.3,
+    "hayalet": {
+     "gercek_ort": 64.7,
+     "hayalet_ort": 64.5,
+     "P_gercek_ust": 0.532,
+     "tepki_gercek_%": 48.1,
+     "tepki_n": 27,
+     "tepki_hayalet_%": 47.8,
+     "P_tepki_ust": 0.514
+    }
+   },
+   "D20": {
+    "seviye_var_%": 71.0,
+    "uzaklik_medyan_bp": 34.0,
+    "W2_B": {
+     "ort": 54.1,
+     "toplam": 8758.0,
+     "en_kotu": -468.4,
+     "kotu10": -218.5,
+     "maksDD": -710.0
+    },
+    "W2_A": {
+     "ort": 22.0,
+     "toplam": 3565.0,
+     "en_kotu": -468.4,
+     "kotu10": -181.2,
+     "maksDD": -788.0
+    },
+    "W2_YARIM": {
+     "ort": 59.2,
+     "toplam": 9586.0,
+     "en_kotu": -501.3,
+     "kotu10": -238.9,
+     "maksDD": -781.0
+    },
+    "W1_B": {
+     "ort": 54.6,
+     "toplam": 8848.0,
+     "en_kotu": -468.4,
+     "kotu10": -218.5,
+     "maksDD": -620.0
+    },
+    "W1_A": {
+     "ort": 22.6,
+     "toplam": 3655.0,
+     "en_kotu": -468.4,
+     "kotu10": -177.3,
+     "maksDD": -698.0
+    },
+    "W1_YARIM": {
+     "ort": 59.5,
+     "toplam": 9631.0,
+     "en_kotu": -501.3,
+     "kotu10": -237.5,
+     "maksDD": -736.0
+    },
+    "dolum_%": 66.1,
+    "kacan_piyasa_ort": 137.2,
+    "kacan_kazanan_%": 92.3,
+    "hayalet": {
+     "gercek_ort": 54.1,
+     "hayalet_ort": 63.8,
+     "P_gercek_ust": 0.006,
+     "tepki_gercek_%": 47.4,
+     "tepki_n": 76,
+     "tepki_hayalet_%": 47.5,
+     "P_tepki_ust": 0.448
+    }
+   },
+   "P5": {
+    "seviye_var_%": 58.0,
+    "uzaklik_medyan_bp": 37.8,
+    "W2_B": {
+     "ort": 59.2,
+     "toplam": 9584.0,
+     "en_kotu": -507.6,
+     "kotu10": -233.9,
+     "maksDD": -828.0
+    },
+    "W2_A": {
+     "ort": 28.8,
+     "toplam": 4665.0,
+     "en_kotu": -507.6,
+     "kotu10": -131.6,
+     "maksDD": -560.0
+    },
+    "W2_YARIM": {
+     "ort": 61.7,
+     "toplam": 9999.0,
+     "en_kotu": -520.9,
+     "kotu10": -247.1,
+     "maksDD": -856.0
+    },
+    "W1_B": {
+     "ort": 58.9,
+     "toplam": 9539.0,
+     "en_kotu": -507.6,
+     "kotu10": -233.9,
+     "maksDD": -828.0
+    },
+    "W1_A": {
+     "ort": 28.5,
+     "toplam": 4620.0,
+     "en_kotu": -507.6,
+     "kotu10": -131.6,
+     "maksDD": -560.0
+    },
+    "W1_YARIM": {
+     "ort": 61.6,
+     "toplam": 9977.0,
+     "en_kotu": -520.9,
+     "kotu10": -247.1,
+     "maksDD": -856.0
+    },
+    "dolum_%": 69.1,
+    "kacan_piyasa_ort": 140.7,
+    "kacan_kazanan_%": 96.6,
+    "hayalet": {
+     "gercek_ort": 59.2,
+     "hayalet_ort": 63.4,
+     "P_gercek_ust": 0.136,
+     "tepki_gercek_%": 53.8,
+     "tepki_n": 65,
+     "tepki_hayalet_%": 49.7,
+     "P_tepki_ust": 0.812
+    }
+   },
+   "P20": {
+    "seviye_var_%": 72.8,
+    "uzaklik_medyan_bp": 24.7,
+    "W2_B": {
+     "ort": 58.5,
+     "toplam": 9473.0,
+     "en_kotu": -507.6,
+     "kotu10": -239.1,
+     "maksDD": -812.0
+    },
+    "W2_A": {
+     "ort": 32.1,
+     "toplam": 5195.0,
+     "en_kotu": -507.6,
+     "kotu10": -203.8,
+     "maksDD": -754.0
+    },
+    "W2_YARIM": {
+     "ort": 61.4,
+     "toplam": 9944.0,
+     "en_kotu": -520.9,
+     "kotu10": -249.7,
+     "maksDD": -849.0
+    },
+    "W1_B": {
+     "ort": 58.5,
+     "toplam": 9473.0,
+     "en_kotu": -507.6,
+     "kotu10": -239.1,
+     "maksDD": -812.0
+    },
+    "W1_A": {
+     "ort": 32.1,
+     "toplam": 5195.0,
+     "en_kotu": -507.6,
+     "kotu10": -203.8,
+     "maksDD": -754.0
+    },
+    "W1_YARIM": {
+     "ort": 61.4,
+     "toplam": 9944.0,
+     "en_kotu": -520.9,
+     "kotu10": -249.7,
+     "maksDD": -849.0
+    },
+    "dolum_%": 74.6,
+    "kacan_piyasa_ort": 143.9,
+    "kacan_kazanan_%": 93.3,
+    "hayalet": {
+     "gercek_ort": 58.5,
+     "hayalet_ort": 65.4,
+     "P_gercek_ust": 0.036,
+     "tepki_gercek_%": 50.6,
+     "tepki_n": 87,
+     "tepki_hayalet_%": 47.3,
+     "P_tepki_ust": 0.804
+    }
+   },
+   "W8": {
+    "seviye_var_%": 71.6,
+    "uzaklik_medyan_bp": 86.3,
+    "W2_B": {
+     "ort": 53.6,
+     "toplam": 8685.0,
+     "en_kotu": -468.4,
+     "kotu10": -201.4,
+     "maksDD": -642.0
+    },
+    "W2_A": {
+     "ort": 11.5,
+     "toplam": 1863.0,
+     "en_kotu": -468.4,
+     "kotu10": -137.8,
+     "maksDD": -642.0
+    },
+    "W2_YARIM": {
+     "ort": 58.9,
+     "toplam": 9549.0,
+     "en_kotu": -501.3,
+     "kotu10": -228.4,
+     "maksDD": -736.0
+    },
+    "W1_B": {
+     "ort": 52.0,
+     "toplam": 8424.0,
+     "en_kotu": -468.4,
+     "kotu10": -193.8,
+     "maksDD": -583.0
+    },
+    "W1_A": {
+     "ort": 9.9,
+     "toplam": 1602.0,
+     "en_kotu": -468.4,
+     "kotu10": -120.3,
+     "maksDD": -595.0
+    },
+    "W1_YARIM": {
+     "ort": 58.1,
+     "toplam": 9419.0,
+     "en_kotu": -501.3,
+     "kotu10": -219.8,
+     "maksDD": -719.0
+    },
+    "dolum_%": 49.1,
+    "kacan_piyasa_ort": 99.6,
+    "kacan_kazanan_%": 94.9,
+    "hayalet": {
+     "gercek_ort": 53.6,
+     "hayalet_ort": 56.3,
+     "P_gercek_ust": 0.256,
+     "tepki_gercek_%": 44.6,
+     "tepki_n": 56,
+     "tepki_hayalet_%": 50.9,
+     "P_tepki_ust": 0.14
+    }
+   }
+  },
+  "KESIF": {
+   "n_sinyal": 75,
+   "piyasa": {
+    "ort": 91.3,
+    "toplam": 6847.0,
+    "en_kotu": -427.0,
+    "kotu10": -264.3,
+    "maksDD": -629.0
+   },
+   "D5": {
+    "seviye_var_%": 56.0,
+    "uzaklik_medyan_bp": 93.3,
+    "W2_B": {
+     "ort": 90.7,
+     "toplam": 6804.0,
+     "en_kotu": -319.5,
+     "kotu10": -196.2,
+     "maksDD": -616.0
+    },
+    "W2_A": {
+     "ort": 25.3,
+     "toplam": 1898.0,
+     "en_kotu": -271.2,
+     "kotu10": -124.4,
+     "maksDD": -447.0
+    },
+    "W2_YARIM": {
+     "ort": 91.0,
+     "toplam": 6826.0,
+     "en_kotu": -349.1,
+     "kotu10": -223.8,
+     "maksDD": -620.0
+    },
+    "W1_B": {
+     "ort": 88.8,
+     "toplam": 6663.0,
+     "en_kotu": -319.5,
+     "kotu10": -196.2,
+     "maksDD": -616.0
+    },
+    "W1_A": {
+     "ort": 23.4,
+     "toplam": 1757.0,
+     "en_kotu": -271.2,
+     "kotu10": -124.4,
+     "maksDD": -447.0
+    },
+    "W1_YARIM": {
+     "ort": 90.1,
+     "toplam": 6755.0,
+     "en_kotu": -349.1,
+     "kotu10": -223.8,
+     "maksDD": -620.0
+    },
+    "dolum_%": 57.1,
+    "kacan_piyasa_ort": 120.9,
+    "kacan_kazanan_%": 94.4,
+    "hayalet": {
+     "gercek_ort": 90.7,
+     "hayalet_ort": 94.3,
+     "P_gercek_ust": 0.322,
+     "tepki_gercek_%": 37.5,
+     "tepki_n": 24,
+     "tepki_hayalet_%": 49.9,
+     "P_tepki_ust": 0.066
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 37.3,
+    "uzaklik_medyan_bp": 156.9,
+    "W2_B": {
+     "ort": 98.9,
+     "toplam": 7418.0,
+     "en_kotu": -427.0,
+     "kotu10": -214.2,
+     "maksDD": -629.0
+    },
+    "W2_A": {
+     "ort": 27.3,
+     "toplam": 2045.0,
+     "en_kotu": -55.9,
+     "kotu10": -12.0,
+     "maksDD": -76.0
+    },
+    "W2_YARIM": {
+     "ort": 95.1,
+     "toplam": 7133.0,
+     "en_kotu": -427.0,
+     "kotu10": -222.1,
+     "maksDD": -629.0
+    },
+    "W1_B": {
+     "ort": 98.9,
+     "toplam": 7418.0,
+     "en_kotu": -427.0,
+     "kotu10": -214.2,
+     "maksDD": -629.0
+    },
+    "W1_A": {
+     "ort": 27.3,
+     "toplam": 2045.0,
+     "en_kotu": -55.9,
+     "kotu10": -12.0,
+     "maksDD": -76.0
+    },
+    "W1_YARIM": {
+     "ort": 95.1,
+     "toplam": 7133.0,
+     "en_kotu": -427.0,
+     "kotu10": -222.1,
+     "maksDD": -629.0
+    },
+    "dolum_%": 46.4,
+    "kacan_piyasa_ort": 105.6,
+    "kacan_kazanan_%": 86.7,
+    "hayalet": {
+     "gercek_ort": 98.9,
+     "hayalet_ort": 97.5,
+     "P_gercek_ust": 0.626,
+     "tepki_gercek_%": 23.1,
+     "tepki_n": 13,
+     "tepki_hayalet_%": 46.5,
+     "P_tepki_ust": 0.022
+    }
+   },
+   "D20": {
+    "seviye_var_%": 76.0,
+    "uzaklik_medyan_bp": 36.2,
+    "W2_B": {
+     "ort": 84.5,
+     "toplam": 6336.0,
+     "en_kotu": -277.6,
+     "kotu10": -199.4,
+     "maksDD": -522.0
+    },
+    "W2_A": {
+     "ort": 34.9,
+     "toplam": 2616.0,
+     "en_kotu": -277.6,
+     "kotu10": -169.7,
+     "maksDD": -436.0
+    },
+    "W2_YARIM": {
+     "ort": 87.9,
+     "toplam": 6592.0,
+     "en_kotu": -349.1,
+     "kotu10": -225.4,
+     "maksDD": -569.0
+    },
+    "W1_B": {
+     "ort": 84.5,
+     "toplam": 6336.0,
+     "en_kotu": -277.6,
+     "kotu10": -199.4,
+     "maksDD": -522.0
+    },
+    "W1_A": {
+     "ort": 34.9,
+     "toplam": 2616.0,
+     "en_kotu": -277.6,
+     "kotu10": -169.7,
+     "maksDD": -436.0
+    },
+    "W1_YARIM": {
+     "ort": 87.9,
+     "toplam": 6592.0,
+     "en_kotu": -349.1,
+     "kotu10": -225.4,
+     "maksDD": -569.0
+    },
+    "dolum_%": 64.9,
+    "kacan_piyasa_ort": 134.3,
+    "kacan_kazanan_%": 95.0,
+    "hayalet": {
+     "gercek_ort": 84.5,
+     "hayalet_ort": 94.2,
+     "P_gercek_ust": 0.102,
+     "tepki_gercek_%": 37.8,
+     "tepki_n": 37,
+     "tepki_hayalet_%": 48.8,
+     "P_tepki_ust": 0.06
+    }
+   },
+   "P5": {
+    "seviye_var_%": 61.3,
+    "uzaklik_medyan_bp": 52.3,
+    "W2_B": {
+     "ort": 96.4,
+     "toplam": 7228.0,
+     "en_kotu": -381.7,
+     "kotu10": -214.4,
+     "maksDD": -626.0
+    },
+    "W2_A": {
+     "ort": 47.5,
+     "toplam": 3566.0,
+     "en_kotu": -381.7,
+     "kotu10": -141.6,
+     "maksDD": -435.0
+    },
+    "W2_YARIM": {
+     "ort": 93.8,
+     "toplam": 7038.0,
+     "en_kotu": -404.3,
+     "kotu10": -232.9,
+     "maksDD": -620.0
+    },
+    "W1_B": {
+     "ort": 95.8,
+     "toplam": 7183.0,
+     "en_kotu": -381.7,
+     "kotu10": -214.4,
+     "maksDD": -626.0
+    },
+    "W1_A": {
+     "ort": 47.0,
+     "toplam": 3521.0,
+     "en_kotu": -381.7,
+     "kotu10": -141.6,
+     "maksDD": -435.0
+    },
+    "W1_YARIM": {
+     "ort": 93.5,
+     "toplam": 7015.0,
+     "en_kotu": -404.3,
+     "kotu10": -232.9,
+     "maksDD": -620.0
+    },
+    "dolum_%": 73.9,
+    "kacan_piyasa_ort": 149.3,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 96.4,
+     "hayalet_ort": 97.9,
+     "P_gercek_ust": 0.384,
+     "tepki_gercek_%": 52.9,
+     "tepki_n": 34,
+     "tepki_hayalet_%": 49.3,
+     "P_tepki_ust": 0.668
+    }
+   },
+   "P20": {
+    "seviye_var_%": 78.7,
+    "uzaklik_medyan_bp": 25.1,
+    "W2_B": {
+     "ort": 97.1,
+     "toplam": 7282.0,
+     "en_kotu": -381.7,
+     "kotu10": -223.3,
+     "maksDD": -551.0
+    },
+    "W2_A": {
+     "ort": 58.4,
+     "toplam": 4377.0,
+     "en_kotu": -381.7,
+     "kotu10": -194.7,
+     "maksDD": -447.0
+    },
+    "W2_YARIM": {
+     "ort": 94.2,
+     "toplam": 7065.0,
+     "en_kotu": -404.3,
+     "kotu10": -237.4,
+     "maksDD": -583.0
+    },
+    "W1_B": {
+     "ort": 97.1,
+     "toplam": 7282.0,
+     "en_kotu": -381.7,
+     "kotu10": -223.3,
+     "maksDD": -551.0
+    },
+    "W1_A": {
+     "ort": 58.4,
+     "toplam": 4377.0,
+     "en_kotu": -381.7,
+     "kotu10": -194.7,
+     "maksDD": -447.0
+    },
+    "W1_YARIM": {
+     "ort": 94.2,
+     "toplam": 7065.0,
+     "en_kotu": -404.3,
+     "kotu10": -237.4,
+     "maksDD": -583.0
+    },
+    "dolum_%": 79.7,
+    "kacan_piyasa_ort": 146.6,
+    "kacan_kazanan_%": 91.7,
+    "hayalet": {
+     "gercek_ort": 97.1,
+     "hayalet_ort": 99.7,
+     "P_gercek_ust": 0.32,
+     "tepki_gercek_%": 52.2,
+     "tepki_n": 46,
+     "tepki_hayalet_%": 48.2,
+     "P_tepki_ust": 0.788
+    }
+   },
+   "W8": {
+    "seviye_var_%": 62.7,
+    "uzaklik_medyan_bp": 86.5,
+    "W2_B": {
+     "ort": 80.3,
+     "toplam": 6019.0,
+     "en_kotu": -427.0,
+     "kotu10": -228.1,
+     "maksDD": -583.0
+    },
+    "W2_A": {
+     "ort": 15.6,
+     "toplam": 1167.0,
+     "en_kotu": -245.2,
+     "kotu10": -109.8,
+     "maksDD": -564.0
+    },
+    "W2_YARIM": {
+     "ort": 85.8,
+     "toplam": 6433.0,
+     "en_kotu": -427.0,
+     "kotu10": -241.4,
+     "maksDD": -606.0
+    },
+    "W1_B": {
+     "ort": 78.0,
+     "toplam": 5854.0,
+     "en_kotu": -427.0,
+     "kotu10": -228.1,
+     "maksDD": -583.0
+    },
+    "W1_A": {
+     "ort": 13.4,
+     "toplam": 1002.0,
+     "en_kotu": -245.2,
+     "kotu10": -109.8,
+     "maksDD": -595.0
+    },
+    "W1_YARIM": {
+     "ort": 84.7,
+     "toplam": 6350.0,
+     "en_kotu": -427.0,
+     "kotu10": -241.4,
+     "maksDD": -606.0
+    },
+    "dolum_%": 48.9,
+    "kacan_piyasa_ort": 110.0,
+    "kacan_kazanan_%": 95.8,
+    "hayalet": {
+     "gercek_ort": 80.3,
+     "hayalet_ort": 86.1,
+     "P_gercek_ust": 0.184,
+     "tepki_gercek_%": 39.1,
+     "tepki_n": 23,
+     "tepki_hayalet_%": 53.0,
+     "P_tepki_ust": 0.068
+    }
+   }
+  },
+  "TEST": {
+   "n_sinyal": 87,
+   "piyasa": {
+    "ort": 41.0,
+    "toplam": 3567.0,
+    "en_kotu": -534.2,
+    "kotu10": -281.6,
+    "maksDD": -885.0
+   },
+   "D5": {
+    "seviye_var_%": 52.9,
+    "uzaklik_medyan_bp": 37.7,
+    "W2_B": {
+     "ort": 30.1,
+     "toplam": 2622.0,
+     "en_kotu": -501.9,
+     "kotu10": -249.8,
+     "maksDD": -751.0
+    },
+    "W2_A": {
+     "ort": 12.2,
+     "toplam": 1062.0,
+     "en_kotu": -439.4,
+     "kotu10": -123.1,
+     "maksDD": -456.0
+    },
+    "W2_YARIM": {
+     "ort": 35.6,
+     "toplam": 3094.0,
+     "en_kotu": -501.9,
+     "kotu10": -265.3,
+     "maksDD": -818.0
+    },
+    "W1_B": {
+     "ort": 30.1,
+     "toplam": 2622.0,
+     "en_kotu": -501.9,
+     "kotu10": -249.8,
+     "maksDD": -751.0
+    },
+    "W1_A": {
+     "ort": 12.2,
+     "toplam": 1062.0,
+     "en_kotu": -439.4,
+     "kotu10": -123.1,
+     "maksDD": -456.0
+    },
+    "W1_YARIM": {
+     "ort": 35.6,
+     "toplam": 3094.0,
+     "en_kotu": -501.9,
+     "kotu10": -265.3,
+     "maksDD": -818.0
+    },
+    "dolum_%": 63.0,
+    "kacan_piyasa_ort": 128.7,
+    "kacan_kazanan_%": 88.2,
+    "hayalet": {
+     "gercek_ort": 30.1,
+     "hayalet_ort": 36.2,
+     "P_gercek_ust": 0.06,
+     "tepki_gercek_%": 62.1,
+     "tepki_n": 29,
+     "tepki_hayalet_%": 50.6,
+     "P_tepki_ust": 0.938
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 40.2,
+    "uzaklik_medyan_bp": 134.2,
+    "W2_B": {
+     "ort": 35.3,
+     "toplam": 3068.0,
+     "en_kotu": -501.9,
+     "kotu10": -237.8,
+     "maksDD": -707.0
+    },
+    "W2_A": {
+     "ort": 2.0,
+     "toplam": 178.0,
+     "en_kotu": -405.5,
+     "kotu10": -90.5,
+     "maksDD": -449.0
+    },
+    "W2_YARIM": {
+     "ort": 38.1,
+     "toplam": 3318.0,
+     "en_kotu": -501.9,
+     "kotu10": -258.5,
+     "maksDD": -796.0
+    },
+    "W1_B": {
+     "ort": 36.5,
+     "toplam": 3177.0,
+     "en_kotu": -501.9,
+     "kotu10": -197.7,
+     "maksDD": -721.0
+    },
+    "W1_A": {
+     "ort": 3.3,
+     "toplam": 286.0,
+     "en_kotu": -180.4,
+     "kotu10": -39.8,
+     "maksDD": -201.0
+    },
+    "W1_YARIM": {
+     "ort": 38.8,
+     "toplam": 3372.0,
+     "en_kotu": -501.9,
+     "kotu10": -233.2,
+     "maksDD": -594.0
+    },
+    "dolum_%": 40.0,
+    "kacan_piyasa_ort": 73.9,
+    "kacan_kazanan_%": 81.0,
+    "hayalet": {
+     "gercek_ort": 35.3,
+     "hayalet_ort": 37.1,
+     "P_gercek_ust": 0.304,
+     "tepki_gercek_%": 71.4,
+     "tepki_n": 14,
+     "tepki_hayalet_%": 48.0,
+     "P_tepki_ust": 0.97
+    }
+   },
+   "D20": {
+    "seviye_var_%": 66.7,
+    "uzaklik_medyan_bp": 33.6,
+    "W2_B": {
+     "ort": 27.8,
+     "toplam": 2421.0,
+     "en_kotu": -468.4,
+     "kotu10": -244.6,
+     "maksDD": -710.0
+    },
+    "W2_A": {
+     "ort": 10.9,
+     "toplam": 948.0,
+     "en_kotu": -468.4,
+     "kotu10": -210.6,
+     "maksDD": -788.0
+    },
+    "W2_YARIM": {
+     "ort": 34.4,
+     "toplam": 2994.0,
+     "en_kotu": -501.3,
+     "kotu10": -262.4,
+     "maksDD": -781.0
+    },
+    "W1_B": {
+     "ort": 28.9,
+     "toplam": 2511.0,
+     "en_kotu": -468.4,
+     "kotu10": -244.6,
+     "maksDD": -620.0
+    },
+    "W1_A": {
+     "ort": 11.9,
+     "toplam": 1039.0,
+     "en_kotu": -468.4,
+     "kotu10": -202.3,
+     "maksDD": -698.0
+    },
+    "W1_YARIM": {
+     "ort": 34.9,
+     "toplam": 3039.0,
+     "en_kotu": -501.3,
+     "kotu10": -257.3,
+     "maksDD": -736.0
+    },
+    "dolum_%": 67.2,
+    "kacan_piyasa_ort": 140.1,
+    "kacan_kazanan_%": 89.5,
+    "hayalet": {
+     "gercek_ort": 27.8,
+     "hayalet_ort": 35.6,
+     "P_gercek_ust": 0.022,
+     "tepki_gercek_%": 56.4,
+     "tepki_n": 39,
+     "tepki_hayalet_%": 46.4,
+     "P_tepki_ust": 0.948
+    }
+   },
+   "P5": {
+    "seviye_var_%": 55.2,
+    "uzaklik_medyan_bp": 33.6,
+    "W2_B": {
+     "ort": 27.1,
+     "toplam": 2356.0,
+     "en_kotu": -507.6,
+     "kotu10": -262.1,
+     "maksDD": -828.0
+    },
+    "W2_A": {
+     "ort": 12.6,
+     "toplam": 1099.0,
+     "en_kotu": -507.6,
+     "kotu10": -136.5,
+     "maksDD": -532.0
+    },
+    "W2_YARIM": {
+     "ort": 34.0,
+     "toplam": 2961.0,
+     "en_kotu": -520.9,
+     "kotu10": -271.5,
+     "maksDD": -856.0
+    },
+    "W1_B": {
+     "ort": 27.1,
+     "toplam": 2356.0,
+     "en_kotu": -507.6,
+     "kotu10": -262.1,
+     "maksDD": -828.0
+    },
+    "W1_A": {
+     "ort": 12.6,
+     "toplam": 1099.0,
+     "en_kotu": -507.6,
+     "kotu10": -136.5,
+     "maksDD": -532.0
+    },
+    "W1_YARIM": {
+     "ort": 34.0,
+     "toplam": 2961.0,
+     "en_kotu": -520.9,
+     "kotu10": -271.5,
+     "maksDD": -856.0
+    },
+    "dolum_%": 64.6,
+    "kacan_piyasa_ort": 134.5,
+    "kacan_kazanan_%": 94.1,
+    "hayalet": {
+     "gercek_ort": 27.1,
+     "hayalet_ort": 34.5,
+     "P_gercek_ust": 0.038,
+     "tepki_gercek_%": 54.8,
+     "tepki_n": 31,
+     "tepki_hayalet_%": 51.3,
+     "P_tepki_ust": 0.676
+    }
+   },
+   "P20": {
+    "seviye_var_%": 67.8,
+    "uzaklik_medyan_bp": 24.0,
+    "W2_B": {
+     "ort": 25.2,
+     "toplam": 2192.0,
+     "en_kotu": -507.6,
+     "kotu10": -265.8,
+     "maksDD": -812.0
+    },
+    "W2_A": {
+     "ort": 9.4,
+     "toplam": 817.0,
+     "en_kotu": -507.6,
+     "kotu10": -232.7,
+     "maksDD": -754.0
+    },
+    "W2_YARIM": {
+     "ort": 33.1,
+     "toplam": 2879.0,
+     "en_kotu": -520.9,
+     "kotu10": -273.7,
+     "maksDD": -849.0
+    },
+    "W1_B": {
+     "ort": 25.2,
+     "toplam": 2192.0,
+     "en_kotu": -507.6,
+     "kotu10": -265.8,
+     "maksDD": -812.0
+    },
+    "W1_A": {
+     "ort": 9.4,
+     "toplam": 817.0,
+     "en_kotu": -507.6,
+     "kotu10": -232.7,
+     "maksDD": -754.0
+    },
+    "W1_YARIM": {
+     "ort": 33.1,
+     "toplam": 2879.0,
+     "en_kotu": -520.9,
+     "kotu10": -273.7,
+     "maksDD": -849.0
+    },
+    "dolum_%": 69.5,
+    "kacan_piyasa_ort": 142.1,
+    "kacan_kazanan_%": 94.4,
+    "hayalet": {
+     "gercek_ort": 25.2,
+     "hayalet_ort": 35.7,
+     "P_gercek_ust": 0.002,
+     "tepki_gercek_%": 48.8,
+     "tepki_n": 41,
+     "tepki_hayalet_%": 46.0,
+     "P_tepki_ust": 0.688
+    }
+   },
+   "W8": {
+    "seviye_var_%": 79.3,
+    "uzaklik_medyan_bp": 79.1,
+    "W2_B": {
+     "ort": 30.6,
+     "toplam": 2666.0,
+     "en_kotu": -468.4,
+     "kotu10": -189.0,
+     "maksDD": -642.0
+    },
+    "W2_A": {
+     "ort": 8.0,
+     "toplam": 695.0,
+     "en_kotu": -468.4,
+     "kotu10": -173.9,
+     "maksDD": -642.0
+    },
+    "W2_YARIM": {
+     "ort": 35.8,
+     "toplam": 3116.0,
+     "en_kotu": -501.3,
+     "kotu10": -231.4,
+     "maksDD": -736.0
+    },
+    "W1_B": {
+     "ort": 29.5,
+     "toplam": 2570.0,
+     "en_kotu": -468.4,
+     "kotu10": -170.3,
+     "maksDD": -552.0
+    },
+    "W1_A": {
+     "ort": 6.9,
+     "toplam": 600.0,
+     "en_kotu": -468.4,
+     "kotu10": -144.6,
+     "maksDD": -552.0
+    },
+    "W1_YARIM": {
+     "ort": 35.3,
+     "toplam": 3068.0,
+     "en_kotu": -501.3,
+     "kotu10": -212.7,
+     "maksDD": -719.0
+    },
+    "dolum_%": 49.3,
+    "kacan_piyasa_ort": 92.6,
+    "kacan_kazanan_%": 94.3,
+    "hayalet": {
+     "gercek_ort": 30.6,
+     "hayalet_ort": 30.4,
+     "P_gercek_ust": 0.51,
+     "tepki_gercek_%": 48.5,
+     "tepki_n": 33,
+     "tepki_hayalet_%": 48.8,
+     "P_tepki_ust": 0.476
+    }
+   }
+  }
+ },
+ "MT5_US2000": {
+  "TUM": {
+   "n_sinyal": 234,
+   "piyasa": {
+    "ort": 54.5,
+    "toplam": 12761.0,
+    "en_kotu": -869.3,
+    "kotu10": -402.9,
+    "maksDD": -2483.0
+   },
+   "D5": {
+    "seviye_var_%": 56.4,
+    "uzaklik_medyan_bp": 63.8,
+    "W2_B": {
+     "ort": 54.7,
+     "toplam": 12809.0,
+     "en_kotu": -869.3,
+     "kotu10": -363.9,
+     "maksDD": -2682.0
+    },
+    "W2_A": {
+     "ort": 39.7,
+     "toplam": 9294.0,
+     "en_kotu": -642.3,
+     "kotu10": -137.8,
+     "maksDD": -1029.0
+    },
+    "W2_YARIM": {
+     "ort": 54.6,
+     "toplam": 12785.0,
+     "en_kotu": -869.3,
+     "kotu10": -381.5,
+     "maksDD": -2582.0
+    },
+    "W1_B": {
+     "ort": 53.5,
+     "toplam": 12520.0,
+     "en_kotu": -869.3,
+     "kotu10": -363.9,
+     "maksDD": -2682.0
+    },
+    "W1_A": {
+     "ort": 38.5,
+     "toplam": 9004.0,
+     "en_kotu": -642.3,
+     "kotu10": -135.6,
+     "maksDD": -1029.0
+    },
+    "W1_YARIM": {
+     "ort": 54.0,
+     "toplam": 12640.0,
+     "en_kotu": -869.3,
+     "kotu10": -381.5,
+     "maksDD": -2582.0
+    },
+    "dolum_%": 67.4,
+    "kacan_piyasa_ort": 151.8,
+    "kacan_kazanan_%": 97.7,
+    "hayalet": {
+     "gercek_ort": 54.7,
+     "hayalet_ort": 49.1,
+     "P_gercek_ust": 0.924,
+     "tepki_gercek_%": 52.3,
+     "tepki_n": 88,
+     "tepki_hayalet_%": 47.1,
+     "P_tepki_ust": 0.866
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 40.2,
+    "uzaklik_medyan_bp": 126.7,
+    "W2_B": {
+     "ort": 50.4,
+     "toplam": 11783.0,
+     "en_kotu": -869.3,
+     "kotu10": -367.1,
+     "maksDD": -2597.0
+    },
+    "W2_A": {
+     "ort": 13.9,
+     "toplam": 3262.0,
+     "en_kotu": -631.8,
+     "kotu10": -95.7,
+     "maksDD": -863.0
+    },
+    "W2_YARIM": {
+     "ort": 52.4,
+     "toplam": 12272.0,
+     "en_kotu": -869.3,
+     "kotu10": -383.9,
+     "maksDD": -2515.0
+    },
+    "W1_B": {
+     "ort": 48.9,
+     "toplam": 11433.0,
+     "en_kotu": -869.3,
+     "kotu10": -367.1,
+     "maksDD": -2597.0
+    },
+    "W1_A": {
+     "ort": 12.4,
+     "toplam": 2911.0,
+     "en_kotu": -631.8,
+     "kotu10": -87.8,
+     "maksDD": -863.0
+    },
+    "W1_YARIM": {
+     "ort": 51.7,
+     "toplam": 12097.0,
+     "en_kotu": -869.3,
+     "kotu10": -381.0,
+     "maksDD": -2515.0
+    },
+    "dolum_%": 46.8,
+    "kacan_piyasa_ort": 133.6,
+    "kacan_kazanan_%": 96.0,
+    "hayalet": {
+     "gercek_ort": 50.4,
+     "hayalet_ort": 49.6,
+     "P_gercek_ust": 0.606,
+     "tepki_gercek_%": 50.0,
+     "tepki_n": 44,
+     "tepki_hayalet_%": 48.3,
+     "P_tepki_ust": 0.588
+    }
+   },
+   "D20": {
+    "seviye_var_%": 74.8,
+    "uzaklik_medyan_bp": 51.6,
+    "W2_B": {
+     "ort": 57.1,
+     "toplam": 13364.0,
+     "en_kotu": -869.3,
+     "kotu10": -347.3,
+     "maksDD": -2320.0
+    },
+    "W2_A": {
+     "ort": 48.0,
+     "toplam": 11240.0,
+     "en_kotu": -642.3,
+     "kotu10": -221.5,
+     "maksDD": -1306.0
+    },
+    "W2_YARIM": {
+     "ort": 55.8,
+     "toplam": 13063.0,
+     "en_kotu": -869.3,
+     "kotu10": -372.8,
+     "maksDD": -2401.0
+    },
+    "W1_B": {
+     "ort": 55.9,
+     "toplam": 13083.0,
+     "en_kotu": -869.3,
+     "kotu10": -347.3,
+     "maksDD": -2320.0
+    },
+    "W1_A": {
+     "ort": 46.8,
+     "toplam": 10959.0,
+     "en_kotu": -642.3,
+     "kotu10": -221.5,
+     "maksDD": -1306.0
+    },
+    "W1_YARIM": {
+     "ort": 55.2,
+     "toplam": 12922.0,
+     "en_kotu": -869.3,
+     "kotu10": -372.8,
+     "maksDD": -2401.0
+    },
+    "dolum_%": 72.0,
+    "kacan_piyasa_ort": 151.1,
+    "kacan_kazanan_%": 98.0,
+    "hayalet": {
+     "gercek_ort": 57.1,
+     "hayalet_ort": 53.8,
+     "P_gercek_ust": 0.79,
+     "tepki_gercek_%": 47.2,
+     "tepki_n": 125,
+     "tepki_hayalet_%": 47.6,
+     "P_tepki_ust": 0.45
+    }
+   },
+   "P5": {
+    "seviye_var_%": 62.4,
+    "uzaklik_medyan_bp": 40.7,
+    "W2_B": {
+     "ort": 55.1,
+     "toplam": 12899.0,
+     "en_kotu": -869.3,
+     "kotu10": -377.9,
+     "maksDD": -2195.0
+    },
+    "W2_A": {
+     "ort": 48.1,
+     "toplam": 11255.0,
+     "en_kotu": -670.5,
+     "kotu10": -180.4,
+     "maksDD": -671.0
+    },
+    "W2_YARIM": {
+     "ort": 54.8,
+     "toplam": 12830.0,
+     "en_kotu": -869.3,
+     "kotu10": -389.8,
+     "maksDD": -2339.0
+    },
+    "W1_B": {
+     "ort": 53.7,
+     "toplam": 12554.0,
+     "en_kotu": -869.3,
+     "kotu10": -377.9,
+     "maksDD": -2195.0
+    },
+    "W1_A": {
+     "ort": 46.6,
+     "toplam": 10911.0,
+     "en_kotu": -670.5,
+     "kotu10": -180.4,
+     "maksDD": -671.0
+    },
+    "W1_YARIM": {
+     "ort": 54.1,
+     "toplam": 12658.0,
+     "en_kotu": -869.3,
+     "kotu10": -389.8,
+     "maksDD": -2339.0
+    },
+    "dolum_%": 74.0,
+    "kacan_piyasa_ort": 157.4,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 55.1,
+     "hayalet_ort": 49.0,
+     "P_gercek_ust": 0.966,
+     "tepki_gercek_%": 48.6,
+     "tepki_n": 107,
+     "tepki_hayalet_%": 47.0,
+     "P_tepki_ust": 0.668
+    }
+   },
+   "P20": {
+    "seviye_var_%": 79.5,
+    "uzaklik_medyan_bp": 34.1,
+    "W2_B": {
+     "ort": 58.0,
+     "toplam": 13574.0,
+     "en_kotu": -869.3,
+     "kotu10": -369.1,
+     "maksDD": -2065.0
+    },
+    "W2_A": {
+     "ort": 56.2,
+     "toplam": 13162.0,
+     "en_kotu": -670.5,
+     "kotu10": -262.4,
+     "maksDD": -1050.0
+    },
+    "W2_YARIM": {
+     "ort": 56.3,
+     "toplam": 13167.0,
+     "en_kotu": -869.3,
+     "kotu10": -385.1,
+     "maksDD": -2248.0
+    },
+    "W1_B": {
+     "ort": 56.9,
+     "toplam": 13308.0,
+     "en_kotu": -869.3,
+     "kotu10": -369.1,
+     "maksDD": -2065.0
+    },
+    "W1_A": {
+     "ort": 55.1,
+     "toplam": 12897.0,
+     "en_kotu": -670.5,
+     "kotu10": -262.4,
+     "maksDD": -1050.0
+    },
+    "W1_YARIM": {
+     "ort": 55.7,
+     "toplam": 13035.0,
+     "en_kotu": -869.3,
+     "kotu10": -385.1,
+     "maksDD": -2248.0
+    },
+    "dolum_%": 78.5,
+    "kacan_piyasa_ort": 152.4,
+    "kacan_kazanan_%": 97.5,
+    "hayalet": {
+     "gercek_ort": 58.0,
+     "hayalet_ort": 53.3,
+     "P_gercek_ust": 0.95,
+     "tepki_gercek_%": 47.6,
+     "tepki_n": 145,
+     "tepki_hayalet_%": 47.3,
+     "P_tepki_ust": 0.548
+    }
+   },
+   "W8": {
+    "seviye_var_%": 64.1,
+    "uzaklik_medyan_bp": 113.6,
+    "W2_B": {
+     "ort": 53.9,
+     "toplam": 12623.0,
+     "en_kotu": -869.3,
+     "kotu10": -343.7,
+     "maksDD": -2048.0
+    },
+    "W2_A": {
+     "ort": 30.0,
+     "toplam": 7017.0,
+     "en_kotu": -615.7,
+     "kotu10": -163.3,
+     "maksDD": -1387.0
+    },
+    "W2_YARIM": {
+     "ort": 54.2,
+     "toplam": 12692.0,
+     "en_kotu": -869.3,
+     "kotu10": -369.7,
+     "maksDD": -2147.0
+    },
+    "W1_B": {
+     "ort": 49.5,
+     "toplam": 11591.0,
+     "en_kotu": -869.3,
+     "kotu10": -338.1,
+     "maksDD": -2048.0
+    },
+    "W1_A": {
+     "ort": 25.6,
+     "toplam": 5985.0,
+     "en_kotu": -615.7,
+     "kotu10": -144.1,
+     "maksDD": -1387.0
+    },
+    "W1_YARIM": {
+     "ort": 52.0,
+     "toplam": 12176.0,
+     "en_kotu": -869.3,
+     "kotu10": -361.0,
+     "maksDD": -2215.0
+    },
+    "dolum_%": 56.7,
+    "kacan_piyasa_ort": 121.6,
+    "kacan_kazanan_%": 93.8,
+    "hayalet": {
+     "gercek_ort": 53.9,
+     "hayalet_ort": 51.9,
+     "P_gercek_ust": 0.692,
+     "tepki_gercek_%": 42.4,
+     "tepki_n": 85,
+     "tepki_hayalet_%": 51.3,
+     "P_tepki_ust": 0.042
+    }
+   }
+  },
+  "KESIF": {
+   "n_sinyal": 106,
+   "piyasa": {
+    "ort": 58.7,
+    "toplam": 6225.0,
+    "en_kotu": -869.3,
+    "kotu10": -475.4,
+    "maksDD": -2483.0
+   },
+   "D5": {
+    "seviye_var_%": 58.5,
+    "uzaklik_medyan_bp": 60.7,
+    "W2_B": {
+     "ort": 62.2,
+     "toplam": 6589.0,
+     "en_kotu": -869.3,
+     "kotu10": -425.3,
+     "maksDD": -2682.0
+    },
+    "W2_A": {
+     "ort": 36.4,
+     "toplam": 3861.0,
+     "en_kotu": -642.3,
+     "kotu10": -209.0,
+     "maksDD": -1029.0
+    },
+    "W2_YARIM": {
+     "ort": 60.4,
+     "toplam": 6407.0,
+     "en_kotu": -869.3,
+     "kotu10": -449.9,
+     "maksDD": -2582.0
+    },
+    "W1_B": {
+     "ort": 62.2,
+     "toplam": 6589.0,
+     "en_kotu": -869.3,
+     "kotu10": -425.3,
+     "maksDD": -2682.0
+    },
+    "W1_A": {
+     "ort": 36.4,
+     "toplam": 3861.0,
+     "en_kotu": -642.3,
+     "kotu10": -209.0,
+     "maksDD": -1029.0
+    },
+    "W1_YARIM": {
+     "ort": 60.4,
+     "toplam": 6407.0,
+     "en_kotu": -869.3,
+     "kotu10": -449.9,
+     "maksDD": -2582.0
+    },
+    "dolum_%": 72.6,
+    "kacan_piyasa_ort": 162.2,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 62.2,
+     "hayalet_ort": 59.3,
+     "P_gercek_ust": 0.716,
+     "tepki_gercek_%": 47.7,
+     "tepki_n": 44,
+     "tepki_hayalet_%": 42.6,
+     "P_tepki_ust": 0.77
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 43.4,
+    "uzaklik_medyan_bp": 153.2,
+    "W2_B": {
+     "ort": 58.4,
+     "toplam": 6186.0,
+     "en_kotu": -869.3,
+     "kotu10": -422.1,
+     "maksDD": -2597.0
+    },
+    "W2_A": {
+     "ort": 14.2,
+     "toplam": 1503.0,
+     "en_kotu": -631.8,
+     "kotu10": -146.8,
+     "maksDD": -863.0
+    },
+    "W2_YARIM": {
+     "ort": 58.5,
+     "toplam": 6206.0,
+     "en_kotu": -869.3,
+     "kotu10": -445.2,
+     "maksDD": -2515.0
+    },
+    "W1_B": {
+     "ort": 55.5,
+     "toplam": 5881.0,
+     "en_kotu": -869.3,
+     "kotu10": -422.1,
+     "maksDD": -2597.0
+    },
+    "W1_A": {
+     "ort": 11.3,
+     "toplam": 1197.0,
+     "en_kotu": -631.8,
+     "kotu10": -146.8,
+     "maksDD": -863.0
+    },
+    "W1_YARIM": {
+     "ort": 57.1,
+     "toplam": 6053.0,
+     "en_kotu": -869.3,
+     "kotu10": -445.2,
+     "maksDD": -2515.0
+    },
+    "dolum_%": 50.0,
+    "kacan_piyasa_ort": 135.6,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 58.4,
+     "hayalet_ort": 56.1,
+     "P_gercek_ust": 0.668,
+     "tepki_gercek_%": 52.2,
+     "tepki_n": 23,
+     "tepki_hayalet_%": 50.9,
+     "P_tepki_ust": 0.528
+    }
+   },
+   "D20": {
+    "seviye_var_%": 77.4,
+    "uzaklik_medyan_bp": 54.6,
+    "W2_B": {
+     "ort": 65.0,
+     "toplam": 6889.0,
+     "en_kotu": -869.3,
+     "kotu10": -424.1,
+     "maksDD": -2320.0
+    },
+    "W2_A": {
+     "ort": 53.4,
+     "toplam": 5663.0,
+     "en_kotu": -642.3,
+     "kotu10": -253.6,
+     "maksDD": -1306.0
+    },
+    "W2_YARIM": {
+     "ort": 61.9,
+     "toplam": 6557.0,
+     "en_kotu": -869.3,
+     "kotu10": -449.8,
+     "maksDD": -2401.0
+    },
+    "W1_B": {
+     "ort": 65.0,
+     "toplam": 6889.0,
+     "en_kotu": -869.3,
+     "kotu10": -424.1,
+     "maksDD": -2320.0
+    },
+    "W1_A": {
+     "ort": 53.4,
+     "toplam": 5663.0,
+     "en_kotu": -642.3,
+     "kotu10": -253.6,
+     "maksDD": -1306.0
+    },
+    "W1_YARIM": {
+     "ort": 61.9,
+     "toplam": 6557.0,
+     "en_kotu": -869.3,
+     "kotu10": -449.8,
+     "maksDD": -2401.0
+    },
+    "dolum_%": 75.6,
+    "kacan_piyasa_ort": 162.5,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 65.0,
+     "hayalet_ort": 65.1,
+     "P_gercek_ust": 0.502,
+     "tepki_gercek_%": 41.0,
+     "tepki_n": 61,
+     "tepki_hayalet_%": 42.6,
+     "P_tepki_ust": 0.348
+    }
+   },
+   "P5": {
+    "seviye_var_%": 65.1,
+    "uzaklik_medyan_bp": 44.4,
+    "W2_B": {
+     "ort": 69.7,
+     "toplam": 7392.0,
+     "en_kotu": -869.3,
+     "kotu10": -444.3,
+     "maksDD": -2195.0
+    },
+    "W2_A": {
+     "ort": 54.8,
+     "toplam": 5809.0,
+     "en_kotu": -670.5,
+     "kotu10": -257.3,
+     "maksDD": -671.0
+    },
+    "W2_YARIM": {
+     "ort": 64.2,
+     "toplam": 6809.0,
+     "en_kotu": -869.3,
+     "kotu10": -455.4,
+     "maksDD": -2339.0
+    },
+    "W1_B": {
+     "ort": 69.7,
+     "toplam": 7392.0,
+     "en_kotu": -869.3,
+     "kotu10": -444.3,
+     "maksDD": -2195.0
+    },
+    "W1_A": {
+     "ort": 54.8,
+     "toplam": 5809.0,
+     "en_kotu": -670.5,
+     "kotu10": -257.3,
+     "maksDD": -671.0
+    },
+    "W1_YARIM": {
+     "ort": 64.2,
+     "toplam": 6809.0,
+     "en_kotu": -869.3,
+     "kotu10": -455.4,
+     "maksDD": -2339.0
+    },
+    "dolum_%": 79.7,
+    "kacan_piyasa_ort": 148.9,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 69.7,
+     "hayalet_ort": 60.9,
+     "P_gercek_ust": 0.922,
+     "tepki_gercek_%": 40.7,
+     "tepki_n": 54,
+     "tepki_hayalet_%": 40.7,
+     "P_tepki_ust": 0.478
+    }
+   },
+   "P20": {
+    "seviye_var_%": 83.0,
+    "uzaklik_medyan_bp": 37.3,
+    "W2_B": {
+     "ort": 69.3,
+     "toplam": 7350.0,
+     "en_kotu": -869.3,
+     "kotu10": -444.7,
+     "maksDD": -2065.0
+    },
+    "W2_A": {
+     "ort": 69.8,
+     "toplam": 7396.0,
+     "en_kotu": -670.5,
+     "kotu10": -297.4,
+     "maksDD": -953.0
+    },
+    "W2_YARIM": {
+     "ort": 64.0,
+     "toplam": 6788.0,
+     "en_kotu": -869.3,
+     "kotu10": -456.6,
+     "maksDD": -2248.0
+    },
+    "W1_B": {
+     "ort": 69.3,
+     "toplam": 7350.0,
+     "en_kotu": -869.3,
+     "kotu10": -444.7,
+     "maksDD": -2065.0
+    },
+    "W1_A": {
+     "ort": 69.8,
+     "toplam": 7396.0,
+     "en_kotu": -670.5,
+     "kotu10": -297.4,
+     "maksDD": -953.0
+    },
+    "W1_YARIM": {
+     "ort": 64.0,
+     "toplam": 6788.0,
+     "en_kotu": -869.3,
+     "kotu10": -456.6,
+     "maksDD": -2248.0
+    },
+    "dolum_%": 81.8,
+    "kacan_piyasa_ort": 158.2,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 69.3,
+     "hayalet_ort": 65.1,
+     "P_gercek_ust": 0.792,
+     "tepki_gercek_%": 42.3,
+     "tepki_n": 71,
+     "tepki_hayalet_%": 41.8,
+     "P_tepki_ust": 0.542
+    }
+   },
+   "W8": {
+    "seviye_var_%": 59.4,
+    "uzaklik_medyan_bp": 112.5,
+    "W2_B": {
+     "ort": 54.4,
+     "toplam": 5771.0,
+     "en_kotu": -869.3,
+     "kotu10": -445.2,
+     "maksDD": -2048.0
+    },
+    "W2_A": {
+     "ort": 27.5,
+     "toplam": 2916.0,
+     "en_kotu": -615.7,
+     "kotu10": -172.9,
+     "maksDD": -1387.0
+    },
+    "W2_YARIM": {
+     "ort": 56.6,
+     "toplam": 5998.0,
+     "en_kotu": -869.3,
+     "kotu10": -460.3,
+     "maksDD": -2147.0
+    },
+    "W1_B": {
+     "ort": 49.3,
+     "toplam": 5229.0,
+     "en_kotu": -869.3,
+     "kotu10": -445.2,
+     "maksDD": -2048.0
+    },
+    "W1_A": {
+     "ort": 22.4,
+     "toplam": 2374.0,
+     "en_kotu": -615.7,
+     "kotu10": -172.9,
+     "maksDD": -1387.0
+    },
+    "W1_YARIM": {
+     "ort": 54.0,
+     "toplam": 5727.0,
+     "en_kotu": -869.3,
+     "kotu10": -460.3,
+     "maksDD": -2215.0
+    },
+    "dolum_%": 57.1,
+    "kacan_piyasa_ort": 135.8,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 54.4,
+     "hayalet_ort": 60.8,
+     "P_gercek_ust": 0.132,
+     "tepki_gercek_%": 33.3,
+     "tepki_n": 36,
+     "tepki_hayalet_%": 50.6,
+     "P_tepki_ust": 0.01
+    }
+   }
+  },
+  "TEST": {
+   "n_sinyal": 128,
+   "piyasa": {
+    "ort": 51.1,
+    "toplam": 6536.0,
+    "en_kotu": -653.4,
+    "kotu10": -354.4,
+    "maksDD": -1169.0
+   },
+   "D5": {
+    "seviye_var_%": 54.7,
+    "uzaklik_medyan_bp": 65.6,
+    "W2_B": {
+     "ort": 48.6,
+     "toplam": 6220.0,
+     "en_kotu": -653.4,
+     "kotu10": -319.9,
+     "maksDD": -1499.0
+    },
+    "W2_A": {
+     "ort": 42.4,
+     "toplam": 5433.0,
+     "en_kotu": -360.1,
+     "kotu10": -89.9,
+     "maksDD": -360.0
+    },
+    "W2_YARIM": {
+     "ort": 49.8,
+     "toplam": 6378.0,
+     "en_kotu": -653.4,
+     "kotu10": -329.2,
+     "maksDD": -1334.0
+    },
+    "W1_B": {
+     "ort": 46.3,
+     "toplam": 5931.0,
+     "en_kotu": -653.4,
+     "kotu10": -319.9,
+     "maksDD": -1499.0
+    },
+    "W1_A": {
+     "ort": 40.2,
+     "toplam": 5144.0,
+     "en_kotu": -360.1,
+     "kotu10": -85.7,
+     "maksDD": -360.0
+    },
+    "W1_YARIM": {
+     "ort": 48.7,
+     "toplam": 6233.0,
+     "en_kotu": -653.4,
+     "kotu10": -329.2,
+     "maksDD": -1334.0
+    },
+    "dolum_%": 62.9,
+    "kacan_piyasa_ort": 145.0,
+    "kacan_kazanan_%": 96.2,
+    "hayalet": {
+     "gercek_ort": 48.6,
+     "hayalet_ort": 41.2,
+     "P_gercek_ust": 0.926,
+     "tepki_gercek_%": 56.8,
+     "tepki_n": 44,
+     "tepki_hayalet_%": 51.4,
+     "P_tepki_ust": 0.786
+    }
+   },
+   "D5_2": {
+    "seviye_var_%": 37.5,
+    "uzaklik_medyan_bp": 109.0,
+    "W2_B": {
+     "ort": 43.7,
+     "toplam": 5597.0,
+     "en_kotu": -653.4,
+     "kotu10": -329.6,
+     "maksDD": -1452.0
+    },
+    "W2_A": {
+     "ort": 13.7,
+     "toplam": 1759.0,
+     "en_kotu": -322.1,
+     "kotu10": -61.0,
+     "maksDD": -322.0
+    },
+    "W2_YARIM": {
+     "ort": 47.4,
+     "toplam": 6066.0,
+     "en_kotu": -653.4,
+     "kotu10": -340.8,
+     "maksDD": -1310.0
+    },
+    "W1_B": {
+     "ort": 43.4,
+     "toplam": 5552.0,
+     "en_kotu": -653.4,
+     "kotu10": -326.7,
+     "maksDD": -1452.0
+    },
+    "W1_A": {
+     "ort": 13.4,
+     "toplam": 1714.0,
+     "en_kotu": -322.1,
+     "kotu10": -45.9,
+     "maksDD": -322.0
+    },
+    "W1_YARIM": {
+     "ort": 47.2,
+     "toplam": 6044.0,
+     "en_kotu": -653.4,
+     "kotu10": -333.2,
+     "maksDD": -1310.0
+    },
+    "dolum_%": 43.8,
+    "kacan_piyasa_ort": 132.0,
+    "kacan_kazanan_%": 92.6,
+    "hayalet": {
+     "gercek_ort": 43.7,
+     "hayalet_ort": 43.5,
+     "P_gercek_ust": 0.514,
+     "tepki_gercek_%": 47.6,
+     "tepki_n": 21,
+     "tepki_hayalet_%": 47.6,
+     "P_tepki_ust": 0.464
+    }
+   },
+   "D20": {
+    "seviye_var_%": 72.7,
+    "uzaklik_medyan_bp": 49.8,
+    "W2_B": {
+     "ort": 50.6,
+     "toplam": 6475.0,
+     "en_kotu": -577.3,
+     "kotu10": -292.8,
+     "maksDD": -1325.0
+    },
+    "W2_A": {
+     "ort": 43.6,
+     "toplam": 5577.0,
+     "en_kotu": -568.5,
+     "kotu10": -208.5,
+     "maksDD": -911.0
+    },
+    "W2_YARIM": {
+     "ort": 50.8,
+     "toplam": 6505.0,
+     "en_kotu": -611.0,
+     "kotu10": -316.4,
+     "maksDD": -1247.0
+    },
+    "W1_B": {
+     "ort": 48.4,
+     "toplam": 6194.0,
+     "en_kotu": -577.3,
+     "kotu10": -292.8,
+     "maksDD": -1325.0
+    },
+    "W1_A": {
+     "ort": 41.4,
+     "toplam": 5296.0,
+     "en_kotu": -568.5,
+     "kotu10": -208.5,
+     "maksDD": -911.0
+    },
+    "W1_YARIM": {
+     "ort": 49.7,
+     "toplam": 6365.0,
+     "en_kotu": -611.0,
+     "kotu10": -316.4,
+     "maksDD": -1247.0
+    },
+    "dolum_%": 68.8,
+    "kacan_piyasa_ort": 143.2,
+    "kacan_kazanan_%": 96.6,
+    "hayalet": {
+     "gercek_ort": 50.6,
+     "hayalet_ort": 44.8,
+     "P_gercek_ust": 0.888,
+     "tepki_gercek_%": 53.1,
+     "tepki_n": 64,
+     "tepki_hayalet_%": 52.9,
+     "P_tepki_ust": 0.484
+    }
+   },
+   "P5": {
+    "seviye_var_%": 60.2,
+    "uzaklik_medyan_bp": 39.1,
+    "W2_B": {
+     "ort": 43.0,
+     "toplam": 5507.0,
+     "en_kotu": -653.4,
+     "kotu10": -336.4,
+     "maksDD": -1497.0
+    },
+    "W2_A": {
+     "ort": 42.5,
+     "toplam": 5446.0,
+     "en_kotu": -418.1,
+     "kotu10": -127.6,
+     "maksDD": -583.0
+    },
+    "W2_YARIM": {
+     "ort": 47.0,
+     "toplam": 6021.0,
+     "en_kotu": -653.4,
+     "kotu10": -342.7,
+     "maksDD": -1333.0
+    },
+    "W1_B": {
+     "ort": 40.3,
+     "toplam": 5162.0,
+     "en_kotu": -653.4,
+     "kotu10": -336.4,
+     "maksDD": -1497.0
+    },
+    "W1_A": {
+     "ort": 39.9,
+     "toplam": 5101.0,
+     "en_kotu": -418.1,
+     "kotu10": -127.6,
+     "maksDD": -583.0
+    },
+    "W1_YARIM": {
+     "ort": 45.7,
+     "toplam": 5849.0,
+     "en_kotu": -653.4,
+     "kotu10": -342.7,
+     "maksDD": -1333.0
+    },
+    "dolum_%": 68.8,
+    "kacan_piyasa_ort": 162.4,
+    "kacan_kazanan_%": 100.0,
+    "hayalet": {
+     "gercek_ort": 43.0,
+     "hayalet_ort": 39.5,
+     "P_gercek_ust": 0.826,
+     "tepki_gercek_%": 56.6,
+     "tepki_n": 53,
+     "tepki_hayalet_%": 53.1,
+     "P_tepki_ust": 0.702
+    }
+   },
+   "P20": {
+    "seviye_var_%": 76.6,
+    "uzaklik_medyan_bp": 31.7,
+    "W2_B": {
+     "ort": 48.6,
+     "toplam": 6223.0,
+     "en_kotu": -624.4,
+     "kotu10": -321.7,
+     "maksDD": -1437.0
+    },
+    "W2_A": {
+     "ort": 45.0,
+     "toplam": 5766.0,
+     "en_kotu": -624.4,
+     "kotu10": -248.0,
+     "maksDD": -1050.0
+    },
+    "W2_YARIM": {
+     "ort": 49.8,
+     "toplam": 6379.0,
+     "en_kotu": -638.9,
+     "kotu10": -336.5,
+     "maksDD": -1303.0
+    },
+    "W1_B": {
+     "ort": 46.5,
+     "toplam": 5958.0,
+     "en_kotu": -624.4,
+     "kotu10": -321.7,
+     "maksDD": -1437.0
+    },
+    "W1_A": {
+     "ort": 43.0,
+     "toplam": 5500.0,
+     "en_kotu": -624.4,
+     "kotu10": -248.0,
+     "maksDD": -1050.0
+    },
+    "W1_YARIM": {
+     "ort": 48.8,
+     "toplam": 6247.0,
+     "en_kotu": -638.9,
+     "kotu10": -336.5,
+     "maksDD": -1303.0
+    },
+    "dolum_%": 75.5,
+    "kacan_piyasa_ort": 148.4,
+    "kacan_kazanan_%": 95.8,
+    "hayalet": {
+     "gercek_ort": 48.6,
+     "hayalet_ort": 44.1,
+     "P_gercek_ust": 0.88,
+     "tepki_gercek_%": 52.7,
+     "tepki_n": 74,
+     "tepki_hayalet_%": 52.8,
+     "P_tepki_ust": 0.466
+    }
+   },
+   "W8": {
+    "seviye_var_%": 68.0,
+    "uzaklik_medyan_bp": 121.1,
+    "W2_B": {
+     "ort": 53.5,
+     "toplam": 6851.0,
+     "en_kotu": -577.3,
+     "kotu10": -267.2,
+     "maksDD": -689.0
+    },
+    "W2_A": {
+     "ort": 32.0,
+     "toplam": 4101.0,
+     "en_kotu": -538.8,
+     "kotu10": -165.4,
+     "maksDD": -866.0
+    },
+    "W2_YARIM": {
+     "ort": 52.3,
+     "toplam": 6694.0,
+     "en_kotu": -596.1,
+     "kotu10": -305.4,
+     "maksDD": -929.0
+    },
+    "W1_B": {
+     "ort": 49.7,
+     "toplam": 6362.0,
+     "en_kotu": -577.3,
+     "kotu10": -255.6,
+     "maksDD": -620.0
+    },
+    "W1_A": {
+     "ort": 28.2,
+     "toplam": 3611.0,
+     "en_kotu": -538.8,
+     "kotu10": -132.1,
+     "maksDD": -591.0
+    },
+    "W1_YARIM": {
+     "ort": 50.4,
+     "toplam": 6449.0,
+     "en_kotu": -596.1,
+     "kotu10": -287.0,
+     "maksDD": -791.0
+    },
+    "dolum_%": 56.3,
+    "kacan_piyasa_ort": 111.5,
+    "kacan_kazanan_%": 89.5,
+    "hayalet": {
+     "gercek_ort": 53.5,
+     "hayalet_ort": 45.0,
+     "P_gercek_ust": 0.932,
+     "tepki_gercek_%": 49.0,
+     "tepki_n": 49,
+     "tepki_hayalet_%": 53.1,
+     "P_tepki_ust": 0.296
+    }
+   }
+  }
+ }
+}

@@ -83,6 +83,7 @@ textarea{width:100%;min-height:64px;padding:6px 8px;resize:vertical;box-sizing:b
           <span><i class="sw" style="background:var(--twap)"></i>giriş günü TWAP (09:30–16:00)</span>
           <span><i class="sw" style="background:var(--down)"></i>● N.g ↓ = N. gün 16:00 düştü, tut</span><span>● dip = en derin nokta</span>
           <span><i class="sw" style="background:var(--exit)"></i>▼ çıkış ve çıkış fiyatı çizgisi</span>
+          <span><i class="sw" style="background:var(--muted)"></i>gri noktalı: geçmiş destekler (D5 gün dibi, P5 salınım dibi, W8 hafta dibi)</span>
           <span>tekerlek: yakınlaştır · sürükle: kaydır · çift tık eksen: sıfırla</span>
         </div>
         <div id="cv" style="height:460px;width:100%;position:relative" role="img" aria-label="İşlem grafiği"></div>
@@ -92,6 +93,8 @@ textarea{width:100%;min-height:64px;padding:6px 8px;resize:vertical;box-sizing:b
       <div class="cards">
         <section class="panel"><h2>Neden açıldı (kural)</h2><ol class="steps" id="why"></ol></section>
         <section class="panel"><h2>Nasıl kapandı (çıkış kuralı)</h2><ol class="steps" id="how"></ol></section>
+        <section class="panel"><h2>Destek limitleri (bu işlem)</h2><ol class="steps" id="dest"></ol>
+          <p class="muted" style="font-size:12px">Limit emri 16:00'da desteğe konur, XP çıkışına kadar bekler; çıkış aynı. ≈ = 30 dk mumla yaklaşık, spread ve finansman hariç. Grafikte gri noktalı çizgiler.</p></section>
         <section class="panel"><h2>Giriş anı bilgileri</h2><div class="kv" id="ctx"></div><div class="row" id="gates"></div></section>
         <section class="panel"><h2>Notun (bu işlem)</h2>
           <textarea id="note" placeholder="Bu işlemde ne görüyorsun? Taktik fikrin…"></textarea>
@@ -150,6 +153,12 @@ function render(){
     .map(([k,v])=>`<span>${k}</span><span>${v}</span>`).join('');
   const g = [['OPEX vetosu', [0,1,2].includes(t.opex_k)],['Olay günü vetosu', t.olay===1],['Son saat hafif (> −25,6)', t.son_saat>-25.6],['Düşük VIX (&lt; 17,4)', t.vix!=null&&t.vix<17.37]];
   $('gates').innerHTML = g.map(([k,v])=>`<span class="chip ${v?'veto':'ok'}">${k}: ${v?'açmazdı':'geçer'}</span>`).join('');
+  const FAM={D5:'son 5 günün en yakın gün dibi',D5_2:'son 5 günün ikinci gün dibi',P5:'son 5 günün 1 sa salınım dibi',W8:'son 8 haftanın en yakın hafta dibi'};
+  const ds=t.dest||{}, sgn=v=>(v>0?'+':'')+Math.round(v), after=t.bar.filter(b=>b[0]>=0&&t.giris_t+b[0]*60<t.cikis_t);
+  $('dest').innerHTML=Object.keys(FAM).map(k=>{const L=ds[k];
+    if(L==null) return `<li class="muted"><b>${k}</b> ${FAM[k]}: 15–300 bp içinde seviye yok</li>`;
+    const dist=(t.giris_p-L)/t.giris_p*1e4, hit=after.some(b=>b[3]<=L), v=(t.cikis_p/L-1)*1e4;
+    return `<li><b>${k}</b> ${FAM[k]}: ${fmt(L,1)} (${fmt(dist,0)} bp aşağı) — ${hit?`doldu → ≈${sgn(v)} bp <span class="muted">(piyasa ${sgn(t.net)})</span>`:`<span class="neg">dolmadı → işlem kaçtı</span> <span class="muted">(piyasa ${sgn(t.net)})</span>`}</li>`;}).join('');
   $('note').value = notes[t.id]||'';
   draw();
 }
@@ -168,7 +177,7 @@ function ensureChart(){
   if(!window.LightweightCharts){$('cv').textContent='Grafik kütüphanesi yüklenemedi (internet bağlantısını kontrol et).';return false;}
   new ResizeObserver(()=>{if(chart&&TR[cur])chart.timeScale().setVisibleLogicalRange({from:-1,to:TR[cur].bar.length+2});}).observe($('cv'));
   chart=LightweightCharts.createChart($('cv'),{autoSize:true,localization:{locale:'tr-TR'},crosshair:{mode:0},...theme()});
-  series=chart.addCandlestickSeries(candleColors());
+  series=chart.addCandlestickSeries({...candleColors(),autoscaleInfoProvider:orig=>{const r=orig();const d=TR[cur]&&TR[cur].dest;if(r&&d){const v=Object.values(d).filter(x=>x!=null);if(v.length){r.priceRange.minValue=Math.min(r.priceRange.minValue,...v);r.priceRange.maxValue=Math.max(r.priceRange.maxValue,...v);}}return r;}});
   twapS=chart.addLineSeries({color:css('--twap'),lineWidth:3,lineStyle:0,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
   chart.subscribeCrosshairMove(pr=>{const d=pr.seriesData&&pr.seriesData.get(series);if(!d){$('hover').textContent='';return;}
     const bp=(d.close/TR[cur].giris_p-1)*1e4;
@@ -192,6 +201,7 @@ function draw(){
   plines.forEach(pl=>series.removePriceLine(pl)); plines=[];
   if(vis>idx(t.giris_t)) plines.push(series.createPriceLine({price:t.giris_p,color:css('--entry'),lineWidth:1,lineStyle:2,axisLabelVisible:true,title:'Giriş'}));
   if(vis>idx(t.cikis_t)) plines.push(series.createPriceLine({price:t.cikis_p,color:css('--exit'),lineWidth:1,lineStyle:2,axisLabelVisible:true,title:'Çıkış'}));
+  const dsv=t.dest||{}; ['D5','D5_2','P5','W8'].forEach(k=>{if(dsv[k]!=null) plines.push(series.createPriceLine({price:dsv[k],color:css('--muted'),lineWidth:1,lineStyle:1,axisLabelVisible:true,title:k}));});
   const fit=()=>chart.timeScale().setVisibleLogicalRange({from:-1,to:n+2});
   fit(); requestAnimationFrame(fit); setTimeout(fit,150);
 }

@@ -1083,5 +1083,15 @@
   "output": "research/vw_dip_20261117/RAPOR.md",
   "needs_backend": false,
   "est_runtime": "~20 dk"
+ },
+ {
+  "id": "xp_destek_limit",
+  "name": "Korku gecesi + XP: geçmiş haftanın desteklerine limit girişi",
+  "kind": "script",
+  "command": ".venv/bin/python research/xp_destek_20261119/src/destek.py kos",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "K1 korku gecesi sinyalinde 16:00 piyasa girişi yerine geçmiş gün/hafta diplerine ve 1 saatlik salınım diplerine alım limiti koyar; hayalet seviye (uzaklık karıştırma) ve desteğe tepki testiyle Duka NDX + MT5 dört endekste KEŞİF/TEST karşılaştırır.",
+  "output": "research/xp_destek_20261119/RAPOR.md"
  }
 ]
