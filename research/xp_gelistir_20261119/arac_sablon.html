@@ -1,0 +1,280 @@
+<title>Korku Gecesi Laboratuvarı</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Düzen: solda kural paneli (dar ekranda üstte), sağda önce/sonra kutuları + üç grafik */
+:root{
+  --bg:#f4f6f8; --panel:#ffffff; --fg:#16202a; --muted:#5d6876; --line:#dbe1e7;
+  --base:#8a96a3; --rule:#1f63c6; --good:#1c7c47; --bad:#b4271f; --warn:#9a6300; --grid:#e8edf1;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10151c; --panel:#18202a; --fg:#e6eaef; --muted:#9ca8b6; --line:#2a3542;
+  --base:#7d8a98; --rule:#7fb2ff; --good:#6fd49b; --bad:#ff8b82; --warn:#f0c06c; --grid:#222c37; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10151c; --panel:#18202a; --fg:#e6eaef; --muted:#9ca8b6; --line:#2a3542;
+  --base:#7d8a98; --rule:#7fb2ff; --good:#6fd49b; --bad:#ff8b82; --warn:#f0c06c; --grid:#222c37; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.5}
+.wrap{max-width:1280px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+h1{font-family:var(--display);font-size:26px;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-size:16px;margin:0}
+p{margin:0;max-width:75ch}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:12px;min-width:0}
+.ctl{display:grid;gap:6px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+label{font-size:13px}
+select,input[type=number]{font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);max-width:100%}
+input[type=number]{width:84px}
+input[type=checkbox]{accent-color:var(--rule)}
+button{font:inherit;font-size:12.5px;padding:5px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);cursor:pointer}
+button:hover{border-color:var(--rule)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--rule);outline-offset:1px}
+.sep{border-top:1px solid var(--line)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px}
+.kpi .k{font-size:12px;color:var(--muted)}
+.kpi .v{font-family:var(--display);font-size:20px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:12px;font-variant-numeric:tabular-nums}
+.good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+.verdict{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-weight:500}
+canvas{width:100%;display:block}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:14px}
+.charts>*{min-width:0}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.sw{display:inline-block;width:12px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+.filt{display:grid;grid-template-columns:minmax(0,1fr) 54px 84px;gap:6px;align-items:center}
+.filt select{width:100%}
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <div class="eyebrow">Korku gecesi (K1) + "ilk yükselen kapanışta çık" · 1.013 işlem · NASDAQ + US500/US30/US2000 · 2018–2026</div>
+    <h1>Korku Gecesi Laboratuvarı</h1>
+    <p class="muted">Soldaki kuralları açıp kapat; önce (gri) ve sonra (mavi) aynı işlemler üzerinde anında hesaplanır. Rakamlar işlem başı bp (1 bp = %0,01). KEŞİF = 2018-04 → 2021-10 (kuralların seçildiği dönem), TEST = 2021-11 → 2026-11 (kör dönem). Hedef çizgisi: kâr ×1,0 ve zarar ×0,5.</p>
+  </header>
+
+  <div class="layout">
+    <aside class="panel" aria-label="Kural paneli">
+      <div class="ctl">
+        <h2>Veri</h2>
+        <div class="row"><label for="feed">Besleme</label><select id="feed"></select></div>
+        <div class="row"><label for="per">Dönem</label>
+          <select id="per"><option value="all">Tümü 2018–26</option><option value="K">KEŞİF 2018–21</option><option value="T" selected>TEST 2021–26 (kör)</option></select></div>
+      </div>
+      <div class="ctl">
+        <h2>Hazır ayarlar</h2>
+        <div class="row" id="presets"></div>
+      </div>
+      <div class="sep"></div>
+      <div class="ctl">
+        <h2>Vetolar (girişte açma)</h2>
+        <label><input type="checkbox" id="vOpex"> OPEX'e 0–2 işlem günü kala</label>
+        <label><input type="checkbox" id="vOlay"> CPI/NFP/FOMC/JH günü</label>
+        <div class="row"><label><input type="checkbox" id="vSaat"> Son saat düşüşü hafif: son saat &gt;</label><input type="number" id="vSaatT" step="1"><span class="muted">bp</span></div>
+        <div class="row"><label><input type="checkbox" id="vVix"> Düşük VIX: dünkü VIX &lt;</label><input type="number" id="vVixT" step="0.1"></div>
+        <p class="muted" style="font-size:12px">Eşikler boş bırakılırsa piyasanın KEŞİF eşiği kullanılır (NDX: −25,6 bp, VIX 17,4).</p>
+      </div>
+      <div class="ctl">
+        <h2>Kendi filtren (koşul doğruysa açma)</h2>
+        <div id="filters" style="display:grid;gap:6px"></div>
+      </div>
+      <div class="sep"></div>
+      <div class="ctl">
+        <h2>Çıkış ve risk</h2>
+        <div class="row"><label for="stop">Felaket stopu</label><input type="number" id="stop" step="50" min="0" placeholder="kapalı"><span class="muted">bp</span></div>
+        <div class="row"><label for="cap">En geç çıkış</label><select id="cap"><option value="0">XP (5 gün)</option><option value="1">1 gün</option><option value="2">2 gün</option><option value="3">3 gün</option></select></div>
+        <div class="row"><label><input type="checkbox" id="kad"> Teyitli kademe:</label></div>
+        <div class="row" style="padding-left:20px"><label for="f0">ilk lot</label><input type="number" id="f0" step="0.1" value="0.5"><label for="fa">ek</label><input type="number" id="fa" step="0.1" value="1.5"></div>
+        <div class="row" style="padding-left:20px"><label for="ck">kontrol</label><select id="ck"><option value="c04">04:00</option><option value="c0930">ertesi 09:30</option><option value="c1200">ertesi 12:00</option></select><label for="ke">&gt;</label><input type="number" id="ke" step="5" value="25"><span class="muted">bp</span></div>
+        <div class="row"><label for="lot">Lot çarpanı</label><input type="number" id="lot" step="0.1" value="1" min="0.1"></div>
+      </div>
+    </aside>
+
+    <main style="display:grid;gap:14px;min-width:0">
+      <div class="verdict" id="verdict"></div>
+      <div class="kpis" id="kpis"></div>
+      <div class="charts">
+        <section class="panel">
+          <div><h2>Birikimli sonuç: önce / sonra</h2><div class="legend"><span><i class="sw" style="background:var(--base)"></i>önce (kural yok)</span><span><i class="sw" style="background:var(--rule)"></i>sonra (seçili kurallar)</span></div></div>
+          <canvas id="eq" height="260" aria-label="Birikimli kâr grafiği"></canvas>
+        </section>
+        <section class="panel">
+          <div class="row" style="justify-content:space-between"><h2>Özellik anatomisi</h2><select id="anf" aria-label="Özellik"></select></div>
+          <p class="muted" style="font-size:12px">Seçili özelliğin beşte birlik dilimlerinde (kural yok) ortalama işlem sonucu ve dilimin toplam zarardaki payı.</p>
+          <canvas id="an" height="230" aria-label="Özellik dilimleri grafiği"></canvas>
+        </section>
+        <section class="panel">
+          <div><h2>İşlem yolu: kazanan / kaybeden</h2><div class="legend"><span><i class="sw" style="background:var(--good)"></i>sonunda kazanan</span><span><i class="sw" style="background:var(--bad)"></i>sonunda kaybeden</span></div></div>
+          <p class="muted" style="font-size:12px">Girişten sonra kontrol noktalarında ortalama konum (bp). Kaybedenler ne kadar sürede, ne kadar aşağı gidiyor.</p>
+          <canvas id="pa" height="230" aria-label="İşlem yolu grafiği"></canvas>
+        </section>
+        <section class="panel">
+          <div><h2>Tutuş süresine göre sonuç</h2></div>
+          <p class="muted" style="font-size:12px">Kaç günde çıktı → ortalama sonuç ve işlem sayısı (seçili kurallarla).</p>
+          <canvas id="hd" height="230" aria-label="Tutuş süresi grafiği"></canvas>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const N = DATA.d.length;
+const $ = id => document.getElementById(id);
+const FEAT_TR = {son_saat:"Son saat getirisi (bp)",son_yarim:"Son yarım saat (bp)",seans_ret:"Seans getirisi (bp)",gun_ret:"Gün getirisi (bp)",ilk_yarim_saat:"İlk yarım saat (bp)",
+ twap_uz:"TWAP'tan uzaklık (bp)",bosluk:"Açılış boşluğu (bp)",aralik:"Gün aralığı (bp)",aralik_oran:"Aralık / 20 g ort.",kapanis_konum:"16:00 aralık içi konum (0–1)",dip_saati:"Günün dibi saati",
+ r5:"5 g getiri (bp)",r20:"20 g getiri (bp)",rsi2:"RSI2",sma20_uz:"SMA20 uzaklığı (bp)",sma50_uz:"SMA50 uzaklığı (bp)",sma200_uz:"SMA200 uzaklığı (bp)",rv20:"20 g oynaklık (%)",
+ zirve_uz:"252 g zirveden uzaklık (bp)",vix:"Dünkü VIX",vix_deg:"Dünkü VIX değişimi (%)",vix_vix3m:"VIX / VIX3M",qqq_hacim_oran:"QQQ hacmi / 20 g ort.",mt5_hacim_oran:"Broker hacmi / 20 g ort.",
+ gun:"Haftanın günü (0=Pzt)",ay:"Ay",opex_k:"OPEX'e kalan işlem günü",opex_a:"Son OPEX'ten geçen gün",olay:"Olay günü (1/0)",sess_dun:"Dünkü seans getirisi (bp)",K1_son10:"Son 10 günde korku günü sayısı"};
+const PATH_TR = {c20:"20:00",c00:"00:00",c04:"04:00",c0930:"09:30",c1200:"12:00",g1:"1. gün 16:00",g2:"2. gün",g3:"3. gün",g4:"4. gün",g5:"5. gün"};
+const FEED_TR = {DUKA_NDX:"NASDAQ · Dukascopy",MT5_NAS100:"NASDAQ · MT5 broker",MT5_US500:"US500 (kör)",MT5_US30:"US30 (kör)",MT5_US2000:"US2000 (kör)"};
+
+DATA.feeds.forEach((f,i)=>{const o=document.createElement('option');o.value=i;o.textContent=FEED_TR[f]||f;$('feed').appendChild(o);});
+DATA.feat.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=FEAT_TR[f]||f;$('anf').appendChild(o);});
+$('anf').value='son_saat';
+for(let k=0;k<3;k++){
+  const w=document.createElement('div');w.className='filt';
+  w.innerHTML=`<select id="ff${k}" aria-label="Özellik ${k+1}"><option value="">— özellik —</option>${DATA.feat.map(f=>`<option value="${f}">${FEAT_TR[f]||f}</option>`).join('')}</select>
+  <select id="fo${k}" aria-label="Koşul ${k+1}"><option value=">">&gt;</option><option value="<">&lt;</option></select><input type="number" id="fv${k}" aria-label="Değer ${k+1}" step="any">`;
+  $('filters').appendChild(w);
+}
+const PRESETS = {
+  "Taban":{},
+  "OPEX vetosu":{vOpex:1},
+  "4'lü veto":{vOpex:1,vOlay:1,vSaat:1,vVix:1},
+  "Hedefe en yakın":{vOpex:1,vOlay:1,vSaat:1,vVix:1,stop:400,lot:1.39},
+  "Teyitli kademe":{kad:1,f0:0.5,fa:1.5,ck:"c04",ke:25},
+};
+Object.keys(PRESETS).forEach(n=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>applyPreset(PRESETS[n]);$('presets').appendChild(b);});
+function applyPreset(p){
+  ['vOpex','vOlay','vSaat','vVix','kad'].forEach(k=>$(k).checked=!!p[k]);
+  $('vSaatT').value='';$('vVixT').value='';$('stop').value=p.stop||'';$('cap').value='0';$('lot').value=p.lot||1;
+  $('f0').value=p.f0??0.5;$('fa').value=p.fa??1.5;$('ck').value=p.ck||'c04';$('ke').value=p.ke??25;
+  for(let k=0;k<3;k++){$('ff'+k).value='';$('fv'+k).value='';}
+  update();
+}
+function num(id){const v=parseFloat($(id).value);return Number.isFinite(v)?v:null;}
+
+function rows(){
+  const fi=+$('feed').value, per=$('per').value, out=[];
+  for(let i=0;i<N;i++){if(DATA.b[i]!==fi)continue;if(per==='K'&&DATA.T[i]!==0)continue;if(per==='T'&&DATA.T[i]!==1)continue;out.push(i);}
+  return out;
+}
+function ruleValue(i, R){
+  const pz=DATA.pz[i], th=DATA.esik[pz]||{};
+  if(R.vOpex && [0,1,2].includes(DATA.opex_k[i])) return null;
+  if(R.vOlay && DATA.olay[i]===1) return null;
+  const st=R.saatT??th.son_saat_p80, vt=R.vixT??th.vix_p20;
+  if(R.vSaat && DATA.son_saat[i]!=null && DATA.son_saat[i]>st) return null;
+  if(R.vVix && DATA.vix[i]!=null && DATA.vix[i]<vt) return null;
+  for(const f of R.filt){const x=DATA[f.f][i]; if(x==null) continue; if((f.o==='>'&&x>f.v)||(f.o==='<'&&x<f.v)) return null;}
+  let v=DATA.net[i];
+  if(R.cap>0 && DATA.tg[i]>R.cap){const g=DATA['g'+R.cap][i]; if(g!=null) v=g-1.756*R.cap*1.4;}
+  let lotMult=1;
+  if(R.kad){const c=DATA[R.ck][i]; const add=(c!=null&&c>R.ke); const base=v; v=R.f0*base+(add?R.fa*(base-c-1):0); lotMult=R.f0+(add?R.fa:0);}
+  if(R.stop>0 && DATA.mae[i]!=null && DATA.mae[i]<=-R.stop) v=lotMult*(-R.stop-5);
+  return v*R.lot;
+}
+function readRule(){
+  const filt=[];for(let k=0;k<3;k++){const f=$('ff'+k).value,v=num('fv'+k);if(f&&v!=null)filt.push({f,o:$('fo'+k).value,v});}
+  return {vOpex:$('vOpex').checked,vOlay:$('vOlay').checked,vSaat:$('vSaat').checked,vVix:$('vVix').checked,saatT:num('vSaatT'),vixT:num('vVixT'),
+    filt,stop:num('stop')||0,cap:+$('cap').value,kad:$('kad').checked,f0:num('f0')??0.5,fa:num('fa')??1.5,ck:$('ck').value,ke:num('ke')??25,lot:num('lot')??1};
+}
+function metrics(idx, vals){
+  const v=[],dd=[];idx.forEach((i,k)=>{if(vals[k]!=null){v.push(vals[k]);dd.push(DATA.d[i]);}});
+  if(!v.length) return null;
+  const tot=v.reduce((a,b)=>a+b,0), loss=v.filter(x=>x<0).reduce((a,b)=>a+b,0);
+  const s=[...v].sort((a,b)=>a-b), k10=Math.max(1,Math.floor(v.length/10));
+  let eq=0,pk=0,mdd=0;v.forEach(x=>{eq+=x;pk=Math.max(pk,eq);mdd=Math.min(mdd,eq-pk);});
+  const yrs=new Set(dd.map(x=>x.slice(0,4))).size;
+  return {n:v.length,win:v.filter(x=>x>0).length/v.length*100,avg:tot/v.length,tot,loss,worst:s[0],k10:s.slice(0,k10).reduce((a,b)=>a+b,0)/k10,mdd,yrs};
+}
+const fmt=(x,d=0)=>x==null?'—':x.toLocaleString('tr-TR',{maximumFractionDigits:d,minimumFractionDigits:d});
+function kpi(label, b, a, key, d=0, better='hi', ratio=false){
+  const bv=b?b[key]:null, av=a?a[key]:null;
+  let cls='', s='';
+  if(bv!=null&&av!=null){
+    const r=(key==='loss'||key==='mdd'||key==='worst'||key==='k10')? (bv!==0?av/bv:null) : (bv!==0?av/bv:null);
+    const good = better==='hi' ? av>bv : av>bv; // kayıp ölçülerinde değerler eksi: büyük (sıfıra yakın) iyidir
+    cls = Math.abs(av-bv)<1e-9?'':(good?'good':'bad');
+    s = ratio&&r!=null ? `×${fmt(r,2)}` : '';
+  }
+  return `<div class="kpi"><span class="k">${label}</span><span class="v">${fmt(av,d)}</span><span class="s ${cls}">önce ${fmt(bv,d)} ${s}</span></div>`;
+}
+function update(){
+  const idx=rows(), R=readRule();
+  const base=idx.map(i=>DATA.net[i]), after=idx.map(i=>ruleValue(i,R));
+  const b=metrics(idx,base), a=metrics(idx,after);
+  $('kpis').innerHTML=[kpi('İşlem sayısı',b,a,'n',0),kpi('Kazanan işlem %',b,a,'win',1),kpi('Ortalama bp / işlem',b,a,'avg',1),kpi('Toplam kâr (bp)',b,a,'tot',0,'hi',true),
+    kpi('Brüt zarar (bp)',b,a,'loss',0,'hi',true),kpi('En kötü işlem',b,a,'worst',0),kpi('Ortalama kötü (en kötü %10)',b,a,'k10',0,'hi',true),kpi('En büyük düşüş',b,a,'mdd',0,'hi',true)].join('');
+  if(a&&b){const kr=a.tot/b.tot, zr=b.loss?a.loss/b.loss:0, ok=kr>=1&&zr<=0.5;
+    $('verdict').innerHTML=`Kâr <b>×${fmt(kr,2)}</b> · zarar <b>×${fmt(zr,2)}</b> → ${ok?'<span class="good">hedef tuttu (kâr ≥ ×1,0 ve zarar ≤ ×0,5)</span>':'<span class="warn">hedef tutmadı (kâr ≥ ×1,0 ve zarar ≤ ×0,5 gerekiyor)</span>'} <span class="muted">· ${FEED_TR[DATA.feeds[+$('feed').value]]} · ${$('per').selectedOptions[0].textContent}</span>`;}
+  drawEquity(idx,base,after); drawAnatomy(idx); drawPath(idx); drawHold(idx,after);
+}
+// ---------- grafikler (canvas, kütüphanesiz) ----------
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function setup(cv){const r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1,h=+cv.getAttribute('height');cv.width=r.width*dpr;cv.height=h*dpr;cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,r.width,h);return {c,w:r.width,h};}
+function axes(c,w,h,pad,ymin,ymax,ticks=5,xl=null){
+  c.font='11px '+css('--mono');c.fillStyle=css('--muted');c.strokeStyle=css('--grid');c.lineWidth=1;
+  for(let k=0;k<=ticks;k++){const v=ymin+(ymax-ymin)*k/ticks,y=pad.t+(h-pad.t-pad.b)*(1-k/ticks);c.beginPath();c.moveTo(pad.l,y);c.lineTo(w-pad.r,y);c.stroke();c.textAlign='right';c.textBaseline='middle';c.fillText(fmt(v,0),pad.l-6,y);}
+  if(ymin<0&&ymax>0){const y=pad.t+(h-pad.t-pad.b)*(1-(0-ymin)/(ymax-ymin));c.strokeStyle=css('--muted');c.beginPath();c.moveTo(pad.l,y);c.lineTo(w-pad.r,y);c.stroke();}
+}
+function drawEquity(idx,base,after){
+  const {c,w,h}=setup($('eq')),pad={l:58,r:12,t:10,b:24};
+  const order=idx.map((i,k)=>k).sort((x,y)=>DATA.d[idx[x]]<DATA.d[idx[y]]?-1:1);
+  const sb=[],sa=[];let eb=0,ea=0;order.forEach(k=>{eb+=base[k]||0;ea+=after[k]||0;sb.push(eb);sa.push(ea);});
+  if(!sb.length)return;const all=sb.concat(sa),ymin=Math.min(0,...all),ymax=Math.max(...all)*1.05||1;
+  axes(c,w,h,pad,ymin,ymax);
+  const X=k=>pad.l+(w-pad.l-pad.r)*k/Math.max(1,sb.length-1),Y=v=>pad.t+(h-pad.t-pad.b)*(1-(v-ymin)/(ymax-ymin));
+  const yrs=[];order.forEach((k,j)=>{const y=DATA.d[idx[k]].slice(0,4);if(!yrs.length||yrs[yrs.length-1][0]!==y)yrs.push([y,j]);});
+  c.fillStyle=css('--muted');c.textAlign='center';c.textBaseline='top';yrs.forEach(([y,j],q)=>{if(q%Math.ceil(yrs.length/9)===0)c.fillText(y,X(j),h-pad.b+6);});
+  [[sb,css('--base'),1.5],[sa,css('--rule'),2.2]].forEach(([s,col,lw])=>{c.strokeStyle=col;c.lineWidth=lw;c.beginPath();s.forEach((v,k)=>k?c.lineTo(X(k),Y(v)):c.moveTo(X(k),Y(v)));c.stroke();});
+  c.fillStyle=css('--rule');c.beginPath();c.arc(X(sa.length-1),Y(sa[sa.length-1]),3.5,0,7);c.fill();
+}
+function drawBars(cv,labels,vals,colors,sub){
+  const {c,w,h}=setup(cv),pad={l:52,r:10,t:16,b:36};
+  const vv=vals.filter(v=>v!=null);if(!vv.length)return;const ymin=Math.min(0,...vv)*1.15,ymax=Math.max(0,...vv)*1.15||1;
+  axes(c,w,h,pad,ymin,ymax,4);
+  const bw=(w-pad.l-pad.r)/labels.length,Y=v=>pad.t+(h-pad.t-pad.b)*(1-(v-ymin)/(ymax-ymin));
+  labels.forEach((l,k)=>{const v=vals[k];if(v==null)return;const x=pad.l+bw*k+bw*0.18;c.fillStyle=colors[k];const y0=Y(0),y1=Y(v);c.fillRect(x,Math.min(y0,y1),bw*0.64,Math.abs(y1-y0));
+    c.fillStyle=css('--fg');c.font='11px '+css('--mono');c.textAlign='center';c.textBaseline=v>=0?'bottom':'top';c.fillText(fmt(v,0),x+bw*0.32,v>=0?y1-2:y1+2);
+    c.fillStyle=css('--muted');c.textBaseline='top';c.fillText(l,x+bw*0.32,h-pad.b+5);if(sub)c.fillText(sub[k],x+bw*0.32,h-pad.b+18);});
+}
+function drawAnatomy(idx){
+  const f=$('anf').value, pts=idx.filter(i=>DATA[f][i]!=null).map(i=>[DATA[f][i],DATA.net[i]]);
+  const uniq=[...new Set(pts.map(p=>p[0]))];let groups;
+  if(uniq.length<=7){uniq.sort((a,b)=>a-b);groups=uniq.map(u=>({lab:String(u),v:pts.filter(p=>p[0]===u).map(p=>p[1])}));}
+  else{pts.sort((a,b)=>a[0]-b[0]);groups=[];for(let q=0;q<5;q++){const s=pts.slice(Math.floor(q*pts.length/5),Math.floor((q+1)*pts.length/5));groups.push({lab:`${fmt(s[0]?.[0],1)}…${fmt(s[s.length-1]?.[0],1)}`,v:s.map(p=>p[1])});}}
+  const L=pts.filter(p=>p[1]<0).reduce((a,p)=>a+p[1],0);
+  drawBars($('an'),groups.map(g=>g.lab),groups.map(g=>g.v.length?g.v.reduce((a,b)=>a+b,0)/g.v.length:null),
+    groups.map(g=>{const m=g.v.reduce((a,b)=>a+b,0)/Math.max(1,g.v.length);return m<0?css('--bad'):css('--rule');}),
+    groups.map(g=>`n ${g.v.length} · zarar %${fmt(L?g.v.filter(x=>x<0).reduce((a,b)=>a+b,0)/L*100:0,0)}`));
+}
+function drawPath(idx){
+  const {c,w,h}=setup($('pa')),pad={l:52,r:10,t:12,b:28},P=DATA.path.slice(0,8);
+  const mean=(sel,p)=>{const v=sel.map(i=>DATA[p][i]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null;};
+  const W=idx.filter(i=>DATA.net[i]>0),Lx=idx.filter(i=>DATA.net[i]<0);
+  const sw=P.map(p=>mean(W,p)),sl=P.map(p=>mean(Lx,p)),all=[0,...sw,...sl].filter(x=>x!=null);
+  const ymin=Math.min(...all)*1.1,ymax=Math.max(...all)*1.1||1;axes(c,w,h,pad,ymin,ymax,4);
+  const X=k=>pad.l+(w-pad.l-pad.r)*k/(P.length-1),Y=v=>pad.t+(h-pad.t-pad.b)*(1-(v-ymin)/(ymax-ymin));
+  c.fillStyle=css('--muted');c.font='11px '+css('--mono');c.textAlign='center';c.textBaseline='top';P.forEach((p,k)=>c.fillText(PATH_TR[p],X(k),h-pad.b+6));
+  [[sw,css('--good')],[sl,css('--bad')]].forEach(([s,col])=>{c.strokeStyle=col;c.lineWidth=2;c.beginPath();let st=false;s.forEach((v,k)=>{if(v==null)return;st?c.lineTo(X(k),Y(v)):c.moveTo(X(k),Y(v));st=true;});c.stroke();
+    s.forEach((v,k)=>{if(v==null)return;c.fillStyle=col;c.beginPath();c.arc(X(k),Y(v),2.5,0,7);c.fill();});});
+}
+function drawHold(idx,after){
+  const g={};idx.forEach((i,k)=>{if(after[k]==null)return;const d=DATA.tg[i];(g[d]=g[d]||[]).push(after[k]);});
+  const ks=Object.keys(g).map(Number).sort((a,b)=>a-b);
+  drawBars($('hd'),ks.map(k=>k+' gün'),ks.map(k=>g[k].reduce((a,b)=>a+b,0)/g[k].length),ks.map(k=>{const m=g[k].reduce((a,b)=>a+b,0)/g[k].length;return m<0?css('--bad'):css('--rule');}),ks.map(k=>'n '+g[k].length));
+}
+document.querySelectorAll('aside input, aside select').forEach(el=>el.addEventListener('input',update));
+$('anf').addEventListener('input',update);
+window.addEventListener('resize',()=>{clearTimeout(window.__rt);window.__rt=setTimeout(update,120);});
+try{const m=window.matchMedia('(prefers-color-scheme: dark)');m.addEventListener('change',update);}catch(e){}
+applyPreset(PRESETS["4'lü veto"]);
+</script>
