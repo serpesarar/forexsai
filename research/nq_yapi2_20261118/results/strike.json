@@ -1,0 +1,86 @@
+{
+ "duka": {
+  "ESKI_cuma_disi": {
+   "n": 428,
+   "gercek": -0.04,
+   "plasebo": -0.39,
+   "fark": 0.35,
+   "s15": -0.67,
+   "dokunus_gercek": 0.647,
+   "dokunus_plasebo": 0.637,
+   "P": 0.579
+  },
+  "ESKI_cuma": {
+   "n": 107,
+   "gercek": 0.59,
+   "plasebo": 1.43,
+   "fark": -0.84,
+   "s15": -0.05,
+   "dokunus_gercek": 0.617,
+   "dokunus_plasebo": 0.69,
+   "P": 0.4015
+  },
+  "0DTE_cuma_disi": {
+   "n": 405,
+   "gercek": -0.8,
+   "plasebo": -0.86,
+   "fark": 0.06,
+   "s15": -1.44,
+   "dokunus_gercek": 0.751,
+   "dokunus_plasebo": 0.769,
+   "P": 0.5175
+  },
+  "0DTE_cuma": {
+   "n": 105,
+   "gercek": 1.02,
+   "plasebo": 1.44,
+   "fark": -0.42,
+   "s15": 0.38,
+   "dokunus_gercek": 0.8,
+   "dokunus_plasebo": 0.806,
+   "P": 0.42
+  }
+ },
+ "mt5": {
+  "ESKI_cuma_disi": {
+   "n": 438,
+   "gercek": -0.45,
+   "plasebo": -1.49,
+   "fark": 1.05,
+   "s15": -1.59,
+   "dokunus_gercek": 0.635,
+   "dokunus_plasebo": 0.627,
+   "P": 0.7275
+  },
+  "ESKI_cuma": {
+   "n": 111,
+   "gercek": 2.45,
+   "plasebo": 0.58,
+   "fark": 1.87,
+   "s15": 1.33,
+   "dokunus_gercek": 0.64,
+   "dokunus_plasebo": 0.679,
+   "P": 0.7272
+  },
+  "0DTE_cuma_disi": {
+   "n": 366,
+   "gercek": -0.83,
+   "plasebo": -0.53,
+   "fark": -0.31,
+   "s15": -1.5,
+   "dokunus_gercek": 0.754,
+   "dokunus_plasebo": 0.774,
+   "P": 0.4103
+  },
+  "0DTE_cuma": {
+   "n": 93,
+   "gercek": 1.85,
+   "plasebo": 2.11,
+   "fark": -0.26,
+   "s15": 1.19,
+   "dokunus_gercek": 0.817,
+   "dokunus_plasebo": 0.841,
+   "P": 0.4642
+  }
+ }
+}
