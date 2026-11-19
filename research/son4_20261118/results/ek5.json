@@ -1,0 +1,173 @@
+{
+ "veto": {
+  "C3b_QQQ": {
+   "n_veto": 59,
+   "veto_ort": -11.6,
+   "kalan_ort": 61.8,
+   "yarilar": [
+    3.2,
+    -25.9
+   ],
+   "P_EV_eksi": 0.7138
+  },
+  "K1_QQQ": {
+   "n_veto": 202,
+   "veto_ort": -23.4,
+   "kalan_ort": 34.3,
+   "yarilar": [
+    -32.5,
+    -14.2
+   ],
+   "P_EV_eksi": 0.9528
+  },
+  "K1_SPY": {
+   "n_veto": 150,
+   "veto_ort": -25.9,
+   "kalan_ort": 19.4,
+   "yarilar": [
+    -36.7,
+    -15.1
+   ],
+   "P_EV_eksi": 0.973
+  },
+  "C3b_NDX_1985_1999": {
+   "n_veto": 25,
+   "veto_ort": -176.1,
+   "kalan_ort": 16.1,
+   "yarilar": [
+    -355.5,
+    -10.5
+   ],
+   "P_EV_eksi": 0.9966
+  },
+  "K1gi_DUKA_NDX": {
+   "n_veto": 45,
+   "veto_ort": -15.5,
+   "kalan_ort": 70.0,
+   "yarilar": [
+    -26.2,
+    -5.3
+   ],
+   "P_EV_eksi": 0.7682
+  },
+  "K1gi_MT5_NAS100": {
+   "n_veto": 42,
+   "veto_ort": -9.8,
+   "kalan_ort": 63.6,
+   "yarilar": [
+    -29.9,
+    10.3
+   ],
+   "P_EV_eksi": 0.6654
+  },
+  "K1gi_MT5_US500": {
+   "n_veto": 24,
+   "veto_ort": -20.8,
+   "kalan_ort": 37.0,
+   "yarilar": [
+    -56.6,
+    15.0
+   ],
+   "P_EV_eksi": 0.8228
+  },
+  "K1gi_MT5_US30": {
+   "n_veto": 26,
+   "veto_ort": -21.5,
+   "kalan_ort": 43.7,
+   "yarilar": [
+    -51.2,
+    8.2
+   ],
+   "P_EV_eksi": 0.8046
+  },
+  "K1gi_MT5_US2000": {
+   "n_veto": 43,
+   "veto_ort": -9.3,
+   "kalan_ort": 42.1,
+   "yarilar": [
+    -11.8,
+    -7.0
+   ],
+   "P_EV_eksi": 0.6654
+  }
+ },
+ "doz_vade_sonrasi": {
+  "C3b_QQQ": {
+   "n": 55,
+   "vade_sonrasi": 62.8,
+   "diger_pzt_sali": 99.8,
+   "fark": -37.0,
+   "P_fark_arti": 0.1122
+  },
+  "K1_QQQ": {
+   "n": 112,
+   "vade_sonrasi": 41.3,
+   "diger_pzt_sali": 42.8,
+   "fark": -1.4,
+   "P_fark_arti": 0.4782
+  },
+  "K1_SPY": {
+   "n": 92,
+   "vade_sonrasi": 19.4,
+   "diger_pzt_sali": 42.4,
+   "fark": -22.9,
+   "P_fark_arti": 0.1438
+  },
+  "C3b_NDX_1985_1999": {
+   "n": 28,
+   "vade_sonrasi": 41.5,
+   "diger_pzt_sali": 17.9,
+   "fark": 23.6,
+   "P_fark_arti": 0.7862
+  },
+  "K1gi_DUKA_NDX": {
+   "n": 22,
+   "vade_sonrasi": 43.2,
+   "diger_pzt_sali": 83.1,
+   "fark": -39.9,
+   "P_fark_arti": 0.1962
+  },
+  "K1gi_MT5_NAS100": {
+   "n": 21,
+   "vade_sonrasi": 44.5,
+   "diger_pzt_sali": 82.5,
+   "fark": -38.0,
+   "P_fark_arti": 0.225
+  },
+  "K1gi_MT5_US500": {
+   "n": 9,
+   "vade_sonrasi": 15.8,
+   "diger_pzt_sali": 41.9,
+   "fark": -26.1,
+   "P_fark_arti": 0.3574
+  },
+  "K1gi_MT5_US30": {
+   "n": 7,
+   "vade_sonrasi": 19.6,
+   "diger_pzt_sali": 72.6,
+   "fark": -53.0,
+   "P_fark_arti": 0.2094
+  },
+  "K1gi_MT5_US2000": {
+   "n": 16,
+   "vade_sonrasi": 44.4,
+   "diger_pzt_sali": 68.3,
+   "fark": -24.0,
+   "P_fark_arti": 0.312
+  }
+ },
+ "veto_havuz": {
+  "n_veto": 616,
+  "z_ort": -0.259,
+  "yarilar_z": [
+   -0.278,
+   -0.241
+  ],
+  "P_EV_eksi_z": 1.0
+ },
+ "doz_havuz_z": {
+  "n": 362,
+  "fark_z": -0.085,
+  "P_fark_arti": 0.0624
+ }
+}

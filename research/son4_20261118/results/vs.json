@@ -1,0 +1,316 @@
+{
+ "yon_KESIF_QQQ": {
+  "W1_pzt_kapanis_car_acilis": 1,
+  "W2_car_acilis_kapanis": -1,
+  "W3_car_kapanis_cuma_kapanis": -1,
+  "W4_pzt_kapanis_car_kapanis": 1
+ },
+ "QQQ": {
+  "PLASEBO_cag": {
+   "W1_pzt_kapanis_car_acilis": {
+    "yon": 1,
+    "n": 60,
+    "vade": 8.2,
+    "taban": -43.6,
+    "fark_yonlu": 51.8,
+    "t": 1.1,
+    "P": 0.8628
+   },
+   "W2_car_acilis_kapanis": {
+    "yon": -1,
+    "n": 60,
+    "vade": 8.2,
+    "taban": -3.7,
+    "fark_yonlu": -11.9,
+    "t": -0.32,
+    "P": 0.369
+   },
+   "W3_car_kapanis_cuma_kapanis": {
+    "yon": -1,
+    "n": 60,
+    "vade": 10.6,
+    "taban": 28.0,
+    "fark_yonlu": 17.4,
+    "t": 0.32,
+    "P": 0.6174
+   },
+   "W4_pzt_kapanis_car_kapanis": {
+    "yon": 1,
+    "n": 60,
+    "vade": 18.5,
+    "taban": -47.3,
+    "fark_yonlu": 65.7,
+    "t": 1.13,
+    "P": 0.8706
+   }
+  },
+  "KESIF": {
+   "W1_pzt_kapanis_car_acilis": {
+    "yon": 1,
+    "n": 142,
+    "vade": 22.9,
+    "taban": 7.0,
+    "fark_yonlu": 15.9,
+    "t": 1.17,
+    "P": 0.8796
+   },
+   "W2_car_acilis_kapanis": {
+    "yon": -1,
+    "n": 142,
+    "vade": -2.8,
+    "taban": 2.3,
+    "fark_yonlu": 5.2,
+    "t": 0.47,
+    "P": 0.6786
+   },
+   "W3_car_kapanis_cuma_kapanis": {
+    "yon": -1,
+    "n": 142,
+    "vade": -15.8,
+    "taban": -0.3,
+    "fark_yonlu": 15.5,
+    "t": 0.87,
+    "P": 0.8094
+   },
+   "W4_pzt_kapanis_car_kapanis": {
+    "yon": 1,
+    "n": 142,
+    "vade": 21.9,
+    "taban": 11.3,
+    "fark_yonlu": 10.6,
+    "t": 0.62,
+    "P": 0.7396
+   }
+  },
+  "TEST": {
+   "W1_pzt_kapanis_car_acilis": {
+    "yon": 1,
+    "n": 130,
+    "vade": 20.2,
+    "taban": 12.1,
+    "fark_yonlu": 8.1,
+    "t": 0.64,
+    "P": 0.734
+   },
+   "W2_car_acilis_kapanis": {
+    "yon": -1,
+    "n": 130,
+    "vade": -4.0,
+    "taban": 4.6,
+    "fark_yonlu": 8.6,
+    "t": 0.79,
+    "P": 0.791
+   },
+   "W3_car_kapanis_cuma_kapanis": {
+    "yon": -1,
+    "n": 130,
+    "vade": -34.1,
+    "taban": 3.7,
+    "fark_yonlu": 37.8,
+    "t": 2.07,
+    "P": 0.9814
+   },
+   "W4_pzt_kapanis_car_kapanis": {
+    "yon": 1,
+    "n": 130,
+    "vade": 18.3,
+    "taban": 18.5,
+    "fark_yonlu": -0.2,
+    "t": -0.01,
+    "P": 0.4968
+   }
+  },
+  "SON5": {
+   "W1_pzt_kapanis_car_acilis": {
+    "yon": 1,
+    "n": 60,
+    "vade": 10.3,
+    "taban": 7.1,
+    "fark_yonlu": 3.2,
+    "t": 0.16,
+    "P": 0.5482
+   },
+   "W2_car_acilis_kapanis": {
+    "yon": -1,
+    "n": 60,
+    "vade": -28.5,
+    "taban": 11.0,
+    "fark_yonlu": 39.5,
+    "t": 2.18,
+    "P": 0.9872
+   },
+   "W3_car_kapanis_cuma_kapanis": {
+    "yon": -1,
+    "n": 60,
+    "vade": -32.5,
+    "taban": -6.9,
+    "fark_yonlu": 25.6,
+    "t": 0.84,
+    "P": 0.8018
+   },
+   "W4_pzt_kapanis_car_kapanis": {
+    "yon": 1,
+    "n": 60,
+    "vade": -15.8,
+    "taban": 20.0,
+    "fark_yonlu": -35.8,
+    "t": -1.22,
+    "P": 0.1082
+   }
+  }
+ },
+ "SPY": {
+  "PLASEBO_cag": {
+   "W1_pzt_kapanis_car_acilis": {
+    "yon": 1,
+    "n": 133,
+    "vade": 16.6,
+    "taban": -1.9,
+    "fark_yonlu": 18.5,
+    "t": 1.46,
+    "P": 0.9284
+   },
+   "W2_car_acilis_kapanis": {
+    "yon": -1,
+    "n": 133,
+    "vade": -0.9,
+    "taban": -0.7,
+    "fark_yonlu": 0.3,
+    "t": 0.03,
+    "P": 0.514
+   },
+   "W3_car_kapanis_cuma_kapanis": {
+    "yon": -1,
+    "n": 133,
+    "vade": -19.6,
+    "taban": 5.9,
+    "fark_yonlu": 25.5,
+    "t": 1.68,
+    "P": 0.9526
+   },
+   "W4_pzt_kapanis_car_kapanis": {
+    "yon": 1,
+    "n": 133,
+    "vade": 17.6,
+    "taban": -0.9,
+    "fark_yonlu": 18.5,
+    "t": 1.21,
+    "P": 0.8842
+   }
+  },
+  "KESIF": {
+   "W1_pzt_kapanis_car_acilis": {
+    "yon": 1,
+    "n": 142,
+    "vade": 13.4,
+    "taban": 3.4,
+    "fark_yonlu": 10.0,
+    "t": 0.81,
+    "P": 0.7882
+   },
+   "W2_car_acilis_kapanis": {
+    "yon": -1,
+    "n": 142,
+    "vade": -3.2,
+    "taban": 1.5,
+    "fark_yonlu": 4.7,
+    "t": 0.47,
+    "P": 0.6732
+   },
+   "W3_car_kapanis_cuma_kapanis": {
+    "yon": -1,
+    "n": 142,
+    "vade": -13.7,
+    "taban": -2.1,
+    "fark_yonlu": 11.6,
+    "t": 0.73,
+    "P": 0.773
+   },
+   "W4_pzt_kapanis_car_kapanis": {
+    "yon": 1,
+    "n": 142,
+    "vade": 12.2,
+    "taban": 6.9,
+    "fark_yonlu": 5.3,
+    "t": 0.34,
+    "P": 0.6454
+   }
+  },
+  "TEST": {
+   "W1_pzt_kapanis_car_acilis": {
+    "yon": 1,
+    "n": 130,
+    "vade": 7.4,
+    "taban": 6.9,
+    "fark_yonlu": 0.6,
+    "t": 0.06,
+    "P": 0.5176
+   },
+   "W2_car_acilis_kapanis": {
+    "yon": -1,
+    "n": 130,
+    "vade": -9.3,
+    "taban": 3.8,
+    "fark_yonlu": 13.1,
+    "t": 1.57,
+    "P": 0.9444
+   },
+   "W3_car_kapanis_cuma_kapanis": {
+    "yon": -1,
+    "n": 130,
+    "vade": -23.9,
+    "taban": 6.0,
+    "fark_yonlu": 30.0,
+    "t": 2.14,
+    "P": 0.9844
+   },
+   "W4_pzt_kapanis_car_kapanis": {
+    "yon": 1,
+    "n": 130,
+    "vade": 0.2,
+    "taban": 12.7,
+    "fark_yonlu": -12.5,
+    "t": -0.95,
+    "P": 0.1658
+   }
+  },
+  "SON5": {
+   "W1_pzt_kapanis_car_acilis": {
+    "yon": 1,
+    "n": 60,
+    "vade": 6.2,
+    "taban": 4.6,
+    "fark_yonlu": 1.6,
+    "t": 0.11,
+    "P": 0.52
+   },
+   "W2_car_acilis_kapanis": {
+    "yon": -1,
+    "n": 60,
+    "vade": -25.8,
+    "taban": 7.4,
+    "fark_yonlu": 33.2,
+    "t": 2.31,
+    "P": 0.9914
+   },
+   "W3_car_kapanis_cuma_kapanis": {
+    "yon": -1,
+    "n": 60,
+    "vade": -23.5,
+    "taban": -2.3,
+    "fark_yonlu": 21.2,
+    "t": 0.95,
+    "P": 0.8344
+   },
+   "W4_pzt_kapanis_car_kapanis": {
+    "yon": 1,
+    "n": 60,
+    "vade": -17.4,
+    "taban": 13.9,
+    "fark_yonlu": -31.3,
+    "t": -1.42,
+    "P": 0.075
+   }
+  }
+ }
+}

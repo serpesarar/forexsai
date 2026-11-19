@@ -1,0 +1,49 @@
+{
+ "scope": "ndx_opex_korku_vetosu",
+ "tarih": "2026-11-18",
+ "aciklama": "VETO: aylık OPEX haftasının Çarşamba ve Perşembe günü açılacak korku dönüşü uzunları (K1 korku gecesi, ertesi seans ES, C3b/C3 RSI2) AÇMA. OPEX Cuma girişleri uzantı (C). ORB×VIX uzun kolu aynı pencerede C+ (ayrı karar).",
+ "kanit": "research/son4_20261118/ (PROTOCOL EK-2…7, RAPOR); defter §2.91 SV-01",
+ "checks": {
+  "1_hacim": {
+   "n_vetolanan_gunici_K1_5_besleme": 135,
+   "n_C3b_QQQ": 39,
+   "not": "+ günlük K1 QQQ 137 / SPY 106, C3b ^NDX 1985–99 21",
+   "gecti": true
+  },
+  "2_beklenti": {
+   "vetolanan_ort_bp": -18.2,
+   "P_EV_eksi": 0.9444,
+   "kalan_ort_bp": 50.5,
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "ilk_yari": -38.8,
+   "ikinci_yari": 2.1,
+   "gecti": false,
+   "not": "mutlak ortalama ikinci yarıda ≈ 0; göreli fark (vetolanan − kalan) iki yarıda: bkz. RAPOR"
+  },
+  "4_surtunme": {
+   "not": "veto işlem siler; spread ×1,5 vetolanan işlemleri yalnız daha da eksi yapar (spread ≈ 1 bp, fark −40…−90 bp)",
+   "gecti": true
+  },
+  "5_icra": {
+   "gunluk_vekil_K1_QQQ_fark": -52.7,
+   "gercek_gunici_K1_5_besleme_fark": "−40…−89 bp (5/5 eksi)",
+   "gecti": true
+  },
+  "6_tek_pozisyon": {
+   "not": "veto yalnız giriş siler",
+   "gecti": true
+  }
+ },
+ "ek_kanitlar": {
+  "bagimsiz_donem_C3b_NDX_1985_1999": "−240 bp (P 0,9998)",
+  "haftanin_gunu_kontrolu": "OPEX dışı Çar/Per'e göre 8/8 set eksi",
+  "canli_kitap_Duka_2018_26": "C3B −106 bp (ESKİ −134 / YENİ −102), C3 −61 bp",
+  "KSG_etkisiz": "sıradan gece tutuşu farksız → etki korku dönüşüne özgü",
+  "vade_sonrasi_doz": "X"
+ },
+ "kart_6_6": 5,
+ "verdict": "SHADOW",
+ "sinif": "B (veto kapısı; canlıya bağlama kullanıcı kararı)"
+}
