@@ -1,0 +1,404 @@
+{
+ "OPEX_SAT": {
+  "DUKA_NDX_1sa": {
+   "n": 33,
+   "ort": -0.9,
+   "isabet": 0.364,
+   "P_arti": 0.4236,
+   "en_kotu": -80.7,
+   "en_iyi": 158.6
+  },
+  "DUKA_NDX_5sa": {
+   "n": 33,
+   "ort": -9.4,
+   "isabet": 0.485,
+   "P_arti": 0.1828,
+   "en_kotu": -140.3,
+   "en_iyi": 142.2
+  },
+  "DUKA_NDX_1gun": {
+   "n": 33,
+   "ort": 24.6,
+   "isabet": 0.545,
+   "P_arti": 0.8056,
+   "en_kotu": -248.4,
+   "en_iyi": 655.7
+  },
+  "DUKA_NDX_1_5gun": {
+   "n": 33,
+   "ort": 29.9,
+   "isabet": 0.485,
+   "P_arti": 0.8374,
+   "en_kotu": -216.9,
+   "en_iyi": 591.1
+  },
+  "MT5_NAS100_1sa": {
+   "n": 30,
+   "ort": 2.4,
+   "isabet": 0.467,
+   "P_arti": 0.6322,
+   "en_kotu": -54.3,
+   "en_iyi": 127.8
+  },
+  "MT5_NAS100_5sa": {
+   "n": 30,
+   "ort": -3.8,
+   "isabet": 0.467,
+   "P_arti": 0.3504,
+   "en_kotu": -130.7,
+   "en_iyi": 125.9
+  },
+  "MT5_NAS100_1gun": {
+   "n": 30,
+   "ort": 18.8,
+   "isabet": 0.567,
+   "P_arti": 0.701,
+   "en_kotu": -253.7,
+   "en_iyi": 728.7
+  },
+  "MT5_NAS100_1_5gun": {
+   "n": 30,
+   "ort": 16.9,
+   "isabet": 0.467,
+   "P_arti": 0.6856,
+   "en_kotu": -223.0,
+   "en_iyi": 587.9
+  },
+  "MT5_US500_1sa": {
+   "n": 19,
+   "ort": -1.5,
+   "isabet": 0.421,
+   "P_arti": 0.3182,
+   "en_kotu": -31.0,
+   "en_iyi": 36.4
+  },
+  "MT5_US500_5sa": {
+   "n": 19,
+   "ort": -4.4,
+   "isabet": 0.474,
+   "P_arti": 0.2686,
+   "en_kotu": -82.9,
+   "en_iyi": 40.8
+  },
+  "MT5_US500_1gun": {
+   "n": 19,
+   "ort": -5.6,
+   "isabet": 0.474,
+   "P_arti": 0.4238,
+   "en_kotu": -245.4,
+   "en_iyi": 190.6
+  },
+  "MT5_US500_1_5gun": {
+   "n": 19,
+   "ort": 16.8,
+   "isabet": 0.632,
+   "P_arti": 0.7712,
+   "en_kotu": -202.5,
+   "en_iyi": 190.3
+  },
+  "MT5_US30_1sa": {
+   "n": 21,
+   "ort": -4.9,
+   "isabet": 0.429,
+   "P_arti": 0.1172,
+   "en_kotu": -74.0,
+   "en_iyi": 20.2
+  },
+  "MT5_US30_5sa": {
+   "n": 21,
+   "ort": -9.2,
+   "isabet": 0.381,
+   "P_arti": 0.063,
+   "en_kotu": -62.2,
+   "en_iyi": 57.1
+  },
+  "MT5_US30_1gun": {
+   "n": 21,
+   "ort": 19.4,
+   "isabet": 0.571,
+   "P_arti": 0.8112,
+   "en_kotu": -253.9,
+   "en_iyi": 212.8
+  },
+  "MT5_US30_1_5gun": {
+   "n": 21,
+   "ort": 28.9,
+   "isabet": 0.619,
+   "P_arti": 0.909,
+   "en_kotu": -215.7,
+   "en_iyi": 178.0
+  },
+  "MT5_US2000_1sa": {
+   "n": 32,
+   "ort": -4.0,
+   "isabet": 0.531,
+   "P_arti": 0.0628,
+   "en_kotu": -37.1,
+   "en_iyi": 24.1
+  },
+  "MT5_US2000_5sa": {
+   "n": 32,
+   "ort": 0.6,
+   "isabet": 0.531,
+   "P_arti": 0.5298,
+   "en_kotu": -101.6,
+   "en_iyi": 103.7
+  },
+  "MT5_US2000_1gun": {
+   "n": 32,
+   "ort": 0.8,
+   "isabet": 0.562,
+   "P_arti": 0.506,
+   "en_kotu": -359.0,
+   "en_iyi": 251.7
+  },
+  "MT5_US2000_1_5gun": {
+   "n": 32,
+   "ort": 23.2,
+   "isabet": 0.594,
+   "P_arti": 0.801,
+   "en_kotu": -281.4,
+   "en_iyi": 366.5
+  }
+ },
+ "kontrol_AL_OPEX_disi": {
+  "DUKA_NDX_1sa": {
+   "n": 219,
+   "ort": -0.5,
+   "isabet": 0.603,
+   "P_arti": 0.4698,
+   "en_kotu": -532.5,
+   "en_iyi": 233.2
+  },
+  "DUKA_NDX_5sa": {
+   "n": 219,
+   "ort": 3.2,
+   "isabet": 0.603,
+   "P_arti": 0.7292,
+   "en_kotu": -363.9,
+   "en_iyi": 229.9
+  },
+  "DUKA_NDX_1gun": {
+   "n": 219,
+   "ort": 54.4,
+   "isabet": 0.648,
+   "P_arti": 1.0,
+   "en_kotu": -1050.9,
+   "en_iyi": 1213.1
+  },
+  "DUKA_NDX_1_5gun": {
+   "n": 219,
+   "ort": 63.7,
+   "isabet": 0.653,
+   "P_arti": 1.0,
+   "en_kotu": -866.6,
+   "en_iyi": 985.7
+  },
+  "MT5_NAS100_1sa": {
+   "n": 204,
+   "ort": -4.4,
+   "isabet": 0.51,
+   "P_arti": 0.144,
+   "en_kotu": -349.1,
+   "en_iyi": 175.1
+  },
+  "MT5_NAS100_5sa": {
+   "n": 204,
+   "ort": 3.6,
+   "isabet": 0.578,
+   "P_arti": 0.7478,
+   "en_kotu": -371.4,
+   "en_iyi": 479.7
+  },
+  "MT5_NAS100_1gun": {
+   "n": 204,
+   "ort": 54.1,
+   "isabet": 0.647,
+   "P_arti": 1.0,
+   "en_kotu": -949.6,
+   "en_iyi": 1217.4
+  },
+  "MT5_NAS100_1_5gun": {
+   "n": 204,
+   "ort": 55.7,
+   "isabet": 0.637,
+   "P_arti": 0.9998,
+   "en_kotu": -968.9,
+   "en_iyi": 940.8
+  },
+  "MT5_US500_1sa": {
+   "n": 127,
+   "ort": -8.0,
+   "isabet": 0.528,
+   "P_arti": 0.0538,
+   "en_kotu": -462.2,
+   "en_iyi": 108.2
+  },
+  "MT5_US500_5sa": {
+   "n": 127,
+   "ort": -1.9,
+   "isabet": 0.606,
+   "P_arti": 0.389,
+   "en_kotu": -323.0,
+   "en_iyi": 137.2
+  },
+  "MT5_US500_1gun": {
+   "n": 127,
+   "ort": 50.1,
+   "isabet": 0.638,
+   "P_arti": 0.9992,
+   "en_kotu": -897.5,
+   "en_iyi": 982.1
+  },
+  "MT5_US500_1_5gun": {
+   "n": 127,
+   "ort": 57.9,
+   "isabet": 0.701,
+   "P_arti": 0.9992,
+   "en_kotu": -926.4,
+   "en_iyi": 798.7
+  },
+  "MT5_US30_1sa": {
+   "n": 141,
+   "ort": -9.5,
+   "isabet": 0.532,
+   "P_arti": 0.007,
+   "en_kotu": -453.2,
+   "en_iyi": 85.5
+  },
+  "MT5_US30_5sa": {
+   "n": 141,
+   "ort": -2.8,
+   "isabet": 0.539,
+   "P_arti": 0.3134,
+   "en_kotu": -451.4,
+   "en_iyi": 339.6
+  },
+  "MT5_US30_1gun": {
+   "n": 141,
+   "ort": 36.5,
+   "isabet": 0.624,
+   "P_arti": 0.9768,
+   "en_kotu": -1208.0,
+   "en_iyi": 827.1
+  },
+  "MT5_US30_1_5gun": {
+   "n": 141,
+   "ort": 26.8,
+   "isabet": 0.645,
+   "P_arti": 0.9444,
+   "en_kotu": -872.3,
+   "en_iyi": 620.5
+  },
+  "MT5_US2000_1sa": {
+   "n": 202,
+   "ort": -3.2,
+   "isabet": 0.569,
+   "P_arti": 0.2228,
+   "en_kotu": -510.2,
+   "en_iyi": 267.5
+  },
+  "MT5_US2000_5sa": {
+   "n": 202,
+   "ort": 3.4,
+   "isabet": 0.559,
+   "P_arti": 0.7584,
+   "en_kotu": -359.7,
+   "en_iyi": 381.2
+  },
+  "MT5_US2000_1gun": {
+   "n": 202,
+   "ort": 33.0,
+   "isabet": 0.554,
+   "P_arti": 0.983,
+   "en_kotu": -1264.7,
+   "en_iyi": 918.8
+  },
+  "MT5_US2000_1_5gun": {
+   "n": 202,
+   "ort": 33.1,
+   "isabet": 0.609,
+   "P_arti": 0.9846,
+   "en_kotu": -939.4,
+   "en_iyi": 713.0
+  }
+ },
+ "havuz": {
+  "1sa": {
+   "n": 135,
+   "z_ort": -0.03,
+   "P_arti": 0.2262,
+   "besleme_arti": 1,
+   "yarilar_bp": [
+    2.1,
+    -5.3
+   ]
+  },
+  "5sa": {
+   "n": 135,
+   "z_ort": -0.07,
+   "P_arti": 0.099,
+   "besleme_arti": 1,
+   "yarilar_bp": [
+    0.8,
+    -10.8
+   ]
+  },
+  "1gun": {
+   "n": 135,
+   "z_ort": 0.061,
+   "P_arti": 0.8326,
+   "besleme_arti": 4,
+   "yarilar_bp": [
+    42.9,
+    -17.3
+   ]
+  },
+  "1_5gun": {
+   "n": 135,
+   "z_ort": 0.115,
+   "P_arti": 0.9678,
+   "besleme_arti": 5,
+   "yarilar_bp": [
+    43.9,
+    3.2
+   ]
+  },
+  "gunluk_C3b_NDX_1985_1999_SAT_1g": {
+   "n": 35,
+   "ort": 44.6,
+   "isabet": 0.629,
+   "P_arti": 0.9826,
+   "en_kotu": -170.9,
+   "en_iyi": 504.6,
+   "kontrol_AL_ort": 3.3
+  },
+  "gunluk_C3b_NDX_1985_1999_SAT_2g": {
+   "n": 35,
+   "ort": 134.9,
+   "isabet": 0.571,
+   "P_arti": 0.9996,
+   "en_kotu": -242.4,
+   "en_iyi": 1935.9,
+   "kontrol_AL_ort": 34.7
+  },
+  "gunluk_C3b_QQQ_SAT_1g": {
+   "n": 67,
+   "ort": 18.9,
+   "isabet": 0.493,
+   "P_arti": 0.8024,
+   "en_kotu": -573.1,
+   "en_iyi": 514.3,
+   "kontrol_AL_ort": 38.8
+  },
+  "gunluk_C3b_QQQ_SAT_2g": {
+   "n": 67,
+   "ort": 17.2,
+   "isabet": 0.567,
+   "P_arti": 0.6886,
+   "en_kotu": -1074.0,
+   "en_iyi": 803.0,
+   "kontrol_AL_ort": 54.3
+  }
+ }
+}

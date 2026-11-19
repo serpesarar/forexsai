@@ -1,0 +1,66 @@
+{
+ "CAR16_1_5gun ~ Çar kapanış→Cum açılış AL": {
+  "1999_2015": {
+   "n": 202,
+   "opex": 6.8,
+   "kontrol": 22.6,
+   "fark_yonlu": -15.8,
+   "P_yon": 0.1842
+  },
+  "2016_2026": {
+   "n": 131,
+   "opex": 2.9,
+   "kontrol": 0.5,
+   "fark_yonlu": 2.4,
+   "P_yon": 0.5517
+  }
+ },
+ "PER0930_1gun ~ Per açılış→Cum açılış AL": {
+  "1999_2015": {
+   "n": 202,
+   "opex": -3.1,
+   "kontrol": 15.8,
+   "fark_yonlu": -18.9,
+   "P_yon": 0.105
+  },
+  "2016_2026": {
+   "n": 131,
+   "opex": 8.8,
+   "kontrol": -2.2,
+   "fark_yonlu": 10.9,
+   "P_yon": 0.7967
+  }
+ },
+ "CUM0930_1gun ~ Cum açılış→Pzt açılış SAT": {
+  "1999_2015": {
+   "n": 202,
+   "opex": -22.6,
+   "kontrol": 3.4,
+   "fark_yonlu": 26.0,
+   "P_yon": 0.9637
+  },
+  "2016_2026": {
+   "n": 130,
+   "opex": -21.5,
+   "kontrol": 5.3,
+   "fark_yonlu": 26.9,
+   "P_yon": 0.9647
+  }
+ },
+ "PER0930_5sa ~ Per açılış→Per kapanış AL": {
+  "1999_2015": {
+   "n": 202,
+   "opex": -7.7,
+   "kontrol": 8.8,
+   "fark_yonlu": -16.5,
+   "P_yon": 0.0885
+  },
+  "2016_2026": {
+   "n": 131,
+   "opex": 2.7,
+   "kontrol": -3.6,
+   "fark_yonlu": 6.3,
+   "P_yon": 0.7295
+  }
+ }
+}
