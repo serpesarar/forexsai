@@ -59,9 +59,9 @@ textarea{width:100%;min-height:64px;padding:6px 8px;resize:vertical;box-sizing:b
     <aside class="panel" aria-label="İşlem listesi">
       <div class="row">
         <select id="fRes" aria-label="Sonuç filtresi"><option value="all">Tüm işlemler</option><option value="win">Kazananlar</option><option value="loss">Kaybedenler</option><option value="big">Büyük kayıp (≤ −200 bp)</option></select>
-        <select id="fYear" aria-label="Yıl"><option value="all">Tüm yıllar</option></select>
+        <select id="fYear" aria-label="Yıl"><option value="son4" selected>2022–2026 (son 4 yıl)</option><option value="all">Tüm yıllar</option></select>
       </div>
-      <div class="row"><select id="fSort" aria-label="Sıralama"><option value="date">Tarihe göre</option><option value="worst">En kötüden</option><option value="best">En iyiden</option><option value="hold">Tutuşa göre (uzun)</option></select>
+      <div class="row"><select id="fSort" aria-label="Sıralama"><option value="new">Yeniden eskiye</option><option value="date">Eskiden yeniye</option><option value="worst">En kötüden</option><option value="best">En iyiden</option><option value="hold">Tutuşa göre (uzun)</option></select>
         <span class="muted" id="count"></span></div>
       <div class="list" id="list"></div>
     </aside>
@@ -114,13 +114,14 @@ const NYd = new Intl.DateTimeFormat('tr-TR',{timeZone:'America/New_York',weekday
 const nyStr = s => NYf.format(new Date(s*1000));
 let cur = 0, shown = Infinity, timer = null, view = [];
 let notes = {}; try{ notes = JSON.parse(localStorage.getItem('kg_notes')||'{}'); }catch(e){}
-[...new Set(TR.map(t=>t.d.slice(0,4)))].forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;$('fYear').appendChild(o);});
+[...new Set(TR.map(t=>t.d.slice(0,4)))].reverse().forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;$('fYear').appendChild(o);});
 
 function buildList(){
   const r=$('fRes').value, y=$('fYear').value, s=$('fSort').value;
-  view = TR.filter(t=>(r==='all'||(r==='win'&&t.net>0)||(r==='loss'&&t.net<=0)||(r==='big'&&t.net<=-200)) && (y==='all'||t.d.startsWith(y)));
-  if(s==='worst') view.sort((a,b)=>a.net-b.net); else if(s==='best') view.sort((a,b)=>b.net-a.net); else if(s==='hold') view.sort((a,b)=>b.tg-a.tg||a.net-b.net); else view.sort((a,b)=>a.d<b.d?-1:1);
-  $('count').textContent = view.length+' işlem';
+  view = TR.filter(t=>(r==='all'||(r==='win'&&t.net>0)||(r==='loss'&&t.net<=0)||(r==='big'&&t.net<=-200)) && (y==='all'||(y==='son4'&&t.d>='2022')||t.d.startsWith(y)));
+  if(s==='new') view.sort((a,b)=>a.d<b.d?1:-1); else if(s==='worst') view.sort((a,b)=>a.net-b.net); else if(s==='best') view.sort((a,b)=>b.net-a.net); else if(s==='hold') view.sort((a,b)=>b.tg-a.tg||a.net-b.net); else view.sort((a,b)=>a.d<b.d?-1:1);
+  const tot=view.reduce((a,t)=>a+t.net,0), wr=view.length?view.filter(t=>t.net>0).length/view.length*100:0;
+  $('count').textContent = `${view.length} işlem · isabet %${fmt(wr,0)} · toplam ${tot>0?'+':''}${fmt(tot,0)} bp`;
   $('list').innerHTML = view.map((t,k)=>`<div class="item${t.id===TR[cur].id?' on':''}" tabindex="0" data-k="${k}"><span>${t.d}${notes[t.id]?' ✎':''}</span><span class="muted">${t.tg} g</span><span class="${t.net>0?'pos':'neg'}">${t.net>0?'+':''}${fmt(t.net,0)}</span></div>`).join('');
   $('list').querySelectorAll('.item').forEach(el=>{const go=()=>select(view[+el.dataset.k].id);el.onclick=go;el.onkeydown=e=>{if(e.key==='Enter')go();};});
 }
@@ -206,5 +207,5 @@ $('note').addEventListener('input',()=>{const t=TR[cur];const v=$('note').value.
 $('copy').onclick=()=>{const txt=TR.filter(t=>notes[t.id]).map(t=>`${t.d} (${t.net>0?'+':''}${Math.round(t.net)} bp, ${t.tg} gün): ${notes[t.id]}`).join('\n')||'(henüz not yok)';
   navigator.clipboard.writeText(txt).then(()=>$('copyMsg').textContent='Kopyalandı',()=>{$('note').value=txt;$('note').select();$('copyMsg').textContent='Seçildi, Ctrl/Cmd+C ile kopyala';});};
 try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',retheme);}catch(e){}
-$('fSort').value='worst'; buildList(); select(view[0].id);
+$('fSort').value='new'; buildList(); select(view[0].id);
 </script>
