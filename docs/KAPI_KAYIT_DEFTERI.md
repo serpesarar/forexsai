@@ -1609,6 +1609,7 @@ FOMC tarihleri 1994–2007 Fed tarihsel sayfalarından (`data/fomc_1994_2007.csv
 | XG-05 | 2026-11-19 | Korumalı korku gecesi: NDX al + US500/US30/US2000 sat (h 0,5 / 1 / beta, KEŞİF ölçeği) (EK-2) | h 0,5 korelasyon 0,87–0,98; ölçekle kâr korununca zarar ×1,6–3,6 | X |
 | XG-06 | 2026-11-19 | Teyitli kademeli giriş (f0 + kontrol noktasında artıysa ek) (EK-3) | kâr ve zarar aynı oranda; A: NDX kâr ×1,09–1,14 zarar ×0,89–0,97, US30 kâr ×0,49 | C |
 | XG-07 | 2026-11-19 | Derin felaket stopu XP tutuşunda (−200…−600 bp, yol en düşüğü) ± 4'lü veto ± kademe (EK-4) | Zarar ×1,2–2,0 her piyasada iki dönemde (kesilenler sonradan kazanıyordu); stop + P4 zarar ×0,29–0,44, kâr ×0,27–0,61 | X |
+| XG-08 | 2026-11-19 | İşlem başı oynaklığa göre lot (1/rv20, 1/VIX; ölçek KEŞİF'te kâr = taban) (EK-5) | TEST zarar ×1,07–1,97, en kötü işlem büyüyor | X |
 
 ## 3. Meta-dersler (kalıcı ilkeler)
 

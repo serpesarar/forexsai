@@ -62,3 +62,11 @@ stop ∧ kademe A. S KEŞİF'te seçilir (kâr× ≥ 1,0 iken zarar×'ı en kü�
 ## EK-4 sonucu
 Derin felaket stopu (−200…−600 bp) her piyasada ve iki dönemde zararı ×1,2–2,0 artırdı (kesilen işlemlerin çoğu sonradan kazanana
 dönüyordu). Stop + 4'lü veto: zarar ×0,29–0,44 ama kâr ×0,27–0,61 → hedef yine tutmadı.
+
+## EK-5 (2026-11-19) — işlem başı oynaklığa göre lot (risk eşitleme)
+Lot w = c / rv20 (giriş günü, nedensel), w tavan 2,0 taban 0,25; ayrıca w = c / VIX ve w = c / max(rv20, VIX). c her piyasada KEŞİF toplam
+kârını tabana eşitleyecek şekilde KEŞİF'ten dondurulur. Ölçüt aynı: TEST'te kâr× ≥ 1,00 ve zarar× ≤ 0,50 (Duka + MT5), kör ≥ 2/3.
+
+## EK-5 sonucu
+Oynaklığa göre lot (1/rv20, 1/VIX, 1/max) KEŞİF'te kârı tabana eşitleyince zarar ×0,98–1,71; TEST'te zarar ×1,07–1,97 → X
+(korku gecesinin kazancı yüksek oynaklık günlerinde; lotu orada küçültüp sakin günde büyütmek zararı artırıyor).

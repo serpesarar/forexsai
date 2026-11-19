@@ -32,3 +32,7 @@
 ## EK-4 — derin felaket stopu (−200…−600 bp, işlem yolunda)
 Zarar her piyasada ve her dönemde ×1,2–2,0 arttı; stopla kesilen işlemlerin çoğu sonradan kazanana dönüyordu. 4'lü vetoyla birlikte
 zarar ×0,29–0,44, kâr ×0,27–0,61. **Yedinci yol da hedefi tutmadı.**
+
+## EK-5 — oynaklığa göre lot (risk eşitleme)
+1/rv20, 1/VIX, 1/max(rv20, VIX); ölçek KEŞİF'te kârı tabana eşitler. TEST'te zarar ×1,07–1,97 → X. Korku gecesinin kazancı yüksek
+oynaklık gecelerinde; lotu orada küçültmek kazancı, sakin günlerde büyütmek zararı artırıyor. **Sekizinci yol da hedefi tutmadı.**
