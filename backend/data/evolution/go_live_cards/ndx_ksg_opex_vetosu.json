@@ -1,0 +1,41 @@
+{
+ "scope": "ndx_ksg_opex_vetosu",
+ "tarih": "2026-11-18",
+ "aciklama": "VETO: canlı KSG (15:00→16:00 aşağı → 16:00 AL → ertesi 09:30) girişini aylık OPEX'e 0–2 işlem günü kala (Çar/Per/vade Cuma'sı) AÇMA",
+ "kanit": "research/kapi_genis_20261118/ (PROTOCOL GX-01 + EK-1, RAPOR); defter §2.94 GX-05",
+ "checks": {
+  "1_hacim": {
+   "n_vetolanan_Duka": 163,
+   "n_vetolanan_kor_3_piyasa": 284,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "vetolanan_ort_Duka_bp": -4.7,
+   "P_EV_eksi_Duka": 0.773,
+   "vetolanan_ort_kor_bp": -9.2,
+   "P_EV_eksi_kor": 0.9918,
+   "kalan_ort_Duka_bp": 8.4,
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "ilk_yari": -7.3,
+   "ikinci_yari": -2.1,
+   "gecti": true
+  },
+  "4_surtunme": {
+   "not": "veto işlem siler; spread ×1,5 vetolananları daha da eksi yapar",
+   "gecti": true
+  },
+  "5_icra": {
+   "bagimsiz_gercek_spread": "MT5 NAS100 −9, EET30 −12, NQ −14, US500 −16, US30 −9, US2000 −22 bp (6/6 eksi, havuz P 1,00)",
+   "gecti": true
+  },
+  "6_tek_pozisyon": {
+   "not": "veto yalnız giriş siler",
+   "gecti": true
+  }
+ },
+ "verdict": "SHADOW",
+ "sinif": "B (veto; canlı KSG modülüne bağlama kullanıcı kararı)",
+ "kart_6_6": 6
+}

@@ -1,0 +1,758 @@
+{
+ "GX01": {
+  "AYSONU_E2": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 0
+    },
+    "ESKI": {
+     "n": 0
+    },
+    "YENI": {
+     "n": 0
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 20,
+     "n_diger": 28,
+     "ic": 40.8,
+     "diger": 84.4,
+     "fark": -43.7,
+     "P_eksi": 0.7462
+    },
+    "ESKI": {
+     "n": 11,
+     "n_diger": 10,
+     "ic": 17.8,
+     "diger": 86.2,
+     "fark": -68.3,
+     "P_eksi": 0.806
+    },
+    "YENI": {
+     "n": 9,
+     "n_diger": 18,
+     "ic": 68.8,
+     "diger": 83.5,
+     "fark": -14.7,
+     "P_eksi": 0.527
+    }
+   }
+  },
+  "AYSONU_SON": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 0
+    },
+    "ESKI": {
+     "n": 0
+    },
+    "YENI": {
+     "n": 0
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 28,
+     "n_diger": 40,
+     "ic": 66.9,
+     "diger": 22.7,
+     "fark": 44.1,
+     "P_eksi": 0.0528
+    },
+    "ESKI": {
+     "n": 14,
+     "n_diger": 21,
+     "ic": 16.1,
+     "diger": 3.6,
+     "fark": 12.5,
+     "P_eksi": 0.3796
+    },
+    "YENI": {
+     "n": 14,
+     "n_diger": 19,
+     "ic": 117.6,
+     "diger": 43.9,
+     "fark": 73.7,
+     "P_eksi": 0.0214
+    }
+   }
+  },
+  "C3": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 32,
+     "n_diger": 177,
+     "ic": -19.0,
+     "diger": 54.6,
+     "fark": -73.6,
+     "P_eksi": 0.9962
+    },
+    "ESKI": {
+     "n": 8,
+     "n_diger": 67,
+     "ic": -68.6,
+     "diger": 54.0,
+     "fark": -122.6,
+     "P_eksi": 0.972
+    },
+    "YENI": {
+     "n": 24,
+     "n_diger": 110,
+     "ic": -2.5,
+     "diger": 54.9,
+     "fark": -57.5,
+     "P_eksi": 0.957
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 45,
+     "n_diger": 164,
+     "ic": 47.5,
+     "diger": 42.2,
+     "fark": 5.4,
+     "P_eksi": 0.4228
+    },
+    "ESKI": {
+     "n": 14,
+     "n_diger": 61,
+     "ic": 95.1,
+     "diger": 28.5,
+     "fark": 66.6,
+     "P_eksi": 0.129
+    },
+    "YENI": {
+     "n": 31,
+     "n_diger": 103,
+     "ic": 26.0,
+     "diger": 50.2,
+     "fark": -24.2,
+     "P_eksi": 0.7804
+    }
+   }
+  },
+  "C3B": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 19,
+     "n_diger": 113,
+     "ic": -21.0,
+     "diger": 83.1,
+     "fark": -104.1,
+     "P_eksi": 0.9984
+    },
+    "ESKI": {
+     "n": 5,
+     "n_diger": 46,
+     "ic": -75.6,
+     "diger": 74.2,
+     "fark": -149.9,
+     "P_eksi": 0.9958
+    },
+    "YENI": {
+     "n": 14,
+     "n_diger": 67,
+     "ic": -1.5,
+     "diger": 89.1,
+     "fark": -90.7,
+     "P_eksi": 0.9846
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 31,
+     "n_diger": 101,
+     "ic": 88.7,
+     "diger": 61.8,
+     "fark": 26.9,
+     "P_eksi": 0.1768
+    },
+    "ESKI": {
+     "n": 12,
+     "n_diger": 39,
+     "ic": 109.0,
+     "diger": 44.4,
+     "fark": 64.6,
+     "P_eksi": 0.0282
+    },
+    "YENI": {
+     "n": 19,
+     "n_diger": 62,
+     "ic": 75.9,
+     "diger": 72.7,
+     "fark": 3.2,
+     "P_eksi": 0.4776
+    }
+   }
+  },
+  "CAPREV": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 8,
+     "n_diger": 95,
+     "ic": -0.1,
+     "diger": 0.3,
+     "fark": -0.4,
+     "P_eksi": 0.9596
+    },
+    "ESKI": {
+     "n": 5,
+     "n_diger": 34,
+     "ic": 0.0,
+     "diger": 0.1,
+     "fark": -0.0,
+     "P_eksi": 0.549
+    },
+    "YENI": {
+     "n": 3
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 25,
+     "n_diger": 78,
+     "ic": 0.2,
+     "diger": 0.3,
+     "fark": -0.1,
+     "P_eksi": 0.741
+    },
+    "ESKI": {
+     "n": 7,
+     "n_diger": 32,
+     "ic": 0.1,
+     "diger": 0.1,
+     "fark": 0.1,
+     "P_eksi": 0.4108
+    },
+    "YENI": {
+     "n": 18,
+     "n_diger": 46,
+     "ic": 0.2,
+     "diger": 0.5,
+     "fark": -0.3,
+     "P_eksi": 0.8514
+    }
+   }
+  },
+  "CEKIC": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 91,
+     "n_diger": 610,
+     "ic": -0.1,
+     "diger": 0.2,
+     "fark": -0.3,
+     "P_eksi": 0.9464
+    },
+    "ESKI": {
+     "n": 32,
+     "n_diger": 268,
+     "ic": -0.1,
+     "diger": 0.1,
+     "fark": -0.2,
+     "P_eksi": 0.7636
+    },
+    "YENI": {
+     "n": 59,
+     "n_diger": 342,
+     "ic": -0.1,
+     "diger": 0.2,
+     "fark": -0.3,
+     "P_eksi": 0.9392
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 166,
+     "n_diger": 535,
+     "ic": -0.1,
+     "diger": 0.2,
+     "fark": -0.3,
+     "P_eksi": 0.9878
+    },
+    "ESKI": {
+     "n": 74,
+     "n_diger": 226,
+     "ic": -0.1,
+     "diger": 0.2,
+     "fark": -0.3,
+     "P_eksi": 0.919
+    },
+    "YENI": {
+     "n": 92,
+     "n_diger": 309,
+     "ic": -0.1,
+     "diger": 0.2,
+     "fark": -0.4,
+     "P_eksi": 0.9622
+    }
+   }
+  },
+  "FOMC_GECE": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 1
+    },
+    "ESKI": {
+     "n": 0
+    },
+    "YENI": {
+     "n": 1
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 28,
+     "n_diger": 41,
+     "ic": 36.3,
+     "diger": 22.4,
+     "fark": 13.9,
+     "P_eksi": 0.198
+    },
+    "ESKI": {
+     "n": 13,
+     "n_diger": 16,
+     "ic": 44.8,
+     "diger": 11.9,
+     "fark": 32.9,
+     "P_eksi": 0.0904
+    },
+    "YENI": {
+     "n": 15,
+     "n_diger": 25,
+     "ic": 28.9,
+     "diger": 29.2,
+     "fark": -0.3,
+     "P_eksi": 0.5206
+    }
+   }
+  },
+  "KSG": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 163,
+     "n_diger": 915,
+     "ic": -4.7,
+     "diger": 8.4,
+     "fark": -13.1,
+     "P_eksi": 0.971
+    },
+    "ESKI": {
+     "n": 82,
+     "n_diger": 405,
+     "ic": -6.8,
+     "diger": 9.4,
+     "fark": -16.2,
+     "P_eksi": 0.9652
+    },
+    "YENI": {
+     "n": 81,
+     "n_diger": 510,
+     "ic": -2.5,
+     "diger": 7.6,
+     "fark": -10.1,
+     "P_eksi": 0.8354
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 258,
+     "n_diger": 820,
+     "ic": 5.5,
+     "diger": 6.7,
+     "fark": -1.2,
+     "P_eksi": 0.583
+    },
+    "ESKI": {
+     "n": 118,
+     "n_diger": 369,
+     "ic": 1.9,
+     "diger": 8.3,
+     "fark": -6.4,
+     "P_eksi": 0.7494
+    },
+    "YENI": {
+     "n": 140,
+     "n_diger": 451,
+     "ic": 8.5,
+     "diger": 5.5,
+     "fark": 3.1,
+     "P_eksi": 0.3336
+    }
+   }
+  },
+  "ORBVIX": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 99,
+     "n_diger": 642,
+     "ic": -0.1,
+     "diger": 0.1,
+     "fark": -0.3,
+     "P_eksi": 0.973
+    },
+    "ESKI": {
+     "n": 45,
+     "n_diger": 296,
+     "ic": -0.1,
+     "diger": 0.1,
+     "fark": -0.2,
+     "P_eksi": 0.8568
+    },
+    "YENI": {
+     "n": 54,
+     "n_diger": 346,
+     "ic": -0.2,
+     "diger": 0.1,
+     "fark": -0.3,
+     "P_eksi": 0.9524
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 169,
+     "n_diger": 572,
+     "ic": 0.2,
+     "diger": 0.1,
+     "fark": 0.2,
+     "P_eksi": 0.0608
+    },
+    "ESKI": {
+     "n": 76,
+     "n_diger": 265,
+     "ic": 0.3,
+     "diger": 0.1,
+     "fark": 0.2,
+     "P_eksi": 0.1228
+    },
+    "YENI": {
+     "n": 93,
+     "n_diger": 307,
+     "ic": 0.2,
+     "diger": 0.1,
+     "fark": 0.2,
+     "P_eksi": 0.1574
+    }
+   }
+  },
+  "ORBVIX_LO": {
+   "veto_k0_2": {
+    "tum": {
+     "n": 110,
+     "n_diger": 693,
+     "ic": 0.0,
+     "diger": -0.0,
+     "fark": 0.0,
+     "P_eksi": 0.3754
+    },
+    "ESKI": {
+     "n": 46,
+     "n_diger": 304,
+     "ic": 0.1,
+     "diger": 0.0,
+     "fark": 0.0,
+     "P_eksi": 0.4572
+    },
+    "YENI": {
+     "n": 64,
+     "n_diger": 389,
+     "ic": 0.0,
+     "diger": -0.0,
+     "fark": 0.1,
+     "P_eksi": 0.3634
+    }
+   },
+   "sonra_a3_7": {
+    "tum": {
+     "n": 182,
+     "n_diger": 621,
+     "ic": 0.0,
+     "diger": 0.0,
+     "fark": -0.0,
+     "P_eksi": 0.5062
+    },
+    "ESKI": {
+     "n": 83,
+     "n_diger": 267,
+     "ic": -0.1,
+     "diger": 0.1,
+     "fark": -0.2,
+     "P_eksi": 0.8518
+    },
+    "YENI": {
+     "n": 99,
+     "n_diger": 354,
+     "ic": 0.1,
+     "diger": -0.0,
+     "fark": 0.1,
+     "P_eksi": 0.1998
+    }
+   }
+  },
+  "ORB_bagimsiz": {
+   "veto_k0_2": {
+    "n": 86,
+    "n_diger": 533,
+    "ic": -0.0,
+    "diger": 0.1,
+    "fark": -0.1,
+    "P_eksi": 0.7994
+   },
+   "sonra_a3_7": {
+    "n": 145,
+    "n_diger": 474,
+    "ic": 0.2,
+    "diger": 0.1,
+    "fark": 0.1,
+    "P_eksi": 0.2202
+   }
+  }
+ },
+ "GX02": {
+  "havuz": {
+   "n": 1942,
+   "fark_z": -0.001,
+   "P_eksi": 0.5378
+  },
+  "set": {
+   "C3b_QQQ": {
+    "n": 205,
+    "n_diger": 202,
+    "ic": 45.8,
+    "diger": 56.8,
+    "fark": -11.1,
+    "P_eksi": 0.688
+   },
+   "K1_QQQ": {
+    "n": 645,
+    "n_diger": 572,
+    "ic": 31.2,
+    "diger": 17.8,
+    "fark": 13.5,
+    "P_eksi": 0.1452
+   },
+   "K1_SPY": {
+    "n": 520,
+    "n_diger": 471,
+    "ic": 22.1,
+    "diger": 3.5,
+    "fark": 18.6,
+    "P_eksi": 0.0446
+   },
+   "C3b_NDX_1985_1999": {
+    "n": 36,
+    "n_diger": 38,
+    "ic": 23.9,
+    "diger": 48.0,
+    "fark": -24.1,
+    "P_eksi": 0.7064
+   },
+   "K1gi_DUKA_NDX": {
+    "n": 133,
+    "n_diger": 108,
+    "ic": 48.0,
+    "diger": 63.0,
+    "fark": -15.0,
+    "P_eksi": 0.7082
+   },
+   "K1gi_MT5_NAS100": {
+    "n": 120,
+    "n_diger": 104,
+    "ic": 42.6,
+    "diger": 59.8,
+    "fark": -17.3,
+    "P_eksi": 0.7424
+   },
+   "K1gi_MT5_US500": {
+    "n": 72,
+    "n_diger": 66,
+    "ic": 10.4,
+    "diger": 48.8,
+    "fark": -38.4,
+    "P_eksi": 0.9308
+   },
+   "K1gi_MT5_US30": {
+    "n": 86,
+    "n_diger": 66,
+    "ic": 22.1,
+    "diger": 43.8,
+    "fark": -21.7,
+    "P_eksi": 0.7666
+   },
+   "K1gi_MT5_US2000": {
+    "n": 125,
+    "n_diger": 102,
+    "ic": 5.0,
+    "diger": 61.8,
+    "fark": -56.8,
+    "P_eksi": 0.9836
+   }
+  },
+  "1994_2016": {
+   "n": 1018,
+   "fark_z": 0.083,
+   "P_eksi": 0.0318
+  },
+  "2017_sonrasi": {
+   "n": 924,
+   "fark_z": -0.103,
+   "P_eksi": 0.9848
+  },
+  "set_arti": 2
+ },
+ "GX03": {
+  "havuz": {
+   "n": 581,
+   "fark_z": 0.035,
+   "P_eksi": 0.2096
+  },
+  "set": {
+   "C3b_QQQ": {
+    "n": 54,
+    "n_diger": 361,
+    "ic": 49.5,
+    "diger": 51.6,
+    "fark": -2.1,
+    "P_eksi": 0.5234
+   },
+   "K1_QQQ": {
+    "n": 177,
+    "n_diger": 1074,
+    "ic": 27.3,
+    "diger": 24.6,
+    "fark": 2.7,
+    "P_eksi": 0.4582
+   },
+   "K1_SPY": {
+    "n": 136,
+    "n_diger": 882,
+    "ic": 36.7,
+    "diger": 9.1,
+    "fark": 27.6,
+    "P_eksi": 0.0664
+   },
+   "C3b_NDX_1985_1999": {
+    "n": 38,
+    "n_diger": 181,
+    "ic": -16.5,
+    "diger": -3.6,
+    "fark": -13.0,
+    "P_eksi": 0.6286
+   },
+   "K1gi_DUKA_NDX": {
+    "n": 44,
+    "n_diger": 208,
+    "ic": 53.7,
+    "diger": 55.0,
+    "fark": -1.3,
+    "P_eksi": 0.503
+   },
+   "K1gi_MT5_NAS100": {
+    "n": 41,
+    "n_diger": 193,
+    "ic": 45.8,
+    "diger": 51.4,
+    "fark": -5.6,
+    "P_eksi": 0.5572
+   },
+   "K1gi_MT5_US500": {
+    "n": 25,
+    "n_diger": 121,
+    "ic": 15.4,
+    "diger": 30.0,
+    "fark": -14.6,
+    "P_eksi": 0.6604
+   },
+   "K1gi_MT5_US30": {
+    "n": 24,
+    "n_diger": 138,
+    "ic": 19.8,
+    "diger": 35.6,
+    "fark": -15.8,
+    "P_eksi": 0.6684
+   },
+   "K1gi_MT5_US2000": {
+    "n": 42,
+    "n_diger": 192,
+    "ic": 51.5,
+    "diger": 28.5,
+    "fark": 22.9,
+    "P_eksi": 0.217
+   }
+  },
+  "1985_1999": {
+   "n": 59,
+   "fark_z": -0.096,
+   "P_eksi": 0.7198
+  },
+  "1999_2026": {
+   "n": 522,
+   "fark_z": 0.047,
+   "P_eksi": 0.1514
+  },
+  "set_arti": 3
+ },
+ "GX04": {
+  "havuz": {
+   "n": 90,
+   "fark_z": -0.111,
+   "P_eksi": 0.8742
+  },
+  "set": {
+   "C3b_QQQ": {
+    "n": 10,
+    "n_diger": 405,
+    "ic": 54.4,
+    "diger": 51.3,
+    "fark": 3.1,
+    "P_eksi": 0.4564
+   },
+   "K1_QQQ": {
+    "n": 35,
+    "n_diger": 1216,
+    "ic": -6.0,
+    "diger": 25.9,
+    "fark": -31.9,
+    "P_eksi": 0.756
+   },
+   "K1_SPY": {
+    "n": 25,
+    "n_diger": 993,
+    "ic": -18.4,
+    "diger": 13.5,
+    "fark": -32.0,
+    "P_eksi": 0.8188
+   },
+   "C3b_NDX_1985_1999": {
+    "n": 3
+   },
+   "K1gi_DUKA_NDX": {
+    "n": 4
+   },
+   "K1gi_MT5_NAS100": {
+    "n": 4
+   },
+   "K1gi_MT5_US500": {
+    "n": 2
+   },
+   "K1gi_MT5_US30": {
+    "n": 4
+   },
+   "K1gi_MT5_US2000": {
+    "n": 3
+   }
+  },
+  "1985_1999": {
+   "n": 6,
+   "fark_z": -0.072,
+   "P_eksi": 0.5658
+  },
+  "1999_2026": {
+   "n": 84,
+   "fark_z": -0.116,
+   "P_eksi": 0.8662
+  },
+  "set_arti": 1
+ }
+}
