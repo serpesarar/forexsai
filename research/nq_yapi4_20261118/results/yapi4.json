@@ -1,0 +1,536 @@
+{
+ "PC": {
+  "QQQ_PC_yuksek_AL_h5": {
+   "KESIF": {
+    "n": 35,
+    "ort": -62.6,
+    "plasebo": -6.5,
+    "fark": -56.1,
+    "yuzdelik": 0.152,
+    "isabet": 0.429,
+    "en_kotu": -794.3
+   },
+   "TEST": {
+    "n": 43,
+    "ort": 29.3,
+    "plasebo": 17.0,
+    "fark": 12.3,
+    "yuzdelik": 0.6385,
+    "isabet": 0.605,
+    "en_kotu": -486.4
+   }
+  },
+  "QQQ_PC_dusuk_SAT_h5": {
+   "KESIF": {
+    "n": 32,
+    "ort": -42.2,
+    "plasebo": -43.7,
+    "fark": 1.5,
+    "yuzdelik": 0.514,
+    "isabet": 0.312,
+    "en_kotu": -398.7
+   },
+   "TEST": {
+    "n": 56,
+    "ort": 7.5,
+    "plasebo": -45.0,
+    "fark": 52.4,
+    "yuzdelik": 0.97,
+    "isabet": 0.5,
+    "en_kotu": -313.9
+   }
+  },
+  "QQQ_PC_yuksek_AL_h20": {
+   "KESIF": {
+    "n": 23,
+    "ort": -152.2,
+    "plasebo": -6.5,
+    "fark": -145.7,
+    "yuzdelik": 0.1335,
+    "isabet": 0.478,
+    "en_kotu": -2354.6
+   },
+   "TEST": {
+    "n": 34,
+    "ort": 152.3,
+    "plasebo": 77.1,
+    "fark": 75.2,
+    "yuzdelik": 0.8745,
+    "isabet": 0.706,
+    "en_kotu": -724.2
+   }
+  },
+  "QQQ_PC_dusuk_SAT_h20": {
+   "KESIF": {
+    "n": 23,
+    "ort": -163.2,
+    "plasebo": -153.5,
+    "fark": -9.8,
+    "yuzdelik": 0.4825,
+    "isabet": 0.391,
+    "en_kotu": -1215.6
+   },
+   "TEST": {
+    "n": 36,
+    "ort": -89.4,
+    "plasebo": -169.6,
+    "fark": 80.2,
+    "yuzdelik": 0.9085,
+    "isabet": 0.222,
+    "en_kotu": -480.8
+   }
+  },
+  "SPY_PC_yuksek_AL_h5": {
+   "KESIF": {
+    "n": 35,
+    "ort": -76.8,
+    "plasebo": -11.9,
+    "fark": -65.0,
+    "yuzdelik": 0.1,
+    "isabet": 0.429,
+    "en_kotu": -787.3
+   },
+   "TEST": {
+    "n": 43,
+    "ort": 7.7,
+    "plasebo": 6.2,
+    "fark": 1.6,
+    "yuzdelik": 0.5135,
+    "isabet": 0.581,
+    "en_kotu": -480.6
+   }
+  },
+  "SPY_PC_dusuk_SAT_h5": {
+   "KESIF": {
+    "n": 32,
+    "ort": -17.9,
+    "plasebo": -28.6,
+    "fark": 10.8,
+    "yuzdelik": 0.5875,
+    "isabet": 0.344,
+    "en_kotu": -475.5
+   },
+   "TEST": {
+    "n": 56,
+    "ort": -8.4,
+    "plasebo": -35.0,
+    "fark": 26.6,
+    "yuzdelik": 0.891,
+    "isabet": 0.429,
+    "en_kotu": -204.1
+   }
+  },
+  "SPY_PC_yuksek_AL_h20": {
+   "KESIF": {
+    "n": 23,
+    "ort": -176.3,
+    "plasebo": -38.7,
+    "fark": -137.6,
+    "yuzdelik": 0.125,
+    "isabet": 0.478,
+    "en_kotu": -1886.2
+   },
+   "TEST": {
+    "n": 34,
+    "ort": 91.8,
+    "plasebo": 37.3,
+    "fark": 54.5,
+    "yuzdelik": 0.845,
+    "isabet": 0.706,
+    "en_kotu": -593.2
+   }
+  },
+  "SPY_PC_dusuk_SAT_h20": {
+   "KESIF": {
+    "n": 23,
+    "ort": -59.2,
+    "plasebo": -101.9,
+    "fark": 42.7,
+    "yuzdelik": 0.6595,
+    "isabet": 0.348,
+    "en_kotu": -1119.8
+   },
+   "TEST": {
+    "n": 36,
+    "ort": -88.2,
+    "plasebo": -129.2,
+    "fark": 41.0,
+    "yuzdelik": 0.812,
+    "isabet": 0.222,
+    "en_kotu": -412.8
+   }
+  }
+ },
+ "BT": {
+  "QQQ_BT1_itki_h5": {
+   "KESIF": {
+    "n": 218,
+    "ort": -8.2,
+    "plasebo": 6.6,
+    "fark": -14.8,
+    "yuzdelik": 0.278,
+    "isabet": 0.578,
+    "en_kotu": -2476.2
+   },
+   "TEST": {
+    "n": 38,
+    "ort": 1.1,
+    "plasebo": 2.6,
+    "fark": -1.5,
+    "yuzdelik": 0.48,
+    "isabet": 0.579,
+    "en_kotu": -701.2
+   }
+  },
+  "QQQ_BT2_tukenme_h5": {
+   "KESIF": {
+    "n": 154,
+    "ort": 111.6,
+    "plasebo": -0.7,
+    "fark": 112.2,
+    "yuzdelik": 1.0,
+    "isabet": 0.591,
+    "en_kotu": -1428.4
+   },
+   "TEST": {
+    "n": 23,
+    "ort": 84.7,
+    "plasebo": -2.1,
+    "fark": 86.7,
+    "yuzdelik": 0.909,
+    "isabet": 0.565,
+    "en_kotu": -584.4
+   }
+  },
+  "QQQ_BT1_itki_h20": {
+   "KESIF": {
+    "n": 153,
+    "ort": 21.9,
+    "plasebo": 34.5,
+    "fark": -12.6,
+    "yuzdelik": 0.4195,
+    "isabet": 0.601,
+    "en_kotu": -2797.9
+   },
+   "TEST": {
+    "n": 28,
+    "ort": 43.0,
+    "plasebo": 56.7,
+    "fark": -13.7,
+    "yuzdelik": 0.446,
+    "isabet": 0.571,
+    "en_kotu": -1462.4
+   }
+  },
+  "QQQ_BT2_tukenme_h20": {
+   "KESIF": {
+    "n": 112,
+    "ort": 126.1,
+    "plasebo": 12.1,
+    "fark": 113.9,
+    "yuzdelik": 0.9675,
+    "isabet": 0.571,
+    "en_kotu": -2398.5
+   },
+   "TEST": {
+    "n": 17,
+    "ort": 4.4,
+    "plasebo": -12.9,
+    "fark": 17.3,
+    "yuzdelik": 0.543,
+    "isabet": 0.471,
+    "en_kotu": -1239.6
+   }
+  },
+  "SPY_BT1_itki_h5": {
+   "KESIF": {
+    "n": 242,
+    "ort": -5.7,
+    "plasebo": 5.1,
+    "fark": -10.7,
+    "yuzdelik": 0.266,
+    "isabet": 0.554,
+    "en_kotu": -1518.2
+   },
+   "TEST": {
+    "n": 38,
+    "ort": 4.0,
+    "plasebo": 2.7,
+    "fark": 1.3,
+    "yuzdelik": 0.4975,
+    "isabet": 0.632,
+    "en_kotu": -549.5
+   }
+  },
+  "SPY_BT2_tukenme_h5": {
+   "KESIF": {
+    "n": 161,
+    "ort": 61.1,
+    "plasebo": -1.7,
+    "fark": 62.8,
+    "yuzdelik": 0.9985,
+    "isabet": 0.615,
+    "en_kotu": -945.5
+   },
+   "TEST": {
+    "n": 23,
+    "ort": 45.6,
+    "plasebo": -0.1,
+    "fark": 45.7,
+    "yuzdelik": 0.824,
+    "isabet": 0.609,
+    "en_kotu": -587.9
+   }
+  },
+  "SPY_BT1_itki_h20": {
+   "KESIF": {
+    "n": 171,
+    "ort": 20.3,
+    "plasebo": 28.0,
+    "fark": -7.7,
+    "yuzdelik": 0.411,
+    "isabet": 0.602,
+    "en_kotu": -1903.5
+   },
+   "TEST": {
+    "n": 28,
+    "ort": 19.6,
+    "plasebo": 43.8,
+    "fark": -24.3,
+    "yuzdelik": 0.382,
+    "isabet": 0.643,
+    "en_kotu": -1254.9
+   }
+  },
+  "SPY_BT2_tukenme_h20": {
+   "KESIF": {
+    "n": 119,
+    "ort": 70.2,
+    "plasebo": 6.1,
+    "fark": 64.1,
+    "yuzdelik": 0.9435,
+    "isabet": 0.58,
+    "en_kotu": -3095.6
+   },
+   "TEST": {
+    "n": 17,
+    "ort": 12.7,
+    "plasebo": 6.7,
+    "fark": 6.0,
+    "yuzdelik": 0.5135,
+    "isabet": 0.471,
+    "en_kotu": -916.1
+   }
+  }
+ },
+ "VD": {
+  "QQQ_VD1_fiyat_up_vix_up_h1": {
+   "yon": -1,
+   "KESIF": {
+    "n": 55,
+    "ort": 14.0,
+    "plasebo": -7.2,
+    "fark": 21.2,
+    "yuzdelik": 0.756,
+    "isabet": 0.509,
+    "en_kotu": -636.1
+   },
+   "TEST": {
+    "n": 12,
+    "ort": 60.6,
+    "plasebo": -5.0,
+    "fark": 65.6,
+    "yuzdelik": 0.9305,
+    "isabet": 0.583,
+    "en_kotu": -109.5
+   }
+  },
+  "QQQ_VD1_fiyat_up_vix_up_h5": {
+   "yon": -1,
+   "KESIF": {
+    "n": 50,
+    "ort": -22.5,
+    "plasebo": -31.8,
+    "fark": 9.3,
+    "yuzdelik": 0.556,
+    "isabet": 0.34,
+    "en_kotu": -880.5
+   },
+   "TEST": {
+    "n": 11,
+    "ort": 163.4,
+    "plasebo": -12.1,
+    "fark": 175.5,
+    "yuzdelik": 0.967,
+    "isabet": 0.818,
+    "en_kotu": -193.8
+   }
+  },
+  "QQQ_VD2_fiyat_dn_vix_dn_h1": {
+   "yon": -1,
+   "KESIF": {
+    "n": 159,
+    "ort": 19.2,
+    "plasebo": -2.0,
+    "fark": 21.2,
+    "yuzdelik": 0.862,
+    "isabet": 0.579,
+    "en_kotu": -1071.7
+   },
+   "TEST": {
+    "n": 44,
+    "ort": -5.5,
+    "plasebo": 1.6,
+    "fark": -7.1,
+    "yuzdelik": 0.3945,
+    "isabet": 0.545,
+    "en_kotu": -457.9
+   }
+  },
+  "QQQ_VD2_fiyat_dn_vix_dn_h5": {
+   "yon": 1,
+   "KESIF": {
+    "n": 129,
+    "ort": 33.9,
+    "plasebo": -13.1,
+    "fark": 47.0,
+    "yuzdelik": 0.87,
+    "isabet": 0.481,
+    "en_kotu": -1905.6
+   },
+   "TEST": {
+    "n": 36,
+    "ort": 25.0,
+    "plasebo": -25.1,
+    "fark": 50.1,
+    "yuzdelik": 0.7915,
+    "isabet": 0.583,
+    "en_kotu": -730.9
+   }
+  },
+  "SPY_VD1_fiyat_up_vix_up_h1": {
+   "yon": -1,
+   "KESIF": {
+    "n": 34,
+    "ort": -11.5,
+    "plasebo": -8.7,
+    "fark": -2.8,
+    "yuzdelik": 0.469,
+    "isabet": 0.559,
+    "en_kotu": -585.9
+   },
+   "TEST": {
+    "n": 7,
+    "ort": 73.7,
+    "plasebo": -3.0,
+    "fark": 76.7,
+    "yuzdelik": 0.9555,
+    "isabet": 0.714,
+    "en_kotu": -77.7
+   }
+  },
+  "SPY_VD1_fiyat_up_vix_up_h5": {
+   "yon": -1,
+   "KESIF": {
+    "n": 33,
+    "ort": -12.8,
+    "plasebo": -34.7,
+    "fark": 21.9,
+    "yuzdelik": 0.685,
+    "isabet": 0.455,
+    "en_kotu": -456.8
+   },
+   "TEST": {
+    "n": 6,
+    "ort": 169.5,
+    "plasebo": -4.5,
+    "fark": 174.0,
+    "yuzdelik": 0.9505,
+    "isabet": 0.667,
+    "en_kotu": -117.3
+   }
+  },
+  "SPY_VD2_fiyat_dn_vix_dn_h1": {
+   "yon": -1,
+   "KESIF": {
+    "n": 71,
+    "ort": 7.1,
+    "plasebo": -3.5,
+    "fark": 10.6,
+    "yuzdelik": 0.7175,
+    "isabet": 0.535,
+    "en_kotu": -673.7
+   },
+   "TEST": {
+    "n": 18,
+    "ort": -21.2,
+    "plasebo": 2.1,
+    "fark": -23.3,
+    "yuzdelik": 0.245,
+    "isabet": 0.556,
+    "en_kotu": -270.1
+   }
+  },
+  "SPY_VD2_fiyat_dn_vix_dn_h5": {
+   "yon": 1,
+   "KESIF": {
+    "n": 60,
+    "ort": 8.3,
+    "plasebo": -6.6,
+    "fark": 14.9,
+    "yuzdelik": 0.6405,
+    "isabet": 0.517,
+    "en_kotu": -1993.6
+   },
+   "TEST": {
+    "n": 14,
+    "ort": 98.1,
+    "plasebo": -33.9,
+    "fark": 132.0,
+    "yuzdelik": 0.952,
+    "isabet": 0.571,
+    "en_kotu": -319.7
+   }
+  },
+  "NDX_1990_1999_VD1_fiyat_up_vix_up_h1": {
+   "yon": -1,
+   "n": 50,
+   "ort": 4.8,
+   "plasebo": -14.2,
+   "fark": 19.1,
+   "yuzdelik": 0.8175,
+   "isabet": 0.5,
+   "en_kotu": -242.9
+  },
+  "NDX_1990_1999_VD1_fiyat_up_vix_up_h5": {
+   "yon": -1,
+   "n": 41,
+   "ort": -101.0,
+   "plasebo": -60.4,
+   "fark": -40.6,
+   "yuzdelik": 0.217,
+   "isabet": 0.244,
+   "en_kotu": -670.4
+  },
+  "NDX_1990_1999_VD2_fiyat_dn_vix_dn_h1": {
+   "yon": -1,
+   "n": 104,
+   "ort": 6.2,
+   "plasebo": -11.6,
+   "fark": 17.8,
+   "yuzdelik": 0.8955,
+   "isabet": 0.49,
+   "en_kotu": -382.4
+  },
+  "NDX_1990_1999_VD2_fiyat_dn_vix_dn_h5": {
+   "yon": 1,
+   "n": 88,
+   "ort": 26.0,
+   "plasebo": 35.1,
+   "fark": -9.1,
+   "yuzdelik": 0.3905,
+   "isabet": 0.557,
+   "en_kotu": -660.8
+  }
+ }
+}

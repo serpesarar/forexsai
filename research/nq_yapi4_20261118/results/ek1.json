@@ -1,0 +1,168 @@
+{
+ "QQQ_a_BT2_rsi_alt_payi": 0.65,
+ "QQQ_a_rsi_alt": {
+  "KESIF": {
+   "n": 101,
+   "ort": 123.6,
+   "plasebo": -0.4,
+   "fark": 124.1,
+   "yuzdelik": 1.0,
+   "isabet": 0.634,
+   "en_kotu": -1428.4
+  },
+  "TEST": {
+   "n": 14,
+   "ort": 98.0,
+   "plasebo": 1.5,
+   "fark": 96.5,
+   "yuzdelik": 0.8795,
+   "isabet": 0.643,
+   "en_kotu": -584.4
+  }
+ },
+ "QQQ_a_rsi_ust": {
+  "KESIF": {
+   "n": 53,
+   "ort": 88.5,
+   "plasebo": 0.6,
+   "fark": 88.0,
+   "yuzdelik": 0.9505,
+   "isabet": 0.509,
+   "en_kotu": -573.8
+  },
+  "TEST": {
+   "n": 9,
+   "ort": 64.0,
+   "plasebo": -5.6,
+   "fark": 69.6,
+   "yuzdelik": 0.732,
+   "isabet": 0.444,
+   "en_kotu": -283.3
+  }
+ },
+ "QQQ_b_BT2_rsi_ust_epizot": {
+  "KESIF": {
+   "n": 113,
+   "ort": 22.8,
+   "plasebo": -0.7,
+   "fark": 23.5,
+   "yuzdelik": 0.7495,
+   "isabet": 0.54,
+   "en_kotu": -1754.5
+  },
+  "TEST": {
+   "n": 20,
+   "ort": 37.4,
+   "plasebo": -20.0,
+   "fark": 57.4,
+   "yuzdelik": 0.778,
+   "isabet": 0.55,
+   "en_kotu": -514.0
+  }
+ },
+ "QQQ_c_C3b_x_BT2_KESIF": {
+  "n": 112,
+  "n_degil": 190,
+  "ile": 92.3,
+  "olmadan": 12.7,
+  "fark": 79.6,
+  "P": 0.999
+ },
+ "QQQ_c_C3b_x_BT2_TEST": {
+  "n": 25,
+  "n_degil": 56,
+  "ile": 82.7,
+  "olmadan": 36.8,
+  "fark": 45.9,
+  "P": 0.805
+ },
+ "SPY_a_BT2_rsi_alt_payi": 0.598,
+ "SPY_a_rsi_alt": {
+  "KESIF": {
+   "n": 95,
+   "ort": 54.4,
+   "plasebo": -5.1,
+   "fark": 59.5,
+   "yuzdelik": 0.991,
+   "isabet": 0.6,
+   "en_kotu": -945.5
+  },
+  "TEST": {
+   "n": 15,
+   "ort": 32.1,
+   "plasebo": 5.7,
+   "fark": 26.4,
+   "yuzdelik": 0.668,
+   "isabet": 0.667,
+   "en_kotu": -587.9
+  }
+ },
+ "SPY_a_rsi_ust": {
+  "KESIF": {
+   "n": 66,
+   "ort": 70.7,
+   "plasebo": 1.5,
+   "fark": 69.1,
+   "yuzdelik": 0.985,
+   "isabet": 0.636,
+   "en_kotu": -570.7
+  },
+  "TEST": {
+   "n": 8,
+   "ort": 71.0,
+   "plasebo": -15.3,
+   "fark": 86.3,
+   "yuzdelik": 0.822,
+   "isabet": 0.5,
+   "en_kotu": -230.3
+  }
+ },
+ "SPY_b_BT2_rsi_ust_epizot": {
+  "KESIF": {
+   "n": 127,
+   "ort": 4.0,
+   "plasebo": -3.0,
+   "fark": 7.0,
+   "yuzdelik": 0.6275,
+   "isabet": 0.583,
+   "en_kotu": -1905.2
+  },
+  "TEST": {
+   "n": 17,
+   "ort": 43.2,
+   "plasebo": -21.4,
+   "fark": 64.5,
+   "yuzdelik": 0.838,
+   "isabet": 0.471,
+   "en_kotu": -461.3
+  }
+ },
+ "SPY_c_C3b_x_BT2_KESIF": {
+  "n": 117,
+  "n_degil": 176,
+  "ile": 61.5,
+  "olmadan": 16.5,
+  "fark": 44.9,
+  "P": 0.9775
+ },
+ "SPY_c_C3b_x_BT2_TEST": {
+  "n": 20,
+  "n_degil": 60,
+  "ile": 47.3,
+  "olmadan": 53.3,
+  "fark": -6.0,
+  "P": 0.4363
+ },
+ "NDX_1995_1999_BT2": {
+  "n": 6,
+  "ort": 129.8,
+  "plasebo": 94.8,
+  "fark": 35.0,
+  "yuzdelik": 0.575,
+  "isabet": 0.833,
+  "en_kotu": -407.9
+ },
+ "NDX_1995_1999_BT2_rsi_ust": {
+  "n": 2
+ }
+}
