@@ -1,0 +1,210 @@
+<title>Korku Gecesi İşlem Oynatıcı</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Düzen: solda işlem listesi, sağda grafik + kural kartları + oynatma; dar ekranda üst üste */
+:root{
+  --bg:#f3f5f7; --panel:#ffffff; --fg:#151e28; --muted:#5e6977; --line:#d9dfe6; --grid:#e9eef2;
+  --up:#1e8a55; --down:#c4362d; --entry:#1f63c6; --twap:#a2690a; --exit:#6b3fb8; --hold:rgba(31,99,198,.07);
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --panel:#171f28; --fg:#e5e9ee; --muted:#9aa6b4; --line:#29333f; --grid:#202a35;
+  --up:#4fcf8c; --down:#ff7b72; --entry:#7fb2ff; --twap:#f0c06c; --exit:#c3a2ff; --hold:rgba(127,178,255,.08); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --panel:#171f28; --fg:#e5e9ee; --muted:#9aa6b4; --line:#29333f; --grid:#202a35;
+  --up:#4fcf8c; --down:#ff7b72; --entry:#7fb2ff; --twap:#f0c06c; --exit:#c3a2ff; --hold:rgba(127,178,255,.08); color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.5}
+.wrap{max-width:1360px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:14px}
+h1{font-family:var(--display);font-size:24px;margin:0}
+h2{font-family:var(--display);font-size:15px;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:10px;min-width:0}
+select,button,textarea{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg)}
+select{padding:4px 6px} button{padding:5px 10px;cursor:pointer} button:hover{border-color:var(--entry)}
+button:focus-visible,select:focus-visible,textarea:focus-visible,.item:focus-visible{outline:2px solid var(--entry);outline-offset:1px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.list{max-height:640px;overflow:auto;display:grid;gap:2px}
+.item{display:grid;grid-template-columns:1fr auto auto;gap:8px;padding:5px 8px;border-radius:6px;cursor:pointer;font-variant-numeric:tabular-nums;font-size:13px;border:1px solid transparent}
+.item:hover{background:var(--bg)} .item.on{border-color:var(--entry);background:var(--bg)}
+.pos{color:var(--up)} .neg{color:var(--down)}
+.head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+.big{font-family:var(--display);font-size:22px;font-variant-numeric:tabular-nums}
+canvas{width:100%;display:block;touch-action:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cards>*{min-width:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px;font-variant-numeric:tabular-nums}
+.kv span:nth-child(odd){color:var(--muted)}
+.steps{display:grid;gap:4px;font-size:13px;margin:0;padding-left:18px}
+.chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:12px;border:1px solid var(--line)}
+.chip.veto{border-color:var(--down);color:var(--down)} .chip.ok{border-color:var(--up);color:var(--up)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.sw{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:5px;border-radius:2px}
+textarea{width:100%;min-height:64px;padding:6px 8px;resize:vertical;box-sizing:border-box}
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:6px">
+    <div class="eyebrow">NASDAQ · Dukascopy 30 dk mumlar · 249 işlem · 2018-04 → 2026-11</div>
+    <h1>Korku Gecesi İşlem Oynatıcı</h1>
+    <p class="muted">Her işlem gerçek grafik üzerinde: neden açıldı, nereden girildi, gece ve sonraki günler nasıl ilerledi, hangi 16:00 kontrolünde kapandı. Bu stratejide sabit TP/SL yok; çıkış kuralı "ilk yükselen 16:00 kapanışı, en geç 5 gün". ← / → tuşları önceki / sonraki işlem.</p>
+  </header>
+
+  <div class="layout">
+    <aside class="panel" aria-label="İşlem listesi">
+      <div class="row">
+        <select id="fRes" aria-label="Sonuç filtresi"><option value="all">Tüm işlemler</option><option value="win">Kazananlar</option><option value="loss">Kaybedenler</option><option value="big">Büyük kayıp (≤ −200 bp)</option></select>
+        <select id="fYear" aria-label="Yıl"><option value="all">Tüm yıllar</option></select>
+      </div>
+      <div class="row"><select id="fSort" aria-label="Sıralama"><option value="date">Tarihe göre</option><option value="worst">En kötüden</option><option value="best">En iyiden</option><option value="hold">Tutuşa göre (uzun)</option></select>
+        <span class="muted" id="count"></span></div>
+      <div class="list" id="list"></div>
+    </aside>
+
+    <main style="display:grid;gap:12px;min-width:0">
+      <section class="panel">
+        <div class="head">
+          <div><div class="eyebrow" id="hEyebrow"></div><div class="big" id="hTitle"></div></div>
+          <div class="row">
+            <button id="prev" aria-label="Önceki işlem">← Önceki</button>
+            <button id="play">▶ Oynat</button>
+            <select id="speed" aria-label="Hız"><option value="180">Yavaş</option><option value="70" selected>Normal</option><option value="20">Hızlı</option></select>
+            <button id="all">Tamamını göster</button>
+            <button id="next" aria-label="Sonraki işlem">Sonraki →</button>
+          </div>
+        </div>
+        <div class="legend">
+          <span><i class="sw" style="background:var(--entry)"></i>giriş fiyatı (16:00, alış)</span>
+          <span><i class="sw" style="background:var(--twap)"></i>giriş günü TWAP</span>
+          <span><i class="sw" style="background:var(--exit)"></i>çıkış</span>
+          <span><i class="sw" style="background:var(--down)"></i>en derin nokta (MAE)</span>
+          <span>gölge = pozisyon açık</span>
+        </div>
+        <canvas id="cv" height="430" aria-label="İşlem grafiği"></canvas>
+        <div class="muted" id="hover" style="font-size:12px;font-family:var(--mono);min-height:18px"></div>
+      </section>
+
+      <div class="cards">
+        <section class="panel"><h2>Neden açıldı (kural)</h2><ol class="steps" id="why"></ol></section>
+        <section class="panel"><h2>Nasıl kapandı (çıkış kuralı)</h2><ol class="steps" id="how"></ol></section>
+        <section class="panel"><h2>Giriş anı bilgileri</h2><div class="kv" id="ctx"></div><div class="row" id="gates"></div></section>
+        <section class="panel"><h2>Notun (bu işlem)</h2>
+          <textarea id="note" placeholder="Bu işlemde ne görüyorsun? Taktik fikrin…"></textarea>
+          <div class="row"><button id="copy">Tüm notları kopyala</button><span class="muted" id="copyMsg" style="font-size:12px"></span></div>
+          <p class="muted" style="font-size:12px">Notlar yalnız bu tarayıcıda saklanır. Kopyalayıp sohbete yapıştırırsan sınarım.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+const TR = JSON.parse(document.getElementById('data').textContent);
+const $ = id => document.getElementById(id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = (x,d=1)=>x==null?'—':Number(x).toLocaleString('tr-TR',{maximumFractionDigits:d,minimumFractionDigits:d});
+const NYf = new Intl.DateTimeFormat('tr-TR',{timeZone:'America/New_York',weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+const NYd = new Intl.DateTimeFormat('tr-TR',{timeZone:'America/New_York',weekday:'short',day:'2-digit',month:'short'});
+const nyStr = s => NYf.format(new Date(s*1000));
+let cur = 0, shown = Infinity, timer = null, view = [];
+let notes = {}; try{ notes = JSON.parse(localStorage.getItem('kg_notes')||'{}'); }catch(e){}
+[...new Set(TR.map(t=>t.d.slice(0,4)))].forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;$('fYear').appendChild(o);});
+
+function buildList(){
+  const r=$('fRes').value, y=$('fYear').value, s=$('fSort').value;
+  view = TR.filter(t=>(r==='all'||(r==='win'&&t.net>0)||(r==='loss'&&t.net<=0)||(r==='big'&&t.net<=-200)) && (y==='all'||t.d.startsWith(y)));
+  if(s==='worst') view.sort((a,b)=>a.net-b.net); else if(s==='best') view.sort((a,b)=>b.net-a.net); else if(s==='hold') view.sort((a,b)=>b.tg-a.tg||a.net-b.net); else view.sort((a,b)=>a.d<b.d?-1:1);
+  $('count').textContent = view.length+' işlem';
+  $('list').innerHTML = view.map((t,k)=>`<div class="item${t.id===TR[cur].id?' on':''}" tabindex="0" data-k="${k}"><span>${t.d}${notes[t.id]?' ✎':''}</span><span class="muted">${t.tg} g</span><span class="${t.net>0?'pos':'neg'}">${t.net>0?'+':''}${fmt(t.net,0)}</span></div>`).join('');
+  $('list').querySelectorAll('.item').forEach(el=>{const go=()=>select(view[+el.dataset.k].id);el.onclick=go;el.onkeydown=e=>{if(e.key==='Enter')go();};});
+}
+function select(id){ stop(); cur = TR.findIndex(t=>t.id===id); shown=Infinity; render(); buildList(); const on=$('list').querySelector('.on'); if(on) on.scrollIntoView({block:'nearest'}); }
+function step(dir){ const k=view.findIndex(t=>t.id===TR[cur].id); const n=view[Math.min(view.length-1,Math.max(0,(k<0?0:k)+dir))]; if(n) select(n.id); }
+
+function render(){
+  const t = TR[cur];
+  $('hEyebrow').textContent = `AL (uzun) · giriş ${nyStr(t.giris_t)} NY · çıkış ${nyStr(t.cikis_t)} NY`;
+  $('hTitle').innerHTML = `<span class="${t.net>0?'pos':'neg'}">${t.net>0?'+':''}${fmt(t.net,0)} bp</span> <span class="muted" style="font-size:15px">· ${t.tg} günde · giriş ${fmt(t.giris_p,1)} → çıkış ${fmt(t.cikis_p,1)}</span>`;
+  const twd = (t.giris_bid/t.twap-1)*100, lh = t.son_saat;
+  $('why').innerHTML = [
+    `09:30'dan 16:00'ya kadar ortalama fiyat (TWAP) <b>${fmt(t.twap,1)}</b>.`,
+    `16:00 fiyatı <b>${fmt(t.giris_bid,1)}</b>: TWAP'ın <b>%${fmt(Math.abs(twd),2)}</b> altında (eşik %0,50) → gün içi satış baskısı.`,
+    `Son saat (15:00 → 16:00) <b>${fmt(lh,0)} bp</b> (aşağı olmalı) → kapanışa doğru korku.`,
+    `İkisi birlikte = <b>korku gecesi (K1)</b> → 16:00'da alış fiyatından <b>${fmt(t.giris_p,1)}</b> AL.`
+  ].map(x=>`<li>${x}</li>`).join('');
+  $('how').innerHTML = t.chk.map(c=>{
+    const last = c.t===t.cikis_t;
+    const txt = c.yukseldi ? `<span class="pos">yükseldi</span> → <b>ÇIK</b> (ilk yükselen kapanış)` : (last ? `düştü ama 5. gün → <b>zorunlu ÇIK</b>` : `<span class="neg">düştü</span> → tutmaya devam`);
+    const bp = (c.p/t.giris_p-1)*1e4;
+    return `<li>${c.gun}. gün 16:00 (${NYd.format(new Date(c.t*1000))}): ${fmt(c.p,1)} <span class="muted">(${bp>0?'+':''}${fmt(bp,0)} bp)</span> — ${txt}</li>`;
+  }).join('') + `<li class="muted">"Yükseldi" = bu 16:00 kapanışı bir önceki 16:00 kapanışının (ilk gün: giriş fiyatının) üstünde.</li><li class="muted">En derin nokta ${fmt(t.mae,0)} bp (${nyStr(t.mae_t)}), en yüksek +${fmt(t.mfe,0)} bp.</li>`;
+  $('ctx').innerHTML = [['Gün getirisi',fmt(t.gun_ret,0)+' bp'],['Seans (09:30→16:00)',fmt(t.seans,0)+' bp'],['Son saat',fmt(t.son_saat,0)+' bp'],['TWAP uzaklığı',fmt(t.twap_uz,0)+' bp'],
+    ['RSI2',fmt(t.rsi2,0)],['SMA200 uzaklığı',t.sma200==null?'—':fmt(t.sma200,0)+' bp'],['Dünkü VIX',fmt(t.vix,1)],['OPEX\'e kalan işlem günü',t.opex_k>40?'—':t.opex_k],['Makro olay günü',t.olay?'evet':'hayır']]
+    .map(([k,v])=>`<span>${k}</span><span>${v}</span>`).join('');
+  const g = [['OPEX vetosu', [0,1,2].includes(t.opex_k)],['Olay günü vetosu', t.olay===1],['Son saat hafif (> −25,6)', t.son_saat>-25.6],['Düşük VIX (&lt; 17,4)', t.vix!=null&&t.vix<17.37]];
+  $('gates').innerHTML = g.map(([k,v])=>`<span class="chip ${v?'veto':'ok'}">${k}: ${v?'açmazdı':'geçer'}</span>`).join('');
+  $('note').value = notes[t.id]||'';
+  draw();
+}
+
+let geom=null;
+function draw(){
+  const t=TR[cur], cv=$('cv'), r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1, H=+cv.getAttribute('height');
+  cv.width=r.width*dpr; cv.height=H*dpr; cv.style.height=H+'px'; const c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,r.width,H);
+  const W=r.width, pad={l:10,r:118,t:14,b:30};
+  const bars=t.bar, n=bars.length, vis=Math.min(n, shown);
+  const lo=Math.min(...bars.map(b=>b[3]), t.giris_p, t.mae_p??Infinity), hi=Math.max(...bars.map(b=>b[2]), t.giris_p);
+  const m=(hi-lo)*0.06, ymin=lo-m, ymax=hi+m;
+  const bw=(W-pad.l-pad.r)/n, X=k=>pad.l+bw*(k+0.5), Y=v=>pad.t+(H-pad.t-pad.b)*(1-(v-ymin)/(ymax-ymin));
+  const tm=b=>t.giris_t+b[0]*60; const kAt=s=>{let k=bars.findIndex(b=>tm(b)>=s);return k<0?n-1:k;};
+  const k0=kAt(t.giris_t), kx=kAt(t.cikis_t);
+  geom={X,Y,bw,pad,ymin,ymax,W,H,bars,t,tm};
+  // ızgara + sağ eksen (fiyat ve giriş farkı bp)
+  c.font='11px '+css('--mono'); c.strokeStyle=css('--grid'); c.fillStyle=css('--muted'); c.lineWidth=1;
+  for(let q=0;q<=6;q++){const v=ymin+(ymax-ymin)*q/6,y=Y(v);c.beginPath();c.moveTo(pad.l,y);c.lineTo(W-pad.r,y);c.stroke();c.textAlign='left';c.textBaseline='middle';
+    const bp=(v/t.giris_p-1)*1e4; c.fillText(`${fmt(v,0)}  ${bp>0?'+':''}${fmt(bp,0)}bp`, W-pad.r+6, y);}
+  // gün ayraçları
+  let lastDay='';bars.forEach((b,k)=>{const dd=NYd.format(new Date(tm(b)*1000));if(dd!==lastDay){lastDay=dd;c.strokeStyle=css('--line');c.beginPath();c.moveTo(X(k)-bw/2,pad.t);c.lineTo(X(k)-bw/2,H-pad.b);c.stroke();c.fillStyle=css('--muted');c.textAlign='left';c.textBaseline='top';c.fillText(dd,X(k)-bw/2+3,H-pad.b+6);}});
+  // pozisyon gölgesi
+  if(vis>k0){c.fillStyle=css('--hold');c.fillRect(X(k0)-bw/2,pad.t,X(Math.min(kx,vis-1))-X(k0)+bw/2,H-pad.t-pad.b);}
+  // TWAP (giriş günü 09:30–16:00)
+  const td=NYd.format(new Date(t.giris_t*1000)); let ka=bars.findIndex(b=>NYd.format(new Date(tm(b)*1000))===td && ((tm(b)-t.giris_t)/3600)>=-6.5);
+  if(ka>=0){c.strokeStyle=css('--twap');c.setLineDash([5,4]);c.lineWidth=1.5;c.beginPath();c.moveTo(X(ka)-bw/2,Y(t.twap));c.lineTo(X(k0)+bw/2,Y(t.twap));c.stroke();c.setLineDash([]);
+    c.fillStyle=css('--twap');c.textAlign='left';c.textBaseline='bottom';c.fillText('TWAP '+fmt(t.twap,0),X(ka),Y(t.twap)-3);}
+  // mumlar
+  for(let k=0;k<vis;k++){const [_,o,h,l,cl]=bars[k];const up=cl>=o;c.strokeStyle=up?css('--up'):css('--down');c.fillStyle=c.strokeStyle;c.beginPath();c.moveTo(X(k),Y(h));c.lineTo(X(k),Y(l));c.stroke();
+    const y1=Y(Math.max(o,cl)),y2=Y(Math.min(o,cl));c.fillRect(X(k)-Math.max(1,bw*0.32),y1,Math.max(2,bw*0.64),Math.max(1,y2-y1));}
+  // giriş çizgisi + ok
+  if(vis>k0){c.strokeStyle=css('--entry');c.lineWidth=1.3;c.setLineDash([2,3]);c.beginPath();c.moveTo(X(k0),Y(t.giris_p));c.lineTo(W-pad.r,Y(t.giris_p));c.stroke();c.setLineDash([]);
+    c.fillStyle=css('--entry');c.beginPath();const ex=X(k0),ey=Y(t.giris_p)+4;c.moveTo(ex,ey);c.lineTo(ex-7,ey+12);c.lineTo(ex+7,ey+12);c.fill();
+    c.font='600 12px '+css('--body');c.textAlign='center';c.textBaseline='top';c.fillText('AL 16:00',ex,ey+14);}
+  // 16:00 kontrolleri
+  t.chk.forEach(ch=>{const k=kAt(ch.t);if(k>=vis)return;c.strokeStyle=ch.yukseldi?css('--up'):css('--down');c.setLineDash([3,3]);c.beginPath();c.moveTo(X(k),pad.t);c.lineTo(X(k),H-pad.b);c.stroke();c.setLineDash([]);
+    c.fillStyle=c.strokeStyle;c.font='11px '+css('--mono');c.textAlign='center';c.textBaseline='top';c.fillText(`${ch.gun}.g ${ch.yukseldi?'↑':'↓'}`,X(k),pad.t);});
+  // MAE
+  const km=kAt(t.mae_t); if(km<vis&&t.mae_p!=null){c.fillStyle=css('--down');c.beginPath();c.arc(X(km),Y(t.mae_p),4,0,7);c.fill();c.font='11px '+css('--mono');c.textAlign='left';c.textBaseline='top';c.fillText(`en derin ${fmt(t.mae,0)}bp`,X(km)+6,Y(t.mae_p)+2);}
+  // çıkış
+  if(vis>kx){c.strokeStyle=css('--exit');c.lineWidth=2.4;const x=X(kx),y=Y(t.cikis_p);c.beginPath();c.moveTo(x-6,y-6);c.lineTo(x+6,y+6);c.moveTo(x+6,y-6);c.lineTo(x-6,y+6);c.stroke();
+    c.fillStyle=css('--exit');c.font='600 12px '+css('--body');c.textAlign='center';c.textBaseline='bottom';c.fillText(`ÇIK ${t.net>0?'+':''}${fmt(t.net,0)}bp`,x,y-9);}
+}
+function play(){ if(timer){stop();return;} const t=TR[cur]; if(shown>=t.bar.length) shown=0; $('play').textContent='❚❚ Durdur';
+  timer=setInterval(()=>{shown++;draw();if(shown>=TR[cur].bar.length)stop();}, +$('speed').value); }
+function stop(){ clearInterval(timer); timer=null; $('play').textContent='▶ Oynat'; }
+$('play').onclick=play; $('all').onclick=()=>{stop();shown=Infinity;draw();};
+$('prev').onclick=()=>step(-1); $('next').onclick=()=>step(1);
+['fRes','fYear','fSort'].forEach(id=>$(id).addEventListener('input',()=>{buildList(); if(view.length&&!view.some(t=>t.id===TR[cur].id)) select(view[0].id);}));
+document.addEventListener('keydown',e=>{if(e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;if(e.key==='ArrowRight')step(1);if(e.key==='ArrowLeft')step(-1);if(e.key===' '){e.preventDefault();play();}});
+$('note').addEventListener('input',()=>{const t=TR[cur];const v=$('note').value.trim();if(v)notes[t.id]=v;else delete notes[t.id];try{localStorage.setItem('kg_notes',JSON.stringify(notes));}catch(e){}buildList();});
+$('copy').onclick=()=>{const txt=TR.filter(t=>notes[t.id]).map(t=>`${t.d} (${t.net>0?'+':''}${Math.round(t.net)} bp, ${t.tg} gün): ${notes[t.id]}`).join('\n')||'(henüz not yok)';
+  navigator.clipboard.writeText(txt).then(()=>$('copyMsg').textContent='Kopyalandı',()=>{$('note').value=txt;$('note').select();$('copyMsg').textContent='Seçildi, Ctrl/Cmd+C ile kopyala';});};
+$('cv').addEventListener('mousemove',e=>{if(!geom)return;const r=$('cv').getBoundingClientRect();const k=Math.floor((e.clientX-r.left-geom.pad.l)/geom.bw);const b=geom.bars[k];if(!b){$('hover').textContent='';return;}
+  const bp=(b[4]/geom.t.giris_p-1)*1e4;$('hover').textContent=`${nyStr(geom.tm(b))} NY · A ${fmt(b[1],1)} Y ${fmt(b[2],1)} D ${fmt(b[3],1)} K ${fmt(b[4],1)} · girişe göre ${bp>0?'+':''}${fmt(bp,0)} bp`;});
+window.addEventListener('resize',()=>{clearTimeout(window.__r);window.__r=setTimeout(draw,120);});
+try{window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);}catch(e){}
+$('fSort').value='worst'; buildList(); select(view[0].id);
+</script>
