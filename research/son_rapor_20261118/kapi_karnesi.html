@@ -51,7 +51,7 @@ ul{margin:0;padding-left:20px;display:grid;gap:6px;max-width:72ch}
   <header style="display:grid;gap:10px">
     <div class="eyebrow">NAS100 · Dukascopy + MT5 · 2018-04 → 2026-11 · uçtan uca yeniden sınama</div>
     <h1>NASDAQ Kapı Karnesi</h1>
-    <p class="lead">Bu sohbette bulunan onaylanabilir 8 kapı tek bir test düzeneğinde baştan kuruldu; NASDAQ'ta iki veri kaynağında, kör US500/US30/US2000'de ve 1985'e uzanan günlük geçmişte çalıştırıldı. 6'sı NASDAQ'ta onaylandı; olay günü vetosu NASDAQ dışında onaylandı; vade sonrası dozu karışık kaldı. Rakamlar işlem başı <b>bp</b> (1 bp = %0,01; NAS100 25.000 iken 1 bp ≈ 2,5 puan), lottan bağımsız, spread ve gecelik finansman düşülmüş.</p>
+    <p class="lead">Bu sohbette bulunan onaylanabilir 14 kapının hepsi tek bir test düzeneğinde baştan kuruldu; NASDAQ'ta iki veri kaynağında, kör US500/US30/US2000'de ve 1985'e uzanan günlük geçmişte çalıştırıldı. 10'u onaylandı, 1'i koşullu (yalnız NASDAQ dışında), 3'ü zayıf ya da önerilmez. Rakamlar işlem başı <b>bp</b> (1 bp = %0,01; NAS100 25.000 iken 1 bp ≈ 2,5 puan), lottan bağımsız, spread ve gecelik finansman düşülmüş.</p>
   </header>
 
   <section>
@@ -118,6 +118,32 @@ ul{margin:0;padding-left:20px;display:grid;gap:6px;max-width:72ch}
         </tbody>
       </table>
     </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Sohbetin ilk yarısında bulunan kapılar, aynı düzenekte</div>
+    <h2>Korku gecesi ailesinin diğer üyeleri ve dozları</h2>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>Kapı</th><th>Ne yapar</th><th>NASDAQ işlem/yıl</th><th>Kazanan</th><th>Ort. bp</th><th>En kötü</th><th>En kötü %10 ort.</th><th>En büyük düşüş</th><th>Kör US500 / US30 / US2000 ort. bp</th><th>Karar</th></tr></thead>
+        <tbody>
+          <tr><td><b>K3 son saat korkusu</b><small>KG-03</small></td><td>15:00→16:00 ≤ −%0,3 → 16:00 al → ertesi 16:00</td><td>37–38</td><td>%57–60</td><td>+35…+39</td><td class="neg">−613…−623</td><td class="neg">−275…−277</td><td class="neg">−1.260…−1.265</td><td>+13 / +15 / +20</td><td><span class="pill ok">Onay</span><small>K1 ile büyük ölçüde aynı gün</small></td></tr>
+          <tr><td><b>Geniş fitilli KSG</b><small>FG-03</small></td><td>12 sa içinde 2 saatlik büyük alt fitil ∧ 15:00→15:30 aşağı → 15:30 al → ertesi 16:00</td><td>25–26</td><td>%61–63</td><td>+45…+50</td><td class="neg">−633…−643</td><td class="neg">−289…−299</td><td class="neg">−1.153…−1.209</td><td>+29 / +41 / +26</td><td><span class="pill ok">Onay</span><small>taban ≈ 0; US2000'de düşüş −3.536</small></td></tr>
+          <tr><td><b>Referans fitilli KSG</b><small>FG-02</small></td><td>6 sa içinde 1 saatlik büyük alt fitil ∧ son saat aşağı → 16:00 al → 09:30</td><td>21–22</td><td>%63–64</td><td>+28…+31</td><td class="neg">−401…−402</td><td class="neg">−205…−212</td><td class="neg">−591…−687</td><td>−7 / +17 / +14</td><td><span class="pill ok">NASDAQ'ta onay</span><small>US500'de yok</small></td></tr>
+          <tr><td><b>Korku ∧ ters VIX eğrisi dozu</b><small>KB-03</small></td><td>K1 günü dünkü VIX ≥ VIX3M ise lot büyüt</td><td>≈ 5 (dozlu)</td><td>—</td><td>dozlu +173…+176 vs +25…+32</td><td colspan="3">seyrek; büyük stres günleri (kuyruk riski yüksek)</td><td>+89 / +94 / +142 (dozlu)</td><td><span class="pill ok">Onay</span><small>P 0,995 (NASDAQ), kör 3/3 aynı yön</small></td></tr>
+          <tr><td><b>Korku ∧ C3b aynı gün dozu</b><small>KB-03</small></td><td>K1 günü RSI2 &lt; 10 ise lot büyüt</td><td>≈ 9 (dozlu)</td><td>—</td><td>dozlu +68…+69 vs +42…+49</td><td colspan="3">—</td><td>+24 / +38 / +52 (dozlu)</td><td><span class="pill weak">Zayıf</span><small>P 0,42–0,83; önceki B tekrar etmedi</small></td></tr>
+          <tr><td><b>NDX korkusu → Avrupa ertesi gün</b><small>YK-07</small></td><td>NDX K1 gecesi DAX/CAC/STOXX al → sonraki yerel kapanış</td><td>≈ 25</td><td>—</td><td>+14…+15 (YENİ +5…+8)</td><td colspan="3">—</td><td>UK100 tutmuyor</td><td><span class="pill weak">Küçük</span><small>B ama NDX'e üstünlüğü yok, önerilmez</small></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="note">
+    <h2>Tam liste: 14 onaylanabilir kapı</h2>
+    <p><b>Onay (10):</b> OPEX korku vetosu · KSG OPEX vetosu · C3b + OPEX vetosu · "ilk yükselen kapanışta çık" (US2000 hariç) · korku ertesi seansı · art arda korku dozu · K3 son saat korkusu · geniş fitilli KSG · referans fitilli KSG (NASDAQ) · korku ∧ ters VIX eğrisi dozu.</p>
+    <p><b>Koşullu (1):</b> olay günü vetosu — NASDAQ dışında güçlü, NASDAQ'ta zayıf.</p>
+    <p><b>Zayıf / önerilmez (3):</b> vade sonrası 3.–7. gün dozu · korku ∧ C3b aynı gün dozu · NDX korkusunun Avrupa'ya taşınması.</p>
+    <p class="lead">Korku gecesi (K1) ailesi aynı günlere düşer: K1, K3, geniş fitilli KSG ve ertesi seans çoğu zaman birlikte tetiklenir. Ayrı kollar gibi toplanmaz; aynı anda tek pozisyon açılmalıdır.</p>
   </section>
 
   <section class="cols">
