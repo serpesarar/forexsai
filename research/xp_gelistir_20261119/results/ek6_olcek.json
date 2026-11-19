@@ -1,0 +1,42 @@
+{
+ "DUKA_NDX": {
+  "L_kesif": 1.39,
+  "TEST_kar×": 0.81,
+  "TEST_zarar×": 0.4,
+  "TEST_kotu10×": 0.52,
+  "TEST_DD×": 0.52,
+  "oran_TEST": 2.0
+ },
+ "MT5_NAS100": {
+  "L_kesif": 1.22,
+  "TEST_kar×": 0.75,
+  "TEST_zarar×": 0.38,
+  "TEST_kotu10×": 0.48,
+  "TEST_DD×": 0.44,
+  "oran_TEST": 1.97
+ },
+ "MT5_US500": {
+  "L_kesif": 1.36,
+  "TEST_kar×": 0.36,
+  "TEST_zarar×": 0.43,
+  "TEST_kotu10×": 0.52,
+  "TEST_DD×": 0.97,
+  "oran_TEST": 0.84
+ },
+ "MT5_US30": {
+  "L_kesif": 1.23,
+  "TEST_kar×": 0.6,
+  "TEST_zarar×": 0.54,
+  "TEST_kotu10×": 0.69,
+  "TEST_DD×": 0.71,
+  "oran_TEST": 1.11
+ },
+ "MT5_US2000": {
+  "L_kesif": 0.88,
+  "TEST_kar×": 0.33,
+  "TEST_zarar×": 0.36,
+  "TEST_kotu10×": 0.49,
+  "TEST_DD×": 0.47,
+  "oran_TEST": 0.92
+ }
+}

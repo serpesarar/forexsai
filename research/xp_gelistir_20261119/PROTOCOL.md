@@ -70,3 +70,14 @@ kârını tabana eşitleyecek şekilde KEŞİF'ten dondurulur. Ölçüt aynı: T
 ## EK-5 sonucu
 Oynaklığa göre lot (1/rv20, 1/VIX, 1/max) KEŞİF'te kârı tabana eşitleyince zarar ×0,98–1,71; TEST'te zarar ×1,07–1,97 → X
 (korku gecesinin kazancı yüksek oynaklık günlerinde; lotu orada küçültüp sakin günde büyütmek zararı artırıyor).
+
+## EK-6 (2026-11-19) — birleşim + lot ölçeği (oran hedefi)
+Hedefin matematiği: TEST'te kâr×/zarar× ≥ 2 olan bir yapı, lotla ölçeklenince kâr ×1 / zarar ×0,5 verir. Kayıtlarda bu orana yaklaşan
+tek birleşim S400 + P4 (TEST'te görüldü → seçimi TEST'e bakarak yapılmış sayılır). Dürüst sınama: lot çarpanı L = 1 / (KEŞİF kâr×),
+piyasa başına KEŞİF'ten dondurulur; TEST'te L × (S400 + P4) uygulanır. Geçme: Duka + MT5 kâr× ≥ 1,0 ve zarar× ≤ 0,5; kör ≥ 2/3.
+Not: seçim TEST'i gördükten sonra yapıldığı için geçse bile en fazla C+ (ileri gölge gerekir).
+
+## EK-6 sonucu
+KEŞİF'ten dondurulan lot (Duka ×1,39, MT5 ×1,22) ile TEST: Duka kâr ×0,81 / zarar ×0,40 / kötü10 ×0,52 / DD ×0,52; MT5 kâr ×0,75 /
+zarar ×0,38 / DD ×0,44. Kör US500/US30/US2000 kâr×/zarar× oranı 0,84–1,11 (iyileşme yok). → Hedefe en yakın sonuç ama kâr %19–25 eksik
+ve kör piyasalarda tutmuyor: C (NDX'e özgü, ileri gölge gerekir).

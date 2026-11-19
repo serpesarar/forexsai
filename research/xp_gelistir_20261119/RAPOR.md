@@ -36,3 +36,12 @@ zarar ×0,29–0,44, kâr ×0,27–0,61. **Yedinci yol da hedefi tutmadı.**
 ## EK-5 — oynaklığa göre lot (risk eşitleme)
 1/rv20, 1/VIX, 1/max(rv20, VIX); ölçek KEŞİF'te kârı tabana eşitler. TEST'te zarar ×1,07–1,97 → X. Korku gecesinin kazancı yüksek
 oynaklık gecelerinde; lotu orada küçültmek kazancı, sakin günlerde büyütmek zararı artırıyor. **Sekizinci yol da hedefi tutmadı.**
+
+## EK-6 — hedefe en yakın yapı: 4'lü veto + −400 bp felaket stopu + lot ×1,2–1,4 (KEŞİF'ten dondurulmuş)
+| | Kâr× | Zarar× | En kötü %10× | En büyük düşüş× |
+|---|---|---|---|---|
+| Duka NDX 2021–26 | 0,81 | **0,40** | 0,52 | 0,52 |
+| MT5 NAS100 2021–26 | 0,75 | **0,38** | 0,48 | 0,44 |
+| Kör US500 / US30 / US2000 | 0,36 / 0,60 / 0,33 | 0,43 / 0,54 / 0,36 | — | — |
+NASDAQ'ta zarar yarıdan fazla düşüyor ama kâr %19–25 eksik; kör piyasalarda kâr/zarar oranı iyileşmiyor (0,84–1,11) → **C**, hedef
+tutmadı. Birleşim TEST görüldükten sonra seçildiği için ancak ileriye dönük gölgede doğrulanabilir.
