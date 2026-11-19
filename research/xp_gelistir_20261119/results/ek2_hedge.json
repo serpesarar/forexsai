@@ -1,0 +1,317 @@
+{
+ "US500_h05": {
+  "olcek": 1.62,
+  "KESIF": {
+   "n": 58,
+   "kar×": 1.0,
+   "zarar×": 0.91,
+   "kotu10×": 0.84,
+   "DD×": 1.57,
+   "en_kotu": [
+    -392,
+    -441
+   ],
+   "isabet": [
+    82.8,
+    81.0
+   ],
+   "korelasyon_taban_pkt": 0.87
+  },
+  "TEST": {
+   "n": 141,
+   "kar×": 1.07,
+   "zarar×": 0.99,
+   "kotu10×": 0.96,
+   "DD×": 1.04,
+   "en_kotu": [
+    -786,
+    -714
+   ],
+   "isabet": [
+    76.6,
+    75.2
+   ],
+   "korelasyon_taban_pkt": 0.98
+  }
+ },
+ "US500_h10": {
+  "olcek": 4.21,
+  "KESIF": {
+   "n": 58,
+   "kar×": 1.0,
+   "zarar×": 3.7,
+   "kotu10×": 2.29,
+   "DD×": 4.43,
+   "en_kotu": [
+    -392,
+    -988
+   ],
+   "isabet": [
+    82.8,
+    56.9
+   ],
+   "korelasyon_taban_pkt": 0.1
+  },
+  "TEST": {
+   "n": 141,
+   "kar×": 1.38,
+   "zarar×": 1.61,
+   "kotu10×": 1.21,
+   "DD×": 1.35,
+   "en_kotu": [
+    -786,
+    -626
+   ],
+   "isabet": [
+    76.6,
+    68.8
+   ],
+   "korelasyon_taban_pkt": 0.66
+  }
+ },
+ "US500_beta": {
+  "olcek": 4.16,
+  "KESIF": {
+   "n": 58,
+   "kar×": 1.0,
+   "zarar×": 3.66,
+   "kotu10×": 2.26,
+   "DD×": 4.3,
+   "en_kotu": [
+    -392,
+    -976
+   ],
+   "isabet": [
+    82.8,
+    56.9
+   ],
+   "korelasyon_taban_pkt": 0.09
+  },
+  "TEST": {
+   "n": 141,
+   "kar×": 0.85,
+   "zarar×": 2.11,
+   "kotu10×": 1.29,
+   "DD×": 2.44,
+   "en_kotu": [
+    -786,
+    -619
+   ],
+   "isabet": [
+    76.6,
+    61.0
+   ],
+   "korelasyon_taban_pkt": 0.38
+  }
+ },
+ "US30_h05": {
+  "olcek": 1.47,
+  "KESIF": {
+   "n": 89,
+   "kar×": 1.0,
+   "zarar×": 0.94,
+   "kotu10×": 0.86,
+   "DD×": 1.0,
+   "en_kotu": [
+    -435,
+    -482
+   ],
+   "isabet": [
+    77.5,
+    68.5
+   ],
+   "korelasyon_taban_pkt": 0.9
+  },
+  "TEST": {
+   "n": 141,
+   "kar×": 1.1,
+   "zarar×": 1.07,
+   "kotu10×": 0.99,
+   "DD×": 1.04,
+   "en_kotu": [
+    -786,
+    -731
+   ],
+   "isabet": [
+    76.6,
+    72.3
+   ],
+   "korelasyon_taban_pkt": 0.96
+  }
+ },
+ "US30_h10": {
+  "olcek": 2.78,
+  "KESIF": {
+   "n": 89,
+   "kar×": 1.0,
+   "zarar×": 2.37,
+   "kotu10×": 1.59,
+   "DD×": 1.61,
+   "en_kotu": [
+    -435,
+    -956
+   ],
+   "isabet": [
+    77.5,
+    60.7
+   ],
+   "korelasyon_taban_pkt": 0.22
+  },
+  "TEST": {
+   "n": 141,
+   "kar×": 1.39,
+   "zarar×": 1.88,
+   "kotu10×": 1.44,
+   "DD×": 1.29,
+   "en_kotu": [
+    -786,
+    -801
+   ],
+   "isabet": [
+    76.6,
+    68.1
+   ],
+   "korelasyon_taban_pkt": 0.69
+  }
+ },
+ "US30_beta": {
+  "olcek": 2.82,
+  "KESIF": {
+   "n": 89,
+   "kar×": 1.0,
+   "zarar×": 2.47,
+   "kotu10×": 1.62,
+   "DD×": 1.64,
+   "en_kotu": [
+    -435,
+    -970
+   ],
+   "isabet": [
+    77.5,
+    60.7
+   ],
+   "korelasyon_taban_pkt": 0.18
+  },
+  "TEST": {
+   "n": 141,
+   "kar×": 1.41,
+   "zarar×": 1.93,
+   "kotu10×": 1.53,
+   "DD×": 2.17,
+   "en_kotu": [
+    -786,
+    -1029
+   ],
+   "isabet": [
+    76.6,
+    67.4
+   ],
+   "korelasyon_taban_pkt": 0.49
+  }
+ },
+ "US2000_h05": {
+  "olcek": 1.59,
+  "KESIF": {
+   "n": 90,
+   "kar×": 1.0,
+   "zarar×": 1.01,
+   "kotu10×": 0.8,
+   "DD×": 0.91,
+   "en_kotu": [
+    -435,
+    -351
+   ],
+   "isabet": [
+    77.8,
+    67.8
+   ],
+   "korelasyon_taban_pkt": 0.83
+  },
+  "TEST": {
+   "n": 141,
+   "kar×": 0.97,
+   "zarar×": 1.2,
+   "kotu10×": 1.06,
+   "DD×": 1.44,
+   "en_kotu": [
+    -786,
+    -643
+   ],
+   "isabet": [
+    76.6,
+    71.6
+   ],
+   "korelasyon_taban_pkt": 0.92
+  }
+ },
+ "US2000_h10": {
+  "olcek": 3.92,
+  "KESIF": {
+   "n": 90,
+   "kar×": 1.0,
+   "zarar×": 4.83,
+   "kotu10×": 2.82,
+   "DD×": 4.82,
+   "en_kotu": [
+    -435,
+    -1109
+   ],
+   "isabet": [
+    77.8,
+    56.7
+   ],
+   "korelasyon_taban_pkt": -0.03
+  },
+  "TEST": {
+   "n": 141,
+   "kar×": 0.85,
+   "zarar×": 3.62,
+   "kotu10×": 2.49,
+   "DD×": 3.59,
+   "en_kotu": [
+    -786,
+    -1199
+   ],
+   "isabet": [
+    76.6,
+    58.9
+   ],
+   "korelasyon_taban_pkt": 0.37
+  }
+ },
+ "US2000_beta": {
+  "olcek": 3.37,
+  "KESIF": {
+   "n": 90,
+   "kar×": 1.0,
+   "zarar×": 3.84,
+   "kotu10×": 2.42,
+   "DD×": 3.4,
+   "en_kotu": [
+    -435,
+    -952
+   ],
+   "isabet": [
+    77.8,
+    57.8
+   ],
+   "korelasyon_taban_pkt": 0.0
+  },
+  "TEST": {
+   "n": 141,
+   "kar×": 1.29,
+   "zarar×": 2.49,
+   "kotu10×": 1.88,
+   "DD×": 3.07,
+   "en_kotu": [
+    -786,
+    -1042
+   ],
+   "isabet": [
+    76.6,
+    65.2
+   ],
+   "korelasyon_taban_pkt": 0.5
+  }
+ }
+}
