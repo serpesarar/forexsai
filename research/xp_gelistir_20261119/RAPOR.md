@@ -28,3 +28,7 @@
    kör US30'da tutmadı → C).
 3. Mevcut önerilen paket (OPEX vetosu + XP) zaten bu ailenin en iyi risk/getiri dengesi; zararı yarıya indirmenin tek gerçek yolu lotu
    yarıya indirmek (kâr da yarıya iner).
+
+## EK-4 — derin felaket stopu (−200…−600 bp, işlem yolunda)
+Zarar her piyasada ve her dönemde ×1,2–2,0 arttı; stopla kesilen işlemlerin çoğu sonradan kazanana dönüyordu. 4'lü vetoyla birlikte
+zarar ×0,29–0,44, kâr ×0,27–0,61. **Yedinci yol da hedefi tutmadı.**

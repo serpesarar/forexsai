@@ -54,3 +54,11 @@ Geçme: TEST'te kâr× ≥ 1,00 ve zarar× ≤ 0,50 (Duka + MT5), kör ≥ 2/3't
 ## EK-3 sonucu
 Kademeli giriş kâr ve zararı aynı oranda küçültüyor (B hücresi: zarar ×0,45–0,52, kâr ×0,40–0,44); A hücresi NDX TEST kâr ×1,09–1,14,
 zarar ×0,89–0,97, kör US30 kâr ×0,49 → hedef tutmadı.
+
+## EK-4 (2026-11-19) — derin felaket stopu XP tutuşunda
+İşlem yolunun en düşüğü (mae) ≤ −S ise çıkış −S − 5 bp kayma; S ∈ {200, 250, 300, 400, 500, 600} bp. Ayrıca stop ∧ 4'lü veto (P4) ve
+stop ∧ kademe A. S KEŞİF'te seçilir (kâr× ≥ 1,0 iken zarar×'ı en küçük; dört piyasa ortalaması), TEST'te aynı ölçüt.
+
+## EK-4 sonucu
+Derin felaket stopu (−200…−600 bp) her piyasada ve iki dönemde zararı ×1,2–2,0 artırdı (kesilen işlemlerin çoğu sonradan kazanana
+dönüyordu). Stop + 4'lü veto: zarar ×0,29–0,44 ama kâr ×0,27–0,61 → hedef yine tutmadı.
