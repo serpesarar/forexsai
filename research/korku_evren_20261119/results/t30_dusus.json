@@ -1,0 +1,78 @@
+{
+ "DUKA_NDX": {
+  "tum": {
+   "n": 324,
+   "ort": -154.7,
+   "medyan": -95.6,
+   "en_derin_%10": -357.5,
+   "en_derin": -1188.4,
+   "dibe_saat_medyan": 18.5
+  },
+  "kazananlar": {
+   "n": 250,
+   "ort": -95.3,
+   "medyan": -66.6,
+   "en_derin_%10": -232.4,
+   "en_derin": -615.9,
+   "dibe_saat_medyan": 16.5
+  },
+  "kaybedenler": {
+   "n": 74,
+   "ort": -355.3,
+   "medyan": -299.2,
+   "en_derin_%10": -725.2,
+   "en_derin": -1188.4,
+   "dibe_saat_medyan": 45.5
+  },
+  "dagilim_%": {
+   "25": 79.9,
+   "50": 67.0,
+   "100": 48.5,
+   "200": 26.5,
+   "300": 14.5,
+   "500": 5.6
+  },
+  "en_kotu_islem_net": -782.9,
+  "en_derin_gun": "2025-04-03",
+  "mfe_ort": 160.7,
+  "tutus_gun_ort": 1.53
+ },
+ "MT5_NAS100": {
+  "tum": {
+   "n": 309,
+   "ort": -156.4,
+   "medyan": -93.3,
+   "en_derin_%10": -360.2,
+   "en_derin": -1198.0,
+   "dibe_saat_medyan": 18.0
+  },
+  "kazananlar": {
+   "n": 237,
+   "ort": -95.4,
+   "medyan": -63.9,
+   "en_derin_%10": -230.6,
+   "en_derin": -615.8,
+   "dibe_saat_medyan": 16.5
+  },
+  "kaybedenler": {
+   "n": 72,
+   "ort": -357.0,
+   "medyan": -300.8,
+   "en_derin_%10": -738.8,
+   "en_derin": -1198.0,
+   "dibe_saat_medyan": 43.8
+  },
+  "dagilim_%": {
+   "25": 79.6,
+   "50": 68.3,
+   "100": 46.9,
+   "200": 27.8,
+   "300": 14.6,
+   "500": 5.8
+  },
+  "en_kotu_islem_net": -786.1,
+  "en_derin_gun": "2025-04-03",
+  "mfe_ort": 161.0,
+  "tutus_gun_ort": 1.52
+ }
+}

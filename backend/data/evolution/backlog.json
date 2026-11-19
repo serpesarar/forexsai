@@ -5493,12 +5493,12 @@
   {
     "id": "bl_ed511f77bd",
     "title": "Korku gecesi T30 eşiği: kart + ileri gölge",
-    "detail": "EV-01 B: TWAP ≤ −%0,3 (son saat < 0, OPEX vetolu, XP) eklenen işlemler +38,9 bp, 5/5 beslemede Sharpe artar. 2. KURAL canlıya alma kartı çıkar (go_live_gate) ve ileri gölge etiketleyicisine (research/korku_golge_20261119) T30 sinyallerini ayrı etiketle ekle; canlıya alma kararı kullanıcıda",
+    "detail": "EV-01 B: TWAP ≤ −%0,3 (son saat < 0, OPEX vetolu, XP) eklenen işlemler +38,9 bp, 5/5 beslemede Sharpe artar. 2. KURAL canlıya alma kartı çıkar (go_live_gate) ve ileri gölge etiketleyicisine (research/korku_golge_20261119) T30 sinyallerini ayrı etiketle ekle; canlıya alma kararı kullanıcıda | 2026-11-19: kart 6/6 LIVE, korku_live.py canlı (magic +16, 0.75 lot), parite 309/309.",
     "category": "experiment",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-11-19T20:48:23.573192+00:00",
-    "updated_at": "2026-11-19T20:48:23.573351+00:00"
+    "updated_at": "2026-11-19T21:30:00+00:00"
   }
 ]

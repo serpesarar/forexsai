@@ -1,0 +1,160 @@
+{
+ "scope": "ndx_korku_t30_paket",
+ "tarih": "2026-11-19T16:35:17",
+ "aciklama": "NDX korku gecesi paketi, T30 eşiği: 16:00 ET fiyatı 09:30'dan beri TWAP'ın ≥ %0,3 altında ∧ 15:00→16:00 aşağı → 16:00 AL. OPEX vetosu (vadeye 0–2 işlem günü kala açma). Çıkış XP: sonraki ilk 16:00'da fiyat önceki 16:00'nın üstündeyse, en geç 5. işlem günü. TP/SL yok.",
+ "ana_olcum": "Dukascopy NDX 1m 2018-04 → 2026-11-05, giriş 16:00 açılışı + spread, çıkış 16:00 açılışı, finansman; ikincil MT5 NAS100 M30",
+ "olay": 324,
+ "ort_bp": 74.3,
+ "isabet": 0.772,
+ "checks": {
+  "1_hacim": {
+   "deger": 324,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "+74.3 bp P(EV>0) 1.000",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "+81.2 / +67.4",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "spread ×1,5 +74.0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "16:00 +74.3 vs sonraki mum açılışı +71.4",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "tek pozisyon +69.4 (n 266)",
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "mt5_nas100_checks": {
+  "1_hacim": {
+   "deger": 309,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "deger": "+73.9 bp P(EV>0) 1.000",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "+79.7 / +68.2",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "spread ×1,5 +73.4",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "16:00 +73.9 vs sonraki mum açılışı +71.3",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "tek pozisyon +68.0 (n 257)",
+   "gecti": true
+  }
+ },
+ "risk": {
+  "std_bp": 195.6,
+  "en_kotu_bp": -782.9,
+  "maxDD_bp": -1226.4,
+  "yillar": {
+   "2018": 75.1,
+   "2019": 4.2,
+   "2020": 136.2,
+   "2021": 56.4,
+   "2022": 67.7,
+   "2023": 74.7,
+   "2024": 61.3,
+   "2025": 84.8,
+   "2026": 60.0
+  }
+ },
+ "dusus_MAE": {
+  "DUKA_NDX": {
+   "tum": {
+    "n": 324,
+    "ort": -154.7,
+    "medyan": -95.6,
+    "en_derin_%10": -357.5,
+    "en_derin": -1188.4,
+    "dibe_saat_medyan": 18.5
+   },
+   "kazananlar": {
+    "n": 250,
+    "ort": -95.3,
+    "medyan": -66.6,
+    "en_derin_%10": -232.4,
+    "en_derin": -615.9,
+    "dibe_saat_medyan": 16.5
+   },
+   "kaybedenler": {
+    "n": 74,
+    "ort": -355.3,
+    "medyan": -299.2,
+    "en_derin_%10": -725.2,
+    "en_derin": -1188.4,
+    "dibe_saat_medyan": 45.5
+   },
+   "dagilim_%": {
+    "25": 79.9,
+    "50": 67.0,
+    "100": 48.5,
+    "200": 26.5,
+    "300": 14.5,
+    "500": 5.6
+   },
+   "en_kotu_islem_net": -782.9,
+   "en_derin_gun": "2025-04-03",
+   "mfe_ort": 160.7,
+   "tutus_gun_ort": 1.53
+  },
+  "MT5_NAS100": {
+   "tum": {
+    "n": 309,
+    "ort": -156.4,
+    "medyan": -93.3,
+    "en_derin_%10": -360.2,
+    "en_derin": -1198.0,
+    "dibe_saat_medyan": 18.0
+   },
+   "kazananlar": {
+    "n": 237,
+    "ort": -95.4,
+    "medyan": -63.9,
+    "en_derin_%10": -230.6,
+    "en_derin": -615.8,
+    "dibe_saat_medyan": 16.5
+   },
+   "kaybedenler": {
+    "n": 72,
+    "ort": -357.0,
+    "medyan": -300.8,
+    "en_derin_%10": -738.8,
+    "en_derin": -1198.0,
+    "dibe_saat_medyan": 43.8
+   },
+   "dagilim_%": {
+    "25": 79.6,
+    "50": 68.3,
+    "100": 46.9,
+    "200": 27.8,
+    "300": 14.6,
+    "500": 5.8
+   },
+   "en_kotu_islem_net": -786.1,
+   "en_derin_gun": "2025-04-03",
+   "mfe_ort": 161.0,
+   "tutus_gun_ort": 1.52
+  }
+ },
+ "verdict": "LIVE",
+ "sinif": "B",
+ "verdict_gerekce": "EV-01: eklenen işlemler KEŞİF +32,9 / TEST +38,9 bp, 5/5 beslemede paket Sharpe artar. Canlıya alma: kullanıcı kararı 2026-11-19.",
+ "kanit": "research/korku_evren_20261119/ (PROTOCOL, RAPOR; defter §2.101 EV-01); paket §2.95 kapı 03"
+}

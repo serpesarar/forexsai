@@ -100,6 +100,10 @@ try:                                    # VIXREG-FX (FX-01 H12, kart 6/6) CANLI 
     import fx_vixreg_live               # AYRI magic (+15), global tavana SAYILMAZ. Kapatma: config.FX_VIXREG_LIVE = False.
 except Exception:                       # pragma: no cover
     fx_vixreg_live = None
+try:                                    # KORKU GECESİ K1-T30 + OPEX vetosu + XP (NAS100) CANLI — kullanıcı kararı 2026-11-19, kart
+    import korku_live                   # ndx_korku_t30_paket 6/6. AYRI blok: import hatası diğerlerini etkilemesin. Kapatma: config.KORKU_LIVE = False.
+except Exception:                       # pragma: no cover
+    korku_live = None
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -2718,6 +2722,11 @@ def main():
                     ksg_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
                 except Exception as e:
                     log.warning("ksg çıkış hatası: %s", e)
+            if korku_live is not None and config.LIVE_TRADING:     # KORKU: XP çıkışı (sonraki ilk yükselen 16:00 ET, en çok 5 gün), frenden önce
+                try:
+                    korku_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
+                except Exception as e:
+                    log.warning("korku çıkış hatası: %s", e)
             if aysonu_live is not None and config.LIVE_TRADING:    # AY SONU: son seans 16:00 / ay başı D+3 16:30 ET çıkışı (frenden önce)
                 try:
                     aysonu_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
@@ -2859,7 +2868,8 @@ def main():
             #    Gölgelerden SONRA çağrılır (VIX geçmişini onlar günceller). Her açılışta kural adı + geçmiş başarı ekrana yazılır.
             #    Kapatma: config.C3B_LIVE / ORB_VIX_LIVE / CEKIC_LIVE = False.
             for _name, _mod in (("c3b", c3b_live), ("orb×vix", orb_vix_live), ("çekiç", cekic_live), ("ksg", ksg_live),
-                                ("ay sonu", aysonu_live), ("xau 1h", xau_r0b_live), ("fx vixreg", fx_vixreg_live)):
+                                ("ay sonu", aysonu_live), ("xau 1h", xau_r0b_live), ("fx vixreg", fx_vixreg_live),
+                                ("korku", korku_live)):
                 if _mod is None:
                     continue
                 try:

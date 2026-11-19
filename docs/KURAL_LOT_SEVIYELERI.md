@@ -23,6 +23,7 @@ Tanımlar tek yerde: `yeni deneme/kural_katalogu.py` (`RULES`). Olaylar `kural_c
 | **AY SONU son seans** (NAS100 + US500, iki yönlü) | +12 | **1.0** NAS100; US500 aynı nominal (≈3,7) | `AYSONU_SON_LIVE_LOT`, `AYSONU_SON_LIVE`, `AYSONU_US500_PARITY` | %55 NAS100 / %70 US500 (broker 2018-26) | +38 / +44 bp (broker); ETF 2002-26 +24 bp | yok (acil SL %4) | ayın son işlem günü 09:30 → 16:00 ET; yön D−3'te SPY−TLT ay içi farkı (≥+%2 SAT, ≤−%2 AL) | ≈8–9/yıl | B |
 | **AY BAŞI uzun** (NAS100 + US500) | +13 | **0.75** NAS100; US500 aynı nominal | `AYSONU_E2_LIVE_LOT`, `AYSONU_E2_LIVE` | %61 broker / %71 QQQ | +56 bp (broker) | yok (acil SL %8) | D kapanışında fark ≥ +%2 → AL D 16:30 → D+3 16:30 ET | ≈5/yıl | B |
 | **XAU 1h yeni tepe** (XAUUSD; R0B_G1 + S2) | +14 | **0.05** (5 ons ≈ 20 bin $) | `XAU_R0B_LIVE_LOT`, `XAU_R0B_LIVE`, `XAU_R0B_S2_THR` | %36,3 (n 3.259, Duka 2008-26) | +0,109R (risk ≈ 120 $/işlem) | 1,5×ATR14(H1) | yok; 20. bar kapanışı, Cuma 16:50 NY | ≈3,4/hafta (≈14–15/ay) | B+ |
+| **KORKU GECESİ** K1-T30 + OPEX vetosu + XP (NAS100) | +16 | **0.75** | `KORKU_LIVE_LOT`, `KORKU_LIVE`, `KORKU_LIVE_EMERGENCY_SL` | %77 (n 324, Duka 1m 2018-26; MT5 n 309) | +74 bp | yok (acil SL %13) | ilk yükselen 16:00 ET fiyatı, en çok 5 işlem günü; giriş 16:00 ET, TWAP ≥ %0,3 altı ∧ son saat aşağı, vadeye 0–2 gün kala açılmaz | ≈36/yıl (≈3/ay) | B |
 
 **Lot mantığı:** kanıt sınıfı ve işlem yapısı. En güçlü kanıt (A, yüksek isabet, kısa tutuş) en büyük lotu alır; düşük isabetli,
 komşu eşiklerde kırılgan, sık işlem açan FR-15 en küçüğü. Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL`
@@ -61,3 +62,12 @@ uçtan uca yeniden koşuldu: n 3.296 / +0,109R / %36,4 (araştırma 3.259 / +0,1
 **Uyarılar:** isabet düşük (%36), seri kayıp olağan (maks. düşüş −49R ≈ 5.900 $ bu lotta); kazancın bir kısmı altının 2008-26 yükselişi (seçim düzeltmesinde
 sürüklenme-üstü fark p 0,47); gölge ileri karnesi n 6 (−0,6R). Gölge `xau_shadow.py` yan yana sürer. Durdurma ölçütü: canlı n=60 işlemde ort. R < 0 →
 `XAU_R0B_LIVE = False`. Decider XAU işlemleri ayrı magic'tedir, bu kuralı etkilemez.
+
+**KORKU GECESİ (2026-11-19):** kullanıcı kararıyla canlı (`yeni deneme/korku_live.py`, magic +16, lot 0.75, yalnız NAS100, tek pozisyon). Kart
+`go_live_cards/ndx_korku_t30_paket.json` 6/6 LIVE (Duka NDX 1m n 324 +74,3 bp, MT5 NAS100 n 309 +73,9 bp, 9/9 yıl artı). Kanıt:
+research/korku_evren_20261119 (EV-01, defter §2.101) + paket §2.95. Canlı mantık araştırmayla birebir: 309/309 giriş, 307/307 çıkış
+(`research/korku_evren_20261119/src/canli_parite.py`). **Giriş sonrası düşüş (MAE, geçmiş):** ort −155 bp, medyan −96; kazananlarda −95,
+kaybedenlerde −355; işlemlerin %48'i ≥ 100 bp, %27'si ≥ 200 bp, %6'sı ≥ 500 bp aşağı iner; en derin −1.188 bp (2025-04-03); dip medyan
+18 saat sonra. Bu satır işlem açılınca duyuruda da yazılır (`RULES[...]["dusus"]`; diğer kurallara da eklenebilir).
+**Yoğunlaşma:** C3b (2.0) + KSG (0.5, VIX ≥ 25'te 1.0) ile aynı korku gecelerine düşer; tavan 4,5 lot aşılırsa sonraki kural atlanır (olaya yazılır).
+Durdurma ölçütü: canlı n=40 işlemde ort. net < 0 → `KORKU_LIVE = False`. NYSE takvimi `aysonu_live.NYSE_HOLIDAYS` (2028'e kadar).

@@ -102,6 +102,20 @@ RULES: dict[str, dict] = {
         "kanit": "MK-06 kart 10/10 (research/decider_xau_tpsl_20261015/mekanik) + MK-13 S2 (A); uyarı: sürüklenme-üstü fark seçim "
                  "düzeltmesinden geçmiyor (p_sel 0,47), gölge ileri n 6; durdurma n=60'ta ort R<0",
     },
+    # 2026-11-19 kullanıcı kararı: korku gecesi paketi K1-T30 + OPEX vetosu + XP CANLI (korku_live.py). Sayılar kart ndx_korku_t30_paket.json.
+    "KORKU": {
+        "ad": "KORKU GECESİ — K1-T30 + OPEX vetosu + XP (NAS100)", "kisa": "KORKU", "sinif": "B", "magic_offset": 16,
+        "lot_key": "KORKU_LIVE_LOT", "lot": 0.75, "live_key": "KORKU_LIVE",
+        "isabet": "%77", "n": 324, "ort": "+74 bp/işlem (Dukascopy NDX 1m 2018-26; MT5 NAS100 n 309 +74 bp)",
+        "tutus": "ort. 1,5 işlem günü (en fazla 5)",
+        "sl": "yok (acil durum SL %13 — en derin seyir −%11,9, 2025-04-03)", "tp": "yok; ilk yükselen 16:00 ET fiyatında çık (XP)",
+        "siklik": "≈ 36 işlem/yıl (≈ 3/ay); vadeye 0–2 işlem günü kala açılmaz",
+        "dusus": "ort −155 bp, medyan −96 bp; kazananlarda ort −95 / kaybedenlerde −355 bp; işlemlerin %48'i ≥ 100 bp, %27'si ≥ 200 bp, "
+                 "%6'sı ≥ 500 bp aşağı iner; en derin %10 ≤ −358 bp, en derin −1.188 bp (2025-04-03); dip medyan 18 saat sonra; "
+                 "en kötü net −783 bp",
+        "kanit": "go_live_cards/ndx_korku_t30_paket.json (6/6, 9/9 yıl artı; MT5 6/6); research/korku_evren_20261119 EV-01; "
+                 "durdurma n=40'ta ort < 0",
+    },
 }
 
 
@@ -130,8 +144,10 @@ def banner(rule_id: str, line: str, extra: dict | None = None) -> list[str]:
     r = RULES[rule_id]
     out = [f"╔══ SİNYAL AÇILDI ═══ {r['ad']}",
            f"║ GEÇMİŞ BAŞARI: isabet {r['isabet']} (n {r['n']}) · ort {r['ort']} · sınıf {r['sinif']}",
-           f"║ SL: {r['sl']} · TP: {r['tp']} · tutuş: {r['tutus']} · sıklık: {r['siklik']}",
-           f"║ {line}"]
+           f"║ SL: {r['sl']} · TP: {r['tp']} · tutuş: {r['tutus']} · sıklık: {r['siklik']}"]
+    if r.get("dusus"):                          # giriş sonrası geçmiş düşüş (MAE) — işlem açılınca "ne kadar aşağı gidebilir" bilgisi
+        out.append(f"║ GİRİŞ SONRASI DÜŞÜŞ (geçmiş): {r['dusus']}")
+    out.append(f"║ {line}")
     if extra:
         out.append("║ " + " · ".join(f"{k}={v}" for k, v in extra.items()))
     out.append("╚══ " + r["kanit"])
