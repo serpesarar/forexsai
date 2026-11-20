@@ -1153,5 +1153,15 @@
   "category": "research",
   "what_it_does": "KSG gecelerinde (Duka 1m, MT5, kör endeksler, EET30, NQ, U1 2016–17) gece içi TP limiti × stop braketini, 09:30'da zararda olan geceyi gün içinde tutmayı, gece düşüşünde ikinci birim eklemeyi ve son 10 dk düşüş payını ölçer; isabet/beklenti/Sharpe tablosu, KEŞİF seçimi + TEST/bağımsız geçme, E116 karşı kolu ve 18:00 yeniden açılış gecikme sınaması.",
   "output": "research/ksg_tpsl_20261119/RAPOR.md"
+ },
+ {
+  "id": "caprev_tpsl",
+  "name": "CAPREV daha az SL: stop genişliği, ertesi gün tutuş, gün içi TP, giriş ayrımı",
+  "kind": "script",
+  "command": "cd research/caprev_tpsl_20261120/src && python3 tablolar.py && python3 cr_analiz.py && python3 ek1.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "Canlı CAPREV'i (stres ∧ VIX ≥ 18,4, önceki dip altı ilk 1 sa kapanışı → AL) 11 beslemede + ^NDX günlük vekil 1990–2015'te birebir üretir; stop genişliği, ertesi gün/XP/kurtarma tutuşu (stoplu/stopsuz), gün içi TP ve giriş anında SL↔TP özelliklerini sabit lotta net bp + Sharpe ile ölçer; KEŞİF seçimi + TEST/bağımsız/kör geçme, gece parçası ayrıştırması, E116 karşı kolu ve canlı KORKU/KSG/C3b örtüşmesi.",
+  "output": "research/caprev_tpsl_20261120/RAPOR.md"
  }
 ]

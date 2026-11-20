@@ -5522,5 +5522,16 @@
     "source": "session",
     "created_at": "2026-11-20T04:38:25.786639+00:00",
     "updated_at": "2026-11-20T04:44:15.272359+00:00"
+  },
+  {
+    "id": "bl_bf27c045c8",
+    "title": "CAPREV gece uzatması gölge etiketi",
+    "detail": "caprev_shadow'a D1 16:00 stopsuz + XP stopsuz sonucu ekle (bugün yalnız stoplu R_d1). Canlı KORKU/KSG/C3b ile örtüşmeyen gecelerde n>=30 ve ort>0 ise yalnız o geceler için uzatma kararı kullanıcıya. Kanıt research/caprev_tpsl_20261120 (CR-03 C).",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-20T18:36:07.896334+00:00",
+    "updated_at": "2026-11-20T18:36:07.896482+00:00"
   }
 ]

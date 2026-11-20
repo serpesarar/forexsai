@@ -1,0 +1,134 @@
+{
+ "NDX": {
+  "n": 364,
+  "yil": [
+   2000,
+   2015
+  ],
+  "taban": -6.4,
+  "sharpe_taban": -0.113,
+  "S_None": {
+   "fark": 14.7,
+   "sharpe": 0.139,
+   "yil_arti": "10/15",
+   "en_iyi5_haric": 3.8
+  },
+  "H_D1c_ns": {
+   "fark": 29.6,
+   "sharpe": 0.263,
+   "yil_arti": "11/15",
+   "en_iyi5_haric": 15.3
+  },
+  "H_XP_ns": {
+   "fark": 34.4,
+   "sharpe": 0.354,
+   "yil_arti": "11/15",
+   "en_iyi5_haric": 20.6
+  },
+  "H_D1c_st": {
+   "fark": 9.4,
+   "sharpe": 0.038,
+   "yil_arti": "8/15",
+   "en_iyi5_haric": -5.1
+  }
+ },
+ "GSPC": {
+  "n": 127,
+  "yil": [
+   2007,
+   2015
+  ],
+  "taban": 0.4,
+  "sharpe_taban": 0.007,
+  "S_None": {
+   "fark": -4.5,
+   "sharpe": -0.063,
+   "yil_arti": "3/9",
+   "en_iyi5_haric": -15.6
+  },
+  "H_D1c_ns": {
+   "fark": -7.4,
+   "sharpe": -0.083,
+   "yil_arti": "6/9",
+   "en_iyi5_haric": -32.0
+  },
+  "H_XP_ns": {
+   "fark": -0.8,
+   "sharpe": -0.004,
+   "yil_arti": "6/9",
+   "en_iyi5_haric": -21.5
+  },
+  "H_D1c_st": {
+   "fark": -7.7,
+   "sharpe": -0.101,
+   "yil_arti": "4/9",
+   "en_iyi5_haric": -29.7
+  }
+ },
+ "DJI": {
+  "n": 246,
+  "yil": [
+   1994,
+   2015
+  ],
+  "taban": -11.6,
+  "sharpe_taban": -0.253,
+  "S_None": {
+   "fark": 7.6,
+   "sharpe": -0.071,
+   "yil_arti": "11/19",
+   "en_iyi5_haric": -3.1
+  },
+  "H_D1c_ns": {
+   "fark": 11.0,
+   "sharpe": -0.008,
+   "yil_arti": "12/19",
+   "en_iyi5_haric": -4.8
+  },
+  "H_XP_ns": {
+   "fark": 37.3,
+   "sharpe": 0.368,
+   "yil_arti": "16/19",
+   "en_iyi5_haric": 22.1
+  },
+  "H_D1c_st": {
+   "fark": 0.6,
+   "sharpe": -0.177,
+   "yil_arti": "7/19",
+   "en_iyi5_haric": -10.3
+  }
+ },
+ "RUT": {
+  "n": 181,
+  "yil": [
+   2007,
+   2015
+  ],
+  "taban": -21.9,
+  "sharpe_taban": -0.447,
+  "S_None": {
+   "fark": 7.0,
+   "sharpe": -0.261,
+   "yil_arti": "6/9",
+   "en_iyi5_haric": -9.3
+  },
+  "H_D1c_ns": {
+   "fark": 26.2,
+   "sharpe": 0.053,
+   "yil_arti": "7/9",
+   "en_iyi5_haric": 8.6
+  },
+  "H_XP_ns": {
+   "fark": -0.9,
+   "sharpe": -0.311,
+   "yil_arti": "5/9",
+   "en_iyi5_haric": -20.6
+  },
+  "H_D1c_st": {
+   "fark": 27.6,
+   "sharpe": 0.084,
+   "yil_arti": "8/9",
+   "en_iyi5_haric": 11.6
+  }
+ }
+}

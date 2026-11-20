@@ -66,3 +66,17 @@ DB-03/04 (VXN primi, artan VIX tanımsız), NX-01 (1m: n 103, +0,278R, ESKİ +0,
   artırılmaz, hüküm yukarıdaki gibi verilir.
 - Canlıya bağlama bu çalışmadan VERİLMEZ; B çıkarsa ayrı kart + kullanıcı kararı. Sonuçlardan sonra yazılan her ek "EK-n" başlığıyla
   bu dosyanın sonuna eklenir ve hükmü değiştirmez.
+
+## EK-1 (ana sonuçlardan SONRA yazıldı; hükmü değiştirmez, yalnız mekanizma ve canlı karar için)
+Ana koşuda H(D1 16:00, stopsuz) C (kör 1/3), S(1,5) C, XP stopsuz C, T X, E C. Ölçülür:
+(1) Ayrıştırma: H_D1c_ns − taban = [S_yok − taban] (D0 içinde stopu kaldırmak) + [H_D1c_ns − S_yok] (D0 16:00 → D1 16:00 gecesi).
+(2) Örtüşme: CAPREV günlerinde aynı akşam canlı "16:00 civarı AL" kuralları — KORKU T30 (`korku_evren` t30 listesi), C3b, KSG (Duka 1m
+dondurulmuş listeleri). Gece parçasının örtüşen ve örtüşmeyen günlerdeki ortalaması; portföyde aynı riskin ikinci kez alınıp alınmadığı.
+(3) E116 karşı kolu: stres ∧ VIX ≥ 18,4 Pzt–Per olup tetik OLMAYAN günlerde (dip kırılmadı) 16:00 → ertesi 16:00 getirisi; ve tüm günlerde
+aynı gece (koşulsuz sürüklenme).
+(4) Kuyruk: H_D1c_ns ve S_yok için en kötü 5 işlem, en iyi 5 hariç fark, kitap maks. düşüş (bp, sabit lot).
+(5) S_yok (seçilmedi) tüm beslemelerde betimleyici.
+
+## EK-2 (sonuçlardan SONRA; hükmü değiştirmez)
+Kör ölçüt (iii) 1/3 ile düştü (MT5 US500 2020+, US30, US2000 2018+; kısa dönem). Aynı günlük vekil kör ABD endekslerinin uzun
+geçmişinde: ^GSPC, ^DJI, ^RUT günlük 1990–2015 (açılışı olmayan yıllar atılır). Ölçü: S_yok, H_D1c_ns ve H_XP_ns'nin tabana farkı.
