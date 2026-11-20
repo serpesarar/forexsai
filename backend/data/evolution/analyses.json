@@ -1163,5 +1163,15 @@
   "category": "research",
   "what_it_does": "Canlı CAPREV'i (stres ∧ VIX ≥ 18,4, önceki dip altı ilk 1 sa kapanışı → AL) 11 beslemede + ^NDX günlük vekil 1990–2015'te birebir üretir; stop genişliği, ertesi gün/XP/kurtarma tutuşu (stoplu/stopsuz), gün içi TP ve giriş anında SL↔TP özelliklerini sabit lotta net bp + Sharpe ile ölçer; KEŞİF seçimi + TEST/bağımsız/kör geçme, gece parçası ayrıştırması, E116 karşı kolu ve canlı KORKU/KSG/C3b örtüşmesi.",
   "output": "research/caprev_tpsl_20261120/RAPOR.md"
+ },
+ {
+  "id": "caprev_derin",
+  "name": "CAPREV derin: SL/TP tipleri, girişte SL eleme, yüksek isabetli çıkış",
+  "kind": "script",
+  "command": "cd research/caprev_derin_20261120/src && python3 cd_veri.py && python3 cd_analiz.py && python3 cd_ek1.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "CAPREV olaylarını 1990–2015 günlük vekilde (5 endeks) 24 bağlam özelliğiyle kümeler, tek filtre / lojistik / GBM / tip skoru ile SL elemeyi ve 24 hücrelik 'kâra kadar tut' çıkış ızgarasını orada seçip canlı kuralın 2018–26 1m/M30 işlemlerinde (NDX, DAX, kör ABD endeksleri) sınar; isabet, net bp, Sharpe, en kötü %5.",
+  "output": "research/caprev_derin_20261120/RAPOR.md"
  }
 ]

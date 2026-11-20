@@ -46,3 +46,12 @@ kapanış" gününde çık) → 24 hücre. M dolunca son kapanışta çıkılır
 - Betimleyici: F × X birleşimi (dondurulan en iyi filtre + en iyi çıkış); SL / TP / ZK sınıflarının özellik profili (KEŞİF ve TEST ayrı);
   X hücrelerinin canlı KORKU/KSG/C3b geceleriyle örtüşmesi.
 - Canlıya bağlama bu çalışmadan VERİLMEZ. Sonuçlardan sonra yazılan her ek "EK-n" başlığıyla eklenir ve hükmü değiştirmez.
+
+## EK-1 (ana sonuçlardan SONRA yazıldı; hükmü değiştirmez)
+Ana koşu: F en iyi "dünkü aralık üst tertil" C, diğer F X; M (lojistik, GBM) X (TEST AUC ≈ 0,55); X (5 gün, 3×dvol, kâr/yükselen) X (DAX eksi).
+KEŞİF SL/TP profilinde p < 0,01 olan yedi özellik iki tip gösteriyor ("ani panik" ↔ "uzayan çöküş"). Ölçülür:
+(1) **Tip skoru** — yalnız KEŞİF'ten: işaretler KEŞİF'teki SL−TP farkının tersi (sma50 +, r5z +, stres10 −, vix_pct −, vix1 +, vade_egri −,
+genişlik +), z'ler KEŞİF ortalama/sd'si, eksik = 0; filtre = skoru KEŞİF %33'lüğünün altında olanı at. Geçme ölçütleri F ile aynı.
+(2) DAX'ın uzun tutuşta ayrışması: Duka NDX ve DAX'ta D0'da zararlı işlemlerin 1…5 gün içinde kâra dönme oranı ve dönmeyenlerin kaybı.
+(3) Birleşim: "dünkü aralık üst tertil" × X_5_3.0_kar ve tip skoru × X_5_3.0_kar (betimleyici).
+(4) X_5_3.0_kar tutuşlarının canlı KORKU/KSG/C3b geceleriyle örtüşmesi (Duka NDX).
