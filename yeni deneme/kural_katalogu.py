@@ -69,7 +69,8 @@ RULES: dict[str, dict] = {
         "sl": "yok (acil durum SL %7 — araştırmada giriş sonrası en kötü seyir −%6,1, net −%4,0)", "tp": "yok; ertesi işlem günü 09:30 ET'de çık",
         "siklik": "≈ 10 işlem/ay (yılda ≈ 123)",
         "kanit": "go_live_cards/ndx_ksg_gece.json (6/6; C+: 2018-19 eksi, 2020→ 7/7 yıl; durdurma: n=60'ta ort<0); "
-                 "dünkü VIX ≥ 25'te çift lot (KSG_VIX25_DOUBLE)",
+                 "dünkü VIX ≥ 25'te çift lot (KSG_VIX25_DOUBLE); vadeye 0–2 işlem günü kala açılmaz (KSG_OPEX_VETO, GX-06); "
+                 "gölge: ksg_shadow.py (sabah kurtarma KZ-02, 18:30 ekleme KZ-03, olay öncesi gece OG-01)",
     },
     # 2026-11-12 kullanıcı kararı: ay sonu dengeleme akışı CANLI (aysonu_live.py). NAS100 lotu burada; US500 aynı nominal (parite).
     "AYSONU_SON": {

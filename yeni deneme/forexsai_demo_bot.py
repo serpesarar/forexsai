@@ -53,6 +53,10 @@ try:                                    # DAX FOMC öncesi uzun GÖLGE (DP-03, 2
     import dax_fomc_shadow
 except Exception:                       # pragma: no cover
     dax_fomc_shadow = None
+try:                                    # KSG gölge etiketleri (KZ-02 kurtarma, KZ-03 ekleme, OG-01 olay, OPEX vetolu geceler; 2026-11-20) — emir göndermez
+    import ksg_shadow
+except Exception:                       # pragma: no cover
+    ksg_shadow = None
 try:                                    # FX fiks akışı dönüşü GÖLGE (FX-01, 2026-11-13) — emir göndermez; import hatası botu durdurmaz
     import fx_fiks_shadow
 except Exception:                       # pragma: no cover
@@ -2635,7 +2639,7 @@ def main():
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
                    ("DAYCOMBO_SL", 110.0),
-                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("C3B_LIVE", True), ("C3B_LIVE_LOT", 2.0), ("ORB_VIX_LIVE", True), ("ORB_VIX_LIVE_LOT", 0.75), ("CEKIC_LIVE", True), ("CEKIC_LIVE_LOT", 0.5), ("KSG_LIVE", True), ("KSG_LIVE_LOT", 0.5), ("RULE_MAX_LOTS_PER_SYMBOL", 4.5), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
+                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("C3B_LIVE", True), ("C3B_LIVE_LOT", 2.0), ("ORB_VIX_LIVE", True), ("ORB_VIX_LIVE_LOT", 0.75), ("CEKIC_LIVE", True), ("CEKIC_LIVE_LOT", 0.5), ("KSG_LIVE", True), ("KSG_LIVE_LOT", 0.5), ("KSG_OPEX_VETO", True), ("KSG_SHADOW_ENABLED", True), ("RULE_MAX_LOTS_PER_SYMBOL", 4.5), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
                    ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
                    ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
                    ("USOIL_BREAKOUT_SL_ATR", 1.0),
@@ -2769,6 +2773,14 @@ def main():
                     dax_fomc_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset, cfg=config)
                 except Exception as e:
                     log.warning("dax fomc gölge hatası: %s", e)
+
+            # ── KSG GÖLGE etiketleri (research/ksg_tpsl_20261119 KZ-02/03, ksg_olay_gecesi OG-01, OPEX vetolu geceler) — EMİR YOK.
+            #    Fren 'continue'undan ÖNCE. Kapatma: config.KSG_SHADOW_ENABLED = False.
+            if ksg_shadow is not None and getattr(config, "KSG_SHADOW_ENABLED", True):
+                try:
+                    ksg_shadow.poll(mt5, log, resolve_symbol, _daycombo_offset, cfg=config)
+                except Exception as e:
+                    log.warning("ksg gölge hatası: %s", e)
 
             # ── FX fiks akışı dönüşü GÖLGE (FX-01 H8c USDJPY gotobi + H9 ay sonu Londra fiksi; kartlar
             #    go_live_cards/usdjpy_gotobi_fiks_donus.json, fx_aysonu_fiks_donus.json, 5/6) — EMİR YOK. Fren 'continue'undan

@@ -74,6 +74,23 @@ def test_emergency_stop_and_catalog():
     assert len(kk.banner("KSG", "x")) >= 5
 
 
+def test_opex_veto_calendar():
+    # 2026-11 vadesi 20 Kasım Cuma: 18/19/20 Kasım vetolu, 17 Kasım değil; kapatma bayrağı vetoyu kaldırır
+    assert ks.opex_blocks(date(2026, 11, 20)) == (True, 0)
+    assert ks.opex_blocks(date(2026, 11, 18)) == (True, 2)
+    assert ks.opex_blocks(date(2026, 11, 17)) == (False, 3)
+    assert ks.opex_blocks(date(2026, 11, 18), enabled=False) == (False, None)
+
+
+def test_opex_veto_matches_korku_live():
+    import korku_live as kl
+    d = date(2026, 1, 2)
+    for i in range(400):
+        x = d + timedelta(days=i)
+        if x.weekday() < 5:
+            assert ks.opex_blocks(x)[0] == kl.opex_veto(x)
+
+
 if __name__ == "__main__":
     n = 0
     for k, f in sorted(globals().items()):

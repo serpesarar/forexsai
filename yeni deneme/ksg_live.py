@@ -16,6 +16,10 @@ KURAL (donduruldu; değiştirmek kanıtı geçersiz kılar):
   Dukascopy 1m: VIX ≥ 25 geceleri ESKİ +32,2 bp (n 98) vs +0,3 / YENİ +11,3 (n 92) vs +5,3; kitap aylık Sharpe 1,82 → 1,88
   (birleşik P 0,92, iki dönemde de artı). VIX geçmişi yoksa doz uygulanmaz. Sınıf B−. Kapatma: config.KSG_VIX25_DOUBLE = False.
   Giriş gecikmesi: 16:00 barı açılışından en çok 10 dk sonra (araştırma: 16:01 +5,1, 16:05 +5,2, 16:14 +4,5 bp — kenar sürer).
+  OPEX VETOSU (2026-11-20, kullanıcı kararı; research/ksg_opex_canli_20261119 GX-06 + defter GX-05): aylık vadeye 0, 1 ya da 2 işlem
+  günü kala KSG AÇILMAZ (korku_live.opex_veto ile aynı takvim). Canlı kodla yeniden oynatma: vetolanan geceler MT5 −9 / Duka −13 bp,
+  bağımsız 6/6 eksi; kitap Sharpe MT5 0,875 → 0,947, Duka 0,771 → 0,905. Kapatma: config.KSG_OPEX_VETO = False.
+  Vetolanan gece ksg_shadow.py'de yine izlenir (vetonun ileri ölçümü).
 """
 from __future__ import annotations
 
@@ -85,6 +89,18 @@ def find_signal(bars: list[dict], today: date) -> dict | None:
     if ret_bp >= 0.0:
         return None
     return {"o15": o15, "o16": o16, "ret_bp": round(ret_bp, 2), "t16": t16}
+
+
+def opex_blocks(today: date, enabled: bool = True) -> tuple[bool, int | None]:
+    """(veto mu, vadeye işlem günü). korku_live takvimi; içe aktarma hatası → veto yok (fail-open, eski davranış)."""
+    if not enabled:
+        return False, None
+    try:
+        import korku_live as kl
+        k = kl.days_to_opex(today)
+        return k in (0, 1, 2), k
+    except Exception:
+        return False, None
 
 
 def exit_due(entry_day: date, now_day: date, now_min: int, now_wd: int) -> bool:
@@ -158,6 +174,12 @@ def poll(mt5, config, log, resolve_symbol, get_vix, offset_fn, send_order, mk_co
         return
     late = now - sig["t16"]
     rec = {"day": str(today), "o15": sig["o15"], "o16": sig["o16"], "ret_bp": sig["ret_bp"], "latency_s": round(late, 1)}
+    veto, k_opex = opex_blocks(today, bool(getattr(config, "KSG_OPEX_VETO", True)))
+    rec["vadeye_gun"] = k_opex
+    if veto:
+        kk.append_event({"kind": "skip", "rule": RULE, "reason": "OPEX vetosu (vadeye 0–2 işlem günü)", **rec})
+        log.info("KSG sinyali OPEX vetosuyla atlandı (vadeye %d işlem günü): %s", k_opex, rec)
+        return
     if late > MAX_LATE_S:
         kk.append_event({"kind": "skip", "rule": RULE, "reason": "geç tespit", **rec})
         return

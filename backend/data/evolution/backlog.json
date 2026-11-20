@@ -5504,23 +5504,23 @@
   {
     "id": "bl_1e21cd65c7",
     "title": "KSG bilanço gecesi gölge etiketi",
-    "detail": "KD-02: KSG ∧ mega-cap bilanço gecesi +24,7 vs +4,2 bp ama KSG'ye özgü kısım P 0,86, doz ×2 KEŞİF'te Sharpe düşürüyor. ksg_live'a lot değiştirmeyen 'bilanço gecesi' bayrağı yaz (kural_canli_olaylar), n≥40'ta ileri ölç; ayrıca 'olay öncesi gece' bileşiği (FOMC ∨ CPI/NFP ∨ bilanço) için ön kayıtlı sınama — 2026-11-19 OG-01/02 (§2.104): bileşik sınandı; koşulsuz X (prim FOMC'de), KSG ∧ O ön kayıt B ama dokunulmamış 2016–17'de +1,3 bp → pratik C+; kalan iş: ksg_live'a lotu değiştirmeyen olay_oncesi bayrağı (FOMC/CPI/bilanço alt etiket, NFP ayrı), n≥40'ta ileri ölç",
+    "detail": "KD-02: KSG ∧ mega-cap bilanço gecesi +24,7 vs +4,2 bp ama KSG'ye özgü kısım P 0,86, doz ×2 KEŞİF'te Sharpe düşürüyor. ksg_live'a lot değiştirmeyen 'bilanço gecesi' bayrağı yaz (kural_canli_olaylar), n≥40'ta ileri ölç; ayrıca 'olay öncesi gece' bileşiği (FOMC ∨ CPI/NFP ∨ bilanço) için ön kayıtlı sınama — 2026-11-19 OG-01/02 (§2.104): bileşik sınandı; koşulsuz X (prim FOMC'de), KSG ∧ O ön kayıt B ama dokunulmamış 2016–17'de +1,3 bp → pratik C+; kalan iş: ksg_live'a lotu değiştirmeyen olay_oncesi bayrağı (FOMC/CPI/bilanço alt etiket, NFP ayrı), n≥40'ta ileri ölç — 2026-11-20 KZ-05: ksg_shadow.py gece tarihlerini + FOMC öncesi bayrağını kaydediyor (lot değişmez); CPI/NFP/bilanço değerlendirmede takvimle, n ≥ 40",
     "category": "experiment",
     "priority": "medium",
     "status": "in_progress",
     "source": "session",
     "created_at": "2026-11-19T22:20:33.758946+00:00",
-    "updated_at": "2026-11-19T23:58:42.232840+00:00"
+    "updated_at": "2026-11-20T04:44:15.272359+00:00"
   },
   {
     "id": "bl_0750af6c7b",
     "title": "KSG sabah kurtarma gölge etiketi",
-    "detail": "ksg_live çıkışında 09:30 net ≤ −60 bp ise lotu/çıkışı değiştirmeden 16:00 fiyatını kaydet (KZ-02 C, E116 güçlü, 2016–17'de tutmadı); n ≥ 40 tutulan gecede ort(16:00 − 09:30) > 0 ve medyan > 0 ise canlı kurtarma kararı kullanıcıya",
+    "detail": "ksg_live çıkışında 09:30 net ≤ −60 bp ise lotu/çıkışı değiştirmeden 16:00 fiyatını kaydet (KZ-02 C, E116 güçlü, 2016–17'de tutmadı); n ≥ 40 tutulan gecede ort(16:00 − 09:30) > 0 ve medyan > 0 ise canlı kurtarma kararı kullanıcıya — 2026-11-20 KZ-05: gölgeye bağlandı (yeni deneme/ksg_shadow.py, KSG_SHADOW_ENABLED); karne --karne, karar n ≥ 40",
     "category": "experiment",
     "priority": "medium",
-    "status": "pending",
+    "status": "in_progress",
     "source": "session",
     "created_at": "2026-11-20T04:38:25.786639+00:00",
-    "updated_at": "2026-11-20T04:38:25.786771+00:00"
+    "updated_at": "2026-11-20T04:44:15.272359+00:00"
   }
 ]
