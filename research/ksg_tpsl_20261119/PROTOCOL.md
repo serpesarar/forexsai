@@ -38,3 +38,9 @@ gün içinde tutmaya devam (kurtarma); (A) gece içi düşüşte ikinci birim ek
 - M: **B** Duka KEŞİF ve TEST'te fark aynı işaret > 0, NQ'da > 0, havuz P ≥ 0,95. Aksi C/X.
 - Isabet/beklenti tablosu tüm hücreler için betimleyici raporlanır (kullanıcı sorusunun doğrudan cevabı).
 - Canlıya bağlama bu çalışmadan VERİLMEZ; B çıkarsa ayrı kart + kullanıcı kararı.
+
+## EK-1 (ana sonuçlardan SONRA yazıldı; hükmü değiştirmez, yalnız sağlamlık/mekanizma)
+Ana koşuda A(18:00, −40) C (U1 Duka M30'da 0 ekleme → bağımsız ölçüt sağlanamadı), R(−60, 16:00) C. Ölçülür:
+(1) A: icra gecikmesi 18:05 / 18:15 / 18:30 (Duka 1m, NQ 5m; MT5/EET30 18:30), eşik komşuları −30/−50/−60, eklenen birim dağılımı (medyan,
+isabet, en iyi 5 hariç), yıl yıl, bilanço gecesi örtüşmesi, U1'de 18:00 mumunun varlığı; 18:00 mumu spread'i vs 16:00 spread'i.
+(2) R: E116 karşı kolu — KSG-olmayan gecelerde 09:30 net ≤ −60 → 16:00'a tutmanın 09:30→16:00 getirisi.

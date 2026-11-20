@@ -5511,5 +5511,16 @@
     "source": "session",
     "created_at": "2026-11-19T22:20:33.758946+00:00",
     "updated_at": "2026-11-19T23:58:42.232840+00:00"
+  },
+  {
+    "id": "bl_0750af6c7b",
+    "title": "KSG sabah kurtarma gölge etiketi",
+    "detail": "ksg_live çıkışında 09:30 net ≤ −60 bp ise lotu/çıkışı değiştirmeden 16:00 fiyatını kaydet (KZ-02 C, E116 güçlü, 2016–17'de tutmadı); n ≥ 40 tutulan gecede ort(16:00 − 09:30) > 0 ve medyan > 0 ise canlı kurtarma kararı kullanıcıya",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-20T04:38:25.786639+00:00",
+    "updated_at": "2026-11-20T04:38:25.786771+00:00"
   }
 ]

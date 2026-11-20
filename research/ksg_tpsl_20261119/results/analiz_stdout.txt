@@ -1,0 +1,16 @@
+DUKA_NDX gece 1035 taban 6.55 isabet 0.555
+MT5_NAS100 gece 1045 taban 7.33 isabet 0.563
+MT5_US500 gece 794 taban 2.93 isabet 0.56
+MT5_US30 gece 1045 taban 0.54 isabet 0.527
+MT5_US2000 gece 1059 taban 8.35 isabet 0.55
+DUKA_M30_2016_17 gece 154 taban 0.9 isabet 0.519
+EET30 gece 961 taban 7.02 isabet 0.55
+NQ gece 521 taban 9.47 isabet 0.568
+T T_80_None X {'test': False, 'mt5': False, 'havuz_P': False, 'kor_2_3': False, 'bagimsiz': False, 'sharpe': False} P 0.0907
+T T_120_None X {'test': False, 'mt5': False, 'havuz_P': False, 'kor_2_3': True, 'bagimsiz': False, 'sharpe': False} P 0.1817
+R R_60_16:00 C {'test': True, 'mt5': True, 'havuz_P': False, 'kor_2_3': True, 'bagimsiz': False, 'sharpe': True} P 0.8867
+R R_30_10:30 C {'test': True, 'mt5': True, 'havuz_P': False, 'kor_2_3': True, 'bagimsiz': True, 'sharpe': True} P 0.762
+A ('18:00', 40) C {'test': True, 'mt5': True, 'havuz_P': True, 'kor_2_3': True, 'bagimsiz': False, 'sharpe': True} P 0.9983
+A ('20:00', 40) X {'test': False, 'mt5': True, 'havuz_P': False, 'kor_2_3': True, 'bagimsiz': False, 'sharpe': True} P 0.9657
+M {"DUKA_NDX_KESIF": {"m>=0.5": [174, 13.79], "m<0.5": [277, 2.88], "fark": 10.91, "tertil": {"0": -5.07, "1": 11.05, "2": 15.26}}, "DUKA_NDX_TEST": {"m>=0.5": [237, 4.48], "m<0.5": [347, 7.26], "fark": -2.78, "tertil": {"0": 7.57, "1": 9.84, "2": 1.01}}, "NQ_tum": {"m>=0.5": [195, 9.32], "m<0.5": [326, 9.57], "fark": -0.25, "tertil": {"0": 3.95, "1": 16.49, "2": 8.02}}, "havuz": {"fark": 1.94, "P": 0.5767}, "hukum": "C"}
+/opt/homebrew/Cellar/python@3.13/3.13.9_1/bin/python3.13 analiz.py  12.63s user 0.90s system 105% cpu 12.842 total
