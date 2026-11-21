@@ -62,3 +62,23 @@ Hücre = D0 gün içi stop c0 ∈ {1,0; 3,0}×dvol × D0 sonrası stop c1 ∈ {1
 - Geçme: KQ-01'in (i)–(vi) ölçütleri **ve (vii) dokunulmamış beslemeler**: EET30 ve NQ (NDX, bu çıkış ve yol özellikleriyle hiç
   ölçülmedi) ile MT5_GER40 (DAX M30, 2016+) üçünde de taban üstü fark > 0 ve CVaR5 tabanın 2 katından kötü değil.
   B = (i)–(vii) hepsi; C = (i) geçer, biri düşer; X = Duka NDX ya da DAX'ta fark ≤ 0.
+
+## KQ-02 sonucu (ana koşu, değiştirilmez)
+Seçilen c0 3,0 / c1 1,5 / a 0,5 / q 0 / G2 vixchg ≥ 0,10 ve c0 3,0 / c1 3,0 / a 0,5 / q 0,25 / G2 → **C**. Birincide yalnız (vii) düştü:
+NDX taze beslemeleri geçti (EET30 +15,0, NQ +14,6), DAX taze beslemesi MT5_GER40 −20,9 (korumasız kâr çıkışı orada −31,2).
+İkincide ayrıca (v) DAX.
+
+## KQ-03 — NDX kapsamı (KQ-02 sonuçlarından SONRA, KQ-03 sonuçlarından ÖNCE)
+⚠️ Kapsam daraltması DAX'ın düştüğü görüldükten sonra yapıldı. Gerekçe sonuçtan bağımsız değildir; mekanizma CD EK-1'de var
+(D0 zararlıların 5 günde toparlanması NDX %77, DAX %61). Canlı kâr çıkışı 2026-11-21'den beri zaten yalnız NDX'te. DAX bacağı canlı tabanda kalır.
+- Hücre ızgarası KQ-02 ile aynı (216) + korumasız X_5_3.0_kar.
+- Seçim: yalnız KEŞİF ABD endeksleri (^NDX ^GSPC ^DJI ^RUT 1990–2015), KQ-02 kuralıyla (isabet ≥ taban + 10 ∧ CVaR5 ≥ 1,5 × taban), 2 hücre.
+- **B (NDX kapsamı):** (i) Duka NDX ve MT5 NAS100'de fark > 0 ve isabet > taban; (ii) havuz (Duka NDX + günlük 2016–26 NDX/GSPC/DJI/RUT)
+  ay bloklu P ≥ 0,975; (iii) kör MT5 US500/US30/US2000'in ≥ 2'sinde fark > 0; (iv) Duka NDX Sharpe > taban; (v) Duka NDX ve MT5 NAS100
+  CVaR5 ≥ 2 × taban; (vi) Duka NDX CVaR5 korumasız kâr çıkışından iyi; (vii) taze EET30 ve NQ'da fark > 0 ve CVaR5 ≥ 2 × taban.
+- **Canlıya alma kartı (CLAUDE.md 2. kural), B hücresi için**, ABD endeks ailesi havuzunda (Duka NDX + MT5 US500/US30/US2000; kural her
+  endekste kendi verisiyle) mutlak net bp ile: (1) ≥ 150 işlem; (2) ort > 0 ve ay bloklu P(EV>0) ≥ %90; (3) kronolojik iki yarı ≥ 0;
+  (4) spread ×1,5 stresinde (maliyet +%50) ort > 0; (5) icra: giriş zaten tetik barı bitişindeki SONRAKİ barın açılışı + gerçek spread
+  (cr_motor px_at; bar kapanışı değil) → yapısal olarak sağlanır, iyimser (tetik kapanışı) ile fark raporlanır; (6) aynı anda tek pozisyon
+  (aile içinde, tarih sırasıyla, açıkken gelen tetik atlanır) ile ort > 0.
+- C / X tanımları KQ-02 ile aynı (X = Duka NDX'te fark ≤ 0).
