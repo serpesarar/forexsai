@@ -82,3 +82,19 @@ NDX taze beslemeleri geçti (EET30 +15,0, NQ +14,6), DAX taze beslemesi MT5_GER4
   (cr_motor px_at; bar kapanışı değil) → yapısal olarak sağlanır, iyimser (tetik kapanışı) ile fark raporlanır; (6) aynı anda tek pozisyon
   (aile içinde, tarih sırasıyla, açıkken gelen tetik atlanır) ile ort > 0.
 - C / X tanımları KQ-02 ile aynı (X = Duka NDX'te fark ≤ 0).
+
+## KQ-03 sonucu (değiştirilmez)
+c03.0_c11.5_a0.5_q0.0_G2_vixchg0.1 → B, kart 6/6 LIVE; korumasız kâr çıkışı C (taze NQ CVaR5). 2026-11-21 canlıya bağlandı (5b9458f2).
+Kalan şüphe: NDX kapsamı DAX sonucu görüldükten sonra seçildi.
+
+## KQ-04 — kapsam kuralı + donmuş kural, HİÇ KULLANILMAMIŞ endekslerde (KQ-03'ten SONRA, KQ-04 sonuçlarından ÖNCE)
+- **Kapsam kuralı (yalnız KEŞİF'ten, yapısal):** bir endeks kâr çıkışına uygundur ⇔ kendi 1990–2015 günlük vekil CAPREV olaylarında, D0 kapanışında
+  zararda olanların 5 işlem günü içinde girişe dönme oranı ≥ 0,65. (KEŞİF değerleri ön incelemede: NDX 0,73, GSPC 0,72, DJI 0,68, RUT 0,66,
+  GDAXI 0,60 → eşik DAX ile ABD'yi ayıran 0,65; DAX'ın bu ölçüde en düşük olduğu KEŞİF'te de görülüyor.) Bu oran korumanın sonucunu kullanmaz.
+- **Örneklem:** CAPREV araştırmalarının hiçbirinde kullanılmamış dört günlük endeks: ^FTSE, ^STOXX50E, ^N225, ^HSI (yfinance,
+  `research/kasa_trend_20261028/data/`), açılışı olmayan yıllar atılır. Kural günlük vekil (cr_gunluk), dünkü ABD VIX ≥ 18,4; ABD dışı olduğundan
+  s ≥ 1 VIX koruması s−1 günü VIX kapanışıyla (DAX kuralı). Donmuş hücre: KQ-03 seçimi, hiçbir parametre değişmez.
+- **Sınama:** her endeksin 2016–2026 dönemi (birincil); 1990–2015 ikincil (bu endeksler seçimde hiç yoktu, o dönem de dışarıda).
+- **B (kapsam + kural doğrulandı):** kapsam içi (oran ≥ 0,65) dokunulmamış endeksler havuzunda 2016–26: (i) taban üstü ortalama fark > 0 ve ay bloklu
+  P ≥ 0,90; (ii) kapsam içi endekslerin en az yarısında fark > 0; (iii) havuz CVaR5 ≥ 2 × taban CVaR5; (iv) kapsam dışı endeks varsa havuz farkı kapsam
+  içinden küçük (kuralın yönü). Kapsam içi endeks yoksa hüküm "sınanamadı". C: (i) geçer, biri düşer. X: (i) fark ≤ 0.
