@@ -1,0 +1,203 @@
+{
+ "scope": "caprev_ndx_kar_koruma",
+ "tarih": "2026-11-21",
+ "kural": "CAPREV NDX bacağı (giriş canlı kuralla aynı) + çıkış: D0 gün içi stop 3×dvol; D0 kapanışında bid ≥ giriş → çık; zararda ise yalnız z0>−0,5 ∧ clv0>0 iken tut, stop girişin 1,5×dvol altına; D1…D4 kapanışında kârdaysa ya da VIX ≥ girişteki dünkü VIX×1,10 ise çık; en geç D5 kapanışı",
+ "veri": "Duka NDX 1m 2018–26, MT5 NAS100/US500/US30/US2000 M30, EET30, NQ, günlük vekil 1990–2026",
+ "secim": "KEŞİF ABD endeksleri 1990–2015 (917 olay), 216 hücre, ön kayıt KQ-03 (PROTOCOL.md)",
+ "on_kayit_hukum": "B",
+ "on_kayit_olcut": {
+  "ndx_mt5": true,
+  "havuz_P": true,
+  "kor_2_3": true,
+  "sharpe": true,
+  "cvar5_2x": true,
+  "cvar5_kar": true,
+  "taze": true
+ },
+ "havuz_P": 1.0,
+ "olcum": {
+  "DUKA_NDX": {
+   "n": 101,
+   "ort": 63.8,
+   "fark": 15.9,
+   "fark_kar": -42.1,
+   "isabet": [
+    0.574,
+    0.891,
+    0.703
+   ],
+   "sharpe": [
+    0.714,
+    1.341,
+    0.84
+   ],
+   "cvar5": [
+    -250.0,
+    -475.0,
+    -426.0
+   ]
+  },
+  "MT5_NAS100": {
+   "n": 101,
+   "ort": 64.1,
+   "fark": 17.9,
+   "fark_kar": -47.2,
+   "isabet": [
+    0.574,
+    0.891,
+    0.703
+   ],
+   "sharpe": [
+    0.693,
+    1.459,
+    0.863
+   ],
+   "cvar5": [
+    -284.0,
+    -461.0,
+    -424.0
+   ]
+  },
+  "EET30": {
+   "n": 93,
+   "ort": 56.9,
+   "fark": 15.0,
+   "fark_kar": -42.5,
+   "isabet": [
+    0.559,
+    0.882,
+    0.699
+   ],
+   "sharpe": [
+    0.633,
+    1.284,
+    0.759
+   ],
+   "cvar5": [
+    -303.0,
+    -514.0,
+    -463.0
+   ]
+  },
+  "NQ": {
+   "n": 59,
+   "ort": 51.2,
+   "fark": 14.6,
+   "fark_kar": -25.7,
+   "isabet": [
+    0.593,
+    0.898,
+    0.712
+   ],
+   "sharpe": [
+    0.753,
+    1.26,
+    0.938
+   ],
+   "cvar5": [
+    -225.0,
+    -578.0,
+    -411.0
+   ]
+  },
+  "MT5_US500": {
+   "n": 56,
+   "ort": 74.9,
+   "fark": 6.2,
+   "fark_kar": -16.0,
+   "isabet": [
+    0.625,
+    0.893,
+    0.75
+   ],
+   "sharpe": [
+    0.963,
+    1.155,
+    0.972
+   ],
+   "cvar5": [
+    -174.0,
+    -315.0,
+    -277.0
+   ]
+  },
+  "MT5_US30": {
+   "n": 73,
+   "ort": 56.9,
+   "fark": -0.9,
+   "fark_kar": -21.7,
+   "isabet": [
+    0.603,
+    0.849,
+    0.753
+   ],
+   "sharpe": [
+    0.882,
+    1.064,
+    0.775
+   ],
+   "cvar5": [
+    -264.0,
+    -410.0,
+    -440.0
+   ]
+  },
+  "MT5_US2000": {
+   "n": 129,
+   "ort": 34.6,
+   "fark": 7.3,
+   "fark_kar": -7.1,
+   "isabet": [
+    0.504,
+    0.814,
+    0.651
+   ],
+   "sharpe": [
+    0.513,
+    0.545,
+    0.57
+   ],
+   "cvar5": [
+    -289.0,
+    -722.0,
+    -463.0
+   ]
+  }
+ },
+ "kart": {
+  "n": 359,
+  "ort": 53.6,
+  "P_EV": 1.0,
+  "yari": [
+   36.9,
+   70.3
+  ],
+  "spread_x1_5": 52.8,
+  "icra_iyimser_fark_bp": 1.7,
+  "tek_pozisyon": {
+   "n": 165,
+   "ort": 47.3
+  },
+  "ndx_yari": [
+   48.2,
+   79.1
+  ],
+  "olcut": {
+   "1_hacim": true,
+   "2_beklenti": true,
+   "3_kararlilik": true,
+   "4_surtunme": true,
+   "5_icra": true,
+   "6_tek_pozisyon": true
+  },
+  "verdikt": "LIVE"
+ },
+ "verdikt": "LIVE",
+ "uyari": "Kapsam (NDX) DAX'ın KQ-02'de düştüğü görüldükten sonra seçildi; çöküş işaretleri (z0, clv0) TEST anatomisi görüldükten sonra tanımlandı. Dokunulmamış EET30/NQ beslemeleri ve KEŞİF-yalnız seçim bu riske karşı şarttı. İleri doğrulama: canlı NDX işlemleri.",
+ "korumasiz_kar_karsilastirma": {
+  "hukum": "C",
+  "dusen": [
+   "taze"
+  ]
+ }
+}

@@ -1173,5 +1173,15 @@
   "category": "research",
   "what_it_does": "CAPREV olaylarını 1990–2015 günlük vekilde (5 endeks) 24 bağlam özelliğiyle kümeler, tek filtre / lojistik / GBM / tip skoru ile SL elemeyi ve 24 hücrelik 'kâra kadar tut' çıkış ızgarasını orada seçip canlı kuralın 2018–26 1m/M30 işlemlerinde (NDX, DAX, kör ABD endeksleri) sınar; isabet, net bp, Sharpe, en kötü %5.",
   "output": "research/caprev_derin_20261120/RAPOR.md"
+ },
+ {
+  "id": "caprev_kuyruk",
+  "name": "CAPREV kâr çıkışı kuyruk anatomisi + tutuş koruması (KQ-01…03)",
+  "kind": "script",
+  "command": "cd research/caprev_kuyruk_20261121 && python3 src/kq_veri.py && python3 src/kq_analiz.py && python3 src/kq2_veri.py && python3 src/kq2_analiz.py && python3 src/kq3_analiz.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "Kâr çıkışında tutulan CAPREV işlemlerini ÇÖKÜŞ/DÖNÜŞ olarak ayırır, giriş ve D0/D1 kapanışı özelliklerinin ayırt ediciliğini ölçer; 216 hücrelik tutma şartı × stop takvimi × VIX korumasını 1990–2015'te seçip NDX/DAX/kör/taze beslemelerde ve canlıya alma kartında sınar.",
+  "output": "research/caprev_kuyruk_20261121/RAPOR.md"
  }
 ]

@@ -2706,7 +2706,7 @@ def main():
             #    açık CAPREV pozisyonu yine de seans kapanışında kapanmalı) ──
             if caprev_live is not None and getattr(config, "CAPREV_LIVE", True) and config.LIVE_TRADING:
                 try:
-                    caprev_live.manage_exits(mt5, config, log)
+                    caprev_live.manage_exits(mt5, config, log, get_vix=get_vix)
                 except Exception as e:
                     log.warning("caprev çıkış hatası: %s", e)
 

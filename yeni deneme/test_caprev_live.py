@@ -145,3 +145,52 @@ def test_kar_check_stale_tick_does_not_count_day(tmp_path, monkeypatch):
     m = _MT5(99.0, due - 20 * 3600)
     cl._kar_check(m, _Cfg(), _Log(), due + 5, _Pos(), meta)
     assert not m.sent and meta["step"] == 2
+
+
+# ── KQ-03 tutuş koruması ──
+def test_kar_decision_guard_rules():
+    g = {"dvol": 0.02, "clv": 0.4, "vixchg": None}
+    assert cl.kar_decision(99.2, 100.0, 0, g) is None                 # z = −0,4 → tut
+    assert cl.kar_decision(98.9, 100.0, 0, g) == "tutma_yok"          # z = −0,55 → çık
+    assert cl.kar_decision(99.5, 100.0, 0, {**g, "clv": 0.0}) == "tutma_yok"
+    assert cl.kar_decision(99.0, 100.0, 2, {**g, "vixchg": 0.12}) == "vix"
+    assert cl.kar_decision(99.0, 100.0, 2, {**g, "vixchg": 0.05}) is None
+    assert cl.kar_decision(98.0, 100.0, 0, None) is None              # korumasız
+
+
+class _MT5G(_MT5):
+    TIMEFRAME_H1, TRADE_ACTION_SLTP = 1, 6
+    def __init__(self, bid, t, bars=None):
+        super().__init__(bid, t)
+        self.bars = bars
+    def copy_rates_from_pos(self, *a): return self.bars
+    def symbol_info(self, s):
+        class I: digits = 2
+        return I()
+
+
+def test_guarded_hold_moves_stop_and_vix_exit(tmp_path, monkeypatch):
+    monkeypatch.setattr(cl, "LOG_JSONL", tmp_path / "l.jsonl")
+    d0 = date(2026, 11, 19)
+    prof = cl.PROFILES["NDX.INDX"]
+    due = cl.session_close_utc(d0, prof)
+    bars = [{"time": int(cl.cs.local_to_utc(d0, m, "US")), "open": 100, "high": 101, "low": 98.5, "close": 99.5}
+            for m in range(540, 960, 60)]
+    meta = {"market": "NDX.INDX", "mode": "kar", "entry": 100.0, "step": 0, "entry_t": due - 3600, "exit_t": due,
+            "dvol": 0.02, "vix0": 20.0}
+    m = _MT5G(99.5, due + 5, bars)                                    # z = −0,25, clv > 0 → tut + stop 97,00
+    cl._kar_check(m, _Cfg(), _Log(), due + 5, _Pos(), meta, 0, lambda: 21.0)
+    assert meta["step"] == 1 and len(m.sent) == 1 and m.sent[0]["action"] == 6 and m.sent[0]["sl"] == 97.0
+    m2 = _MT5G(99.6, meta["exit_t"] + 5)
+    cl._kar_check(m2, _Cfg(), _Log(), meta["exit_t"] + 5, _Pos(), meta, 0, lambda: 22.5)   # VIX +%12,5 → çık
+    assert len(m2.sent) == 1 and m2.sent[0]["type"] == 0
+
+
+def test_guarded_d0_deep_loss_exits(tmp_path, monkeypatch):
+    monkeypatch.setattr(cl, "LOG_JSONL", tmp_path / "l.jsonl")
+    due = cl.session_close_utc(date(2026, 11, 19), cl.PROFILES["NDX.INDX"])
+    meta = {"market": "NDX.INDX", "mode": "kar", "entry": 100.0, "step": 0, "entry_t": due - 3600, "exit_t": due,
+            "dvol": 0.02, "vix0": 20.0}
+    m = _MT5G(98.8, due + 5, None)                                    # z = −0,6
+    cl._kar_check(m, _Cfg(), _Log(), due + 5, _Pos(), meta, 0, None)
+    assert len(m.sent) == 1 and "position" in m.sent[0]
