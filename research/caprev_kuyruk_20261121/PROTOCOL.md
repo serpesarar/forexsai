@@ -133,3 +133,12 @@ Kullanıcı: "korumasızı daha fazla araştır, farklı bir işleme giriş yeri
 - **B:** (a) NDX: Duka NDX ve MT5 NAS100 fark > 0 ∧ isabet > taban; havuz (Duka NDX + günlük 2016–26 ABD 4) P ≥ 0,975; Duka NDX Sharpe > taban; Duka NDX ve MT5
   CVaR5 ≥ 2 × taban; EET30 ve NQ fark > 0 ∧ CVaR5 ≥ 2 × taban (E4 seçilirse 1m beslemelerde D1 açılış = D1 09:30 ilk bar); (b) yeni piyasalar kapsam içi havuzunda
   fark > 0 ∧ P ≥ 0,90 ∧ CVaR5 ≥ 2 × taban; (c) kart 6/6. C: (a)'nın ilk şartı geçer, biri düşer. X: Duka NDX fark ≤ 0.
+
+## KQ-06 sonucu (değiştirilmez)
+Seçilen **E2_U0_h0.5** (yarısı tetikte, yarısı D0 kapanışında; ilk kontrol kapanışı zarardaysa her yarının yarısı orada kapanır): **C** — yalnız (a) kör MT5 ≥ 2/3 düştü
+(US500 −23,1, US30 −18,6, US2000 −3,1). Geçenler: Duka NDX +28,3 (ort +76,2, isabet %73, Sharpe 0,71 → 1,51, CVaR5 −253 vs taban −250), MT5 NAS100 +32,4 / −247,
+EET30 +28,2 / −261, NQ +26,7 / −256, havuz P 1,00, yeni piyasalar kapsam içi (FCHI/SSMI/IBEX/BVSP) +32,6 P 0,998 CVaR5 −473 (sınır −678), kart 6/6 LIVE.
+E4_U3_h1.0: yeni piyasalarda −2,8 (P 0,42) → B olamaz; 1m beslemelerde E4 hesaplanmadı (NDX ölçütleri taban ile dolduruldu, hüküm yazılmaz).
+Betimleyici (EK, hükmü değiştirmez): E2_U0_h0.5 yeni 10 piyasanın 10'unda artı (kapsam dışı AEX/GSPTSE/KS11/TWII/MXX/AXJO dahil, +4…+59);
+kör CFD açığı D0 kapanışı yarısından (MT5 US500/US30 E1 −57/−43, aynı endeks günlük vekil +30/+34); DAX'ta E2 −8,8 (Duka) / −1,3 (MT5) → DAX tabanda kalır;
+E2_U0_h1.0 (seçilmedi) NDX +50,8 / CVaR5 −342 / isabet %81.

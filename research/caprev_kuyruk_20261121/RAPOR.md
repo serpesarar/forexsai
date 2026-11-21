@@ -93,3 +93,21 @@ Beş ön kayıtlı tur. Kalıcı bulgular:
 2. "Kâra kadar tut" kenarı genelleşiyor (dokunulmamış piyasalar +22 bp, P 0,98); kuyruk onun yapısal bedeli (taban × 2–2,6).
 3. VIX tırmanışı çıkışı ABD dışında bir gün gecikmeli çalışır ve kenarı yer.
 4. NDX'te her yapı B geçiyor; NDX + dokunulmamış piyasa birlikte, kuyruk sınırıyla, hiçbir yapı geçmiyor. Kuyruk ile kenar arasındaki seçim bir lot/risk kararıdır.
+
+## KQ-06 — farklı giriş yeri + tutuş şartı (kullanıcı isteği): seçilen **bölünmüş giriş + yarım tutuş**, hüküm **C**
+Yapı: tetikte yarım lot al, D0 seans kapanışında kalan yarımı al; her yarı için felaket stopu kendi girişinin 3×dvol altı; her yarının ilk kontrol kapanışında
+(tetik yarısı D0, kapanış yarısı D1) zarardaysa yarısını kapat, kalanını kâra kadar (≤ 5 kapanış) taşı.
+
+| | Ort. | İsabet | Sharpe | En kötü %5 |
+|---|---|---|---|---|
+| Taban (canlı aynı gün) Duka NDX | +48 | %57 | 0,71 | −250 |
+| Korumasız kâr çıkışı | +106 | %89 | 1,34 | −475 |
+| Korumalı (KQ-03, canlıda) | +64 | %70 | 0,84 | −426 |
+| **Bölünmüş giriş + yarım tutuş** | **+76** | **%73** | **1,51** | **−253** |
+| MT5 NAS100 / EET30 / NQ farkı (CVaR5) | +32 (−247) / +28 (−261) / +27 (−256) | | | |
+| Yeni 10 piyasa (hiç kullanılmamış) | 10/10 artı; kapsam içi 4: +32,6 bp P 0,998 | | | |
+| Kör MT5 US500 / US30 / US2000 | **−23 / −19 / −3** (ön kayıt ≥ 2/3 artı istiyordu) | | | |
+
+**Okuma:** kuyruğu tabana indiren ve kenarı koruyan ilk yapı bu (NDX'te en kötü %5 −253 ≈ taban, Sharpe en yüksek). Kuyruğu küçülten mekanizma: çöküşün
+çoğu D0 kapanışından sonra derinleşiyor; yarım lotu kapanışa bırakmak hem giriş fiyatını iyileştiriyor hem riskin yarısını çöküşün ilk gününden çıkarıyor.
+Ön kayıt hükmü C: kör ABD CFD'lerinde D0 kapanışı yarısı eksi (aynı endekslerin günlük verisi artı; ayrım çözülmedi). DAX'ta uygulanmaz.
