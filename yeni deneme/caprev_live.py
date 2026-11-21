@@ -14,6 +14,12 @@ KURAL (kartla BİREBİR — değiştirmek kanıtı geçersiz kılar; research/nd
   * Stop: giriş × (1 − günlük vol), günlük vol = son 20 seans kapanış getirisinin std'si. TP YOK.
   * Çıkış: aynı yerel gün seans kapanışında (NDX 16:00 NY, DAX 18:00 Berlin) market kapanış.
   * Portföy: aynı anda TEK CAPREV pozisyonu (kartın 6. ölçütü); piyasa başına günde bir tetik.
+KÂR ÇIKIŞI (2026-11-21, KULLANICI KARARI "canlıya al direk"; araştırma §2.107 CD-04, ön kayıt hükmü X — DAX'ta
+  çalışmadığı için; NDX'te isabet %57→%89, +48→+106 bp, Sharpe 0,71→1,34, kuyruk CVaR5 −250→−475 bp):
+  * YALNIZ NDX (config.CAPREV_KAR_EXIT, varsayılan True; CAPREV_KAR_MARKETS). DAX eski kuralda kalır.
+  * Stop = felaket stopu giriş × (1 − 3·dvol). D0 seans kapanışında bid ≥ giriş ise çık; değilse sonraki her işlem
+    günü seans kapanışında bid ≥ giriş olunca çık; en çok D5 kapanışında (araştırmadaki exit_index, m=5) zorla çık.
+  * Tutuş sürerken "tek CAPREV pozisyonu" kuralı geçerli: başka CAPREV tetiği atlanır (skip olarak loglanır).
 Botun open_trade yolu KULLANILMAZ (fakeout/squeeze/probasyon kartta yok). trade_manager bu magic'e dokunmaz.
 """
 from __future__ import annotations
@@ -40,6 +46,9 @@ FETCH_H1 = 1500                  # ≈ 60+ gün; ≥ 21 tam seans
 POLL_EVERY_S = 30
 MAX_HOLD_S = 30 * 3600           # emniyet: seans kapanışı kaçarsa
 TRADE_WEEKDAYS = (0, 1, 2, 3)
+KAR_MAX_DAYS = 5                 # D0 + en çok 5 işlem günü kapanışı (CD-04 X_5_3.0_kar)
+KAR_STOP_DVOL = 3.0              # felaket stopu, dvol katı
+KAR_MAX_HOLD_S = 9 * 86400       # emniyet: hafta sonu + tatil payı
 
 PROFILES: dict[str, dict] = {
     "NDX.INDX": {"tz": "US", "rth": (540, 960), "close": 960, "win": (180, 900), "need_from": 570},
@@ -102,6 +111,28 @@ def trigger(bars: list[dict], prof: dict, today: date, pdl: float) -> dict | Non
 
 def session_close_utc(day: date, prof: dict) -> float:
     return cs.local_to_utc(day, prof["close"], prof["tz"])
+
+
+def next_weekday(day: date) -> date:
+    from datetime import timedelta
+    d = day + timedelta(days=1)
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d
+
+
+def kar_enabled(config, market: str) -> bool:
+    mk = tuple(getattr(config, "CAPREV_KAR_MARKETS", ("NDX.INDX",)))
+    return bool(getattr(config, "CAPREV_KAR_EXIT", True)) and market in mk
+
+
+def kar_decision(bid: float, entry: float, step: int) -> str | None:
+    """Kâr çıkışı kontrol noktası (seans kapanışı, step 0 = D0). 'kar' | 'sure' | None (tut)."""
+    if bid >= entry:
+        return "kar"
+    if step >= KAR_MAX_DAYS:
+        return "sure"
+    return None
 
 
 # ═════════════════════════ durum / kayıt ═════════════════════════
@@ -170,10 +201,38 @@ def _manage_exits(mt5, config, log, now: float, st: dict) -> None:
         else:                                           # bot yeniden başladıysa: açılış gününün kapanışı
             prof = PROFILES["GDAXI.INDX" if "GER" in pos.symbol.upper() else "NDX.INDX"]
             due = session_close_utc(cs.to_local(pos.time - meta_off(st), prof["tz"])[0], prof)
+        if meta and meta.get("mode") == "kar":
+            _kar_check(mt5, config, log, now, pos, meta, meta_off(st))
+            continue
         if now >= due:
             _close_position(mt5, config, pos, log, "seans kapanışı")
         elif now - (meta or {}).get("entry_t", now) > MAX_HOLD_S:
             _close_position(mt5, config, pos, log, "emniyet süresi")
+
+
+def _kar_check(mt5, config, log, now: float, pos, meta: dict, off: int = 0) -> None:
+    """Kâr çıkışı: her seans kapanışı anında (≤ 30 dk içinde) bid ≥ giriş mi? Tatil/kapalı günde tick bayatsa ertele."""
+    prof = PROFILES[meta["market"]]
+    if now - meta["entry_t"] > KAR_MAX_HOLD_S:
+        _close_position(mt5, config, pos, log, "kâr çıkışı emniyet süresi")
+        return
+    if now < meta["exit_t"]:
+        return
+    tick = mt5.symbol_info_tick(pos.symbol)
+    fresh = tick is not None and abs(now - (float(getattr(tick, "time", now + off)) - off)) < 1800 and tick.bid > 0
+    step = int(meta.get("step", 0))
+    if fresh:
+        why = kar_decision(float(tick.bid), float(meta["entry"]), step)
+        _append({"kind": "kar_check", "ticket": pos.ticket, "step": step, "bid": tick.bid,
+                 "entry": meta["entry"], "decision": why or "tut"})
+        if why:
+            _close_position(mt5, config, pos, log, f"kâr çıkışı ({why}, D{step})")
+            return
+        meta["step"] = step + 1
+        log.info("CAPREV kâr çıkışı: D%d kapanışı zararda (bid %.2f < giriş %.2f) → tut", step, tick.bid, meta["entry"])
+    else:
+        _append({"kind": "kar_check", "ticket": pos.ticket, "step": step, "decision": "bayat tick, gün sayılmadı"})
+    meta["exit_t"] = session_close_utc(next_weekday(cs.to_local(meta["exit_t"], prof["tz"])[0]), prof)
 
 
 def manage_exits(mt5, config, log, now: float | None = None) -> None:
@@ -247,10 +306,12 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
     if tick is None or info is None:
         return
     ask = round(tick.ask, info.digits)
-    sl = round(ask * (1 - ctx["dvol"]), info.digits)
+    kar = kar_enabled(config, market)
+    sl = round(ask * (1 - (KAR_STOP_DVOL if kar else 1.0) * ctx["dvol"]), info.digits)
     lot = float(getattr(config, "CAPREV_LIVE_LOT", 1.0))
     exit_t = session_close_utc(today, prof)
-    line = f"CAPREV {market} BUY {lot} lot @ {ask} SL={sl} (dvol %{100 * ctx['dvol']:.2f}, VIX {base['vix']:.1f}), çıkış seans kapanışı"
+    line = f"CAPREV {market} BUY {lot} lot @ {ask} SL={sl} (dvol %{100 * ctx['dvol']:.2f}, VIX {base['vix']:.1f}), " + (
+        f"çıkış kâr kuralı (≤D{KAR_MAX_DAYS})" if kar else "çıkış seans kapanışı")
     if not live:
         log.info("[GÖZLEM] %s", line)
         _append({"kind": "observe", "ask": ask, "sl": sl, **base})
@@ -265,7 +326,7 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
     res = send_order(req, sym)
     ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
     rec = {"kind": "entry", "ok": ok, "retcode": getattr(res, "retcode", None), "ask": ask, "sl": sl,
-           "lot": lot, "exit_t": exit_t, **base}
+           "lot": lot, "exit_t": exit_t, "mode": "kar" if kar else "d0", **base}
     try:                                            # ZM 60 dk bandı × SL (yalnız kayıt, DTS-06; fail-open)
         import range_band_bridge
         rec["range_band"] = range_band_bridge.check(mt5, sym, ask, None, sl, "BUY")
@@ -274,7 +335,8 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
     if ok:
         ticket = int(getattr(res, "order", 0))
         rec["ticket"] = ticket
-        st.setdefault("pos", {})[str(ticket)] = {"entry_t": now, "exit_t": exit_t, "market": market}
+        st.setdefault("pos", {})[str(ticket)] = {"entry_t": now, "exit_t": exit_t, "market": market,
+                                                  "mode": "kar" if kar else "d0", "entry": ask, "step": 0}
         log.info("[CANLI] ✅ %s ticket=%s", line, ticket)
         try:                                    # kural adı + geçmiş başarı ekrana (kural_katalogu); hata emri etkilemez
             import kural_katalogu
