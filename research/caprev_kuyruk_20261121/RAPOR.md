@@ -58,3 +58,22 @@ spread ×1,5 +52,8, icra iyimser farkı 1,7 bp (giriş zaten sonraki bar açıl�
 - ⚠️ Kapsam (NDX) ve çöküş işaretleri sonuç görüldükten sonra seçildi; KEŞİF-yalnız seçim ve dokunulmamış EET30/NQ beslemeleri bu riske karşı
   konuldu. İleri doğrulama canlı NDX işlemleriyle: 30 işlemde ort > canlı taban ve CVaR5 ≥ 2 × taban beklenir.
 - DAX'ta kâr çıkışı (korumalı ya da değil) çalışmıyor; DAX bacağı aynı gün çıkışta kalır.
+
+## KQ-04 — hiç kullanılmamış dört endeks (FTSE, Euro Stoxx 50, Nikkei 225, Hang Seng; ön kayıt c19d9127): **C**
+| 2016–26 | n | Taban | Korumasız kâr (fark / CVaR5) | Korumalı (fark / CVaR5) |
+|---|---|---|---|---|
+| Stoxx 50 | 81 | | +30,0 / −623 | −9,9 / −517 |
+| Nikkei 225 | 98 | | +31,4 / −657 | +3,6 / −480 |
+| Hang Seng | 117 | | +8,5 / −526 | +4,3 / −300 |
+| FTSE (2 işlem) | 2 | | | |
+| **Havuz** | 298 | −16,3 / −227 | **+22,2 (P 0,98) / −596** | **+0,6 (P 0,54) / −430** |
+1990–2015 (bu endeksler seçimde hiç yoktu): korumasız +25…+32 (4/4 artı), korumalı +0,6…+17.
+Kapsam kuralı (KEŞİF toparlanma ≥ 0,65) DAX'ı 1990–2015 verisinden dışarıda bırakıyor (0,60), dört yeni endeksin dördünü içeride; ama dışarıda kalan
+yeni endeks olmadığından kuralın kendisi bu örneklemde sınanamadı.
+
+**Son okuma:** NDX'teki koruma kazancı başka piyasaya taşınmıyor: korumalı kural dokunulmamış piyasalarda tabana döner. "Kâra kadar tut" kenarı ise taşınıyor.
+Kuyruk bu kenarın yapısal bedeli. Kuyruğu filtreyle kesmek kenarı da kesiyor; kalan seçenek bir risk/lot kararı:
+- korumalı (canlıda): NDX'te B, kart 6/6, kuyruk küçük ama başka piyasada kenar ≈ 0;
+- korumasız tam lot: kenar genelleşiyor, kuyruk ~2–2,6 × taban (ön kayıt kuyruk ölçütünü geçmiyor);
+- korumasız düşük lot: kuyruğu tabana eşitleyen lot NDX'te ≈ 0,5 (−250/−475); o lotta beklenti ≈ +56 bp-lot (taban +48). Bu oran TEST'ten okunuyor,
+  ön kayıtlı değil; KEŞİF oranıyla (≈ 0,38) NDX'te +40 < +48.

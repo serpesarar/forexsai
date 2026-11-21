@@ -1,0 +1,475 @@
+{
+ "kapsam": {
+  "FTSE": {
+   "kesif_olay": 37,
+   "toparlanma": 0.737,
+   "kapsam_ici": true,
+   "dokunulmamis": true
+  },
+  "STOXX50E": {
+   "kesif_olay": 156,
+   "toparlanma": 0.711,
+   "kapsam_ici": true,
+   "dokunulmamis": true
+  },
+  "N225": {
+   "kesif_olay": 360,
+   "toparlanma": 0.68,
+   "kapsam_ici": true,
+   "dokunulmamis": true
+  },
+  "HSI": {
+   "kesif_olay": 351,
+   "toparlanma": 0.663,
+   "kapsam_ici": true,
+   "dokunulmamis": true
+  },
+  "NDX": {
+   "kesif_olay": 363,
+   "toparlanma": 0.73,
+   "kapsam_ici": true,
+   "dokunulmamis": false
+  },
+  "GSPC": {
+   "kesif_olay": 127,
+   "toparlanma": 0.719,
+   "kapsam_ici": true,
+   "dokunulmamis": false
+  },
+  "DJI": {
+   "kesif_olay": 246,
+   "toparlanma": 0.684,
+   "kapsam_ici": true,
+   "dokunulmamis": false
+  },
+  "RUT": {
+   "kesif_olay": 181,
+   "toparlanma": 0.659,
+   "kapsam_ici": true,
+   "dokunulmamis": false
+  },
+  "GDAXI": {
+   "kesif_olay": 347,
+   "toparlanma": 0.603,
+   "kapsam_ici": false,
+   "dokunulmamis": false
+  }
+ },
+ "tek": {
+  "FTSE": {
+   "2016_26": {
+    "n": 2,
+    "base": {
+     "ort": 26.0,
+     "isabet": 0.5,
+     "cvar5": -104.0
+    },
+    "kar": {
+     "ort": 84.1,
+     "isabet": 1.0,
+     "cvar5": 13.0
+    },
+    "koruma": {
+     "ort": 84.1,
+     "isabet": 1.0,
+     "cvar5": 13.0
+    },
+    "fark_koruma": 58.1,
+    "fark_kar": 58.1
+   },
+   "1990_2015": {
+    "n": 37,
+    "base": {
+     "ort": -36.2,
+     "isabet": 0.459,
+     "cvar5": -217.0
+    },
+    "kar": {
+     "ort": -4.6,
+     "isabet": 0.811,
+     "cvar5": -512.0
+    },
+    "koruma": {
+     "ort": -30.0,
+     "isabet": 0.622,
+     "cvar5": -340.0
+    },
+    "fark_koruma": 6.2,
+    "fark_kar": 31.6
+   }
+  },
+  "STOXX50E": {
+   "2016_26": {
+    "n": 81,
+    "base": {
+     "ort": -35.9,
+     "isabet": 0.407,
+     "cvar5": -262.0
+    },
+    "kar": {
+     "ort": -5.9,
+     "isabet": 0.79,
+     "cvar5": -623.0
+    },
+    "koruma": {
+     "ort": -45.8,
+     "isabet": 0.531,
+     "cvar5": -517.0
+    },
+    "fark_koruma": -9.9,
+    "fark_kar": 30.0
+   },
+   "1990_2015": {
+    "n": 156,
+    "base": {
+     "ort": -42.7,
+     "isabet": 0.429,
+     "cvar5": -430.0
+    },
+    "kar": {
+     "ort": -14.2,
+     "isabet": 0.801,
+     "cvar5": -1049.0
+    },
+    "koruma": {
+     "ort": -25.4,
+     "isabet": 0.609,
+     "cvar5": -490.0
+    },
+    "fark_koruma": 17.3,
+    "fark_kar": 28.5
+   }
+  },
+  "N225": {
+   "2016_26": {
+    "n": 98,
+    "base": {
+     "ort": -26.6,
+     "isabet": 0.398,
+     "cvar5": -234.0
+    },
+    "kar": {
+     "ort": 4.8,
+     "isabet": 0.786,
+     "cvar5": -657.0
+    },
+    "koruma": {
+     "ort": -23.0,
+     "isabet": 0.571,
+     "cvar5": -480.0
+    },
+    "fark_koruma": 3.6,
+    "fark_kar": 31.4
+   },
+   "1990_2015": {
+    "n": 360,
+    "base": {
+     "ort": -25.3,
+     "isabet": 0.403,
+     "cvar5": -319.0
+    },
+    "kar": {
+     "ort": -0.0,
+     "isabet": 0.786,
+     "cvar5": -761.0
+    },
+    "koruma": {
+     "ort": -24.7,
+     "isabet": 0.586,
+     "cvar5": -548.0
+    },
+    "fark_koruma": 0.6,
+    "fark_kar": 25.3
+   }
+  },
+  "HSI": {
+   "2016_26": {
+    "n": 117,
+    "base": {
+     "ort": 5.1,
+     "isabet": 0.504,
+     "cvar5": -186.0
+    },
+    "kar": {
+     "ort": 13.6,
+     "isabet": 0.795,
+     "cvar5": -526.0
+    },
+    "koruma": {
+     "ort": 9.4,
+     "isabet": 0.658,
+     "cvar5": -300.0
+    },
+    "fark_koruma": 4.3,
+    "fark_kar": 8.5
+   },
+   "1990_2015": {
+    "n": 351,
+    "base": {
+     "ort": -23.0,
+     "isabet": 0.45,
+     "cvar5": -301.0
+    },
+    "kar": {
+     "ort": 2.0,
+     "isabet": 0.795,
+     "cvar5": -870.0
+    },
+    "koruma": {
+     "ort": -11.6,
+     "isabet": 0.63,
+     "cvar5": -543.0
+    },
+    "fark_koruma": 11.4,
+    "fark_kar": 25.0
+   }
+  },
+  "NDX": {
+   "2016_26": {
+    "n": 124,
+    "base": {
+     "ort": 30.0,
+     "isabet": 0.556,
+     "cvar5": -238.0
+    },
+    "kar": {
+     "ort": 72.2,
+     "isabet": 0.871,
+     "cvar5": -557.0
+    },
+    "koruma": {
+     "ort": 45.9,
+     "isabet": 0.718,
+     "cvar5": -362.0
+    },
+    "fark_koruma": 16.0,
+    "fark_kar": 42.3
+   },
+   "1990_2015": {
+    "n": 363,
+    "base": {
+     "ort": -5.9,
+     "isabet": 0.46,
+     "cvar5": -425.0
+    },
+    "kar": {
+     "ort": 59.7,
+     "isabet": 0.84,
+     "cvar5": -1153.0
+    },
+    "koruma": {
+     "ort": 23.3,
+     "isabet": 0.634,
+     "cvar5": -661.0
+    },
+    "fark_koruma": 29.2,
+    "fark_kar": 65.6
+   }
+  },
+  "GSPC": {
+   "2016_26": {
+    "n": 96,
+    "base": {
+     "ort": 9.7,
+     "isabet": 0.51,
+     "cvar5": -306.0
+    },
+    "kar": {
+     "ort": 62.7,
+     "isabet": 0.875,
+     "cvar5": -453.0
+    },
+    "koruma": {
+     "ort": 32.3,
+     "isabet": 0.729,
+     "cvar5": -447.0
+    },
+    "fark_koruma": 22.6,
+    "fark_kar": 53.0
+   },
+   "1990_2015": {
+    "n": 127,
+    "base": {
+     "ort": 0.4,
+     "isabet": 0.512,
+     "cvar5": -420.0
+    },
+    "kar": {
+     "ort": 10.3,
+     "isabet": 0.811,
+     "cvar5": -1084.0
+    },
+    "koruma": {
+     "ort": -6.6,
+     "isabet": 0.638,
+     "cvar5": -622.0
+    },
+    "fark_koruma": -7.1,
+    "fark_kar": 9.9
+   }
+  },
+  "DJI": {
+   "2016_26": {
+    "n": 81,
+    "base": {
+     "ort": -2.2,
+     "isabet": 0.432,
+     "cvar5": -274.0
+    },
+    "kar": {
+     "ort": 47.5,
+     "isabet": 0.827,
+     "cvar5": -454.0
+    },
+    "koruma": {
+     "ort": 19.0,
+     "isabet": 0.667,
+     "cvar5": -392.0
+    },
+    "fark_koruma": 21.3,
+    "fark_kar": 49.8
+   },
+   "1990_2015": {
+    "n": 246,
+    "base": {
+     "ort": -11.6,
+     "isabet": 0.472,
+     "cvar5": -314.0
+    },
+    "kar": {
+     "ort": 19.9,
+     "isabet": 0.817,
+     "cvar5": -695.0
+    },
+    "koruma": {
+     "ort": 13.7,
+     "isabet": 0.679,
+     "cvar5": -453.0
+    },
+    "fark_koruma": 25.4,
+    "fark_kar": 31.5
+   }
+  },
+  "RUT": {
+   "2016_26": {
+    "n": 148,
+    "base": {
+     "ort": -14.8,
+     "isabet": 0.426,
+     "cvar5": -282.0
+    },
+    "kar": {
+     "ort": 10.8,
+     "isabet": 0.797,
+     "cvar5": -819.0
+    },
+    "koruma": {
+     "ort": 6.7,
+     "isabet": 0.622,
+     "cvar5": -544.0
+    },
+    "fark_koruma": 21.4,
+    "fark_kar": 25.6
+   },
+   "1990_2015": {
+    "n": 181,
+    "base": {
+     "ort": -21.9,
+     "isabet": 0.442,
+     "cvar5": -446.0
+    },
+    "kar": {
+     "ort": -39.5,
+     "isabet": 0.768,
+     "cvar5": -1219.0
+    },
+    "koruma": {
+     "ort": -34.1,
+     "isabet": 0.586,
+     "cvar5": -668.0
+    },
+    "fark_koruma": -12.2,
+    "fark_kar": -17.6
+   }
+  },
+  "GDAXI": {
+   "2016_26": {
+    "n": 90,
+    "base": {
+     "ort": -0.4,
+     "isabet": 0.489,
+     "cvar5": -245.0
+    },
+    "kar": {
+     "ort": 4.1,
+     "isabet": 0.822,
+     "cvar5": -737.0
+    },
+    "koruma": {
+     "ort": 15.0,
+     "isabet": 0.689,
+     "cvar5": -502.0
+    },
+    "fark_koruma": 15.5,
+    "fark_kar": 4.5
+   },
+   "1990_2015": {
+    "n": 347,
+    "base": {
+     "ort": -25.3,
+     "isabet": 0.444,
+     "cvar5": -339.0
+    },
+    "kar": {
+     "ort": -28.2,
+     "isabet": 0.746,
+     "cvar5": -926.0
+    },
+    "koruma": {
+     "ort": -18.4,
+     "isabet": 0.594,
+     "cvar5": -505.0
+    },
+    "fark_koruma": 6.9,
+    "fark_kar": -2.9
+   }
+  }
+ },
+ "havuz": {
+  "kapsam_ici": {
+   "n": 298,
+   "base": {
+    "ort": -16.3,
+    "isabet": 0.443,
+    "cvar5": -227.0
+   },
+   "kar": {
+    "ort": 5.9,
+    "isabet": 0.792,
+    "cvar5": -596.0
+   },
+   "koruma": {
+    "ort": -15.8,
+    "isabet": 0.597,
+    "cvar5": -430.0
+   },
+   "fark_koruma": 0.6,
+   "fark_kar": 22.2,
+   "endeksler": [
+    "FTSE",
+    "STOXX50E",
+    "N225",
+    "HSI"
+   ],
+   "P": 0.5377,
+   "P_kar": 0.983
+  }
+ },
+ "olcut": {
+  "i_fark_P": false,
+  "ii_yari": true,
+  "iii_cvar": true,
+  "iv_yon": true
+ },
+ "hukum": "C"
+}

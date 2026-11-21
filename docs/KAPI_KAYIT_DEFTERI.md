@@ -1702,6 +1702,7 @@ Yöntem: seçim 1990–2015 günlük vekil havuzunda (NDX, S&P, Dow, Russell, DA
 | KQ-02 | D0 tutma şartı (z0, clv0) × stop takvimi (c0, c1) × s≥1 koruma, 216 hücre, NDX+DAX + taze besleme | Seçilen c0 3 / c1 1,5 / z0>−0,5 / VIX+%10: NDX ve taze NDX beslemeleri geçti, DAX taze MT5_GER40 −20,9 | **C** |
 | **KQ-03** | Aynı ızgara, NDX kapsamı (DAX düştükten SONRA daraltıldı), ABD KEŞİF'inde seçim | Aynı hücre: Duka NDX +48→+64 bp, isabet %57→%70, Sharpe 0,71→0,84, CVaR5 −426 (korumasız −475); EET30 +15, NQ +15; kart 6/6 LIVE | **B → CANLI (NDX)** |
 | KQ-03k | Korumasız kâr çıkışı aynı ölçütle | Beklenti +106 ama taze NQ CVaR5 −578 (sınır −450) | C |
+| KQ-04 | Donmuş KQ-03 hücresi + KEŞİF kapsam kuralı (toparlanma ≥ 0,65), hiç kullanılmamış FTSE/Stoxx/Nikkei/HSI 2016–26 | Korumalı +0,6 bp (P 0,54); korumasız kâr +22,2 (P 0,98) ama CVaR5 2,6× taban; 1990–2015 korumasız 4/4 artı | **C** — koruma genelleşmiyor, kâr çıkışı genelleşiyor |
 - Bedel: koruma kuyruğu ~%10 daraltır, beklentinin ~%40'ını bırakır; çöküş gibi görünen D0'lar en büyük dönüşleri de veriyor (2020-03-09/12).
 - Canlı: `yeni deneme/caprev_live.py` `CAPREV_KAR_GUARD=True` (geri: False). Kart `go_live_cards/caprev_ndx_kar_koruma.json`.
 

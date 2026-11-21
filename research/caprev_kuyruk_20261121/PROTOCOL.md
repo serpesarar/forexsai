@@ -98,3 +98,8 @@ Kalan şüphe: NDX kapsamı DAX sonucu görüldükten sonra seçildi.
 - **B (kapsam + kural doğrulandı):** kapsam içi (oran ≥ 0,65) dokunulmamış endeksler havuzunda 2016–26: (i) taban üstü ortalama fark > 0 ve ay bloklu
   P ≥ 0,90; (ii) kapsam içi endekslerin en az yarısında fark > 0; (iii) havuz CVaR5 ≥ 2 × taban CVaR5; (iv) kapsam dışı endeks varsa havuz farkı kapsam
   içinden küçük (kuralın yönü). Kapsam içi endeks yoksa hüküm "sınanamadı". C: (i) geçer, biri düşer. X: (i) fark ≤ 0.
+
+## KQ-04 sonucu (değiştirilmez): **C**
+Dört dokunulmamış endeksin dördü de kapsam içi (toparlanma 0,66–0,74). Kapsam içi havuz 2016–26 (298 işlem): korumalı fark +0,6 bp, P 0,54 → (i) düştü;
+(ii) 3/4 artı, (iii) CVaR5 −430 vs taban −227 (1,9×) geçti, (iv) kapsam dışı yok. Korumasız kâr çıkışı aynı havuzda +22,2 bp, P 0,983, CVaR5 −596 (2,6×);
+1990–2015'te dört endeksin dördünde artı (+25…+32). Okuma: "kâra kadar tut" kenarı genelleşiyor, KQ-03 koruması genelleşmiyor; kuyruk kâr çıkışının yapısal bedeli.
