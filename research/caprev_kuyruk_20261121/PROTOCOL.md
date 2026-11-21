@@ -46,3 +46,19 @@ Hiçbiri uygun değilse eşik 2,0 × taban CVaR5'e gevşer (yazılır).
 - Ölçü: sabit lotta net bp (spread + 1,756 bp/takvim günü finansman), isabet (net > 0), kitap Sharpe (iş günü serisi), CVaR5.
 - Betimleyici: korumalı hücrenin korumasız X_5_3.0_kar'a göre farkı (NDX), yıllara göre kuyruk, 2020-Şubat/Mart davranışı.
 - Canlı değişiklik yalnız B'de ve kullanıcıya bildirilerek; sonuçlardan sonra yazılan her ek EK-n başlığıyla eklenir, hükmü değiştirmez.
+
+## KQ-01 sonucu (ana koşu, değiştirilmez)
+Seçilen G1_z0.5|G3_vix40 ve G1_z0.5|G7_term1.1 → **C** (yalnız (v) düştü: DAX CVaR5 −520 vs sınır −516). Anatomi (betimleyici):
+çöküşü girişte zayıf (en iyi TEST AUC 0,68 vix_sma10), **D0 kapanışında** güçlü ayırt eden iki işaret üç örneklemde de tekrarlıyor:
+z_0 (D0 kapanış zararı/dvol; AUC 0,27–0,34) ve clv_0 (D0 kapanışının gün aralığındaki konumu; AUC 0,30–0,44). Kuyruk stoplarının
+çoğu D1–D4'te. ⚠️ Bu tanımlar TEST anatomisi görüldükten SONRA seçildi → KQ-02'ye dokunulmamış besleme şartı eklenir.
+
+## KQ-02 — tutuş uygunluğu + stop takvimi (yeni tanım; KQ-01 sonuçlarından SONRA, KQ-02 sonuçlarından ÖNCE)
+Hücre = D0 gün içi stop c0 ∈ {1,0; 3,0}×dvol × D0 sonrası stop c1 ∈ {1,5; 2,0; 3,0}×dvol (girişten) × D0 kapanışı tutma şartı
+[z_0 > −a, a ∈ {0,5; 0,75; 1,0; ∞}] ∧ [clv_0 > q, q ∈ {0; 0,15; 0,25}] (şart tutmazsa D0 kapanışında çık) × s ≥ 1 kapanış koruması
+∈ {yok; G8 sekmeme; G2 vixchg ≥ 0,10} → 216 hücre. Kural "kâr", en çok D5 (CD-04). clv_0 eksikse şart yok.
+- Seçim (yalnız KEŞİF, KQ-01 ile aynı): isabet ≥ taban + 10 puan ∧ CVaR5 ≥ 1,5 × taban CVaR5; en yüksek taban üstü ortalama fark
+  **2 hücre** dondurulur (yoksa 2,0 ×).
+- Geçme: KQ-01'in (i)–(vi) ölçütleri **ve (vii) dokunulmamış beslemeler**: EET30 ve NQ (NDX, bu çıkış ve yol özellikleriyle hiç
+  ölçülmedi) ile MT5_GER40 (DAX M30, 2016+) üçünde de taban üstü fark > 0 ve CVaR5 tabanın 2 katından kötü değil.
+  B = (i)–(vii) hepsi; C = (i) geçer, biri düşer; X = Duka NDX ya da DAX'ta fark ≤ 0.
