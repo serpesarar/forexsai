@@ -25,6 +25,12 @@ TUTUŞ KORUMASI (2026-11-21, KQ-03 NDX kapsamı B + canlıya alma kartı 6/6 LIV
   * D0 kapanışı zararda ise YALNIZ z0 = (bid/giriş − 1)/dvol > −0,5 ve kapanış gün dibinde değilse (clv > 0) tut; değilse D0'da çık.
   * Tutulursa stop girişin 1,5×dvol altına çekilir (SLTP; başarısızsa yazılımsal stop).
   * D1…D4 kapanışında VIX ≥ girişteki dünkü VIX × 1,10 ise çık. Kâr ve D5 kuralları aynı.
+BÖLÜNMÜŞ GİRİŞ + YARIM TUTUŞ (2026-11-21, KQ-06, KULLANICI ONAYI; ön kayıt C — kör ABD CFD'leri eksi; NDX'te +48→+76 bp,
+  Sharpe 0,71→1,51, CVaR5 −253 ≈ taban; yeni 10 piyasanın 10'u artı). config.CAPREV_SPLIT_ENTRY (varsayılan True), yalnız kâr piyasaları (NDX):
+  * Tetikte lotun YARISI (A), D0 seans kapanışında kalan YARISI (B) alınır; her yarının felaket stopu kendi girişinin 3×dvol altı.
+  * Her yarının ilk kontrol kapanışında (A: D0, B: D1) bid ≥ giriş → o yarı kapanır; zararda ise o yarının yarısı kapanır, kalanı taşınır.
+  * Sonraki kapanışlarda bid ≥ giriş → kapanır; en geç ilk kontrolden sonraki 5. kapanışta kapanır. KQ-03 koruması (z0/VIX) bu modda YOK.
+  * B bekliyorken başka CAPREV tetiği atlanır (tek pozisyon).
 Botun open_trade yolu KULLANILMAZ (fakeout/squeeze/probasyon kartta yok). trade_manager bu magic'e dokunmaz.
 """
 from __future__ import annotations
@@ -58,6 +64,7 @@ KQ_HOLD_Z = 0.5                  # D0 kapanışı tutma şartı: zarar < 0,5×dv
 KQ_HOLD_CLV = 0.0                # ve kapanış gün dibinin üstünde (q)
 KQ_STOP2_DVOL = 1.5              # D0 sonrası stop (c1)
 KQ_VIX_UP = 0.10                 # s ≥ 1 koruması: VIX tırmanışı (G2)
+SPLIT_HOLD = 0.5                 # KQ-06 h: ilk kontrol kapanışı zarardaysa tutulan pay
 
 PROFILES: dict[str, dict] = {
     "NDX.INDX": {"tz": "US", "rth": (540, 960), "close": 960, "win": (180, 900), "need_from": 570},
@@ -135,6 +142,29 @@ def kar_enabled(config, market: str) -> bool:
     return bool(getattr(config, "CAPREV_KAR_EXIT", True)) and market in mk
 
 
+def split_enabled(config, market: str) -> bool:
+    return kar_enabled(config, market) and bool(getattr(config, "CAPREV_SPLIT_ENTRY", True))
+
+
+def split_decision(bid: float, entry: float, step: int, partial_done: bool) -> str | None:
+    """KQ-06 yarı kontrolü: 'kar' (tam kapat) | 'sure' (tam kapat) | 'yarim' (payın yarısını kapat) | None (tut)."""
+    if bid >= entry:
+        return "kar"
+    if step >= KAR_MAX_DAYS:
+        return "sure"
+    if step == 0 and not partial_done:
+        return "yarim"
+    return None
+
+
+def round_volume(v: float, info) -> float:
+    """Hacmi sembolün adımına aşağı yuvarla; minimumun altındaysa 0."""
+    step = float(getattr(info, "volume_step", 0.01) or 0.01)
+    vmin = float(getattr(info, "volume_min", step) or step)
+    r = math.floor(v / step + 1e-9) * step
+    return round(r, 8) if r + 1e-12 >= vmin else 0.0
+
+
 def kar_decision(bid: float, entry: float, step: int, guard: dict | None = None) -> str | None:
     """Kâr çıkışı kontrol noktası (seans kapanışı, step 0 = D0). 'kar' | 'sure' | 'tutma_yok' | 'vix' | None (tut).
 
@@ -204,20 +234,21 @@ def _open_positions(mt5, config) -> list:
     return [p for p in (mt5.positions_get() or []) if p.magic == mg]
 
 
-def _close_position(mt5, config, pos, log, why: str) -> None:
+def _close_position(mt5, config, pos, log, why: str, volume: float | None = None) -> bool:
     tick = mt5.symbol_info_tick(pos.symbol)
     if tick is None:
-        return
+        return False
     req = {"action": mt5.TRADE_ACTION_DEAL, "symbol": pos.symbol, "position": pos.ticket,
-           "volume": float(pos.volume), "type": mt5.ORDER_TYPE_SELL, "price": tick.bid,
+           "volume": float(volume if volume is not None else pos.volume), "type": mt5.ORDER_TYPE_SELL, "price": tick.bid,
            "deviation": config.DEVIATION_POINTS, "magic": magic(config), "comment": "fxs CAPREV exit",
            "type_filling": mt5.ORDER_FILLING_IOC}
     res = mt5.order_send(req)
     ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
     _append({"kind": "exit", "ticket": pos.ticket, "symbol": pos.symbol, "why": why, "bid": tick.bid,
-             "ok": ok, "retcode": getattr(res, "retcode", None)})
-    (log.info if ok else log.error)("CAPREV %s kapanış ticket=%s @%.2f (%s) retcode=%s",
-                                    "✅" if ok else "❌", pos.ticket, tick.bid, why, getattr(res, "retcode", None))
+             "volume": req["volume"], "ok": ok, "retcode": getattr(res, "retcode", None)})
+    (log.info if ok else log.error)("CAPREV %s kapanış ticket=%s %.2f lot @%.2f (%s) retcode=%s",
+                                    "✅" if ok else "❌", pos.ticket, req["volume"], tick.bid, why, getattr(res, "retcode", None))
+    return ok
 
 
 def _manage_exits(mt5, config, log, now: float, st: dict, get_vix=None) -> None:
@@ -231,6 +262,9 @@ def _manage_exits(mt5, config, log, now: float, st: dict, get_vix=None) -> None:
         else:                                           # bot yeniden başladıysa: açılış gününün kapanışı
             prof = PROFILES["GDAXI.INDX" if "GER" in pos.symbol.upper() else "NDX.INDX"]
             due = session_close_utc(cs.to_local(pos.time - meta_off(st), prof["tz"])[0], prof)
+        if meta and meta.get("mode") == "split":
+            _split_check(mt5, config, log, now, pos, meta, meta_off(st))
+            continue
         if meta and meta.get("mode") == "kar":
             _kar_check(mt5, config, log, now, pos, meta, meta_off(st), get_vix)
             continue
@@ -309,11 +343,88 @@ def _kar_check(mt5, config, log, now: float, pos, meta: dict, off: int = 0, get_
     meta["exit_t"] = session_close_utc(next_weekday(cs.to_local(meta["exit_t"], prof["tz"])[0]), prof)
 
 
+def _split_check(mt5, config, log, now: float, pos, meta: dict, off: int = 0) -> None:
+    """KQ-06 yarı: kontrol kapanışında kâr → kapat; ilk kontrolde zarar → payın yarısını kapat; D(ilk+5) → kapat."""
+    prof = PROFILES[meta["market"]]
+    if now - meta["entry_t"] > KAR_MAX_HOLD_S:
+        _close_position(mt5, config, pos, log, "bölünmüş giriş emniyet süresi")
+        return
+    if now < meta["exit_t"]:
+        return
+    tick = mt5.symbol_info_tick(pos.symbol)
+    fresh = tick is not None and abs(now - (float(getattr(tick, "time", now + off)) - off)) < 1800 and tick.bid > 0
+    step = int(meta.get("step", 0))
+    if fresh:
+        why = split_decision(float(tick.bid), float(meta["entry"]), step, bool(meta.get("partial_done")))
+        _append({"kind": "split_check", "ticket": pos.ticket, "part": meta.get("part"), "step": step, "bid": tick.bid,
+                 "entry": meta["entry"], "decision": why or "tut"})
+        if why in ("kar", "sure"):
+            _close_position(mt5, config, pos, log, f"bölünmüş giriş {meta.get('part')} ({why}, kontrol {step})")
+            return
+        if why == "yarim":
+            vol = round_volume(float(pos.volume) * (1 - SPLIT_HOLD), mt5.symbol_info(pos.symbol))
+            if 0 < vol < float(pos.volume):
+                _close_position(mt5, config, pos, log, f"bölünmüş giriş {meta.get('part')} yarım kapanış", volume=vol)
+            else:
+                _append({"kind": "split_partial_skip", "ticket": pos.ticket, "volume": float(pos.volume)})
+            meta["partial_done"] = True
+        meta["step"] = step + 1
+    else:
+        _append({"kind": "split_check", "ticket": pos.ticket, "step": step, "decision": "bayat tick, gün sayılmadı"})
+    meta["exit_t"] = session_close_utc(next_weekday(cs.to_local(meta["exit_t"], prof["tz"])[0]), prof)
+
+
+def _open_split_b(mt5, config, log, now: float, st: dict) -> None:
+    """D0 seans kapanışında bekleyen ikinci yarıyı (B) al."""
+    for key, pb in list(st.get("pending_b", {}).items()):
+        if now < pb["due"]:
+            continue
+        st["pending_b"].pop(key, None)
+        late = now - pb["due"]
+        rec = {"kind": "entry_b", "market": pb["market"], "latency_s": round(late, 1), "lot": pb["lot"]}
+        if late > MAX_LATE_S:
+            _append({**rec, "skip": "geç (seans kapanışı kaçtı)"})
+            log.warning("CAPREV bölünmüş giriş B atlandı: kapanıştan %.0f sn geç", late)
+            continue
+        try:
+            ti = mt5.terminal_info()
+            if ti is not None and not bool(getattr(ti, "trade_allowed", True)):
+                _append({**rec, "skip": "autotrading kapalı"})
+                continue
+        except Exception:
+            pass
+        tick, info = mt5.symbol_info_tick(pb["sym"]), mt5.symbol_info(pb["sym"])
+        if tick is None or info is None:
+            _append({**rec, "skip": "tick yok"})
+            continue
+        ask = round(tick.ask, info.digits)
+        sl = round(ask * (1 - KAR_STOP_DVOL * pb["dvol"]), info.digits)
+        req = {"action": mt5.TRADE_ACTION_DEAL, "symbol": pb["sym"], "volume": float(pb["lot"]), "type": mt5.ORDER_TYPE_BUY,
+               "price": ask, "sl": sl, "tp": 0.0, "deviation": config.DEVIATION_POINTS, "magic": magic(config),
+               "comment": "fxs CAPREV B", "type_time": mt5.ORDER_TIME_GTC, "type_filling": mt5.ORDER_FILLING_IOC}
+        res = mt5.order_send(req)
+        ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
+        rec.update({"ok": ok, "retcode": getattr(res, "retcode", None), "ask": ask, "sl": sl})
+        if ok:
+            ticket = int(getattr(res, "order", 0))
+            prof = PROFILES[pb["market"]]
+            d0 = cs.to_local(pb["due"], prof["tz"])[0]
+            st.setdefault("pos", {})[str(ticket)] = {"entry_t": now, "market": pb["market"], "mode": "split", "part": "B",
+                                                      "entry": ask, "step": 0, "dvol": pb["dvol"], "vix0": pb.get("vix0"),
+                                                      "exit_t": session_close_utc(next_weekday(d0), prof)}
+            rec["ticket"] = ticket
+            log.info("[CANLI] ✅ CAPREV %s bölünmüş giriş B %.2f lot @ %s SL=%s ticket=%s", pb["market"], pb["lot"], ask, sl, ticket)
+        else:
+            log.error("[CANLI] ❌ CAPREV bölünmüş giriş B reddedildi retcode=%s", rec["retcode"])
+        _append(rec)
+
+
 def manage_exits(mt5, config, log, now: float | None = None, get_vix=None) -> None:
     """Açık CAPREV pozisyonlarını seans kapanışında kapat (ana döngünün başında, frenlerden önce)."""
     now = time.time() if now is None else now
     st = _load_state()
     _manage_exits(mt5, config, log, now, st, get_vix)
+    _open_split_b(mt5, config, log, now, st)
     _save_state(st)
 
 
@@ -364,6 +475,9 @@ def poll(mt5, config, log, resolve_symbol, get_vix, offset_fn, send_order, mk_co
         if late > MAX_LATE_S:
             _append({"kind": "skip", "reason": "geç tespit", **base})
             continue
+        if st.get("pending_b"):
+            _append({"kind": "skip", "reason": "bölünmüş girişin ikinci yarısı bekliyor (tek pozisyon)", **base})
+            continue
         if _open_positions(mt5, config):
             _append({"kind": "skip", "reason": "portföyde açık CAPREV var (tek pozisyon)", **base})
             log.info("CAPREV %s tetik ama açık CAPREV pozisyonu var → atlandı", market)
@@ -384,8 +498,18 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
     sl = round(ask * (1 - (KAR_STOP_DVOL if kar else 1.0) * ctx["dvol"]), info.digits)
     lot = float(getattr(config, "CAPREV_LIVE_LOT", 1.0))
     exit_t = session_close_utc(today, prof)
+    split = kar and split_enabled(config, market)
+    lot_b = 0.0
+    if split:
+        lot_a = round_volume(lot / 2, info)
+        lot_b = round_volume(lot - lot_a, info)
+        if lot_a <= 0 or lot_b <= 0:
+            split = False
+        else:
+            lot = lot_a
     line = f"CAPREV {market} BUY {lot} lot @ {ask} SL={sl} (dvol %{100 * ctx['dvol']:.2f}, VIX {base['vix']:.1f}), " + (
-        f"çıkış kâr kuralı (≤D{KAR_MAX_DAYS})" if kar else "çıkış seans kapanışı")
+        (f"bölünmüş giriş A (B {lot_b} lot D0 kapanışında), yarım tutuş" if split else
+         f"çıkış kâr kuralı (≤D{KAR_MAX_DAYS})" if kar else "çıkış seans kapanışı"))
     if not live:
         log.info("[GÖZLEM] %s", line)
         _append({"kind": "observe", "ask": ask, "sl": sl, **base})
@@ -400,7 +524,7 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
     res = send_order(req, sym)
     ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
     rec = {"kind": "entry", "ok": ok, "retcode": getattr(res, "retcode", None), "ask": ask, "sl": sl,
-           "lot": lot, "exit_t": exit_t, "mode": "kar" if kar else "d0", **base}
+           "lot": lot, "exit_t": exit_t, "mode": "split" if split else ("kar" if kar else "d0"), **base}
     try:                                            # ZM 60 dk bandı × SL (yalnız kayıt, DTS-06; fail-open)
         import range_band_bridge
         rec["range_band"] = range_band_bridge.check(mt5, sym, ask, None, sl, "BUY")
@@ -410,8 +534,9 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
         ticket = int(getattr(res, "order", 0))
         rec["ticket"] = ticket
         st.setdefault("pos", {})[str(ticket)] = {"entry_t": now, "exit_t": exit_t, "market": market,
-                                                  "mode": "kar" if kar else "d0", "entry": ask, "step": 0,
-                                                  "dvol": ctx["dvol"], "vix0": base["vix"]}
+                                                  "mode": "split" if split else ("kar" if kar else "d0"), "entry": ask,
+                                                  "step": 0, "dvol": ctx["dvol"], "vix0": base["vix"],
+                                                  **({"part": "A"} if split else {})}
         log.info("[CANLI] ✅ %s ticket=%s", line, ticket)
         try:                                    # kural adı + geçmiş başarı ekrana (kural_katalogu); hata emri etkilemez
             import kural_katalogu
@@ -422,4 +547,8 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
         log_trade("LIVE", f"{market}:BUY:CAPREV", sym, "BUY", ask, 0.0, sl, ["caprev"], f"ticket={ticket}")
     else:
         log.error("[CANLI] ❌ CAPREV emir reddedildi retcode=%s → %s", rec["retcode"], line)
+    if split:                                       # B yarısı A'dan bağımsız (KQ-06 E2): A dolmasa da kapanışta alınır
+        st.setdefault("pending_b", {})[f"{market}|{today}"] = {"market": market, "sym": sym, "due": exit_t, "lot": lot_b,
+                                                               "dvol": ctx["dvol"], "vix0": base["vix"]}
+        rec["pending_b_lot"] = lot_b
     _append(rec)

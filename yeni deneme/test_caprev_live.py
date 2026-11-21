@@ -121,7 +121,7 @@ class _MT5:
 
 class _Log:
     def info(self, *a): pass
-    error = info
+    error = warning = info
 
 
 def test_kar_check_holds_then_exits(tmp_path, monkeypatch):
@@ -194,3 +194,86 @@ def test_guarded_d0_deep_loss_exits(tmp_path, monkeypatch):
     m = _MT5G(98.8, due + 5, None)                                    # z = −0,6
     cl._kar_check(m, _Cfg(), _Log(), due + 5, _Pos(), meta, 0, None)
     assert len(m.sent) == 1 and "position" in m.sent[0]
+
+
+# ── KQ-06 bölünmüş giriş + yarım tutuş ──
+def test_split_decision_rules():
+    assert cl.split_decision(100.0, 100.0, 0, False) == "kar"
+    assert cl.split_decision(99.0, 100.0, 0, False) == "yarim"
+    assert cl.split_decision(99.0, 100.0, 1, True) is None
+    assert cl.split_decision(99.0, 100.0, cl.KAR_MAX_DAYS, True) == "sure"
+
+
+def test_round_volume():
+    class I: volume_step, volume_min = 0.1, 0.1
+    assert cl.round_volume(0.5, I()) == 0.5
+    assert cl.round_volume(0.25, I()) == 0.2
+    assert cl.round_volume(0.05, I()) == 0.0
+
+
+class _Info:
+    digits, volume_step, volume_min = 2, 0.01, 0.01
+
+
+class _MT5S(_MT5G):
+    ORDER_TYPE_BUY, ORDER_TIME_GTC = 0, 0
+    def symbol_info(self, s): return _Info()
+    def terminal_info(self):
+        class T: trade_allowed = True
+        return T()
+
+
+class _PosV:
+    ticket, symbol = 9, "NAS100"
+    def __init__(self, v): self.volume = v
+
+
+def test_split_enter_schedules_b_and_b_opens_at_close(tmp_path, monkeypatch):
+    monkeypatch.setattr(cl, "LOG_JSONL", tmp_path / "l.jsonl")
+    d0 = date(2026, 11, 19)
+    prof = cl.PROFILES["NDX.INDX"]
+    close = cl.session_close_utc(d0, prof)
+    m = _MT5S(100.0, close - 3600)
+    st = {"fired": {}}
+    sent = []
+    class R:
+        retcode, order = 10009, 111
+    def send(req, sym):
+        sent.append(req); return R()
+    ctx = {"dvol": 0.02}
+    base = {"vix": 25.0, "latency_s": 5.0}
+    cl._enter(m, _Cfg(LIVE_TRADING=True, CAPREV_LIVE_LOT=1.0), _Log(), "NDX.INDX", "NAS100", prof, d0, ctx, base, close - 3600,
+              st, True, send, lambda a, b: a + b, lambda: True, lambda *a: None)
+    assert sent[0]["volume"] == 0.5 and sent[0]["sl"] == 94.0
+    assert st["pos"]["111"]["mode"] == "split" and st["pos"]["111"]["part"] == "A"
+    pb = st["pending_b"]["NDX.INDX|2026-11-19"]
+    assert pb["lot"] == 0.5 and pb["due"] == close
+    m2 = _MT5S(98.0, close + 10)
+    cl._open_split_b(m2, _Cfg(), _Log(), close + 10, st)
+    assert not st["pending_b"] and m2.sent[0]["volume"] == 0.5 and m2.sent[0]["sl"] == round(98.0 * 0.94, 2)
+    b = [v for k, v in st["pos"].items() if v.get("part") == "B"][0]
+    assert b["exit_t"] == cl.session_close_utc(date(2026, 11, 20), prof) and b["step"] == 0
+
+
+def test_split_check_partial_then_profit(tmp_path, monkeypatch):
+    monkeypatch.setattr(cl, "LOG_JSONL", tmp_path / "l.jsonl")
+    prof = cl.PROFILES["NDX.INDX"]
+    due = cl.session_close_utc(date(2026, 11, 19), prof)
+    meta = {"market": "NDX.INDX", "mode": "split", "part": "A", "entry": 100.0, "step": 0, "entry_t": due - 3600, "exit_t": due}
+    m = _MT5S(99.0, due + 5)
+    cl._split_check(m, _Cfg(), _Log(), due + 5, _PosV(0.5), meta)
+    assert len(m.sent) == 1 and m.sent[0]["volume"] == 0.25 and meta["partial_done"] and meta["step"] == 1
+    m2 = _MT5S(99.5, meta["exit_t"] + 5)
+    cl._split_check(m2, _Cfg(), _Log(), meta["exit_t"] + 5, _PosV(0.25), meta)
+    assert not m2.sent and meta["step"] == 2                      # hâlâ zarar → tut, ikinci yarım kapanış YOK
+    m3 = _MT5S(100.2, meta["exit_t"] + 5)
+    cl._split_check(m3, _Cfg(), _Log(), meta["exit_t"] + 5, _PosV(0.25), meta)
+    assert len(m3.sent) == 1 and m3.sent[0]["volume"] == 0.25
+
+
+def test_split_b_late_is_skipped(tmp_path, monkeypatch):
+    monkeypatch.setattr(cl, "LOG_JSONL", tmp_path / "l.jsonl")
+    st = {"pending_b": {"k": {"market": "NDX.INDX", "sym": "NAS100", "due": 1000.0, "lot": 0.5, "dvol": 0.02}}}
+    m = _MT5S(100.0, 5000)
+    cl._open_split_b(m, _Cfg(), _Log(), 1000.0 + cl.MAX_LATE_S + 5, st)
+    assert not m.sent and not st["pending_b"]

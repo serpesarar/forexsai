@@ -1,0 +1,217 @@
+{
+ "scope": "caprev_ndx_bolunmus_giris",
+ "tarih": "2026-11-21",
+ "kural": "CAPREV NDX bacağı: tetikte yarım lot (A), D0 seans kapanışında yarım lot (B); her yarı stop kendi girişinin 3×dvol altı; ilk kontrol kapanışında (A D0, B D1) kârdaysa kapat, zarardaysa yarısını kapat; sonra kârlı ilk kapanışta ya da en geç 5 kapanış sonra kapat",
+ "on_kayit": "research/caprev_kuyruk_20261121/PROTOCOL.md KQ-06 (f7a39a31)",
+ "on_kayit_hukum": "C",
+ "on_kayit_olcut": {
+  "ndx_mt5": true,
+  "havuz_P": true,
+  "kor_2_3": false,
+  "sharpe": true,
+  "cvar5_2x": true,
+  "cvar5_kar": true,
+  "taze": true
+ },
+ "dusen": "kör MT5 US500/US30/US2000 −23,1/−18,6/−3,1 (≥2/3 artı istenmişti)",
+ "olcum": {
+  "DUKA_NDX": {
+   "n": 101,
+   "ort": 76.2,
+   "fark": 28.3,
+   "fark_kar": -29.7,
+   "isabet": [
+    0.574,
+    0.891,
+    0.733
+   ],
+   "sharpe": [
+    0.714,
+    1.341,
+    1.506
+   ],
+   "cvar5": [
+    -250.0,
+    -475.0,
+    -253.0
+   ]
+  },
+  "MT5_NAS100": {
+   "n": 101,
+   "ort": 78.7,
+   "fark": 32.4,
+   "fark_kar": -32.7,
+   "isabet": [
+    0.574,
+    0.891,
+    0.743
+   ],
+   "sharpe": [
+    0.693,
+    1.459,
+    1.599
+   ],
+   "cvar5": [
+    -284.0,
+    -461.0,
+    -247.0
+   ]
+  },
+  "EET30": {
+   "n": 93,
+   "ort": 70.0,
+   "fark": 28.2,
+   "fark_kar": -29.4,
+   "isabet": [
+    0.559,
+    0.882,
+    0.688
+   ],
+   "sharpe": [
+    0.633,
+    1.284,
+    1.475
+   ],
+   "cvar5": [
+    -303.0,
+    -514.0,
+    -261.0
+   ]
+  },
+  "NQ": {
+   "n": 59,
+   "ort": 63.2,
+   "fark": 26.7,
+   "fark_kar": -13.6,
+   "isabet": [
+    0.593,
+    0.898,
+    0.729
+   ],
+   "sharpe": [
+    0.753,
+    1.26,
+    1.484
+   ],
+   "cvar5": [
+    -225.0,
+    -578.0,
+    -256.0
+   ]
+  },
+  "MT5_US500": {
+   "n": 56,
+   "ort": 45.7,
+   "fark": -23.1,
+   "fark_kar": -45.2,
+   "isabet": [
+    0.625,
+    0.893,
+    0.732
+   ],
+   "sharpe": [
+    0.963,
+    1.155,
+    1.064
+   ],
+   "cvar5": [
+    -174.0,
+    -315.0,
+    -246.0
+   ]
+  },
+  "MT5_US30": {
+   "n": 73,
+   "ort": 39.2,
+   "fark": -18.6,
+   "fark_kar": -39.4,
+   "isabet": [
+    0.603,
+    0.849,
+    0.712
+   ],
+   "sharpe": [
+    0.882,
+    1.064,
+    0.79
+   ],
+   "cvar5": [
+    -264.0,
+    -410.0,
+    -319.0
+   ]
+  },
+  "MT5_US2000": {
+   "n": 129,
+   "ort": 24.2,
+   "fark": -3.1,
+   "fark_kar": -17.5,
+   "isabet": [
+    0.504,
+    0.814,
+    0.674
+   ],
+   "sharpe": [
+    0.513,
+    0.545,
+    0.529
+   ],
+   "cvar5": [
+    -289.0,
+    -722.0,
+    -433.0
+   ]
+  }
+ },
+ "yeni_piyasalar": {
+  "n": 294,
+  "fark": 32.6,
+  "P": 0.9983,
+  "isabet": [
+   0.422,
+   0.697
+  ],
+  "cvar5": [
+   -339.0,
+   -473.0
+  ],
+  "endeks_fark": {
+   "BVSP": 58.7,
+   "FCHI": 8.6,
+   "IBEX": 21.0,
+   "SSMI": 50.0
+  },
+  "ok": true
+ },
+ "kart": {
+  "n": 359,
+  "ort": 45.2,
+  "P_EV": 1.0,
+  "yari": [
+   44.4,
+   46.1
+  ],
+  "spread_x1_5": 44.4,
+  "icra_iyimser_fark_bp": 1.7,
+  "tek_pozisyon": {
+   "n": 124,
+   "ort": 52.8
+  },
+  "ndx_yari": [
+   76.2,
+   76.2
+  ],
+  "olcut": {
+   "1_hacim": true,
+   "2_beklenti": true,
+   "3_kararlilik": true,
+   "4_surtunme": true,
+   "5_icra": true,
+   "6_tek_pozisyon": true
+  },
+  "verdikt": "LIVE"
+ },
+ "verdikt": "LIVE",
+ "karar": "2026-11-21 kullanıcı onayıyla CANLI (C hükmüne rağmen); DAX canlı tabanda",
+ "izleme": "30 NDX işleminde ort > +48 bp ve CVaR5 ≥ 2×taban; caprev_live.jsonl entry_b / split_check kayıtları"
+}
