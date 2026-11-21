@@ -118,3 +118,18 @@ Seçilen c0 3 / c1 3 / tutma şartı yok / VIX +%10 / h 0,5 ve aynısı c1 2: ND
 Sharpe 1,12, CVaR5 −394), dokunulmamış havuz +3,3 / +3,6 bp (P 0,71 / 0,73) → düştü. Betimleyici (seçilmedi, KEŞİF CVaR5 −705 uygunluk dışı):
 korumasız h 0,5 → Duka NDX +79,5 / −405, EET30 +28,5 / −437, NQ +20,6 / −417, dokunulmamış havuz +8,7 (P 0,909) / CVaR5 −471 (sınır −454).
 **Araştırma burada kapanır:** dokunulmamış endeksler üç turda kullanıldı; yeni tur seçim gürültüsüne dönüşür. Temiz kalan tek kanıt ileri canlı veri.
+
+## KQ-06 — farklı giriş yeri + büyük çöküşe karşı tutuş şartı, korumasız kâr çıkışı (kullanıcı isteği; KQ-05'ten SONRA, KQ-06 sonuçlarından ÖNCE)
+Kullanıcı: "korumasızı daha fazla araştır, farklı bir işleme giriş yeri ya da en kötü/büyük ölçekli düşüşlerden koruyacak bir strateji ara."
+- **Çıkış sabit:** kâr kuralı (ilk kârlı seans kapanışı, ilk kontrol kapanışından itibaren en çok 5 kontrol), felaket stopu ortalama giriş × (1 − 3·dvol), VIX koruması YOK.
+- **Giriş (E):** E0 canlı tetik (günlük vekilde min(açılış, önceki dip)); E1 D0 seans kapanışında al; E2 bölünmüş (yarısı E0, yarısı D0 kapanışı, iki ayrı yarım pozisyon);
+  E3a / E3b E0'ın 0,5 / 1,0 × dvol altına D0 boyunca limit (dolmazsa işlem yok = 0); E4 D1 açılışında al.
+- **Tutuş şartı (U, girişte bilinen; tutmazsa canlı taban işlemi: 1×dvol stop, D0 çıkışı):** U0 hepsi; U1 kapanış > SMA200 (dün); U2 dünkü VIX < 30;
+  U3 252 gün zirvesinden düşüş > −%15.
+- **Tutuş payı:** h ∈ {0,5; 1,0} (ilk kontrol kapanışı zarardaysa 1 − h orada kapanır). → 6 × 4 × 2 = 48 hücre.
+- **Seçim:** yalnız KEŞİF ABD endeksleri 1990–2015, günlük vekil; KQ-03 kuralı (isabet ≥ taban + 10 ∧ CVaR5 ≥ 1,5 × taban; en yüksek fark), 2 hücre.
+- **Yeni dokunulmamış piyasalar (bu çalışmada indirildi, hiçbir CAPREV turunda yok):** ^FCHI ^AEX ^SSMI ^IBEX ^GSPTSE ^AXJO ^KS11 ^BVSP ^TWII ^MXX (yfinance
+  günlük, açılışı olmayan yıllar atılır), 2000–2026; KQ-04 kapsam kuralı (kendi 1990–2015 toparlanması ≥ 0,65; veri yoksa 2000–2009) uygulanır.
+- **B:** (a) NDX: Duka NDX ve MT5 NAS100 fark > 0 ∧ isabet > taban; havuz (Duka NDX + günlük 2016–26 ABD 4) P ≥ 0,975; Duka NDX Sharpe > taban; Duka NDX ve MT5
+  CVaR5 ≥ 2 × taban; EET30 ve NQ fark > 0 ∧ CVaR5 ≥ 2 × taban (E4 seçilirse 1m beslemelerde D1 açılış = D1 09:30 ilk bar); (b) yeni piyasalar kapsam içi havuzunda
+  fark > 0 ∧ P ≥ 0,90 ∧ CVaR5 ≥ 2 × taban; (c) kart 6/6. C: (a)'nın ilk şartı geçer, biri düşer. X: Duka NDX fark ≤ 0.
