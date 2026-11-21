@@ -77,3 +77,19 @@ Kuyruk bu kenarın yapısal bedeli. Kuyruğu filtreyle kesmek kenarı da kesiyor
 - korumasız tam lot: kenar genelleşiyor, kuyruk ~2–2,6 × taban (ön kayıt kuyruk ölçütünü geçmiyor);
 - korumasız düşük lot: kuyruğu tabana eşitleyen lot NDX'te ≈ 0,5 (−250/−475); o lotta beklenti ≈ +56 bp-lot (taban +48). Bu oran TEST'ten okunuyor,
   ön kayıtlı değil; KEŞİF oranıyla (≈ 0,38) NDX'te +40 < +48.
+
+## KQ-05 — kısmi tutuş (D0 zararda yarısını kapat): **C**
+| | Duka NDX (ort / isabet / CVaR5) | Dokunulmamış 4 endeks (fark / P / CVaR5; sınır −454) |
+|---|---|---|
+| Taban | +48 / %57 / −250 | — / — / −227 |
+| Korumalı (KQ-03, canlıda) | +64 / %70 / −426 | +0,6 / 0,54 / −430 |
+| Korumasız tam tutuş | +106 / %89 / −475 | +22,2 / 0,98 / −596 |
+| KQ-05 seçimi (VIX korumalı, yarım tutuş) | +78 / %78 / −394 | +3,3 / 0,71 / −469 |
+| Korumasız yarım tutuş (betimleyici, seçilmedi) | +80 / %79 / −405 | +8,7 / 0,91 / −471 |
+
+## Kapanış
+Beş ön kayıtlı tur. Kalıcı bulgular:
+1. Çöküş girişte tanınmıyor; D0 kapanışında tanınıyor (AUC 0,70) ama tanınanları kesmek dönüşleri de kesiyor.
+2. "Kâra kadar tut" kenarı genelleşiyor (dokunulmamış piyasalar +22 bp, P 0,98); kuyruk onun yapısal bedeli (taban × 2–2,6).
+3. VIX tırmanışı çıkışı ABD dışında bir gün gecikmeli çalışır ve kenarı yer.
+4. NDX'te her yapı B geçiyor; NDX + dokunulmamış piyasa birlikte, kuyruk sınırıyla, hiçbir yapı geçmiyor. Kuyruk ile kenar arasındaki seçim bir lot/risk kararıdır.

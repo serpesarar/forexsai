@@ -112,3 +112,9 @@ Dört dokunulmamış endeksin dördü de kapsam içi (toparlanma 0,66–0,74). K
   İsabet: işlem net > 0 (iki parçanın toplamı).
 - **B:** KQ-03'ün (i)–(vii) NDX ölçütleri **ve** KQ-04 dokunulmamış havuzunda (FTSE/Stoxx/Nikkei/HSI 2016–26) fark > 0 ∧ P ≥ 0,90 ∧ CVaR5 ≥ 2 × taban
   **ve** canlıya alma kartı 6/6 (ABD aile havuzu). C: NDX (i) geçer, biri düşer. X: Duka NDX fark ≤ 0.
+
+## KQ-05 sonucu (değiştirilmez): **C**
+Seçilen c0 3 / c1 3 / tutma şartı yok / VIX +%10 / h 0,5 ve aynısı c1 2: NDX ölçütleri (i)–(vii) ve kart 6/6 geçti (Duka NDX +78,1 bp, isabet %78,
+Sharpe 1,12, CVaR5 −394), dokunulmamış havuz +3,3 / +3,6 bp (P 0,71 / 0,73) → düştü. Betimleyici (seçilmedi, KEŞİF CVaR5 −705 uygunluk dışı):
+korumasız h 0,5 → Duka NDX +79,5 / −405, EET30 +28,5 / −437, NQ +20,6 / −417, dokunulmamış havuz +8,7 (P 0,909) / CVaR5 −471 (sınır −454).
+**Araştırma burada kapanır:** dokunulmamış endeksler üç turda kullanıldı; yeni tur seçim gürültüsüne dönüşür. Temiz kalan tek kanıt ileri canlı veri.
