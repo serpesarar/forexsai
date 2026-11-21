@@ -103,3 +103,12 @@ Kalan şüphe: NDX kapsamı DAX sonucu görüldükten sonra seçildi.
 Dört dokunulmamış endeksin dördü de kapsam içi (toparlanma 0,66–0,74). Kapsam içi havuz 2016–26 (298 işlem): korumalı fark +0,6 bp, P 0,54 → (i) düştü;
 (ii) 3/4 artı, (iii) CVaR5 −430 vs taban −227 (1,9×) geçti, (iv) kapsam dışı yok. Korumasız kâr çıkışı aynı havuzda +22,2 bp, P 0,983, CVaR5 −596 (2,6×);
 1990–2015'te dört endeksin dördünde artı (+25…+32). Okuma: "kâra kadar tut" kenarı genelleşiyor, KQ-03 koruması genelleşmiyor; kuyruk kâr çıkışının yapısal bedeli.
+
+## KQ-05 — kısmi tutuş (KQ-04 sonuçlarından SONRA, KQ-05 sonuçlarından ÖNCE)
+⚠️ Fikir KQ-04'te korumasız kâr çıkışının kenarı genelleştirip kuyruk ölçütünü (2×) ~1,3 katla kaçırdığı görüldükten sonra kuruldu.
+- Yapı: D0 kapanışında pozisyon zarardaysa ve stop olmadıysa payın (1 − h)'si D0 kapanışında kapanır, h'si hücre kuralıyla tutulur.
+  h ∈ {0,5; 1,0} × KQ-02'nin 216 hücresi + korumasız X_5_3.0_kar → 434 hücre (h = 1 KQ-03 ile aynı).
+- Seçim: yalnız KEŞİF ABD endeksleri 1990–2015, KQ-03 kuralıyla (isabet ≥ taban + 10 ∧ CVaR5 ≥ 1,5 × taban; en yüksek fark), 2 hücre.
+  İsabet: işlem net > 0 (iki parçanın toplamı).
+- **B:** KQ-03'ün (i)–(vii) NDX ölçütleri **ve** KQ-04 dokunulmamış havuzunda (FTSE/Stoxx/Nikkei/HSI 2016–26) fark > 0 ∧ P ≥ 0,90 ∧ CVaR5 ≥ 2 × taban
+  **ve** canlıya alma kartı 6/6 (ABD aile havuzu). C: NDX (i) geçer, biri düşer. X: Duka NDX fark ≤ 0.
