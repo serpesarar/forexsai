@@ -61,6 +61,10 @@ try:                                    # FX fiks akışı dönüşü GÖLGE (FX
     import fx_fiks_shadow
 except Exception:                       # pragma: no cover
     fx_fiks_shadow = None
+try:                                    # COT-G2 kesitsel kalabalık dönüşü GÖLGE (FX-YI EK-23, sınıf C, 2026-11-21) — emir göndermez
+    import cot_g2_shadow
+except Exception:                       # pragma: no cover
+    cot_g2_shadow = None
 try:                                    # aileler arası yığılma Y2 GÖLGE etiketi (IO-29, 2026-11-12) — emir göndermez, giriş engellemez
     import yigilma_shadow
 except Exception:                       # pragma: no cover
@@ -2790,6 +2794,15 @@ def main():
                     fx_fiks_shadow.poll(mt5, log, _daycombo_offset, cfg=config, get_vix=get_vix)
                 except Exception as e:
                     log.warning("fx fiks gölge hatası: %s", e)
+
+            # ── COT-G2 kesitsel kalabalık dönüşü GÖLGE (FX-YI EK-23; 2010–26 %83–86 ama 2007–10 −40 bp → sınıf C, canlıya uygun
+            #    DEĞİL; yalnız ileri kanıt). Cuma CFTC yayınından sonra sanal giriş, D1 TP 0,5 / SL 3 ATR, 10 bar — EMİR YOK.
+            #    Kapatma: config.COT_G2_SHADOW_ENABLED = False.
+            if cot_g2_shadow is not None and getattr(config, "COT_G2_SHADOW_ENABLED", True):
+                try:
+                    cot_g2_shadow.poll(mt5, log, cfg=config)
+                except Exception as e:
+                    log.warning("cot-g2 gölge hatası: %s", e)
 
             # ── Aileler arası yığılma GÖLGE etiketi (IO-29 Y2, sınıf C) — EMİR YOK, giriş engellemez. Tüm hesabın
             #    deal geçmişini okur (decider dahil). Fren 'continue'undan ÖNCE. Kapatma: config.YIGILMA_SHADOW_ENABLED = False.

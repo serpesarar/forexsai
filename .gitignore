@@ -128,3 +128,5 @@ research/**/*.npy
 research/**/*.zip
 research/**/*.tar.gz
 research/**/*.csv.gz
+yeni deneme/cot_g2_state.json
+yeni deneme/cot_cache/
