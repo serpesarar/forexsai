@@ -125,11 +125,48 @@ def _iso_age_s(ts: str | None) -> float | None:
     return (datetime.now(timezone.utc) - dt).total_seconds() if dt else None
 
 
+#: Durum dosyasını yazan/okuyan iş parçacıkları (ana döngü, komut işleme, borç) sırayla erişir.
+STATE_LOCK = threading.RLock()
+STATE_READ_RETRIES = 5
+STATE_READ_RETRY_S = 0.2
+
+
+def _read_state_file() -> dict | None:
+    """Diskteki durum. Dosya yoksa {}; okunamıyor/bozuksa (yeniden denemelerden sonra) None.
+
+    2026-11-22 bulgusu: write_text atomik değildi; dosya yarım yazılmışken yapılan okuma JSON hatası
+    veriyor, save_state bunu "diskte borç yok" sayıp `pending_restarts`'ı siliyordu → 11-21 20:06'da
+    yazılan bot restart borcu ödenmeden kayboldu, bot eski kodla kaldı (10-20 vakasının ikinci yolu)."""
+    for i in range(STATE_READ_RETRIES):
+        try:
+            return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return {}
+        except Exception:
+            time.sleep(STATE_READ_RETRY_S * (i + 1))
+    return None
+
+
+def _write_state_file(out: dict) -> None:
+    """Atomik yazım: geçici dosya + os.replace (okuyan hiçbir zaman yarım dosya görmez)."""
+    tmp = STATE_FILE.with_name(STATE_FILE.name + ".tmp")
+    tmp.write_text(json.dumps(out, indent=2), encoding="utf-8")
+    for i in range(STATE_READ_RETRIES):
+        try:
+            os.replace(tmp, STATE_FILE)
+            return
+        except PermissionError:          # Windows: başka süreç dosyayı açık tutuyor olabilir
+            time.sleep(STATE_READ_RETRY_S * (i + 1))
+    os.replace(tmp, STATE_FILE)
+
+
 def load_state() -> dict:
-    try:
-        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    except Exception:
+    with STATE_LOCK:
+        d = _read_state_file()
+    if d is None:
+        log.error("agent_state.json okunamadı (bozuk?) — boş durumla devam")
         return {}
+    return d
 
 
 def save_state(state: dict, own_pending: bool = False) -> None:
@@ -140,17 +177,19 @@ def save_state(state: dict, own_pending: bool = False) -> None:
     siliyordu → ertelenen restart'lar hiç ödenmedi (bot 10-15'ten beri eski kodla). Artık
     own_pending=False iken borç anahtarı diskteki hâliyle korunur (bellekteki değer yok sayılır).
     """
-    out = dict(state)
-    if not own_pending:
-        try:
-            disk = json.loads(STATE_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            disk = {}
-        if PENDING_RESTART_KEY in disk:
-            out[PENDING_RESTART_KEY] = disk[PENDING_RESTART_KEY]
-        else:
-            out.pop(PENDING_RESTART_KEY, None)
-    STATE_FILE.write_text(json.dumps(out, indent=2), encoding="utf-8")
+    with STATE_LOCK:
+        out = dict(state)
+        if not own_pending:
+            disk = _read_state_file()
+            if disk is None:
+                # Disk okunamadı: borcun durumu bilinmiyor → bu turda YAZMA (borcu silmektense bir tur kaybet).
+                log.error("agent_state.json okunamadı — borç korunsun diye bu tur yazılmadı")
+                return
+            if PENDING_RESTART_KEY in disk:
+                out[PENDING_RESTART_KEY] = disk[PENDING_RESTART_KEY]
+            else:
+                out.pop(PENDING_RESTART_KEY, None)
+        _write_state_file(out)
 
 
 def supa():
@@ -576,7 +615,7 @@ def push_heartbeat(client, extra: dict | None = None) -> None:
         # bile True yazıyordu. Artık gerçek bağlantı; ölçüm yoksa None.
         "mt5": HEALTH.get("mt5_connected"),
         "open_positions": open_position_count(),
-        "agent_version": "1.5",
+        "agent_version": "1.6",
         # Panel "ajan çevrimiçi ama işlem verisi bayat" durumunun SEBEBİNİ
         # görebilsin diye trade senkron sağlığı da taşınır.
         "trade_sync_ok": TRADE_SYNC["ok"],
@@ -977,8 +1016,11 @@ def handle_restart_process(client, cmd: dict) -> tuple[str, int]:
     target = str(p.get("target", ""))
     out, rc = restart_target(target, force=bool(p.get("force")))
     if rc == 3:
-        _queue_pending_restart(target, "elle istendi")
-        out += " → BORÇ yazıldı (pozisyon kapanınca ödenecek, 72s sonra zorla)"
+        if _queue_pending_restart(target, "elle istendi"):
+            out += " → BORÇ yazıldı (pozisyon kapanınca ödenecek, 72s sonra zorla)"
+        else:
+            out += " → BORÇ YAZILAMADI (agent_state.json okunamıyor) — tekrar dene"
+            rc = 5
     return out, rc
 
 
@@ -992,20 +1034,46 @@ PENDING_RESTART_KEY = "pending_restarts"
 PENDING_RESTART_MAX_AGE_H = 72
 
 
-def _queue_pending_restart(target: str, behind: str = "") -> None:
-    st = load_state()
-    pend = st.get(PENDING_RESTART_KEY) or {}
-    if target not in pend:
-        pend[target] = {"since": now_iso(), "commits": behind}
-        st[PENDING_RESTART_KEY] = pend
-        save_state(st, own_pending=True)
-        log.warning("[oto] %s restart'ı ERTELENDİ → borç yazıldı, "
-                    "pozisyon kapanınca uygulanacak", target)
+def _queue_pending_restart(target: str, behind: str = "") -> bool:
+    """Borcu yaz. Disk okunamazsa YAZMAZ (diğer anahtarları silmemek için) ve False döner."""
+    with STATE_LOCK:
+        st = _read_state_file()
+        if st is None:
+            log.error("[oto] %s borcu YAZILAMADI — agent_state.json okunamıyor", target)
+            return False
+        pend = st.get(PENDING_RESTART_KEY) or {}
+        if target not in pend:
+            pend[target] = {"since": now_iso(), "commits": behind}
+            st[PENDING_RESTART_KEY] = pend
+            save_state(st, own_pending=True)
+            log.warning("[oto] %s restart'ı ERTELENDİ → borç yazıldı, "
+                        "pozisyon kapanınca uygulanacak", target)
+        return True
+
+
+def _drop_paid(targets: list[str]) -> None:
+    """Ödenen/kapanan borçları diskteki GÜNCEL borç listesinden çıkar (arada yazılmış yeni borç korunur)."""
+    if not targets:
+        return
+    with STATE_LOCK:
+        disk = _read_state_file()
+        if disk is None:
+            log.error("[oto] ödenen borç silinemedi — agent_state.json okunamıyor (bir sonraki turda tekrar)")
+            return
+        pend = disk.get(PENDING_RESTART_KEY) or {}
+        for t in targets:
+            pend.pop(t, None)
+        disk[PENDING_RESTART_KEY] = pend
+        save_state(disk, own_pending=True)
 
 
 def flush_pending_restarts(client) -> None:
     """Bekleyen restart borçlarını uygun anda öde (her ana döngü turunda)."""
-    st = load_state()
+    with STATE_LOCK:
+        st = _read_state_file()
+    if st is None:
+        log.error("[oto] borç kontrolü atlandı — agent_state.json okunamıyor")
+        return
     pend = st.get(PENDING_RESTART_KEY) or {}
     if not pend:
         return
@@ -1013,26 +1081,28 @@ def flush_pending_restarts(client) -> None:
     # kaldırdı) yeni kodla çalışıyordur → borç ödenmiş sayılır; sağlıklı süreç bir
     # daha öldürülmez.
     restarts = _load_wd().get("restarts") or {}
+    closed: list[str] = []
     for target, info in list(pend.items()):
         borc_at = _iso_dt(info.get("since"))
         restart_at = _iso_dt((restarts.get(target) or {}).get("at"))
         if borc_at and restart_at and restart_at > borc_at:
             pend.pop(target)
+            closed.append(target)
             log.info("[oto] %s borcu kapandı — süreç borçtan sonra zaten yeniden başlamış", target)
     if not pend:
-        st[PENDING_RESTART_KEY] = pend
-        save_state(st, own_pending=True)
+        _drop_paid(closed)
         return
-    if open_position_count() > 0:
-        return                                  # hâlâ uygun değil
     done = []
-    for target, info in list(pend.items()):
-        out, rc = restart_target(target)
-        log.info("[oto] ertelenmiş restart ödendi: %s → rc=%s", target, rc)
-        if rc == 0:
-            done.append((target, info, out))
-    for target, _info, _out in done:
-        pend.pop(target, None)
+    # 2026-11-22: önceden açık pozisyon varken burada dönülüyordu → aşağıdaki 72 saat zorlaması pozisyon
+    # açıkken HİÇ çalışmıyordu (haftalarca açık kalan VIXREG-FX pozisyonlarıyla bot asla güncellenmezdi).
+    if open_position_count() == 0:
+        for target, info in list(pend.items()):
+            out, rc = restart_target(target)
+            log.info("[oto] ertelenmiş restart ödendi: %s → rc=%s", target, rc)
+            if rc == 0:
+                done.append((target, info, out))
+        for target, _info, _out in done:
+            pend.pop(target, None)
     # 72 saati aşan borçlar: zorla uygula (pozisyon hiç kapanmıyorsa bile
     # eski kodla çalışmak daha riskli — bu bulgu 3 günlük sessiz sapmadan geldi)
     for target, info in list(pend.items()):
@@ -1048,8 +1118,7 @@ def flush_pending_restarts(client) -> None:
             if rc == 0:
                 done.append((target, info, out))
                 pend.pop(target, None)
-    st[PENDING_RESTART_KEY] = pend
-    save_state(st, own_pending=True)
+    _drop_paid(closed + [d[0] for d in done])
     if done and client is not None:
         try:
             client.table("evolution_commands").insert({

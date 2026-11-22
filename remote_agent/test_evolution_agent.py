@@ -511,7 +511,7 @@ def test_healthy_bot_not_touched_and_heartbeat_reports_alive(agent, box):
     meta = client.upserted[0]["meta"]
     assert meta["bot_alive"] is True
     assert meta["bot_log_age_s"] is not None and meta["bot_log_age_s"] < 120
-    assert "bot_last_restart" in meta and meta["agent_version"] == "1.5"
+    assert "bot_last_restart" in meta and meta["agent_version"] == "1.6"
 
 
 def test_dead_bot_restarted_without_deferral_even_with_open_positions(agent, box):
@@ -927,3 +927,64 @@ def test_klon_coklu_net_reads_summary_and_survives_missing_file(agent, tmp_path,
     assert agent._klon_coklu_net() is None
     (tmp_path / "ozet.json").write_text(json.dumps({"semboller": {"NAS100": {"A": {"net": 12.5}, "B": {"net": -3.0}}}}), encoding="utf-8")
     assert agent._klon_coklu_net() == {"NAS100": {"A": 12.5, "B": -3.0}}
+
+
+# ── 2026-11-22: yarım yazılmış / okunamayan durum dosyası borcu silmemeli; 72s zorlaması pozisyon açıkken de ──
+def test_save_state_skips_write_when_disk_unreadable(agent, tmp_path, monkeypatch):
+    f = tmp_path / "agent_state.json"
+    monkeypatch.setattr(agent, "STATE_FILE", f)
+    monkeypatch.setattr(agent, "STATE_READ_RETRY_S", 0.0)
+    agent._queue_pending_restart("bot", "test")
+    good = f.read_text()
+    f.write_text('{"pending_restarts": {"bot": ')        # yarım dosya (eski atomik olmayan yazım)
+    agent.save_state({"last_deal_ts": 5})                # ana döngü turu
+    assert f.read_text() == '{"pending_restarts": {"bot": '   # YAZILMADI → borç silinmedi
+    f.write_text(good)
+    agent.save_state({"last_deal_ts": 6})
+    disk = json.loads(f.read_text())
+    assert disk["last_deal_ts"] == 6 and "bot" in disk[agent.PENDING_RESTART_KEY]
+
+
+def test_queue_refuses_on_unreadable_state(agent, tmp_path, monkeypatch):
+    f = tmp_path / "agent_state.json"
+    monkeypatch.setattr(agent, "STATE_FILE", f)
+    monkeypatch.setattr(agent, "STATE_READ_RETRY_S", 0.0)
+    f.write_text('{"journal_offset": 9, "x"')
+    assert agent._queue_pending_restart("bot", "t") is False
+    assert f.read_text() == '{"journal_offset": 9, "x"'      # diğer anahtarlar silinmedi
+
+
+def test_state_write_is_atomic(agent, tmp_path, monkeypatch):
+    f = tmp_path / "agent_state.json"
+    monkeypatch.setattr(agent, "STATE_FILE", f)
+    agent.save_state({"a": 1})
+    assert json.loads(f.read_text()) == {"a": 1}
+    assert not (tmp_path / "agent_state.json.tmp").exists()
+
+
+def test_forced_restart_runs_with_open_positions(agent, tmp_path, monkeypatch):
+    f = tmp_path / "agent_state.json"
+    monkeypatch.setattr(agent, "STATE_FILE", f)
+    monkeypatch.setattr(agent, "WATCHDOG_STATE_FILE", tmp_path / "wd.json")
+    old = "2026-11-01T00:00:00+00:00"
+    f.write_text(json.dumps({"journal_offset": 3, agent.PENDING_RESTART_KEY: {"bot": {"since": old, "commits": "x"}}}))
+    monkeypatch.setattr(agent, "open_position_count", lambda: 17)
+    calls = []
+    monkeypatch.setattr(agent, "restart_target", lambda t, force=False, why="": (calls.append((t, force)) or ("ok", 0)))
+    agent.flush_pending_restarts(None)
+    assert calls == [("bot", True)]
+    disk = json.loads(f.read_text())
+    assert disk[agent.PENDING_RESTART_KEY] == {} and disk["journal_offset"] == 3
+
+
+def test_fresh_debt_waits_while_positions_open(agent, tmp_path, monkeypatch):
+    f = tmp_path / "agent_state.json"
+    monkeypatch.setattr(agent, "STATE_FILE", f)
+    monkeypatch.setattr(agent, "WATCHDOG_STATE_FILE", tmp_path / "wd.json")
+    agent._queue_pending_restart("bot", "t")
+    monkeypatch.setattr(agent, "open_position_count", lambda: 2)
+    calls = []
+    monkeypatch.setattr(agent, "restart_target", lambda t, force=False, why="": (calls.append((t, force)) or ("ok", 0)))
+    agent.flush_pending_restarts(None)
+    assert calls == []
+    assert "bot" in json.loads(f.read_text())[agent.PENDING_RESTART_KEY]
