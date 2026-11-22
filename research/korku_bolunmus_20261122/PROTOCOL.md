@@ -50,3 +50,14 @@ genişlik şartı {var; yok} → 24 hücre. Sonuç işlem başına (ana + ek) ne
 - Seçim (KEŞİF): Sharpe > taban ∧ CVaR5 ≥ 1,5 × taban arasında taban üstü fark en yüksek 1 hücre.
 - B: TEST (i) Duka NDX ve MT5 NAS100 fark > 0; (ii) havuz P ≥ 0,95; (iii) kör ≥ 2/3; (iv) Duka NDX Sharpe > taban; (v) Duka NDX ve MT5 CVaR5 ≥ 1,5 × taban;
   (vi) eklenen birimlerin kendi ortalaması iki dönemde de > 0.
+
+## TUR 3 sonucu (değiştirilmez): **B**
+Seçilen A50_u1,0 (D1 16:00 zararı ≤ −50 bp → 1 birim ek, ana XP'de birlikte çık; VIX/genişlik şartı yok). TEST: Duka +22,1, MT5 NAS100 +20,7, kör +21,2/+16,5/+6,7,
+P 1,00, Duka Sharpe 1,97 → 2,10, CVaR5 −513 → −666 (sınır −770), ek birim KEŞİF +74,6 (136) / TEST +67,7 (217). Bedel: maks. düşüş Duka −1.226 → −1.966, US2000 −1.512 → −2.508.
+
+## TUR 4 — KR-04: dokunulmamış beslemeler + kart ölçütleri (TUR 3'ten SONRA, TUR 4 sonuçlarından ÖNCE)
+Donmuş A50_u1,0, hiçbir parametre değişmez.
+- Dokunulmamış beslemeler: **EET30 ve NQ** (KORKU KC-01'de yalnız XP için kullanıldı; bu ekleme kuralı orada hiç ölçülmedi), tüm dönem.
+- Kart ölçütleri (Duka NDX tüm dönem, mutlak net bp, işlem = ana + ek): (1) ≥ 150; (2) ort > 0 ∧ P(EV>0) ≥ %90; (3) kronolojik iki yarı ≥ 0 ve iki yarıda da fark > 0;
+  (4) spread ×1,5 stresinde fark > 0; (5) icra: ek birim D1 16:00 + 1 bar açılışından alınırsa fark > 0; (6) tek pozisyon (ana + ek bir pozisyon sayılır) ile fark > 0.
+- **B:** EET30 ve NQ'da fark > 0 ve CVaR5 ≥ 1,5 × taban, ve (1)–(6). C: biri düşer. X: EET30 ve NQ ikisinde de fark ≤ 0.

@@ -199,8 +199,51 @@ def tur2() -> dict:
     return out
 
 
+# ───────── TUR 3 ─────────
+def add_sim(ev: dict, a: float, u: float, v: float | None, use_br: bool) -> tuple[float, int, float]:
+    r, jx = M.sim(ev, "E0", "XP", 1.0)
+    if jx <= 1 or ev.get("d1") is None:
+        return r, jx, np.nan
+    f = ev["d1"]
+    if f["r1bp"] > -a or (use_br and f["br"] >= 2) or (v is not None and np.isfinite(f["vixchg"]) and f["vixchg"] >= v):
+        return r, jx, np.nan
+    ra = (ev["bid"][jx] / ev["ask"][1] - 1) * 1e4 - M.FIN * (ev["cal"][jx] - ev["cal"][1])
+    return r + u * ra, jx, ra
+
+
+def tur3() -> dict:
+    P = load()
+    for ev in P:
+        ev["d1"] = d1_feats(ev) if len(ev["bid"]) > 1 else None
+    grid = list(itertools.product((50, 100, 150), (0.5, 1.0), (0.10, None), (True, False)))
+    names = {g: f"A{g[0]}_u{g[1]}_v{g[2] if g[2] is not None else 'yok'}_br{'var' if g[3] else 'yok'}" for g in grid}
+    cells = {names[g]: (lambda ev, g=g: add_sim(ev, *g)[:2]) for g in grid}
+    T = frame(P, cells)
+    addv = {names[g]: [add_sim(ev, *g)[2] for ev in P] for g in grid}
+    for c, vals in addv.items():
+        T[c + "#ek"] = vals
+    K = T[T.donem == "KESIF"]
+    cv0, sh0 = cvar5(K.base), sharpe(K.d, K.base)
+    tab = {c: {"fark": round(float((K[c] - K.base).mean()), 2), "cvar5": round(cvar5(K[c])), "sharpe": sharpe(K.d, K[c]),
+               "ek_n": int(K[c + "#ek"].notna().sum()), "ek_ort": round(float(K[c + "#ek"].mean()), 1)} for c in cells}
+    elig = [c for c in cells if tab[c]["sharpe"] > sh0 and tab[c]["cvar5"] >= 1.5 * cv0]
+    sel = sorted(elig, key=lambda c: tab[c]["fark"], reverse=True)[:1]
+    out = {"kesif_taban": {"ort": round(float(K.base.mean()), 1), "cvar5": round(cv0), "sharpe": sh0}, "kesif_tablo": tab, "uygun": elig, "secilen": sel, "hucre": {}}
+    for c in sel:
+        j = judge(T, c)
+        X = T[T.donem == "TEST"]
+        ek = {dn: {"n": int(T[(T.donem == dn)][c + "#ek"].notna().sum()), "ort": round(float(T[T.donem == dn][c + "#ek"].mean()), 1)} for dn in ("KESIF", "TEST")}
+        j["ek_birim"] = ek
+        j["olcut"]["vi_ek"] = all(ek[dn]["ort"] > 0 for dn in ek)
+        j["hukum"] = "B" if all(j["olcut"].values()) else ("C" if j["olcut"]["i_ana"] else "X")
+        j["ek_test_besleme"] = {g: {"n": int(X[X.feed == g][c + "#ek"].notna().sum()), "ort": round(float(X[X.feed == g][c + "#ek"].mean()), 1)} for g in MAIN + BLIND}
+        out["hucre"][c] = j
+    T.to_pickle(HERE / "cache/tur3.pkl")
+    return out
+
+
 if __name__ == "__main__":
-    fn = {"tur1": tur1, "tur2": tur2}[sys.argv[1]]
+    fn = {"tur1": tur1, "tur2": tur2, "tur3": tur3}[sys.argv[1]]
     out = fn()
     json.dump(out, open(HERE / f"results/{sys.argv[1]}.json", "w"), ensure_ascii=False, indent=1, default=float)
     print(json.dumps({k: out[k] for k in out if k != "test_tum"}, ensure_ascii=False, indent=1, default=float)[:6000])
