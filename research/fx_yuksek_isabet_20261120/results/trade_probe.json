@@ -1,0 +1,688 @@
+{
+ "AUDUSD": [
+  "Markets\\Forex\\Majors\\AUDUSD",
+  4,
+  18,
+  0.17,
+  -3.2
+ ],
+ "EURUSD": [
+  "Markets\\Forex\\Majors\\EURUSD",
+  4,
+  14,
+  -7.15,
+  1.4
+ ],
+ "GBPUSD": [
+  "Markets\\Forex\\Majors\\GBPUSD",
+  4,
+  19,
+  -2.5,
+  -2.56
+ ],
+ "USDCAD": [
+  "Markets\\Forex\\Majors\\USDCAD",
+  4,
+  15,
+  3.3,
+  -9.46
+ ],
+ "USDCHF": [
+  "Markets\\Forex\\Majors\\USDCHF",
+  4,
+  16,
+  5.02,
+  -11.27
+ ],
+ "USDJPY": [
+  "Markets\\Forex\\Majors\\USDJPY",
+  4,
+  21,
+  0.0,
+  0.0
+ ],
+ "AUDNZD": [
+  "Markets\\Forex\\Minors\\AUDNZD",
+  4,
+  33,
+  4.05,
+  -10.89
+ ],
+ "NZDUSD": [
+  "Markets\\Forex\\Minors\\NZDUSD",
+  4,
+  20,
+  -3.13,
+  0.57
+ ],
+ "EURNZD": [
+  "Markets\\Forex\\Minors\\EURNZD",
+  4,
+  57,
+  -6.13,
+  -3.94
+ ],
+ "GBPNZD": [
+  "Markets\\Forex\\Minors\\GBPNZD",
+  4,
+  67,
+  2.44,
+  -13.94
+ ],
+ "NZDJPY": [
+  "Markets\\Forex\\Minors\\NZDJPY",
+  4,
+  29,
+  0.0,
+  0.0
+ ],
+ "NZDCAD": [
+  "Markets\\Forex\\Minors\\NZDCAD",
+  4,
+  26,
+  -1.34,
+  -2.83
+ ],
+ "NZDCHF": [
+  "Markets\\Forex\\Minors\\NZDCHF",
+  4,
+  22,
+  1.87,
+  -4.78
+ ],
+ "AUDCAD": [
+  "Markets\\Forex\\Crosses\\AUDCAD",
+  4,
+  18,
+  4.06,
+  -8.97
+ ],
+ "AUDCHF": [
+  "Markets\\Forex\\Crosses\\AUDCHF",
+  4,
+  18,
+  5.12,
+  -9.06
+ ],
+ "EURAUD": [
+  "Markets\\Forex\\Crosses\\EURAUD",
+  4,
+  28,
+  -14.58,
+  6.63
+ ],
+ "EURCHF": [
+  "Markets\\Forex\\Crosses\\EURCHF",
+  4,
+  15,
+  3.36,
+  -9.17
+ ],
+ "EURGBP": [
+  "Markets\\Forex\\Crosses\\EURGBP",
+  4,
+  15,
+  -5.29,
+  1.38
+ ],
+ "GBPAUD": [
+  "Markets\\Forex\\Crosses\\GBPAUD",
+  4,
+  34,
+  -9.16,
+  0.48
+ ],
+ "GBPCHF": [
+  "Markets\\Forex\\Crosses\\GBPCHF",
+  4,
+  28,
+  4.66,
+  -15.09
+ ],
+ "AUDJPY": [
+  "Markets\\Forex\\Crosses\\AUDJPY",
+  4,
+  19,
+  0.0,
+  0.0
+ ],
+ "CADCHF": [
+  "Markets\\Forex\\Crosses\\CADCHF",
+  4,
+  21,
+  1.41,
+  -5.6
+ ],
+ "CADJPY": [
+  "Markets\\Forex\\Crosses\\CADJPY",
+  4,
+  25,
+  0.0,
+  0.0
+ ],
+ "CHFJPY": [
+  "Markets\\Forex\\Crosses\\CHFJPY",
+  4,
+  32,
+  0.0,
+  0.0
+ ],
+ "EURCAD": [
+  "Markets\\Forex\\Crosses\\EURCAD",
+  4,
+  30,
+  -3.23,
+  -4.49
+ ],
+ "EURJPY": [
+  "Markets\\Forex\\Crosses\\EURJPY",
+  4,
+  20,
+  0.0,
+  0.0
+ ],
+ "GBPCAD": [
+  "Markets\\Forex\\Crosses\\GBPCAD",
+  4,
+  27,
+  3.64,
+  -12.81
+ ],
+ "GBPJPY": [
+  "Markets\\Forex\\Crosses\\GBPJPY",
+  4,
+  29,
+  0.0,
+  0.0
+ ],
+ "AUDCNH": [
+  "Markets\\Forex\\Crosses\\AUDCNH",
+  4,
+  47,
+  16.03,
+  -70.72
+ ],
+ "CNHJPY": [
+  "Markets\\Forex\\Crosses\\CNHJPY",
+  4,
+  25,
+  0.0,
+  0.0
+ ],
+ "AUDSGD": [
+  "Markets\\Forex\\Exotics\\AUDSGD",
+  4,
+  77,
+  4.78,
+  -10.62
+ ],
+ "CHFSGD": [
+  "Markets\\Forex\\Exotics\\CHFSGD",
+  4,
+  143,
+  -12.12,
+  -0.82
+ ],
+ "EURCZK": [
+  "Markets\\Forex\\Exotics\\EURCZK",
+  4,
+  1350,
+  -188.17,
+  -7.87
+ ],
+ "EURHUF": [
+  "Markets\\Forex\\Exotics\\EURHUF",
+  4,
+  624,
+  -40.63,
+  4.66
+ ],
+ "EURMXN": [
+  "Markets\\Forex\\Exotics\\EURMXN",
+  4,
+  1328,
+  -321.71,
+  42.64
+ ],
+ "EURNOK": [
+  "Markets\\Forex\\Exotics\\EURNOK",
+  4,
+  458,
+  -85.04,
+  18.03
+ ],
+ "EURPLN": [
+  "Markets\\Forex\\Exotics\\EURPLN",
+  4,
+  294,
+  -25.11,
+  -7.05
+ ],
+ "EURSEK": [
+  "Markets\\Forex\\Exotics\\EURSEK",
+  4,
+  1378,
+  -13.29,
+  -47.18
+ ],
+ "EURSGD": [
+  "Markets\\Forex\\Exotics\\EURSGD",
+  4,
+  102,
+  -1.13,
+  -8.33
+ ],
+ "EURTRY": [
+  "Markets\\Forex\\Exotics\\EURTRY",
+  4,
+  17469,
+  -6922.77,
+  3404.13
+ ],
+ "EURZAR": [
+  "Markets\\Forex\\Exotics\\EURZAR",
+  4,
+  1899,
+  -354.91,
+  49.66
+ ],
+ "GBPMXN": [
+  "Markets\\Forex\\Exotics\\GBPMXN",
+  4,
+  1741,
+  -319.14,
+  -63.87
+ ],
+ "GBPNOK": [
+  "Markets\\Forex\\Exotics\\GBPNOK",
+  4,
+  920,
+  -50.4,
+  -18.65
+ ],
+ "GBPSEK": [
+  "Markets\\Forex\\Exotics\\GBPSEK",
+  4,
+  1946,
+  25.67,
+  -109.95
+ ],
+ "GBPSGD": [
+  "Markets\\Forex\\Exotics\\GBPSGD",
+  4,
+  147,
+  5.36,
+  -16.74
+ ],
+ "GBPTRY": [
+  "Markets\\Forex\\Exotics\\GBPTRY",
+  4,
+  20009,
+  -6099.86,
+  5264.56
+ ],
+ "NOKJPY": [
+  "Markets\\Forex\\Exotics\\NOKJPY",
+  4,
+  25,
+  0.0,
+  0.0
+ ],
+ "NOKSEK": [
+  "Markets\\Forex\\Exotics\\NOKSEK",
+  4,
+  175,
+  4.04,
+  -10.01
+ ],
+ "SEKJPY": [
+  "Markets\\Forex\\Exotics\\SEKJPY",
+  4,
+  70,
+  0.0,
+  0.0
+ ],
+ "SGDJPY": [
+  "Markets\\Forex\\Exotics\\SGDJPY",
+  4,
+  111,
+  0.0,
+  0.0
+ ],
+ "USDCNH": [
+  "Markets\\Forex\\Exotics\\USDCNH",
+  4,
+  264,
+  13.88,
+  -88.8
+ ],
+ "USDCZK": [
+  "Markets\\Forex\\Exotics\\USDCZK",
+  4,
+  2280,
+  -79.58,
+  -92.78
+ ],
+ "USDHUF": [
+  "Markets\\Forex\\Exotics\\USDHUF",
+  4,
+  707,
+  -23.28,
+  -4.32
+ ],
+ "USDMXN": [
+  "Markets\\Forex\\Exotics\\USDMXN",
+  4,
+  1190,
+  -217.14,
+  39.45
+ ],
+ "USDNOK": [
+  "Markets\\Forex\\Exotics\\USDNOK",
+  4,
+  799,
+  -38.77,
+  -13.34
+ ],
+ "USDPLN": [
+  "Markets\\Forex\\Exotics\\USDPLN",
+  4,
+  475,
+  -25.84,
+  -32.14
+ ],
+ "USDSEK": [
+  "Markets\\Forex\\Exotics\\USDSEK",
+  4,
+  1614,
+  27.76,
+  -83.03
+ ],
+ "USDSGD": [
+  "Markets\\Forex\\Exotics\\USDSGD",
+  4,
+  109,
+  4.41,
+  -12.29
+ ],
+ "USDTHB": [
+  "Markets\\Forex\\Exotics\\USDTHB",
+  4,
+  7910,
+  -1114.89,
+  -752.89
+ ],
+ "USDTRY": [
+  "Markets\\Forex\\Exotics\\USDTRY",
+  4,
+  13627,
+  -6132.3,
+  2871.8
+ ],
+ "USDZAR": [
+  "Markets\\Forex\\Exotics\\USDZAR",
+  4,
+  1125,
+  -253.74,
+  40.76
+ ],
+ "ZARJPY": [
+  "Markets\\Forex\\Exotics\\ZARJPY",
+  4,
+  24,
+  0.0,
+  0.0
+ ],
+ "USDHKD": [
+  "Markets\\Forex\\Exotics\\USDHKD",
+  0,
+  353,
+  9.33,
+  -50.36
+ ],
+ "AUDDKK": [
+  "Markets\\Forex\\Exotics\\AUDDKK",
+  4,
+  271,
+  23.5,
+  -44.21
+ ],
+ "AUDHUF": [
+  "Markets\\Forex\\Exotics\\AUDHUF",
+  4,
+  410,
+  -16.46,
+  -10.39
+ ],
+ "AUDNOK": [
+  "Markets\\Forex\\Exotics\\AUDNOK",
+  4,
+  452,
+  -8.31,
+  -24.71
+ ],
+ "AUDPLN": [
+  "Markets\\Forex\\Exotics\\AUDPLN",
+  4,
+  187,
+  4.12,
+  -17.16
+ ],
+ "CADMXN": [
+  "Markets\\Forex\\Exotics\\CADMXN",
+  4,
+  1012,
+  -219.6,
+  43.99
+ ],
+ "CADSGD": [
+  "Markets\\Forex\\Exotics\\CADSGD",
+  4,
+  84,
+  -1.89,
+  -5.49
+ ],
+ "CHFDKK": [
+  "Markets\\Forex\\Exotics\\CHFDKK",
+  4,
+  601,
+  -68.95,
+  12.55
+ ],
+ "CHFHUF": [
+  "Markets\\Forex\\Exotics\\CHFHUF",
+  4,
+  778,
+  -84.6,
+  25.94
+ ],
+ "CHFNOK": [
+  "Markets\\Forex\\Exotics\\CHFNOK",
+  4,
+  825,
+  -173.55,
+  38.57
+ ],
+ "CHFPLN": [
+  "Markets\\Forex\\Exotics\\CHFPLN",
+  4,
+  512,
+  -58.42,
+  22.3
+ ],
+ "CHFSEK": [
+  "Markets\\Forex\\Exotics\\CHFSEK",
+  4,
+  1694,
+  -101.44,
+  15.06
+ ],
+ "EURCNH": [
+  "Markets\\Forex\\Exotics\\EURCNH",
+  4,
+  288,
+  10.55,
+  -41.5
+ ],
+ "EURDKK": [
+  "Markets\\Forex\\Exotics\\EURDKK",
+  4,
+  430,
+  -9.73,
+  -22.18
+ ],
+ "GBPCNH": [
+  "Markets\\Forex\\Exotics\\GBPCNH",
+  4,
+  367,
+  38.33,
+  -85.19
+ ],
+ "GBPDKK": [
+  "Markets\\Forex\\Exotics\\GBPDKK",
+  4,
+  737,
+  7.14,
+  -62.78
+ ],
+ "GBPHUF": [
+  "Markets\\Forex\\Exotics\\GBPHUF",
+  4,
+  887,
+  -44.41,
+  -0.96
+ ],
+ "MXNJPY": [
+  "Markets\\Forex\\Exotics\\MXNJPY",
+  4,
+  1110,
+  0.0,
+  0.0
+ ],
+ "NZDCNH": [
+  "Markets\\Forex\\Exotics\\NZDCNH",
+  4,
+  172,
+  -8.41,
+  -37.02
+ ],
+ "NZDHUF": [
+  "Markets\\Forex\\Exotics\\NZDHUF",
+  4,
+  355,
+  -25.99,
+  0.14
+ ],
+ "NZDSGD": [
+  "Markets\\Forex\\Exotics\\NZDSGD",
+  4,
+  72,
+  -0.43,
+  -3.8
+ ],
+ "USDDKK": [
+  "Markets\\Forex\\Exotics\\USDDKK",
+  4,
+  637,
+  5.7,
+  -47.07
+ ],
+ "EURILS": [
+  "Markets\\Forex\\Exotics\\EURILS",
+  4,
+  871,
+  35.7,
+  -83.07
+ ],
+ "USDILS": [
+  "Markets\\Forex\\Exotics\\USDILS",
+  4,
+  829,
+  39.63,
+  -89.7
+ ],
+ "USDRON": [
+  "Markets\\Forex\\Exotics\\USDRON",
+  4,
+  1655,
+  -31.77,
+  -15.1
+ ],
+ "USDAED": [
+  "Markets\\Forex\\Exotics\\USDAED",
+  0,
+  19,
+  65.62,
+  -120.38
+ ],
+ "XAGSGD": [
+  "Markets\\Commodities\\Silver\\XAGSGD",
+  4,
+  0,
+  -12.26,
+  -0.03
+ ],
+ "XAUCNH": [
+  "Markets\\Commodities\\Gold\\XAUCNH",
+  4,
+  0,
+  -1959.05,
+  -884.37
+ ],
+ "XAUSGD": [
+  "Markets\\Commodities\\Gold\\XAUSGD",
+  4,
+  0,
+  -466.04,
+  -45.74
+ ],
+ "USDBRL": [
+  "Markets\\Forex\\NDFs\\USDBRL",
+  4,
+  558,
+  -1129.76,
+  136.75
+ ],
+ "USDIDR": [
+  "Markets\\Forex\\NDFs\\USDIDR",
+  4,
+  166,
+  0.0,
+  0.0
+ ],
+ "USDINR": [
+  "Markets\\Forex\\NDFs\\USDINR",
+  4,
+  101,
+  0.0,
+  0.0
+ ],
+ "USDKRW": [
+  "Markets\\Forex\\NDFs\\USDKRW",
+  4,
+  57,
+  -7.61,
+  -156.46
+ ],
+ "USDCLP": [
+  "Markets\\Forex\\NDFs\\USDCLP",
+  4,
+  60,
+  -10.0,
+  -6.0
+ ],
+ "USDCOP": [
+  "Markets\\Forex\\NDFs\\USDCOP",
+  4,
+  1813,
+  -602.02,
+  -374.85
+ ],
+ "USDTWD": [
+  "Markets\\Forex\\NDFs\\USDTWD",
+  4,
+  39,
+  -18.05,
+  -136.06
+ ]
+}

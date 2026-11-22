@@ -1,0 +1,127 @@
+todo 4780
+15:47:33 200 / 4780
+15:48:12 400 / 4780
+15:48:53 600 / 4780
+15:49:33 800 / 4780
+15:50:12 1000 / 4780
+15:50:52 1200 / 4780
+15:51:31 1400 / 4780
+15:52:22 1600 / 4780
+15:52:59 1800 / 4780
+15:53:39 2000 / 4780
+15:54:19 2200 / 4780
+15:54:59 2400 / 4780
+15:55:39 2600 / 4780
+15:56:19 2800 / 4780
+15:56:59 3000 / 4780
+15:58:05 3200 / 4780
+15:58:29 AUDUSD engel 503 2018-03-21 BID bekle 30
+15:58:29 AUDUSD engel 503 2018-03-21 ASK bekle 30
+15:58:31 AUDUSD engel RemoteDisconnected 2018-01-05 BID bekle 30
+15:58:33 AUDUSD engel 503 2018-04-06 BID bekle 30
+15:58:33 AUDUSD engel 503 2018-04-06 ASK bekle 30
+15:58:57 AUDUSD engel RemoteDisconnected 2018-06-13 ASK bekle 30
+15:58:59 AUDUSD engel RemoteDisconnected 2018-03-21 BID bekle 60
+15:58:59 AUDUSD engel RemoteDisconnected 2018-03-21 ASK bekle 60
+15:59:02 AUDUSD engel 503 2018-07-12 ASK bekle 30
+15:59:03 AUDUSD engel RemoteDisconnected 2018-04-06 BID bekle 60
+15:59:03 AUDUSD engel RemoteDisconnected 2018-04-06 ASK bekle 60
+15:59:03 AUDUSD engel 503 2018-08-01 BID bekle 30
+15:59:05 AUDUSD engel 503 2018-08-03 BID bekle 30
+15:59:32 AUDUSD engel RemoteDisconnected 2018-07-12 ASK bekle 60
+15:59:33 AUDUSD engel RemoteDisconnected 2018-08-01 BID bekle 60
+15:59:34 AUDUSD engel 503 2018-10-11 ASK bekle 30
+15:59:34 AUDUSD engel RemoteDisconnected 2018-10-05 BID bekle 30
+15:59:34 AUDUSD engel 503 2018-11-02 BID bekle 30
+15:59:34 AUDUSD engel 503 2018-11-02 ASK bekle 30
+15:59:34 AUDUSD engel 503 2018-11-08 BID bekle 30
+15:59:35 AUDUSD engel RemoteDisconnected 2018-08-03 BID bekle 60
+15:59:36 AUDUSD engel 503 2018-11-08 ASK bekle 30
+15:59:36 AUDUSD engel RemoteDisconnected 2018-10-11 BID bekle 30
+15:59:36 AUDUSD engel RemoteDisconnected 2018-10-05 ASK bekle 30
+16:00:04 AUDUSD engel RemoteDisconnected 2018-10-11 ASK bekle 60
+16:00:04 AUDUSD engel 503 2018-03-21 BID bekle 120
+16:00:04 AUDUSD engel RemoteDisconnected 2018-11-02 BID bekle 60
+16:00:04 AUDUSD engel 503 2018-04-06 BID bekle 120
+16:00:04 AUDUSD engel RemoteDisconnected 2018-11-02 ASK bekle 60
+16:00:04 AUDUSD engel RemoteDisconnected 2018-11-08 BID bekle 60
+16:00:06 AUDUSD engel RemoteDisconnected 2018-11-08 ASK bekle 60
+16:00:06 AUDUSD engel 503 2018-10-05 ASK bekle 60
+16:00:08 AUDUSD engel RemoteDisconnected 2018-11-14 BID bekle 30
+16:00:19 AUDUSD engel 503 2018-11-14 ASK bekle 30
+16:00:19 AUDUSD engel 503 2018-12-07 BID bekle 30
+16:00:42 AUDUSD engel 503 2018-07-12 ASK bekle 120
+16:00:42 AUDUSD engel 503 2018-11-14 BID bekle 60
+16:00:47 AUDUSD engel 503 2018-12-12 BID bekle 30
+16:00:49 AUDUSD engel RemoteDisconnected 2018-11-14 ASK bekle 60
+16:00:49 AUDUSD engel RemoteDisconnected 2018-12-07 BID bekle 60
+16:01:06 AUDUSD engel 503 2018-10-11 ASK bekle 120
+16:01:06 AUDUSD engel 503 2018-11-08 BID bekle 120
+16:01:06 AUDUSD engel 503 2018-11-02 BID bekle 120
+16:01:06 AUDUSD engel RemoteDisconnected 2018-10-05 ASK bekle 120
+16:01:07 AUDUSD engel 503 2018-12-12 ASK bekle 30
+16:01:07 AUDUSD engel 503 2018-11-08 ASK bekle 120
+16:01:07 AUDUSD engel 503 2018-12-19 BID bekle 30
+16:01:07 AUDUSD engel 503 2018-11-02 ASK bekle 120
+16:01:11 AUDUSD engel 504 2018-03-21 ASK bekle 120
+16:01:17 AUDUSD engel RemoteDisconnected 2018-12-12 BID bekle 60
+16:01:37 AUDUSD engel RemoteDisconnected 2018-12-12 ASK bekle 60
+16:01:37 AUDUSD engel RemoteDisconnected 2018-12-19 BID bekle 60
+16:01:42 AUDUSD engel RemoteDisconnected 2018-11-14 BID bekle 120
+16:02:01 AUDUSD engel 503 2018-12-07 BID bekle 120
+16:02:01 AUDUSD engel 503 2018-11-14 ASK bekle 120
+16:02:04 AUDUSD engel RemoteDisconnected 2018-04-06 BID bekle 120
+16:02:04 AUDUSD engel RemoteDisconnected 2018-03-21 BID bekle 120
+16:02:18 AUDUSD engel 503 2018-12-12 BID bekle 120
+16:02:42 AUDUSD engel RemoteDisconnected 2018-07-12 ASK bekle 120
+16:03:06 AUDUSD engel RemoteDisconnected 2018-10-11 ASK bekle 120
+16:03:06 AUDUSD engel RemoteDisconnected 2018-11-02 BID bekle 120
+16:03:06 AUDUSD engel RemoteDisconnected 2018-11-08 BID bekle 120
+16:03:07 AUDUSD engel RemoteDisconnected 2018-11-02 ASK bekle 120
+16:03:07 AUDUSD engel RemoteDisconnected 2018-11-08 ASK bekle 120
+16:03:11 AUDUSD engel RemoteDisconnected 2018-03-21 ASK bekle 120
+16:03:37 AUDUSD engel 503 2019-01-11 ASK bekle 30
+16:04:01 AUDUSD engel RemoteDisconnected 2018-12-07 BID bekle 120
+16:04:01 AUDUSD engel RemoteDisconnected 2018-11-14 ASK bekle 120
+ATLANDI AUDUSD 2018-03-21 BID
+ATLANDI AUDUSD 2018-04-06 BID
+16:04:07 AUDUSD engel RemoteDisconnected 2019-01-11 ASK bekle 60
+16:04:18 AUDUSD engel RemoteDisconnected 2018-12-12 BID bekle 120
+16:04:28 AUDUSD engel ConnectionResetError 2019-03-08 ASK bekle 30
+ATLANDI AUDUSD 2018-07-12 ASK
+16:04:58 AUDUSD engel TimeoutError 2018-11-14 BID bekle 120
+ATLANDI AUDUSD 2018-11-02 BID
+ATLANDI AUDUSD 2018-10-11 ASK
+ATLANDI AUDUSD 2018-11-08 BID
+ATLANDI AUDUSD 2018-11-02 ASK
+ATLANDI AUDUSD 2018-11-08 ASK
+ATLANDI AUDUSD 2018-03-21 ASK
+16:05:29 AUDUSD engel 503 2021-10-08 BID bekle 30
+16:05:59 AUDUSD engel RemoteDisconnected 2021-10-08 BID bekle 60
+ATLANDI AUDUSD 2018-12-07 BID
+ATLANDI AUDUSD 2018-11-14 ASK
+ATLANDI AUDUSD 2018-12-12 BID
+16:06:21 AUDUSD engel TimeoutError 2020-08-27 BID bekle 30
+16:06:21 AUDUSD engel TimeoutError 2020-08-27 ASK bekle 30
+16:06:22 AUDUSD engel TimeoutError 2019-01-11 ASK bekle 120
+16:06:23 AUDUSD engel TimeoutError 2020-10-02 BID bekle 30
+16:06:23 AUDUSD engel TimeoutError 2020-09-16 ASK bekle 30
+16:06:31 AUDUSD engel TimeoutError 2022-03-10 BID bekle 30
+16:06:55 AUDUSD engel TimeoutError 2023-06-14 ASK bekle 30
+16:06:55 AUDUSD engel TimeoutError 2023-07-07 BID bekle 30
+16:06:56 AUDUSD engel ConnectionResetError 2026-06-10 BID bekle 30
+ATLANDI AUDUSD 2018-11-14 BID
+16:07:05 AUDUSD engel TimeoutError 2024-06-07 BID bekle 30
+16:07:24 USDCAD engel 503 2013-01-04 ASK bekle 30
+16:07:50 AUDUSD engel TimeoutError 2020-08-27 BID bekle 60
+16:07:50 AUDUSD engel TimeoutError 2020-08-27 ASK bekle 60
+16:07:54 USDCAD engel RemoteDisconnected 2013-01-04 ASK bekle 60
+16:08:07 USDCAD engel TimeoutError 2012-06-14 ASK bekle 30
+16:08:35 3400 / 4780
+16:08:55 3600 / 4780
+16:08:55 3800 / 4780
+16:08:58 4000 / 4780
+16:08:58 4200 / 4780
+16:09:17 4400 / 4780
+16:09:57 4600 / 4780
+İNDİRME BİTTİ 4780

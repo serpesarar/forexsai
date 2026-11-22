@@ -1,0 +1,1702 @@
+{
+ "XAUUSD": [
+  "Markets\\Commodities\\Gold\\XAUUSD",
+  4,
+  26,
+  "Gold vs US Dollar",
+  0.01,
+  100.0,
+  -69.59,
+  23.0
+ ],
+ "XAGUSD": [
+  "Markets\\Commodities\\Silver\\XAGUSD",
+  4,
+  0,
+  "Silver vs US Dollar",
+  0.001,
+  5000.0,
+  -11.09,
+  2.98
+ ],
+ "XAGAUD": [
+  "Markets\\Commodities\\Silver\\XAGAUD",
+  4,
+  0,
+  "Silver vs Australian Dollar",
+  0.001,
+  5000.0,
+  -18.06,
+  4.76
+ ],
+ "XAUAUD": [
+  "Markets\\Commodities\\Gold\\XAUAUD",
+  4,
+  0,
+  "Gold vs Australian Dollar",
+  0.01,
+  100.0,
+  -117.98,
+  46.43
+ ],
+ "SpotBrent": [
+  "Markets\\Commodities\\Energies\\SpotBrent",
+  4,
+  0,
+  "Brent Crude vs US Dollar",
+  0.001,
+  100.0,
+  136.92,
+  -149.31
+ ],
+ "XPDUSD": [
+  "Markets\\Commodities\\Metals\\XPDUSD",
+  4,
+  0,
+  "Palladium vs US Dollar",
+  0.01,
+  100.0,
+  -23.33,
+  6.23
+ ],
+ "XPTUSD": [
+  "Markets\\Commodities\\Metals\\XPTUSD",
+  4,
+  0,
+  "Platinum vs US Dollar",
+  0.01,
+  100.0,
+  -22.72,
+  -2.04
+ ],
+ "NatGas": [
+  "Markets\\Commodities\\Energies\\NatGas",
+  4,
+  0,
+  "Natural Gas vs US Dollar",
+  0.001,
+  10000.0,
+  -14.07,
+  12.57
+ ],
+ "Aluminium": [
+  "Markets\\Commodities\\Metals\\Aluminium",
+  4,
+  0,
+  "Aluminium / US Dollar",
+  0.001,
+  1.0,
+  1175.45,
+  -1308.72
+ ],
+ "Nickel": [
+  "Markets\\Commodities\\Metals\\Nickel",
+  4,
+  0,
+  "Nickel / US Dollar",
+  0.001,
+  1.0,
+  -3235.95,
+  2762.37
+ ],
+ "Zinc": [
+  "Markets\\Commodities\\Metals\\Zinc",
+  4,
+  0,
+  "Zinc / US Dollar",
+  0.001,
+  1.0,
+  639.72,
+  -747.68
+ ],
+ "XAGSGD": [
+  "Markets\\Commodities\\Silver\\XAGSGD",
+  4,
+  0,
+  "Silver / Singapore dollar",
+  0.001,
+  5000.0,
+  -12.26,
+  -0.03
+ ],
+ "XAUCNH": [
+  "Markets\\Commodities\\Gold\\XAUCNH",
+  4,
+  0,
+  "Gold / Chinese Yuan",
+  0.001,
+  100.0,
+  -1959.05,
+  -884.37
+ ],
+ "XAUSGD": [
+  "Markets\\Commodities\\Gold\\XAUSGD",
+  4,
+  0,
+  "Gold / Singapore dollar",
+  0.001,
+  100.0,
+  -466.04,
+  -45.74
+ ],
+ "Lead": [
+  "Markets\\Commodities\\Metals\\Lead",
+  4,
+  0,
+  "Lead / US Dollar",
+  0.001,
+  1.0,
+  -355.14,
+  288.19
+ ],
+ "CN50": [
+  "Markets\\Indices\\Minors\\CN50",
+  4,
+  320,
+  "China 50 Index",
+  0.1,
+  1.0,
+  -6.42,
+  1.42
+ ],
+ "HK50": [
+  "Markets\\Indices\\Minors\\HK50",
+  4,
+  190,
+  "Hong Kong 50 Index",
+  0.1,
+  1.0,
+  -5.18,
+  0.18
+ ],
+ "USDX": [
+  "Markets\\Indices\\Currency\\USDX",
+  4,
+  50,
+  "US Dollar Index",
+  0.001,
+  100.0,
+  0.07,
+  -5.98
+ ],
+ "SCI25": [
+  "Markets\\Indices\\Minors\\SCI25",
+  4,
+  6,
+  "Singapore 25 Index Cash",
+  0.1,
+  1.0,
+  -4.05,
+  -0.95
+ ],
+ "CHINAH": [
+  "Markets\\Indices\\Minors\\CHINAH",
+  4,
+  1600,
+  "Hong Kong China H-shares Index",
+  0.01,
+  1.0,
+  -4.54,
+  -0.46
+ ],
+ "HSTECH": [
+  "Markets\\Indices\\Minors\\HSTECH",
+  4,
+  75,
+  "Hang Seng Tech Index",
+  0.1,
+  1.0,
+  -5.18,
+  0.18
+ ],
+ "TWN": [
+  "Markets\\Indices\\Minors\\TWN",
+  4,
+  66,
+  "FTSE Taiwan RIC Capped Index",
+  0.1,
+  1.0,
+  -4.1,
+  -0.9
+ ],
+ "ADAUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\ADAUSD",
+  4,
+  0,
+  "Cardano vs US Dollar",
+  0.0001,
+  100.0,
+  -10.5,
+  -1.5
+ ],
+ "AVAXUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\AVAXUSD",
+  4,
+  0,
+  "Avalanche vs US Dollar",
+  0.001,
+  10.0,
+  -9.0,
+  -3.0
+ ],
+ "BCHUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\BCHUSD",
+  4,
+  0,
+  "Bitcoin Cash vs US Dollar",
+  0.01,
+  1.0,
+  -6.5,
+  -5.5
+ ],
+ "BNBUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\BNBUSD",
+  4,
+  0,
+  "Binance Coin vs US Dollar",
+  0.01,
+  1.0,
+  -10.5,
+  -1.5
+ ],
+ "COMPUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\COMPUSD",
+  4,
+  0,
+  "Compound vs US Dollar",
+  0.001,
+  1.0,
+  32.5,
+  -44.5
+ ],
+ "DOGEUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\DOGEUSD",
+  4,
+  0,
+  "Dogecoin vs US Dollar",
+  1e-05,
+  1000.0,
+  -12.5,
+  0.5
+ ],
+ "DOTUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\DOTUSD",
+  4,
+  0,
+  "Polkadot vs US Dollar",
+  0.001,
+  10.0,
+  -6.5,
+  -5.5
+ ],
+ "ETCUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\ETCUSD",
+  4,
+  0,
+  "Ethereum Classic VS US Dollar",
+  0.001,
+  1.0,
+  -11.0,
+  -1.0
+ ],
+ "GLMRUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\GLMRUSD",
+  4,
+  0,
+  "Glimmer Vs US Dollar",
+  1e-05,
+  1.0,
+  -11.0,
+  -1.0
+ ],
+ "KSMUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\KSMUSD",
+  4,
+  0,
+  "Kusama Vs US Dollar",
+  0.001,
+  1.0,
+  -10.0,
+  -2.0
+ ],
+ "LINKUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\LINKUSD",
+  4,
+  0,
+  "Chainlink vs US Dollar",
+  0.001,
+  10.0,
+  -10.5,
+  -1.5
+ ],
+ "SOLUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\SOLUSD",
+  4,
+  0,
+  "Solana vs US Dollar",
+  0.01,
+  1.0,
+  -5.0,
+  -3.0
+ ],
+ "UNIUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\UNIUSD",
+  4,
+  0,
+  "Uniswap vs US Dollar",
+  0.001,
+  10.0,
+  -9.0,
+  1.0
+ ],
+ "XLMUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\XLMUSD",
+  4,
+  0,
+  "Stellar Lumens vs US Dollar",
+  0.0001,
+  100.0,
+  -8.5,
+  0.5
+ ],
+ "XRPUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\XRPUSD",
+  4,
+  0,
+  "Ripple vs US Dollar",
+  0.0001,
+  100.0,
+  -8.5,
+  0.5
+ ],
+ "BTCAUD": [
+  "Markets\\Cryptocurrencies\\Major\\BTCAUD",
+  4,
+  0,
+  "Bitcoin vs Australian Dollar",
+  0.01,
+  1.0,
+  -14.0,
+  2.0
+ ],
+ "BTCUSD": [
+  "Markets\\Cryptocurrencies\\Major\\BTCUSD",
+  4,
+  0,
+  "Bitcoin vs US Dollar",
+  0.01,
+  1.0,
+  -14.0,
+  2.0
+ ],
+ "ETHAUD": [
+  "Markets\\Cryptocurrencies\\Major\\ETHAUD",
+  4,
+  0,
+  "Ethereum Vs Australian Dollar",
+  0.01,
+  1.0,
+  -6.0,
+  0.0
+ ],
+ "ETHUSD": [
+  "Markets\\Cryptocurrencies\\Major\\ETHUSD",
+  4,
+  0,
+  "Ethereum vs US Dollar",
+  0.01,
+  1.0,
+  -9.0,
+  -1.0
+ ],
+ "LTCUSD": [
+  "Markets\\Cryptocurrencies\\Major\\LTCUSD",
+  4,
+  0,
+  "Litecoin vs US Dollar",
+  0.01,
+  1.0,
+  -11.5,
+  -0.5
+ ],
+ "XTZUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\XTZUSD",
+  4,
+  0,
+  "Tezos vs US Dollar",
+  0.0001,
+  100.0,
+  -7.0,
+  -1.0
+ ],
+ "TRUMPUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\TRUMPUSD",
+  4,
+  0,
+  "TRUMP vs US Dollar",
+  0.01,
+  1.0,
+  -8.5,
+  0.5
+ ],
+ "AAVUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\AAVUSD",
+  4,
+  0,
+  "AAVE vs US Dollar",
+  0.01,
+  10.0,
+  -11.0,
+  -1.0
+ ],
+ "ATMUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\ATMUSD",
+  4,
+  0,
+  "Cosmos vs US Dollar",
+  0.0001,
+  100.0,
+  2.5,
+  -14.5
+ ],
+ "FLOUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\FLOUSD",
+  4,
+  0,
+  "1000 Floki Inu vs US Dollar",
+  1e-05,
+  100.0,
+  -11.0,
+  -1.0
+ ],
+ "JUPUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\JUPUSD",
+  4,
+  0,
+  "Jupiter vs US Dollar",
+  0.0001,
+  100.0,
+  -11.0,
+  -1.0
+ ],
+ "NERUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\NERUSD",
+  4,
+  0,
+  "NEAR vs US Dollar",
+  0.0001,
+  100.0,
+  -11.0,
+  -1.0
+ ],
+ "ONDUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\ONDUSD",
+  4,
+  0,
+  "ONDO vs US Dollar",
+  1e-05,
+  100.0,
+  -11.0,
+  -1.0
+ ],
+ "PEPUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\PEPUSD",
+  4,
+  0,
+  "1000 PEPE vs US Dollar",
+  1e-05,
+  1000.0,
+  -10.5,
+  -1.5
+ ],
+ "SHBUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\SHBUSD",
+  4,
+  0,
+  "1000 Shiba Inu vs US Dollar",
+  1e-05,
+  1000.0,
+  -7.0,
+  -1.0
+ ],
+ "TRXUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\TRXUSD",
+  4,
+  0,
+  "TRON vs US Dollar",
+  1e-05,
+  100.0,
+  39.5,
+  -47.5
+ ],
+ "WIFUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\WIFUSD",
+  4,
+  0,
+  "dogwifhat vs US Dollar",
+  0.0001,
+  100.0,
+  -8.5,
+  0.5
+ ],
+ "ARBUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\ARBUSD",
+  4,
+  0,
+  "Arbitrum vs US Dollar",
+  0.0001,
+  100.0,
+  -11.0,
+  -1.0
+ ],
+ "BNKUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\BNKUSD",
+  4,
+  0,
+  "1000 BONK vs US Dollar",
+  1e-05,
+  1000.0,
+  -11.0,
+  -1.0
+ ],
+ "MANUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\MANUSD",
+  4,
+  0,
+  "Decentraland vs US Dollar",
+  0.0001,
+  1000.0,
+  -11.0,
+  -1.0
+ ],
+ "SANUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\SANUSD",
+  4,
+  0,
+  "The Sandbox vs US Dollar",
+  0.0001,
+  1000.0,
+  -8.0,
+  0.0
+ ],
+ "POLUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\POLUSD",
+  4,
+  0,
+  "Polygon (Ex-MATIC) vs US Dollar",
+  0.0001,
+  100.0,
+  -5.5,
+  -6.5
+ ],
+ "SONUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\SONUSD",
+  4,
+  0,
+  "Sonic vs US Dollar",
+  1e-05,
+  1000.0,
+  -11.0,
+  -1.0
+ ],
+ "HBARUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\HBARUSD",
+  4,
+  0,
+  "Hedera vs US Dollar",
+  0.0001,
+  1000.0,
+  0.37,
+  -3.23
+ ],
+ "SUIUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\SUIUSD",
+  4,
+  0,
+  "Sui vs US Dollar",
+  0.001,
+  100.0,
+  -9.0,
+  1.0
+ ],
+ "TONUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\TONUSD",
+  4,
+  0,
+  "Toncoin vs US Dollar",
+  0.001,
+  100.0,
+  -11.0,
+  -1.0
+ ],
+ "APTUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\APTUSD",
+  4,
+  0,
+  "Aptos vs US Dollar",
+  0.001,
+  100.0,
+  -18.65,
+  -10.66
+ ],
+ "HYPEUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\HYPEUSD",
+  4,
+  0,
+  "Hyperliquid vs US Dollar",
+  0.01,
+  10.0,
+  -6.14,
+  -2.54
+ ],
+ "INJUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\INJUSD",
+  4,
+  0,
+  "Injective vs US Dollar",
+  0.01,
+  100.0,
+  -20.33,
+  -11.58
+ ],
+ "RENDERUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\RENDERUSD",
+  4,
+  0,
+  "Render vs US Dollar",
+  0.001,
+  100.0,
+  -19.29,
+  -11.64
+ ],
+ "FETUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\FETUSD",
+  4,
+  0,
+  "Artificial Superintelligence Alliance vs US Dollar",
+  0.0001,
+  1000.0,
+  -20.59,
+  -4.0
+ ],
+ "XAUTUSD": [
+  "Markets\\Cryptocurrencies\\Real World Assets\\XAUTUSD",
+  4,
+  0,
+  "Tether Gold vs US Dollar",
+  0.01,
+  100.0,
+  -9.0,
+  1.0
+ ],
+ "PAXGUSD": [
+  "Markets\\Cryptocurrencies\\Real World Assets\\PAXGUSD",
+  4,
+  0,
+  "PAX Gold vs US Dollar",
+  0.01,
+  100.0,
+  -11.0,
+  -1.0
+ ],
+ "USCUSD": [
+  "Markets\\Cryptocurrencies\\Minor\\USCUSD",
+  3,
+  4,
+  "USDC vs US Dollar",
+  0.0001,
+  100000.0,
+  0.0,
+  0.0
+ ],
+ "0001.HK": [
+  "Markets\\Stocks\\Hong Kong\\0001.HK",
+  4,
+  0,
+  "CK Hutchison Holdings Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "9988.HK": [
+  "Markets\\Stocks\\Hong Kong\\9988.HK",
+  4,
+  0,
+  "Alibaba Group Holding Ltd [HKG]",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "1093.HK": [
+  "Markets\\Stocks\\Hong Kong\\1093.HK",
+  4,
+  0,
+  "CSPC Pharmaceutical Group Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "9618.HK": [
+  "Markets\\Stocks\\Hong Kong\\9618.HK",
+  4,
+  0,
+  "JD.com Inc",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0960.HK": [
+  "Markets\\Stocks\\Hong Kong\\0960.HK",
+  4,
+  0,
+  "Longfor Group Holdings Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.32
+ ],
+ "0941.HK": [
+  "Markets\\Stocks\\Hong Kong\\0941.HK",
+  3,
+  0,
+  "China Mobile Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.18
+ ],
+ "0939.HK": [
+  "Markets\\Stocks\\Hong Kong\\0939.HK",
+  4,
+  0,
+  "China Construction Bank Corp",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "1109.HK": [
+  "Markets\\Stocks\\Hong Kong\\1109.HK",
+  4,
+  0,
+  "China Resources Land Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0857.HK": [
+  "Markets\\Stocks\\Hong Kong\\0857.HK",
+  4,
+  0,
+  "PetroChina Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.82
+ ],
+ "0700.HK": [
+  "Markets\\Stocks\\Hong Kong\\0700.HK",
+  4,
+  0,
+  "Tencent Holdings Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0688.HK": [
+  "Markets\\Stocks\\Hong Kong\\0688.HK",
+  4,
+  0,
+  "China Overseas Land & Investment Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0669.HK": [
+  "Markets\\Stocks\\Hong Kong\\0669.HK",
+  4,
+  0,
+  "Techtronic Industries Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "0066.HK": [
+  "Markets\\Stocks\\Hong Kong\\0066.HK",
+  4,
+  0,
+  "MTR Corp",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0006.HK": [
+  "Markets\\Stocks\\Hong Kong\\0006.HK",
+  4,
+  0,
+  "Power Assets Holdings Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "0005.HK": [
+  "Markets\\Stocks\\Hong Kong\\0005.HK",
+  4,
+  0,
+  "HSBC Holdings Plc",
+  0.001,
+  1.0,
+  -5.18,
+  0.08
+ ],
+ "3988.HK": [
+  "Markets\\Stocks\\Hong Kong\\3988.HK",
+  4,
+  0,
+  "Bank of China Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0388.HK": [
+  "Markets\\Stocks\\Hong Kong\\0388.HK",
+  4,
+  0,
+  "Hong Kong Exchanges & Clearing Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "1113.HK": [
+  "Markets\\Stocks\\Hong Kong\\1113.HK",
+  4,
+  0,
+  "CK Asset Holdings Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0386.HK": [
+  "Markets\\Stocks\\Hong Kong\\0386.HK",
+  4,
+  0,
+  "China Petroleum & Chemical / Sinopec",
+  0.001,
+  1.0,
+  -5.18,
+  -0.82
+ ],
+ "3690.HK": [
+  "Markets\\Stocks\\Hong Kong\\3690.HK",
+  4,
+  0,
+  "Meituan Dianping - Class B",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "0003.HK": [
+  "Markets\\Stocks\\Hong Kong\\0003.HK",
+  4,
+  0,
+  "Hong Kong & China Gas Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0291.HK": [
+  "Markets\\Stocks\\Hong Kong\\0291.HK",
+  4,
+  0,
+  "China Resources Beer Holding Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "1211.HK": [
+  "Markets\\Stocks\\Hong Kong\\1211.HK",
+  4,
+  0,
+  "BYD Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0027.HK": [
+  "Markets\\Stocks\\Hong Kong\\0027.HK",
+  4,
+  0,
+  "Galaxy Entertainment Group Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "1299.HK": [
+  "Markets\\Stocks\\Hong Kong\\1299.HK",
+  4,
+  0,
+  "AIA Group Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "2688.HK": [
+  "Markets\\Stocks\\Hong Kong\\2688.HK",
+  3,
+  0,
+  "ENN Energy Holdings Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "1398.HK": [
+  "Markets\\Stocks\\Hong Kong\\1398.HK",
+  4,
+  0,
+  "Ind Comm Bank of China Ltd / ICBC",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0267.HK": [
+  "Markets\\Stocks\\Hong Kong\\0267.HK",
+  4,
+  0,
+  "CITIC Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "0016.HK": [
+  "Markets\\Stocks\\Hong Kong\\0016.HK",
+  4,
+  0,
+  "Sun Hung Kai Properties Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0175.HK": [
+  "Markets\\Stocks\\Hong Kong\\0175.HK",
+  3,
+  0,
+  "Geely Automobile Holdings Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "2628.HK": [
+  "Markets\\Stocks\\Hong Kong\\2628.HK",
+  4,
+  0,
+  "China Life Insurance Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "1810.HK": [
+  "Markets\\Stocks\\Hong Kong\\1810.HK",
+  4,
+  0,
+  "Xiaomi Corp",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "2388.HK": [
+  "Markets\\Stocks\\Hong Kong\\2388.HK",
+  4,
+  0,
+  "BOC Hong Kong Holdings Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "1997.HK": [
+  "Markets\\Stocks\\Hong Kong\\1997.HK",
+  4,
+  0,
+  "Wharf Real Estate Investment Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.12
+ ],
+ "2382.HK": [
+  "Markets\\Stocks\\Hong Kong\\2382.HK",
+  4,
+  0,
+  "Sunny Optical Technology Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0002.HK": [
+  "Markets\\Stocks\\Hong Kong\\0002.HK",
+  4,
+  0,
+  "CLP Holdings Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "2319.HK": [
+  "Markets\\Stocks\\Hong Kong\\2319.HK",
+  4,
+  0,
+  "China Mengniu Dairy Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "2020.HK": [
+  "Markets\\Stocks\\Hong Kong\\2020.HK",
+  4,
+  0,
+  "Anta Sports Products Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "2318.HK": [
+  "Markets\\Stocks\\Hong Kong\\2318.HK",
+  4,
+  0,
+  "Ping An Insurance Group Co of China Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "2269.HK": [
+  "Markets\\Stocks\\Hong Kong\\2269.HK",
+  4,
+  0,
+  "WuXi Biologics Cayman Inc",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "2313.HK": [
+  "Markets\\Stocks\\Hong Kong\\2313.HK",
+  4,
+  0,
+  "Shenzhou International Group Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0823.HK": [
+  "Markets\\Stocks\\Hong Kong\\0823.HK",
+  4,
+  0,
+  "Link Real Estate Investment Trust",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "3968.HK": [
+  "Markets\\Stocks\\Hong Kong\\3968.HK",
+  4,
+  0,
+  "China Merchants Bank Co Ltd Class H",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "9999.HK": [
+  "Markets\\Stocks\\Hong Kong\\9999.HK",
+  4,
+  0,
+  "NetEase Inc Ordinary Shares",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "BABA.US-24": [
+  "Markets\\Stocks\\USA\\24 Hour\\BABA.US-24",
+  4,
+  0,
+  "Alibaba (24 Hours)",
+  0.01,
+  1.0,
+  -6.42,
+  1.27
+ ],
+ "CNU.AU": [
+  "Markets\\Stocks\\Australia\\CNU.AU",
+  4,
+  0,
+  "Chorus Ltd",
+  0.001,
+  1.0,
+  -7.11,
+  1.61
+ ],
+ "CNA.GB": [
+  "Markets\\Stocks\\UK\\CNA.GB",
+  4,
+  0,
+  "Centrica",
+  0.0001,
+  1.0,
+  -6.48,
+  1.38
+ ],
+ "GSK.GB": [
+  "Markets\\Stocks\\UK\\GSK.GB",
+  4,
+  0,
+  "GlaxoSmithKline",
+  0.0001,
+  1.0,
+  -6.48,
+  1.38
+ ],
+ "LSEG.GB": [
+  "Markets\\Stocks\\UK\\LSEG.GB",
+  4,
+  0,
+  "London Stock Exchange",
+  0.0001,
+  1.0,
+  -6.48,
+  1.38
+ ],
+ "FCSS.GB": [
+  "Markets\\Stocks\\UK\\FCSS.GB",
+  4,
+  0,
+  "Fidelity China Special Situations PLC",
+  0.0001,
+  1.0,
+  -6.48,
+  1.48
+ ],
+ "ACN.US": [
+  "Markets\\Stocks\\USA\\ACN.US",
+  4,
+  0,
+  "Accenture PLC",
+  0.01,
+  1.0,
+  -6.42,
+  1.27
+ ],
+ "BABA.US": [
+  "Markets\\Stocks\\USA\\BABA.US",
+  4,
+  0,
+  "Alibaba",
+  0.01,
+  1.0,
+  -6.42,
+  1.27
+ ],
+ "CNC.US": [
+  "Markets\\Stocks\\USA\\CNC.US",
+  4,
+  0,
+  "Centene Corporation",
+  0.01,
+  1.0,
+  -6.42,
+  1.27
+ ],
+ "CNP.US": [
+  "Markets\\Stocks\\USA\\CNP.US",
+  4,
+  0,
+  "CenterPoint Energy Inc",
+  0.01,
+  1.0,
+  -6.42,
+  1.32
+ ],
+ "DG.US": [
+  "Markets\\Stocks\\USA\\DG.US",
+  4,
+  0,
+  "Dollar General Corporation",
+  0.01,
+  1.0,
+  -6.42,
+  1.27
+ ],
+ "DLTR.US": [
+  "Markets\\Stocks\\USA\\DLTR.US",
+  4,
+  0,
+  "Dollar Tree",
+  0.01,
+  1.0,
+  -6.42,
+  1.32
+ ],
+ "HSIC.US": [
+  "Markets\\Stocks\\USA\\HSIC.US",
+  4,
+  0,
+  "Henry Schein",
+  0.01,
+  1.0,
+  -6.42,
+  1.32
+ ],
+ "ICE.US": [
+  "Markets\\Stocks\\USA\\ICE.US",
+  4,
+  0,
+  "Intercontinental Exchange Inc",
+  0.01,
+  1.0,
+  -6.42,
+  1.32
+ ],
+ "MHK.US": [
+  "Markets\\Stocks\\USA\\MHK.US",
+  4,
+  0,
+  "Mohawk Industries",
+  0.01,
+  1.0,
+  -6.42,
+  1.32
+ ],
+ "ACN.US-24": [
+  "Markets\\Stocks\\USA\\24 Hour\\ACN.US-24",
+  4,
+  0,
+  "Accenture PLC",
+  0.01,
+  1.0,
+  -6.42,
+  1.27
+ ],
+ "ICE.US-24": [
+  "Markets\\Stocks\\USA\\24 Hour\\ICE.US-24",
+  4,
+  0,
+  "Intercontinental Exchange Inc",
+  0.01,
+  1.0,
+  -6.42,
+  1.32
+ ],
+ "1288.HK": [
+  "Markets\\Stocks\\Hong Kong\\1288.HK",
+  4,
+  0,
+  "Agricultural Bank of China Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "1088.HK": [
+  "Markets\\Stocks\\Hong Kong\\1088.HK",
+  4,
+  0,
+  "China Shenhua Energy Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "0300.HK": [
+  "Markets\\Stocks\\Hong Kong\\0300.HK",
+  4,
+  0,
+  "Midea Group Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "1658.HK": [
+  "Markets\\Stocks\\Hong Kong\\1658.HK",
+  4,
+  0,
+  "Postal Savings Bank of China C",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "3328.HK": [
+  "Markets\\Stocks\\Hong Kong\\3328.HK",
+  4,
+  0,
+  "Bank of Communications Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "2899.HK": [
+  "Markets\\Stocks\\Hong Kong\\2899.HK",
+  4,
+  0,
+  "Zijin Mining Group Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "9633.HK": [
+  "Markets\\Stocks\\Hong Kong\\9633.HK",
+  4,
+  0,
+  "Nongfu Spring Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "9961.HK": [
+  "Markets\\Stocks\\Hong Kong\\9961.HK",
+  4,
+  0,
+  "Trip.com Group Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "1339.HK": [
+  "Markets\\Stocks\\Hong Kong\\1339.HK",
+  4,
+  0,
+  "People's Insurance Co Group",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "1024.HK": [
+  "Markets\\Stocks\\Hong Kong\\1024.HK",
+  4,
+  0,
+  "Kuaishou Technology",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "6690.HK": [
+  "Markets\\Stocks\\Hong Kong\\6690.HK",
+  4,
+  0,
+  "Haier Smart Home Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "9888.HK": [
+  "Markets\\Stocks\\Hong Kong\\9888.HK",
+  4,
+  0,
+  "Baidu Inc",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "1919.HK": [
+  "Markets\\Stocks\\Hong Kong\\1919.HK",
+  4,
+  0,
+  "COSCO SHIPPING Holdings Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "2333.HK": [
+  "Markets\\Stocks\\Hong Kong\\2333.HK",
+  4,
+  0,
+  "Great Wall Motor Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "9992.HK": [
+  "Markets\\Stocks\\Hong Kong\\9992.HK",
+  4,
+  0,
+  "Pop Mart International Group L",
+  0.001,
+  1.0,
+  -5.18,
+  -0.12
+ ],
+ "9868.HK": [
+  "Markets\\Stocks\\Hong Kong\\9868.HK",
+  4,
+  0,
+  "XPeng Inc",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "6862.HK": [
+  "Markets\\Stocks\\Hong Kong\\6862.HK",
+  4,
+  0,
+  "Haidilao International Holding",
+  0.001,
+  1.0,
+  -5.18,
+  0.03
+ ],
+ "0168.HK": [
+  "Markets\\Stocks\\Hong Kong\\0168.HK",
+  4,
+  0,
+  "Tsingtao Brewery Co Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "1347.HK": [
+  "Markets\\Stocks\\Hong Kong\\1347.HK",
+  4,
+  0,
+  "Hua Hong Semiconductor Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  -0.12
+ ],
+ "9626.HK": [
+  "Markets\\Stocks\\Hong Kong\\9626.HK",
+  4,
+  0,
+  "Bilibili Inc",
+  0.001,
+  1.0,
+  -5.18,
+  -0.02
+ ],
+ "9896.HK": [
+  "Markets\\Stocks\\Hong Kong\\9896.HK",
+  4,
+  0,
+  "MINISO Group Holding Ltd",
+  0.001,
+  1.0,
+  -5.18,
+  0.18
+ ],
+ "1357.HK": [
+  "Markets\\Stocks\\Hong Kong\\1357.HK",
+  4,
+  0,
+  "Meitu Inc",
+  0.001,
+  1.0,
+  -5.18,
+  -0.32
+ ],
+ "9898.HK": [
+  "Markets\\Stocks\\Hong Kong\\9898.HK",
+  4,
+  0,
+  "Weibo Corp",
+  0.001,
+  1.0,
+  -5.18,
+  0.18
+ ],
+ "2097.HK": [
+  "Markets\\Stocks\\Hong Kong\\2097.HK",
+  4,
+  0,
+  "Mixue Group",
+  0.001,
+  1.0,
+  -5.18,
+  0.18
+ ],
+ "0883.HK": [
+  "Markets\\Stocks\\Hong Kong\\0883.HK",
+  3,
+  0,
+  "CNOOC Ltd",
+  0.001,
+  1.0,
+  -5.66,
+  0.66
+ ],
+ "0728.HK": [
+  "Markets\\Stocks\\Hong Kong\\0728.HK",
+  3,
+  0,
+  "China Telecom Corp Ltd",
+  0.001,
+  1.0,
+  -5.66,
+  0.66
+ ],
+ "0981.HK": [
+  "Markets\\Stocks\\Hong Kong\\0981.HK",
+  3,
+  0,
+  "Semiconductor Manufacturing In",
+  0.001,
+  1.0,
+  -5.66,
+  0.66
+ ],
+ "0625.HK": [
+  "Markets\\Stocks\\Hong Kong\\0625.HK",
+  4,
+  0,
+  "Shein Global Holdings",
+  0.001,
+  1.0,
+  -5.18,
+  0.18
+ ],
+ "AAXJ.US": [
+  "Markets\\ETFs\\AAXJ.US",
+  1,
+  0,
+  "iShares MSCI All Country Asia ex Japan ETF",
+  0.01,
+  1.0,
+  -6.42,
+  1.22
+ ],
+ "EWH.US": [
+  "Markets\\ETFs\\EWH.US",
+  4,
+  0,
+  "iShares MSCI Hong Kong ETF",
+  0.01,
+  1.0,
+  -6.42,
+  1.22
+ ],
+ "EWS.US": [
+  "Markets\\ETFs\\EWS.US",
+  4,
+  0,
+  "iShares MSCI Singapore ETF - EWS",
+  0.01,
+  1.0,
+  -6.42,
+  1.27
+ ],
+ "MCHI.US": [
+  "Markets\\ETFs\\MCHI.US",
+  4,
+  0,
+  "iShares MSCI China ETF",
+  0.01,
+  1.0,
+  -6.42,
+  1.27
+ ],
+ "FXI.US": [
+  "Markets\\ETFs\\FXI.US",
+  4,
+  1,
+  "iShares China 25 ETF",
+  0.01,
+  1.0,
+  -6.42,
+  1.22
+ ],
+ "HK50-F": [
+  "Markets\\Forwards\\Indices\\Minor\\HK50-F",
+  4,
+  0,
+  "Hong Kong 50 - Forward (28 Oct - 25 Nov)",
+  0.1,
+  1.0,
+  0.0,
+  0.0
+ ],
+ "USDX-F": [
+  "Markets\\Forwards\\Indices\\Currency\\USDX-F",
+  4,
+  0,
+  "US Dollar Index - Forward (10 Sep - 9 Dec)",
+  0.001,
+  100.0,
+  0.0,
+  0.0
+ ],
+ "CXMT.CN-PERP": [
+  "Markets\\Perp CFDs\\Stocks\\CXMT.CN-PERP",
+  4,
+  0,
+  "ChangXin Memory Technologies Perp CFD",
+  0.0001,
+  1.0,
+  -59.0,
+  59.0
+ ],
+ "UNITREE.CN-PERP": [
+  "Markets\\Perp CFDs\\Stocks\\UNITREE.CN-PERP",
+  4,
+  0,
+  "Unitree Robotics Perp CFD",
+  0.001,
+  1.0,
+  698.0,
+  -698.0
+ ],
+ "SHEIN.HK-PERP": [
+  "Markets\\Perp CFDs\\Stocks\\SHEIN.HK-PERP",
+  3,
+  0,
+  "Shein Global Holdings Perp CFD",
+  0.0001,
+  1.0,
+  49.0,
+  -49.0
+ ]
+}

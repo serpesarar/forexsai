@@ -5458,6 +5458,94 @@
     "updated_at": "2026-11-18T21:40:54.951090+00:00"
   },
   {
+    "id": "bl_31df29770d",
+    "title": "NASDAQ varyans primi (VXN−RV20) ileri gölge + doz sınaması",
+    "detail": "NA-02 VP1 C+: yüzdelik ≥0,80 → 20 g AL TEST +95 bp P 0,90. Gölge etiketi vrp_pct ve C3b/KSG/korku gecesinde doz boyutu olarak ön kayıtlı sınama; research/nq_akis_20261118 — 2026-11-18 VK/KM ile yapıldı: VP1 bağımsız dönemde ve örtüşmesiz epizotta düştü (X), doz/veto 1990'larda ters (X). research/nq_kombi_20261118",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-11-19T01:30:12.075412+00:00",
+    "updated_at": "2026-11-19T01:44:46.877455+00:00"
+  },
+  {
+    "id": "bl_2b84cc6958",
+    "title": "Korku gecesi K1 × gece/gün içi çekişmesi gölge etiketi",
+    "detail": "KM-01 C+: 20 g Σgece−Σgün içi yüzdelik ≥0,80 iken K1 +34 bp ek; gerçek gün içi K1'de 2021 sonrası +22…+66, 2018–21 eksi. Canlı K1 gecelerine factors etiketi, ≥40 ileri gece sonra karar; research/nq_kombi_20261118",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T01:45:46.954852+00:00",
+    "updated_at": "2026-11-19T01:45:46.954971+00:00"
+  },
+  {
+    "id": "bl_c2249d2853",
+    "title": "OPEX Çar/Per korku alımı vetosu — canlıya bağlama kararı",
+    "detail": "SV-01 B, kart 5/6: OPEX haftası Çar/Per girişli C3b/C3/K1 korku gecesi/ertesi seans uzunlarını açma. Kullanıcı onayıyla yeni deneme/ c3b_live, korku gecesi ve ES modüllerine takvim vetosu (getattr bayrak, varsayılan gölge log); kart go_live_cards/ndx_opex_korku_vetosu.json",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T03:25:29.206089+00:00",
+    "updated_at": "2026-11-19T03:25:29.206225+00:00"
+  },
+  {
+    "id": "bl_0ab09f947b",
+    "title": "ORB×VIX ve Perşembe vetoları ileri gölge",
+    "detail": "SV-02 ORB×VIX OPEX Çar–Cum −0,30R (bağımsız P 0,79) ve SV-03 Perşembe korku alımı (2005 sonrası) C+: canlı işlemlere gölge etiketi, ≥ 30 ileri olay sonra karar; research/son4_20261118",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T03:25:29.209732+00:00",
+    "updated_at": "2026-11-19T03:25:29.209736+00:00"
+  },
+  {
+    "id": "bl_80b553bd20",
+    "title": "Vade Cuma 09:30 → Pazartesi 09:30 SAT ileri gölge",
+    "detail": "OZ-01 C+: QQQ 1999–2015 +26 bp P 0,964, 2016–26 +27, kör US500/US30/US2000 3/3; NDX gün içi TEST zayıf (P 0,68). Ayda bir olay; ≥ 12 ileri olay gölge log, sonra karar; research/opex_zaman_20261118",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T04:08:50.465315+00:00",
+    "updated_at": "2026-11-19T04:08:50.465439+00:00"
+  },
+  {
+    "id": "bl_2bab6cb98a",
+    "title": "Vade döngüsü: veto (k0–2) + vade sonrası 3–7. gün dozu canlı kararı",
+    "detail": "MX-01/04: korku alımı (K1/C3b/ES) vade öncesi 0–2 gün açma, vade sonrası 3–7. gün ×1,5. Kartlar ndx_opex_korku_vetosu (5/6) + ndx_vade_sonrasi_korku_dozu (6/6, ikinci yarı zayıf). Önce gölge etiket; research/vade_mantik_20261118",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T04:19:14.126278+00:00",
+    "updated_at": "2026-11-19T04:19:14.126409+00:00"
+  },
+  {
+    "id": "bl_432736d4f6",
+    "title": "KSG OPEX vetosu canlı kararı",
+    "detail": "GX-05 B kart 6/6: canlı KSG (yeni deneme/ksg_live.py) girişini OPEX'e 0–2 işlem günü kala açma; korku vetosu (SV-01) ile aynı takvim fonksiyonu; önce gölge log; research/kapi_genis_20261118",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T04:31:48.752865+00:00",
+    "updated_at": "2026-11-19T04:31:48.752999+00:00"
+  },
+  {
+    "id": "bl_b9ffa7fca4",
+    "title": "XP 4'lü veto + −400 bp stop ileri gölge",
+    "detail": "XG-09 C: NDX'te zarar ×0,4, kâr ×0,8 (lot ×1,3); kör US'de tutmadı ve birleşim TEST görüldükten sonra seçildi → ≥ 40 ileri işlem gölge; research/xp_gelistir_20261119",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-19T17:58:07.966777+00:00",
+    "updated_at": "2026-11-19T17:58:07.966964+00:00"
+  },
+  {
     "id": "bl_00fc2245ad",
     "title": "Korku gecesi kanal∪GBM vetosu ileri gölge",
     "detail": "1 sa kanal z80 alt %20 ∪ GBM en riskli %15 vetosu TEST'te kâr ×0,956 zarar ×0,46 ama birleşim sonradan kuruldu; 2026-11 sonrası yeni K1 işlemlerinde gölge etiket olarak izlenmeli (≥40 işlem) | 2026-11-19: donduruldu ve ileri gölgeye kondu (research/korku_golge_20261119/, yeniden üretim birebir). Periyodik: `tazele.py hepsi` → `etiketle.py kos`. Ölçüt ≥40 sonuçlu + ≥8 vetolu (≈5 ay). Tek komut: `etiketle.py guncelle`. Olay takvimi kapsamı 2027-07-31 (E148 düzeltildi).",
@@ -5533,5 +5621,137 @@
     "source": "session",
     "created_at": "2026-11-20T18:36:07.896334+00:00",
     "updated_at": "2026-11-20T19:30:00+00:00"
+  },
+  {
+    "id": "bl_fcbadd6987",
+    "title": "VIXREG-FX 19 Kasım uzlaştırması yazılmadı",
+    "detail": "fx_vixreg_live_state.json done=2026-11-18 kaldı, vix_hist 11-19 var; pencere (16:30–16:57 ET) kaçmış olabilir — bot o saatte ayakta mıydı, uzlaşma döngüsü çalıştı mı bak",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-20T21:12:43.790635+00:00",
+    "updated_at": "2026-11-20T21:12:43.790829+00:00"
+  },
+  {
+    "id": "bl_2369933936",
+    "title": "VIXREG-FX yoğunlaşma riski kararı",
+    "detail": "16 çift tek rejim bahsi; çift sayısı/lot/toplam risk tavanı kullanıcı kararı bekliyor",
+    "category": "decision",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-20T21:12:43.796086+00:00",
+    "updated_at": "2026-11-20T21:12:43.796092+00:00"
+  },
+  {
+    "id": "bl_b1cf650358",
+    "title": "USDHKD taahhüt ucu stratejisi (HK3) icra yeri",
+    "detail": "Pepperstone'da USDHKD trade_mode=0; HK3 B kanıtlı ama bu hesapta icra edilemez — HKD işleme açık broker/hesap gerekir",
+    "category": "decision",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-20T22:33:47.684385+00:00",
+    "updated_at": "2026-11-20T22:33:47.684540+00:00"
+  },
+  {
+    "id": "bl_8b2f3f0f17",
+    "title": "COT-TERS sepeti ileri gölge (C)",
+    "detail": "19∪39 (kaldıraçlı fon pozisyonu/akışı aşırı → ters, D1 TP0,5/1 SL3 ATR 10 g) 2010→ üç dönemde %72–75 +5…+11 bp ama 1993–2009 legacy eksi ve ayda 2,3–2,6 sinyal; canlıya değil, yalnız haftalık COT yayınından sonra ileri gölge kaydı düşünülebilir — karar kullanıcıda",
+    "category": "idea",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-21T19:54:37.063695+00:00",
+    "updated_at": "2026-11-21T19:54:37.063813+00:00"
+  },
+  {
+    "id": "bl_2892104430",
+    "title": "CAPREV NDX kâr çıkışı canlı izleme",
+    "detail": "30 NDX işleminde isabet ≥%80 ve ort. > canlı taban +48 bp mı; kuyruk (CVaR5 −475 bekleniyor) ve tek-pozisyon nedeniyle atlanan tetikleri say",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-21T20:06:14.316842+00:00",
+    "updated_at": "2026-11-21T20:06:14.316960+00:00"
+  },
+  {
+    "id": "bl_96f4e7677a",
+    "title": "CAPREV korumalı kâr çıkışı canlı izleme (NDX)",
+    "detail": "30 NDX işleminde ort > canlı taban +48 bp ve CVaR5 ≥ 2×taban mı; tutma_yok / vix / stop_move kayıtlarını caprev_live.jsonl'dan say; SLTP başarısızlığı var mı",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-21T20:41:32.439228+00:00",
+    "updated_at": "2026-11-21T20:41:32.439356+00:00"
+  },
+  {
+    "id": "bl_f5cea9e4fc",
+    "title": "COT-G2 kesitsel ileri gölge (C)",
+    "detail": "en uzun-kalabalık para birimini sat / en kısa-kalabalığı al (TFF kaldıraçlı fon z, uç fark ≥ 2), TP 0,5 / SL 3 ATR 10 g: 2010–26 %83–86 +6/+11 bp ayda 3,2; 2007–10 −40 bp (2008). Canlı değil — Cuma COT yayınından sonra emirsiz gölge kaydı yazılabilir, karar kullanıcıda",
+    "category": "idea",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-21T20:44:47.334299+00:00",
+    "updated_at": "2026-11-21T20:44:47.334435+00:00"
+  },
+  {
+    "id": "bl_bcc3a117b5",
+    "title": "COT-G2 gölgesini kutuya gönder + ≥40 ileri işlem karnesi",
+    "detail": "cot_g2_shadow.py yazıldı ve bota bağlandı ama commit/push edilmedi; push sonrası kutuda cot_g2_shadow.jsonl birikir, python cot_g2_shadow.py --karne. ≥40 işlem isabet ≥ %75 ∧ ort > 0 olmadan kart yok",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-21T20:51:14.538232+00:00",
+    "updated_at": "2026-11-21T20:51:14.538352+00:00"
+  },
+  {
+    "id": "bl_bcfa52e138",
+    "title": "Bot restart: COT-G2 gölgesi kutuda ama bot eski kodla",
+    "detail": "1765d1be elle pull edildi, oto-restart tetiklenmedi; python3 scripts/remote.py restart bot (pozisyon açıksa borç yazar). Sonra bot logunda 'COT-G2-GÖLGE' satırı ve cot_g2_shadow.jsonl kontrol",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-21T20:56:34.648408+00:00",
+    "updated_at": "2026-11-21T20:56:34.648530+00:00"
+  },
+  {
+    "id": "bl_0a12bdaeae",
+    "title": "KORKU koşullu ekleme canlı/gölge kararı",
+    "detail": "KR-03/04 B + kart 6/6: D1 16:00 zararı ≥50 bp → +1 birim, ana XP ile çık; bedel maks. düşüş ×1,6, NQ Sharpe düşüyor. korku_live'a ekleme bayrağı (varsayılan kapalı) + gölge kaydı",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-22T07:02:25.465661+00:00",
+    "updated_at": "2026-11-22T07:02:25.465797+00:00"
+  },
+  {
+    "id": "bl_51a9046c18",
+    "title": "Ajan borç düzeltmesini push et + bot restart'ı yeniden kuyruğa al",
+    "detail": "remote_agent/evolution_agent.py yerelde (90/90). Kullanıcı commit+push etmeli; ajan 10 dk'da kendini günceller; sonra python3 scripts/remote.py restart bot (borç yeniden yazılır, artık 72 sa içinde pozisyon açıkken de zorla uygulanır)",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-22T07:09:51.939128+00:00",
+    "updated_at": "2026-11-22T07:09:51.939270+00:00"
+  },
+  {
+    "id": "bl_173ba3657d",
+    "title": "KH: MQL5 bot hesapları ters mühendislik",
+    "detail": "Kullanıcı 20 T + 10 O hesabın işlem geçmişini research/kopya_hesap_20261122/data/raw/ altına indirecek; sonra kh_yukle → kh01 → KH-02/03 (KH-03 betiği veri gelince yazılacak, saat ofseti hizalaması dahil)",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-22T07:11:25.133873+00:00",
+    "updated_at": "2026-11-22T07:11:25.134015+00:00"
   }
 ]

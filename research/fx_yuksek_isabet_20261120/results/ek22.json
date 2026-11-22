@@ -1,0 +1,242 @@
+{
+ "USDCNH|TP": {
+  "n": 41,
+  "epizod": 19,
+  "wr": 46.3,
+  "ort": -6.7,
+  "en_kotu": -346.4,
+  "medyan_gun": 1.0,
+  "rastgele_p95": 21.1,
+  "ilk": "2015-11-18"
+ },
+ "USDCNH|5": {
+  "n": 57,
+  "epizod": 16,
+  "wr": 45.6,
+  "ort": -11.3,
+  "en_kotu": -143.0,
+  "medyan_gun": 5.0,
+  "rastgele_p95": 18.7,
+  "ilk": "2015-11-18"
+ },
+ "USDCNH|20": {
+  "n": 18,
+  "epizod": 18,
+  "wr": 27.8,
+  "ort": -42.5,
+  "en_kotu": -193.2,
+  "medyan_gun": 20.0,
+  "rastgele_p95": 47.0,
+  "ilk": "2015-11-18"
+ },
+ "USDSGD|TP": {
+  "n": 70,
+  "epizod": 40,
+  "wr": 55.7,
+  "ort": 12.5,
+  "en_kotu": -212.8,
+  "medyan_gun": 2.0,
+  "rastgele_p95": 17.8,
+  "ilk": "2010-11-01"
+ },
+ "USDSGD|5": {
+  "n": 142,
+  "epizod": 30,
+  "wr": 53.5,
+  "ort": 3.6,
+  "en_kotu": -198.2,
+  "medyan_gun": 5.0,
+  "rastgele_p95": 6.7,
+  "ilk": "2010-11-01"
+ },
+ "USDSGD|20": {
+  "n": 43,
+  "epizod": 43,
+  "wr": 51.2,
+  "ort": 25.8,
+  "en_kotu": -299.5,
+  "medyan_gun": 20.0,
+  "rastgele_p95": 29.2,
+  "ilk": "2010-11-01"
+ },
+ "USDX|TP": {
+  "n": 25,
+  "epizod": 10,
+  "wr": 24.0,
+  "ort": -42.7,
+  "en_kotu": -255.7,
+  "medyan_gun": 1.0,
+  "rastgele_p95": 30.3,
+  "ilk": "2020-03-27"
+ },
+ "USDX|5": {
+  "n": 43,
+  "epizod": 7,
+  "wr": 37.2,
+  "ort": -27.0,
+  "en_kotu": -151.5,
+  "medyan_gun": 5.0,
+  "rastgele_p95": 15.2,
+  "ilk": "2020-03-27"
+ },
+ "USDX|20": {
+  "n": 12,
+  "epizod": 12,
+  "wr": 41.7,
+  "ort": -76.1,
+  "en_kotu": -296.2,
+  "medyan_gun": 20.0,
+  "rastgele_p95": 81.1,
+  "ilk": "2020-03-27"
+ },
+ "HK50|TP": {
+  "n": 25,
+  "epizod": 10,
+  "wr": 52.0,
+  "ort": -28.2,
+  "en_kotu": -536.3,
+  "medyan_gun": 1.0,
+  "rastgele_p95": 113.0,
+  "ilk": "2020-03-27"
+ },
+ "HK50|5": {
+  "n": 43,
+  "epizod": 7,
+  "wr": 46.5,
+  "ort": -47.3,
+  "en_kotu": -733.1,
+  "medyan_gun": 5.0,
+  "rastgele_p95": 71.9,
+  "ilk": "2020-03-27"
+ },
+ "HK50|20": {
+  "n": 12,
+  "epizod": 12,
+  "wr": 41.7,
+  "ort": -173.0,
+  "en_kotu": -738.0,
+  "medyan_gun": 20.0,
+  "rastgele_p95": 266.0,
+  "ilk": "2020-03-27"
+ },
+ "CHINAH|TP": {
+  "n": 5,
+  "epizod": 4,
+  "wr": 80.0,
+  "ort": 61.4,
+  "en_kotu": -139.5,
+  "medyan_gun": 2.0,
+  "rastgele_p95": 302.9,
+  "ilk": "2020-11-24"
+ },
+ "CHINAH|5": {
+  "n": 10,
+  "epizod": 4,
+  "wr": 40.0,
+  "ort": -70.8,
+  "en_kotu": -339.3,
+  "medyan_gun": 5.0,
+  "rastgele_p95": 154.5,
+  "ilk": "2020-11-24"
+ },
+ "CHINAH|20": {
+  "n": 4,
+  "epizod": 4,
+  "wr": 50.0,
+  "ort": -9.6,
+  "en_kotu": -498.4,
+  "medyan_gun": 20.0,
+  "rastgele_p95": 569.9,
+  "ilk": "2020-11-24"
+ },
+ "CN50|TP": {
+  "n": 25,
+  "epizod": 10,
+  "wr": 28.0,
+  "ort": -124.8,
+  "en_kotu": -1128.2,
+  "medyan_gun": 1.0,
+  "rastgele_p95": 69.0,
+  "ilk": "2020-03-27"
+ },
+ "CN50|5": {
+  "n": 43,
+  "epizod": 7,
+  "wr": 32.6,
+  "ort": -118.7,
+  "en_kotu": -866.2,
+  "medyan_gun": 5.0,
+  "rastgele_p95": 46.4,
+  "ilk": "2020-03-27"
+ },
+ "CN50|20": {
+  "n": 12,
+  "epizod": 12,
+  "wr": 8.3,
+  "ort": -430.3,
+  "en_kotu": -1104.5,
+  "medyan_gun": 20.0,
+  "rastgele_p95": 187.8,
+  "ilk": "2020-03-27"
+ },
+ "FXI.US|TP": {
+  "n": 13,
+  "epizod": 8,
+  "wr": 53.8,
+  "ort": -22.6,
+  "en_kotu": -617.6,
+  "medyan_gun": 2.0,
+  "rastgele_p95": 215.2,
+  "ilk": "2020-06-29"
+ },
+ "FXI.US|5": {
+  "n": 30,
+  "epizod": 8,
+  "wr": 46.7,
+  "ort": -39.4,
+  "en_kotu": -1368.8,
+  "medyan_gun": 5.0,
+  "rastgele_p95": 96.4,
+  "ilk": "2020-06-29"
+ },
+ "FXI.US|20": {
+  "n": 9,
+  "epizod": 9,
+  "wr": 22.2,
+  "ort": -294.7,
+  "en_kotu": -1027.4,
+  "medyan_gun": 20.0,
+  "rastgele_p95": 334.6,
+  "ilk": "2020-06-29"
+ },
+ "EWH.US|TP": {
+  "n": 13,
+  "epizod": 8,
+  "wr": 53.8,
+  "ort": 15.0,
+  "en_kotu": -306.6,
+  "medyan_gun": 2.0,
+  "rastgele_p95": 132.0,
+  "ilk": "2020-06-12"
+ },
+ "EWH.US|5": {
+  "n": 32,
+  "epizod": 9,
+  "wr": 50.0,
+  "ort": -5.5,
+  "en_kotu": -534.2,
+  "medyan_gun": 5.0,
+  "rastgele_p95": 31.6,
+  "ilk": "2020-06-12"
+ },
+ "EWH.US|20": {
+  "n": 10,
+  "epizod": 10,
+  "wr": 50.0,
+  "ort": -145.5,
+  "en_kotu": -861.2,
+  "medyan_gun": 20.0,
+  "rastgele_p95": 210.1,
+  "ilk": "2020-06-12"
+ }
+}

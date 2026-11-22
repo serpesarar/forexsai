@@ -1,0 +1,36 @@
+kuyrukta bantlı FX bar dışa aktarımı c800ef4a-890f-469b-ae7d-8c5ce157967c
+{"USDHKD": {"meta": {"point": 1e-05, "digits": 5, "tick_value": 0.12755801657488866, "contract": 100000.0, "swap_long": 9.33, "swap_short": -50.36, "spread_now": 293}, "D1": [4964, 1184025600, 1795132800, 200], "H1": [100098, 1264726800, 1795212000, 200], "M15": [100000, 1668387600, 1795213800, 200]}, "EURDKK": {"meta": {"point": 1e-05, "digits": 5, "tick_value": 0.14666993251716404, "contract": 100000.0, "swap_long": -9.73, "swap_short": -22.18, "spread_now": 430}, "D1": [877, 1688342400, 1795132800, 200], "H1": [21013, 1688382000, 1795212000, 200], "M15": [84000, 1688384700, 1795213800, 200]}, "USDDKK": {"meta": {"point": 1e-05, "digits": 5, "tick_value": 0.14666950227704403, "contract": 100000.0, "swap_long": 5.7, "swap_short": -47.07, "spread_now": 488}, "D1": [877, 1688342400, 1795132800, 200], "H1": [21013, 1688382000, 1795212000, 200], "M15": [84033, 1688384700, 1795213800, 200]}, "USDCNH": {"meta": {"point": 1e-05, "digits": 5, "tick_value": 0.14975731826575037, "contract": 100000.0, "swap_long": 13.88, "swap_short": -88.8, "spread_now": 214}, "D1": [2937, 1447718400, 1795132800, 200], "H1": [67232, 1447747200, 1795212000, 200], "M15": [100000, 1668412800, 1795213800, 200]}, "USDSGD": {"meta": {"point": 1e-05, "digits": 5, "tick_value": 0.7747673760953273, "contract": 100000.0, "swap_long": 4.41, "swap_short": -12.29, "spread_now": 52}, "D1": [5715, 1136851200, 1795132800, 200], "H1": [100098, 1286539200, 1795212000, 200], "M15": [100000, 1668408300, 1795213800, 200]}, "USDAED": {"meta": {"point": 1e-05, "digits": 5, "tick_value": 0.272248116043037, "contract": 100000.0, "swap_long": 65.62, "swap_short": -120.38, "spread_now": 18}, "D1": [297, 1757894400, 1795132800, 200], "H1": [7144, 1757894400, 1795212000, 200], "M15": [28558, 1757894400, 1795213800, 200]}, "EURCZK": {"meta": {"point": 1e-05, "digits": 5, "tick_value": 0.044798752802721976, "contract": 100000.0, "swap_long": -188.17, "swap_short": -7.87, "spread_now": 1350}, "D1": [3090, 1420156800, 1795132800, 200], "H1": [52943, 1420189200, 1795212000, 200], "M15": [100000, 1604099700, 1795214700, 200]}, "EURHUF": {"meta": {"point": 0.001, "digits": 3, "tick_value": 0.2930892486070934, "contract": 100000.0, "swap_long": -40.63, "swap_short": 4.66, "spread_now": 374}, "D1": [3160, 1420070400, 1795132800, 200], "H1": [73333, 1420153200, 1795212000, 200], "M15": [100000, 1667800800, 1795214700, 200]}, "EURPLN": {"meta": {"point": 1e-05, "digits": 5, "tick_value": 0.24563325481256953, "contract": 100000.0, "swap_long": -25.11, "swap_short": -7.05, "spread_now": 294}, "D1": [3160, 1420070400, 1795132800, 200], "H1": [73530, 1420153200, 1795212000, 200], "M15": [100000, 1667930400, 1795214700, 200]}, "USDILS": {"meta": {"point": 1e-05, "digits": 5, "tick_value": 0.29778477902880474, "contract": 100000.0, "swap_long": 39.63, "swap_short": -89.7, "spread_now": 524}, "D1": [875, 1688428800, 1795132800, 200], "H1": [20979, 1688475600, 1795212000, 200], "M15": [83798, 1688476500, 1795214700, 20
+Storage endpoint URL should have a trailing slash.
+indirildi EURCZK_D1.csv.gz
+indirildi EURCZK_H1.csv.gz
+indirildi EURCZK_M15.csv.gz
+indirildi EURDKK_D1.csv.gz
+indirildi EURDKK_H1.csv.gz
+indirildi EURDKK_M15.csv.gz
+indirildi EURHUF_D1.csv.gz
+indirildi EURHUF_H1.csv.gz
+indirildi EURHUF_M15.csv.gz
+indirildi EURPLN_D1.csv.gz
+indirildi EURPLN_H1.csv.gz
+indirildi EURPLN_M15.csv.gz
+indirildi USDAED_D1.csv.gz
+indirildi USDAED_H1.csv.gz
+indirildi USDAED_M15.csv.gz
+indirildi USDCNH_D1.csv.gz
+indirildi USDCNH_H1.csv.gz
+indirildi USDCNH_M15.csv.gz
+indirildi USDDKK_D1.csv.gz
+indirildi USDDKK_H1.csv.gz
+indirildi USDDKK_M15.csv.gz
+indirildi USDHKD_D1.csv.gz
+indirildi USDHKD_H1.csv.gz
+indirildi USDHKD_M15.csv.gz
+indirildi USDILS_D1.csv.gz
+indirildi USDILS_H1.csv.gz
+indirildi USDILS_M15.csv.gz
+indirildi USDSGD_D1.csv.gz
+indirildi USDSGD_H1.csv.gz
+indirildi USDSGD_M15.csv.gz
+indirildi USDTHB_D1.csv.gz
+indirildi USDTHB_H1.csv.gz
+indirildi USDTHB_M15.csv.gz

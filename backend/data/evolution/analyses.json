@@ -1085,6 +1085,42 @@
   "est_runtime": "~20 dk"
  },
  {
+  "id": "ndx_orb_fibo_of01",
+  "name": "Nasdaq açılış kırılımında Fibonacci giriş ve hedef karşılaştırması",
+  "kind": "script",
+  "command": ".venv/bin/python research/ndx_orb_fibo_20261118/replay.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "ORB × VIX uzun sinyalinde 16 sabit giriş ve hedef politikasını eşli Duka ve MT5 M1 verisinde karşılaştırır. Tam Fibonacci kuralı stres ve ek katkı ölçütlerini geçmedi (OF-01).",
+  "output": "research/ndx_orb_fibo_20261118/RAPOR.md",
+  "needs_backend": false,
+  "est_runtime": "~20 sn"
+ },
+ {
+  "id": "ndx_orb_baglam_of02_07",
+  "name": "Nasdaq açılış kırılımı, Fibonacci, VIX ve dolar endeksi",
+  "kind": "script",
+  "command": "bash research/ndx_orb_baglam_20261118/run.sh",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "Altı giriş ve çıkış deneyini iki Nasdaq fiyat kaynağında eşli seanslar ve spread stresiyle tekrarlar. OF-02–07 ana eklemeleri reddedildi. OF-08–09 kırılım mesafesini ve ikinci kapanış teyidini ölçer. Dünkü aralığa göre iç gün, orta nokta ve boşluk sonrası toparlanma deneylerini de çalıştırır.",
+  "output": "research/ndx_orb_baglam_20261118/RAPOR.md",
+  "needs_backend": false,
+  "est_runtime": "~2 dk"
+ },
+ {
+  "id": "fx_evren_95",
+  "name": "95 FX paritesinde saatlik strateji sınaması",
+  "kind": "script",
+  "command": ".venv/bin/python research/fx_evren_20261118/publish.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "Kaydedilmiş broker geçmişi ve uzak hesap özetleriyle dönemsel sıralamayı ve kapsamı doğrular. Bağlı raporda çapraz teyidi, hafta sonu, Tokyo saatleri, ay dönümü, sabah sıkışması, yen seans devri, gece geri çekilmesi, tick yoğunluğu, regresyon eşleştirmesi ve aylık/haftalık momentum ile iki günlük yön geri alımı deneyleri bulunur.",
+  "output": "research/fx_evren_20261118/RAPOR.md",
+  "needs_backend": false,
+  "est_runtime": "~3 sn"
+ },
+ {
   "id": "xp_destek_limit",
   "name": "Korku gecesi + XP: geçmiş haftanın desteklerine limit girişi",
   "kind": "script",
@@ -1173,6 +1209,16 @@
   "category": "research",
   "what_it_does": "CAPREV olaylarını 1990–2015 günlük vekilde (5 endeks) 24 bağlam özelliğiyle kümeler, tek filtre / lojistik / GBM / tip skoru ile SL elemeyi ve 24 hücrelik 'kâra kadar tut' çıkış ızgarasını orada seçip canlı kuralın 2018–26 1m/M30 işlemlerinde (NDX, DAX, kör ABD endeksleri) sınar; isabet, net bp, Sharpe, en kötü %5.",
   "output": "research/caprev_derin_20261120/RAPOR.md"
+ },
+ {
+  "id": "fx_yuksek_isabet",
+  "name": "Forex %80 isabet arayışı (gece bandı, günlük, olay devamı, vade sabitlemesi, bant kurları, haber anı)",
+  "kind": "script",
+  "command": "cd research/fx_yuksek_isabet_20261120 && python3 scan.py && python3 d1.py && python3 sel_g.py && python3 ek2.py && python3 pin.py && python3 band.py && python3 duka_olay.py build && python3 spike.py && python3 sel_spike.py tum && ../../.venv/bin/python -I takvim11.py && python3 ek11.py && python3 kor11.py \"B|D1|tp0.25|sl4.0\" && python3 ek12.py && python3 ek13.py && python3 ek14.py && python3 ek15.py && python3 ek16.py && python3 ek17.py ana && python3 ek17.py blok && python3 ek17.py blok_plasebo_yon && python3 ek18.py && python3 ek18b.py && python3 ek19_20.py && python3 ek21.py && python3 vekil_kor.py && python3 ek22.py && python3 ek23.py && python3 ek23b.py && python3 ek23c.py",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "25 Pepperstone FX çifti (M15/H1/D1) + kutudan bantlı kurlar + Dukascopy 1m BID/ASK olay günleri üzerinde 7 ön kayıtlı aileyi KEŞİF/TEST/KÖR ve plaseboyla sınar; ölçüt: isabet ≥ %80 ∧ net > 0 ∧ ×1,5 maliyet ∧ iki yarı ∧ plasebo.",
+  "output": "research/fx_yuksek_isabet_20261120/RAPOR.md"
  },
  {
   "id": "caprev_kuyruk",

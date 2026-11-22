@@ -1,0 +1,523 @@
+todo 10852
+16:26:35 AUDUSD engel 503 2018-01-19 BID bekle 30
+16:26:35 AUDUSD engel 503 2018-01-14 BID bekle 30
+16:26:35 AUDUSD engel 503 2018-01-03 BID bekle 30
+16:26:35 AUDUSD engel 503 2018-01-09 BID bekle 30
+16:26:35 AUDUSD engel 503 2018-01-07 BID bekle 30
+16:26:35 AUDUSD engel 503 2018-01-11 BID bekle 30
+16:26:35 AUDUSD engel 503 2018-01-10 BID bekle 30
+16:26:41 AUDUSD engel 503 2018-01-21 BID bekle 30
+16:26:41 AUDUSD engel 503 2018-01-16 BID bekle 30
+16:26:41 AUDUSD engel 503 2018-01-02 BID bekle 30
+16:27:05 AUDUSD engel RemoteDisconnected 2018-01-19 BID bekle 60
+16:27:05 AUDUSD engel RemoteDisconnected 2018-01-03 BID bekle 60
+16:27:05 AUDUSD engel RemoteDisconnected 2018-01-10 BID bekle 60
+16:27:05 AUDUSD engel RemoteDisconnected 2018-01-11 BID bekle 60
+16:27:05 AUDUSD engel RemoteDisconnected 2018-01-14 BID bekle 60
+16:27:05 AUDUSD engel RemoteDisconnected 2018-01-09 BID bekle 60
+16:27:05 AUDUSD engel RemoteDisconnected 2018-01-07 BID bekle 60
+16:27:11 AUDUSD engel RemoteDisconnected 2018-01-21 BID bekle 60
+16:27:11 AUDUSD engel RemoteDisconnected 2018-01-16 BID bekle 60
+16:27:11 AUDUSD engel RemoteDisconnected 2018-01-02 BID bekle 60
+16:28:19 AUDUSD engel ConnectionResetError 2018-01-19 BID bekle 120
+16:29:26 AUDUSD engel TimeoutError 2018-01-21 BID bekle 120
+16:29:26 AUDUSD engel TimeoutError 2018-01-02 BID bekle 120
+16:29:26 AUDUSD engel TimeoutError 2018-01-16 BID bekle 120
+16:30:09 AUDUSD engel RemoteDisconnected 2020-03-12 BID bekle 30
+16:30:09 AUDUSD engel 503 2020-05-22 BID bekle 30
+16:30:11 AUDUSD engel 503 2020-06-01 BID bekle 30
+16:30:11 AUDUSD engel RemoteDisconnected 2020-03-26 BID bekle 30
+16:30:15 AUDUSD engel 503 2020-06-25 BID bekle 30
+16:30:37 AUDUSD engel ConnectionResetError 2020-07-07 BID bekle 30
+16:30:39 AUDUSD engel 503 2020-03-12 BID bekle 60
+16:30:39 AUDUSD engel RemoteDisconnected 2020-05-22 BID bekle 60
+16:30:41 AUDUSD engel RemoteDisconnected 2020-06-01 BID bekle 60
+16:30:42 AUDUSD engel 503 2020-03-26 BID bekle 60
+16:30:43 AUDUSD engel 503 2020-10-14 BID bekle 30
+16:30:45 AUDUSD engel RemoteDisconnected 2020-06-25 BID bekle 60
+16:31:11 AUDUSD engel TimeoutError 2020-06-28 BID bekle 30
+16:31:11 AUDUSD engel TimeoutError 2020-07-03 BID bekle 30
+16:31:13 AUDUSD engel RemoteDisconnected 2020-10-14 BID bekle 60
+16:31:20 AUDUSD engel TimeoutError 2018-01-19 BID bekle 120
+16:31:27 AUDUSD engel 503 2018-01-02 BID bekle 120
+16:31:27 AUDUSD engel 503 2018-01-16 BID bekle 120
+16:31:39 AUDUSD engel 503 2021-07-25 BID bekle 30
+16:31:39 AUDUSD engel RemoteDisconnected 2020-03-12 BID bekle 120
+16:31:41 AUDUSD engel 503 2020-06-28 BID bekle 60
+16:31:42 AUDUSD engel RemoteDisconnected 2020-03-26 BID bekle 120
+16:31:45 AUDUSD engel 503 2020-06-25 BID bekle 120
+16:32:09 AUDUSD engel RemoteDisconnected 2021-07-25 BID bekle 60
+16:32:16 AUDUSD engel 503 2021-08-19 BID bekle 30
+16:32:16 AUDUSD engel 503 2021-08-24 BID bekle 30
+16:32:16 AUDUSD engel 503 2021-08-20 BID bekle 30
+16:32:16 AUDUSD engel 503 2021-08-22 BID bekle 30
+16:32:16 AUDUSD engel 503 2021-08-23 BID bekle 30
+16:32:16 AUDUSD engel 503 2021-08-25 BID bekle 30
+16:32:16 AUDUSD engel 503 2020-10-14 BID bekle 120
+16:32:41 AUDUSD engel RemoteDisconnected 2020-06-28 BID bekle 120
+16:32:46 AUDUSD engel RemoteDisconnected 2021-08-24 BID bekle 60
+16:32:46 AUDUSD engel RemoteDisconnected 2021-08-19 BID bekle 60
+16:32:46 AUDUSD engel RemoteDisconnected 2021-08-22 BID bekle 60
+16:32:46 AUDUSD engel RemoteDisconnected 2021-08-23 BID bekle 60
+16:32:46 AUDUSD engel RemoteDisconnected 2021-08-20 BID bekle 60
+16:32:46 AUDUSD engel RemoteDisconnected 2021-08-25 BID bekle 60
+16:33:00 AUDUSD engel 504 2021-08-18 BID bekle 30
+16:33:10 AUDUSD engel 503 2021-07-25 BID bekle 120
+ATLANDI AUDUSD 2018-01-19 BID
+ATLANDI AUDUSD 2018-01-02 BID
+16:33:27 AUDUSD engel RemoteDisconnected 2021-08-29 BID bekle 30
+ATLANDI AUDUSD 2018-01-16 BID
+16:33:27 AUDUSD engel RemoteDisconnected 2021-08-30 BID bekle 30
+16:33:30 AUDUSD engel RemoteDisconnected 2021-08-18 BID bekle 60
+16:33:32 AUDUSD engel 503 2021-08-26 BID bekle 30
+16:33:43 AUDUSD engel 503 2020-03-12 BID bekle 120
+16:33:45 AUDUSD engel RemoteDisconnected 2020-06-25 BID bekle 120
+16:33:46 AUDUSD engel 503 2021-08-24 BID bekle 120
+16:33:46 AUDUSD engel 503 2021-08-25 BID bekle 120
+16:33:46 AUDUSD engel 503 2021-08-23 BID bekle 120
+16:33:55 AUDUSD engel 503 2020-03-26 BID bekle 120
+16:33:55 AUDUSD engel 503 2021-08-20 BID bekle 120
+16:33:55 AUDUSD engel 503 2021-08-19 BID bekle 120
+16:33:55 AUDUSD engel 503 2021-08-22 BID bekle 120
+16:33:57 AUDUSD engel 503 2021-08-30 BID bekle 60
+16:33:57 AUDUSD engel 503 2021-08-29 BID bekle 60
+16:34:02 AUDUSD engel RemoteDisconnected 2021-08-26 BID bekle 60
+16:34:16 AUDUSD engel RemoteDisconnected 2020-10-14 BID bekle 120
+16:34:43 AUDUSD engel 503 2021-08-18 BID bekle 120
+16:34:43 AUDUSD engel 503 2020-06-28 BID bekle 120
+16:34:57 AUDUSD engel RemoteDisconnected 2021-08-30 BID bekle 120
+16:34:57 AUDUSD engel RemoteDisconnected 2021-08-29 BID bekle 120
+16:35:10 AUDUSD engel RemoteDisconnected 2021-07-25 BID bekle 120
+ATLANDI AUDUSD 2020-03-12 BID
+16:35:43 AUDUSD engel RemoteDisconnected 2021-08-31 BID bekle 30
+ATLANDI AUDUSD 2020-06-25 BID
+16:35:46 AUDUSD engel RemoteDisconnected 2021-08-24 BID bekle 120
+16:35:46 AUDUSD engel RemoteDisconnected 2021-08-25 BID bekle 120
+16:35:46 AUDUSD engel RemoteDisconnected 2021-08-23 BID bekle 120
+ATLANDI AUDUSD 2020-03-26 BID
+16:35:55 AUDUSD engel RemoteDisconnected 2021-09-02 BID bekle 30
+16:35:55 AUDUSD engel RemoteDisconnected 2021-08-22 BID bekle 120
+16:35:55 AUDUSD engel RemoteDisconnected 2021-08-20 BID bekle 120
+16:35:55 AUDUSD engel RemoteDisconnected 2021-08-19 BID bekle 120
+ATLANDI AUDUSD 2020-10-14 BID
+16:36:17 AUDUSD engel TimeoutError 2021-08-26 BID bekle 120
+16:36:43 AUDUSD engel RemoteDisconnected 2021-08-18 BID bekle 120
+ATLANDI AUDUSD 2020-06-28 BID
+16:36:43 1000 / 10852
+16:36:43 AUDUSD engel RemoteDisconnected 2021-10-04 BID bekle 30
+16:37:00 AUDUSD engel TimeoutError 2021-09-01 BID bekle 30
+ATLANDI AUDUSD 2021-07-25 BID
+16:37:40 AUDUSD engel TimeoutError 2021-09-02 BID bekle 60
+ATLANDI AUDUSD 2021-08-24 BID
+ATLANDI AUDUSD 2021-08-23 BID
+ATLANDI AUDUSD 2021-08-25 BID
+ATLANDI AUDUSD 2021-08-22 BID
+ATLANDI AUDUSD 2021-08-20 BID
+ATLANDI AUDUSD 2021-08-19 BID
+16:38:40 AUDUSD engel 503 2022-08-07 BID bekle 30
+16:38:40 AUDUSD engel 503 2022-08-08 BID bekle 30
+ATLANDI AUDUSD 2021-08-18 BID
+16:39:10 AUDUSD engel RemoteDisconnected 2022-08-07 BID bekle 60
+16:39:10 AUDUSD engel RemoteDisconnected 2022-08-08 BID bekle 60
+16:39:11 AUDUSD engel 503 2022-10-10 BID bekle 30
+16:39:17 AUDUSD engel 503 2022-10-23 BID bekle 30
+16:39:19 AUDUSD engel RemoteDisconnected 2022-10-03 BID bekle 30
+16:39:19 AUDUSD engel 503 2022-10-27 BID bekle 30
+16:39:20 AUDUSD engel 503 2022-10-28 BID bekle 30
+16:39:20 AUDUSD engel 503 2022-10-31 BID bekle 30
+16:39:22 AUDUSD engel 503 2022-11-06 BID bekle 30
+16:39:22 AUDUSD engel 503 2022-11-08 BID bekle 30
+16:39:41 AUDUSD engel RemoteDisconnected 2022-10-10 BID bekle 60
+16:39:42 AUDUSD engel 503 2022-12-19 BID bekle 30
+16:39:46 AUDUSD engel 503 2022-12-27 BID bekle 30
+16:39:47 AUDUSD engel RemoteDisconnected 2022-10-23 BID bekle 60
+16:39:49 AUDUSD engel RemoteDisconnected 2022-10-27 BID bekle 60
+16:39:50 AUDUSD engel RemoteDisconnected 2022-10-28 BID bekle 60
+16:39:50 AUDUSD engel RemoteDisconnected 2022-10-31 BID bekle 60
+16:39:52 AUDUSD engel RemoteDisconnected 2022-11-06 BID bekle 60
+16:39:52 AUDUSD engel RemoteDisconnected 2022-11-08 BID bekle 60
+16:39:55 AUDUSD engel TimeoutError 2021-09-02 BID bekle 120
+16:39:58 AUDUSD engel TimeoutError 2022-08-11 BID bekle 30
+16:40:05 AUDUSD engel 503 2023-01-30 BID bekle 30
+16:40:12 AUDUSD engel RemoteDisconnected 2022-12-19 BID bekle 60
+16:40:16 AUDUSD engel RemoteDisconnected 2022-12-27 BID bekle 60
+16:40:35 AUDUSD engel RemoteDisconnected 2023-01-30 BID bekle 60
+16:40:42 AUDUSD engel 503 2022-10-10 BID bekle 120
+16:40:56 AUDUSD engel 503 2022-10-27 BID bekle 120
+16:40:56 AUDUSD engel 503 2022-10-23 BID bekle 120
+16:40:56 AUDUSD engel 503 2022-11-06 BID bekle 120
+16:40:56 AUDUSD engel 503 2022-10-31 BID bekle 120
+16:41:17 AUDUSD engel 503 2023-11-21 BID bekle 30
+16:41:17 AUDUSD engel 503 2022-12-19 BID bekle 120
+16:41:19 AUDUSD engel 503 2022-12-27 BID bekle 120
+16:41:19 AUDUSD engel 503 2024-03-17 BID bekle 30
+16:41:45 AUDUSD engel 503 2023-01-30 BID bekle 120
+16:41:47 AUDUSD engel RemoteDisconnected 2023-11-21 BID bekle 60
+16:41:49 AUDUSD engel RemoteDisconnected 2024-03-17 BID bekle 60
+16:41:50 AUDUSD engel 503 2024-10-02 BID bekle 30
+16:41:53 AUDUSD engel 503 2024-10-22 BID bekle 30
+16:41:54 AUDUSD engel 503 2024-10-24 BID bekle 30
+16:41:54 AUDUSD engel 503 2024-10-25 BID bekle 30
+16:41:56 AUDUSD engel 503 2021-09-02 BID bekle 120
+16:42:11 AUDUSD engel 503 2024-11-19 BID bekle 30
+16:42:20 AUDUSD engel RemoteDisconnected 2024-10-02 BID bekle 60
+16:42:23 AUDUSD engel RemoteDisconnected 2024-10-22 BID bekle 60
+16:42:24 AUDUSD engel RemoteDisconnected 2024-10-24 BID bekle 60
+16:42:24 AUDUSD engel RemoteDisconnected 2024-10-25 BID bekle 60
+16:42:41 AUDUSD engel RemoteDisconnected 2024-11-19 BID bekle 60
+16:42:42 AUDUSD engel RemoteDisconnected 2022-10-10 BID bekle 120
+16:42:48 AUDUSD engel 503 2023-11-21 BID bekle 120
+16:42:56 AUDUSD engel RemoteDisconnected 2022-10-23 BID bekle 120
+16:42:56 AUDUSD engel RemoteDisconnected 2022-10-27 BID bekle 120
+16:42:56 AUDUSD engel RemoteDisconnected 2022-10-31 BID bekle 120
+16:42:56 AUDUSD engel RemoteDisconnected 2022-11-06 BID bekle 120
+16:43:17 AUDUSD engel RemoteDisconnected 2022-12-19 BID bekle 120
+16:43:19 AUDUSD engel RemoteDisconnected 2022-12-27 BID bekle 120
+16:43:41 AUDUSD engel ConnectionResetError 2024-10-02 BID bekle 120
+16:43:45 AUDUSD engel RemoteDisconnected 2023-01-30 BID bekle 120
+ATLANDI AUDUSD 2021-09-02 BID
+16:43:56 AUDUSD engel RemoteDisconnected 2024-12-26 BID bekle 30
+16:44:39 AUDUSD engel TimeoutError 2024-10-24 BID bekle 120
+16:44:39 AUDUSD engel TimeoutError 2024-10-25 BID bekle 120
+ATLANDI AUDUSD 2022-10-10 BID
+16:44:48 AUDUSD engel RemoteDisconnected 2023-11-21 BID bekle 120
+ATLANDI AUDUSD 2022-10-27 BID
+ATLANDI AUDUSD 2022-10-23 BID
+ATLANDI AUDUSD 2022-10-31 BID
+ATLANDI AUDUSD 2022-11-06 BID
+16:44:56 AUDUSD engel TimeoutError 2024-11-19 BID bekle 120
+ATLANDI AUDUSD 2022-12-19 BID
+ATLANDI AUDUSD 2022-12-27 BID
+16:45:41 AUDUSD engel TimeoutError 2024-12-26 BID bekle 60
+ATLANDI AUDUSD 2023-01-30 BID
+16:45:46 AUDUSD engel ConnectionResetError 2025-04-15 BID bekle 30
+16:45:48 AUDUSD engel TimeoutError 2025-04-14 BID bekle 30
+16:45:52 AUDUSD engel TimeoutError 2025-04-16 BID bekle 30
+16:45:57 AUDUSD engel TimeoutError 2025-03-25 BID bekle 30
+16:46:15 AUDUSD engel TimeoutError 2025-04-23 BID bekle 30
+16:46:25 AUDUSD engel ConnectionResetError 2025-04-15 BID bekle 60
+ATLANDI AUDUSD 2023-11-21 BID
+16:46:56 AUDUSD engel 503 2026-05-06 BID bekle 30
+16:47:00 AUDUSD engel ConnectionResetError 2024-12-26 BID bekle 120
+16:47:11 AUDUSD engel ConnectionResetError 2025-03-25 BID bekle 60
+16:47:14 AUDUSD engel TimeoutError 2025-04-14 BID bekle 60
+16:47:26 AUDUSD engel RemoteDisconnected 2026-05-06 BID bekle 60
+16:47:30 AUDUSD engel ConnectionResetError 2025-04-23 BID bekle 60
+16:47:35 AUDUSD engel TimeoutError 2024-10-25 BID bekle 120
+16:47:44 AUDUSD engel TimeoutError 2026-03-09 BID bekle 30
+16:47:53 AUDUSD engel TimeoutError 2024-11-19 BID bekle 120
+16:48:21 AUDUSD engel TimeoutError 2025-04-15 BID bekle 120
+ATLANDI AUDUSD 2024-10-25 BID
+ATLANDI AUDUSD 2024-11-19 BID
+16:49:53 2000 / 10852
+16:49:53 GBPUSD engel 503 2020-08-23 BID bekle 30
+16:50:17 GBPUSD engel 503 2020-12-31 BID bekle 30
+16:50:22 AUDUSD engel 503 2025-04-15 BID bekle 120
+16:50:23 GBPUSD engel RemoteDisconnected 2020-08-23 BID bekle 60
+16:50:47 GBPUSD engel RemoteDisconnected 2020-12-31 BID bekle 60
+16:52:00 GBPUSD engel TimeoutError 2022-01-14 BID bekle 30
+16:52:13 GBPUSD engel TimeoutError 2020-08-23 BID bekle 120
+16:52:15 GBPUSD engel TimeoutError 2022-04-24 BID bekle 30
+ATLANDI AUDUSD 2025-04-15 BID
+16:52:22 3000 / 10852
+16:52:22 GBPUSD engel RemoteDisconnected 2023-04-28 BID bekle 30
+16:52:32 GBPUSD engel ConnectionResetError 2023-01-30 BID bekle 30
+16:52:58 GBPUSD engel ConnectionResetError 2022-04-24 BID bekle 60
+16:53:09 GBPUSD engel TimeoutError 2023-04-04 BID bekle 30
+16:53:18 GBPUSD engel ConnectionResetError 2023-01-30 BID bekle 60
+16:53:21 GBPUSD engel TimeoutError 2023-07-05 BID bekle 30
+16:53:23 GBPUSD engel TimeoutError 2023-05-15 BID bekle 30
+16:53:24 GBPUSD engel TimeoutError 2023-08-31 BID bekle 30
+16:53:27 GBPUSD engel TimeoutError 2023-05-07 BID bekle 30
+16:53:27 GBPUSD engel TimeoutError 2023-05-08 BID bekle 30
+16:53:34 GBPUSD engel TimeoutError 2023-04-28 BID bekle 60
+16:53:50 GBPUSD engel TimeoutError 2023-10-31 BID bekle 30
+16:54:02 GBPUSD engel ConnectionResetError 2023-07-05 BID bekle 60
+16:54:24 GBPUSD engel ConnectionResetError 2023-04-04 BID bekle 60
+16:54:40 GBPUSD engel TimeoutError 2023-05-15 BID bekle 60
+16:54:41 GBPUSD engel TimeoutError 2023-08-31 BID bekle 60
+16:54:44 GBPUSD engel TimeoutError 2023-05-08 BID bekle 60
+16:55:09 GBPUSD engel TimeoutError 2020-08-23 BID bekle 120
+16:55:13 GBPUSD engel TimeoutError 2023-01-30 BID bekle 120
+16:55:14 GBPUSD engel ConnectionResetError 2025-05-09 BID bekle 30
+16:55:16 GBPUSD engel TimeoutError 2023-10-31 BID bekle 60
+16:55:20 GBPUSD engel TimeoutError 2023-04-28 BID bekle 120
+16:55:37 GBPUSD engel TimeoutError 2025-11-11 BID bekle 30
+16:56:17 GBPUSD engel 503 2023-10-31 BID bekle 120
+16:56:22 EURUSD engel 503 2020-03-31 BID bekle 30
+16:56:52 EURUSD engel RemoteDisconnected 2020-03-31 BID bekle 60
+ATLANDI GBPUSD 2020-08-23 BID
+16:57:20 GBPUSD engel 503 2023-04-28 BID bekle 120
+16:57:31 EURUSD engel 503 2021-03-15 BID bekle 30
+16:57:31 EURUSD engel 503 2021-02-02 BID bekle 30
+16:57:31 GBPUSD engel 503 2023-01-30 BID bekle 120
+16:58:01 EURUSD engel RemoteDisconnected 2021-03-15 BID bekle 60
+16:58:01 EURUSD engel RemoteDisconnected 2021-02-02 BID bekle 60
+16:58:06 EURUSD engel 503 2022-01-24 BID bekle 30
+16:58:06 EURUSD engel 503 2022-02-16 BID bekle 30
+16:58:17 GBPUSD engel RemoteDisconnected 2023-10-31 BID bekle 120
+16:58:25 EURUSD engel 503 2022-03-14 BID bekle 30
+16:58:28 EURUSD engel 503 2022-07-11 BID bekle 30
+16:58:36 EURUSD engel RemoteDisconnected 2022-01-24 BID bekle 60
+16:58:36 EURUSD engel RemoteDisconnected 2022-02-16 BID bekle 60
+16:58:55 EURUSD engel RemoteDisconnected 2022-03-14 BID bekle 60
+16:58:58 EURUSD engel RemoteDisconnected 2022-07-11 BID bekle 60
+16:59:11 EURUSD engel ConnectionResetError 2023-01-01 BID bekle 30
+ATLANDI GBPUSD 2023-04-28 BID
+16:59:20 EURUSD engel RemoteDisconnected 2023-03-07 BID bekle 30
+ATLANDI GBPUSD 2023-01-30 BID
+16:59:31 4000 / 10852
+16:59:31 EURUSD engel RemoteDisconnected 2023-03-28 BID bekle 30
+16:59:38 EURUSD engel ConnectionResetError 2022-12-28 BID bekle 30
+16:59:44 EURUSD engel ConnectionResetError 2023-02-23 BID bekle 30
+17:00:03 EURUSD engel ConnectionResetError 2023-03-07 BID bekle 60
+17:00:07 EURUSD engel TimeoutError 2023-02-24 BID bekle 30
+17:00:11 EURUSD engel ConnectionResetError 2023-02-06 BID bekle 30
+17:00:11 EURUSD engel TimeoutError 2021-02-02 BID bekle 120
+17:00:11 EURUSD engel TimeoutError 2023-02-12 BID bekle 30
+ATLANDI GBPUSD 2023-10-31 BID
+17:00:17 5000 / 10852
+17:00:39 EURUSD engel TimeoutError 2022-01-24 BID bekle 120
+17:00:39 EURUSD engel TimeoutError 2022-02-16 BID bekle 120
+17:00:44 EURUSD engel TimeoutError 2023-01-01 BID bekle 60
+17:01:04 EURUSD engel TimeoutError 2023-03-28 BID bekle 60
+17:01:10 EURUSD engel TimeoutError 2022-12-28 BID bekle 60
+17:01:16 EURUSD engel TimeoutError 2023-02-23 BID bekle 60
+17:01:33 EURUSD engel TimeoutError 2023-02-24 BID bekle 60
+17:01:36 EURUSD engel TimeoutError 2023-02-06 BID bekle 60
+17:01:58 EURUSD engel TimeoutError 2023-03-07 BID bekle 120
+17:02:20 EURUSD engel TimeoutError 2024-11-10 BID bekle 30
+17:02:31 EURUSD engel TimeoutError 2024-12-15 BID bekle 30
+17:02:31 EURUSD engel ConnectionResetError 2025-03-23 BID bekle 30
+17:02:50 EURUSD engel 503 2025-12-29 BID bekle 30
+17:02:55 EURUSD engel TimeoutError 2023-03-28 BID bekle 120
+17:02:56 EURUSD engel 503 2026-02-03 BID bekle 30
+17:03:01 EURUSD engel TimeoutError 2022-12-28 BID bekle 120
+17:03:02 EURUSD engel TimeoutError 2021-02-02 BID bekle 120
+17:03:03 EURUSD engel 503 2026-02-27 BID bekle 30
+17:03:06 EURUSD engel 503 2026-03-12 BID bekle 30
+17:03:07 EURUSD engel TimeoutError 2023-02-23 BID bekle 120
+17:03:11 EURUSD engel 503 2026-03-31 BID bekle 30
+17:03:12 EURUSD engel 503 2025-03-23 BID bekle 60
+17:03:12 EURUSD engel 503 2026-04-02 BID bekle 30
+17:03:12 EURUSD engel 503 2026-04-05 BID bekle 30
+17:03:20 EURUSD engel RemoteDisconnected 2025-12-29 BID bekle 60
+17:03:23 EURUSD engel TimeoutError 2023-02-24 BID bekle 120
+17:03:26 EURUSD engel 503 2026-05-01 BID bekle 30
+17:03:27 EURUSD engel RemoteDisconnected 2026-02-03 BID bekle 60
+17:03:33 EURUSD engel RemoteDisconnected 2026-02-27 BID bekle 60
+17:03:36 EURUSD engel RemoteDisconnected 2026-03-12 BID bekle 60
+17:03:41 EURUSD engel RemoteDisconnected 2026-03-31 BID bekle 60
+17:03:42 EURUSD engel RemoteDisconnected 2026-04-02 BID bekle 60
+17:03:42 EURUSD engel RemoteDisconnected 2026-04-05 BID bekle 60
+17:03:56 EURUSD engel RemoteDisconnected 2026-05-01 BID bekle 60
+17:03:58 EURUSD engel 503 2026-05-25 BID bekle 30
+17:03:58 EURUSD engel 503 2023-03-07 BID bekle 120
+17:04:12 EURUSD engel RemoteDisconnected 2025-03-23 BID bekle 120
+17:04:28 EURUSD engel RemoteDisconnected 2026-05-25 BID bekle 60
+17:04:44 EURUSD engel 503 2026-04-05 BID bekle 120
+17:04:44 EURUSD engel 503 2026-04-02 BID bekle 120
+17:04:55 EURUSD engel 503 2026-05-26 BID bekle 30
+17:04:55 EURUSD engel 503 2023-03-28 BID bekle 120
+17:04:56 EURUSD engel 503 2026-02-03 BID bekle 120
+17:04:56 EURUSD engel 503 2026-02-27 BID bekle 120
+17:04:56 EURUSD engel 503 2026-03-31 BID bekle 120
+17:04:56 EURUSD engel 503 2026-05-01 BID bekle 120
+17:04:59 EURUSD engel 503 2026-05-27 BID bekle 30
+ATLANDI EURUSD 2021-02-02 BID
+17:05:02 EURUSD engel 503 2026-05-28 BID bekle 30
+17:05:24 EURUSD engel 503 2023-02-24 BID bekle 120
+17:05:25 EURUSD engel RemoteDisconnected 2026-05-26 BID bekle 60
+17:05:28 EURUSD engel 503 2026-05-25 BID bekle 120
+17:05:29 EURUSD engel RemoteDisconnected 2026-05-27 BID bekle 60
+17:05:32 EURUSD engel RemoteDisconnected 2026-05-28 BID bekle 60
+17:05:33 EURUSD engel 503 2026-05-29 BID bekle 30
+17:05:36 EURUSD engel 503 2026-05-31 BID bekle 30
+ATLANDI EURUSD 2023-03-07 BID
+17:05:58 EURUSD engel RemoteDisconnected 2026-06-01 BID bekle 30
+17:06:03 EURUSD engel RemoteDisconnected 2026-05-29 BID bekle 60
+17:06:06 EURUSD engel RemoteDisconnected 2026-05-31 BID bekle 60
+17:06:42 EURUSD engel ConnectionResetError 2026-06-01 BID bekle 60
+17:06:44 EURUSD engel RemoteDisconnected 2026-04-02 BID bekle 120
+17:06:44 EURUSD engel RemoteDisconnected 2026-04-05 BID bekle 120
+ATLANDI EURUSD 2023-03-28 BID
+17:06:55 EURUSD engel RemoteDisconnected 2026-07-08 BID bekle 30
+17:06:56 EURUSD engel RemoteDisconnected 2026-02-03 BID bekle 120
+17:06:56 EURUSD engel RemoteDisconnected 2026-02-27 BID bekle 120
+17:06:56 EURUSD engel RemoteDisconnected 2026-03-31 BID bekle 120
+17:06:56 EURUSD engel RemoteDisconnected 2026-05-01 BID bekle 120
+ATLANDI EURUSD 2023-02-24 BID
+17:07:24 6000 / 10852
+17:07:24 EURUSD engel RemoteDisconnected 2026-09-01 BID bekle 30
+17:07:27 EURUSD engel TimeoutError 2025-03-23 BID bekle 120
+17:07:28 EURUSD engel RemoteDisconnected 2026-05-25 BID bekle 120
+17:07:44 EURUSD engel TimeoutError 2026-05-27 BID bekle 120
+17:07:47 EURUSD engel TimeoutError 2026-05-28 BID bekle 120
+17:08:04 EURUSD engel ConnectionResetError 2026-06-01 BID bekle 120
+17:08:18 EURUSD engel TimeoutError 2026-05-29 BID bekle 120
+17:08:21 EURUSD engel TimeoutError 2026-05-31 BID bekle 120
+ATLANDI EURUSD 2026-04-02 BID
+ATLANDI EURUSD 2026-04-05 BID
+ATLANDI EURUSD 2026-02-03 BID
+ATLANDI EURUSD 2026-02-27 BID
+ATLANDI EURUSD 2026-03-31 BID
+ATLANDI EURUSD 2026-05-01 BID
+17:08:57 EURUSD engel ConnectionResetError 2026-09-01 BID bekle 60
+ATLANDI EURUSD 2025-03-23 BID
+ATLANDI EURUSD 2026-05-25 BID
+17:09:29 USDCAD engel 503 2018-12-10 BID bekle 30
+17:09:29 USDCAD engel 503 2018-12-17 BID bekle 30
+17:09:30 USDCAD engel 503 2018-12-25 BID bekle 30
+17:09:36 USDCAD engel 503 2019-01-22 BID bekle 30
+17:09:36 USDCAD engel 503 2019-01-24 BID bekle 30
+17:09:59 USDCAD engel RemoteDisconnected 2018-12-10 BID bekle 60
+17:09:59 USDCAD engel RemoteDisconnected 2018-12-17 BID bekle 60
+17:10:00 USDCAD engel RemoteDisconnected 2018-12-25 BID bekle 60
+17:10:06 USDCAD engel RemoteDisconnected 2019-01-22 BID bekle 60
+17:10:06 USDCAD engel RemoteDisconnected 2019-01-24 BID bekle 60
+17:10:47 7000 / 10852
+17:10:53 USDCAD engel RemoteDisconnected 2019-07-16 BID bekle 30
+17:10:58 USDCAD engel 503 2019-07-28 BID bekle 30
+17:10:59 USDCAD engel 503 2018-12-10 BID bekle 120
+17:11:00 USDCAD engel 503 2018-12-17 BID bekle 120
+17:11:00 USDCAD engel 503 2018-12-25 BID bekle 120
+17:11:02 USDCAD engel 503 2019-07-29 BID bekle 30
+17:11:04 USDCAD engel 503 2019-07-30 BID bekle 30
+17:11:04 USDCAD engel 503 2019-08-01 BID bekle 30
+17:11:28 USDCAD engel RemoteDisconnected 2019-07-28 BID bekle 60
+17:11:32 USDCAD engel RemoteDisconnected 2019-07-29 BID bekle 60
+17:11:34 USDCAD engel RemoteDisconnected 2019-07-30 BID bekle 60
+17:11:34 USDCAD engel RemoteDisconnected 2019-08-01 BID bekle 60
+17:11:44 USDCAD engel 503 2019-08-20 BID bekle 30
+17:11:44 USDCAD engel 503 2019-08-21 BID bekle 30
+17:11:44 USDCAD engel RemoteDisconnected 2019-08-06 BID bekle 30
+17:11:44 USDCAD engel 503 2019-08-22 BID bekle 30
+17:11:44 USDCAD engel 503 2019-08-25 BID bekle 30
+17:11:44 USDCAD engel 503 2019-08-26 BID bekle 30
+17:11:44 USDCAD engel 503 2019-08-27 BID bekle 30
+17:11:45 USDCAD engel 503 2019-08-28 BID bekle 30
+17:11:45 USDCAD engel RemoteDisconnected 2019-08-14 BID bekle 30
+17:12:14 USDCAD engel RemoteDisconnected 2019-08-20 BID bekle 60
+17:12:14 USDCAD engel RemoteDisconnected 2019-08-26 BID bekle 60
+17:12:14 USDCAD engel RemoteDisconnected 2019-08-21 BID bekle 60
+17:12:14 USDCAD engel RemoteDisconnected 2019-08-22 BID bekle 60
+17:12:14 USDCAD engel RemoteDisconnected 2019-08-25 BID bekle 60
+17:12:14 USDCAD engel RemoteDisconnected 2019-08-27 BID bekle 60
+17:12:15 USDCAD engel RemoteDisconnected 2019-08-28 BID bekle 60
+17:12:15 USDCAD engel 503 2019-08-14 BID bekle 60
+17:12:32 USDCAD engel 503 2019-07-29 BID bekle 120
+17:12:48 USDCAD engel 503 2019-07-28 BID bekle 120
+17:12:48 USDCAD engel 503 2019-07-30 BID bekle 120
+17:12:48 USDCAD engel 503 2019-08-29 BID bekle 30
+17:12:59 USDCAD engel RemoteDisconnected 2018-12-10 BID bekle 120
+17:13:00 USDCAD engel RemoteDisconnected 2018-12-17 BID bekle 120
+17:13:00 USDCAD engel RemoteDisconnected 2018-12-25 BID bekle 120
+17:13:15 USDCAD engel RemoteDisconnected 2019-08-14 BID bekle 120
+17:13:18 USDCAD engel RemoteDisconnected 2019-08-29 BID bekle 60
+17:13:24 USDCAD engel 503 2019-08-20 BID bekle 120
+17:13:24 USDCAD engel 503 2019-08-22 BID bekle 120
+17:13:24 USDCAD engel 503 2019-08-21 BID bekle 120
+17:13:24 USDCAD engel 503 2019-08-26 BID bekle 120
+17:13:24 USDCAD engel 503 2019-08-27 BID bekle 120
+17:13:24 USDCAD engel 503 2019-08-28 BID bekle 120
+17:13:29 USDCAD engel 503 2019-08-30 BID bekle 30
+17:13:29 USDCAD engel 503 2019-08-25 BID bekle 120
+17:13:59 USDCAD engel RemoteDisconnected 2019-08-30 BID bekle 60
+17:14:32 USDCAD engel RemoteDisconnected 2019-07-29 BID bekle 120
+17:14:48 USDCAD engel RemoteDisconnected 2019-07-28 BID bekle 120
+17:14:48 USDCAD engel RemoteDisconnected 2019-07-30 BID bekle 120
+ATLANDI USDCAD 2018-12-10 BID
+ATLANDI USDCAD 2018-12-17 BID
+ATLANDI USDCAD 2018-12-25 BID
+17:15:20 USDCAD engel ConnectionResetError 2019-09-02 BID bekle 30
+17:15:24 USDCAD engel RemoteDisconnected 2019-08-21 BID bekle 120
+17:15:24 USDCAD engel RemoteDisconnected 2019-08-22 BID bekle 120
+17:15:24 USDCAD engel RemoteDisconnected 2019-08-26 BID bekle 120
+17:15:24 USDCAD engel RemoteDisconnected 2019-08-27 BID bekle 120
+17:15:24 USDCAD engel RemoteDisconnected 2019-08-20 BID bekle 120
+17:15:24 USDCAD engel RemoteDisconnected 2019-08-28 BID bekle 120
+17:15:29 USDCAD engel RemoteDisconnected 2019-08-25 BID bekle 120
+17:15:33 USDCAD engel TimeoutError 2019-08-29 BID bekle 120
+17:16:15 USDCAD engel TimeoutError 2019-09-03 BID bekle 30
+17:16:30 USDCAD engel TimeoutError 2019-08-14 BID bekle 120
+ATLANDI USDCAD 2019-07-29 BID
+ATLANDI USDCAD 2019-07-28 BID
+ATLANDI USDCAD 2019-07-30 BID
+17:17:22 USDCAD engel TimeoutError 2020-03-09 BID bekle 30
+ATLANDI USDCAD 2019-08-26 BID
+ATLANDI USDCAD 2019-08-27 BID
+ATLANDI USDCAD 2019-08-22 BID
+ATLANDI USDCAD 2019-08-28 BID
+ATLANDI USDCAD 2019-08-21 BID
+ATLANDI USDCAD 2019-08-20 BID
+ATLANDI USDCAD 2019-08-25 BID
+17:17:36 USDCAD engel TimeoutError 2019-09-03 BID bekle 60
+17:17:43 USDCAD engel ConnectionResetError 2020-11-25 BID bekle 30
+17:17:43 USDCAD engel ConnectionResetError 2020-11-24 BID bekle 30
+17:18:17 USDCAD engel TimeoutError 2020-12-07 BID bekle 30
+17:18:18 USDCAD engel ConnectionResetError 2020-11-26 BID bekle 30
+17:18:19 USDCAD engel ConnectionResetError 2019-08-29 BID bekle 120
+ATLANDI USDCAD 2019-08-14 BID
+17:18:44 USDCAD engel TimeoutError 2020-03-09 BID bekle 60
+17:18:56 USDCAD engel ConnectionResetError 2019-09-03 BID bekle 120
+17:18:57 USDCAD engel ConnectionResetError 2020-11-26 BID bekle 60
+17:19:04 USDCAD engel TimeoutError 2020-11-25 BID bekle 60
+17:19:22 USDCAD engel TimeoutError 2022-01-31 BID bekle 30
+17:19:49 USDCAD engel TimeoutError 2022-07-17 BID bekle 30
+ATLANDI USDCAD 2019-08-29 BID
+17:20:20 USDCAD engel 503 2024-01-12 BID bekle 30
+17:20:41 USDCAD engel 503 2024-05-06 BID bekle 30
+17:20:50 USDCAD engel RemoteDisconnected 2024-01-12 BID bekle 60
+17:21:08 USDCAD engel 503 2024-04-24 BID bekle 30
+17:21:08 USDCAD engel 503 2024-09-04 BID bekle 30
+17:21:08 USDCAD engel 503 2024-10-13 BID bekle 30
+17:21:08 USDCAD engel 503 2019-09-03 BID bekle 120
+17:21:08 USDCAD engel 503 2024-11-21 BID bekle 30
+17:21:11 USDCAD engel RemoteDisconnected 2024-05-06 BID bekle 60
+17:21:38 USDCAD engel RemoteDisconnected 2024-04-24 BID bekle 60
+17:21:38 USDCAD engel RemoteDisconnected 2024-09-04 BID bekle 60
+17:21:38 USDCAD engel RemoteDisconnected 2024-10-13 BID bekle 60
+17:21:38 USDCAD engel RemoteDisconnected 2024-11-21 BID bekle 60
+ATLANDI USDCAD 2019-09-03 BID
+17:23:08 8000 / 10852
+17:23:08 AUDUSD engel RemoteDisconnected 2019-03-27 ASK bekle 30
+17:23:29 USDCAD engel ConnectionResetError 2026-11-08 BID bekle 30
+17:23:30 AUDUSD engel ConnectionResetError 2019-07-10 ASK bekle 30
+17:23:32 USDCAD engel TimeoutError 2024-09-04 BID bekle 120
+17:23:32 USDCAD engel TimeoutError 2024-10-13 BID bekle 120
+17:23:32 USDCAD engel TimeoutError 2024-11-21 BID bekle 120
+17:24:07 AUDUSD engel TimeoutError 2020-11-25 ASK bekle 30
+17:24:16 AUDUSD engel ConnectionResetError 2021-03-24 ASK bekle 30
+17:24:31 AUDUSD engel TimeoutError 2021-08-04 ASK bekle 30
+17:24:41 AUDUSD engel TimeoutError 2022-07-06 ASK bekle 30
+17:24:44 AUDUSD engel TimeoutError 2019-03-27 ASK bekle 60
+17:25:05 USDCAD engel ConnectionResetError 2026-11-08 BID bekle 60
+17:25:20 GBPUSD engel ConnectionResetError 2023-12-27 ASK bekle 30
+17:25:29 GBPUSD engel TimeoutError 2020-10-28 ASK bekle 30
+17:25:34 AUDUSD engel TimeoutError 2020-11-25 ASK bekle 60
+17:25:34 AUDUSD engel ConnectionResetError 2022-07-06 ASK bekle 60
+17:25:53 GBPUSD engel TimeoutError 2021-12-22 ASK bekle 30
+17:25:57 AUDUSD engel TimeoutError 2021-08-04 ASK bekle 60
+17:25:57 AUDUSD engel TimeoutError 2021-03-24 ASK bekle 60
+17:26:03 GBPUSD engel TimeoutError 2023-07-19 ASK bekle 30
+17:26:29 GBPUSD engel TimeoutError 2026-02-25 ASK bekle 30
+17:26:39 USDCAD engel TimeoutError 2024-09-04 BID bekle 120
+17:26:39 USDCAD engel TimeoutError 2024-10-13 BID bekle 120
+17:26:39 USDCAD engel TimeoutError 2024-11-21 BID bekle 120
+17:26:43 GBPUSD engel ConnectionResetError 2021-12-22 ASK bekle 60
+17:26:50 AUDUSD engel TimeoutError 2019-03-27 ASK bekle 120
+17:26:52 GBPUSD engel TimeoutError 2023-12-27 ASK bekle 60
+17:26:53 AUDUSD engel ConnectionResetError 2020-11-25 ASK bekle 120
+17:27:01 GBPUSD engel TimeoutError 2020-10-28 ASK bekle 60
+17:27:07 USDCAD engel TimeoutError 2026-11-08 BID bekle 120
+17:27:37 AUDUSD engel TimeoutError 2022-07-06 ASK bekle 120
+17:28:25 USDCAD engel 503 2026-04-15 ASK bekle 30
+ATLANDI USDCAD 2024-09-04 BID
+ATLANDI USDCAD 2024-10-13 BID
+ATLANDI USDCAD 2024-11-21 BID
+17:28:39 9000 / 10852
+17:28:55 USDCAD engel RemoteDisconnected 2026-04-15 ASK bekle 60
+17:29:39 AUDUSD engel 503 2022-07-06 ASK bekle 120
+ATLANDI AUDUSD 2022-07-06 ASK
+17:31:39 10000 / 10852
+İNDİRME BİTTİ 10852

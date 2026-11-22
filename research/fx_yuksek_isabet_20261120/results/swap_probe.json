@@ -1,0 +1,72 @@
+{
+ "USDAED": {
+  "swap_mode": 1,
+  "swap_long": 65.62,
+  "swap_short": -120.38,
+  "swap_rollover3days": 3,
+  "point": 1e-05,
+  "trade_tick_value": 0.272248116043037,
+  "trade_contract_size": 100000.0,
+  "bid": 3.67293,
+  "ask": 3.67312,
+  "currency_profit": "AED",
+  "trade_mode": 0,
+  "volume_min": 1e-08
+ },
+ "USDHKD": {
+  "swap_mode": 1,
+  "swap_long": 9.33,
+  "swap_short": -50.36,
+  "swap_rollover3days": 3,
+  "point": 1e-05,
+  "trade_tick_value": 0.1275502069502108,
+  "trade_contract_size": 100000.0,
+  "bid": 7.8370999999999995,
+  "ask": 7.84005,
+  "currency_profit": "HKD",
+  "trade_mode": 0,
+  "volume_min": 1e-08
+ },
+ "EURUSD": {
+  "swap_mode": 1,
+  "swap_long": -7.15,
+  "swap_short": 1.4,
+  "swap_rollover3days": 3,
+  "point": 1e-05,
+  "trade_tick_value": 1.0,
+  "trade_contract_size": 100000.0,
+  "bid": 1.0961,
+  "ask": 1.09622,
+  "currency_profit": "USD",
+  "trade_mode": 4,
+  "volume_min": 0.01
+ },
+ "USDTHB": {
+  "swap_mode": 1,
+  "swap_long": -1114.89,
+  "swap_short": -752.89,
+  "swap_rollover3days": 3,
+  "point": 1e-05,
+  "trade_tick_value": 0.02943942911059069,
+  "trade_contract_size": 100000.0,
+  "bid": 33.88895,
+  "ask": 33.96805,
+  "currency_profit": "THB",
+  "trade_mode": 4,
+  "volume_min": 0.01
+ },
+ "USDCNH": {
+  "swap_mode": 1,
+  "swap_long": 13.88,
+  "swap_short": -88.8,
+  "swap_rollover3days": 3,
+  "point": 1e-05,
+  "trade_tick_value": 0.1497801975600806,
+  "trade_contract_size": 100000.0,
+  "bid": 6.67426,
+  "ask": 6.67645,
+  "currency_profit": "CNH",
+  "trade_mode": 4,
+  "volume_min": 0.01
+ }
+}
