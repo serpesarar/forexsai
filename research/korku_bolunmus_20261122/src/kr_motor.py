@@ -37,13 +37,14 @@ def events(b: pd.DataFrame, step: int, name: str) -> list[dict]:
     for i, d in enumerate(days):
         if not sig.iloc[i] or d > CUT or f.opex_k.iloc[i] in (0, 1, 2):
             continue
-        bid, ask, idx = [], [], []
+        bid, ask, idx, asknx = [], [], [], []
         for j in range(i, min(i + NDAY, len(days))):
             u = VR.ts(days[j], 16, 0)
             k = int(np.searchsorted(t, u))
             if k >= len(t) or t[k] - u > tol:
                 break
             bid.append(float(o[k])); ask.append(float(o[k] + sp[k])); idx.append(k)
+            asknx.append(float(o[k + 1] + sp[k + 1]) if k + 1 < len(t) else np.nan)
         if len(bid) < 2:
             continue
         cal = [(days[i + j] - d).days for j in range(len(bid))]
@@ -51,7 +52,7 @@ def events(b: pd.DataFrame, step: int, name: str) -> list[dict]:
         dts = [days[i + j] for j in range(len(bid))]
         rlo = [float(dp.lo.iloc[i + j]) for j in range(len(bid))]
         rhi = [float(dp.hi.iloc[i + j]) for j in range(len(bid))]
-        out.append({"feed": name, "d": d, "bid": bid, "ask": ask, "cal": cal, "low": lows, "dates": dts, "rlo": rlo, "rhi": rhi,
+        out.append({"feed": name, "d": d, "bid": bid, "ask": ask, "cal": cal, "low": lows, "dates": dts, "rlo": rlo, "rhi": rhi, "ask_nx": asknx,
                     "donem": "KESIF" if d <= pd.Timestamp("2021-10-31") else "TEST",
                     "f": {k: (float(v) if isinstance(v, (int, float, np.floating, np.integer)) else v) for k, v in f.iloc[i].to_dict().items()}})
     return out
@@ -95,7 +96,12 @@ def sim(ev: dict, entry: str, rule: str, h: float, **kw) -> tuple[float, int]:
 
 def main() -> None:
     P = []
-    for name, (b, step) in E.feeds().items():
+    sys.path.insert(0, str(ROOT / "research/ksg_tpsl_20261119/src"))
+    import motor as KM  # noqa: E402
+    feeds = dict(E.feeds())
+    for nm in ("EET30", "NQ"):
+        feeds[nm] = KM.load(nm)
+    for name, (b, step) in feeds.items():
         ev = events(b, step, name)
         P += ev
         print(name, len(ev))

@@ -61,3 +61,14 @@ Donmuş A50_u1,0, hiçbir parametre değişmez.
 - Kart ölçütleri (Duka NDX tüm dönem, mutlak net bp, işlem = ana + ek): (1) ≥ 150; (2) ort > 0 ∧ P(EV>0) ≥ %90; (3) kronolojik iki yarı ≥ 0 ve iki yarıda da fark > 0;
   (4) spread ×1,5 stresinde fark > 0; (5) icra: ek birim D1 16:00 + 1 bar açılışından alınırsa fark > 0; (6) tek pozisyon (ana + ek bir pozisyon sayılır) ile fark > 0.
 - **B:** EET30 ve NQ'da fark > 0 ve CVaR5 ≥ 1,5 × taban, ve (1)–(6). C: biri düşer. X: EET30 ve NQ ikisinde de fark ≤ 0.
+
+## TUR 4 sonucu (değiştirilmez): **B**
+Dokunulmamış EET30 +23,8 bp (CVaR5 −395 → −554, sınır −593), NQ +6,2 (−424 → −623, sınır −636; Sharpe 1,72 → 1,40, maks. düşüş −1.241 → −2.353). Duka NDX tüm dönem
++20,4, kart 6/6: n 324, ort +94,7, P 1,00, yarılar +104/+85 (fark +23/+18), spread ×1,5 +20,3, sonraki bar +20,0, tek pozisyon +18,2 (253). Ek oranı %25.
+
+## TUR 5 — KR-05: ek birimin çıkışı (düşüşü azaltma; TUR 4'ten SONRA, TUR 5 sonuçlarından ÖNCE)
+Ekleme koşulu donmuş (D1 zararı ≤ −50 bp). Ek birimin çıkışı: Y1 ana ile birlikte (TUR 3); Y2 tek gece (D2 16:00); Y3 kendi XP'si (ilk referans D1 16:00 bid) en çok 2 gün;
+Y4 D2 16:00'da kârdaysa çık, değilse ana ile. Ek büyüklüğü u ∈ {0,5; 1,0} → 8 hücre.
+- Seçim (yalnız KEŞİF Duka + MT5 4; EET30/NQ kullanılmaz): KEŞİF farkı ≥ TUR 3 hücresinin yarısı (≥ +9,2) olanlar arasında KEŞİF havuz maks. düşüşü en küçük 1 hücre.
+- **B:** TEST (i) Duka ve MT5 NAS100 fark > 0; (ii) havuz P ≥ 0,95; (iii) Duka ve MT5 NAS100 maks. düşüşü TUR 3 hücresininkinden küçük; (iv) EET30 ve NQ tüm dönem fark > 0;
+  (v) Duka Sharpe > taban. C: (i) geçer biri düşer. X: (i) düşer.

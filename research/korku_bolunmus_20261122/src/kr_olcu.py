@@ -119,7 +119,7 @@ def _ctx():
     return _CTX
 
 
-OWN = {"DUKA_NDX": "NDX", "MT5_NAS100": "NDX", "MT5_US500": "GSPC", "MT5_US30": "DJI", "MT5_US2000": "RUT"}
+OWN = {"DUKA_NDX": "NDX", "MT5_NAS100": "NDX", "EET30": "NDX", "NQ": "NDX", "MT5_US500": "GSPC", "MT5_US30": "DJI", "MT5_US2000": "RUT"}
 
 
 def d1_feats(ev: dict) -> dict:
@@ -242,8 +242,63 @@ def tur3() -> dict:
     return out
 
 
+# ───────── TUR 4 ─────────
+CELL3 = (50, 1.0, None, False)
+
+
+def add_sim_ex(ev: dict, nx: bool = False, stress: float = 0.0) -> tuple[float, int, bool]:
+    r, jx = M.sim(ev, "E0", "XP", 1.0)
+    sp0 = (ev["ask"][0] / ev["bid"][0] - 1) * 1e4
+    tot = r - stress * sp0
+    added = False
+    if jx > 1 and ev.get("d1") is not None and ev["d1"]["r1bp"] <= -CELL3[0]:
+        a1 = ev["ask_nx"][1] if nx else ev["ask"][1]
+        if np.isfinite(a1):
+            ra = (ev["bid"][jx] / a1 - 1) * 1e4 - M.FIN * (ev["cal"][jx] - ev["cal"][1])
+            sp1 = (ev["ask"][1] / ev["bid"][1] - 1) * 1e4
+            tot += CELL3[1] * (ra - stress * sp1)
+            added = True
+    return tot, jx, added
+
+
+def tur4() -> dict:
+    P = load()
+    for ev in P:
+        ev["d1"] = d1_feats(ev) if len(ev["bid"]) > 1 else None
+    rows = []
+    for ev in P:
+        b, jb = M.sim(ev, "E0", "XP", 1.0)
+        v, jx, ad = add_sim_ex(ev)
+        rows.append({"feed": ev["feed"], "d": pd.Timestamp(ev["d"]), "exit": pd.Timestamp(ev["dates"][jx]), "base": b, "kq": v, "eklendi": ad,
+                     "kq_nx": add_sim_ex(ev, nx=True)[0], "kq_s15": add_sim_ex(ev, stress=0.5)[0],
+                     "base_s15": b - 0.5 * (ev["ask"][0] / ev["bid"][0] - 1) * 1e4})
+    T = pd.DataFrame(rows)
+    T["blk"] = T.feed + "|" + T.d.dt.to_period("M").astype(str)
+    T["donem"] = "TUM"
+    st = {g: stats(T[T.feed == g], "kq") for g in ("EET30", "NQ", "DUKA_NDX", "MT5_NAS100")}
+    taze_ok = all(st[g]["fark"] > 0 and st[g]["cvar5"][1] >= 1.5 * st[g]["cvar5"][0] for g in ("EET30", "NQ"))
+    x = T[T.feed == "DUKA_NDX"].sort_values("d").reset_index(drop=True)
+    h = len(x) // 2
+    keep, busy = [], pd.Timestamp("1900-01-01")
+    for i, r in x.iterrows():
+        if r.d > busy:
+            keep.append(i); busy = r.exit
+    op = x.loc[keep]
+    kart = {"n": len(x), "ort": round(float(x.kq.mean()), 1), "P_EV": boot(x.kq.values, x.blk.values),
+            "yari_ort": [round(float(x.kq[:h].mean()), 1), round(float(x.kq[h:].mean()), 1)],
+            "yari_fark": [round(float((x.kq - x.base)[:h].mean()), 1), round(float((x.kq - x.base)[h:].mean()), 1)],
+            "s15_fark": round(float((x.kq_s15 - x.base_s15).mean()), 1), "nx_fark": round(float((x.kq_nx - x.base).mean()), 1),
+            "tek_poz": {"n": len(op), "fark": round(float((op.kq - op.base).mean()), 1), "ort": round(float(op.kq.mean()), 1)},
+            "ek_orani": round(float(x.eklendi.mean()), 3)}
+    ko = {"1": kart["n"] >= 150, "2": kart["ort"] > 0 and kart["P_EV"] >= 0.90, "3": min(kart["yari_ort"]) >= 0 and min(kart["yari_fark"]) > 0,
+          "4": kart["s15_fark"] > 0, "5": kart["nx_fark"] > 0, "6": kart["tek_poz"]["fark"] > 0}
+    kart["olcut"] = ko
+    neg = all(st[g]["fark"] <= 0 for g in ("EET30", "NQ"))
+    return {"besleme": st, "taze_ok": taze_ok, "kart": kart, "hukum": "B" if taze_ok and all(ko.values()) else ("X" if neg else "C")}
+
+
 if __name__ == "__main__":
-    fn = {"tur1": tur1, "tur2": tur2, "tur3": tur3}[sys.argv[1]]
+    fn = {"tur1": tur1, "tur2": tur2, "tur3": tur3, "tur4": tur4}[sys.argv[1]]
     out = fn()
     json.dump(out, open(HERE / f"results/{sys.argv[1]}.json", "w"), ensure_ascii=False, indent=1, default=float)
     print(json.dumps({k: out[k] for k in out if k != "test_tum"}, ensure_ascii=False, indent=1, default=float)[:6000])
