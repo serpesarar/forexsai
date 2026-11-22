@@ -482,3 +482,10 @@ Kayıp yalnız 2008 krizinden değil, 2010 öncesinin tamamından geliyor → ç
 ertesi D1 açılışı, TP 0,5 / SL 3 ATR20, 10 bar; EMİR YOK. Birebirlik `parity_cot_g2.py`: 870 haftanın 870'inde aynı (çift, yön). Birim testleri
 `test_cot_g2_shadow.py` (5). Bota bağlandı (`forexsai_demo_bot.py`, `COT_G2_SHADOW_ENABLED`, varsayılan açık). İlk sinyal: rapor 2026-11-17 →
 CHFJPY AL (JPY z +1,26 uzun-kalabalık, CHF z −2,12 kısa-kalabalık). Karne ölçütü: ≥ 40 ileri işlem, isabet ≥ %75 ∧ ort > 0 → ancak o zaman kart.
+
+## EK-8b (2026-11-22) — HK3 sıklığı + ileri gölge kaydı
+`hk3.py` (EK-8 birebir yeniden üretim): 71 işlem, isabet %91,5 (swapsız %85,9), ort +2,1 bp (swapsız +0,6), en kötü −9,4 bp;
+**ayda ort. 0,37 işlem** — 194 ayın yalnız 38'inde işlem var (o aylarda ort. 1,9), kümeli (2015 21, 2020 19, 2016 11; 2018–19, 2022–24,
+2026'da hiç). Tutuş medyan 3,3 gün, ort 12,3, p90 32,7.
+Gölge `yeni deneme/hk3_shadow.py`: Pepperstone USDHKD fiyatı (işleme kapalı ama yayınlanıyor) H1 kapanmış barlar; EMİR YOK.
+Birebirlik `parity_hk3.py`: 71/71 giriş aynı, swapsız %85,9 / +0,6, swaplı %91,5 / +2,09 (araştırma +2,1). Bota bağlandı (`HK3_SHADOW_ENABLED`).

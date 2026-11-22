@@ -65,6 +65,10 @@ try:                                    # COT-G2 kesitsel kalabalık dönüşü 
     import cot_g2_shadow
 except Exception:                       # pragma: no cover
     cot_g2_shadow = None
+try:                                    # HK3 USDHKD 7,75 taahhüt ucu GÖLGE (FX-YI EK-8, sınıf B, işleme kapalı sembol) — emir göndermez
+    import hk3_shadow
+except Exception:                       # pragma: no cover
+    hk3_shadow = None
 try:                                    # aileler arası yığılma Y2 GÖLGE etiketi (IO-29, 2026-11-12) — emir göndermez, giriş engellemez
     import yigilma_shadow
 except Exception:                       # pragma: no cover
@@ -2803,6 +2807,14 @@ def main():
                     cot_g2_shadow.poll(mt5, log, cfg=config)
                 except Exception as e:
                     log.warning("cot-g2 gölge hatası: %s", e)
+
+            # ── HK3 USDHKD 7,75 taahhüt ucu GÖLGE (FX-YI EK-8; 2010–26 n 71 %91,5 +2,1 bp, ayda 0,37) — Pepperstone'da USDHKD
+            #    işleme kapalı (trade_mode 0), fiyat yayınlanıyor → yalnız ileri kanıt. EMİR YOK. Kapatma: config.HK3_SHADOW_ENABLED = False.
+            if hk3_shadow is not None and getattr(config, "HK3_SHADOW_ENABLED", True):
+                try:
+                    hk3_shadow.poll(mt5, log, cfg=config)
+                except Exception as e:
+                    log.warning("hk3 gölge hatası: %s", e)
 
             # ── Aileler arası yığılma GÖLGE etiketi (IO-29 Y2, sınıf C) — EMİR YOK, giriş engellemez. Tüm hesabın
             #    deal geçmişini okur (decider dahil). Fren 'continue'undan ÖNCE. Kapatma: config.YIGILMA_SHADOW_ENABLED = False.

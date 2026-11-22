@@ -130,3 +130,7 @@ research/**/*.tar.gz
 research/**/*.csv.gz
 yeni deneme/cot_g2_state.json
 yeni deneme/cot_cache/
+
+# Kopya hesap ters mühendisliği (KH) — indirilen başkalarının işlem geçmişleri, push edilmez
+research/kopya_hesap_20261122/data/
+yeni deneme/hk3_state.json
