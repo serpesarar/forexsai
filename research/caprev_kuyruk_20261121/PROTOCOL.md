@@ -162,3 +162,11 @@ Kullanıcı: "ortalama ve maks. düşüşleri %60 oranında azaltana kadar derin
 - Sınama: TEST Duka NDX (birincil), MT5 NAS100, EET30, NQ, günlük 2016–26 NDX.
 - **Başarı (hedef):** Duka NDX'te ortalama zarar ve maks. düşüş KQ-06'nın ≤ %40'ı, ortalama kâr ≥ KQ-06'nın %60'ı (aynı ort. lotta), Sharpe ≥ KQ-06; MT5 NAS100 ve EET30'da
   yön aynı (iki ölçü de ≤ %70). Tutmazsa ulaşılan oranlar ve hedefe en yakın yapı raporlanır; hedef ancak lot küçültmeyle sağlanıyorsa açıkça yazılır.
+
+## KQ-08 sonucu (değiştirilmez): **hedef tutmadı**
+KEŞİF seçimi L6 (oynaklık lotu × kayıp sonrası yarım): KEŞİF zarar ×0,68, düşüş ×0,48. TEST'te ortalama ağırlık 1,23–1,37'ye çıktı (oynaklık lotu bu dönemde
+fiilen büyüttü); aynı ortalama lota çevrilince Duka NDX zarar ×0,89, düşüş ×0,85, kâr ×0,89 (hedef ≤ 0,40 / ≤ 0,40 / ≥ 0,60). Oynaklık lotu (L1) tek başına TEST'te
+zarar ×1,06, düşüş ×1,12 (kötüleştiriyor). Betimleyici (seçilmedi): **L4 kayıp sonrası yarım lot** aynı ort. lotta Duka ×0,84 / ×0,81 / kâr ×1,09, MT5 ×0,78 / ×0,75 / ×1,10,
+EET30 ×0,86 / ×0,81 / ×1,10, NQ ×0,93 / ×0,80 / ×1,08 — tutarlı ~%15–25 azalma, kâr korunuyor. Düz lot ×0,4: zarar −103 → −41, düşüş −519 → −208, kâr +76 → +30.
+**Okuma:** %60 azalma aynı ortalama lotta yapı/filtreyle elde edilmiyor (kaybeden girişte tanınmıyor); ancak lot küçültmeyle. L4 + lot ×0,5 kabaca zarar ×0,42,
+düşüş ×0,41, kâr ×0,55 verir (Duka) — hedefe düz lot ×0,4'ten daha ucuz ulaşır, ama L4 ön kayıtla seçilmedi.
