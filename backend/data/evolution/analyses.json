@@ -1183,5 +1183,15 @@
   "category": "research",
   "what_it_does": "Kâr çıkışında tutulan CAPREV işlemlerini ÇÖKÜŞ/DÖNÜŞ olarak ayırır, giriş ve D0/D1 kapanışı özelliklerinin ayırt ediciliğini ölçer; 216 hücrelik tutma şartı × stop takvimi × VIX korumasını 1990–2015'te seçip NDX/DAX/kör/taze beslemelerde ve canlıya alma kartında sınar.",
   "output": "research/caprev_kuyruk_20261121/RAPOR.md"
+ },
+ {
+  "id": "korku_bolunmus",
+  "name": "KORKU × CAPREV dersleri 5 tur: bölünmüş giriş, yarım tutuş, D1 tutuş şartı, koşullu ekleme",
+  "kind": "script",
+  "command": "cd research/korku_bolunmus_20261122 && python3 src/kr_motor.py && for t in tur1 tur2 tur3 tur4 tur5; do python3 src/kr_olcu.py $t; done",
+  "cwd": ".",
+  "category": "research",
+  "what_it_does": "Canlı KORKU paketinin (T30+OPEX+XP) 16:00 yollarında bölünmüş giriş, yarım tutuş, D1 kesme şartları, D1 koşullu ekleme ve ek birim çıkışlarını KEŞİF'te seçip TEST, kör ABD ve dokunulmamış EET30/NQ beslemelerinde sınar; canlıya alma kartı.",
+  "output": "research/korku_bolunmus_20261122/RAPOR.md"
  }
 ]

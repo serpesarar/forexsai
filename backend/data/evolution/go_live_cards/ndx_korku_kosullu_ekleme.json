@@ -1,0 +1,226 @@
+{
+ "scope": "ndx_korku_kosullu_ekleme",
+ "tarih": "2026-11-22",
+ "kural": "Canlı KORKU paketi (T30 + OPEX vetosu + XP) aynen; D1 16:00'da XP çıkmadıysa ve zarar ≤ −50 bp ise D1 16:00 ask'ında +1 birim; ek birim ana pozisyonla aynı XP çıkışında kapanır",
+ "on_kayit": "research/korku_bolunmus_20261122/PROTOCOL.md TUR 3 + TUR 4",
+ "hukum_tur3": "B",
+ "hukum_tur4": "B",
+ "test_tur3": {
+  "DUKA_NDX": {
+   "n": 195,
+   "taban": 68.5,
+   "ort": 90.6,
+   "fark": 22.1,
+   "isabet": [
+    0.759,
+    0.8
+   ],
+   "sharpe": [
+    1.972,
+    2.097
+   ],
+   "cvar5": [
+    -513,
+    -666
+   ],
+   "maxdd": [
+    -1226.0,
+    -1966.0
+   ],
+   "en_kotu": [
+    -783,
+    -1226
+   ]
+  },
+  "MT5_NAS100": {
+   "n": 185,
+   "taban": 68.9,
+   "ort": 89.6,
+   "fark": 20.7,
+   "isabet": [
+    0.768,
+    0.822
+   ],
+   "sharpe": [
+    1.885,
+    1.991
+   ],
+   "cvar5": [
+    -519,
+    -671
+   ],
+   "maxdd": [
+    -1233.0,
+    -1694.0
+   ],
+   "en_kotu": [
+    -786,
+    -1233
+   ]
+  },
+  "MT5_US500": {
+   "n": 152,
+   "taban": 73.7,
+   "ort": 94.9,
+   "fark": 21.2,
+   "isabet": [
+    0.829,
+    0.862
+   ],
+   "sharpe": [
+    2.382,
+    2.516
+   ],
+   "cvar5": [
+    -275,
+    -345
+   ],
+   "maxdd": [
+    -854.0,
+    -1035.0
+   ],
+   "en_kotu": [
+    -569,
+    -854
+   ]
+  },
+  "MT5_US30": {
+   "n": 128,
+   "taban": 48.5,
+   "ort": 65.0,
+   "fark": 16.5,
+   "isabet": [
+    0.758,
+    0.797
+   ],
+   "sharpe": [
+    1.552,
+    1.445
+   ],
+   "cvar5": [
+    -330,
+    -513
+   ],
+   "maxdd": [
+    -738.0,
+    -1067.0
+   ],
+   "en_kotu": [
+    -534,
+    -1012
+   ]
+  },
+  "MT5_US2000": {
+   "n": 181,
+   "taban": 45.9,
+   "ort": 52.6,
+   "fark": 6.7,
+   "isabet": [
+    0.707,
+    0.768
+   ],
+   "sharpe": [
+    1.496,
+    1.305
+   ],
+   "cvar5": [
+    -428,
+    -707
+   ],
+   "maxdd": [
+    -1512.0,
+    -2508.0
+   ],
+   "en_kotu": [
+    -653,
+    -1045
+   ]
+  }
+ },
+ "dokunulmamis": {
+  "EET30": {
+   "n": 290,
+   "taban": 75.5,
+   "ort": 99.3,
+   "fark": 23.8,
+   "isabet": [
+    0.772,
+    0.824
+   ],
+   "sharpe": [
+    2.092,
+    2.235
+   ],
+   "cvar5": [
+    -395,
+    -554
+   ],
+   "maxdd": [
+    -1223.0,
+    -1645.0
+   ],
+   "en_kotu": [
+    -781,
+    -1223
+   ]
+  },
+  "NQ": {
+   "n": 156,
+   "taban": 58.5,
+   "ort": 64.7,
+   "fark": 6.2,
+   "isabet": [
+    0.744,
+    0.788
+   ],
+   "sharpe": [
+    1.715,
+    1.398
+   ],
+   "cvar5": [
+    -424,
+    -623
+   ],
+   "maxdd": [
+    -1241.0,
+    -2353.0
+   ],
+   "en_kotu": [
+    -1241,
+    -2353
+   ]
+  }
+ },
+ "kart": {
+  "n": 324,
+  "ort": 94.7,
+  "P_EV": 1.0,
+  "yari_ort": [
+   104.3,
+   85.1
+  ],
+  "yari_fark": [
+   23.1,
+   17.7
+  ],
+  "s15_fark": 20.3,
+  "nx_fark": 20.0,
+  "tek_poz": {
+   "n": 253,
+   "fark": 18.2,
+   "ort": 87.3
+  },
+  "ek_orani": 0.25,
+  "olcut": {
+   "1": true,
+   "2": true,
+   "3": true,
+   "4": true,
+   "5": true,
+   "6": true
+  }
+ },
+ "verdikt": "LIVE",
+ "bedel": "maks. düşüş Duka −1.226 → −1.966, CVaR5 −437 → −586; NQ Sharpe 1,72 → 1,40",
+ "karar": "bekliyor (kullanıcı)"
+}

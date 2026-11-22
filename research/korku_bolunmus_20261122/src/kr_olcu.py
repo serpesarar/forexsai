@@ -297,8 +297,58 @@ def tur4() -> dict:
     return {"besleme": st, "taze_ok": taze_ok, "kart": kart, "hukum": "B" if taze_ok and all(ko.values()) else ("X" if neg else "C")}
 
 
+# ───────── TUR 5 ─────────
+def add_exit_sim(ev: dict, y: str, u: float) -> tuple[float, int]:
+    r, jx = M.sim(ev, "E0", "XP", 1.0)
+    if jx <= 1 or ev.get("d1") is None or ev["d1"]["r1bp"] > -50:
+        return r, jx
+    bid, cal, a1 = ev["bid"], ev["cal"], ev["ask"][1]
+    if y == "Y1":
+        je = jx
+    elif y == "Y2":
+        je = min(2, len(bid) - 1)
+    elif y == "Y3":
+        je, prev = min(3, len(bid) - 1), bid[1]
+        for j in range(2, min(3, len(bid) - 1) + 1):
+            if bid[j] > prev:
+                je = j
+                break
+            prev = bid[j]
+    else:  # Y4
+        je = 2 if len(bid) > 2 and bid[2] >= a1 else jx
+    ra = (bid[je] / a1 - 1) * 1e4 - M.FIN * (cal[je] - cal[1])
+    return r + u * ra, max(jx, je)
+
+
+def tur5() -> dict:
+    P = [ev for ev in load() if ev["feed"] not in ("EET30", "NQ")]
+    Pn = [ev for ev in load() if ev["feed"] in ("EET30", "NQ")]
+    for ev in P + Pn:
+        ev["d1"] = d1_feats(ev) if len(ev["bid"]) > 1 else None
+    cells = {f"{y}_u{u}": (lambda ev, y=y, u=u: add_exit_sim(ev, y, u)) for y in ("Y1", "Y2", "Y3", "Y4") for u in (0.5, 1.0)}
+    T = frame(P, cells)
+    K = T[T.donem == "KESIF"]
+    tab = {c: {"fark": round(float((K[c] - K.base).mean()), 2), "maxdd": maxdd(K.d, K[c]), "sharpe": sharpe(K.d, K[c]), "cvar5": round(cvar5(K[c]))} for c in cells}
+    elig = [c for c in cells if tab[c]["fark"] >= 9.19]
+    sel = sorted(elig, key=lambda c: -tab[c]["maxdd"])[:1]
+    ref = "Y1_u1.0"
+    out = {"kesif_taban": {"maxdd": maxdd(K.d, K.base), "sharpe": sharpe(K.d, K.base)}, "kesif_tablo": tab, "uygun": elig, "secilen": sel, "hucre": {}}
+    Tn = frame(Pn, cells)
+    for c in sel:
+        X = T[T.donem == "TEST"]
+        res = {g: stats(X[X.feed == g], c) | {"maxdd_tur3": maxdd(X[X.feed == g].d, X[X.feed == g][ref])} for g in MAIN + BLIND}
+        P_ = boot((X[c] - X.base).values, X.blk.values)
+        tz = {g: stats(Tn[Tn.feed == g], c) | {"maxdd_tur3": maxdd(Tn[Tn.feed == g].d, Tn[Tn.feed == g][ref])} for g in ("EET30", "NQ")}
+        ok = {"i": all(res[g]["fark"] > 0 for g in MAIN), "ii": P_ >= 0.95,
+              "iii": all(res[g]["maxdd"][1] > res[g]["maxdd_tur3"] for g in MAIN),
+              "iv": all(tz[g]["fark"] > 0 for g in tz), "v": res["DUKA_NDX"]["sharpe"][1] > res["DUKA_NDX"]["sharpe"][0]}
+        out["hucre"][c] = {"test": res, "taze": tz, "P": P_, "olcut": ok, "hukum": "B" if all(ok.values()) else ("C" if ok["i"] else "X")}
+    T.to_pickle(HERE / "cache/tur5.pkl")
+    return out
+
+
 if __name__ == "__main__":
-    fn = {"tur1": tur1, "tur2": tur2, "tur3": tur3, "tur4": tur4}[sys.argv[1]]
+    fn = {"tur1": tur1, "tur2": tur2, "tur3": tur3, "tur4": tur4, "tur5": tur5}[sys.argv[1]]
     out = fn()
     json.dump(out, open(HERE / f"results/{sys.argv[1]}.json", "w"), ensure_ascii=False, indent=1, default=float)
     print(json.dumps({k: out[k] for k in out if k != "test_tum"}, ensure_ascii=False, indent=1, default=float)[:6000])

@@ -72,3 +72,8 @@ Y4 D2 16:00'da kârdaysa çık, değilse ana ile. Ek büyüklüğü u ∈ {0,5; 
 - Seçim (yalnız KEŞİF Duka + MT5 4; EET30/NQ kullanılmaz): KEŞİF farkı ≥ TUR 3 hücresinin yarısı (≥ +9,2) olanlar arasında KEŞİF havuz maks. düşüşü en küçük 1 hücre.
 - **B:** TEST (i) Duka ve MT5 NAS100 fark > 0; (ii) havuz P ≥ 0,95; (iii) Duka ve MT5 NAS100 maks. düşüşü TUR 3 hücresininkinden küçük; (iv) EET30 ve NQ tüm dönem fark > 0;
   (v) Duka Sharpe > taban. C: (i) geçer biri düşer. X: (i) düşer.
+
+## TUR 5 sonucu (değiştirilmez): **C**
+KEŞİF seçimi Y2_u1,0 (ek birim tek gece): KEŞİF maks. düşüş −6.422 → −4.698. TEST: Duka +13,3, MT5 +11,9, P 0,997, EET30 +10,0, NQ +0,6; ama maks. düşüş Duka −2.155 /
+MT5 −1.848 (TUR 3: −1.966 / −1.694) ve Duka Sharpe 1,97 → 1,92 → (iii)(v) düştü. Y4 = Y1 (D2'de kârdaysa ana da XP ile çıkıyor).
+**Program sonucu:** en iyi yapı TUR 3/4 hücresi (D1 zararı ≥ 50 bp → +1 birim, ana XP ile çık) — B + kart 6/6; düşüşü çıkışla küçültmek çalışmadı.
