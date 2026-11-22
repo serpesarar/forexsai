@@ -142,3 +142,10 @@ E4_U3_h1.0: yeni piyasalarda −2,8 (P 0,42) → B olamaz; 1m beslemelerde E4 he
 Betimleyici (EK, hükmü değiştirmez): E2_U0_h0.5 yeni 10 piyasanın 10'unda artı (kapsam dışı AEX/GSPTSE/KS11/TWII/MXX/AXJO dahil, +4…+59);
 kör CFD açığı D0 kapanışı yarısından (MT5 US500/US30 E1 −57/−43, aynı endeks günlük vekil +30/+34); DAX'ta E2 −8,8 (Duka) / −1,3 (MT5) → DAX tabanda kalır;
 E2_U0_h1.0 (seçilmedi) NDX +50,8 / CVaR5 −342 / isabet %81.
+
+## EK-7 (KQ-06 sonuçlarından SONRA, kullanıcı C hükmünü onaylamadı; teşhis, hükmü değiştirmez)
+Kör CFD açığının kaynağı. (1) Veri hizası: olay günlerinde D0→D1 kapanış getirisi CFD ile nakit endeks korelasyonu 0,99–1,00, ort. fark −1,4…+0,4 bp → besleme hatası yok.
+(2) Kör CFD ile günlük vekil farklı olay kümesi (canlı 1 sa kapanış tetiği vs gün dibi dokunuşu); 10 yeni piyasanın artısı günlük vekil tanımında.
+(3) Mekanizma: E2 − taban, aynı gün toparlanmasıyla −0,62…−0,81 korelasyonlu; güçlü toparlanma günlerinde 5/5 beslemede −79…−106 bp (yarım lot toparlanmayı kaçırır),
+zayıf günlerde NDX +133/+148, kör +50…+72. Kör havuz fark −11,8 (%90 −31,5…+8,1, P 0,17); Duka NDX +28,3 (%90 −6,7…+62,4, P 0,91).
+(4) B'yi koşula bağlamak güçlü günlerin kaybını değiştirmez (kayıp A'nın yarım lotundan). Sonuç: KQ-06 NDX'e özgü bir takas; kör endekslerde yapısal olarak tutmuyor.
