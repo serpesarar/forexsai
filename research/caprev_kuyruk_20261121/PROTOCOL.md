@@ -170,3 +170,6 @@ zarar ×1,06, düşüş ×1,12 (kötüleştiriyor). Betimleyici (seçilmedi): **
 EET30 ×0,86 / ×0,81 / ×1,10, NQ ×0,93 / ×0,80 / ×1,08 — tutarlı ~%15–25 azalma, kâr korunuyor. Düz lot ×0,4: zarar −103 → −41, düşüş −519 → −208, kâr +76 → +30.
 **Okuma:** %60 azalma aynı ortalama lotta yapı/filtreyle elde edilmiyor (kaybeden girişte tanınmıyor); ancak lot küçültmeyle. L4 + lot ×0,5 kabaca zarar ×0,42,
 düşüş ×0,41, kâr ×0,55 verir (Duka) — hedefe düz lot ×0,4'ten daha ucuz ulaşır, ama L4 ön kayıtla seçilmedi.
+
+## Kapanış (2026-11-22): kullanıcı KQ-06'nın C hükmünü kuyruk hedefinin cevabı olarak ONAYLADI
+Canlı yapı: CAPREV NDX bölünmüş giriş + yarım tutuş (KQ-06), lot 0,4 (KQ-08 kararı). DAX canlı tabanda. İleri izleme: 30 NDX işlemde ort > +48 bp (1 lot eşdeğeri) ve CVaR5 ≥ 2 × taban.
