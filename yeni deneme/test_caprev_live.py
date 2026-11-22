@@ -242,7 +242,7 @@ def test_split_enter_schedules_b_and_b_opens_at_close(tmp_path, monkeypatch):
         sent.append(req); return R()
     ctx = {"dvol": 0.02}
     base = {"vix": 25.0, "latency_s": 5.0}
-    cl._enter(m, _Cfg(LIVE_TRADING=True, CAPREV_LIVE_LOT=1.0), _Log(), "NDX.INDX", "NAS100", prof, d0, ctx, base, close - 3600,
+    cl._enter(m, _Cfg(LIVE_TRADING=True, CAPREV_LIVE_LOT=1.0, CAPREV_NDX_LOT=1.0), _Log(), "NDX.INDX", "NAS100", prof, d0, ctx, base, close - 3600,
               st, True, send, lambda a, b: a + b, lambda: True, lambda *a: None)
     assert sent[0]["volume"] == 0.5 and sent[0]["sl"] == 94.0
     assert st["pos"]["111"]["mode"] == "split" and st["pos"]["111"]["part"] == "A"
@@ -277,3 +277,17 @@ def test_split_b_late_is_skipped(tmp_path, monkeypatch):
     m = _MT5S(100.0, 5000)
     cl._open_split_b(m, _Cfg(), _Log(), 1000.0 + cl.MAX_LATE_S + 5, st)
     assert not m.sent and not st["pending_b"]
+
+
+def test_ndx_default_lot_is_0_4(tmp_path, monkeypatch):
+    monkeypatch.setattr(cl, "LOG_JSONL", tmp_path / "l.jsonl")
+    d0 = date(2026, 11, 19)
+    prof = cl.PROFILES["NDX.INDX"]
+    close = cl.session_close_utc(d0, prof)
+    sent, st = [], {"fired": {}}
+    class R:
+        retcode, order = 10009, 7
+    cl._enter(_MT5S(100.0, close - 3600), _Cfg(LIVE_TRADING=True, CAPREV_LIVE_LOT=1.0), _Log(), "NDX.INDX", "NAS100", prof, d0,
+              {"dvol": 0.02}, {"vix": 25.0, "latency_s": 1.0}, close - 3600, st, True, lambda r, s_: (sent.append(r), R())[1],
+              lambda a, b: a + b, lambda: True, lambda *a: None)
+    assert sent[0]["volume"] == 0.2 and st["pending_b"]["NDX.INDX|2026-11-19"]["lot"] == 0.2

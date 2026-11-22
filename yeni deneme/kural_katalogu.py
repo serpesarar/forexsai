@@ -9,7 +9,7 @@ getiri, SL/TP, işlem sıklığı, lot, magic. İşlem açıldığında `announc
 
 LOT SEVİYELERİ (kanıt sınıfına göre; kullanıcı kararı 2026-11-08). Her biri `config` içinde `getattr(config, <lot_key>, varsayılan)`
 ile ezilebilir (kutuda config.py gitignore'da → varsayılan BURADA):
-    C3b 2.0  ·  CAPREV 1.0  ·  ORB×VIX 0.75  ·  FR-15 çekiç 0.5 (her endekste)  ·  KSG 0.5 (NAS100, gece)
+    C3b 2.0  ·  CAPREV 1.0 (NDX 0.4, KQ-08)  ·  ORB×VIX 0.75  ·  FR-15 çekiç 0.5 (her endekste)  ·  KSG 0.5 (NAS100, gece)
     AYSONU son seans 1.0 · AYSONU ay başı 0.75 (NAS100; US500 aynı nominal) — 2026-11-12
     XAU 1h yeni tepe 0.05 (XAUUSD) — 2026-11-12
 Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL` (varsayılan 4.5) üstüne çıkamaz (yoğunlaşma freni).

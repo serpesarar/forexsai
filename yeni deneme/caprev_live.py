@@ -31,6 +31,7 @@ BÖLÜNMÜŞ GİRİŞ + YARIM TUTUŞ (2026-11-21, KQ-06, KULLANICI ONAYI; ön ka
   * Her yarının ilk kontrol kapanışında (A: D0, B: D1) bid ≥ giriş → o yarı kapanır; zararda ise o yarının yarısı kapanır, kalanı taşınır.
   * Sonraki kapanışlarda bid ≥ giriş → kapanır; en geç ilk kontrolden sonraki 5. kapanışta kapanır. KQ-03 koruması (z0/VIX) bu modda YOK.
   * B bekliyorken başka CAPREV tetiği atlanır (tek pozisyon).
+NDX LOTU 0,4 (2026-11-22, KQ-08 kullanıcı kararı): ortalama zarar ve maks. düşüşü %60 azaltmak için; config.CAPREV_NDX_LOT ile değişir. DAX CAPREV_LIVE_LOT'ta kalır.
 Botun open_trade yolu KULLANILMAZ (fakeout/squeeze/probasyon kartta yok). trade_manager bu magic'e dokunmaz.
 """
 from __future__ import annotations
@@ -65,6 +66,7 @@ KQ_HOLD_CLV = 0.0                # ve kapanış gün dibinin üstünde (q)
 KQ_STOP2_DVOL = 1.5              # D0 sonrası stop (c1)
 KQ_VIX_UP = 0.10                 # s ≥ 1 koruması: VIX tırmanışı (G2)
 SPLIT_HOLD = 0.5                 # KQ-06 h: ilk kontrol kapanışı zarardaysa tutulan pay
+NDX_LOT = 0.4                    # KQ-08: düz lot ×0,4 → ort. zarar −103 → −41, maks. düşüş −519 → −208, kâr +76 → +30 bp (Sharpe aynı)
 
 PROFILES: dict[str, dict] = {
     "NDX.INDX": {"tz": "US", "rth": (540, 960), "close": 960, "win": (180, 900), "need_from": 570},
@@ -497,6 +499,8 @@ def _enter(mt5, config, log, market, sym, prof, today, ctx, base, now, st, live,
     kar = kar_enabled(config, market)
     sl = round(ask * (1 - (KAR_STOP_DVOL if kar else 1.0) * ctx["dvol"]), info.digits)
     lot = float(getattr(config, "CAPREV_LIVE_LOT", 1.0))
+    if market == "NDX.INDX":                        # KQ-08 kullanıcı kararı 2026-11-22: NDX zarar/düşüş −%60 → lot 0,4
+        lot = float(getattr(config, "CAPREV_NDX_LOT", NDX_LOT))
     exit_t = session_close_utc(today, prof)
     split = kar and split_enabled(config, market)
     lot_b = 0.0
