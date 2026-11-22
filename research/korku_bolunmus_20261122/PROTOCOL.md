@@ -37,3 +37,16 @@ Giriş ve gece aynen (E0, tam lot). D1 16:00'da XP çıkmadıysa (bid ≤ giriş
   (XG-02 09:30/04:00 eşikleri ve 1–3 günlük tavanı sınamıştı, X; bu tur karar anı olarak yalnız D1 16:00'ı ve bağlam şartlarını kullanır.)
 - Anatomi (betimleyici): D1'de tutulan işlemler ÇÖKÜŞ (son net ≤ −300 bp) / DÖNÜŞ (son net > 0) / SÜRÜNME; giriş ve D1 özellikleri, AUC, iki dönem.
 - Seçim ve B: TUR 1 ile aynı (KEŞİF: CVaR5 ≥ 1,2 × taban, en yüksek fark, 1 hücre; TEST (i)–(v)).
+
+## TUR 2 sonucu (değiştirilmez): **X**
+68 hücrenin hepsi KEŞİF'te tabanın altında (en iyi S3_0,15 −4,1); seçilen S3_0,15 TEST Duka −10,4, MT5 −10,5, kör üçü eksi. Kuyruk %5'in tamamı D2–D5 çıkışlı (XP'nin
+tuttuğu işlemler). Anatomi D1'de tutulanlar (KEŞİF 26 ÇÖKÜŞ / 174, TEST 33 / 343): D1 zararı AUC 0,24 / 0,11 (ters yönde 0,76 / 0,89), genişlik 0,71 / 0,78, VIX tırmanışı
+0,76 / 0,64. **Ders:** çöküş D1'de tanınıyor ama derin D1 zararlıları ortalamada güçlü dönüyor; kesmek dönüşü öldürüyor.
+
+## TUR 3 — KR-03: D1'de koşullu ekleme (TUR 2'den SONRA, TUR 3 sonuçlarından ÖNCE)
+Giriş, gece ve XP aynen. D1 16:00'da XP çıkmadıysa ve D1 zararı ≤ −a bp ise **ve çöküş imzası yoksa** (genişlik br < 2 ∧ VIX tırmanışı < v) D1 16:00 ask'ında
+u birim EK alınır. Ek birim ana pozisyonla aynı anda kapanır (ana XP çıkışı; ilk referans D1 16:00 bid). a ∈ {50; 100; 150}, u ∈ {0,5; 1,0}, v ∈ {0,10; ∞ (VIX şartı yok)},
+genişlik şartı {var; yok} → 24 hücre. Sonuç işlem başına (ana + ek) net bp; Sharpe kitap.
+- Seçim (KEŞİF): Sharpe > taban ∧ CVaR5 ≥ 1,5 × taban arasında taban üstü fark en yüksek 1 hücre.
+- B: TEST (i) Duka NDX ve MT5 NAS100 fark > 0; (ii) havuz P ≥ 0,95; (iii) kör ≥ 2/3; (iv) Duka NDX Sharpe > taban; (v) Duka NDX ve MT5 CVaR5 ≥ 1,5 × taban;
+  (vi) eklenen birimlerin kendi ortalaması iki dönemde de > 0.

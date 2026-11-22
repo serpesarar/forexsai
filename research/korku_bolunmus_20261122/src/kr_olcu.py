@@ -102,8 +102,105 @@ def tur1() -> dict:
     return out
 
 
+# ───────── TUR 2 ─────────
+_CTX: dict = {}
+
+
+def _ctx():
+    if _CTX:
+        return _CTX
+    sys.path.insert(0, str(M.ROOT / "research/caprev_tpsl_20261120/src"))
+    import cr_gunluk as G  # noqa: E402
+    import cr_motor as CM  # noqa: E402
+    v = pd.read_parquet(CM.VIX_PATH)["Close"].squeeze()
+    v.index = pd.to_datetime(v.index).tz_localize(None).normalize() if getattr(v.index, "tz", None) else pd.to_datetime(v.index).normalize()
+    _CTX["vix"] = v.dropna()
+    _CTX["r1"] = {n: G.load_daily(n).Close.pct_change() for n in ("NDX", "GSPC", "DJI", "RUT")}
+    return _CTX
+
+
+OWN = {"DUKA_NDX": "NDX", "MT5_NAS100": "NDX", "MT5_US500": "GSPC", "MT5_US30": "DJI", "MT5_US2000": "RUT"}
+
+
+def d1_feats(ev: dict) -> dict:
+    c = _ctx()
+    d0, d1 = pd.Timestamp(ev["dates"][0]).normalize(), pd.Timestamp(ev["dates"][1]).normalize()
+    vx = c["vix"]
+    k0 = int(vx.index.searchsorted(d0)) - 1
+    v0 = float(vx.iloc[k0]) if k0 >= 0 else np.nan
+    v1 = float(vx.loc[d1]) if d1 in vx.index else np.nan
+    br = 0
+    for n, r in c["r1"].items():
+        if n == OWN[ev["feed"]]:
+            continue
+        if d1 in r.index and r.loc[d1] <= -0.01:
+            br += 1
+    rng = ev["rhi"][1] - ev["rlo"][1]
+    return {"r1bp": (ev["bid"][1] / ev["ask"][0] - 1) * 1e4, "vixchg": v1 / v0 - 1 if v0 > 0 else np.nan,
+            "clv": (ev["bid"][1] - ev["rlo"][1]) / rng if rng > 0 else np.nan, "br": br, "ll": ev["rlo"][1] < ev["rlo"][0], "vix0": v0}
+
+
+def s_cells() -> dict:
+    C = {}
+    for a in (50, 100, 150, 200):
+        C[f"S1_{a}"] = ("S1", lambda f, a=a: f["r1bp"] <= -a)
+    for v in (0.05, 0.10, 0.20):
+        C[f"S2_{v}"] = ("S2", lambda f, v=v: np.isfinite(f["vixchg"]) and f["vixchg"] >= v)
+    for q in (0.15, 0.25):
+        C[f"S3_{q}"] = ("S3", lambda f, q=q: np.isfinite(f["clv"]) and f["clv"] <= q)
+    for k in (2, 3):
+        C[f"S4_{k}"] = ("S4", lambda f, k=k: f["br"] >= k)
+    C["S5"] = ("S5", lambda f: bool(f["ll"]))
+    return C
+
+
+def tur2() -> dict:
+    from sklearn.metrics import roc_auc_score
+    P = load()
+    for ev in P:
+        ev["d1"] = d1_feats(ev) if len(ev["bid"]) > 1 else None
+    S = s_cells()
+    combos = {k: [k] for k in S} | {f"{a}|{b}": [a, b] for a, b in itertools.combinations(S, 2) if S[a][0] != S[b][0]}
+
+    def mk(names):
+        def hold(ev, j, r):
+            return not any(S[n][1](ev["d1"]) for n in names)
+        return lambda ev: M.sim(ev, "E0", "XP", 1.0, hold_if=hold)
+    cells = {c: mk(n) for c, n in combos.items()}
+    T = frame(P, cells)
+    sel = select(T, list(cells))
+    # anatomi: D1'de tutulanlar
+    rows = []
+    for ev, (_, r) in zip(P, T.iterrows()):
+        if r["base#j"] <= 1 or ev["d1"] is None:
+            continue
+        cls = "COKUS" if r.base <= -300 else ("DONUS" if r.base > 0 else "SURUNME")
+        rows.append({"donem": ev["donem"], "cls": cls, **ev["d1"],
+                     **{f"g_{k}": v for k, v in ev["f"].items() if isinstance(v, float)}})
+    A = pd.DataFrame(rows)
+    an = {}
+    for dn in ("KESIF", "TEST"):
+        x = A[A.donem == dn]
+        y = (x.cls == "COKUS").astype(int)
+        tab = {"n": x.cls.value_counts().to_dict()}
+        for col in [c for c in x.columns if c not in ("donem", "cls")]:
+            v = pd.to_numeric(x[col], errors="coerce")
+            ok = v.notna()
+            if ok.sum() >= 30 and y[ok].sum() >= 5 and (1 - y[ok]).sum() >= 5:
+                tab[col] = round(float(roc_auc_score(y[ok], v[ok])), 3)
+        an[dn] = tab
+    top = sorted([k for k in an["KESIF"] if k != "n"], key=lambda k: -abs(an["KESIF"][k] - 0.5))[:15]
+    out = {"secim": {k: v for k, v in sel.items() if k != "kesif_tablo"},
+           "kesif_ilk10": dict(sorted(sel["kesif_tablo"].items(), key=lambda kv: -kv[1]["fark"])[:10]),
+           "anatomi_n": {dn: an[dn]["n"] for dn in an},
+           "anatomi_ilk15": {k: [an["KESIF"].get(k), an["TEST"].get(k)] for k in top},
+           "hucre": {c: judge(T, c) for c in sel["secilen"]}}
+    T.to_pickle(HERE / "cache/tur2.pkl")
+    return out
+
+
 if __name__ == "__main__":
-    fn = {"tur1": tur1}[sys.argv[1]]
+    fn = {"tur1": tur1, "tur2": tur2}[sys.argv[1]]
     out = fn()
     json.dump(out, open(HERE / f"results/{sys.argv[1]}.json", "w"), ensure_ascii=False, indent=1, default=float)
     print(json.dumps({k: out[k] for k in out if k != "test_tum"}, ensure_ascii=False, indent=1, default=float)[:6000])

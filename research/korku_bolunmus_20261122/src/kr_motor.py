@@ -48,7 +48,10 @@ def events(b: pd.DataFrame, step: int, name: str) -> list[dict]:
             continue
         cal = [(days[i + j] - d).days for j in range(len(bid))]
         lows = [float(l[idx[j - 1]:idx[j]].min()) if j else np.nan for j in range(len(bid))]
-        out.append({"feed": name, "d": d, "bid": bid, "ask": ask, "cal": cal, "low": lows,
+        dts = [days[i + j] for j in range(len(bid))]
+        rlo = [float(dp.lo.iloc[i + j]) for j in range(len(bid))]
+        rhi = [float(dp.hi.iloc[i + j]) for j in range(len(bid))]
+        out.append({"feed": name, "d": d, "bid": bid, "ask": ask, "cal": cal, "low": lows, "dates": dts, "rlo": rlo, "rhi": rhi,
                     "donem": "KESIF" if d <= pd.Timestamp("2021-10-31") else "TEST",
                     "f": {k: (float(v) if isinstance(v, (int, float, np.floating, np.integer)) else v) for k, v in f.iloc[i].to_dict().items()}})
     return out
