@@ -222,5 +222,5 @@
  },
  "verdikt": "LIVE",
  "bedel": "maks. düşüş Duka −1.226 → −1.966, CVaR5 −437 → −586; NQ Sharpe 1,72 → 1,40",
- "karar": "bekliyor (kullanıcı)"
+ "karar": "2026-11-22 kullanıcı kararı: GÖLGE (korku_live.py KORKU_ADD_SHADOW, emir yok; korku_ekleme_golge.jsonl)"
 }

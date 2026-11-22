@@ -15,6 +15,9 @@ KURAL (donduruldu; değiştirmek kanıtı geçersiz kılar). Tüm saatler New Yo
   (2025-04-03) → %13 hiçbir geçmiş işlemi kesmez; yalnız bot ölürse sigorta.
   Tek pozisyon: açık KORKU pozisyonu varken yeni sinyal atlanır (kart 6. ölçütü: tek pozisyon +69 bp, n 266).
   Giriş gecikmesi en çok 10 dk (kart 5. ölçütü: sonraki mum açılışı +71,4 vs +74,3 bp).
+  KOŞULLU EKLEME GÖLGESİ (2026-11-22, research/korku_bolunmus_20261122 KR-03/04 B + kart 6/6; KULLANICI KARARI: GÖLGE):
+  D1 16:00'da XP çıkmadıysa ve D1 P16 girişin ≥ 50 bp altındaysa "+1 birim" sanal alınır (D1 P16 + giriş spread'i), ana pozisyonla aynı XP
+  çıkışında sanal kapanır. EMİR YOK; yalnız korku_ekleme_golge.jsonl. config.KORKU_ADD_SHADOW (varsayılan True).
   Kaçırılan çıkış kontrolü (bot kapalıyken 16:00 geçtiyse): bar geçmişinden aynı kural yeniden hesaplanır, çıkış günü geçmişse hemen kapatılır.
 """
 from __future__ import annotations
@@ -40,6 +43,8 @@ MIN_SESSION_BARS = 12
 MAX_LATE_S = 600
 EMERGENCY_SL = 0.13
 FETCH_M30 = 400
+ADD_LOSS_BP = 50.0
+ADD_SHADOW_LOG = HERE / "korku_ekleme_golge.jsonl"
 
 
 # ═════════════════════════ takvim ═════════════════════════
@@ -137,6 +142,63 @@ def xp_exit(tab: dict[date, dict], entry_day: date, today: date, now_min: int) -
     return None
 
 
+def d1_add_signal(tab: dict[date, dict], entry_day: date, entry_ask: float, today: date, now_min: int) -> dict | None:
+    """KR-03: giriş sonrası ilk işlem günü (D1) 16:00'da XP çıkmadı ∧ D1 P16 girişin ≥ ADD_LOSS_BP altında → sanal ek."""
+    p0 = tab.get(entry_day, {}).get("p16")
+    if p0 is None:
+        return None
+    d = entry_day
+    while d < today:
+        d += timedelta(days=1)
+        if not is_trading_day(d):
+            continue
+        p1 = tab.get(d, {}).get("p16")
+        if p1 is None:
+            if d < today:
+                continue
+            return None
+        if d == today and now_min < MIN_ENTRY:
+            return None
+        loss = (p1 / entry_ask - 1.0) * 1e4
+        if p1 > p0 or loss > -ADD_LOSS_BP:
+            return {"d1": str(d), "eklendi": False, "d1_bp": round(loss, 1)}
+        spread = max(0.0, entry_ask - p0)
+        return {"d1": str(d), "eklendi": True, "d1_bp": round(loss, 1), "ek_ask": round(p1 + spread, 3)}
+    return None
+
+
+def _shadow_append(rec: dict) -> None:
+    try:
+        with open(ADD_SHADOW_LOG, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"ts": time.time(), **rec}, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
+
+def _add_shadow(config, st: dict, p, tab, entry_day, today, mloc, ex) -> None:
+    """Gölge: D1'de ek kararını bir kez yaz; ana XP çıkışında sanal ek birimin sonucunu yaz. Emir göndermez, hata yutulur."""
+    if not bool(getattr(config, "KORKU_ADD_SHADOW", True)):
+        return
+    sh_st = st.setdefault("add_shadow", {})
+    key = str(p.ticket)
+    rec = sh_st.get(key)
+    if rec is None:
+        sig = d1_add_signal(tab, entry_day, float(p.price_open), today, mloc)
+        if sig is None:
+            return
+        rec = sh_st[key] = {"ticket": p.ticket, "giris": str(entry_day), "giris_ask": float(p.price_open), **sig}
+        _shadow_append({"kind": "d1_karar", **rec})
+    if ex and rec.get("eklendi") and not rec.get("kapandi"):
+        px = tab.get(ex[1], {}).get("p16")
+        if px is not None:
+            days = (date.fromisoformat(str(ex[1])) - date.fromisoformat(rec["d1"])).days
+            r = (px / rec["ek_ask"] - 1.0) * 1e4 - 1.756 * days
+            rec.update({"kapandi": True, "cikis": str(ex[1]), "ek_net_bp": round(r, 1)})
+            _shadow_append({"kind": "ek_kapanis", **rec})
+    if ex and (not rec.get("eklendi") or rec.get("kapandi")):
+        sh_st.pop(key, None)
+
+
 def stop_price(ask: float, digits: int, frac: float = EMERGENCY_SL) -> float:
     return round(ask * (1.0 - frac), digits)
 
@@ -177,12 +239,18 @@ def manage_exits(mt5, config, log, send_order, offset_fn, resolve_symbol, now: f
         return
     tab = day_table(_bars(mt5, sym, offset_fn))
     today, mloc, _ = cs.to_local(now, sh.TZ)
+    st = _load_state()
     for p in pos:
         entry_day = cs.to_local(p.time - offset_fn(sym), sh.TZ)[0]
         ex = xp_exit(tab, entry_day, today, mloc)
+        try:
+            _add_shadow(config, st, p, tab, entry_day, today, mloc, ex)
+        except Exception as e:                      # gölge asla canlı çıkışı engellemez
+            log.warning("KORKU ekleme gölgesi hatası: %s", e)
         if ex:
             why = f"XP {ex[0]} ({ex[1]})" + ("" if ex[1] == today else " — geç kontrol")
             kk.close(mt5, config, log, send_order, RULE, p, why)
+    _save_state(st)
 
 
 # ═════════════════════════ giriş ═════════════════════════

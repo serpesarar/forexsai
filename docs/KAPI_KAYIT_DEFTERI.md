@@ -1714,7 +1714,7 @@ Yöntem: seçim 1990–2015 günlük vekil havuzunda (NDX, S&P, Dow, Russell, DA
 | KR-01 | Kullanıcı: "KORKU'ya aynı çıkışı dene" — bölünmüş giriş (yarısı ertesi 16:00, koşulsuz) × XP/XU × yarım tutuş (XU tek başına KC-02'de X, tekrarlanmadı) | KEŞİF 7/7 hücre taban altı (E2 −31…−40, yarım tutuş −10); seçilen yarım tutuş TEST Duka −17, MT5 −18 | **X** — kenar giriş gecesinde |
 | KR-02 | D1 16:00 tutuş şartı: zarar, VIX tırmanışı, kapanış konumu, genişlik, alt dip (68 hücre) + anatomi | Kuyruk %5'in hepsi D2–D5 çıkışlı; D1'de çöküş tanınıyor (zarar AUC TEST 0,89, genişlik 0,78) ama kesmek her hücrede kayıp (en iyi TEST −10) | **X** |
 | KR-03 | D1'de koşullu ekleme (zarar eşiği × birim × VIX/genişlik şartı, 24 hücre) | **D1 zararı ≥ 50 bp → +1 birim, ana XP ile çık:** TEST Duka +22,1, MT5 +20,7, kör 3/3, P 1,00, Sharpe 1,97 → 2,10, ek birim KEŞİF +75 / TEST +68; CVaR5 −513 → −666, maks. düşüş −1.226 → −1.966 | **B** |
-| KR-04 | Donmuş KR-03, dokunulmamış EET30/NQ + kart | EET30 +23,8, NQ +6,2 (NQ Sharpe 1,72 → 1,40); kart 6/6 (n 324, ort +94,7, yarı farkları +23/+18, spread ×1,5 +20, sonraki bar +20, tek poz. +18) | **B**, kart LIVE (karar kullanıcıda) |
+| KR-04 | Donmuş KR-03, dokunulmamış EET30/NQ + kart | EET30 +23,8, NQ +6,2 (NQ Sharpe 1,72 → 1,40); kart 6/6 (n 324, ort +94,7, yarı farkları +23/+18, spread ×1,5 +20, sonraki bar +20, tek poz. +18) | **B**, kart LIVE → **2026-11-22 kullanıcı kararı GÖLGE** (`korku_live.py` `KORKU_ADD_SHADOW`, emir yok) |
 | KR-05 | Ek birimin çıkışı: tek gece / kendi XP / D2 kârı (8 hücre) | KEŞİF'te düşüş azalır, TEST'te büyür (Duka −2.155 vs −1.966), Sharpe taban altı | **C** — risk çıkışla küçülmüyor |
 
 ## 3. Meta-dersler (kalıcı ilkeler)

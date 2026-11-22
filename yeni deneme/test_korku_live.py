@@ -86,3 +86,35 @@ if __name__ == "__main__":
         if nm.startswith("test_"):
             fn()
     print("test_korku_live: hepsi geçti")
+
+
+# ── KR-03 koşullu ekleme gölgesi ──
+def test_d1_add_signal():
+    mon, tue = date(2026, 11, 2), date(2026, 11, 3)
+    tab = _tab([(mon, 100.0), (tue, 99.3)])
+    assert kl.d1_add_signal(tab, mon, 100.1, tue, 15 * 60) is None                  # 16:00 öncesi
+    s = kl.d1_add_signal(tab, mon, 100.1, tue, 16 * 60)
+    assert s["eklendi"] and s["ek_ask"] == 99.4                                     # −80 bp, spread 0,1
+    tab2 = _tab([(mon, 100.0), (tue, 99.8)])
+    assert kl.d1_add_signal(tab2, mon, 100.1, tue, 16 * 60)["eklendi"] is False     # −30 bp yetmez
+    tab3 = _tab([(mon, 100.0), (tue, 100.5)])
+    assert kl.d1_add_signal(tab3, mon, 100.1, tue, 16 * 60)["eklendi"] is False     # XP çıkışı
+
+
+def test_add_shadow_records_result(tmp_path, monkeypatch):
+    monkeypatch.setattr(kl, "ADD_SHADOW_LOG", tmp_path / "g.jsonl")
+    mon, tue, wed = date(2026, 11, 2), date(2026, 11, 3), date(2026, 11, 4)
+    tab = _tab([(mon, 100.0), (tue, 99.0), (wed, 99.6)])
+
+    class P:
+        ticket, price_open = 5, 100.1
+
+    class C:
+        KORKU_ADD_SHADOW = True
+    st = {}
+    kl._add_shadow(C(), st, P(), tab, mon, tue, 16 * 60, None)
+    assert st["add_shadow"]["5"]["eklendi"] and st["add_shadow"]["5"]["ek_ask"] == 99.1
+    kl._add_shadow(C(), st, P(), tab, mon, wed, 16 * 60, ("yukselis", wed))
+    assert "5" not in st["add_shadow"]
+    lines = (tmp_path / "g.jsonl").read_text().strip().splitlines()
+    assert len(lines) == 2 and '"ek_kapanis"' in lines[1]
