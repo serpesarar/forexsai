@@ -149,3 +149,16 @@ Kör CFD açığının kaynağı. (1) Veri hizası: olay günlerinde D0→D1 kap
 (3) Mekanizma: E2 − taban, aynı gün toparlanmasıyla −0,62…−0,81 korelasyonlu; güçlü toparlanma günlerinde 5/5 beslemede −79…−106 bp (yarım lot toparlanmayı kaçırır),
 zayıf günlerde NDX +133/+148, kör +50…+72. Kör havuz fark −11,8 (%90 −31,5…+8,1, P 0,17); Duka NDX +28,3 (%90 −6,7…+62,4, P 0,91).
 (4) B'yi koşula bağlamak güçlü günlerin kaybını değiştirmez (kayıp A'nın yarım lotundan). Sonuç: KQ-06 NDX'e özgü bir takas; kör endekslerde yapısal olarak tutmuyor.
+
+## KQ-08 — ortalama zarar ve maks. düşüşü %60 azaltma: risk/lot yönetimi (kullanıcı isteği 2026-11-22; sonuçlardan ÖNCE)
+Kullanıcı: "ortalama ve maks. düşüşleri %60 oranında azaltana kadar derin inceleme ve strateji geliştirme yap, zarar çok fazla."
+- Taban: canlı KQ-06 (E2_U0_h0.5), sabit 1 birim. Hedef ölçüler: (a) kaybeden işlemlerin ortalama zararı, (b) işlem sırasıyla birikimli kâr eğrisinin maks. düşüşü.
+- **Aynı ortalama lot şartı:** her aile ağırlığı w_i, KEŞİF'te ort(w) = 1 olacak sabitle ölçeklenir (lotu küçültmek hedef değildir; düz lot ×0,4 hedefi sağlar ama kârı
+  da %60 düşürür — referans olarak raporlanır). TEST'te ort(w) ayrıca raporlanır.
+- Aileler (karar anında bilinen bilgiyle): L1 oynaklık hedefi w ∝ clip(dvol_ref/dvol, 0,25, 2), dvol_ref = KEŞİF medyanı; L2 VIX: w ∝ clip(VIX_ref/VIX_dün, 0,25, 2);
+  L3 düşüş freni: kendi birikimli eğrisi (önceki kapanmış işlemler) zirvesinden ≥ X bp aşağıdaysa w × 0,5, X ∈ {300; 600}; L4 kayıp sonrası: önceki işlem zararlıysa ve 10 iş günü
+  içindeyse w × 0,5; L5 = L1 × L3(300); L6 = L1 × L4. Ağırlık hem tetik yarısına hem D0 kapanışı yarısına aynı uygulanır.
+- Seçim: yalnız KEŞİF ABD günlük vekili 1990–2015 (ölçekleme ve dvol_ref, VIX_ref burada); hedefe en yakın 1 aile = max min(1 − zarar_oranı, 1 − düşüş_oranı).
+- Sınama: TEST Duka NDX (birincil), MT5 NAS100, EET30, NQ, günlük 2016–26 NDX.
+- **Başarı (hedef):** Duka NDX'te ortalama zarar ve maks. düşüş KQ-06'nın ≤ %40'ı, ortalama kâr ≥ KQ-06'nın %60'ı (aynı ort. lotta), Sharpe ≥ KQ-06; MT5 NAS100 ve EET30'da
+  yön aynı (iki ölçü de ≤ %70). Tutmazsa ulaşılan oranlar ve hedefe en yakın yapı raporlanır; hedef ancak lot küçültmeyle sağlanıyorsa açıkça yazılır.
