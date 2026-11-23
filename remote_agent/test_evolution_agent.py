@@ -511,7 +511,7 @@ def test_healthy_bot_not_touched_and_heartbeat_reports_alive(agent, box):
     meta = client.upserted[0]["meta"]
     assert meta["bot_alive"] is True
     assert meta["bot_log_age_s"] is not None and meta["bot_log_age_s"] < 120
-    assert "bot_last_restart" in meta and meta["agent_version"] == "1.7"
+    assert "bot_last_restart" in meta and meta["agent_version"] == "1.8"
 
 
 def test_dead_bot_restarted_without_deferral_even_with_open_positions(agent, box):
@@ -1051,3 +1051,37 @@ def test_fresh_debt_waits_while_positions_open(agent, tmp_path, monkeypatch):
     agent.flush_pending_restarts(None)
     assert calls == []
     assert "bot" in json.loads(f.read_text())[agent.PENDING_RESTART_KEY]
+
+
+def test_parse_state_text_salvages_double_close(agent):
+    """11-23 kutu vakası: iki kopya aynı .tmp'ye yazdı, dosya `}}` ile bitti."""
+    good = {"a": 1, "pending_restarts": {"bot": {"since": "x"}}}
+    text = json.dumps(good, indent=2)
+    assert agent.parse_state_text(text) == good
+    assert agent.parse_state_text(text + "}") == good
+    assert agent.parse_state_text('{"a": ') is None
+    assert agent.parse_state_text("[1, 2]") is None
+
+
+def test_save_state_keeps_pending_when_file_has_trailing_garbage(agent, tmp_path, monkeypatch):
+    monkeypatch.setattr(agent, "STATE_FILE", tmp_path / "agent_state.json")
+    monkeypatch.setattr(agent, "STATE_READ_RETRY_S", 0)
+    disk = {"x": 1, agent.PENDING_RESTART_KEY: {"bot": {"since": "s"}}}
+    agent.STATE_FILE.write_text(json.dumps(disk, indent=2) + "}", encoding="utf-8")
+    agent.save_state({"x": 2})
+    assert json.loads(agent.STATE_FILE.read_text(encoding="utf-8")) == {
+        "x": 2, agent.PENDING_RESTART_KEY: {"bot": {"since": "s"}}}
+    assert not list(tmp_path.glob("*.tmp"))
+
+
+def test_instance_lock_is_exclusive(agent, tmp_path):
+    first = agent.acquire_instance_lock(tmp_path / "a.lock")
+    assert first is not None
+    import subprocess
+    code = ("import fcntl,sys; f=open(sys.argv[1],'a+')\n"
+            "try:\n fcntl.flock(f.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB); print('got')\n"
+            "except OSError: print('busy')")
+    out = subprocess.run([sys.executable, "-c", code, str(tmp_path / "a.lock")],
+                         capture_output=True, text=True).stdout.strip()
+    assert out == "busy"
+    first.close()

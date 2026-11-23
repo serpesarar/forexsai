@@ -139,17 +139,43 @@ def _read_state_file() -> dict | None:
     yazılan bot restart borcu ödenmeden kayboldu, bot eski kodla kaldı (10-20 vakasının ikinci yolu)."""
     for i in range(STATE_READ_RETRIES):
         try:
-            return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+            text = STATE_FILE.read_text(encoding="utf-8")
         except FileNotFoundError:
             return {}
         except Exception:
             time.sleep(STATE_READ_RETRY_S * (i + 1))
+            continue
+        parsed = parse_state_text(text)
+        if parsed is not None:
+            return parsed
+        time.sleep(STATE_READ_RETRY_S * (i + 1))
     return None
 
 
+def parse_state_text(text: str) -> dict | None:
+    """SAF: durum metni → dict; çözülemezse None.
+
+    2026-11-23 bulgusu: kutuda iki ajan kopyası aynı `.tmp` adına aynı anda yazdı; kısa
+    içerik uzunun son baytını bıraktı ve dosya `}}` ile bitti ("Extra data"). Okuma her
+    seferinde None döndüğü için save_state hiç yazmadı, borç eklenemedi. İlk JSON nesnesi
+    eksiksizse kuyruk atılır ve nesne kullanılır; bir sonraki yazım dosyayı temizler."""
+    try:
+        data = json.loads(text)
+    except ValueError:
+        try:
+            data, end = json.JSONDecoder().raw_decode(text.lstrip())
+        except ValueError:
+            return None
+        log.warning("agent_state.json sonunda fazladan %d karakter vardı — ilk nesne kurtarıldı",
+                    len(text.lstrip()) - end)
+    return data if isinstance(data, dict) else None
+
+
 def _write_state_file(out: dict) -> None:
-    """Atomik yazım: geçici dosya + os.replace (okuyan hiçbir zaman yarım dosya görmez)."""
-    tmp = STATE_FILE.with_name(STATE_FILE.name + ".tmp")
+    """Atomik yazım: geçici dosya + os.replace (okuyan hiçbir zaman yarım dosya görmez).
+
+    Geçici ad süreç kimliğini taşır: iki süreç aynı anda yazsa da baytları karışmaz."""
+    tmp = STATE_FILE.with_name(f"{STATE_FILE.name}.{os.getpid()}.tmp")
     tmp.write_text(json.dumps(out, indent=2), encoding="utf-8")
     for i in range(STATE_READ_RETRIES):
         try:
@@ -615,7 +641,7 @@ def push_heartbeat(client, extra: dict | None = None) -> None:
         # bile True yazıyordu. Artık gerçek bağlantı; ölçüm yoksa None.
         "mt5": HEALTH.get("mt5_connected"),
         "open_positions": open_position_count(),
-        "agent_version": "1.7",
+        "agent_version": "1.8",
         # Panel "ajan çevrimiçi ama işlem verisi bayat" durumunun SEBEBİNİ
         # görebilsin diye trade senkron sağlığı da taşınır.
         "trade_sync_ok": TRADE_SYNC["ok"],
@@ -1854,8 +1880,37 @@ def reconcile_stale_commands(client) -> None:
         log.warning("stale komut mutabakatı başarısız: %s", e)
 
 
+#: Tek kopya kilidi. 2026-11-23: kutuda iki start_agent.bat döngüsü iki ajan çalıştırıyordu
+#: (haftalık işler iki kez koştu, agent_state.json bozuldu). Kilit süreç ölünce OS'ça bırakılır.
+INSTANCE_LOCK_FILE = Path(__file__).parent / "evolution_agent.lock"
+_INSTANCE_LOCK = None
+
+
+def acquire_instance_lock(path: Path = INSTANCE_LOCK_FILE):
+    """Kilit alınırsa açık dosya tutamacı, başka kopya tutuyorsa None."""
+    fh = open(path, "a+")
+    try:
+        if os.name == "nt":
+            import msvcrt
+            fh.seek(0)
+            msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        fh.close()
+        return None
+    return fh
+
+
 def main() -> None:
-    log.info("Evrim Ajanı başlıyor | host=%s mt5=%s", HOST, HAS_MT5)
+    global _INSTANCE_LOCK
+    _INSTANCE_LOCK = acquire_instance_lock()
+    if _INSTANCE_LOCK is None:
+        # Log dosyasına yazma: ikinci başlatıcı döngüsü 30 sn'de bir dener, gürültü olur.
+        print(f"[ajan] başka kopya çalışıyor (kilit: {INSTANCE_LOCK_FILE.name}) — bu kopya çıkıyor")
+        sys.exit(0)
+    log.info("Evrim Ajanı başlıyor | host=%s mt5=%s pid=%s", HOST, HAS_MT5, os.getpid())
     client = supa()
     state = load_state()
     if HAS_MT5 and not mt5_connect():
