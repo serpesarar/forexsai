@@ -126,3 +126,19 @@ M1 çekerek tamamlandı).
 `PROTOCOL.md` (ön kayıt + EK-1/2) · `src/eng.py` (motor) · `src/s0_taban.py` · `src/s1_tarama.py` · `src/s2_derin.py` ·
 `src/s3_yillik.py` · `src/s4_gecikme.py` · `src/s5_lag1.py` · `results/` (tarama.csv, yillik_delta.csv, gecikme.csv, lag1.log,
 sinir_egrisi.csv, derin*.log). Veri `data/` git dışı.
+
+## 8. Aşırı oynak rejime özel strateji (EK-5, `src/s8_rejim.py`, `results/rejim_tarama.csv`)
+Rejim: σ30 = ATR14(1m)·√30 / fiyat ≥ θ (bugün %1,89). θ = %1,0 → 9 yılda 258 gün; θ = %0,8 → 522 gün.
+
+| strateji (θ = %1,0) | n | ort. R | SL payı | 2018–20 | 2021–23 | 2024–26 | 2023 / 2024 / 2025 / 2026 Σ R |
+|---|---|---|---|---|---|---|---|
+| **K0 mevcut DAYCOMBO+REENTRY (V1 braket)** | 105 | **+0,184** | %31 | +0,190 | +0,152 | +0,223 | −1,8 / +0,2 / +4,5 / +0,6 |
+| DIP m=2, TP 1,5 / SL 1,5 ATR5 (en iyi yeni) | 505 | +0,066 | %45 | +0,109 | +0,035 | +0,035 | −4,5 / +1,5 / +1,6 / 0,0 |
+| DIP m=1, TP 1,5 / SL 1,5 | 715 | +0,030 | %47 | +0,029 | +0,034 | +0,022 | −6,5 / +7,5 / −0,9 / −4,0 |
+| KIRILIM 30 dk, TP 1,5 / SL 1,5 | 303 | +0,027 | %47 | +0,057 | +0,004 | +0,009 | 0,0 / +2,0 / +2,4 / −4,0 |
+
+θ = %0,8'de yeni adayların hepsi eksi (2024–26 −0,06…−0,19R). DIP m=2 plasebo p 0,015 (rastgele rejim dakikası medyan −0,012R) ama
+24 hücrede çoklu sınama eşiği ≈ 0,004 → geçmedi; K0'dan zayıf.
+**Hüküm:** bugünkü gibi aşırı oynak günler için en iyi strateji yeni bir strateji değil, **mevcut DAYCOMBO + oynaklığa göre braket (SL-08)**.
+Bu rejimde işlem başı +0,18R ile kitabın en iyi dilimi, SL oranı %31 (normal günlerde ~%40). "Daha çok işlem" isteyen dip/kırılım
+türevleri işlem sayısını 3–7 kat artırıyor ama işlem başı kazancı düşürüyor ve son yıllarda tutmuyor. Bağlanmadı.

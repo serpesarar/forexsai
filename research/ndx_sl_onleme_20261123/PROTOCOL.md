@@ -98,3 +98,17 @@ SL_p = max(110, k × ölçü), TP_p = SL_p × 80/110, **lot = 30 × 110 / SL_p**
 Ölçüt: lag 1 tabanına karşı 2023–2026 her yıl Δ Σ R > 0 (S4) + havuz P ≥ %90 + stres (spread ×1,5, kayma 0,2) Δ > 0;
 ayrıca ön kayıtlı 1. ölçüt (ESKİ-A/B, Y24, Y25). Kullanıcı ölçüsü: bugünkü **canlı** 4 SL'den kaçı aynı girişte stopsuz TP'ye ulaşırdı
 (canlı giriş fiyatı/saatiyle) ve canlı 6 TP'den kaçı korunur; tarihsel SL-engel / TP-kayıp.
+
+## EK-5 (kullanıcı 2026-11-23: "bugünkü oynaklığı ayrı bir olay say, ona özel daha az SL / daha çok TP / daha çok işlem") — sonuçlar görülmeden
+**Rejim:** dakika i'de σ30 = ATR14(1m)·√30 / fiyat ≥ θ, θ ∈ {%0,8; %1,0} (9 yılda 522 / 258 gün; bugün %1,89, ilk 6 işlem rejimde).
+Şok oranı elendi (ABD açılış mumu yüzünden her gün "şok"). Pencere 13:30–20:00 UTC, Cuma dahil değil, yalnız BUY, tek pozisyon,
+çıkıştan sonra 5 dk soğuma, zaman çıkışı 20:50 UTC. Giriş = sinyal barı kapanışından **2 dk sonra** açılış (canlı ≈1 dk gecikme) + spread (ESKİ ölçekli).
+TP/SL ATR5 katı (ölçeksiz), R = eşit $ risk.
+- **K0 (karşılaştırma):** mevcut DAYCOMBO+REENTRY (V1 braketi, lag 1) işlemlerinden kararı rejimde olanlar.
+- **K1 DIP:** c ≤ son 60 dk tepesi − m·ATR5 ∧ 1m mum yeşil → AL. m ∈ {1; 1,5; 2}.
+- **K3 KIRILIM:** c > son 30 dk tepesi (devam) → AL.
+- Geometri (TP, SL)×ATR5 ∈ {(1; 1,5), (1,5; 1,5), (1; 2)} — her aday 3 hücre.
+- **Plasebo:** aynı rejim günlerinde, aynı gün başına işlem sayısıyla rastgele rejim dakikasında giriş, aynı geometri; 200 tekrar.
+**Ölçüt:** ort. R > 0 ESKİ-A (2018–20), ESKİ-B (2021–23), SON (2024–26/11) **her birinde**; havuz gün-blok P(EV>0) ≥ %90; spread ×1,5 ort. R > 0;
+plasebodan iyi p ≤ 0,10/hücre sayısı; K0'dan (rejimde mevcut) ort. R ve Σ R yüksek. Kullanıcı ölçüsü: 2023–2026 her yıl Σ R > 0 (az günlü yıl işaretlenir),
+işlem sayısı K0'a göre, SL oranı. Geçen: **rejimde DAYCOMBO yerine** birleşik sistem sınaması (kart) → bota.
