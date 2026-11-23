@@ -1249,5 +1249,15 @@
     "category": "research",
     "what_it_does": "Başka bir trader'ın altın botunun işlemlerini bizim 1m barlarımıza hizalar; kopya kârını giriş zamanı / yön / çıkış / trend tabanına ayrıştırır (nedensel plasebolarla), türetilen itki kuralını bağımsız dönemde sınar, 2026-11-21 sonrası ileri gölge kopya kartını ölçer. C pozisyon motoru + Python ikizi, 2010–2017 kilitli kasa. SC-08: 300 özellikli 7-TF giriş anatomisi; SC-10 klon kârı; SC-11: Dukascopy tik verisiyle saniye hizası ve giriş saniyesi tetiği (sc_tick.py, sc11_*). SC-12 hesap durumu seçimi; SC-13 çözülen tarzdan 16 hücrelik strateji ailesi (keşif 2018–21, tek atış doğrulama 2022–24, kasa kilitli).",
     "output": "research/soma_cozum_20261122/RAPOR.md"
+  },
+  {
+    "id": "korku_sepeti_risk_defteri",
+    "name": "Korku sepeti risk defteri: canlı NAS100 kitabında çakışma ve lot tavanı",
+    "kind": "script",
+    "command": ".venv/bin/python research/korku_sepeti_20261123/src/kitap.py",
+    "cwd": ".",
+    "category": "research",
+    "what_it_does": "8 canlı NAS100 kuralını canlı lot ve sürümleriyle Duka 1m 2018–26 gün sonu işaretli tek kitapta birleştirir. Aynı gün açık korku kuralı sayısını, en kötü günlerin bileşimini ve 4,5 tavanının atlattığı işlemleri ölçer. Ön kayıtlı tavan adaylarını (aile tavanı, çakışmada yarım lot) tekdüze lot küçültme kontrolüne karşı iki yarıda ve MT5 kitabında sınar.",
+    "output": "research/korku_sepeti_20261123/RAPOR.md"
   }
 ]
