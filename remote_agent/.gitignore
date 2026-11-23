@@ -4,3 +4,5 @@ evolution_agent.log
 __pycache__/
 watchdog_state.json
 WATCHDOG_OFF
+evolution_agent.lock
+agent_state.json.*.tmp

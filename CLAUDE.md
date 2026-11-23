@@ -54,6 +54,11 @@ akışına düşer. *2026-11-02: demo hesabı `Invalid account` ile düşmüş, 
 canlı, kalp atışı yeşildi.* Bu iki arızanın çaresi kutuda kullanıcı girişidir.
 Ajan ≥1.4 ayrıca `bot_log_silent` (demo_bot.log > 10 dk yazılmıyor) ve `recorder_down` (`data_recorder.py` yok)
 üretir; kaydedici izleyicinin kapsamında değildir, ölürse kendiliğinden geri gelmez.
+Ajan ≥1.7 `recorder_stale` üretir: süreç canlı ama `indicator_snapshots`'ın en taze 1m barı piyasa açıkken > 10 dk.
+*2026-11-19→23: Pepperstone terminali 05:05 UTC'de yeniden başladı, kaydedici eski IPC'de kaldı, 4,5 gün her dakika
+`kayıt @` yazıp tek bar yazmadı; `recorder_alive=True` yanılttı.* Kaydedici artık bağlantıyı her döngüde yoklar ve
+yeniden kurar, DBG hesabını reddeder. Ajan ≥1.8 tek kopya kilidi (`evolution_agent.lock`) taşır: 11-22'den beri iki
+`start_agent.bat` döngüsü iki ajan çalıştırıyordu ve `agent_state.json` `}}` ile bozulmuştu.
 *2026-11-03: `demo_bot.log`a ekleme `OSError 22` veriyordu (kod değil, dosya; nedeni belirsiz, klasör OneDrive'da).
 Bot çalışıyordu ama log yazamadığı için izleyici onu ~15 dk'da bir "asılı" diye öldürdü. Çare: botu durdur, dosyayı
 yeniden adlandır, botu başlat. Teşhis: `open('demo_bot.log','a')` ile tek karakter yazıp flush et.*
