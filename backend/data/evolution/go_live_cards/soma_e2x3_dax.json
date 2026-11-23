@@ -1,0 +1,86 @@
+{
+ "scope": "soma_e2x3_dax",
+ "tarih": "2026-11-23T17:51:52",
+ "aciklama": "Soma klon modeli (HistGradientBoosting, SC-08; KEŞİF eğitimi, eşik q0,998) skoru eşiği aşağıdan yukarı kestiğinde, 1m kapanış > EMA1440 ise AL; SL 1×ATR14(H1), 480 dk zaman çıkışı, TP yok.",
+ "ana_olcum": "Dukascopy DAX 1m, kart penceresi son 4 yıl 2022-11-14 → 2026-11-14 (kullanıcı ölçütü 2026-11-23: son 3–4 yıl sürekli artı yeterli); giriş = sinyal barından sonraki 1m açılışı + yıl×saat spread",
+ "veri_notu": "fibo önbelleği, yıl×saat spread",
+ "olay": 619,
+ "ort_R": 0.1249,
+ "ort_bp": 5.001,
+ "isabet": 0.388,
+ "checks": {
+  "1_hacim": {
+   "n": 619,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "ort_R": 0.1249,
+   "P_EV_pos": 0.8376,
+   "gecti": false
+  },
+  "3_kararlilik": {
+   "yari1_R": 0.0417,
+   "yari2_R": 0.2079,
+   "gecti": true
+  },
+  "4_surtunme": {
+   "stres_R": 0.1112,
+   "gecti": true
+  },
+  "5_icra": {
+   "iyimser_R": 0.2004,
+   "gercek_R": 0.1249,
+   "fark": 0.0755,
+   "gecti": false
+  },
+  "6_tek_pozisyon": {
+   "n": 232,
+   "ort_R": 0.1304,
+   "gecti": true
+  }
+ },
+ "kart_6_6": false,
+ "son4_yil_R": {
+  "2023": -0.013,
+  "2024": 0.076,
+  "2025": 0.227,
+  "2026": 0.175
+ },
+ "son4_her_yil_arti": false,
+ "tum_yillar_R": {
+  "2018": 0.487,
+  "2019": 0.18,
+  "2020": 0.186,
+  "2021": 0.115,
+  "2022": 0.382,
+  "2023": -0.013,
+  "2024": 0.076,
+  "2025": 0.227,
+  "2026": 0.175
+ },
+ "tum_yillar_n": {
+  "2018": 87,
+  "2019": 175,
+  "2020": 125,
+  "2021": 131,
+  "2022": 181,
+  "2023": 169,
+  "2024": 144,
+  "2025": 156,
+  "2026": 129
+ },
+ "rastgele_alis_farki": {
+  "taban_bp": 0.18,
+  "fark_bp": 4.821,
+  "fark_P": 0.9372
+ },
+ "maks_dusus_R": 47.75,
+ "yilda_sinyal": 154.8,
+ "verdict": "SHADOW",
+ "kanit": "research/soma_cozum_20261122 (PROTOCOL SC-13…SC-19; src/sc19_canli_kart.py, results/sc19_kart.json)",
+ "uyarilar": [
+  "hacim özelliği canlıda broker tick hacmi (araştırma Dukascopy) — ilk 60 işlemde canlı karne izlenecek"
+ ],
+ "durdurma": "canlı n=60 işlemde ort R < 0 → kapat",
+ "canli_karar": "canlıya ALINMADI — son 4 yılda eksi yıl var"
+}

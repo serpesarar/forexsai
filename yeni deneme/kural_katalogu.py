@@ -14,7 +14,7 @@ ile ezilebilir (kutuda config.py gitignore'da → varsayılan BURADA):
     XAU 1h yeni tepe 0.05 (XAUUSD) — 2026-11-12
 Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL` (varsayılan 4.5) üstüne çıkamaz (yoğunlaşma freni).
 
-Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE, KSG_LIVE, AYSONU_SON_LIVE, AYSONU_E2_LIVE, XAU_R0B_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
+Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE, KSG_LIVE, AYSONU_SON_LIVE, AYSONU_E2_LIVE, XAU_R0B_LIVE, SOMA_E4X3_LIVE, SOMA_E2_XAU_LIVE, SOMA_E2_NDX_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
 """
 from __future__ import annotations
 
@@ -116,6 +116,33 @@ RULES: dict[str, dict] = {
                  "en kötü net −783 bp",
         "kanit": "go_live_cards/ndx_korku_t30_paket.json (6/6, 9/9 yıl artı; MT5 6/6); research/korku_evren_20261119 EV-01; "
                  "durdurma n=40'ta ort < 0",
+    },
+    # 2026-11-23 kullanıcı kararı ("canlıya al direk"): Soma PureGold çözümlemesinden türeyen üç kural CANLI (research/soma_cozum_20261122,
+    # SC-13 → SC-19; kart penceresi son 4 yıl — kullanıcı ölçütü). Lot: XAU 0.05 (stop 1×ATR_H1 ≈ 15–20 $ → işlem başı ≈ 80–100 $),
+    # NAS100 0.5 (stop ≈ 60–100 puan → ≈ 30–50 $). Durdurma: kural başına canlı n=60'ta ort R < 0.
+    "SOMA_E4X3": {
+        "ad": "SOMA E4X3 — XAU trend içi yeni gün tepesi + H4 kanal tavanı AL (modelsiz)", "kisa": "SOMAE4", "sinif": "C+",
+        "magic_offset": 17, "lot_key": "SOMA_E4X3_LIVE_LOT", "lot": 0.05, "live_key": "SOMA_E4X3_LIVE",
+        "isabet": "%37,5", "n": 421, "ort": "+0,20 R/işlem (son 4 yıl; rastgele alışa +6,5 bp, P 0,99)",
+        "tutus": "480 dk", "sl": "1 × ATR14(H1)", "tp": "yok; 480 dk zaman çıkışı / Cuma 16:50 NY",
+        "siklik": "≈ 2 işlem/hafta (günde en çok 1)",
+        "kanit": "go_live_cards/soma_e4x3_xau.json (6/6; 2023–26 her yıl artı, 2018–22 karışık); SC-19c canlı kod paritesi 494/494",
+    },
+    "SOMA_E2_XAU": {
+        "ad": "SOMA E2X3 — Soma klon modeli AL (XAUUSD)", "kisa": "SOMAE2X", "sinif": "C+",
+        "magic_offset": 18, "lot_key": "SOMA_E2_XAU_LIVE_LOT", "lot": 0.05, "live_key": "SOMA_E2_XAU_LIVE",
+        "isabet": "%39,7", "n": 945, "ort": "+0,27 R/işlem (son 4 yıl; tek pozisyon +0,28 R)",
+        "tutus": "480 dk", "sl": "1 × ATR14(H1)", "tp": "yok; 480 dk zaman çıkışı / Cuma 16:50 NY",
+        "siklik": "≈ 4–5 sinyal/hafta (tek pozisyonla ≈ 1,5/hafta)",
+        "kanit": "go_live_cards/soma_e2x3_xau.json (6/6; 2025 model eğitimiyle kısmen çakışır); SC-19b parite skor korelasyonu 1,0",
+    },
+    "SOMA_E2_NDX": {
+        "ad": "SOMA E2X3 — Soma klon modeli AL (NAS100, dondurulmuş taşıma)", "kisa": "SOMAE2N", "sinif": "B",
+        "magic_offset": 19, "lot_key": "SOMA_E2_NDX_LIVE_LOT", "lot": 0.5, "live_key": "SOMA_E2_NDX_LIVE",
+        "isabet": "%42,1", "n": 589, "ort": "+0,27 R/işlem (son 4 yıl; rastgele alışa +7,8 bp, P 0,98; tek pozisyon +0,19 R)",
+        "tutus": "480 dk", "sl": "1 × ATR14(H1)", "tp": "yok; 480 dk zaman çıkışı / Cuma 16:50 NY",
+        "siklik": "≈ 3 sinyal/hafta (tek pozisyonla ≈ 1/hafta)",
+        "kanit": "go_live_cards/soma_e2x3_ndx.json (6/6; Dukascopy NDX 2018–26 dokuz yılın dokuzu artı); SC-19b parite 1,0",
     },
 }
 

@@ -1,0 +1,99 @@
+{
+ "scope": "soma_e2x3_ndx",
+ "tarih": "2026-11-23T17:51:52",
+ "aciklama": "Soma klon modeli (HistGradientBoosting, SC-08; KEŞİF eğitimi, eşik q0,998) skoru eşiği aşağıdan yukarı kestiğinde, 1m kapanış > EMA1440 ise AL; SL 1×ATR14(H1), 480 dk zaman çıkışı, TP yok.",
+ "ana_olcum": "Dukascopy NDX 1m, kart penceresi son 4 yıl 2022-11-14 → 2026-11-14 (kullanıcı ölçütü 2026-11-23: son 3–4 yıl sürekli artı yeterli); giriş = sinyal barından sonraki 1m açılışı + yıl×saat spread",
+ "veri_notu": "hacim kapsamı son 4 yıl %100 (eksik → NaN; E2 yaklaşık)",
+ "olay": 589,
+ "ort_R": 0.2719,
+ "ort_bp": 8.644,
+ "isabet": 0.421,
+ "checks": {
+  "1_hacim": {
+   "n": 589,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "ort_R": 0.2719,
+   "P_EV_pos": 0.9764,
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "yari1_R": 0.2426,
+   "yari2_R": 0.3012,
+   "gecti": true
+  },
+  "4_surtunme": {
+   "stres_R": 0.2538,
+   "gecti": true
+  },
+  "5_icra": {
+   "iyimser_R": 0.2915,
+   "gercek_R": 0.2719,
+   "fark": 0.0196,
+   "gecti": true
+  },
+  "6_tek_pozisyon": {
+   "n": 233,
+   "ort_R": 0.1909,
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "son4_yil_R": {
+  "2023": 0.378,
+  "2024": 0.339,
+  "2025": 0.166,
+  "2026": 0.105
+ },
+ "son4_her_yil_arti": true,
+ "tum_yillar_R": {
+  "2018": 0.663,
+  "2019": 0.142,
+  "2020": 0.372,
+  "2021": 0.039,
+  "2022": 0.535,
+  "2023": 0.378,
+  "2024": 0.339,
+  "2025": 0.166,
+  "2026": 0.105
+ },
+ "tum_yillar_n": {
+  "2018": 195,
+  "2019": 186,
+  "2020": 195,
+  "2021": 132,
+  "2022": 79,
+  "2023": 188,
+  "2024": 137,
+  "2025": 156,
+  "2026": 100
+ },
+ "rastgele_alis_farki": {
+  "taban_bp": 0.84,
+  "fark_bp": 7.805,
+  "fark_P": 0.9774
+ },
+ "maks_dusus_R": 42.93,
+ "yilda_sinyal": 147.2,
+ "verdict": "LIVE",
+ "kanit": "research/soma_cozum_20261122 (PROTOCOL SC-13…SC-19; src/sc19_canli_kart.py, results/sc19_kart.json)",
+ "canli_parite": {
+  "n_dakika": 29309,
+  "skor_korelasyon": 1.0,
+  "skor_mutlak_fark_medyan": 0.0,
+  "y_uyum": 1.0,
+  "ates_arastirma": 1,
+  "ates_canli": 1,
+  "ortak_tam": 1,
+  "arastirma_canlida_2dk": 1.0,
+  "canli_arastirmada_2dk": 1.0,
+  "n_sentetik": 49386
+ },
+ "uyarilar": [
+  "dondurulmuş taşıma (model altın için eğitildi, NDX'te hiç ayar yapılmadı); 9/9 yıl artı",
+  "hacim özelliği canlıda broker tick hacmi (araştırma Dukascopy) — ilk 60 işlemde canlı karne izlenecek"
+ ],
+ "durdurma": "canlı n=60 işlemde ort R < 0 → kapat",
+ "canli_karar": "kullanıcı kararı 2026-11-23 ('canlıya al direk'); kart 6/6 + son 4 yılın her yılı artı"
+}

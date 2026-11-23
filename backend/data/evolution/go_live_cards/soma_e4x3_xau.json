@@ -1,0 +1,99 @@
+{
+ "scope": "soma_e4x3_xau",
+ "tarih": "2026-11-23T17:51:52",
+ "aciklama": "Modelsiz: 1m kapanış > EMA1440 ve > EMA240; bar sunucu gününün yeni tepesi; kapanış ≥ H4 HH20 − 0,25×ATR_H4; 1m gövde ≥ %50 yükseliş; sunucu günü başına ilk olay. AL, SL 1×ATR14(H1), 480 dk zaman çıkışı, TP yok.",
+ "ana_olcum": "Dukascopy XAU 1m, kart penceresi son 4 yıl 2022-11-14 → 2026-11-14 (kullanıcı ölçütü 2026-11-23: son 3–4 yıl sürekli artı yeterli); giriş = sinyal barından sonraki 1m açılışı + yıl×saat spread + 0,08 $/ons komisyon",
+ "veri_notu": "kendi küpü (eğitim piyasası; 2025 model eğitimiyle kısmen çakışır)",
+ "olay": 421,
+ "ort_R": 0.1994,
+ "ort_bp": 5.444,
+ "isabet": 0.375,
+ "checks": {
+  "1_hacim": {
+   "n": 421,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "ort_R": 0.1994,
+   "P_EV_pos": 0.9848,
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "yari1_R": 0.1697,
+   "yari2_R": 0.2291,
+   "gecti": true
+  },
+  "4_surtunme": {
+   "stres_R": 0.1634,
+   "gecti": true
+  },
+  "5_icra": {
+   "iyimser_R": 0.2499,
+   "gercek_R": 0.1994,
+   "fark": 0.0505,
+   "gecti": true
+  },
+  "6_tek_pozisyon": {
+   "n": 403,
+   "ort_R": 0.2198,
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "son4_yil_R": {
+  "2023": 0.323,
+  "2024": 0.155,
+  "2025": 0.235,
+  "2026": 0.215
+ },
+ "son4_her_yil_arti": true,
+ "tum_yillar_R": {
+  "2018": -0.152,
+  "2019": 0.43,
+  "2020": -0.037,
+  "2021": -0.011,
+  "2022": -0.194,
+  "2023": 0.323,
+  "2024": 0.155,
+  "2025": 0.235,
+  "2026": 0.215
+ },
+ "tum_yillar_n": {
+  "2018": 83,
+  "2019": 98,
+  "2020": 110,
+  "2021": 90,
+  "2022": 95,
+  "2023": 98,
+  "2024": 108,
+  "2025": 127,
+  "2026": 73
+ },
+ "rastgele_alis_farki": {
+  "taban_bp": -1.06,
+  "fark_bp": 6.504,
+  "fark_P": 0.9906
+ },
+ "maks_dusus_R": 11.56,
+ "yilda_sinyal": 105.2,
+ "verdict": "LIVE",
+ "kanit": "research/soma_cozum_20261122 (PROTOCOL SC-13…SC-19; src/sc19_canli_kart.py, results/sc19_kart.json)",
+ "canli_parite": {
+  "donem": [
+   "2026-09-14",
+   "2026-11-14"
+  ],
+  "pozitif": 94,
+  "negatif_ornek": 400,
+  "uyum": 494,
+  "toplam": 494,
+  "ilk_olay_sayisi": 11,
+  "uyumsuz": []
+ },
+ "uyarilar": [
+  "2018-21 GELISTIRME'de ön kayıtlı eşiği geçmedi; son yıllar ölçütüyle aday",
+  "hacim özelliği canlıda broker tick hacmi (araştırma Dukascopy) — ilk 60 işlemde canlı karne izlenecek"
+ ],
+ "durdurma": "canlı n=60 işlemde ort R < 0 → kapat",
+ "canli_karar": "kullanıcı kararı 2026-11-23 ('canlıya al direk'); kart 6/6 + son 4 yılın her yılı artı"
+}

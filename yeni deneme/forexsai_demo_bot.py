@@ -117,6 +117,14 @@ try:                                    # KORKU GECESİ K1-T30 + OPEX vetosu + X
     import korku_live                   # ndx_korku_t30_paket 6/6. AYRI blok: import hatası diğerlerini etkilemesin. Kapatma: config.KORKU_LIVE = False.
 except Exception:                       # pragma: no cover
     korku_live = None
+try:                                    # SOMA E4X3 (XAU modelsiz) + E2X3 (Soma klon modeli; XAU + NAS100) CANLI — kullanıcı kararı 2026-11-23,
+    import soma_e4x3_live               # kartlar soma_e4x3_xau / soma_e2x3_xau / soma_e2x3_ndx 6/6 (SC-19). AYRI bloklar: biri düşerse diğerleri sürer.
+except Exception:                       # pragma: no cover
+    soma_e4x3_live = None
+try:                                    # Kapatma: config.SOMA_E4X3_LIVE / SOMA_E2_XAU_LIVE / SOMA_E2_NDX_LIVE = False.
+    import soma_e2x3_live
+except Exception:                       # pragma: no cover
+    soma_e2x3_live = None
 from sr_zones import detect_zones, plan_sr_entry, momentum_stretch
 from channel_filter import is_channel_rejection, is_mean_reversion, adx_from_bars
 
@@ -2756,6 +2764,12 @@ def main():
                     xau_r0b_live.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
                 except Exception as e:
                     log.warning("xau 1h çıkış hatası: %s", e)
+            for _sn, _sm in (("soma e4x3", soma_e4x3_live), ("soma e2x3", soma_e2x3_live)):   # 480 dk / Cuma çıkışı (frenden önce)
+                if _sm is not None and config.LIVE_TRADING:
+                    try:
+                        _sm.manage_exits(mt5, config, log, _send_market_order, _daycombo_offset, resolve_symbol)
+                    except Exception as e:
+                        log.warning("%s çıkış hatası: %s", _sn, e)
 
             # ── Decider XAU erken kesme (DX-04): fren 'continue'undan ÖNCE — açık decider
             #    pozisyonu fren devredeyken de yönetilmeli ──
@@ -2913,7 +2927,7 @@ def main():
             #    Kapatma: config.C3B_LIVE / ORB_VIX_LIVE / CEKIC_LIVE = False.
             for _name, _mod in (("c3b", c3b_live), ("orb×vix", orb_vix_live), ("çekiç", cekic_live), ("ksg", ksg_live),
                                 ("ay sonu", aysonu_live), ("xau 1h", xau_r0b_live), ("fx vixreg", fx_vixreg_live),
-                                ("korku", korku_live)):
+                                ("korku", korku_live), ("soma e4x3", soma_e4x3_live), ("soma e2x3", soma_e2x3_live)):
                 if _mod is None:
                     continue
                 try:

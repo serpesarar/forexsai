@@ -5705,10 +5705,11 @@
     "detail": "cot_g2_shadow.py yazıldı ve bota bağlandı ama commit/push edilmedi; push sonrası kutuda cot_g2_shadow.jsonl birikir, python cot_g2_shadow.py --karne. ≥40 işlem isabet ≥ %75 ∧ ort > 0 olmadan kart yok",
     "category": "wiring",
     "priority": "medium",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-11-21T20:51:14.538232+00:00",
-    "updated_at": "2026-11-21T20:51:14.538352+00:00"
+    "updated_at": "2026-11-21T20:51:14.538352+00:00",
+    "note": "2026-11-22: ajan 1.6 + bot borcu yazıldı (23:01 UTC), en geç 72 sa'te zorla restart"
   },
   {
     "id": "bl_bcfa52e138",
@@ -5716,10 +5717,11 @@
     "detail": "1765d1be elle pull edildi, oto-restart tetiklenmedi; python3 scripts/remote.py restart bot (pozisyon açıksa borç yazar). Sonra bot logunda 'COT-G2-GÖLGE' satırı ve cot_g2_shadow.jsonl kontrol",
     "category": "wiring",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-11-21T20:56:34.648408+00:00",
-    "updated_at": "2026-11-21T20:56:34.648530+00:00"
+    "updated_at": "2026-11-21T20:56:34.648530+00:00",
+    "note": "2026-11-22: ajan 1.6 + bot borcu yazıldı (23:01 UTC), en geç 72 sa'te zorla restart"
   },
   {
     "id": "bl_0a12bdaeae",
@@ -5738,10 +5740,11 @@
     "detail": "remote_agent/evolution_agent.py yerelde (90/90). Kullanıcı commit+push etmeli; ajan 10 dk'da kendini günceller; sonra python3 scripts/remote.py restart bot (borç yeniden yazılır, artık 72 sa içinde pozisyon açıkken de zorla uygulanır)",
     "category": "wiring",
     "priority": "high",
-    "status": "pending",
+    "status": "done",
     "source": "session",
     "created_at": "2026-11-22T07:09:51.939128+00:00",
-    "updated_at": "2026-11-22T07:09:51.939270+00:00"
+    "updated_at": "2026-11-22T07:09:51.939270+00:00",
+    "note": "2026-11-22: ajan 1.6 + bot borcu yazıldı (23:01 UTC), en geç 72 sa'te zorla restart"
   },
   {
     "id": "bl_173ba3657d",
@@ -5753,5 +5756,159 @@
     "source": "session",
     "created_at": "2026-11-22T07:11:25.133873+00:00",
     "updated_at": "2026-11-22T07:11:25.134015+00:00"
+  },
+  {
+    "id": "bl_f277fde47f",
+    "title": "KH-02/03: seçili hesapların ham işlem dosyaları",
+    "detail": "Kullanıcı seçtiği hesapları söyleyince export/positions CSV'leri data/raw/'a indir (onaylı), KH-02 seçim kenarı + KH-03 giriş kenarı (sonraki 1m açılışı+spread, plasebo, Bonferroni) koş",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-22T22:12:47.043487+00:00",
+    "updated_at": "2026-11-22T22:12:47.043610+00:00"
+  },
+  {
+    "id": "bl_ab6b150855",
+    "title": "KH-04 fikir: Soma/CWDT altın getirisi 'hep altın uzun' tabanını geçiyor mu",
+    "detail": "KH-03 plasebosu aynı yönü koruyordu; haftalık yön seçiminin değeri altın boğasından ayrıştırılmadı. Yeni ön kayıt + XAU uzun tabanı + 2024-26 dışı dönem gerekir",
+    "category": "idea",
+    "priority": "low",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-22T22:27:33.736810+00:00",
+    "updated_at": "2026-11-22T22:27:33.736957+00:00"
+  },
+  {
+    "id": "bl_afaf14c21d",
+    "title": "KH-10: scalper'ları tick verisiyle sına",
+    "detail": "BreakZone (XAU) ve AI Wall Street (USTEC) 20 sn–5 dk işlemler; Dukascopy tick (saatlik bi5) işlem saatleri için ~50 MB; kullanıcı onayı gerekir",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-22T22:55:34.398168+00:00",
+    "updated_at": "2026-11-22T22:55:34.398302+00:00"
+  },
+  {
+    "id": "bl_88c727cd9b",
+    "title": "SC-07 Soma ileri gölge kopya",
+    "detail": "2026-11-21 sonrası Soma sinyalleri, 5 dk gecikmeli kopya; kullanıcı ayda bir MQL5 export'u alır, kh_yukle + sc_duka guncel + sc07_ileri_golge.py; kart n>=100 sinyal",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T00:15:46.964267+00:00",
+    "updated_at": "2026-11-23T00:15:46.964393+00:00"
+  },
+  {
+    "id": "bl_e41daab49c",
+    "title": "SC-08 Soma birebir tetik (tick)",
+    "detail": "Dukascopy tick ile giriş saniyesindeki koşul; hedef HESAP ileri yarısında kesinlik>=%50 yakalama>=%50; sonra GELISTIRME→DOGRULAMA→KASA | 2026-11-23 SC-11 X: giriş saniyesi = günün yeni ucu + 30 sn itki (AUC 0,86) ama ıska pencerelerinin %84ünde de var; kesinlik artışı 0.",
+    "category": "experiment",
+    "priority": "high",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-11-23T00:15:47.049222+00:00",
+    "updated_at": "2026-11-23T05:23:13.409600+00:00"
+  },
+  {
+    "id": "bl_df16400bfa",
+    "title": "SC kasa verisi + spread yeniden kurulum",
+    "detail": "sc_duka.py indir bitince sc_veri.bar_kur() (2010-17 BID + tüm yıllar ASK Çarşamba), SC-01/03 yeniden koş; 2018-24 maliyeti şu an 2025 bp profilinden",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T00:15:47.137786+00:00",
+    "updated_at": "2026-11-23T00:15:47.137949+00:00"
+  },
+  {
+    "id": "bl_2d3a7882a8",
+    "title": "SC-09 Soma vs CWDT yönetim farkı",
+    "detail": "ortak girişlerde Soma +6,2 / CWDT +3,6 bp: piramit, kademeli TP, hızlı kesme hangisi; yalnız betimleyici, ileri gölgede doğrulanır",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T00:15:47.227857+00:00",
+    "updated_at": "2026-11-23T00:15:47.227998+00:00"
+  },
+  {
+    "id": "bl_822ddd0ecd",
+    "title": "SC-12 Soma hesap-durumu seçimi",
+    "detail": "Aday pencereler arasında Soma'nın girip girmediğini hesap durumu açıklıyor mu: açık pozisyon/paket sayısı, günün gerçekleşmiş P&L'i, son işlemden geçen süre, son işlem kaybı; yalnız sağlayıcı geçmişinden nedensel; ön kayıt + KEŞİF/İLERİ",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T05:23:13.480339+00:00",
+    "updated_at": "2026-11-23T05:23:13.480480+00:00"
+  },
+  {
+    "id": "bl_616b86d326",
+    "title": "SC-13 E2X3 ileri gölge / kasa kararı",
+    "detail": "E2X3 (SC-08 modeli alış ateşlemesi, sonraki 1m açılış, stop 1 ATR_H1, 480 dk) doğrulamada P 0,886 ile C kaldı. Seçenek: (a) 2026-11-14 sonrası ileri gölge (sc_duka guncel + skorla), n≥150; (b) kullanıcı onayıyla ön kayıt eki + KASA 2010–17 tek atış. Kasa bir kez kullanılır.",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T05:35:23.774660+00:00",
+    "updated_at": "2026-11-23T05:35:23.774794+00:00"
+  },
+  {
+    "id": "bl_556e2e41f0",
+    "title": "Soma türevi kart + gölge: altın E4X3, altın E2X3, DAX E2X3",
+    "detail": "2. KURAL kartı kutuda MT5 (XAUUSD/GER40) verisiyle; E4X3 modelsiz → botta doğrudan gölge; E2X3 için model skorlaması kutuya taşınmalı",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T07:14:58.252901+00:00",
+    "updated_at": "2026-11-23T07:14:58.253047+00:00"
+  },
+  {
+    "id": "bl_a4b7af0317",
+    "title": "indicator_snapshots 11-19 05:03'ten beri yazılmıyor",
+    "detail": "kutu kaydedicisi döngüde ama 'tick yok'; recorder_alive=True yanıltıcı; DBG klonu aynı dakika restart → yanlış MT5 terminali olasılığı; panel/otopsi 11-19 sonrasını görmüyor",
+    "category": "wiring",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T22:36:17.415858+00:00",
+    "updated_at": "2026-11-23T22:36:17.415963+00:00"
+  },
+  {
+    "id": "bl_00f2b37e1e",
+    "title": "DAYCOMBO buy-stop +0,5ATR5/30dk ileri sınama",
+    "detail": "SL-03 C: lag1 tabanında ΔΣ +11R ama yıllar tutarsız; 2026-11-24 sonrası canlı akışta replay ile ileri karne (n≥80), işlem başı R ve SL/TP oranı",
+    "category": "experiment",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T22:36:17.480854+00:00",
+    "updated_at": "2026-11-23T22:36:17.480977+00:00"
+  },
+  {
+    "id": "bl_10375ddab2",
+    "title": "vol_bracket canlı karne",
+    "detail": "genişletilmiş DAYCOMBO/REENTRY işlemleri n=60'ta ort R<0 ise DAYCOMBO_VOL_BRACKET=False; bot logunda 'vol_bracket:' satırları",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T22:44:38.683389+00:00",
+    "updated_at": "2026-11-23T22:44:38.683632+00:00"
+  },
+  {
+    "id": "bl_8850d3b96c",
+    "title": "SOMA canlı karne n=60",
+    "detail": "E4X3/E2X3 XAU+NDX canlı işlemler n=60'ta ort R<0 ise kapat; broker tick hacmi ↔ Dukascopy farkını soma_kontrol.py ile izle",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-23T22:53:28.110567+00:00",
+    "updated_at": "2026-11-23T22:53:28.110710+00:00"
   }
 ]

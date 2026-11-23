@@ -1,0 +1,28 @@
+{
+ "esik": 0.968058111486534,
+ "n_oz": 300,
+ "XAU": {
+  "n_dakika": 30360,
+  "skor_korelasyon": 1.0,
+  "skor_mutlak_fark_medyan": 0.0,
+  "y_uyum": 1.0,
+  "ates_arastirma": 6,
+  "ates_canli": 6,
+  "ortak_tam": 6,
+  "arastirma_canlida_2dk": 1.0,
+  "canli_arastirmada_2dk": 1.0,
+  "n_sentetik": 56727
+ },
+ "NDX": {
+  "n_dakika": 29309,
+  "skor_korelasyon": 1.0,
+  "skor_mutlak_fark_medyan": 0.0,
+  "y_uyum": 1.0,
+  "ates_arastirma": 1,
+  "ates_canli": 1,
+  "ortak_tam": 1,
+  "arastirma_canlida_2dk": 1.0,
+  "canli_arastirmada_2dk": 1.0,
+  "n_sentetik": 49386
+ }
+}

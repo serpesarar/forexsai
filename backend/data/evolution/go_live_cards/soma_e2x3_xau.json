@@ -1,0 +1,99 @@
+{
+ "scope": "soma_e2x3_xau",
+ "tarih": "2026-11-23T17:51:52",
+ "aciklama": "Soma klon modeli (HistGradientBoosting, SC-08; KEŞİF eğitimi, eşik q0,998) skoru eşiği aşağıdan yukarı kestiğinde, 1m kapanış > EMA1440 ise AL; SL 1×ATR14(H1), 480 dk zaman çıkışı, TP yok.",
+ "ana_olcum": "Dukascopy XAU 1m, kart penceresi son 4 yıl 2022-11-14 → 2026-11-14 (kullanıcı ölçütü 2026-11-23: son 3–4 yıl sürekli artı yeterli); giriş = sinyal barından sonraki 1m açılışı + yıl×saat spread + 0,08 $/ons komisyon",
+ "veri_notu": "kendi küpü (eğitim piyasası; 2025 model eğitimiyle kısmen çakışır)",
+ "olay": 945,
+ "ort_R": 0.2687,
+ "ort_bp": 7.419,
+ "isabet": 0.397,
+ "checks": {
+  "1_hacim": {
+   "n": 945,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "ort_R": 0.2687,
+   "P_EV_pos": 0.99,
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "yari1_R": 0.1018,
+   "yari2_R": 0.4352,
+   "gecti": true
+  },
+  "4_surtunme": {
+   "stres_R": 0.2116,
+   "gecti": true
+  },
+  "5_icra": {
+   "iyimser_R": 0.3342,
+   "gercek_R": 0.2687,
+   "fark": 0.0655,
+   "gecti": true
+  },
+  "6_tek_pozisyon": {
+   "n": 311,
+   "ort_R": 0.2759,
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "son4_yil_R": {
+  "2023": 0.371,
+  "2024": 0.123,
+  "2025": 0.333,
+  "2026": 0.257
+ },
+ "son4_her_yil_arti": true,
+ "tum_yillar_R": {
+  "2018": 0.012,
+  "2019": 0.506,
+  "2020": 0.129,
+  "2021": 0.301,
+  "2022": -0.106,
+  "2023": 0.371,
+  "2024": 0.123,
+  "2025": 0.333,
+  "2026": 0.257
+ },
+ "tum_yillar_n": {
+  "2018": 96,
+  "2019": 133,
+  "2020": 202,
+  "2021": 196,
+  "2022": 144,
+  "2023": 189,
+  "2024": 197,
+  "2025": 397,
+  "2026": 132
+ },
+ "rastgele_alis_farki": {
+  "taban_bp": 1.427,
+  "fark_bp": 5.992,
+  "fark_P": 0.9656
+ },
+ "maks_dusus_R": 54.8,
+ "yilda_sinyal": 236.2,
+ "verdict": "LIVE",
+ "kanit": "research/soma_cozum_20261122 (PROTOCOL SC-13…SC-19; src/sc19_canli_kart.py, results/sc19_kart.json)",
+ "canli_parite": {
+  "n_dakika": 30360,
+  "skor_korelasyon": 1.0,
+  "skor_mutlak_fark_medyan": 0.0,
+  "y_uyum": 1.0,
+  "ates_arastirma": 6,
+  "ates_canli": 6,
+  "ortak_tam": 6,
+  "arastirma_canlida_2dk": 1.0,
+  "canli_arastirmada_2dk": 1.0,
+  "n_sentetik": 56727
+ },
+ "uyarilar": [
+  "2025 model KEŞİF eğitim dönemiyle kısmen çakışır (örneklem içi)",
+  "hacim özelliği canlıda broker tick hacmi (araştırma Dukascopy) — ilk 60 işlemde canlı karne izlenecek"
+ ],
+ "durdurma": "canlı n=60 işlemde ort R < 0 → kapat",
+ "canli_karar": "kullanıcı kararı 2026-11-23 ('canlıya al direk'); kart 6/6 + son 4 yılın her yılı artı"
+}
