@@ -47,23 +47,101 @@ CACHE_SOURCE = "mt5_box"  # candle_cache.source: gün-içi barların tek yazarı
 CC_CHUNK = 1000           # candle_cache upsert batch boyutu
 
 
+# ── MT5 BAĞLANTI DOĞRULAMASI + KENDİNİ ONARMA (2026-11-23) ──────────────────
+# 2026-11-19 05:05 UTC'de Pepperstone terminali yeniden başladı. Kaydedici eski
+# terminalin IPC bağlantısında kaldı: tick ve copy_rates sessizce None döndü, döngü
+# her dakika "kayıt @" yazdı ama 4,5 gün tek bar yazmadı. Süreç canlı göründüğü için
+# izleyici de sağlık denetimi de bir şey görmedi. Şimdi: (a) bağlanılan hesap
+# doğrulanır (kutuda ikinci terminal DBG 303733 var, yolsuz initialize ona gidebilir);
+# (b) bağlantı her döngüde yoklanır, koparsa yeniden kurulur; kurulamazsa süreç
+# çıkar ve izleyici onu yeniden başlatır.
+RECONNECT_AFTER_FAILS = int(getattr(config, "RECORDER_RECONNECT_AFTER", 2))
+RECONNECT_MAX_FAILS = int(getattr(config, "RECORDER_RECONNECT_MAX_FAILS", 5))
+FOREIGN_SERVER_PREFIX = "DBG"
+
+
+def _expected_login() -> int | None:
+    """Beklenen hesap: RECORDER_EXPECTED_LOGIN, yoksa login modundaki MT5_ACCOUNT, yoksa None."""
+    value = getattr(config, "RECORDER_EXPECTED_LOGIN", None) or getattr(config, "MT5_ACCOUNT", None)
+    try:
+        return int(value) if value else None
+    except (TypeError, ValueError):
+        return None
+
+
+def account_problem(account, expected_login: int | None) -> str | None:
+    """SAF: bağlanılan hesap kaydedici için uygun mu? Uygunsa None, değilse sebep."""
+    if account is None:
+        return "account_info() boş (terminal oturumu yok)"
+    server = str(getattr(account, "server", "") or "")
+    if server.upper().startswith(FOREIGN_SERVER_PREFIX):
+        return f"yanlış terminal: sunucu {server} (DBG izleme terminali)"
+    login = getattr(account, "login", None)
+    if expected_login and login != expected_login:
+        return f"yanlış hesap: {login} (beklenen {expected_login})"
+    return None
+
+
 def connect_mt5() -> bool:
     # LOGIN modu / ATTACH modu (MT5_ACCOUNT boş → açık terminale bağlan).
     # 2026-07-26: attach kurulumunda login=0 → '(-2, Invalid params)'.
+    path = getattr(config, "MT5_TERMINAL_PATH", None)
+    if not path:
+        log.warning("config.MT5_TERMINAL_PATH boş — yolsuz initialize DBG terminaline bağlanabilir")
+    kw = {}
     if config.MT5_ACCOUNT:
-        kw = dict(login=config.MT5_ACCOUNT, password=config.MT5_PASSWORD,
-                  server=config.MT5_SERVER)
-        ok = (mt5.initialize(config.MT5_TERMINAL_PATH, **kw)
-              if config.MT5_TERMINAL_PATH else mt5.initialize(**kw))
-    else:
-        ok = (mt5.initialize(config.MT5_TERMINAL_PATH)
-              if config.MT5_TERMINAL_PATH else mt5.initialize())
+        kw = dict(login=config.MT5_ACCOUNT, password=config.MT5_PASSWORD, server=config.MT5_SERVER)
+    ok = mt5.initialize(path, **kw) if path else mt5.initialize(**kw)
     if not ok:
         log.error("mt5.initialize başarısız: %s", mt5.last_error()); return False
     info = mt5.account_info()
-    log.info("MT5 bağlı | hesap=%s broker=%s", getattr(info, "login", "?"),
-             getattr(info, "company", "?"))
+    problem = account_problem(info, _expected_login())
+    if problem:
+        log.error("MT5 bağlantısı REDDEDİLDİ: %s | yol=%s", problem, path)
+        mt5.shutdown()
+        return False
+    log.info("MT5 bağlı | hesap=%s sunucu=%s broker=%s yol=%s", getattr(info, "login", "?"),
+             getattr(info, "server", "?"), getattr(info, "company", "?"), path)
     return True
+
+
+def mt5_link_ok(probe_symbol: str | None) -> bool:
+    """Terminal IPC'si canlı mı? terminal_info veya geçmiş bar okunamıyorsa kopuktur.
+
+    Broker bağlantısının düşmesi (terminal_info().connected=False) burada sayılmaz:
+    onun çaresi yeniden bağlanmak değil, kutuda hesap girişidir (sağlık denetimi bildirir).
+    """
+    try:
+        if mt5.terminal_info() is None:
+            return False
+        if probe_symbol and mt5.copy_rates_from_pos(probe_symbol, mt5.TIMEFRAME_M1, 1, 1) is None:
+            return False
+        return True
+    except Exception:
+        return False
+
+
+def ensure_link(state: dict, resolved: dict) -> bool:
+    """Bağlantı kopuksa yeniden kur. Dönüş: bu döngüde kayıt yapılabilir mi."""
+    probe = next((s for s in resolved.values() if s), None)
+    if mt5_link_ok(probe):
+        state["fails"] = 0
+        return True
+    state["fails"] = state.get("fails", 0) + 1
+    log.warning("MT5 bağlantısı yanıt vermiyor (%d. döngü, %s okunamadı)", state["fails"], probe)
+    if state["fails"] < RECONNECT_AFTER_FAILS:
+        return False
+    mt5.shutdown()
+    if connect_mt5():
+        resolved.update({fx: resolve(m) for fx, m in config.RECORDER_SYMBOLS.items()})
+        log.warning("MT5 bağlantısı YENİDEN KURULDU — kayıt sürüyor")
+        state["fails"] = 0
+        return True
+    if state["fails"] >= RECONNECT_AFTER_FAILS + RECONNECT_MAX_FAILS:
+        log.error("MT5'e %d denemede yeniden bağlanılamadı — çıkılıyor (izleyici yeniden başlatır)",
+                  RECONNECT_MAX_FAILS)
+        sys.exit(3)
+    return False
 
 
 def supa():
@@ -311,10 +389,14 @@ def main():
         mt5.shutdown()
         sys.exit(2)
 
+    link_state: dict = {"fails": 0}
     try:
         loops = 0
         while True:
             log.info("─── kayıt @ %s ───", datetime.now(timezone.utc).strftime("%H:%M:%S"))
+            if not ensure_link(link_state, resolved):
+                time.sleep(config.RECORDER_POLL)
+                continue
             # DST geçişi / broker değişikliği: offset'i saatte bir tazele
             loops += 1
             if loops % max(1, int(3600 / max(config.RECORDER_POLL, 1))) == 0:
