@@ -185,7 +185,9 @@ Oynatıcının gömülü verisi ham fiyat içerdiği için git dışında. Yaln�
 
 **Önerilen sıra.** K1'e yeni filtre arama. Beş tur denendi (XG, XL, XD, XK, XA), hepsi X; kaybeden girişte tanınmıyor (§3-48, §3-50). Aynı veriyle bir tur daha büyük olasılıkla aynı sonucu verir. İlerleme yeni veriden gelir, yani canlı ve gölge işlemlerden.
 
-1. **Korku sepeti risk defteri** (en öncelikli, henüz yapılmadı).
+1. **Korku sepeti risk defteri** — **2026-11-23 yapıldı, sonuç X** (KS-01…04, defter §2.113, `research/korku_sepeti_20261123/RAPOR.md`).
+   - **Sonuç:** en kötü 10 günün hepsinde ≥ 2 korku kuralı açık; C3B kârın %36'sı, kuyruğun %57'si. Ama aynı günler en kârlı günler. Aile tavanı ve çakışmada yarım lot kuyruğu ve kârı aynı oranda kesiyor; tekdüze lot küçültmeden farksız (5/5 X). KR-03 kitapta düşüşü büyütmüyor. Kuyruk küçültülmek istenirse araç toplam lot kararıdır.
+   - Aşağıdaki gerekçe ve plan kayıt için duruyor.
    - **Neden:** NAS100'de beş canlı kural aynı bahsi yapıyor: endeks korkuyla düştükten sonra AL. Bunlar C3b 2,0 (vade haftası 1,0), KSG 0,5 (VIX ≥ 25'te 1,0), KORKU 0,75, CAPREV 0,4 ve ORB×VIX 0,75. Meta-analizde (§2.35, MA-03; eski bot aileleri, 06-30 → 11-09) en kötü 5 gün toplam net kâra eşitti. Lot tavanı 5 ise en kötü 5 gün −22,0 bin $'dan −7,8 bin $'a iniyor, günlük Sharpe 0,111'den 0,154'e çıkıyordu (örneklem içi, C). Bugünkü tek koruma kaba: sembolde 4,5 lot aşılırsa sonraki kural atlanıyor.
    - **Ne yapılacak:**
      - Her kuralın 2018–26 işlem listesi gün gün üst üste konur. Duka NDX 1m + MT5 NAS100, aynı maliyet; `research/son_rapor_20261118/rapor.py` düzeneği yeniden kullanılır.
