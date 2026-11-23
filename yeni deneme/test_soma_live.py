@@ -68,3 +68,10 @@ def test_evaluate_yeni_gun_tepesi():
 def test_model_dosyasi():
     m = E2.load_model()
     assert {"model", "oz", "esik"} <= set(m) and 0 < m["esik"] < 1 and len(m["oz"]) > 50
+
+
+def test_srv_offset_kural():
+    import datetime as dt
+    kis = dt.datetime(2026, 11, 23, 23, 5, tzinfo=dt.timezone.utc).timestamp()
+    yaz = dt.datetime(2026, 7, 1, 12, tzinfo=dt.timezone.utc).timestamp()
+    assert E4.srv_offset(kis) == 2 * 3600 and E4.srv_offset(yaz) == 3 * 3600

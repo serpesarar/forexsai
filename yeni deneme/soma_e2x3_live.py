@@ -141,7 +141,7 @@ def manage_exits(mt5, config, log, send_order, offset_fn, resolve_symbol, now: f
         for pos in kk.open_positions(mt5, config, rule):
             st = st or _load_state()
             meta = st.get("pos", {}).get(str(pos.ticket))
-            t_in = float(meta["entry_t"]) if meta else float(pos.time) - offset_fn(pos.symbol)
+            t_in = float(meta["entry_t"]) if meta else float(pos.time) - bt.rule_offset_sec(int(pos.time))
             why = "480 dk zaman çıkışı" if now - t_in >= HOLD_S else ("Cuma kapanışı" if friday_close_due(now) else None)
             if why and kk.close(mt5, config, log, send_order, rule, pos, why):
                 st.get("pos", {}).pop(str(pos.ticket), None)
@@ -188,7 +188,7 @@ def _poll_one(mt5, config, log, resolve_symbol, offset_fn, send_order, mk_commen
     rec = {"market": market, "bar_t": s["bar_t"], "latency_s": round(late, 1), "skor": round(s["skor"], 4),
            "skor_onceki": round(s["skor_onceki"], 4), "esik": round(mdl["esik"], 4), "atr_h1": round(s["atr_h1"], 3),
            "close": s["close"]}
-    _try_enter(mt5, config, log, sym, rule, market, s, rec, st, now, offset_fn(sym), send_order, mk_comment, autotrading_ok,
+    _try_enter(mt5, config, log, sym, rule, market, s, rec, st, now, bt.rule_offset_sec(int(now) + 3 * 3600), send_order, mk_comment, autotrading_ok,
                log_trade)
 
 

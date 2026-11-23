@@ -30,6 +30,7 @@ from pathlib import Path
 
 import numpy as np
 
+import broker_time as bt
 import caprev_shadow as cs
 import kural_katalogu as kk
 
@@ -107,6 +108,12 @@ def evaluate(m1: dict, h4: dict, h1: dict) -> dict | None:
             "govde": float((c[k] - o[k]) / rng), "stop_dist": SL_K * float(atr1)}
 
 
+def srv_offset(now_utc: float) -> int:
+    """Sunucu − UTC (sn), broker kuralından (sunucu = New York + 7). Bot'un tick'ten ölçtüğü ofset günlük kapanış arasında
+    bayat tick'le 1 saat önbelleğe alınabiliyor (2026-11-23: E4 bu yüzden 23:00 UTC açılışında sessiz kaldı) → kullanılmaz."""
+    return bt.rule_offset_sec(int(now_utc) + 3 * 3600)
+
+
 def friday_close_due(now: float) -> bool:
     _, m, wd = cs.to_local(now, "US")
     return wd == 4 and m >= FRIDAY_CLOSE_NY_MIN
@@ -148,7 +155,7 @@ def manage_exits(mt5, config, log, send_order, offset_fn, resolve_symbol, now: f
     st = _load_state()
     for pos in positions:
         meta = st.get("pos", {}).get(str(pos.ticket))
-        t_in = float(meta["entry_t"]) if meta else float(pos.time) - offset_fn(pos.symbol)
+        t_in = float(meta["entry_t"]) if meta else float(pos.time) - bt.rule_offset_sec(int(pos.time))
         why = "480 dk zaman çıkışı" if now - t_in >= HOLD_S else ("Cuma kapanışı" if friday_close_due(now) else None)
         if why and kk.close(mt5, config, log, send_order, RULE, pos, why):
             st.get("pos", {}).pop(str(pos.ticket), None)
@@ -165,7 +172,7 @@ def poll(mt5, config, log, resolve_symbol, get_vix, offset_fn, send_order, mk_co
     sym = resolve_symbol(MARKET)
     if not sym:
         return
-    off = offset_fn(sym)
+    off = srv_offset(now)                                               # broker kuralı (NY+7); bkz. srv_offset
     st = _load_state()
     now_srv = now + off
     if int(now_srv // 86400) in st.get("fired_days", []):
