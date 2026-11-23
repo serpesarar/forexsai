@@ -615,7 +615,7 @@ def push_heartbeat(client, extra: dict | None = None) -> None:
         # bile True yazıyordu. Artık gerçek bağlantı; ölçüm yoksa None.
         "mt5": HEALTH.get("mt5_connected"),
         "open_positions": open_position_count(),
-        "agent_version": "1.6",
+        "agent_version": "1.7",
         # Panel "ajan çevrimiçi ama işlem verisi bayat" durumunun SEBEBİNİ
         # görebilsin diye trade senkron sağlığı da taşınır.
         "trade_sync_ok": TRADE_SYNC["ok"],
@@ -1368,6 +1368,13 @@ MARKET_BREAK_END_MIN = 23 * 60 + 30
 DECIDER_LLM_ERROR_MARK = "claude exit"
 #: Veri kaydedici süreç eşlemesi (canlılık denetimi WATCHDOG_SPECS["recorder"]).
 RECORDER_MATCH = getattr(cfg, "RECORDER_MATCH", "data_recorder.py")
+#: 2026-11-23: kaydedici 4,5 gün canlı ama yazmadan döndü (terminal yeniden başladı, IPC
+#: koptu). Süreç ve log canlılığı bunu göremez; ölçü Supabase'deki son 1m barın yaşıdır.
+#: En taze sembole bakılır, biri tatilde olsa da alarm çalmaz.
+RECORDER_HEALTH_SYMBOLS = tuple(getattr(cfg, "RECORDER_HEALTH_SYMBOLS",
+                                        ("NDX.INDX", "GDAXI.INDX", "XAUUSD", "USOIL.FOREX")))
+RECORDER_BAR_STALE_SEC = int(getattr(cfg, "RECORDER_BAR_STALE_SEC", 600))
+RECORDER_BAR_TABLE = getattr(cfg, "RECORDER_BAR_TABLE", "indicator_snapshots")
 
 #: Son ölçüm — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
 HEALTH: dict = {}
@@ -1393,7 +1400,8 @@ def market_expected_open(now: datetime) -> bool:
 
 def health_issues(mt5_connected: bool | None, tick_age_s: float | None, market_open: bool,
                   claude_logged_in: bool | None, llm_err_streak: int,
-                  bot_log_age_s: float | None = None, recorder_alive: bool | None = None) -> list[dict]:
+                  bot_log_age_s: float | None = None, recorder_alive: bool | None = None,
+                  recorder_bar_age_s: float | None = None) -> list[dict]:
     """SAF karar → sorun listesi. None = ölçülemedi; ölçülemeyen şey için alarm üretilmez."""
     issues = []
     if mt5_connected is False:
@@ -1417,6 +1425,11 @@ def health_issues(mt5_connected: bool | None, tick_age_s: float | None, market_o
         issues.append({"code": "recorder_down",
                        "message": "Veri kaydedici çalışmıyor — mumlar güncellenmiyor "
                                   "(kutuda: calistir\\1_veri_kaydedici.bat)"})
+    elif market_open and recorder_bar_age_s is not None and recorder_bar_age_s > RECORDER_BAR_STALE_SEC:
+        issues.append({"code": "recorder_stale",
+                       "message": f"Kaydedici canlı ama {recorder_bar_age_s / 60:.0f} dk'dır "
+                                  f"{RECORDER_BAR_TABLE}'a bar yazmıyor — MT5 bağlantısı kopmuş "
+                                  "olabilir (remote.py restart recorder)"})
     return issues
 
 
@@ -1426,6 +1439,32 @@ def process_health() -> dict:
     age = _file_age_s(WATCHDOG_SPECS["bot"]["file"])
     return {"bot_log_age_s": None if age is None else round(age),
             "recorder_alive": None if pids is None else bool(pids)}
+
+
+def recorder_bar_age_s(client, now: datetime | None = None) -> float | None:
+    """Kaydedicinin son yazdığı 1m barın yaşı (sn), en taze sembole göre. None = ölçülemedi."""
+    if client is None:
+        return None
+    now = now or datetime.now(timezone.utc)
+    newest = None
+    for sym in RECORDER_HEALTH_SYMBOLS:
+        try:
+            rows = (client.table(RECORDER_BAR_TABLE).select("candle_time")
+                    .eq("symbol", sym).eq("timeframe", "1m")
+                    .order("candle_time", desc=True).limit(1).execute().data) or []
+        except Exception as e:
+            log.warning("[sağlık] %s son bar okunamadı (%s): %s", RECORDER_BAR_TABLE, sym, e)
+            continue
+        if not rows:
+            continue
+        try:
+            stamp = datetime.fromisoformat(str(rows[0]["candle_time"]).replace("Z", "+00:00"))
+        except (KeyError, ValueError):
+            continue
+        if stamp.tzinfo is None:
+            stamp = stamp.replace(tzinfo=timezone.utc)
+        newest = stamp if newest is None or stamp > newest else newest
+    return None if newest is None else max(0.0, round((now - newest).total_seconds()))
 
 
 def mt5_health() -> dict:
@@ -1533,12 +1572,13 @@ def health_tick(client=None) -> dict:
     global HEALTH
     if not HEALTH_ENABLED:
         return {}
-    measured = {**mt5_health(), **process_health()}
+    measured = {**mt5_health(), **process_health(), "recorder_bar_age_s": recorder_bar_age_s(client)}
     logged_in = claude_logged_in()
     streak = decider_llm_error_streak(getattr(cfg, "DECIDER_JOURNAL", None))
     raw = health_issues(measured.get("mt5_connected"), measured.get("mt5_tick_age_s"),
                         market_expected_open(datetime.now(timezone.utc)), logged_in, streak,
-                        measured.get("bot_log_age_s"), measured.get("recorder_alive"))
+                        measured.get("bot_log_age_s"), measured.get("recorder_alive"),
+                        measured.get("recorder_bar_age_s"))
     # Zaten bildirilmiş sorun yeniden doğrulama beklemez: yoksa ajan yeniden başlayınca
     # ilk turda sorun "düzeldi" görünüp ikinci turda yeniden açılırdı.
     alerted = set(_load_wd().get("health_alerted") or ())
@@ -1585,6 +1625,25 @@ AUTO_RESTART_MAP = [
 ]
 
 
+def auto_restart_targets(changed: list[str]) -> list[str]:
+    """SAF: değişen dosyalar → yeniden başlatılacak hedefler, AUTO_RESTART_MAP sırasıyla.
+
+    Her dosya yalnız İLK eşleşen önekin hedefini tetikler (2026-11-23): eskiden
+    `yeni deneme/data_recorder.py` hem kaydediciyi hem ('yeni deneme/' öneki) botu
+    yeniden başlatıyordu; kaydedici düzeltmesi botu gereksiz yere durdururdu."""
+    hits = set()
+    for f in changed:
+        for prefix, target in AUTO_RESTART_MAP:
+            if f.startswith(prefix):
+                hits.add(target)
+                break
+    ordered = []
+    for _prefix, target in AUTO_RESTART_MAP:
+        if target in hits and target not in ordered:
+            ordered.append(target)
+    return ordered
+
+
 def should_skip_auto_restart(target: str, targets: dict, pids_of) -> bool:
     """only_if_running hedefi kapalıysa oto-güncelleme onu AÇMAZ (2026-11-04: backend/ push'u
     kutuda ikinci backend başlattı, gölge/sonuç tablolarına çift yazdı). Sorgu başarısızsa
@@ -1615,16 +1674,15 @@ def auto_update_tick(client) -> None:
     log.info("oto-güncelleme: %s commit çekildi, %d dosya değişti", behind, len(changed))
 
     results = []
-    for prefix, target in AUTO_RESTART_MAP:
-        if any(f.startswith(prefix) for f in changed):
-            if should_skip_auto_restart(target, _process_targets(), _pids_by_cmdline):
-                log.info("oto-restart %s atlandı: çalışmıyordu, açılmadı", target)
-                continue
-            out, rc = restart_target(target)
-            results.append(f"{target}: rc={rc} {out[:80]}")
-            log.info("oto-restart %s → rc=%s", target, rc)
-            if rc == 3:            # ertelendi (açık pozisyon) → borç yaz
-                _queue_pending_restart(target, behind)
+    for target in auto_restart_targets(changed):
+        if should_skip_auto_restart(target, _process_targets(), _pids_by_cmdline):
+            log.info("oto-restart %s atlandı: çalışmıyordu, açılmadı", target)
+            continue
+        out, rc = restart_target(target)
+        results.append(f"{target}: rc={rc} {out[:80]}")
+        log.info("oto-restart %s → rc=%s", target, rc)
+        if rc == 3:            # ertelendi (açık pozisyon) → borç yaz
+            _queue_pending_restart(target, behind)
     # Panelde iz bırak: değişiklik akışında görünsün
     try:
         client.table("evolution_commands").insert({

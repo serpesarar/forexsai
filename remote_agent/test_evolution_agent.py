@@ -511,7 +511,7 @@ def test_healthy_bot_not_touched_and_heartbeat_reports_alive(agent, box):
     meta = client.upserted[0]["meta"]
     assert meta["bot_alive"] is True
     assert meta["bot_log_age_s"] is not None and meta["bot_log_age_s"] < 120
-    assert "bot_last_restart" in meta and meta["agent_version"] == "1.6"
+    assert "bot_last_restart" in meta and meta["agent_version"] == "1.7"
 
 
 def test_dead_bot_restarted_without_deferral_even_with_open_positions(agent, box):
@@ -748,6 +748,68 @@ def test_health_issues_bot_log_and_recorder(agent):
     assert agent.health_issues(True, 5, True, True, 0, None, None) == []  # ölçülemedi
 
 
+def test_health_issues_recorder_alive_but_not_writing(agent):
+    """11-19→11-23 vakası: süreç ve log canlı, 4,5 gün tek bar yazılmadı."""
+    stale = agent.RECORDER_BAR_STALE_SEC
+    assert _codes(agent.health_issues(True, 5, True, True, 0, 1, True, stale + 1)) == ["recorder_stale"]
+    assert agent.health_issues(True, 5, True, True, 0, 1, True, stale) == []
+    assert agent.health_issues(True, 5, False, True, 0, 1, True, 99999) == []   # piyasa kapalı
+    assert agent.health_issues(True, 5, True, True, 0, 1, True, None) == []     # ölçülemedi
+    # süreç yoksa tek alarm yeter: recorder_down
+    assert _codes(agent.health_issues(True, 5, True, True, 0, 1, False, 99999)) == ["recorder_down"]
+
+
+class _BarClient:
+    """`.table().select().eq().eq().order().limit().execute().data` zincirini sahteler."""
+
+    def __init__(self, stamps: dict):
+        self.stamps, self.sym = stamps, None
+
+    def table(self, name):
+        return self
+
+    def select(self, cols):
+        return self
+
+    def eq(self, col, val):
+        if col == "symbol":
+            self.sym = val
+        return self
+
+    def order(self, col, desc=False):
+        return self
+
+    def limit(self, n):
+        return self
+
+    def execute(self):
+        stamp = self.stamps.get(self.sym)
+        if isinstance(stamp, Exception):
+            raise stamp
+        return types.SimpleNamespace(data=[{"candle_time": stamp}] if stamp else [])
+
+
+def test_recorder_bar_age_uses_freshest_symbol(agent):
+    from datetime import timezone as tz
+    now = datetime(2026, 11, 23, 15, 0, tzinfo=tz.utc)
+    client = _BarClient({"NDX.INDX": "2026-11-19T05:03:00+00:00",
+                         "XAUUSD": "2026-11-23T14:58:00+00:00",
+                         "GDAXI.INDX": RuntimeError("timeout")})
+    assert agent.recorder_bar_age_s(client, now) == 120
+    assert agent.recorder_bar_age_s(_BarClient({}), now) is None
+    assert agent.recorder_bar_age_s(None, now) is None
+
+
+def test_auto_restart_targets_first_match_per_file(agent):
+    """Kaydedici düzeltmesi botu yeniden başlatmamalı (eskiden 'yeni deneme/' de eşleşiyordu)."""
+    assert agent.auto_restart_targets(["yeni deneme/data_recorder.py"]) == ["recorder"]
+    assert agent.auto_restart_targets(["yeni deneme/data_recorder.py", "yeni deneme/main.py"]) == [
+        "recorder", "bot"]
+    assert agent.auto_restart_targets(["remote_agent/x.py", "claude_decider/a.py"]) == [
+        "decider", "agent"]
+    assert agent.auto_restart_targets(["docs/x.md"]) == []
+
+
 def test_process_health_measures_log_age_and_recorder(agent, tmp_path, monkeypatch):
     log_file = tmp_path / "demo_bot.log"
     log_file.write_text("x", encoding="utf-8")
@@ -829,6 +891,7 @@ def health_box(agent, tmp_path, monkeypatch):
     monkeypatch.setattr(agent, "mt5_health", lambda: {"mt5_connected": state.connected,
                                                       "mt5_tick_age_s": 1})
     monkeypatch.setattr(agent, "process_health", lambda: {"bot_log_age_s": 1, "recorder_alive": True})
+    monkeypatch.setattr(agent, "recorder_bar_age_s", lambda client: None)
     monkeypatch.setattr(agent, "claude_logged_in", lambda: True)
     monkeypatch.setattr(agent, "decider_llm_error_streak", lambda p: 0)
     return state

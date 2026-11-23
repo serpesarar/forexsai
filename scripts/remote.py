@@ -257,6 +257,9 @@ def _process_lines(meta: dict) -> list[str]:
         lines.append(f"mt5     : {'🟢 bağlı' if meta.get('mt5') else '🔴 BAĞLI DEĞİL'}"
                      f" · hesap {meta.get('mt5_login') or '?'} @ {meta.get('mt5_server') or '?'}"
                      f" · son tick {_fmt_age(tick)} önce")
+        if "recorder_bar_age_s" in meta:      # ajan ≥1.7
+            rec = {True: "🟢 canlı", False: "🔴 ÖLÜ", None: "⚪ bilinmiyor"}.get(meta.get("recorder_alive"))
+            lines.append(f"recorder: {rec} · son bar {_fmt_age(meta.get('recorder_bar_age_s'))} önce")
         for issue in meta.get("health_issues") or []:
             lines.append(f"🔴 SORUN : {issue.get('message')}")
     if meta.get("watchdog_off"):
