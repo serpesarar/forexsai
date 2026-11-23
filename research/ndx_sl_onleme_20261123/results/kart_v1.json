@@ -1,0 +1,66 @@
+{
+ "2.0": {
+  "ad": "V1 SL=max(110,2.0xATR5) lag1",
+  "n": 3260,
+  "ortR": 0.0558,
+  "P": 0.998,
+  "CI": [
+   0.0201,
+   0.0905
+  ],
+  "yarilar": [
+   0.0436,
+   0.068
+  ],
+  "spread15_ortR": 0.0462,
+  "lag0_ortR": 0.0472,
+  "tek_poz_DC_ortR": 0.041,
+  "checks": {
+   "1_hacim": true,
+   "2_beklenti": true,
+   "3_kararlilik": true,
+   "4_surtunme": true,
+   "5_icra": true,
+   "6_sira_bagimli": true
+  },
+  "verdikt": "LIVE",
+  "plasebo": {
+   "real": 32.45454545454544,
+   "median": -20.95836060891493,
+   "p90": 2.4639652578233835,
+   "p": 0.0
+  }
+ },
+ "2.5": {
+  "ad": "V1 SL=max(110,2.5xATR5) lag1",
+  "n": 3089,
+  "ortR": 0.0611,
+  "P": 0.999,
+  "CI": [
+   0.0239,
+   0.0955
+  ],
+  "yarilar": [
+   0.0425,
+   0.0798
+  ],
+  "spread15_ortR": 0.0518,
+  "lag0_ortR": 0.0477,
+  "tek_poz_DC_ortR": 0.0394,
+  "checks": {
+   "1_hacim": true,
+   "2_beklenti": true,
+   "3_kararlilik": true,
+   "4_surtunme": true,
+   "5_icra": true,
+   "6_sira_bagimli": true
+  },
+  "verdikt": "LIVE",
+  "plasebo": {
+   "real": 39.36363636363632,
+   "median": -31.612283282858762,
+   "p90": -4.6921973083578745,
+   "p": 0.0
+  }
+ }
+}

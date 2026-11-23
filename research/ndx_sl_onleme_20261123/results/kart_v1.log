@@ -1,0 +1,4 @@
+{"ad": "V1 SL=max(110,2.0xATR5) lag1", "n": 3260, "ortR": 0.0558, "P": 0.998, "CI": [0.0201, 0.0905], "yarilar": [0.0436, 0.068], "spread15_ortR": 0.0462, "lag0_ortR": 0.0472, "tek_poz_DC_ortR": 0.041, "checks": {"1_hacim": true, "2_beklenti": true, "3_kararlilik": true, "4_surtunme": true, "5_icra": true, "6_sira_bagimli": true}, "verdikt": "LIVE"}
+  braket plasebosu k=2.0: gerçek Δ +32.5R | plasebo medyan -21.0 %90 +2.5 | p = 0.000
+{"ad": "V1 SL=max(110,2.5xATR5) lag1", "n": 3089, "ortR": 0.0611, "P": 0.999, "CI": [0.0239, 0.0955], "yarilar": [0.0425, 0.0798], "spread15_ortR": 0.0518, "lag0_ortR": 0.0477, "tek_poz_DC_ortR": 0.0394, "checks": {"1_hacim": true, "2_beklenti": true, "3_kararlilik": true, "4_surtunme": true, "5_icra": true, "6_sira_bagimli": true}, "verdikt": "LIVE"}
+  braket plasebosu k=2.5: gerçek Δ +39.4R | plasebo medyan -31.6 %90 -4.7 | p = 0.000

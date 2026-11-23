@@ -1,0 +1,46 @@
+/Users/melihcanodacioglu/Desktop/panel/research/ndx_sl_onleme_20261123/src/s1_tarama.py:117: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  s = pd.concat(ss)
+
+══ R G8 probasyon kaçışı ≥50p ══
+ yil   n  n0   SR   SR0  dSR     mR    mR0  SL  SL0  TP  TP0
+2018 282 285 -1.7   2.2 -3.9 -0.006  0.008 119  118 161  165
+2019 319 321  7.1   5.1  2.0  0.022  0.016 128  130 187  187
+2020 612 622 65.9  57.6  8.3  0.108  0.093 219  228 392  393
+2021 358 359  8.9   6.2  2.7  0.025  0.017 144  146 210  209
+2022 541 552  6.5   2.5  4.1  0.012  0.004 224  231 317  321
+2023 395 398 24.7  25.2 -0.5  0.063  0.063 152  153 243  245
+2024 323 325 10.4  10.1  0.3  0.032  0.031 129  130 191  192
+2025 334 338 -4.8 -10.5  5.7 -0.014 -0.031 142  147 189  188
+2026 331 339 26.5  20.3  6.3  0.080  0.060 124  131 207  208
+  DC: n 1853 vs 1874  ortR +0.039 vs +0.030  ΣR +72.2 vs +56.4
+  RE: n 1510 vs 1530  ortR +0.036 vs +0.033  ΣR +54.8 vs +50.3
+  atlanan kararlar (piyasa girişi karşı-olgusu): {'rule': {'size': 111, 'mean': 0.011, 'sum': 1.273}}
+  plasebo (aynı sayıda rastgele atma): gerçek Δ +20.3R, p = 0.000
+  ESKI-A  SL 466/476 (engel %2)  TP 740/745 (kayıp %1)  ortR +0.059 vs +0.053
+  ESKI-B  SL 520/530 (engel %2)  TP 770/775 (kayıp %1)  ortR +0.031 vs +0.026
+  Y24     SL 129/130 (engel %1)  TP 191/192 (kayıp %1)  ortR +0.032 vs +0.031
+  Y25     SL 220/228 (engel %4)  TP 310/311 (kayıp %0)  ortR +0.010 vs -0.004
+  Y26b    SL 39/40 (engel %3)  TP 73/73 (kayıp %0)  ortR +0.126 vs +0.116
+  VAKA    SL 7/10 (engel %30)  TP 13/12 (kayıp %-8)  ortR +0.123 vs -0.058
+
+══ R G8 probasyon kaçışı ≥100p ══
+ yil   n  n0    SR   SR0  dSR     mR    mR0  SL  SL0  TP  TP0
+2018 286 285   2.9   2.2  0.7  0.010  0.008 118  118 166  165
+2019 321 321   5.1   5.1  0.0  0.016  0.016 130  130 187  187
+2020 617 622  66.1  57.6  8.5  0.107  0.093 221  228 395  393
+2021 359 359   6.2   6.2  0.0  0.017  0.017 146  146 209  209
+2022 550 552   2.7   2.5  0.3  0.005  0.004 230  231 320  321
+2023 398 398  25.2  25.2  0.0  0.063  0.063 153  153 245  245
+2024 325 325  10.1  10.1  0.0  0.031  0.031 130  130 192  192
+2025 336 338 -12.0 -10.5 -1.5 -0.036 -0.031 147  147 186  188
+2026 336 339  23.3  20.3  3.0  0.069  0.060 128  131 208  208
+  DC: n 1868 vs 1874  ortR +0.034 vs +0.030  ΣR +64.1 vs +56.4
+  RE: n 1525 vs 1530  ortR +0.033 vs +0.033  ΣR +50.1 vs +50.3
+  atlanan kararlar (piyasa girişi karşı-olgusu): {'rule': {'size': 17, 'mean': -0.086, 'sum': -1.455}}
+  plasebo (aynı sayıda rastgele atma): gerçek Δ +7.5R, p = 0.002
+  ESKI-A  SL 469/476 (engel %1)  TP 748/745 (kayıp %-0)  ortR +0.060 vs +0.053
+  ESKI-B  SL 529/530 (engel %0)  TP 774/775 (kayıp %0)  ortR +0.026 vs +0.026
+  Y24     SL 130/130 (engel %0)  TP 192/192 (kayıp %0)  ortR +0.031 vs +0.031
+  Y25     SL 227/228 (engel %0)  TP 307/311 (kayıp %1)  ortR -0.007 vs -0.004
+  Y26b    SL 40/40 (engel %0)  TP 73/73 (kayıp %0)  ortR +0.116 vs +0.116
+  VAKA    SL 8/10 (engel %20)  TP 14/12 (kayıp %-17)  ortR +0.099 vs -0.058

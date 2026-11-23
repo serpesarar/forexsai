@@ -1,0 +1,61 @@
+{
+ "scope": "ndx_daycombo_vol_braket",
+ "tarih": "2026-11-23",
+ "defter": "SL-08",
+ "kural": "DAYCOMBO + REENTRY NDX BUY: SL = max(110, 2,5×ATR14(5m kapanmış)), TP = SL×80/110, lot = taban×110/SL (eşit $ risk); sakin piyasada eski 80/110 birebir",
+ "veri": "Dukascopy 1m 2018-01→2023-12 (yüzde geometri, REF 24.000) + Duka 2024 + broker bars_1m 2025-26 + kutu MT5 11-19→23; canlı akış taklidi (probasyon + REENTRY), canlı ≈1 dk gecikme (lag 1) tabanı",
+ "kart": {
+  "n": 3089,
+  "ortR": 0.0611,
+  "P": 0.999,
+  "CI": [
+   0.0239,
+   0.0955
+  ],
+  "yarilar": [
+   0.0425,
+   0.0798
+  ],
+  "spread15_ortR": 0.0518,
+  "lag0_ortR": 0.0477,
+  "tek_poz_DC_ortR": 0.0394,
+  "checks": {
+   "1_hacim": true,
+   "2_beklenti": true,
+   "3_kararlilik": true,
+   "4_surtunme": true,
+   "5_icra": true,
+   "6_sira_bagimli": true
+  }
+ },
+ "verdikt": "LIVE",
+ "taban_ortR_lag1": 0.043,
+ "fark_tabana_dSR": 39.4,
+ "fark_P_gunblok": 0.951,
+ "plasebo_braket_rastgele_atama": {
+  "real": 39.36363636363632,
+  "median": -31.612283282858762,
+  "p90": -4.6921973083578745,
+  "p": 0.0
+ },
+ "yil_delta": {
+  "2018": 12.1,
+  "2019": -3.2,
+  "2020": 11.5,
+  "2021": -8.5,
+  "2022": 22.5,
+  "2023": 4.5,
+  "2024": 0.1,
+  "2025": -1.5,
+  "2026": 1.8
+ },
+ "plato": "2× +32,5R / 2,5× +39,4R / 3× +27,1R (lag 1)",
+ "zayif_yan": "son 4 yılın her yılı artı değil (Δ ≤ 0 yıllar: 2019, 2021, 2025); kullanıcı ölçütü S4 ✗ — sınıf B",
+ "vaka_2026_11_23_canli": {
+  "SL_kurtulan": "3/4",
+  "TP_korunan": "5/6",
+  "gun_usd": "+8.334 (sim, açık pozisyonlar 21:58 kapanışından) vs +1.200 sim / +1.083 gerçek"
+ },
+ "canli": "yeni deneme/vol_bracket.py, DAYCOMBO_VOL_BRACKET=True varsayılan, DAYCOMBO_VOL_K=2.5; kapatma config'te False",
+ "durdurma": "vol_bracket'in genişlettiği işlemler n=60'ta ort R < 0 → False"
+}

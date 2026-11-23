@@ -826,6 +826,12 @@ PRICE_ALERTS_ENABLED=1            # fiyat alarm döngüsü (60s, taze MT5 fiyat�
 # yalnız GÖLGE log; gerçek DAILY_MAX_LOSS değişmedi — canlıya alma kararı kullanıcıda).
 # Decider: situation.range_forecast (bant + kendi stop seviyelerinin konumu; prompt: yön kanıtı DEĞİL).
 
+# ─── 2026-11-23 DAYCOMBO/REENTRY oynaklığa göre braket (defter SL-08, research/ndx_sl_onleme_20261123/) ───
+# Bot (yeni deneme/vol_bracket.py, config getattr): DAYCOMBO_VOL_BRACKET=True, DAYCOMBO_VOL_K=2.5 →
+# NDX BUY DAYCOMBO+REENTRY'de SL=max(110, 2,5×ATR14 5m), TP=SL×80/110, lot=taban×110/SL (eşit $ risk);
+# sakin piyasada eski 80/110 birebir. Kart 6/6, braket plasebosu p=0,000, sınıf B (2021/2025 eksi).
+# Giriş/bekleme/atlama kuralları SL ile TP'yi ayırmıyor (41 aday, r 0,996) — tekrar deneme.
+
 # ─── 2026-07-18 tartışma-bias kapısı + bias notlama (agent_debate_analysis_report.md) ───
 DEBATE_BIAS_GATE_ENABLED=1        # debate kararına KARŞIT pulse/smc sinyalini frenle (NDX+USOIL; fail-open)
 DEBATE_BIAS_GATE_BLOCK=0          # 1 → gerçekten bloklar (default GÖLGE; n=18 erken kanıt — n≥30 + ≥%55 60dk isabet olmadan açma)

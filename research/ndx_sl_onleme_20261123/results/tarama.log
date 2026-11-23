@@ -1,0 +1,45 @@
+A kâr kilidi ≥+2R                  ESKI-A: -14.1 ESKI-B: -27.6 Y24:  -5.6 Y25:  -9.0 Y26b: -7.8 VAKA SL-engel 80% TP-kayıp 42% | P 0.03 stres -72.2 
+A kâr kilidi ≥+3R                  ESKI-A:  +6.4 ESKI-B:  -1.6 Y24:  +3.1 Y25:  -0.6 Y26b: -0.8 VAKA SL-engel 80% TP-kayıp 42% | P 0.64 stres -15.2 
+/Users/melihcanodacioglu/Desktop/panel/research/ndx_sl_onleme_20261123/src/s1_tarama.py:117: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  s = pd.concat(ss)
+A kâr kilidi ≥+4R                  ESKI-A:  -2.9 ESKI-B:  +7.3 Y24:  -0.7 Y25:  -2.9 Y26b: +2.8 VAKA SL-engel 0% TP-kayıp 0% | P 0.53 stres -9.2 
+B gün 1. SL sonrası dur            ESKI-A: -37.9 ESKI-B:  +6.1 Y24:  +7.9 Y25:  +0.2 Y26b: -5.6 VAKA SL-engel 90% TP-kayıp 100% | P 0.28 stres +5.7 
+B gün 2. SL sonrası dur            ESKI-A:  -0.2 ESKI-B:  +7.1 Y24:  -0.2 Y25:  -1.8 Y26b: +2.5 VAKA SL-engel 80% TP-kayıp 100% | P 0.58 stres -3.5 
+B gün 3. SL sonrası dur            ESKI-A:  +4.7 ESKI-B:  +2.0 Y24:  -1.2 Y25:  +1.0 Y26b: -1.2 VAKA SL-engel 60% TP-kayıp 42% | P 0.66 stres +10.7 
+C geri verme ≥1.5R                 ESKI-A:  -7.4 ESKI-B:  +3.3 Y24:  -3.7 Y25:  -4.9 Y26b: +1.2 VAKA SL-engel 60% TP-kayıp 42% | P 0.30 stres -10.1 
+C geri verme ≥2R                   ESKI-A:  -8.4 ESKI-B:  +3.3 Y24:  -3.7 Y25:  -4.9 Y26b: +1.2 VAKA SL-engel 60% TP-kayıp 42% | P 0.29 stres -12.1 
+/Users/melihcanodacioglu/Desktop/panel/research/ndx_sl_onleme_20261123/src/s1_tarama.py:117: FutureWarning: The behavior of DataFrame concatenation with empty or all-NA entries is deprecated. In a future version, this will no longer exclude empty or all-NA columns when determining the result dtypes. To retain the old behavior, exclude the relevant entries before the concat operation.
+  s = pd.concat(ss)
+C geri verme ≥3R                   ESKI-A:  -1.6 ESKI-B:  -2.4 Y24:  -0.7 Y25:  -2.8 Y26b: -0.7 VAKA SL-engel 40% TP-kayıp 42% | P 0.26 stres -8.2 
+D buy-stop +0.25ATR5 15dk          ESKI-A: -23.8 ESKI-B:  +2.1 Y24:  +1.2 Y25: +18.7 Y26b: +5.0 VAKA SL-engel -10% TP-kayıp 42% | P 0.48 stres -3.9 
+D buy-stop +0.25ATR5 30dk          ESKI-A: -31.0 ESKI-B:  +8.8 Y24:  +3.0 Y25:  +5.6 Y26b: +1.3 VAKA SL-engel -10% TP-kayıp 42% | P 0.34 stres +0.0 
+D buy-stop +0.5ATR5 15dk           ESKI-A: -26.4 ESKI-B: +14.5 Y24:  +1.2 Y25: +28.6 Y26b: +5.1 VAKA SL-engel 70% TP-kayıp 75% | P 0.66 stres -10.6 
+D buy-stop +0.5ATR5 30dk           ESKI-A: -19.6 ESKI-B: +38.8 Y24: +11.3 Y25: +27.0 Y26b: -0.3 VAKA SL-engel 70% TP-kayıp 67% | P 0.92 stres +23.1 
+D buy-stop +1.0ATR5 15dk           ESKI-A: -35.5 ESKI-B: +13.0 Y24:  -3.2 Y25:  -0.3 Y26b: -8.3 VAKA SL-engel 90% TP-kayıp 92% | P 0.31 stres -34.1 
+D buy-stop +1.0ATR5 30dk           ESKI-A: -43.3 ESKI-B: +10.9 Y24:  +2.5 Y25: +12.4 Y26b: -2.9 VAKA SL-engel 80% TP-kayıp 92% | P 0.37 stres -23.3 
+E probasyon 10 bar                 ESKI-A:  +4.2 ESKI-B: +19.9 Y24: +13.5 Y25: +42.4 Y26b: -3.5 VAKA SL-engel 30% TP-kayıp 8% | P 0.99 stres +15.7 K1✓
+E probasyon 15 bar                 ESKI-A: -11.5 ESKI-B: +15.2 Y24:  +6.1 Y25:  +3.1 Y26b: -5.3 VAKA SL-engel 40% TP-kayıp 33% | P 0.63 stres -25.4 
+E0 probasyon 5 bar + kayıpsız      ESKI-A:  +0.7 ESKI-B: -15.2 Y24:  +6.8 Y25:  -0.4 Y26b: +4.5 VAKA SL-engel 40% TP-kayıp 33% | P 0.41 stres -17.9 
+E0 probasyon 10 bar + kayıpsız     ESKI-A:  -6.8 ESKI-B: +15.2 Y24: +10.2 Y25: +41.2 Y26b: -1.9 VAKA SL-engel 60% TP-kayıp 33% | P 0.94 stres +20.4 
+E-cap bant ≤0.5×SL                 ESKI-A:  -3.6 ESKI-B:  +4.2 Y24:  -1.7 Y25:  -4.9 Y26b: +3.0 VAKA SL-engel 60% TP-kayıp 50% | P 0.34 stres -12.6 
+E-cap bant ≤1.0×SL                 ESKI-A:  +0.1 ESKI-B:  +1.6 Y24:  +0.0 Y25:  -3.3 Y26b: +0.0 VAKA SL-engel 20% TP-kayıp 17% | P 0.42 stres +0.2 
+F SL sonrası RE geri alma 0.5 30dk ESKI-A: -14.9 ESKI-B: +20.3 Y24:  +1.7 Y25:  +0.5 Y26b: -5.5 VAKA SL-engel 0% TP-kayıp 8% | P 0.64 stres +14.3 
+F SL sonrası RE geri alma 0.5 60dk ESKI-A: -14.5 ESKI-B: +22.8 Y24:  +5.4 Y25:  +1.3 Y26b: -4.8 VAKA SL-engel 0% TP-kayıp 8% | P 0.75 stres +19.7 
+F SL sonrası RE geri alma 1.0 30dk ESKI-A: -13.4 ESKI-B: +20.5 Y24:  -0.8 Y25:  +1.0 Y26b: -6.0 VAKA SL-engel 0% TP-kayıp 25% | P 0.65 stres +3.7 
+F SL sonrası RE geri alma 1.0 60dk ESKI-A: -15.0 ESKI-B: +22.3 Y24:  -0.6 Y25:  -0.0 Y26b: -4.5 VAKA SL-engel -10% TP-kayıp 25% | P 0.63 stres +7.3 
+G ER60 < q10                       ESKI-A: -10.6 ESKI-B:  +8.0 Y24:  +2.5 Y25: +13.0 Y26b: +2.3 VAKA SL-engel 40% TP-kayıp 50% | P 0.76 stres +5.6 
+G ER60 < q20                       ESKI-A: -22.8 ESKI-B: +14.8 Y24:  +8.5 Y25: +19.1 Y26b: +1.9 VAKA SL-engel 70% TP-kayıp 75% | P 0.77 stres +14.1 
+G ER60 < q33                       ESKI-A: -38.3 ESKI-B: +26.7 Y24:  +6.6 Y25:  +7.8 Y26b: +2.3 VAKA SL-engel 70% TP-kayıp 75% | P 0.53 stres +18.6 
+G ER120 < q10                      ESKI-A:  -5.1 ESKI-B: -10.7 Y24:  +7.0 Y25:  +8.7 Y26b: +2.1 VAKA SL-engel 40% TP-kayıp 25% | P 0.49 stres +7.0 
+G ER120 < q20                      ESKI-A: -22.7 ESKI-B: +11.8 Y24: +10.7 Y25: +17.0 Y26b: +3.5 VAKA SL-engel 40% TP-kayıp 33% | P 0.71 stres +24.7 
+G ER120 < q33                      ESKI-A: -61.3 ESKI-B: +20.8 Y24:  +7.6 Y25: +18.2 Y26b: +0.7 VAKA SL-engel 40% TP-kayıp 42% | P 0.33 stres +10.6 
+H şok ≥3× (180dk)                  ESKI-A: -39.7 ESKI-B: -32.0 Y24:  -4.1 Y25: +16.4 Y26b:-14.8 VAKA SL-engel 100% TP-kayıp 100% | P 0.14 stres -63.0 
+H şok ≥4× (180dk)                  ESKI-A: -26.7 ESKI-B: -19.1 Y24:  -9.1 Y25: +11.6 Y26b: -8.8 VAKA SL-engel 100% TP-kayıp 100% | P 0.21 stres -49.7 
+H şok ≥6× (180dk)                  ESKI-A: -23.6 ESKI-B:  +0.7 Y24: -13.1 Y25:  +0.3 Y26b: -4.5 VAKA SL-engel 100% TP-kayıp 100% | P 0.20 stres -62.7 
+I gürültü < q10                    ESKI-A:  -3.0 ESKI-B:  +1.3 Y24:  -1.5 Y25:  -0.7 Y26b: +0.1 VAKA SL-engel 60% TP-kayıp 67% | P 0.41 stres -4.1 
+I gürültü < q20                    ESKI-A:  +2.5 ESKI-B: +13.4 Y24:  +0.6 Y25:  -1.1 Y26b: -1.2 VAKA SL-engel 80% TP-kayıp 92% | P 0.72 stres +13.0 
+I gürültü < q33                    ESKI-A:  -4.9 ESKI-B: +34.9 Y24:  +2.0 Y25:  +2.2 Y26b: -2.3 VAKA SL-engel 100% TP-kayıp 100% | P 0.85 stres +18.9 
+R G8 probasyon kaçışı ≥30p         ESKI-A:  -0.4 ESKI-B:  +9.0 Y24:  +2.0 Y25:  +3.5 Y26b: -0.9 VAKA SL-engel 30% TP-kayıp 25% | P 0.83 stres +5.3 
+R G8 probasyon kaçışı ≥50p         ESKI-A:  +6.4 ESKI-B:  +6.4 Y24:  +0.3 Y25:  +7.3 Y26b: +1.0 VAKA SL-engel 30% TP-kayıp -8% | P 0.97 stres +13.5 K1✓
+R PV −1ATR5 limit (oynak)          ESKI-A: -17.5 ESKI-B:  -2.8 Y24:  +6.5 Y25:  +5.5 Y26b: +5.4 VAKA SL-engel 60% TP-kayıp 58% | P 0.41 stres -19.6 
+R G7 rejim ≥1,8 atla               ESKI-A:  -8.2 ESKI-B: +22.2 Y24:  -1.8 Y25:  +1.1 Y26b: -1.6 VAKA SL-engel 60% TP-kayıp 75% | P 0.63 stres +9.8 

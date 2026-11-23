@@ -34,6 +34,7 @@ import config
 import reflex_exec
 import phase_rules as pr
 import probation_exec
+import vol_bracket
 import reentry_exec
 import shadow_log
 import decider_early_cut
@@ -947,6 +948,11 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     # Türetilmiş TP/SL mesafesi — ATR_GEOMETRY kapsamındaysa ATR-ölçekli,
     # değilse araştırılmış sabit (index: puan, USOIL: yüzde).
     tp_dist, sl_dist = _fixed_distances(price, cfg, None, scope_key, mt5_symbol)
+    # 2026-11-23 SL-08: DAYCOMBO/REENTRY oynak piyasada braket genişler, lot eşit $ riske küçülür
+    tp_dist, sl_dist, _vb_lot, _vb_note = vol_bracket.adjust(
+        mt5, mt5_symbol, scope_key, tp_dist, sl_dist, scope_lot(scope_key), config, log)
+    if _vb_note:
+        log.info("%s — %s", scope_key, _vb_note)
     _k5b_shadow(scope_key, forexsai_sym, mt5_symbol, direction, price, tp_dist, sl_dist)
 
     if direction == "BUY":
@@ -960,7 +966,7 @@ def open_trade(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     tp, sl, price = round(tp, digits), round(sl, digits), round(price, digits)
     if not _range_band_ok(scope_key, mt5_symbol, direction, price, tp, sl, voters):
         return
-    volume = scope_lot(scope_key)
+    volume = _vb_lot
 
     # FAZ 3 gölge: "5 bar bekleseydik ne olurdu" (MOD-E adayı; icra değişmez)
     _shadow_probation(scope_key, forexsai_sym, mt5_symbol, direction, price,
@@ -2646,7 +2652,8 @@ def main():
                    ("VIXREG_SL_MIN", 60.0), ("VIXREG_SL_MAX", 200.0),
                    ("VIXREG_BACKEND_VETO", False), ("CHREV_BACKEND_VETO", False),
                    ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
-                   ("DAYCOMBO_SL", 110.0),
+                   ("DAYCOMBO_SL", 110.0), ("DAYCOMBO_VOL_BRACKET", True),
+                   ("DAYCOMBO_VOL_K", 2.5),
                    ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("C3B_LIVE", True), ("C3B_LIVE_LOT", 2.0), ("ORB_VIX_LIVE", True), ("ORB_VIX_LIVE_LOT", 0.75), ("CEKIC_LIVE", True), ("CEKIC_LIVE_LOT", 0.5), ("KSG_LIVE", True), ("KSG_LIVE_LOT", 0.5), ("KSG_OPEX_VETO", True), ("KSG_SHADOW_ENABLED", True), ("RULE_MAX_LOTS_PER_SYMBOL", 4.5), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
                    ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
                    ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
