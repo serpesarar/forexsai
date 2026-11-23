@@ -3,6 +3,7 @@
 > **Yeni Claude Code oturumu için:** önce bu dosyayı, sonra `CLAUDE.md` + `docs/KAPI_KAYIT_DEFTERI.md` (§0, §1, §2.65–§2.99, §3-36…50)
 > oku. Burada 2026-11-17 → 2026-11-19 arasındaki tek uzun oturumun tüm bulguları, açık işleri ve devam planı var. Sayılar commit'li
 > sonuç dosyalarından alındı. Kaynak yolu her bölümde yazıyor. Okunur sayfa sürümü: `https://claude.ai/artifact/HN4B8uyVzqy39amWobV8rq`.
+> **2026-11-23 güncellemesi:** §6 bugünkü duruma göre yeniden yazıldı; rapordan sonra başka oturumlarda canlıya alınan işler orada.
 
 ---
 
@@ -12,7 +13,7 @@
 - **En iyi paket:** K1 + OPEX vetosu + XP çıkışı.
   - Duka NDX: yılda 24 işlem, isabet %83, işlem başı +103 bp. MT5 NAS100: %80, +96 bp.
   - En kötü işlem −783/−786 bp; maks düşüş −801/−814 bp.
-  - **Canlıda değil**, kartı SHADOW. Canlıya alma kararı kullanıcıda.
+  - **2026-11-19 sonunda canlıya alındı** (kullanıcı kararı): eşik −%0,3 (T30), 0,75 lot, `yeni deneme/korku_live.py`, magic +16, kart `ndx_korku_t30_paket` 6/6. Bu tablodaki sayılar −%0,5 eşiğine ait; T30: Duka n 324, %77, +74 bp.
 - **Son gün:** kullanıcının hedefi "kâr aynı kalsın, zarar en az yarıya insin" idi. 10 yol + destek limiti + 117 özellikli kaybeden analizi denendi; ön kayıtlı hiçbir kural bunu kör dönemde sağlamadı.
 - **En yakın aday:** 1 sa kanal dibi ∪ GBM vetosu. TEST'te kâr ×0,956, zarar ×0,46. Ama sonradan kuruldu, yani ileri gölge sınaması gerekiyor (backlog `bl_00fc2245ad`).
 
@@ -35,7 +36,7 @@ Kaynak `docs/KURAL_LOT_SEVIYELERI.md` + `yeni deneme/kural_katalogu.py`. Kutudak
 | XAU 1h yeni tepe (R0B_G1+S2) | +14 | 0.05 | +0,109R | B+ |
 | VIXREG-FX (16 FX çifti) | +15 | 0.01 | kart 6/6 | — |
 
-Bu oturumun bulgularından biri olan **KSG OPEX vetosu (B)**, canlı KSG kuralına henüz **eklenmedi**. Bkz. §5 madde 2.
+Bu oturumun bulgularından biri olan **KSG OPEX vetosu (B)** 2026-11-20'de canlı KSG kuralına eklendi (`824922d3`, GX-06). Korku gecesi de artık canlı (+16, 0,75 lot); güncel tablo `docs/KURAL_LOT_SEVIYELERI.md`.
 
 ---
 
@@ -173,18 +174,34 @@ Oynatıcının gömülü verisi ham fiyat içerdiği için git dışında. Yaln�
 
 ---
 
-## 6. Devam planı (yeni oturum buradan başlasın)
+## 6. Devam planı (yeni oturum buradan başlasın) — 2026-11-23 güncel
 
-1. **Kanal ∪ GBM vetosunu ileri gölgeye koy** (backlog `bl_00fc2245ad`, en öncelikli).
-   - GBM modeli diske kaydedilmedi. Önce `research/xp_kaybeden_20261119/src/analiz.py::models` içindeki GBM'i yalnız KEŞİF (≤ 2021-10) verisiyle eğit, `joblib` ile dondur. Ayarlar: n_estimators 200, max_depth 2, lr 0,05, subsample 0,8, random_state 0, eşik = KEŞİF OOF %85'liği.
-   - Kanal z'si (80 saatlik 1 sa kapanış regresyonu, son noktanın kalıntı z'si) ve piyasa başına KEŞİF %20 eşiği `ozellik.py::linreg` ile aynı hesaplanmalı.
-   - Yeni K1 sinyallerine yalnız **etiket** yaz (veto etme). ≥ 40 işlemde "vetolananların ortalaması ≈ 0 ve kalanlar > taban" doğrulanırsa B'ye yükseltme önerilir. Karar kullanıcıda.
-2. **KSG OPEX vetosunu canlı KSG'ye bağlama önerisi** (B, kart 6/6, SHADOW). Kod `yeni deneme/` altındaki KSG kuralı. Karar kullanıcıda, 2. KURAL kartı mevcut.
-3. **Önerilen paketi (K1 + OPEX + XP) canlıya alma** kullanıcı kararı.
-   - Kart SHADOW; takvimin NYSE ile ileri uzatılması şart.
-   - Canlıdaki C3b/KSG ile aynı "korkudan sonra endeks AL" yoğunlaşması var; toplam lot tavanını (sembol başı 4.5) gözet.
-4. **Çöküş tipi kaybedenler** (12 işlem, ortalama −295 bp): 20:00'dan sonra kesintisiz düşüş. Sayı az; ^NDX 1985–99 günlük vekili veya ES gece verisiyle ön kayıtlı sınama yapılabilir.
-5. **Oynatıcıya kanal z ve GBM etiketi ekleme** (isteğe bağlı). Kullanıcı işlemleri gözle inceleyip taktik öneriyor; yeni fikirler gelince önce defteri kontrol et (3. KURAL).
+**Bu rapordan sonra yapılanlar (başka oturumlar, 2026-11-19 → 11-22):**
+- Korku gecesi **T30 paketi canlı**: K1 eşiği −%0,3 + OPEX vetosu + XP, NAS100 0,75 lot, tek pozisyon, acil SL %13. Durdurma ölçütü: canlı n 40'ta ortalama net < 0 (EV-05, §2.101).
+- **Kanal ∪ GBM vetosu ileri gölgede** (XK-05, `research/korku_golge_20261119/`). Model `model/gbm_kesif.joblib`, yalnız etiket yazar. Backlog `bl_00fc2245ad` açık. XA-01…04 (§2.100) 570 özellikle aynı sonucu buldu: ayrışma X, veto C.
+- **KSG OPEX vetosu canlı** (KZ-05/GX-06) + `ksg_shadow.py` gölgesi.
+- **Korku koşullu ekleme gölgede** (KR-03/04, §2.110): D1 16:00 zararı ≥ 50 bp → sanal +1 birim. Emir yok; bedeli maks. düşüş ×1,6.
+- **CAPREV:** NDX kâr çıkışı + tutuş koruması + bölünmüş giriş canlı; NDX lotu 0,4 (KQ-08).
+
+**Önerilen sıra.** K1'e yeni filtre arama. Beş tur denendi (XG, XL, XD, XK, XA), hepsi X; kaybeden girişte tanınmıyor (§3-48, §3-50). Aynı veriyle bir tur daha büyük olasılıkla aynı sonucu verir. İlerleme yeni veriden gelir, yani canlı ve gölge işlemlerden.
+
+1. **Korku sepeti risk defteri** (en öncelikli, henüz yapılmadı).
+   - **Neden:** NAS100'de beş canlı kural aynı bahsi yapıyor: endeks korkuyla düştükten sonra AL. Bunlar C3b 2,0 (vade haftası 1,0), KSG 0,5 (VIX ≥ 25'te 1,0), KORKU 0,75, CAPREV 0,4 ve ORB×VIX 0,75. Meta-analizde (§2.35, MA-03; eski bot aileleri, 06-30 → 11-09) en kötü 5 gün toplam net kâra eşitti. Lot tavanı 5 ise en kötü 5 gün −22,0 bin $'dan −7,8 bin $'a iniyor, günlük Sharpe 0,111'den 0,154'e çıkıyordu (örneklem içi, C). Bugünkü tek koruma kaba: sembolde 4,5 lot aşılırsa sonraki kural atlanıyor.
+   - **Ne yapılacak:**
+     - Her kuralın 2018–26 işlem listesi gün gün üst üste konur. Duka NDX 1m + MT5 NAS100, aynı maliyet; `research/son_rapor_20261118/rapor.py` düzeneği yeniden kullanılır.
+     - Ölçülecekler: aynı gün kaç kural birlikte tetikleniyor; en kötü 10 günde toplam açık lot ve zarar; maks. düşüşün ne kadarının çakışma günlerinden geldiği; 4,5 tavanı hangi günlerde hangi kuralı atlatıyor.
+     - **Ön kayıtlı adaylar:** (a) bugünkü kural (tavan 4,5, ilk gelen alır); (b) aile toplam tavanı 2,5 / 3,0 / 3,5; (c) eşit risk payı (her kural oynaklığa göre); (d) çakışma gününde ikinci ve sonraki kurala yarım lot.
+     - **Geçme ölçütü:** aylık Sharpe ≥ bugünkü ve maks. düşüş ile en kötü 10 gün ≤ bugünkünün %70'i, iki besleme ve iki yarıda.
+   - **Çıktı:** aile lot tavanı + paylaşım önerisi + 2. KURAL kartı. Kâr artırmak hedef değil; amaç en kötü günü küçültmek. "Zarar yarıya" hedefinin gerçekçi yolu bu.
+   - KR-03 koşullu ekleme (D1'de +1 birim) bu defterin içinde değerlendirilmeli: tam da çakışma günlerinde lot artırır.
+2. **İleri gölgeleri izle, yeni karar verme.**
+   - Kanal ∪ GBM etiketi ≥ 40 işlemde "vetolananlar ≈ 0 ve kalanlar > taban" ise B'ye yükseltme önerilir.
+   - Korku canlı n 40'ta durdurma ölçütüne bakılır.
+   - Koşullu ekleme gölgesinin sonucu toplanır. Kararlar kullanıcıda.
+3. **Çöküş tipi kaybedenler** (12 işlem, ortalama −295 bp; 20:00'dan sonra kesintisiz düşüş). Önce risk defterine bak: bu günler çoğunlukla çakışma günleriyse çözüm lot tavanıdır, giriş filtresi değil.
+4. **Oynatıcıya kanal z ve GBM etiketi ekleme** (isteğe bağlı). Yeni kullanıcı fikri gelince önce defteri kontrol et (3. KURAL).
+
+**Önerilmeyenler:** korku gecesi için yeni gösterge, formasyon ya da destek/direnç fikri (XD, XK ve XA'da X); korkusuz SAT kuralları ("coşku dönmez", birçok kez tekrarlandı).
 
 ---
 
