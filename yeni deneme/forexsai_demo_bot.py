@@ -2662,7 +2662,7 @@ def main():
                    ("DAYCOMBO_ENABLED", True), ("DAYCOMBO_TP", 80.0),
                    ("DAYCOMBO_SL", 110.0), ("DAYCOMBO_VOL_BRACKET", True),
                    ("DAYCOMBO_VOL_K", 2.5),
-                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("C3B_LIVE", True), ("C3B_LIVE_LOT", 2.0), ("ORB_VIX_LIVE", True), ("ORB_VIX_LIVE_LOT", 0.75), ("CEKIC_LIVE", True), ("CEKIC_LIVE_LOT", 0.5), ("KSG_LIVE", True), ("KSG_LIVE_LOT", 0.5), ("KSG_OPEX_VETO", True), ("KSG_SHADOW_ENABLED", True), ("RULE_MAX_LOTS_PER_SYMBOL", 4.5), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
+                   ("CAPREV_LIVE", True), ("CAPREV_LIVE_LOT", 1.0), ("C3B_LIVE", True), ("C3B_LIVE_LOT", 2.0), ("C3B_ENTRY_1600", True), ("C3B_DOSE_K1", True), ("C3B_K1_VD_LOT", 3.0), ("C3B_K1_OTHER_LOT", 1.0), ("ORB_VIX_LIVE", True), ("ORB_VIX_LIVE_LOT", 0.75), ("CEKIC_LIVE", True), ("CEKIC_LIVE_LOT", 0.5), ("KSG_LIVE", True), ("KSG_LIVE_LOT", 0.5), ("KSG_OPEX_VETO", True), ("KSG_SHADOW_ENABLED", True), ("RULE_MAX_LOTS_PER_SYMBOL", 4.5), ("XAU_SHADOW_ENABLED", True), ("XAU_SWING_SHADOW_ENABLED", True),
                    ("USOIL_BREAKOUT_ENABLED", True), ("USOIL_BREAKOUT_DONCHIAN_N", 48),
                    ("USOIL_BREAKOUT_EMA_TREND", 200), ("USOIL_BREAKOUT_TP_ATR", 1.0),
                    ("USOIL_BREAKOUT_SL_ATR", 1.0),

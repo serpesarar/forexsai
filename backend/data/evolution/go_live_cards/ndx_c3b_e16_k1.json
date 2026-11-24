@@ -1,0 +1,88 @@
+{
+ "scope": "ndx_c3b_e16_k1",
+ "aciklama": "Canlı C3b (ndx_c3b_rsi2_upexit, 6/6) üzerinde iki değişiklik: E16 — karar 15:30 fiyatıyla, giriş 16:00 ET açılışı; K1 — stres (dünkü VIX ≥ 18,4) ∧ derin (z5 ≤ −1,072) işlemde 3.0 lot, diğerlerinde 1.0 lot (oran 1:⅓, taban maks. düşüşüne eşit ölçek). Çıkış, tek pozisyon, vade haftası yarım lotu, acil SL %10 değişmedi. K2 (0,25+0,375·stres+0,375·derin) yalnız gölge log.",
+ "tarih": "2026-11-24",
+ "sembol": "NAS100 (ölçüm Dukascopy USATECHIDXUSD 1m 2018-26 + MT5 NAS100 M30)",
+ "kaynak": "research/c3b_derin_20261124/RAPOR.md (C3D-01…04)",
+ "olay": 132,
+ "olcum_duka_esit_risk": {
+  "taban": {
+   "calmar": 11.4,
+   "sharpe": 1.5
+  },
+  "E16": {
+   "calmar": 14.85,
+   "sharpe": 1.61,
+   "P_sharpe": 0.96,
+   "net": "+%30",
+   "zararlar": "+%7",
+   "karlar": "+%25",
+   "ESKI_calmar": 7.54,
+   "YENI_calmar": 11.69,
+   "mt5_calmar_kat": 1.56,
+   "diger_brokerlar_kat": 0.88
+  },
+  "K1": {
+   "calmar": 14.83,
+   "sharpe": 1.56,
+   "P_sharpe": 0.68,
+   "net": "+%30",
+   "zararlar": "−%50",
+   "karlar": "+%11",
+   "ESKI_calmar": 9.42,
+   "YENI_calmar": 11.42,
+   "mt5_calmar_kat": 3.43,
+   "plasebo_yuzdelik": ">%95"
+  },
+  "K2_golge": {
+   "calmar_kat": 1.398,
+   "net": "+%40",
+   "zararlar": "−%27",
+   "karlar": "+%24"
+  }
+ },
+ "checks": {
+  "1_hacim": {
+   "deger": 132,
+   "esik": "≥150",
+   "gecti": false,
+   "not": "taban kartı (MT5 2016-26) n=155 ile geçti; Duka 2018-26 penceresi 132"
+  },
+  "2_beklenti": {
+   "deger": "lotlu ort +131 bp (K1), +89 bp (E16); taban +68 bp",
+   "esik": "ortR>0 ve P≥%90",
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "deger": "ESKİ/YENİ Calmar K1 ×1,25/×1,00 (taban yarılara göre ×1,87/×1,25 rapor tablosu), E16 ×1,49/×1,28",
+   "esik": "ikisi de ≥0",
+   "gecti": true
+  },
+  "4_surtunme": {
+   "deger": "Duka gerçek spread modeli ile ölçüldü; 16:00 girişinde spread genişler — ölçüme dahil",
+   "esik": ">0",
+   "gecti": true
+  },
+  "5_icra": {
+   "deger": "giriş = 1m açılışı + spread (Duka), M30 16:00 açılışı (MT5)",
+   "esik": "fark < ort/2",
+   "gecti": true
+  },
+  "6_sira_bagimli": {
+   "deger": "tek pozisyon kısıtıyla simüle edildi (canlı kod ile aynı)",
+   "esik": ">0",
+   "gecti": true
+  }
+ },
+ "bagimsizlik": {
+  "taze_38_arac_K1": "Sharpe ↑ araçların %44'ünde, havuz ×0,89 → X",
+  "QQQ_1999_2026_doz": "Sharpe 0,99 → 0,93 → X",
+  "E16_gunluk_setler": "günlük veride sınanamaz"
+ },
+ "verdikt_olcut": "SHADOW (E16 C+, K1 X: taze araçlarda tutmadı)",
+ "verdikt": "LIVE — KULLANICI KARARI",
+ "kullanici_karari": "2026-11-24: 'ilk birinci seçeneği ve ikinci seçeneği uygular mısın Nasdaq üzerinde? Direkt canlıya al bunları' (E16 + K1). K2 K1'e göre kârı artırıyor ama zararı daha az azaltıyor (−%27 vs −%50) → iki şartı birlikte sağlamadığı için canlıya alınmadı, gölge log.",
+ "durdurma": "İleri dönemde n ≥ 20 C3b işleminde stres∧derin ortalaması diğerlerinden düşükse ya da canlı Calmar tabanın altındaysa C3B_DOSE_K1=False; 16:00 girişinde dolum 15:30'dan kötüyse C3B_ENTRY_1600=False.",
+ "kapatma": "config.C3B_ENTRY_1600 / C3B_DOSE_K1 = False",
+ "kod": "yeni deneme/c3b_live.py (z5, dose, fit_lot, _try_pending), test_kural_canli.py"
+}

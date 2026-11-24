@@ -96,15 +96,80 @@ def test_c3b_exit_rules():
     assert c3.should_exit(s2, 1, 4) == "yukselis"         # kaçırılan yükseliş de sayılır
 
 
+def test_c3b_z5_matches_research_motor():
+    import random
+    random.seed(3)
+    v = [100.0]
+    for _ in range(60):
+        v.append(v[-1] * (1 + random.gauss(0, 0.012)))
+    import numpy as np, pandas as pd
+    s = pd.Series(v)
+    ref = ((s / s.shift(5) - 1) / (s.pct_change().rolling(20).std().shift(1) * np.sqrt(5))).to_numpy()
+    for i in range(21, len(v)):
+        assert abs(c3.z5(v, i) - ref[i]) < 1e-9
+    assert c3.z5(v, 10) is None
+
+
+def test_c3b_k1_dose():
+    d = c3.dose(20.0, -1.5)
+    assert d["vd"] and d["lot"] == 3.0 and d["k2_lot_golge"] == 3.09
+    assert c3.dose(17.0, -1.5)["lot"] == 1.0                    # stres yok
+    assert c3.dose(20.0, -0.5)["lot"] == 1.0                    # derin değil
+    assert c3.dose(None, None)["lot"] == 1.0 and c3.dose(None, None)["k2_lot_golge"] == 0.77   # veri yok → küçük lot
+    assert c3.dose(20.0, -0.5)["k2_lot_golge"] == round(3.09 * 0.625, 2)
+
+
+def test_c3b_fit_lot():
+    assert c3.fit_lot(3.0, 1.0, 4.5, 0.5) == 3.0
+    assert c3.fit_lot(3.0, 2.25, 4.5, 0.5) == 2.25             # kalan kapasiteye iner
+    assert c3.fit_lot(3.0, 4.2, 4.5, 0.5) is None              # 0,3 < 0,5 → atla
+
+
+def test_c3b_e16_pending_flow():
+    events = []
+    kk_append, c3_vix = kk.append_event, c3._vix_prev
+    kk.append_event = lambda rec: events.append(rec)
+    c3._vix_prev = lambda d: 21.0
+    entered = []
+    c3_enter = c3._enter
+    c3._enter = lambda *a, **k: entered.append(a[4])
+    try:
+        cfg = types.SimpleNamespace(MAGIC_NUMBER=1000, LIVE_TRADING=True)
+        mt5 = types.SimpleNamespace(positions_get=lambda symbol=None: [])
+        vals = [100 + k * 0.1 for k in range(30)] + [99, 97, 95]   # sert düşüş → RSI2 < 10
+        s = [{"d": date(2026, 1, 1).fromordinal(date(2026, 1, 1).toordinal() + k), "S": v, "E": v, "t": 1_000_000 + k * 86400}
+             for k, v in enumerate(vals)]
+        today = s[-1]["d"]
+        st = {"last_d": None, "pos": {}}
+        t1530 = s[-1]["t"]
+        log = types.SimpleNamespace(info=lambda *a: None)
+        c3.manage_and_enter(mt5, cfg, log, s, today, st, t1530 + 20, "NAS100", 0, None, None, None, None)
+        assert st["pending"]["day"] == str(today) and not entered       # 15:30'da emir yok
+        assert c3._try_pending(mt5, cfg, log, st, today, t1530 + 1000, "NAS100", None, None, None, None) is False
+        assert c3._try_pending(mt5, cfg, log, st, today, t1530 + 1800 + 15, "NAS100", None, None, None, None)
+        assert len(entered) == 1 and entered[0]["entry"] == "1600" and st["pending"] is None
+        # 16:00'ı kaçıran bot girmez
+        st["pending"] = {**entered[0]}
+        c3._try_pending(mt5, cfg, log, st, today, t1530 + 1800 + 400, "NAS100", None, None, None, None)
+        assert len(entered) == 1 and events[-1]["reason"].startswith("16:00 girişinde geç")
+        # bayrak kapalıyken eski 15:30 girişi
+        cfg.C3B_ENTRY_1600 = False
+        st = {"last_d": None, "pos": {}}
+        c3.manage_and_enter(mt5, cfg, log, s, today, st, t1530 + 20, "NAS100", 0, None, None, None, None)
+        assert len(entered) == 2 and "pending" not in st
+    finally:
+        kk.append_event, c3._vix_prev, c3._enter = kk_append, c3_vix, c3_enter
+
+
 # ───────── katalog ─────────
 def test_lots_distinct_and_overridable():
     cfg = types.SimpleNamespace(MAGIC_NUMBER=1000, LIVE_TRADING=True)
     lots = {k: kk.lot_of(cfg, k) for k in kk.RULES}
     assert lots == {"C3B": 2.0, "CAPREV": 1.0, "ORBVIX": 0.75, "CEKIC": 0.5, "KSG": 0.5, "AYSONU_SON": 1.0, "AYSONU_E2": 0.75, "XAU_R0B": 0.05,
-                    "KORKU": 0.75}
+                    "KORKU": 0.75, "SOMA_E4X3": 0.05, "SOMA_E2_XAU": 0.05, "SOMA_E2_NDX": 0.5}
     cfg.C3B_LIVE_LOT = 3.0
     assert kk.lot_of(cfg, "C3B") == 3.0
-    assert len({kk.magic(cfg, k) for k in kk.RULES}) == len(kk.RULES) == 9 and kk.magic(cfg, "CAPREV") == 1007
+    assert len({kk.magic(cfg, k) for k in kk.RULES}) == len(kk.RULES) == 12 and kk.magic(cfg, "CAPREV") == 1007
     assert kk.magic(cfg, "AYSONU_SON") == 1012 and kk.magic(cfg, "AYSONU_E2") == 1013 and kk.magic(cfg, "XAU_R0B") == 1014
 
 

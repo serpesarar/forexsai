@@ -33,10 +33,11 @@ RULES: dict[str, dict] = {
         "ad": "C3b — NDX RSI2 geri dönüşü", "kisa": "C3B", "sinif": "A", "magic_offset": 8,
         "lot_key": "C3B_LIVE_LOT", "lot": 2.0, "live_key": "C3B_LIVE",
         "isabet": "%78,1", "n": 155, "ort": "+65 bp/işlem", "tutus": "≈1,6 gün (en fazla 5 gün)",
-        "sl": "yok (acil durum SL %10 — geçmişteki en kötü işlem −%6,8)", "tp": "yok; ilk yükselen 15:30 ET fiyatında çık",
+        "sl": "yok (acil durum SL %10 — geçmişteki en kötü işlem −%6,8)", "tp": "yok; ilk yükselen 15:30 ET fiyatında çık (giriş 16:00)",
         "siklik": "≈ 1,2 işlem/ay (yılda ≈ 15)",
         "kanit": "go_live_cards/ndx_c3b_rsi2_upexit.json (6/6; kör US500/US30/US2000/GER40 pozitif); Dukascopy 1m 2018-26 n 132 +68 bp; "
-                 "vade haftasında yarım lot (C3B_OPEX_HALF)",
+                 "vade haftasında yarım lot (C3B_OPEX_HALF); 2026-11-24: giriş 16:00 ET (C3B_ENTRY_1600) + K1 dozu "
+                 "stres∧derin 3.0 / diğer 1.0 lot (C3B_DOSE_K1; research/c3b_derin_20261124)",
     },
     "CAPREV": {
         "ad": "CAPREV — kapitülasyon alımı (NDX + DAX)", "kisa": "CAPREV", "sinif": "B+", "magic_offset": 7,

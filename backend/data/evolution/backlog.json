@@ -5943,5 +5943,16 @@
     "source": "session",
     "created_at": "2026-11-24T18:10:34.613637+00:00",
     "updated_at": "2026-11-24T18:10:34.613757+00:00"
+  },
+  {
+    "id": "bl_2d797f94c3",
+    "title": "C3b E16+K1 canlı ileri karnesi",
+    "detail": "n≥20 işlemde stres∧derin vs diğer ort bp, 16:00 dolum vs 15:30 model; tutmazsa C3B_DOSE_K1/C3B_ENTRY_1600=False",
+    "category": "decision",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-24T19:54:51.041115+00:00",
+    "updated_at": "2026-11-24T19:54:51.041237+00:00"
   }
 ]
