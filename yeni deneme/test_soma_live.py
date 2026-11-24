@@ -75,3 +75,54 @@ def test_srv_offset_kural():
     kis = dt.datetime(2026, 11, 23, 23, 5, tzinfo=dt.timezone.utc).timestamp()
     yaz = dt.datetime(2026, 7, 1, 12, tzinfo=dt.timezone.utc).timestamp()
     assert E4.srv_offset(kis) == 2 * 3600 and E4.srv_offset(yaz) == 3 * 3600
+
+
+def test_be_due():
+    assert E2.be_due(100.0, 90.0, 90.0, 110.0, 1.0)              # +1R tam
+    assert not E2.be_due(100.0, 90.0, 90.0, 109.9, 1.0)
+    assert not E2.be_due(100.0, 90.0, 100.0, 120.0, 1.0)         # stop zaten girişte
+    assert not E2.be_due(100.0, 90.0, 90.0, 120.0, 0.0)          # kapalı
+
+
+class _Res:
+    def __init__(self, rc):
+        self.retcode = rc
+
+
+class _MT5:
+    TRADE_ACTION_SLTP, TRADE_RETCODE_DONE = 6, 10009
+
+    def __init__(self, bid):
+        self.bid, self.sent = bid, []
+
+    def symbol_info_tick(self, s):
+        return type("T", (), {"bid": self.bid})()
+
+    def symbol_info(self, s):
+        return type("I", (), {"digits": 2})()
+
+    def order_send(self, req):
+        self.sent.append(req)
+        return _Res(self.TRADE_RETCODE_DONE)
+
+
+class _Log:
+    def info(self, *a): pass
+    def error(self, *a): pass
+
+
+def test_breakeven_bir_kez(tmp_path, monkeypatch):
+    monkeypatch.setattr(E2, "STATE_FILE", tmp_path / "st.json")
+    monkeypatch.setattr(E2.kk, "EVENTS_JSONL", tmp_path / "ev.jsonl")
+    pos = type("P", (), {"ticket": 7, "symbol": "NAS100", "price_open": 20000.0, "sl": 19900.0, "tp": 0.0, "time": 1_700_000_000})()
+    st = {"pos": {"7": {"entry_t": 1.0, "sl": 19900.0, "rule": "SOMA_E2_NDX"}}}
+    cfg = type("C", (), {})()
+    m = _MT5(20099.0)
+    E2._breakeven(m, cfg, _Log(), "SOMA_E2_NDX", pos, st["pos"]["7"], st)
+    assert m.sent == []                                           # +1R'ye ulaşmadı
+    m.bid = 20100.0
+    E2._breakeven(m, cfg, _Log(), "SOMA_E2_NDX", pos, st["pos"]["7"], st)
+    assert len(m.sent) == 1 and m.sent[0]["sl"] == 20000.0 and st["pos"]["7"]["be_done"]
+    E2._breakeven(m, cfg, _Log(), "SOMA_E2_NDX", pos, st["pos"]["7"], st)
+    assert len(m.sent) == 1                                       # bir kez
+    assert "SOMA_E2_XAU" not in E2.BE_RULES                       # DAX/XAU'ya taşınmaz

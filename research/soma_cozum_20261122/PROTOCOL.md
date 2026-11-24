@@ -417,3 +417,54 @@ DOĞRULAMA (kıyas F2_be1: 786 puan, Sharpe 0,96, düşüş 569):
 - be0,75 + piramit → X (1.036, Sharpe 0,82).
 Kayıp profili (DOĞRULAMA, tek pozisyon): taban kayıp %62,7 / tam stop %59,2 → be1 kayıp %46,3 / tam stop %42,6, başabaş kapanış %20,7;
 ortalama kazanç 2,18 → 2,09 R. Kart `go_live_cards/soma_e2x3_ndx_be1.json` 6/6.
+
+## SC-21 — NASDAQ E2X3+BE1 derin dallanma: daha çok işlem / daha çok kazanç / daha az zarar (ÖN KAYIT, 2026-11-24, hiçbir SC-21 hücresi koşulmadan)
+Kullanıcı: "daha fazla işlem sayısı, daha fazla kazanç, daha az zarar — farklı mantıklardan, daha derin".
+**Gövde (kıyas tabanı):** SC-20 F2_be1 = model AL kenarı q0,998, SL 1×ATR_H1, +1R'de başabaş, 480 dk, TP yok.
+**Dönemler, ölçüm, rastgele taban (aynı yönetimle, aynı UTC saati ×5), metrikler:** SC-20 ile aynı. Yeni yol simülatörü `sc21_yol` (numba)
+çekirdekle aynı sıra kuralları (açılış boşluğu → stop önce → TP; stop güncellemesi sonraki bardan); be1 hücresinde çekirdekle
+birebir eşitlik ön koşul (kod denetimi, sonuç değil).
+**Defter kontrolü (3. KURAL):** erken çıkış/zaman stopu botta X (IO-07, M7, E14) → C1/C2 yeni popülasyonda bir kez sınanır, aynı tanım
+tekrar edilmez; meta-etiketleme YI-14'te X (öğrenici TP kolaylığını öğrendi) → burada etiket R (başabaşlı), isabet değil;
+kazanana ekleme KT-01/KC-03/KR-03'te artı ama portföy Sharpe'ı düşebildi (E110) → kıyas Sharpe ile; lot ≠ kenar (MA-05).
+**Aileler:**
+- **A — işlem sayısı.** A1 eşik × be1: q ∈ {0,99; 0,995; 0,997}. A2 meta-etiket: birincil q0,99 / q0,995 ateşlemeleri,
+  HistGradientBoostingRegressor (derinlik 3, 200 iter, lr 0,05, yaprak ≥ 50) Motor özellikleri + skor + VIX/eğri/saat/gün/H4/D1 →
+  hedef be1 R (±5'te kırpık). KEŞİF içi kronolojik 5 kat, genişleyen eğitim, 2 gün arınma; eşik = önceki katların OOF tahmin
+  kantili (1. kat için 1. katın kendi içi). Hücreler: q0,99 üst %30, q0,99 üst %50, q0,995 üst %50. A2 KEŞİF ölçümü 2.–5. katlar
+  döneminde ve taban aynı dönemde yeniden ölçülür. DOĞRULAMA: tüm KEŞİF'le eğitilmiş model, eşik = KEŞİF OOF kantili.
+- **B — kazanç.** B1 kazanana ekle: MFE ilk kez ≥ a·R (a ∈ {1; 1,5}) olan barın SONRAKİ açılışında +1 birim; ortak stop (≥ giriş,
+  be1 sayesinde azami risk ≈ 1R), aynı zaman çıkışı. B2 kârdaysa uzat: 480. dk'da önceki kapanış ≥ +1R ise T → {960; 1440},
+  stop +0,5R'ye kilit. B3 kısmi: %50 TP {1,5; 2}R, kalan be1 koşucu. B4 geniş iz: be1 + MFE ≥ 2R sonrası 1,5R iz, T 960.
+- **C — zarar.** C1 erken başarısızlık: N ∈ {60; 120} dk'da önceki kapanış ≤ giriş − 0,5R → açılışta çık. C2 ivmesizlik:
+  (120 dk, MFE < 0,25R) ve (240 dk, MFE < 0,5R) → çık. C3 günlük kesici: NY gününde tam stop olduysa o gün yeni giriş yok.
+  C4 seri freni: art arda 3 tam stop → gölgeye geç, gölge işlem kazanınca dön.
+- **D — taşıma (betimleyici, aday değil):** be1 DAX ve JPN225'te (SC-19 penceresi; o pencere görülmüştü → kanıt sayılmaz).
+**KEŞİF → DOĞRULAMA:** SC-20 KEŞİF geçme ölçütleri (kıyas F2_be1 KEŞİF). Aile başına en çok 1 aday: A yıllık puan (tek_n ↑ şartı),
+B yıllık puan, C Sharpe (maks. düşüş ↓ şartı). + BİRLEŞİK (geçen aile adaylarının birlikte uygulanışı) → en çok 4 DOĞRULAMA atışı.
+**DOĞRULAMA geçme:** SC-20 ölçütleri, kıyas F2_be1 DOĞRULAMA (786 puan, Sharpe 0,96). B1'de ek: azami eşzamanlı risk ≤ 1,1R kanıtı
+ve Sharpe ↑ zorunlu (puan artışı tek başına lot artışıdır).
+
+### SC-21 KEŞİF sonucu (değiştirilmez) — `results/sc21_kesif.csv/json`
+Gövde (be1) KEŞİF: 779 ateşleme, tek poz. 302, 797 puan/yıl, Sharpe 1,62, düşüş 259, kayıp %61,3. Parite: yol simülatörü = çekirdek (0 bp).
+**Geçen aday yok (A, B, C boş) → DOĞRULAMA atışı yapılmaz.**
+- A1 eşik q0,99: tek poz. 771 işlem (×2,6), 1.009 puan/yıl ama Sharpe 1,26 (< 0,9×), düşüş 664, fark P 0,948 → X. q0,995/0,997 de Sharpe ↓.
+- A2 meta-etiket: üç hücre de gövdeden kötü (Sharpe 0,92–1,20, puan 389–670; aynı dönem gövde 835 / 1,61) → X (YI-14 ile tutarlı).
+- B1 kazanana ekle 1R: 1.186 puan/yıl (+%49) ama Sharpe 1,59 (≈), azami risk 1,64R (boşluk) → lot eşdeğeri, X. 1,5R: 1.093 / 1,61, risk 3,7R → X.
+- B2 uzat, B3 kısmi TP, B4 geniş iz: puan ve Sharpe ↓ → X (E14: kısmi TP isabeti %42→%49, puan ↓).
+- C1 erken çıkış 60 dk: 806 puan / Sharpe 1,635 (+%1) ama düşüş aynı (259) → ön kayıtlı "düşüş ↓" şartı tutmuyor, fark gürültü → X.
+  C2 ivmesizlik, C3 günlük kesici, C4 seri freni: Sharpe ↓ → X.
+
+## SC-21 EK-1 — boyutlandırma (aynı işlemler, ortalama lot 1) (ÖN KAYIT, 2026-11-24, EK hücreleri koşulmadan)
+Gövde be1 işlemleri değişmez; yalnız lot. Lotlar dönem içinde ortalama 1'e normalize (puan artışı lot artışı olamaz).
+- S1 eşit risk: lot = önceki 250 ateşlemenin ATR_bp medyanı / bu işlemin ATR_bp (nedensel), sonra ortalama 1.
+- S2 VIX boyutu: önceki NY günü VIX ≥ 18,4 → lot 2w, altı → w (ortalama 1).
+- S3 S1 × S2.
+Plasebo (MA-05): lotlar işlemler arasında 500 kez karıştırılır → P(Sharpe_gerçek > Sharpe_karışık).
+KEŞİF geçme: Sharpe > gövde ∧ karıştırma P ≥ 0,95 ∧ düşüş ≤ 1,1 × gövde. En çok 1 aday (Sharpe). DOĞRULAMA: aynı + son 4 yıl her yıl R(lotlu) > 0.
+
+### SC-21 EK-1 + D sonucu (değiştirilmez) — `results/sc21_ek1_kesif.json`, `results/sc21_tasima.json`
+KEŞİF (gövde 797 puan, Sharpe 1,621, düşüş 259): S1 eşit risk 632 / 1,591 / 374, karıştırma P 0,76 → X; S2 VIX lotu 914 / 1,491 / 355, P 0,37 → X;
+S3 ikisi 772 / 1,663 / 283, P 0,92 (< 0,95) → X. Aday yok, DOĞRULAMA yok.
+D (betimleyici, 2022-11→2026-11): DAX be1 +0,063R vs taban +0,125R, Sharpe 0,57 vs 0,71 (başabaş zararlı); JPN225 +0,211 vs +0,292R, Sharpe 0,81 vs 0,78 (nötr).
+**SC-21 hükmü: X** — gövde be1 bu kural ailesinin yerel en iyisi; işlem sayısı ancak Sharpe ve düşüş pahasına artıyor, ek kazanç yalnız lot/risk artışıyla.

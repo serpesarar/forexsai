@@ -12,6 +12,11 @@ KANIT (SC-19, son 4 yıl 2022-11 → 2026-11, gerçek icra = sonraki 1m açılı
 Kartlar: backend/data/evolution/go_live_cards/soma_e2x3_xau.json, soma_e2x3_ndx.json.
 Durdurma ölçütü (önceden yazılı): sembol başına canlı n=60 işlemde ort. R < 0 → config.SOMA_E2_<XAU|NDX>_LIVE = False.
 
+BAŞABAŞ (yalnız NAS100) — KULLANICI KARARI 2026-11-24 "Evet, canlıya bağla". SC-20 F2_be1 DOĞRULAMA (2022-11→2026-11, tek atış) B:
+  bid ≥ giriş + 1R (R = giriş − ilk SL) olunca broker SL'si giriş fiyatına çekilir (bir kez). 567 → 786 puan/yıl, Sharpe 0,60 → 0,96,
+  kayıp oranı %62,7 → %46,3, 2023–26 her yıl artı; kart go_live_cards/soma_e2x3_ndx_be1.json 6/6. SC-21: daha iyi dal yok.
+  DAX'ta zararlı (SC-21 D) → XAU/diğer sembollere TAŞINMAZ. Kapatma: config.SOMA_E2_NDX_BE_R = 0.
+
 KURAL (sc10_klon_kar.skorla + sc14_bakis.alis_ates + sc13 X3, birebir):
   Her kapanmış 1m bar k: y = +1 eğer c_k > EMA1440(1m). Skor = model(özellik(k, p=c_k, y, t=k+60 sn)).
   Ateşleme = skor ≥ eşik VE bir önceki dakikanın skoru < eşik (kenar; soğuma 0). Yalnız y = +1 (AL).
@@ -47,6 +52,8 @@ FETCH_H1 = 6_500                        # ≈ 270 işlem günü → D1 EMA200 ı
 EMA_Y = 1440
 FRIDAY_CLOSE_NY_MIN = 16 * 60 + 50
 FRIDAY_LAST_ENTRY_NY_MIN = 8 * 60 + 50
+BE_RULES = {"SOMA_E2_NDX": "SOMA_E2_NDX_BE_R"}   # kural → config anahtarı (varsayılan 1.0 R; 0 → kapalı)
+BE_R_DEFAULT = 1.0
 
 _last_poll: dict[str, float] = {}
 _model_cache: dict = {}
@@ -101,6 +108,12 @@ def fires(s: dict, esik: float) -> bool:
     return s["y"] > 0 and s["skor"] >= esik and not s["skor_onceki"] >= esik
 
 
+def be_due(entry: float, sl0: float, cur_sl: float, bid: float, k: float) -> bool:
+    """Başabaş tetiği: ilk risk R = entry − sl0 > 0, stop henüz girişin altında ve bid ≥ entry + k·R."""
+    r = entry - sl0
+    return k > 0 and r > 0 and cur_sl < entry and bid >= entry + k * r
+
+
 def friday_close_due(now: float) -> bool:
     _, m, wd = cs.to_local(now, "US")
     return wd == 4 and m >= FRIDAY_CLOSE_NY_MIN
@@ -146,6 +159,38 @@ def manage_exits(mt5, config, log, send_order, offset_fn, resolve_symbol, now: f
             if why and kk.close(mt5, config, log, send_order, rule, pos, why):
                 st.get("pos", {}).pop(str(pos.ticket), None)
                 _save_state(st)
+            elif not why and rule in BE_RULES:
+                _breakeven(mt5, config, log, rule, pos, meta, st)
+
+
+def _breakeven(mt5, config, log, rule: str, pos, meta: dict | None, st: dict) -> None:
+    """+k·R'de broker SL'sini girişe çek (bir kez; meta['be_done']). Meta yoksa ilk SL = pozisyonun SL'si."""
+    k = float(getattr(config, BE_RULES[rule], BE_R_DEFAULT))
+    if meta and meta.get("be_done"):
+        return
+    entry, cur_sl = float(pos.price_open), float(getattr(pos, "sl", 0.0) or 0.0)
+    sl0 = float(meta["sl"]) if meta and meta.get("sl") else cur_sl
+    tick = mt5.symbol_info_tick(pos.symbol)
+    if tick is None or not be_due(entry, sl0, cur_sl, float(tick.bid), k):
+        return
+    info = mt5.symbol_info(pos.symbol)
+    new_sl = round(entry, info.digits) if info is not None else entry
+    try:
+        res = mt5.order_send({"action": mt5.TRADE_ACTION_SLTP, "symbol": pos.symbol, "position": pos.ticket, "sl": new_sl,
+                              "tp": float(getattr(pos, "tp", 0.0) or 0.0)})
+        ok = res is not None and res.retcode == mt5.TRADE_RETCODE_DONE
+    except Exception:  # noqa: BLE001
+        ok, res = False, None
+    kk.append_event({"kind": "be_move", "rule": rule, "ticket": pos.ticket, "entry": entry, "sl0": sl0, "sl": new_sl,
+                     "bid": float(tick.bid), "k_R": k, "ok": ok, "retcode": getattr(res, "retcode", None)})
+    if ok:
+        m = st.setdefault("pos", {}).setdefault(str(pos.ticket), {"entry_t": float(pos.time) - bt.rule_offset_sec(int(pos.time)), "sl": sl0, "rule": rule})
+        m["be_done"] = True
+        _save_state(st)
+        log.info("[CANLI] SOMA E2X3 %s başabaş: SL %.2f → %.2f (+%.1fR, ticket %s)", pos.symbol, cur_sl, new_sl, k, pos.ticket)
+    else:
+        log.error("SOMA E2X3 başabaş SL taşıma BAŞARISIZ ticket=%s retcode=%s — sonraki turda yeniden denenir",
+                  pos.ticket, getattr(res, "retcode", None))
 
 
 def poll(mt5, config, log, resolve_symbol, get_vix, offset_fn, send_order, mk_comment, autotrading_ok, log_trade,

@@ -79,5 +79,6 @@
  "verdict": "LIVE",
  "sinif": "B",
  "kanit": "research/soma_cozum_20261122 PROTOCOL SC-20 + EK-1; src/sc20_ndx_dal.py; results/sc20_*.json",
- "canli_karar": "BEKLİYOR — kullanıcı kararı"
+ "canli_karar": "LIVE — kullanıcı 2026-11-24 'Evet, canlıya bağla'; yeni deneme/soma_e2x3_live.py _breakeven (yalnız SOMA_E2_NDX, config SOMA_E2_NDX_BE_R=1.0, 0 → kapalı)",
+ "sc21_not": "SC-21: 19 dal + boyut be1'i geçmedi; be1 DAX'ta zararlı → yalnız NASDAQ"
 }

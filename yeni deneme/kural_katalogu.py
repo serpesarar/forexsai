@@ -141,9 +141,10 @@ RULES: dict[str, dict] = {
         "ad": "SOMA E2X3 — Soma klon modeli AL (NAS100, dondurulmuş taşıma)", "kisa": "SOMAE2N", "sinif": "B",
         "magic_offset": 19, "lot_key": "SOMA_E2_NDX_LIVE_LOT", "lot": 0.5, "live_key": "SOMA_E2_NDX_LIVE",
         "isabet": "%42,1", "n": 589, "ort": "+0,27 R/işlem (son 4 yıl; rastgele alışa +7,8 bp, P 0,98; tek pozisyon +0,19 R)",
-        "tutus": "480 dk", "sl": "1 × ATR14(H1)", "tp": "yok; 480 dk zaman çıkışı / Cuma 16:50 NY",
+        "tutus": "480 dk", "sl": "1 × ATR14(H1); +1R'de girişe çekilir (başabaş, 2026-11-24)", "tp": "yok; 480 dk zaman çıkışı / Cuma 16:50 NY",
         "siklik": "≈ 3 sinyal/hafta (tek pozisyonla ≈ 1/hafta)",
-        "kanit": "go_live_cards/soma_e2x3_ndx.json (6/6; Dukascopy NDX 2018–26 dokuz yılın dokuzu artı); SC-19b parite 1,0",
+        "kanit": "go_live_cards/soma_e2x3_ndx.json (6/6; Dukascopy NDX 2018–26 dokuz yılın dokuzu artı); SC-19b parite 1,0; "
+                 "başabaş go_live_cards/soma_e2x3_ndx_be1.json (SC-20 DOĞRULAMA B: 567→786 puan/yıl, Sharpe 0,60→0,96)",
     },
 }
 
