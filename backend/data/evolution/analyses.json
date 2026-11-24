@@ -1259,5 +1259,14 @@
     "category": "research",
     "what_it_does": "8 canlı NAS100 kuralını canlı lot ve sürümleriyle Duka 1m 2018–26 gün sonu işaretli tek kitapta birleştirir. Aynı gün açık korku kuralı sayısını, en kötü günlerin bileşimini ve 4,5 tavanının atlattığı işlemleri ölçer. Ön kayıtlı tavan adaylarını (aile tavanı, çakışmada yarım lot) tekdüze lot küçültme kontrolüne karşı iki yarıda ve MT5 kitabında sınar.",
     "output": "research/korku_sepeti_20261123/RAPOR.md"
+  },
+  {
+    "id": "c3b_derin_arastirma",
+    "name": "C3b derin araştırma — doz, koruyucu çıkış, giriş/çıkış zamanı",
+    "command": ".venv/bin/python research/c3b_derin_20261124/src/duka.py",
+    "cwd": ".",
+    "category": "research",
+    "what_it_does": "C3b'nin 13 ön kayıtlı türevini (stres∧derinlik dozu, VIX koruyucu çıkış, başabaş çıkışı, 16:00 girişi, çıkış günü zamanlaması) Duka 1m gün sonu işaretli $ kitabında Calmar ile ölçer; bagimsiz.py aynı adayları MT5 NAS100, diğer broker endeksleri, 2018 öncesi ABD, 17 yabancı endeks ve taze 38 ABD aracında sınar (tur2/tur3 argümanı).",
+    "output": "research/c3b_derin_20261124/RAPOR.md"
   }
 ]
