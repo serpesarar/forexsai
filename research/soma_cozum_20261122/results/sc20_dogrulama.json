@@ -1,0 +1,131 @@
+{
+ "TABAN": {
+  "n": 589,
+  "ort_bp": 8.644,
+  "ort_R": 0.2719,
+  "isabet": 0.421,
+  "basabas_isabet": 0.312,
+  "P_EV": 0.988,
+  "taban_bp": 2.446,
+  "fark": 6.198,
+  "fark_P": 0.9364,
+  "yari1": 8.777,
+  "yari2": 8.512,
+  "stres": 8.177,
+  "tek_n": 233,
+  "tek_R": 0.1909,
+  "tek_isabet": 0.365,
+  "puan_yil": 567.4,
+  "sharpe": 0.598,
+  "maks_dusus_puan": 638.0,
+  "yillik_R": {
+   "2022": 0.791,
+   "2023": 0.378,
+   "2024": 0.339,
+   "2025": 0.166,
+   "2026": 0.105
+  }
+ },
+ "F4_egri_normal": {
+  "n": 578,
+  "ort_bp": 7.617,
+  "ort_R": 0.258,
+  "isabet": 0.415,
+  "basabas_isabet": 0.317,
+  "P_EV": 0.9822,
+  "taban_bp": 3.615,
+  "fark": 4.001,
+  "fark_P": 0.856,
+  "yari1": 8.068,
+  "yari2": 7.166,
+  "stres": 7.145,
+  "tek_n": 228,
+  "tek_R": 0.1944,
+  "tek_isabet": 0.364,
+  "puan_yil": 534.9,
+  "sharpe": 0.566,
+  "maks_dusus_puan": 708.8,
+  "yillik_R": {
+   "2022": 0.791,
+   "2023": 0.378,
+   "2024": 0.349,
+   "2025": 0.091,
+   "2026": 0.111
+  },
+  "hukum": "X",
+  "kontrol": {
+   "kart_5olcut": true,
+   "son4_yil": true,
+   "fark_P": false,
+   "tabandan_iyi": false
+  }
+ },
+ "F2_be1": {
+  "n": 589,
+  "ort_bp": 9.12,
+  "ort_R": 0.3095,
+  "isabet": 0.385,
+  "basabas_isabet": 0.26,
+  "P_EV": 0.9954,
+  "taban_bp": 0.911,
+  "fark": 8.208,
+  "fark_P": 0.9878,
+  "yari1": 8.473,
+  "yari2": 9.764,
+  "stres": 8.053,
+  "tek_n": 242,
+  "tek_R": 0.2537,
+  "tek_isabet": 0.331,
+  "puan_yil": 785.6,
+  "sharpe": 0.959,
+  "maks_dusus_puan": 568.8,
+  "yillik_R": {
+   "2022": 0.916,
+   "2023": 0.375,
+   "2024": 0.34,
+   "2025": 0.251,
+   "2026": 0.187
+  },
+  "hukum": "B",
+  "kontrol": {
+   "kart_5olcut": true,
+   "son4_yil": true,
+   "fark_P": true,
+   "tabandan_iyi": true
+  }
+ },
+ "F4_h4_ust": {
+  "n": 538,
+  "ort_bp": 9.003,
+  "ort_R": 0.2813,
+  "isabet": 0.42,
+  "basabas_isabet": 0.307,
+  "P_EV": 0.9834,
+  "taban_bp": 1.237,
+  "fark": 7.766,
+  "fark_P": 0.9574,
+  "yari1": 9.227,
+  "yari2": 8.779,
+  "stres": 8.512,
+  "tek_n": 209,
+  "tek_R": 0.1832,
+  "tek_isabet": 0.354,
+  "puan_yil": 503.1,
+  "sharpe": 0.532,
+  "maks_dusus_puan": 507.4,
+  "yillik_R": {
+   "2022": 0.977,
+   "2023": 0.374,
+   "2024": 0.378,
+   "2025": 0.15,
+   "2026": 0.147
+  },
+  "hukum": "X",
+  "kontrol": {
+   "kart_5olcut": true,
+   "son4_yil": true,
+   "fark_P": true,
+   "tabandan_iyi": false
+  }
+ }
+}

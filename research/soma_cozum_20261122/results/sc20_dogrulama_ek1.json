@@ -1,0 +1,98 @@
+{
+ "kiyas": "F2_be1",
+ "TABAN": {
+  "n": 589,
+  "ort_bp": 9.12,
+  "ort_R": 0.3095,
+  "isabet": 0.385,
+  "basabas_isabet": 0.26,
+  "P_EV": 0.9954,
+  "taban_bp": 0.911,
+  "fark": 8.208,
+  "fark_P": 0.9878,
+  "yari1": 8.473,
+  "yari2": 9.764,
+  "stres": 8.053,
+  "tek_n": 242,
+  "tek_R": 0.2537,
+  "tek_isabet": 0.331,
+  "puan_yil": 785.6,
+  "sharpe": 0.959,
+  "maks_dusus_puan": 568.8,
+  "yillik_R": {
+   "2022": 0.916,
+   "2023": 0.375,
+   "2024": 0.34,
+   "2025": 0.251,
+   "2026": 0.187
+  }
+ },
+ "EK1_be1.0_T480_piramit": {
+  "n": 589,
+  "ort_bp": 9.12,
+  "ort_R": 0.3095,
+  "isabet": 0.385,
+  "basabas_isabet": 0.26,
+  "P_EV": 0.9954,
+  "taban_bp": 0.911,
+  "fark": 8.208,
+  "fark_P": 0.9878,
+  "yari1": 8.473,
+  "yari2": 9.764,
+  "stres": 8.053,
+  "tek_n": 373,
+  "tek_R": 0.2412,
+  "tek_isabet": 0.343,
+  "puan_yil": 1230.5,
+  "sharpe": 0.97,
+  "maks_dusus_puan": 956.3,
+  "yillik_R": {
+   "2022": 0.916,
+   "2023": 0.375,
+   "2024": 0.34,
+   "2025": 0.251,
+   "2026": 0.187
+  },
+  "hukum": "B",
+  "kontrol": {
+   "kart_5olcut": true,
+   "son4_yil": true,
+   "fark_P": true,
+   "tabandan_iyi": true
+  }
+ },
+ "EK1_be0.75_T480_piramit": {
+  "n": 589,
+  "ort_bp": 8.705,
+  "ort_R": 0.2904,
+  "isabet": 0.35,
+  "basabas_isabet": 0.225,
+  "P_EV": 0.9958,
+  "taban_bp": 0.931,
+  "fark": 7.774,
+  "fark_P": 0.9874,
+  "yari1": 8.503,
+  "yari2": 8.906,
+  "stres": 7.681,
+  "tek_n": 383,
+  "tek_R": 0.2101,
+  "tek_isabet": 0.303,
+  "puan_yil": 1036.0,
+  "sharpe": 0.82,
+  "maks_dusus_puan": 920.2,
+  "yillik_R": {
+   "2022": 1.041,
+   "2023": 0.361,
+   "2024": 0.249,
+   "2025": 0.261,
+   "2026": 0.201
+  },
+  "hukum": "X",
+  "kontrol": {
+   "kart_5olcut": true,
+   "son4_yil": true,
+   "fark_P": true,
+   "tabandan_iyi": false
+  }
+ }
+}

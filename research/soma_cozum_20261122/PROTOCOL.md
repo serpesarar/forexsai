@@ -371,3 +371,49 @@ Okuma: modelin öğrendiği "trend içi kanal tavanında güçlü alış dakikas
 E2: canlı yapım (son 99.000 gerçek 1m + öncesi H1'den sentetik dakika + `yeni deneme/soma_motor.py`) ile tam geçmişli araştırma Motor'u son 30 günde
 skor korelasyonu 1,0000, medyan fark 0, ateşlemeler XAU 6/6, NDX 1/1 birebir. E4: canlı `evaluate` ile araştırma koşulu 494/494 aynı karar (94 pozitif).
 Açık kalan: broker tick hacmi ↔ Dukascopy hacmi ve broker fiyatı farkı → kutuda `soma_kontrol.py` ile geriye dönük ateşleme listesi; ilk 60 canlı işlem karnesi.
+
+## SC-20 — NASDAQ E2X3 dallanması (ÖN KAYIT, 2026-11-24, sonuçlara bakmadan) — kullanıcı: "kuralı ana gövde al, dallandır, daha fazla puan ve isabet"
+**Ana gövde (taban hücre):** NDX E2X3 = Soma klon modeli AL kenarı (q0,998, soğuma 0), SL 1×ATR_H1, 480 dk, TP yok (SC-19 canlı).
+**Dönemler:** KEŞİF 2018-01-15 → 2022-11-14 (dal seçimi yalnız burada) · DOĞRULAMA 2022-11-14 → 2026-11-14 (aday başına TEK atış).
+Not: tabanın kendisi DOĞRULAMA'yı SC-19'da gördü; dalların DOĞRULAMA sonucu görülmedi.
+**Ölçüm:** sonraki 1m açılışı + Dukascopy spread, komisyon 0. Her hücre: n, ort bp, ort R, isabet, başabaş isabeti, P(EV>0),
+aynı çıkışla aynı UTC saatinde rastgele alışa fark (×5) + P, iki yarı, spread ×1,5, **tek pozisyon** (kural başına) yıllık NDX puanı (1 lot)
+ve günlük Sharpe (tüm iş günleri), maks. düşüş (puan).
+**Aileler (hepsi KEŞİF'te koşulur, iki tarafı da raporlanır):**
+- F1 çıkış geometrisi: SL k ∈ {0,5; 0,75; 1; 1,5; 2; 3; yok (felaket 5)} × T ∈ {120, 240, 480, 960, 1440, 2880} dk.
+- F2 TP / iz / başabaş (SL 1, T 480 üstüne): TP ∈ {1; 1,5; 2; 3; 5}R; iz (aktivasyon {0,5; 1; 2}R × mesafe {0,5; 1}R); BE +1R'de.
+- F3 eşik: q ∈ {0,99; 0,995; 0,997; 0,998; 0,999} (eşikler altın KEŞİF skor dağılımından, SC-08 gibi).
+- F4 rejim/zaman süzgeçleri (taban çıkış): önceki NY günü VIX ≥ 18,4 / < 18,4; VIX/VIX3M ≥ 1 / < 1; NY nakit seansı (09:30–16:00 ET) /
+  dışı; seans (Asya 18–02 ET, Avrupa 02–09:30, ABD 09:30–16, akşam 16–18); haftanın günü; H4 kapanış > H4 EMA50 / altı;
+  D1 kapanış > D1 EMA200 / altı; skor kovası (eşik üstü alt yarı / üst yarı); önceki ateşlemeden geçen süre (< 1 gün / ≥ 1 gün).
+- F5 yön: SATIŞ aynası (y = −1 kenarı, aynı çıkış).
+- F6 portföy: kural başına tek pozisyon vs eşzamanlı (her ateşleme ayrı); açıkken gelen 2. ateşlemede +1 birim ekleme.
+- F7 bileşik: E2 ∧ aynı sunucu gününde E4 tetiği; E2 ∧ VIX ≥ 18,4 ∧ en iyi F1 çıkışı (F1 sonucundan sonra, yalnız KEŞİF'te).
+**KEŞİF'ten DOĞRULAMA'ya geçme:** n ≥ 150; rastgele alışa fark > 0 ∧ P ≥ 0,95; iki yarı > 0; stres > 0; tek pozisyon > 0;
+ve tabana göre (KEŞİF, tek pozisyon) **Sharpe ↑ ya da yıllık puan ↑** olup diğeri en çok %10 ↓. Bunlardan Sharpe sırasıyla **en çok 3 aday**.
+**DOĞRULAMA geçme (aday başına bir kez):** 2. KURAL kartı 6/6 ∧ 2023, 2024, 2025, 2026 her yıl R > 0 ∧ rastgele alışa fark P ≥ 0,95 ∧
+tabana göre (DOĞRULAMA) Sharpe ↑ ya da yıllık puan ↑ (diğeri ≤ %10 ↓). Geçen → B (canlı adayı; karar kullanıcıda); geçmeyen → C/X.
+Tuzak notları: E14 (isabet ↑ ≠ para ↑ → isabet yalnız başabaşla birlikte), E13/E73 (uzun tutuş uzun kalma primini toplar → rastgele alışa
+fark aynı çıkışla ölçülür), çok hücre (≈110) → DOĞRULAMA tek atış ve ≤ 3 aday.
+
+### SC-20 sonucu (değiştirilmez) — `results/sc20_kesif.csv/json`, `results/sc20_dogrulama.json`
+KEŞİF taban (NDX E2X3): n 779, +0,346 R, isabet %48,1, rastgele alışa +12,4 bp (P 1,00), tek pozisyon 708 puan/yıl, Sharpe 1,36.
+Geçen 13 hücre; Sharpe sırasıyla aday: F4_egri_normal (VIX/VIX3M<1), F2_be1 (+1R'de başabaş), F4_h4_ust.
+DOĞRULAMA (2022-11 → 2026-11), taban: 567 puan/yıl, Sharpe 0,60, isabet %42,1:
+- **F2_be1 → B**: 786 puan/yıl (+%38), Sharpe 0,96, isabet %38,5, 2023 +0,38 / 2024 +0,34 / 2025 +0,25 / 2026 +0,19 R (her yıl tabandan iyi).
+- F4_egri_normal → X (535 puan, Sharpe 0,57 — tabandan kötü; ters eğri vetosu taşınmadı). F4_h4_ust → X (503, 0,53).
+Simülatör notu: başabaş stopu tetiklendiği barın SONRAKİ barından itibaren geçerli (aynı bar içinde iyimser sıra yok).
+Tanımlayıcı (aday değil): F6_piramit 1.116 puan/yıl (KEŞİF, Sharpe 1,44, düşüş ×1,6); TP'li ve dar izli çıkışlar isabeti %59–69'a çıkarıp puanı düşürüyor (E14).
+
+## SC-20 EK-1 — "+1R başabaş" yeni gövde üzerine puan dalları (ÖN KAYIT, 2026-11-24, EK hücrelerin hiçbir sonucu görülmeden)
+Hücreler (KEŞİF'te): başabaş tetiği {0,5; 0,75; 1; 1,5}R × T {480, 960} × mod {tek, piramit (+1 birim ikinci ateşlemede)} = 16 hücre.
+Seçim: SC-20 KEŞİF geçme ölçütleri, kıyas tabanı = F2_be1 (KEŞİF). Aday: **yıllık puan** sırasıyla en çok 2 (Sharpe ≥ 0,9 × F2_be1 şartıyla).
+DOĞRULAMA (tek atış): SC-20 ölçütleri, kıyas tabanı = F2_be1'in DOĞRULAMA sonucu (786 puan, Sharpe 0,96). Toplam DOĞRULAMA sayısı 5 olur.
+
+### SC-20 EK-1 sonucu (değiştirilmez) — `results/sc20_kesif_ek1.*`, `results/sc20_dogrulama_ek1.json`
+KEŞİF adayları (yıllık puan sırası): be1,0 + piramit (1.214 puan, Sharpe 1,66), be0,75 + piramit (1.197, 1,75).
+DOĞRULAMA (kıyas F2_be1: 786 puan, Sharpe 0,96, düşüş 569):
+- **be1,0 + piramit → B** ama **lot eşdeğeri**: 1.231 puan/yıl (+%57), Sharpe 0,97 (≈), maks. düşüş 956 (×1,7). Kenar değil risk kararı.
+- be0,75 + piramit → X (1.036, Sharpe 0,82).
+Kayıp profili (DOĞRULAMA, tek pozisyon): taban kayıp %62,7 / tam stop %59,2 → be1 kayıp %46,3 / tam stop %42,6, başabaş kapanış %20,7;
+ortalama kazanç 2,18 → 2,09 R. Kart `go_live_cards/soma_e2x3_ndx_be1.json` 6/6.

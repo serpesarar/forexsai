@@ -1,0 +1,83 @@
+{
+ "scope": "soma_e2x3_ndx_be1",
+ "tarih": "2026-11-24T13:10:14",
+ "aciklama": "NDX E2X3 (Soma klon modeli AL, SL 1×ATR_H1, 480 dk) + fiyat +1R'ye ulaşınca stop girişe (başabaş). SC-20 F2_be1.",
+ "ana_olcum": "Dukascopy NDX 1m DOĞRULAMA 2022-11-14 → 2026-11-14 (KEŞİF 2018-01 → 2022-11'de seçildi, tek atış); sonraki 1m açılışı + spread",
+ "checks": {
+  "1_hacim": {
+   "n": 589,
+   "gecti": true
+  },
+  "2_beklenti": {
+   "ort_R": 0.3095,
+   "P_EV_pos": 0.9946,
+   "gecti": true
+  },
+  "3_kararlilik": {
+   "yari1_R": 0.2702,
+   "yari2_R": 0.3488,
+   "gecti": true
+  },
+  "4_surtunme": {
+   "stres_R": 0.27,
+   "gecti": true
+  },
+  "5_icra": {
+   "iyimser_R": 0.3459,
+   "gercek_R": 0.3095,
+   "gecti": true
+  },
+  "6_tek_pozisyon": {
+   "n": 242,
+   "ort_R": 0.2537,
+   "gecti": true
+  }
+ },
+ "kart_6_6": true,
+ "son4_yil_R": {
+  "2023": 0.375,
+  "2024": 0.34,
+  "2025": 0.251,
+  "2026": 0.187
+ },
+ "tabana_gore": {
+  "puan_yil": [
+   567.4,
+   785.6
+  ],
+  "sharpe": [
+   0.598,
+   0.959
+  ],
+  "maks_dusus_puan": [
+   638.0,
+   568.8
+  ],
+  "kayip_orani_pct": [
+   62.7,
+   46.3
+  ],
+  "tam_stop_pct": [
+   59.2,
+   42.6
+  ],
+  "basabas_kapanis_pct": [
+   0.9,
+   20.7
+  ]
+ },
+ "rastgele_alis_farki": {
+  "fark_bp": 8.208,
+  "fark_P": 0.9878
+ },
+ "piramit_varyanti": {
+  "puan_yil": 1230.5,
+  "sharpe": 0.97,
+  "maks_dusus_puan": 956.3,
+  "not": "Sharpe değişmiyor, düşüş ×1,7 → lot büyütmeye eşdeğer; ayrı risk kararı"
+ },
+ "verdict": "LIVE",
+ "sinif": "B",
+ "kanit": "research/soma_cozum_20261122 PROTOCOL SC-20 + EK-1; src/sc20_ndx_dal.py; results/sc20_*.json",
+ "canli_karar": "BEKLİYOR — kullanıcı kararı"
+}
