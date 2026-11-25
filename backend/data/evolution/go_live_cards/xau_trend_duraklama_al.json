@@ -1,0 +1,63 @@
+{
+ "scope": "xau_trend_duraklama_al",
+ "tarih": "2026-11-25",
+ "kaynak": "research/myaigold_20261125 MG-4 (My AI Gold EA davranışından türetilip geliştirildi)",
+ "tanim": "XAUUSD, karar her saat başı (kapanmış H1): son 12 sa getirisi ≥ +1,0 ATR_H1 ∧ son 4 sa |getiri| ≤ 0,5 ATR ∧ fiyat H1 EMA50'nin ≥ 1 ATR üstünde ∧ 24 sa aralıkta konum 0,55–0,95 ∧ UTC saat ∈ {07,08,12,15,20,22} ∧ Pzt–Cum → AL (yalnız). Giriş saat başı 1m açılışı (ask). TP +59,2 bp (~+25 $ @4.000), SL −94,7 bp (~−40 $), fiyat +38,2 bp görünce stop +37,9 bp'ye kilit, 4.000 dk emniyet; tek pozisyon.",
+ "kesif_2018_2021": {
+  "n": 231,
+  "ayda": 4.8,
+  "ort_R": 0.0813,
+  "isabet": 0.732,
+  "P_EV": 0.9847,
+  "fark_R": 0.0889,
+  "fark_P": 0.9867,
+  "en_iyi10_haric": 0.0455
+ },
+ "test_2022_2026_05": {
+  "n": 308,
+  "ayda": 5.9,
+  "ort_R": 0.096,
+  "aylik_R": 0.563,
+  "isabet": 0.76,
+  "P_EV": 0.9987,
+  "yari1": 0.061,
+  "yari2": 0.1309,
+  "stres_R": 0.0807,
+  "plasebo_R": 0.0342,
+  "fark_R": 0.0617,
+  "fark_P": 0.9507,
+  "en_iyi10_haric": 0.0668,
+  "sharpe": 1.333,
+  "yillik_R": {
+   "2022": 0.0364,
+   "2023": 0.0891,
+   "2024": 0.0465,
+   "2025": 0.1956,
+   "2026": 0.0763
+  },
+  "iyimser_R": 0.1198
+ },
+ "olcutler": {
+  "1_hacim": true,
+  "2_beklenti": true,
+  "3_kararlilik": true,
+  "4_surtunme": true,
+  "5_icra": true,
+  "6_tek_pozisyon": true
+ },
+ "gecen": "6/6",
+ "son4_yil_arti": true,
+ "kor_2026_05_11_robot_donemi": {
+  "n": 26,
+  "ort_R": -0.0602,
+  "isabet": 0.654
+ },
+ "uyarilar": [
+  "Yalnız AL: altın 2018–26 boğası; plaseboya fark +0,062R P 0,951 (sınırda) — kârın ~1/3'ü aynı saatlerde rastgele alışla da geliyor (E13/E73)",
+  "Kör dönem (2026-05→11, altın 4.540→3.640 düşüş) n 26 −0,06R: düşen altında zayıf",
+  "Robotun ~21 işlem/ayına karşı ayda ~6 işlem — daha çok işlem açan varyantlar anlamlılığı geçemedi",
+  "Canlı R0B (H1 20-bar tepe AL) ve Soma E4X3 ile aynı yön/varlık — korelasyon riski; ortak lot tavanı"
+ ],
+ "verdikt": "LIVE",
+ "canli_karar": "LIVE — kullanıcı 2026-11-25 'Doğrudan canlıya al' (KASA 2010–17 doğrulaması yapılmadan); yeni deneme/xau_trend_duraklama_live.py, magic +20, lot 0.05, kapatma config.XAU_TDA_LIVE=False; durdurma n=60 ort R<0"
+}

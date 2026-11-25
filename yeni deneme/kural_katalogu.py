@@ -14,7 +14,7 @@ ile ezilebilir (kutuda config.py gitignore'da → varsayılan BURADA):
     XAU 1h yeni tepe 0.05 (XAUUSD) — 2026-11-12
 Aynı sembolde bu ailelerin toplam açık lotu `RULE_MAX_LOTS_PER_SYMBOL` (varsayılan 4.5) üstüne çıkamaz (yoğunlaşma freni).
 
-Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE, KSG_LIVE, AYSONU_SON_LIVE, AYSONU_E2_LIVE, XAU_R0B_LIVE, SOMA_E4X3_LIVE, SOMA_E2_XAU_LIVE, SOMA_E2_NDX_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
+Kapatma bayrakları (config): C3B_LIVE, ORB_VIX_LIVE, CEKIC_LIVE, CAPREV_LIVE, KSG_LIVE, AYSONU_SON_LIVE, AYSONU_E2_LIVE, XAU_R0B_LIVE, SOMA_E4X3_LIVE, SOMA_E2_XAU_LIVE, SOMA_E2_NDX_LIVE, XAU_TDA_LIVE — hepsi varsayılan True (LIVE_TRADING da True olmalı).
 """
 from __future__ import annotations
 
@@ -145,6 +145,14 @@ RULES: dict[str, dict] = {
         "siklik": "≈ 3 sinyal/hafta (tek pozisyonla ≈ 1/hafta)",
         "kanit": "go_live_cards/soma_e2x3_ndx.json (6/6; Dukascopy NDX 2018–26 dokuz yılın dokuzu artı); SC-19b parite 1,0; "
                  "başabaş go_live_cards/soma_e2x3_ndx_be1.json (SC-20 DOĞRULAMA B: 567→786 puan/yıl, Sharpe 0,60→0,96)",
+    },
+    "XAU_TDA": {
+        "ad": "XAU TREND-DURAKLAMA AL — My AI Gold davranışından türetilip geliştirildi (MG-4 G0)", "kisa": "XAUTDA", "sinif": "B",
+        "magic_offset": 20, "lot_key": "XAU_TDA_LIVE_LOT", "lot": 0.05, "live_key": "XAU_TDA_LIVE",
+        "isabet": "%76", "n": 308, "ort": "+0,096 R/işlem (TEST 2022–26/05; 2022–26 her yıl artı; plaseboya +0,062 R, P 0,95)",
+        "tutus": "TP/SL/kilit; en çok 4.000 dk", "sl": "−94,7 bp (≈ −40 $ @4.000); +38,2 bp görünce +37,9 bp'ye kilit",
+        "tp": "+59,2 bp (≈ +25 $)", "siklik": "≈ 6 işlem/ay (saat başı, 07/08/12/15/20/22 UTC)",
+        "kanit": "go_live_cards/xau_trend_duraklama_al.json (6/6); canlı kod paritesi 11.761/11.761 saat başı; KASA 2010–17 doğrulaması YAPILMADI (kullanıcı kararı)",
     },
 }
 

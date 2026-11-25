@@ -5954,5 +5954,60 @@
     "source": "session",
     "created_at": "2026-11-24T19:54:51.041115+00:00",
     "updated_at": "2026-11-24T19:54:51.041237+00:00"
+  },
+  {
+    "id": "bl_c6f0495a37",
+    "title": "DH-1…3 diğer hesap kolları",
+    "detail": "CWDT gece FX + Soma petrol: Dukascopy BID+ASK 1m indir (src/dh_indir.py), hizalama, +1dk kopya vs plasebo, 2018-25 bağımsız kural sınaması; gece rollover spread'i (E97) gerçek ask ile",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-24T20:34:46.500074+00:00",
+    "updated_at": "2026-11-24T20:34:46.500209+00:00"
+  },
+  {
+    "id": "bl_c1fd403fb8",
+    "title": "FX gece dönüşü gölge + gerçek swap",
+    "detail": "DH-05 EK-1 (W0 q0.15 m1 TP5 SL100 24sa, EURUSD/GBPUSD/AUDUSD/USDCAD) için emirsiz gölge koşucu + Pepperstone gerçek swap/komisyon ölçümü (demo swap 0 görünüyor); swap 1 pip/gece üstündeyse X — İPTAL 2026-11-25: kanıt E153 hatası çıktı, düzeltilmiş hâli X",
+    "category": "experiment",
+    "priority": "high",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-11-25T02:28:53.217583+00:00",
+    "updated_at": "2026-11-25T02:35:51.278495+00:00"
+  },
+  {
+    "id": "bl_c0b6a0153a",
+    "title": "KH-16 aday hesapları indir (kullanıcı)",
+    "detail": "My Darwin 2400405, Market Anomalies 2342700, Chiroptera 2339732: MQL5 positions + history CSV → research/kopya_hesap_20261122/data/raw/<id>_O.csv / history/<id>_O.history.csv; hat kendiliğinden koşar",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-25T03:01:36.084572+00:00",
+    "updated_at": "2026-11-25T03:01:36.084690+00:00"
+  },
+  {
+    "id": "bl_52e87f39d8",
+    "title": "XAU trend-duraklama AL canlı/gölge kararı",
+    "detail": "kart xau_trend_duraklama_al 6/6; uyarı: AL sürüklenmesi, düşen altında zayıf (kör −0,06R, n 26), R0B/E4X3 korelasyonu — canlı/gölge kararı ve lot kullanıcıda — 2026-11-25 kullanıcı: doğrudan canlıya al (XAU_TDA, lot 0.05)",
+    "category": "decision",
+    "priority": "high",
+    "status": "done",
+    "source": "session",
+    "created_at": "2026-11-25T04:54:51.592608+00:00",
+    "updated_at": "2026-11-25T05:09:06.246637+00:00"
+  },
+  {
+    "id": "bl_xautda_n60",
+    "title": "XAU TDA canlı karne n=60",
+    "detail": "xau_trend_duraklama_live canlı işlemleri n=60'ta ort R<0 ise XAU_TDA_LIVE=False; düşen altında (kör −0,06R) ayrıca izle; R0B/SOMA XAU ile eşzamanlı lot",
+    "category": "experiment",
+    "priority": "high",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-25T05:09:06.246762+00:00",
+    "updated_at": "2026-11-25T05:09:06.246764+00:00"
   }
 ]

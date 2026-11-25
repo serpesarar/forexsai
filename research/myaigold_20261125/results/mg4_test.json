@@ -1,0 +1,156 @@
+{
+ "AL_a1.0_b0.5_uzinf_kz0.95_yogun": {
+  "n": 308,
+  "ayda": 5.9,
+  "ort_R": 0.096,
+  "aylik_R": 0.563,
+  "isabet": 0.76,
+  "P_EV": 0.9987,
+  "yari1": 0.061,
+  "yari2": 0.1309,
+  "stres_R": 0.0807,
+  "plasebo_R": 0.0342,
+  "fark_R": 0.0617,
+  "fark_P": 0.9507,
+  "en_iyi10_haric": 0.0668,
+  "sharpe": 1.333,
+  "AL_R": 0.096,
+  "SAT_R": null,
+  "yillik_R": {
+   "2022": 0.0364,
+   "2023": 0.0891,
+   "2024": 0.0465,
+   "2025": 0.1956,
+   "2026": 0.0763
+  },
+  "iyimser_R": 0.1198,
+  "kontrol": {
+   "kesif_olcutleri": true,
+   "2022_25_her_yil": true,
+   "icra": true
+  },
+  "hukum": "B",
+  "kor_2026_05_11": {
+   "n": 26,
+   "ayda": 4.1,
+   "ort_R": -0.0602,
+   "aylik_R": -0.25,
+   "isabet": 0.654,
+   "P_EV": 0.3317,
+   "yari1": -0.0862,
+   "yari2": -0.0343,
+   "stres_R": -0.0642,
+   "plasebo_R": -0.0696,
+   "fark_R": 0.0094,
+   "fark_P": 0.5263,
+   "en_iyi10_haric": -0.2693,
+   "sharpe": -0.631,
+   "AL_R": -0.0602,
+   "SAT_R": null,
+   "yillik_R": {
+    "2026": -0.0602
+   }
+  },
+  "kesif": {
+   "n": 231,
+   "ayda": 4.8,
+   "ort_R": 0.0813,
+   "aylik_R": 0.391,
+   "isabet": 0.732,
+   "P_EV": 0.9847,
+   "yari1": 0.0744,
+   "yari2": 0.0881,
+   "stres_R": 0.068,
+   "plasebo_R": -0.0076,
+   "fark_R": 0.0889,
+   "fark_P": 0.9867,
+   "en_iyi10_haric": 0.0455,
+   "sharpe": 1.011,
+   "AL_R": 0.0813,
+   "SAT_R": null,
+   "yillik_R": {
+    "2018": -0.036,
+    "2019": 0.0823,
+    "2020": 0.1175,
+    "2021": 0.1179
+   }
+  }
+ },
+ "AL_a1.0_b0.5_uzinf_kz0.95_yogun__tp2.0_sl3.0_kilit": {
+  "n": 316,
+  "ayda": 6.0,
+  "ort_R": 0.0454,
+  "aylik_R": 0.273,
+  "isabet": 0.728,
+  "P_EV": 0.888,
+  "yari1": -0.0072,
+  "yari2": 0.0979,
+  "stres_R": 0.0361,
+  "plasebo_R": 0.0154,
+  "fark_R": 0.03,
+  "fark_P": 0.7657,
+  "en_iyi10_haric": 0.0108,
+  "sharpe": 0.52,
+  "AL_R": 0.0454,
+  "SAT_R": null,
+  "yillik_R": {
+   "2022": -0.0543,
+   "2023": 0.016,
+   "2024": 0.0084,
+   "2025": 0.1609,
+   "2026": 0.0712
+  },
+  "iyimser_R": 0.079,
+  "kontrol": {
+   "kesif_olcutleri": false,
+   "2022_25_her_yil": false,
+   "icra": false
+  },
+  "hukum": "X",
+  "kor_2026_05_11": {
+   "n": 26,
+   "ayda": 4.1,
+   "ort_R": -0.1033,
+   "aylik_R": -0.428,
+   "isabet": 0.654,
+   "P_EV": 0.226,
+   "yari1": -0.0508,
+   "yari2": -0.1558,
+   "stres_R": -0.0777,
+   "plasebo_R": -0.0544,
+   "fark_R": -0.0489,
+   "fark_P": 0.3853,
+   "en_iyi10_haric": -0.3205,
+   "sharpe": -1.009,
+   "AL_R": -0.1033,
+   "SAT_R": null,
+   "yillik_R": {
+    "2026": -0.1033
+   }
+  },
+  "kesif": {
+   "n": 249,
+   "ayda": 5.2,
+   "ort_R": 0.0702,
+   "aylik_R": 0.364,
+   "isabet": 0.735,
+   "P_EV": 0.955,
+   "yari1": 0.0543,
+   "yari2": 0.0859,
+   "stres_R": 0.0444,
+   "plasebo_R": -0.0042,
+   "fark_R": 0.0744,
+   "fark_P": 0.9627,
+   "en_iyi10_haric": 0.0281,
+   "sharpe": 0.932,
+   "AL_R": 0.0702,
+   "SAT_R": null,
+   "yillik_R": {
+    "2018": -0.04,
+    "2019": 0.0405,
+    "2020": 0.1756,
+    "2021": 0.0561
+   }
+  }
+ }
+}

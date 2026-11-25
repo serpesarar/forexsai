@@ -1,0 +1,85 @@
+{
+ "G0_TEST": {
+  "n": 308,
+  "ayda": 5.9,
+  "ort_R": 0.096,
+  "aylik_R": 0.563,
+  "isabet": 0.76,
+  "P_EV": 0.9987,
+  "yari1": 0.061,
+  "yari2": 0.1309,
+  "stres_R": 0.0807,
+  "plasebo_R": 0.0342,
+  "fark_R": 0.0617,
+  "fark_P": 0.9507,
+  "en_iyi10_haric": 0.0668,
+  "sharpe": 1.333,
+  "AL_R": 0.096,
+  "SAT_R": null,
+  "yillik_R": {
+   "2022": 0.0364,
+   "2023": 0.0891,
+   "2024": 0.0465,
+   "2025": 0.1956,
+   "2026": 0.0763
+  },
+  "iyimser_R": 0.1198
+ },
+ "D1_tp80": {
+  "n": 308,
+  "ayda": 5.9,
+  "ort_R": 0.1037,
+  "aylik_R": 0.608,
+  "isabet": 0.76,
+  "P_EV": 0.9997,
+  "yari1": 0.0709,
+  "yari2": 0.1365,
+  "stres_R": 0.0884,
+  "plasebo_R": 0.0384,
+  "fark_R": 0.0653,
+  "fark_P": 0.9573,
+  "en_iyi10_haric": 0.0727,
+  "sharpe": 1.421,
+  "AL_R": 0.1037,
+  "SAT_R": null,
+  "yillik_R": {
+   "2022": 0.0524,
+   "2023": 0.0965,
+   "2024": 0.0463,
+   "2025": 0.2035,
+   "2026": 0.0909
+  },
+  "iyimser_R": 0.1266,
+  "kontrol": {
+   "P_EV_0.99": true,
+   "plasebo_0.99": false,
+   "yarilar_stres_en_iyi10": true,
+   "2022_25": true,
+   "n150": true,
+   "icra": true,
+   "G0dan_iyi": true
+  },
+  "hukum": "X",
+  "kor": {
+   "n": 26,
+   "ayda": 4.1,
+   "ort_R": -0.0433,
+   "aylik_R": -0.18,
+   "isabet": 0.654,
+   "P_EV": 0.379,
+   "yari1": -0.0693,
+   "yari2": -0.0174,
+   "stres_R": -0.0473,
+   "plasebo_R": -0.0681,
+   "fark_R": 0.0248,
+   "fark_P": 0.5653,
+   "en_iyi10_haric": -0.2693,
+   "sharpe": -0.435,
+   "AL_R": -0.0433,
+   "SAT_R": null,
+   "yillik_R": {
+    "2026": -0.0433
+   }
+  }
+ }
+}
