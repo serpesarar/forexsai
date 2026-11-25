@@ -6009,5 +6009,27 @@
     "source": "session",
     "created_at": "2026-11-25T05:09:06.246762+00:00",
     "updated_at": "2026-11-25T05:09:06.246764+00:00"
+  },
+  {
+    "id": "bl_337b8d5163",
+    "title": "tick_recorder kutuda sürekli çalıştır",
+    "detail": "yeni deneme/tick_recorder.py 2026-08-10'dan beri durmuş; broker tick geçmişi ~3 ay kayıyor (eski günler kayboluyor). Başlatma (calistir/16_tick_kaydedici.bat) kullanıcı onayı bekliyor; yılda ~3 GB yerel disk",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-25T05:37:01.117541+00:00",
+    "updated_at": "2026-11-25T05:37:01.117687+00:00"
+  },
+  {
+    "id": "bl_8315a2bc42",
+    "title": "tickdata'yı OneDrive dışına taşı + zaman ekseni notu",
+    "detail": "tick_recorder tickdata/ OneDrive klasöründe (~3 GB/yıl senkron; 2026-11-03 bot logu OSError 22 olayı OneDrive'da). time_msc broker SUNUCU saati (NY+7), docstring UTC diyor; dosya günleri sunucu günü, kayıt ~2 sa gecikmeli ama kayıpsız. LOCALAPPDATA'ya taşı (dbg_izleyici gibi) + docstring düzelt",
+    "category": "wiring",
+    "priority": "medium",
+    "status": "pending",
+    "source": "session",
+    "created_at": "2026-11-25T06:18:58.523267+00:00",
+    "updated_at": "2026-11-25T06:18:58.523400+00:00"
   }
 ]
