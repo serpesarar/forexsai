@@ -641,7 +641,7 @@ def push_heartbeat(client, extra: dict | None = None) -> None:
         # bile True yazıyordu. Artık gerçek bağlantı; ölçüm yoksa None.
         "mt5": HEALTH.get("mt5_connected"),
         "open_positions": open_position_count(),
-        "agent_version": "1.8",
+        "agent_version": "1.9",
         # Panel "ajan çevrimiçi ama işlem verisi bayat" durumunun SEBEBİNİ
         # görebilsin diye trade senkron sağlığı da taşınır.
         "trade_sync_ok": TRADE_SYNC["ok"],
@@ -904,6 +904,8 @@ DEFAULT_PROCESS_TARGETS = {
     "dbg_izleyici": {"match": "dbg_izleyici.py", "bat": r"calistir\23_dbg_izleyici.bat"},
     "klon_coklu": {"match": "klon_coklu.py", "bat": r"calistir\24_klon_coklu_golge.bat"},
     "recorder": {"match": "data_recorder.py", "bat": r"calistir\1_veri_kaydedici.bat"},
+    # 2026-11-25: tick arşivi (yerel disk). 2026-08-10'da sessizce ölmüştü; broker tick geçmişi ~3 ay kaydığı için kayıp kalıcı.
+    "tick_recorder": {"match": "tick_recorder.py", "bat": r"calistir\16_tick_kaydedici.bat"},
     "agent":   {"self": True},
 }
 
@@ -1206,11 +1208,16 @@ WATCHDOG_SPECS = {
                      "stale_after_s": int(getattr(cfg, "DBG_IZLEYICI_STALE_SEC", 900)),
                      "off_file": _REPO / "calistir" / "dbg_izleyici" / "DBG_IZLEYICI_DURDUR"},
     # Çok sembollü sanal ızgara deneyi (emir yok). 5 dk'da bir nabız; veri OneDrive dışında.
+    # tick_recorder 10 dk'da bir özet satırı yazar (hafta sonu dahil) → 30 dk sessizlik = ölü/asılı. Bilerek durdurma: off_file.
+    "tick_recorder": {"file": _REPO / "yeni deneme" / "tick_recorder.log",
+                      "stale_after_s": int(getattr(cfg, "TICK_RECORDER_STALE_SEC", 1800)),
+                      "off_file": _REPO / "yeni deneme" / "TICK_KAYDEDICI_DURDUR"},
     "klon_coklu": {"file": _KLON_COKLU_VERI / "klon_coklu_log.jsonl",
                    "stale_after_s": int(getattr(cfg, "KLON_COKLU_STALE_SEC", 900)),
                    "off_file": _REPO / "calistir" / "klon_coklu" / "KLON_COKLU_DURDUR"},
 }
-WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider", "dbg_klon", "dbg_izleyici", "klon_coklu", "recorder")))
+WATCHDOG_WATCH = tuple(getattr(cfg, "WATCHDOG_WATCH", ("bot", "decider", "dbg_klon", "dbg_izleyici", "klon_coklu", "recorder",
+                                                     "tick_recorder")))
 
 #: Son denetimin gözlemi — kalp atışı iş parçacığı buradan okur (her turda yeni dict atanır).
 WATCHDOG: dict = {}

@@ -511,7 +511,7 @@ def test_healthy_bot_not_touched_and_heartbeat_reports_alive(agent, box):
     meta = client.upserted[0]["meta"]
     assert meta["bot_alive"] is True
     assert meta["bot_log_age_s"] is not None and meta["bot_log_age_s"] < 120
-    assert "bot_last_restart" in meta and meta["agent_version"] == "1.8"
+    assert "bot_last_restart" in meta and meta["agent_version"] == "1.9"
 
 
 def test_dead_bot_restarted_without_deferral_even_with_open_positions(agent, box):
