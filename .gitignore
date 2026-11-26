@@ -71,6 +71,7 @@ research/usoil_breakout_gate_2026-08-11/data/
 yeni deneme/caprev_state.json
 yeni deneme/caprev_state.tmp
 yeni deneme/orb_vix_state.json
+yeni deneme/or5_gece_state.json
 yeni deneme/orb_vix_state.tmp
 yeni deneme/c3b_state.json
 yeni deneme/c3b_state.tmp
@@ -134,3 +135,8 @@ yeni deneme/cot_cache/
 # Kopya hesap ters mühendisliği (KH) — indirilen başkalarının işlem geçmişleri, push edilmez
 research/kopya_hesap_20261122/data/
 yeni deneme/hk3_state.json
+
+# trader-tersine: başkalarının ham işlem geçmişleri asla push edilmez
+research/trader_tersine/hesaplar/*/raw/
+research/trader_tersine/hesaplar/*/data/
+research/trader_tersine/data/

@@ -46,6 +46,10 @@ try:                                    # NDX ORB × VIX GÖLGE (HB-03 C1) — e
     import orb_vix_shadow
 except Exception:                       # pragma: no cover
     orb_vix_shadow = None
+try:                                    # NDX OR5 + gece hizası (Y1a) + Y5 gece etiketi GÖLGE (§2.128–2.130) — emir göndermez
+    import or5_gece_shadow
+except Exception:                       # pragma: no cover
+    or5_gece_shadow = None
 try:                                    # NDX RSI2 C3b/C3 GÖLGE (TR-C3b) — emir göndermez; import hatası botu durdurmaz
     import c3b_shadow
 except Exception:                       # pragma: no cover
@@ -2791,6 +2795,15 @@ def main():
                     orb_vix_shadow.poll(mt5, log, resolve_symbol, get_vix, _daycombo_offset)
                 except Exception as e:
                     log.warning("orb×vix gölge hatası: %s", e)
+
+            # ── NDX OR5 + gece hizası (Y1a) ve ORB×VIX gece etiketi (Y5) GÖLGE — kartlar ndx_or5_gece_hiza.json,
+            #    ndx_orb_vix_gece_hiza.json; kullanıcı kararı 2026-11-26 "gölgede başlat". EMİR YOK; canlı ORB×VIX'e
+            #    dokunmaz. Karne: python or5_gece_shadow.py --karne. Kapatma: config.OR5_GECE_SHADOW_ENABLED = False.
+            if or5_gece_shadow is not None and getattr(config, "OR5_GECE_SHADOW_ENABLED", True):
+                try:
+                    or5_gece_shadow.poll(mt5, log, resolve_symbol, _daycombo_offset)
+                except Exception as e:
+                    log.warning("or5 gece gölge hatası: %s", e)
 
             # ── NDX RSI2 C3b/C3 GÖLGE (kart go_live_cards/ndx_c3b_rsi2_upexit.json) — EMİR YOK. Fren 'continue'undan
             #    ÖNCE: fren devredeyken de ölçüm sürmeli. Kapatma: config.C3B_SHADOW_ENABLED = False.
