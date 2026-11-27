@@ -17,8 +17,14 @@ KURAL (dondurulmuş; araştırma kodu research/trader_tersine/gelistirme/turev_y
 İki sonuç: R_model (sonraki M1 açılışı + tespit anı spread'i, M1'de önce stop) ve R_fill (tespit anı ask/bid).
 Y5: her işlem günü 09:31 ET'de {"kind": "gece", "day", "g", "gece_bp"} yazılır; karne ORB×VIX gölge/canlı kayıtlarını buna bağlar.
 
+DAX KOLU (2026-11-27, kullanıcı: "Yes, add DAX leg"): aynı kural DAX'a uyarlanmış hâliyle (defter §2.140 AV-01, kart
+go_live_cards/dax_y1a.json LIVE 6/6: Duka 2018–26 hizalı +0,191R n 881 P 0,996 / hizasız +0,029; araştırma kodu
+research/trader_tersine/gelistirme/avrupa_or5_20261127/src/avrupa.py ile birebir): yerel saat Berlin (EU DST);
+OR5 09:00–09:04, giriş penceresi 09:05–10:00, çıkış 17:29 barının kapanışı, gece = d−1 17:35 sonrası ilk açılış → 08:59 son kapanış.
+Kayıtlarda "market" alanı; NDX kayıtları eski biçimde (market alanı yoksa NDX sayılır).
+
 Karne:   python or5_gece_shadow.py --karne
-Kapatma: config.OR5_GECE_SHADOW_ENABLED = False
+Kapatma: config.OR5_GECE_SHADOW_ENABLED = False (tümü) · config.OR5_GECE_DAX_ENABLED = False (yalnız DAX kolu)
 """
 from __future__ import annotations
 
@@ -43,6 +49,10 @@ OR_MIN = 5
 ENTRY_LAST_MIN = 630            # 10:30 ET (son tetik kapanışı)
 EXIT_MIN = 959                  # 15:59 ET barının kapanışı
 GLOBEX_MIN = 1080               # 18:00 ET
+# kol profilleri: NDX (asıl, eski kayıt biçimi) + DAX (2026-11-27)
+NDX = {"market": MARKET, "tz": TZ, "open": OPEN_MIN, "entry_last": ENTRY_LAST_MIN, "exit": EXIT_MIN, "gece": GLOBEX_MIN, "etiket": "NDX"}
+DAX = {"market": "GDAXI.INDX", "tz": "EU", "open": 540, "entry_last": 600, "exit": 1049, "gece": 1055, "etiket": "DAX"}
+PROFILLER = {NDX["market"]: NDX, DAX["market"]: DAX}
 POLL_EVERY_S = 60
 FETCH_M1 = 1500                 # ≈ 25 saat: dünkü 18:00'den bugüne
 MAX_LATE_S = 180
@@ -54,11 +64,11 @@ _last_poll = 0.0
 
 # ═════════════════════════ saf yardımcılar (test edilebilir) ═════════════════════════
 
-def local_bars(bars: list[dict]) -> list[dict]:
+def local_bars(bars: list[dict], prof: dict = NDX) -> list[dict]:
     """UTC barlarına yerel (tarih, dakika) ekle, zaman sırasıyla."""
     out = []
     for b in sorted(bars, key=lambda x: x["t"]):
-        d, m, _ = cs.to_local(b["t"], TZ)
+        d, m, _ = cs.to_local(b["t"], prof["tz"])
         out.append({**b, "d": d, "m": m})
     return out
 
@@ -70,13 +80,14 @@ def prev_session_date(today: date) -> date:
     return p
 
 
-def gece_yonu(lb: list[dict], today: date) -> tuple[int, float | None]:
+def gece_yonu(lb: list[dict], today: date, prof: dict = NDX) -> tuple[int, float | None]:
     """g = sign(09:29 son kapanış − d−1 18:00 sonrası ilk açılış). (g, gece_bp); veri yoksa (0, None).
 
     Pazartesi: d−1 = Cuma; Cuma 18:00 sonrası bar yoksa (hafta sonu) Pazar 18:00 açılışı kullanılır."""
     onceki = prev_session_date(today)
-    ac = [b for b in lb if (b["d"] == onceki and b["m"] >= GLOBEX_MIN) or (onceki < b["d"] < today) or (b["d"] == today and b["m"] < OPEN_MIN)]
-    pre = [b for b in lb if b["d"] == today and b["m"] < OPEN_MIN]
+    op, gm = prof["open"], prof["gece"]
+    ac = [b for b in lb if (b["d"] == onceki and b["m"] >= gm) or (onceki < b["d"] < today) or (b["d"] == today and b["m"] < op)]
+    pre = [b for b in lb if b["d"] == today and b["m"] < op]
     if not ac or not pre:
         return 0, None
     a, p = ac[0]["open"], pre[-1]["close"]
@@ -84,19 +95,20 @@ def gece_yonu(lb: list[dict], today: date) -> tuple[int, float | None]:
     return (1 if p > a else -1 if p < a else 0), (round(bp, 2) if bp is not None else None)
 
 
-def find_or5_trigger(lb: list[dict], today: date) -> dict | None:
-    """OR5 + m + ilk m yönlü kırılım kapanışı (09:35–10:30). entry_* sonraki bar; yoksa None alanlı."""
-    sess = [b for b in lb if b["d"] == today and OPEN_MIN <= b["m"] <= EXIT_MIN]
-    rng = [b for b in sess if b["m"] < OPEN_MIN + OR_MIN]
+def find_or5_trigger(lb: list[dict], today: date, prof: dict = NDX) -> dict | None:
+    """OR5 + m + ilk m yönlü kırılım kapanışı (NDX 09:35–10:30 / DAX 09:05–10:00). entry_* sonraki bar; yoksa None alanlı."""
+    op, el = prof["open"], prof["entry_last"]
+    sess = [b for b in lb if b["d"] == today and op <= b["m"] <= prof["exit"]]
+    rng = [b for b in sess if b["m"] < op + OR_MIN]
     if len(rng) < 4:
         return None
     tepe, dip = max(b["high"] for b in rng), min(b["low"] for b in rng)
     m = (rng[-1]["close"] > rng[0]["open"]) - (rng[-1]["close"] < rng[0]["open"])
     if m == 0:
         return None
-    post = [b for b in sess if b["m"] >= OPEN_MIN + OR_MIN]
+    post = [b for b in sess if b["m"] >= op + OR_MIN]
     for i, b in enumerate(post):
-        if b["m"] > ENTRY_LAST_MIN:
+        if b["m"] > el:
             return None
         if (b["close"] > tepe) if m > 0 else (b["close"] < dip):
             nxt = post[i + 1] if i + 1 < len(post) else None
@@ -124,8 +136,10 @@ def walk(bars: list[dict], entry: float, stop: float, m: int, exit_t: float) -> 
 
 def summarize(records: list[dict]) -> dict:
     """Y1a kolları + Y5 (ORB×VIX kayıtları gece yönüyle) + paket."""
-    res = [r for r in records if r.get("kind") == "result" and r.get("status") == "done"]
-    gece = {r["day"]: r.get("g", 0) for r in records if r.get("kind") == "gece"}
+    def _ndx(r): return r.get("market", MARKET) == MARKET
+    hepsi = [r for r in records if r.get("kind") == "result" and r.get("status") == "done"]
+    res = [r for r in hepsi if _ndx(r)]
+    gece = {r["day"]: r.get("g", 0) for r in records if r.get("kind") == "gece" and _ndx(r)}
     out = {"olay": sum(1 for r in records if r.get("kind") == "event"), "cozulen": len(res), "kollar": {}, "Y5": {}}
     for arm in ("hizali", "hizasiz"):
         sub = [r for r in res if r.get("arm") == arm]
@@ -141,6 +155,13 @@ def summarize(records: list[dict]) -> dict:
         rr = [r["R"] for r in sub]
         if sub:
             out["Y5"][ad] = {"n": len(sub), "R": round(sum(rr) / len(rr), 3), "toplam_R": round(sum(rr), 2)}
+    dax = [r for r in hepsi if r.get("market") == DAX["market"]]
+    out["DAX"] = {}
+    for arm in ("hizali", "hizasiz"):
+        rm = [r["R_model"] for r in dax if r.get("arm") == arm and r.get("R_model") is not None]
+        if rm:
+            out["DAX"][arm] = {"n": len(rm), "R_model": round(sum(rm) / len(rm), 3), "toplam_R_model": round(sum(rm), 2),
+                               "isabet": round(sum(x > 0 for x in rm) / len(rm), 3)}
     y1 = out["kollar"].get("hizali", {}).get("toplam_R_model") or 0.0
     y5 = out["Y5"].get("gece_yukari", {}).get("toplam_R") or 0.0
     orb_tum = sum(r["R"] for r in orb if r["day"] in gece)
@@ -187,11 +208,11 @@ def _append(rec: dict) -> None:
 
 # ═════════════════════════ MT5 sarmalayıcı (emir yok) ═════════════════════════
 
-def _m1(mt5, sym: str, offset_fn, n: int) -> list[dict] | None:
+def _m1(mt5, sym: str, offset_fn, n: int, prof: dict = NDX) -> list[dict] | None:
     r = mt5.copy_rates_from_pos(sym, mt5.TIMEFRAME_M1, 1, n)       # 1 → koşan bar hariç
     if r is None or len(r) == 0:
         return None
-    return local_bars(cs._m15_utc(r, offset_fn(sym)))
+    return local_bars(cs._m15_utc(r, offset_fn(sym)), prof)
 
 
 def _resolve_open(mt5, log, resolve_symbol, offset_fn, st: dict, now: float) -> bool:
@@ -199,15 +220,16 @@ def _resolve_open(mt5, log, resolve_symbol, offset_fn, st: dict, now: float) -> 
     for ev in st["open"]:
         try:
             today = date.fromisoformat(ev["day"])
-            exit_t = cs.local_to_utc(today, EXIT_MIN, TZ)
-            sym = resolve_symbol(MARKET)
+            prof = PROFILLER.get(ev.get("market", MARKET), NDX)
+            exit_t = cs.local_to_utc(today, prof["exit"], prof["tz"])
+            sym = resolve_symbol(prof["market"])
             n1 = min(int((now - ev["detect_t"]) / 60) + 30, 6000)
-            lb = _m1(mt5, sym, offset_fn, n1) if sym else None
+            lb = _m1(mt5, sym, offset_fn, n1, prof) if sym else None
             if lb is None:
                 still.append(ev); continue
             out = dict(ev)
             if out.get("entry_model") is None:
-                trig = find_or5_trigger(lb, today)
+                trig = find_or5_trigger(lb, today, prof)
                 if trig and trig["entry_open"] is not None:
                     sp = ev.get("spread", 0.0)
                     out["entry_t"] = trig["entry_t"]
@@ -259,50 +281,81 @@ def poll(mt5, log, resolve_symbol, offset_fn, now: float | None = None, force: b
         return
     _last_poll = now
     st = _load_state()
-    today, mloc, _ = cs.to_local(now, TZ)
     changed = False
-    if today.weekday() < 5 and OPEN_MIN + 1 <= mloc < EXIT_MIN:
-        sym = resolve_symbol(MARKET)
-        lb = _m1(mt5, sym, offset_fn, FETCH_M1) if sym else None
-        if lb:
-            dkey = str(today)
-            if dkey not in st["gece"]:
-                g, bp = gece_yonu(lb, today)
-                if bp is not None:
-                    st["gece"][dkey] = g
-                    _append({"kind": "gece", "day": dkey, "g": g, "gece_bp": bp})
-                    log.info("OR5-GECE-GÖLGE %s gece yönü g=%+d (%.1f bp) — Y5: ORB×VIX %s", dkey, g, bp,
-                             "açılırdı" if g > 0 else "AÇILMAZDI (gölge etiketi; canlıya dokunulmaz)")
-                    changed = True
-            key = f"{MARKET}|{today}"
-            if key not in st["fired"] and mloc >= OPEN_MIN + OR_MIN + 1 and dkey in st["gece"]:
-                trig = find_or5_trigger(lb, today)
-                if trig is None and mloc > ENTRY_LAST_MIN + 1:
-                    st["fired"][key] = "yok"; changed = True
-                elif trig is not None:
-                    tick = mt5.symbol_info_tick(sym)
-                    if tick is not None:
-                        st["fired"][key] = True
-                        g = st["gece"][dkey]
-                        late = now - (trig["trig_t"] + 60)
-                        fill = (tick.ask if trig["m"] > 0 else tick.bid) if late <= MAX_LATE_S else None
-                        ev = {"id": key, "day": dkey, "market": MARKET, "symbol": sym, "m": trig["m"], "g": g,
-                              "arm": "hizali" if g == trig["m"] else "hizasiz", "tepe": trig["tepe"], "dip": trig["dip"],
-                              "stop": trig["stop"], "trig_t": trig["trig_t"], "trig_close": trig["trig_close"],
-                              "entry_t": trig["entry_t"], "entry_model": None, "detect_t": now, "latency_s": round(late, 1),
-                              "ask": tick.ask, "bid": tick.bid, "spread": round(tick.ask - tick.bid, 3), "fill": fill, "status": "open"}
-                        st["open"].append(ev)
-                        _append({"kind": "event", **ev})
-                        log.info("OR5-GECE-GÖLGE %s kol=%s %s: OR5 %.2f–%.2f kırılım %.2f, stop %.2f (EMİR YOK)", dkey, ev["arm"],
-                                 "AL" if trig["m"] > 0 else "SAT", trig["dip"], trig["tepe"], trig["trig_close"], trig["stop"])
-                        changed = True
+    profs = [NDX] + ([DAX] if _dax_acik() else [])
+    for prof in profs:
+        try:
+            changed = _tara(mt5, log, resolve_symbol, offset_fn, st, now, prof) or changed
+        except Exception as exc:          # bir kolun hatası diğerini durdurmasın
+            log.debug("or5_gece %s tarama hatası: %s", prof["etiket"], exc)
+    today = cs.to_local(now, TZ)[0]
     if st["open"]:
         changed = _resolve_open(mt5, log, resolve_symbol, offset_fn, st, now) or changed
     if changed:
         cut = str(today - timedelta(days=10))
         st["fired"] = {k: v for k, v in st["fired"].items() if k.split("|")[1] >= cut}
-        st["gece"] = {k: v for k, v in st["gece"].items() if k >= cut}
+        st["gece"] = {k: v for k, v in st["gece"].items() if k.split("|")[-1] >= cut}
         _save_state(st)
+
+
+def _dax_acik() -> bool:
+    try:
+        import config
+        return bool(getattr(config, "OR5_GECE_DAX_ENABLED", True))
+    except Exception:
+        return True
+
+
+def _tara(mt5, log, resolve_symbol, offset_fn, st: dict, now: float, prof: dict) -> bool:
+    """Bir kol (NDX/DAX) için gece yönü + OR5 tetik taraması. EMİR YOK. NDX durumu eski anahtarlarla (gün) tutulur."""
+    today, mloc, _ = cs.to_local(now, prof["tz"])
+    op, el, ex, mk = prof["open"], prof["entry_last"], prof["exit"], prof["market"]
+    if today.weekday() >= 5 or not (op + 1 <= mloc < ex):
+        return False
+    sym = resolve_symbol(mk)
+    lb = _m1(mt5, sym, offset_fn, FETCH_M1, prof) if sym else None
+    if not lb:
+        return False
+    changed = False
+    dkey = str(today)
+    gkey = dkey if prof is NDX else f"{mk}|{dkey}"
+    if gkey not in st["gece"]:
+        g, bp = gece_yonu(lb, today, prof)
+        if bp is not None:
+            st["gece"][gkey] = g
+            rec = {"kind": "gece", "day": dkey, "g": g, "gece_bp": bp}
+            if prof is not NDX:
+                rec["market"] = mk
+            _append(rec)
+            if prof is NDX:
+                log.info("OR5-GECE-GÖLGE %s gece yönü g=%+d (%.1f bp) — Y5: ORB×VIX %s", dkey, g, bp,
+                         "açılırdı" if g > 0 else "AÇILMAZDI (gölge etiketi; canlıya dokunulmaz)")
+            else:
+                log.info("OR5-GECE-GÖLGE %s %s gece yönü g=%+d (%.1f bp)", prof["etiket"], dkey, g, bp)
+            changed = True
+    key = f"{mk}|{today}"
+    if key not in st["fired"] and mloc >= op + OR_MIN + 1 and gkey in st["gece"]:
+        trig = find_or5_trigger(lb, today, prof)
+        if trig is None and mloc > el + 1:
+            st["fired"][key] = "yok"; changed = True
+        elif trig is not None:
+            tick = mt5.symbol_info_tick(sym)
+            if tick is not None:
+                st["fired"][key] = True
+                g = st["gece"][gkey]
+                late = now - (trig["trig_t"] + 60)
+                fill = (tick.ask if trig["m"] > 0 else tick.bid) if late <= MAX_LATE_S else None
+                ev = {"id": key, "day": dkey, "market": mk, "symbol": sym, "m": trig["m"], "g": g,
+                      "arm": "hizali" if g == trig["m"] else "hizasiz", "tepe": trig["tepe"], "dip": trig["dip"],
+                      "stop": trig["stop"], "trig_t": trig["trig_t"], "trig_close": trig["trig_close"],
+                      "entry_t": trig["entry_t"], "entry_model": None, "detect_t": now, "latency_s": round(late, 1),
+                      "ask": tick.ask, "bid": tick.bid, "spread": round(tick.ask - tick.bid, 3), "fill": fill, "status": "open"}
+                st["open"].append(ev)
+                _append({"kind": "event", **ev})
+                log.info("OR5-GECE-GÖLGE %s %s kol=%s %s: OR5 %.2f–%.2f kırılım %.2f, stop %.2f (EMİR YOK)", prof["etiket"], dkey, ev["arm"],
+                         "AL" if trig["m"] > 0 else "SAT", trig["dip"], trig["tepe"], trig["trig_close"], trig["stop"])
+                changed = True
+    return changed
 
 
 def _karne() -> None:
@@ -311,7 +364,8 @@ def _karne() -> None:
     except OSError:
         print("henüz kayıt yok"); return
     print(json.dumps(summarize([json.loads(x) for x in lines if x.strip()]), ensure_ascii=False, indent=1))
-    print("Kart beklentisi: hizali +0,10…+0,20R, hizasiz ≈ 0; Y5 gece yukarı +0,25…+0,30R, aşağı ≈ 0. n < 30 iken hüküm verme.")
+    print("Kart beklentisi: hizali +0,10…+0,20R, hizasiz ≈ 0; Y5 gece yukarı +0,25…+0,30R, aşağı ≈ 0. "
+          "DAX: hizali ≈ +0,19R, hizasiz ≈ +0,03R. n < 30 iken hüküm verme.")
 
 
 if __name__ == "__main__":
