@@ -64,8 +64,8 @@ engelleyen bir kural, TP'lerin de ≈ %60'ını kesiyor. Bu stratejilerde SL bir
 
 Kod: `src/sy.py` (A+B), `src/ek1_olay.py` (EK-1). Sonuçlar: `results/sonuc.json`, `results/ek1_olay.json`, `results/kararlar.parquet`.
 
-## 8. Uygulanan yasak (2026-11-28, kullanıcı hedefi "SL tiplerini yasakla") — defter B22
-Kanıtın tanıdığı tek düzey aile×yön olduğundan yasak o düzeyde kondu: **NDX MOMSR BUY, CHREV BUY, VIXREG SELL** artık açılmaz.
+## 8. Yasak adayı (2026-11-28) — defter B22 · DURUM: GÖLGE (kullanıcı: canlıya almadan önce geliştir; 4961c66b)
+Kanıtın tanıdığı tek düzey aile×yön olduğundan yasak o düzeyde kondu: **NDX MOMSR BUY, CHREV BUY, VIXREG SELL** gölgede işaretlenir (engellenmez). Tam rapor ve listeler: `teslim/`.
 Bu üç tip canlı kitapta 244 karar üretti, SL oranı %38–46, toplam +327 $ (risk 132.897 $, SL %43). Kârın tamamını taşıyan DAYCOMBO /
 REENTRY / DECIDER / zaman çıkışlı kurallar etkilenmez. Beklenen $ etkisi ≈ 0 (bu ailelerde kenar yok); kazanç = SL sayısı ve $
 salınımı (133 bin $ risk) kalkar, risk bütçesi kanıtlı ailelere kalır.
