@@ -20,9 +20,22 @@ def _h1(n=400, egim=0.5, son4_duz=True):
 
 def test_katalog():
     r = kk.RULES["XAU_TDA"]
-    assert r["magic_offset"] == 20 and r["live_key"] == "XAU_TDA_LIVE" and r["lot"] == 0.05
+    assert r["magic_offset"] == 21 and r["live_key"] == "XAU_TDA_LIVE" and r["lot"] == 0.05
     offs = [v["magic_offset"] for v in kk.RULES.values()]
     assert len(offs) == len(set(offs))
+    assert not set(offs) & kk.RESERVED_MAGIC_OFFSETS          # decider (+20) ve diğer kapsamlarla çakışma yok
+
+
+def test_eski_magic_sahipligi():
+    """+20'de kalan eski TDA pozisyonu (yorum 'fxs') TDA'nın; decider'ınki ('CDEC') değil."""
+    import types
+    cfg = types.SimpleNamespace(MAGIC_NUMBER=52890969)
+    P = lambda magic, comment: types.SimpleNamespace(magic=magic, comment=comment)
+    assert kk.magic(cfg, "XAU_TDA") == 52890990
+    assert kk.owns(cfg, "XAU_TDA", P(52890990, "fxs XAU TDA"))
+    assert kk.owns(cfg, "XAU_TDA", P(52890989, "fxs XAU TDA"))
+    assert not kk.owns(cfg, "XAU_TDA", P(52890989, "CDEC XAUUSD BUY"))
+    assert not kk.owned_by_any_rule(cfg, P(52890989, "CDEC XAUUSD BUY"))
 
 
 def test_ozellik_ve_karar():

@@ -164,7 +164,9 @@ def send_order(mt5, sit_symbol: str, mt5_symbol: str, dec: dict, atr: float | No
     term = mt5.terminal_info()
     if term is not None and not term.trade_allowed:
         return done("skipped", "terminalde algo trading kapalı")
-    poss = [p for p in (mt5.positions_get() or []) if p.magic == DECIDER_MAGIC]
+    # "fxs" yorumlu = bot kural kataloğu (XAU_TDA 2026-11-28'e kadar aynı magic'i kullandı) → decider'ın değil
+    poss = [p for p in (mt5.positions_get() or []) if p.magic == DECIDER_MAGIC
+            and not str(getattr(p, "comment", "") or "").startswith("fxs")]
     if any(p.symbol == mt5_symbol for p in poss):
         return done("skipped", "bu sembolde zaten açık decider pozisyonu")
     if len(poss) >= LIVE_MAX_OPEN:

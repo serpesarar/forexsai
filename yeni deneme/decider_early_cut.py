@@ -81,6 +81,8 @@ def manage(mt5, log, resolve_symbol: Callable[[str], Optional[str]]) -> None:
         try:
             if pos.magic != magic or pos.symbol not in syms or pos.ticket in _karar_verildi:
                 continue
+            if str(getattr(pos, "comment", "") or "").startswith("fxs"):
+                continue    # katalog kuralı (eski XAU_TDA, aynı +20 magic'i 11-28'e kadar paylaştı) — decider değil
             tick = mt5.symbol_info_tick(pos.symbol)
             if tick is None:
                 continue

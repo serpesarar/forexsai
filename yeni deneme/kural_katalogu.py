@@ -27,7 +27,16 @@ EVENTS_JSONL = HERE / "kural_canli_olaylar.jsonl"
 
 MAX_LOTS_PER_SYMBOL_DEFAULT = 4.5          # C3b 2.0 + CAPREV 1.0 + ORB 0.75 + FR-15 0.5 = 4.25 < 4.5 (KSG gece açıkken CAPREV/ORB kapalı: en çok 2.0+0.5+0.5)
 
-# id → tanım. magic_offset: config.MAGIC_NUMBER + offset (+1…+6 başka kapsamlar kullanıyor).
+# Başka kapsamların magic ofsetleri — katalog kuralı bunları KULLANAMAZ (test_xau_tda_live.test_katalog denetler):
+# +1 CHREV, +2 VIXREG, +3 reflex, +4 DAYCOMBO, +5 USOIL breakout, +6 REENTRY, +15 FX VIXREG,
+# +20 claude_decider (claude_decider/execute_mt5.py DECIDER_MAGIC = 52890989).
+RESERVED_MAGIC_OFFSETS = frozenset({1, 2, 3, 4, 5, 6, 15, 20})
+#: Katalog emirlerinin yorum öneki (buy/sell). Decider "CDEC" ile başlar → eski ortak magic'te sahip ayrımı buradan.
+RULE_COMMENT_PREFIX = "fxs"
+
+# id → tanım. magic_offset: config.MAGIC_NUMBER + offset (RESERVED_MAGIC_OFFSETS dışında).
+# legacy_magic_offsets: kuralın ESKİ ofsetleri — o ofsette hâlâ açık, bu katalogca (yorum "fxs") açılmış pozisyonlar
+# kuralın sayılmaya devam eder (geçiş; ör. XAU_TDA 2026-11-28'e kadar decider'la aynı +20'yi kullanıyordu).
 RULES: dict[str, dict] = {
     "C3B": {
         "ad": "C3b — NDX RSI2 geri dönüşü", "kisa": "C3B", "sinif": "A", "magic_offset": 8,
@@ -148,7 +157,10 @@ RULES: dict[str, dict] = {
     },
     "XAU_TDA": {
         "ad": "XAU TREND-DURAKLAMA AL — My AI Gold davranışından türetilip geliştirildi (MG-4 G0)", "kisa": "XAUTDA", "sinif": "B",
-        "magic_offset": 20, "lot_key": "XAU_TDA_LIVE_LOT", "lot": 0.05, "live_key": "XAU_TDA_LIVE",
+        # 2026-11-28: +20 → +21. +20 claude_decider'ın magic'iydi (52890989): TDA decider'ın XAU pozisyonlarını kendi
+        # sanıp 4.000 dk çıkışı/kilit uygulayabiliyor, decider açık TDA'yı görünce XAU'da işlem açmıyordu; bot_trades'te
+        # iki kaynak ayrılamıyordu. +20'de kalan eski TDA pozisyonları yorum önekiyle tanınır (legacy_magic_offsets).
+        "magic_offset": 21, "legacy_magic_offsets": (20,), "lot_key": "XAU_TDA_LIVE_LOT", "lot": 0.05, "live_key": "XAU_TDA_LIVE",
         "isabet": "%76", "n": 308, "ort": "+0,096 R/işlem (TEST 2022–26/05; 2022–26 her yıl artı; plaseboya +0,062 R, P 0,95)",
         "tutus": "TP/SL/kilit; en çok 4.000 dk", "sl": "−94,7 bp (≈ −40 $ @4.000); +38,2 bp görünce +37,9 bp'ye kilit",
         "tp": "+59,2 bp (≈ +25 $)", "siklik": "≈ 6 işlem/ay (saat başı, 07/08/12/15/20/22 UTC)",
@@ -175,6 +187,23 @@ def is_enabled(config, rule_id: str) -> bool:
 
 def rule_magics(config) -> set[int]:
     return {magic(config, k) for k in RULES}
+
+
+def _is_rule_comment(pos) -> bool:
+    return str(getattr(pos, "comment", "") or "").startswith(RULE_COMMENT_PREFIX)
+
+
+def owns(config, rule_id: str, pos) -> bool:
+    """pos bu kuralın mı? Güncel magic → evet; eski (legacy) magic → yalnız katalog yorumuyla açıldıysa."""
+    base = int(getattr(config, "MAGIC_NUMBER", 52890969))
+    if pos.magic == magic(config, rule_id):
+        return True
+    legacy = {base + o for o in RULES[rule_id].get("legacy_magic_offsets", ())}
+    return pos.magic in legacy and _is_rule_comment(pos)
+
+
+def owned_by_any_rule(config, pos) -> bool:
+    return any(owns(config, k, pos) for k in RULES)
 
 
 def banner(rule_id: str, line: str, extra: dict | None = None) -> list[str]:
@@ -224,15 +253,13 @@ def append_event(rec: dict) -> None:
 def concentration_ok(mt5, config, symbol: str, new_lot: float) -> tuple[bool, float, float]:
     """(izin, açık lot, tavan): bu ailelerin AYNI sembolde toplam açık lotu tavanı aşmasın."""
     cap = float(getattr(config, "RULE_MAX_LOTS_PER_SYMBOL", MAX_LOTS_PER_SYMBOL_DEFAULT))
-    mg = rule_magics(config)
-    open_lot = sum(float(p.volume) for p in (mt5.positions_get(symbol=symbol) or []) if p.magic in mg)
+    open_lot = sum(float(p.volume) for p in (mt5.positions_get(symbol=symbol) or []) if owned_by_any_rule(config, p))
     return open_lot + new_lot <= cap + 1e-9, open_lot, cap
 
 
 def open_positions(mt5, config, rule_id: str, symbol: str | None = None) -> list:
-    mg = magic(config, rule_id)
     pos = mt5.positions_get(symbol=symbol) if symbol else mt5.positions_get()
-    return [p for p in (pos or []) if p.magic == mg]
+    return [p for p in (pos or []) if owns(config, rule_id, p)]
 
 
 # ═════════════════════════ MT5 icra (ortak) ═════════════════════════
