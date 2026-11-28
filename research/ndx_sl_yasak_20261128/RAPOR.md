@@ -74,3 +74,11 @@ salınımı (133 bin $ risk) kalkar, risk bütçesi kanıtlı ailelere kalır.
 - Ölçüm: engellenen her giriş `gate_skipped.jsonl` → reason `sl_type_ban` (fiyat, aile). Yasağın bedeli `research/gate_audit.py` ile.
 - Geri alma: kutu config `SL_TYPE_BAN_BLOCK = False` (gölge) / `SL_TYPE_BAN_ENABLED = False`; liste `SL_TYPE_BAN` ile değişir.
 - Yeniden değerlendirme: engellenen ≥ 60 giriş biriktiğinde sanal ort R > +0,05 ve iki yarı > 0 ise ilgili tip listeden çıkarılır.
+
+### 8.1 Geriye dönük etki (aynı canlı kitap, 06-30 → 11-26; örneklem içi, ileri ölçüm B22 karnesinde)
+| | karar | SL | net $ | risk $ | **net/risk (kâr marjı)** | ort R | WR | maks. düşüş | en kötü gün | günlük SR |
+|---|---|---|---|---|---|---|---|---|---|---|
+| mevcut | 452 | 168 | +40.964 | 308.773 | %13,3 | +0,076 | %61,5 | −18.092 | −8.628 | 0,167 |
+| yasakla | 208 | **63** | +40.638 | 175.876 | **%23,1** | **+0,171** | %69,2 | −18.892 | −8.628 | 0,189 |
+SL sayısı −%63, kâr marjı ×1,74, net $ ≈ aynı (−326 $). Maks. düşüş ve en kötü gün değişmiyor (DAYCOMBO/REENTRY 30 lot günleri).
+Aynı risk bütçesi kanıtlı ailelere kalırsa beklenen kâr artışı buradan gelir; bu ayrıca lot kararıdır, otomatik yapılmadı.
