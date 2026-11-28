@@ -192,12 +192,12 @@ DEFAULTS: dict[str, object] = {
     # İşlem düzeyinde SL girişte tanınmıyor (IO-11/IO-26/SL-06/SY-02: SL-engel ↔ TP-kayıp r 0,98–0,996);
     # tanınan tek düzey aile×yön. Canlı NDX 452 karar (06-30→11-26): MOMSR BUY −0,040R (21; CK-01 −0,014,
     # IO-14 −0,04), CHREV BUY −0,071R (13; IO-14 −0,07), VIXREG SELL +0,003R (210, SL %43, 112.663 $
-    # risk → +450 $; CK-01 +0,000). Üçü SL'lerin çoğunu üretip kâr getirmiyor → BLOK. Kanıt sınıfı C
+    # risk → +450 $; CK-01 +0,000). Üçü SL'lerin çoğunu üretip kâr getirmiyor → aday yasak, şimdilik GÖLGE. Kanıt sınıfı C
     # (MOMSR/CHREV n küçük) / A-olgu (VIXREG kenarsız). Engellenen her giriş gate_skipped.jsonl'e
     # 'sl_type_ban' olarak yazılır → yasağın bedeli research/gate_audit.py ile ölçülür.
     # Geri alma: config SL_TYPE_BAN_BLOCK=False (gölge) veya SL_TYPE_BAN_ENABLED=False.
     "SL_TYPE_BAN_ENABLED": True,
-    "SL_TYPE_BAN_BLOCK": True,               # False → yalnız gölge kaydı
+    "SL_TYPE_BAN_BLOCK": False,              # 2026-11-28 kullanıcı: canlıya almadan önce geliştir → GÖLGE (yalnız kayıt)
     "SL_TYPE_BAN": (("NDX.INDX", "MOMSR", "BUY"),
                     ("NDX.INDX", "CHREV", "BUY"),
                     ("NDX.INDX", "VIXREG", "SELL")),

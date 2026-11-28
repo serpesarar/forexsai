@@ -13,7 +13,7 @@ def test_default_bans_three_ndx_types():
     assert pr.sl_type_banned(c, "NDX.INDX", "MOMSR", "BUY")
     assert pr.sl_type_banned(c, "NDX.INDX", "chrev", "buy")
     assert pr.sl_type_banned(c, "NDX.INDX", "VIXREG", "SELL")
-    assert pr.flag(c, "SL_TYPE_BAN_BLOCK") is True
+    assert pr.flag(c, "SL_TYPE_BAN_BLOCK") is False   # gölge
 
 
 def test_profitable_and_other_types_untouched():
