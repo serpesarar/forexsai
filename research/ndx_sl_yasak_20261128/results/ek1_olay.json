@@ -1,0 +1,162 @@
+[
+ {
+  "bayrak": "E1",
+  "n": 204,
+  "gun": 39,
+  "ortR": 0.081,
+  "kalan_ortR": 0.031,
+  "taban_ortR": 0.034,
+  "SL%": 37.3,
+  "taban_SL%": 39.9,
+  "P(ortR<0)": 0.089,
+  "plasebo_yuzdelik": 0.58,
+  "cag": {
+   "2018-20": {
+    "size": 59,
+    "mean": 0.171
+   },
+   "2021-23": {
+    "size": 95,
+    "mean": 0.018
+   },
+   "2024-26": {
+    "size": 50,
+    "mean": 0.093
+   }
+  },
+  "toplamR": 16.4,
+  "aile": {
+   "DC": {
+    "size": 108,
+    "mean": 0.037
+   },
+   "RE": {
+    "size": 96,
+    "mean": 0.13
+   }
+  },
+  "gecti_on": false,
+  "holm_P": 0.089,
+  "gecti": false
+ },
+ {
+  "bayrak": "E2",
+  "n": 108,
+  "gun": 35,
+  "ortR": 0.101,
+  "kalan_ortR": 0.032,
+  "taban_ortR": 0.034,
+  "SL%": 36.1,
+  "taban_SL%": 39.9,
+  "P(ortR<0)": 0.104,
+  "plasebo_yuzdelik": 0.658,
+  "cag": {
+   "2018-20": {
+    "size": 25,
+    "mean": 0.036
+   },
+   "2021-23": {
+    "size": 58,
+    "mean": 0.102
+   },
+   "2024-26": {
+    "size": 25,
+    "mean": 0.162
+   }
+  },
+  "toplamR": 10.9,
+  "aile": {
+   "DC": {
+    "size": 53,
+    "mean": 0.069
+   },
+   "RE": {
+    "size": 55,
+    "mean": 0.131
+   }
+  },
+  "gecti_on": false,
+  "holm_P": 0,
+  "gecti": false
+ },
+ {
+  "bayrak": "E3",
+  "n": 241,
+  "gun": 56,
+  "ortR": -0.024,
+  "kalan_ortR": 0.038,
+  "taban_ortR": 0.034,
+  "SL%": 43.2,
+  "taban_SL%": 39.9,
+  "P(ortR<0)": 0.658,
+  "plasebo_yuzdelik": 0.188,
+  "cag": {
+   "2018-20": {
+    "size": 70,
+    "mean": 0.018
+   },
+   "2021-23": {
+    "size": 93,
+    "mean": -0.129
+   },
+   "2024-26": {
+    "size": 78,
+    "mean": 0.063
+   }
+  },
+  "toplamR": -5.9,
+  "aile": {
+   "DC": {
+    "size": 134,
+    "mean": -0.064
+   },
+   "RE": {
+    "size": 107,
+    "mean": 0.026
+   }
+  },
+  "gecti_on": false,
+  "holm_P": 0,
+  "gecti": false
+ },
+ {
+  "bayrak": "E4",
+  "n": 431,
+  "gun": 92,
+  "ortR": 0.021,
+  "kalan_ortR": 0.036,
+  "taban_ortR": 0.034,
+  "SL%": 40.6,
+  "taban_SL%": 39.9,
+  "P(ortR<0)": 0.33,
+  "plasebo_yuzdelik": 0.269,
+  "cag": {
+   "2018-20": {
+    "size": 116,
+    "mean": 0.091
+   },
+   "2021-23": {
+    "size": 188,
+    "mean": -0.055
+   },
+   "2024-26": {
+    "size": 127,
+    "mean": 0.069
+   }
+  },
+  "toplamR": 9.0,
+  "aile": {
+   "DC": {
+    "size": 234,
+    "mean": -0.023
+   },
+   "RE": {
+    "size": 197,
+    "mean": 0.073
+   }
+  },
+  "gecti_on": false,
+  "holm_P": 0,
+  "gecti": false
+ }
+]

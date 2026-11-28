@@ -188,6 +188,19 @@ DEFAULTS: dict[str, object] = {
     "WEEKLY_OPEN_BLOCK_SYMBOLS": ("USOIL.FOREX",),
     "WEEKLY_OPEN_BLOCK_MIN": 60,
     "WEEKLY_OPEN_GAP_HOURS": 24,
+    # ── 2026-11-28 — SL TİPİ YASAĞI (kullanıcı hedefi "SL tiplerini bul, yasakla"; defter §2.144 SY-01) ──
+    # İşlem düzeyinde SL girişte tanınmıyor (IO-11/IO-26/SL-06/SY-02: SL-engel ↔ TP-kayıp r 0,98–0,996);
+    # tanınan tek düzey aile×yön. Canlı NDX 452 karar (06-30→11-26): MOMSR BUY −0,040R (21; CK-01 −0,014,
+    # IO-14 −0,04), CHREV BUY −0,071R (13; IO-14 −0,07), VIXREG SELL +0,003R (210, SL %43, 112.663 $
+    # risk → +450 $; CK-01 +0,000). Üçü SL'lerin çoğunu üretip kâr getirmiyor → BLOK. Kanıt sınıfı C
+    # (MOMSR/CHREV n küçük) / A-olgu (VIXREG kenarsız). Engellenen her giriş gate_skipped.jsonl'e
+    # 'sl_type_ban' olarak yazılır → yasağın bedeli research/gate_audit.py ile ölçülür.
+    # Geri alma: config SL_TYPE_BAN_BLOCK=False (gölge) veya SL_TYPE_BAN_ENABLED=False.
+    "SL_TYPE_BAN_ENABLED": True,
+    "SL_TYPE_BAN_BLOCK": True,               # False → yalnız gölge kaydı
+    "SL_TYPE_BAN": (("NDX.INDX", "MOMSR", "BUY"),
+                    ("NDX.INDX", "CHREV", "BUY"),
+                    ("NDX.INDX", "VIXREG", "SELL")),
     # ── 2026-10-21 — DECIDER XAU ERKEN KESME (kullanıcı kararı, defter DX-04, B) ──
     # decider_early_cut.py: decider (magic 52890989) XAUUSD BUY pozisyonu ilk kez ≥5 dk
     # yaşındayken son kapalı 1m kapanışında R ≤ −0,5 → piyasadan kapat (tek karar).
@@ -244,6 +257,14 @@ def flag(config, name: str):
     if config is not None and hasattr(config, name):
         return getattr(config, name)
     return DEFAULTS[name]
+
+
+def sl_type_banned(config, forexsai_sym: str, family: str, direction: str) -> bool:
+    """True → (sembol, aile, yön) SL_TYPE_BAN listesinde ve yasak açık (blok/gölge ayrımı çağıranda)."""
+    if not flag(config, "SL_TYPE_BAN_ENABLED"):
+        return False
+    key = (str(forexsai_sym), str(family).upper(), str(direction).upper())
+    return any(tuple(x) == key for x in flag(config, "SL_TYPE_BAN"))
 
 
 # ── Yardımcı: sembol/scope eşleme ───────────────────────────────────────────

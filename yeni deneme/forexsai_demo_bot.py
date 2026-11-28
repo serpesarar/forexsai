@@ -1931,6 +1931,26 @@ def _session_gate_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
     return block
 
 
+def _sl_type_ban_blocks(scope_key: str, family: str, forexsai_sym: str, mt5_symbol: str,
+                        direction: str) -> bool:
+    """SL TİPİ YASAĞI (2026-11-28, defter SY-01) — True → bu aile×yön NDX'te açılmaz.
+    Engellenen giriş gate_skipped.jsonl'e yazılır (yasağın bedeli sonradan ölçülür). Fail-open."""
+    try:
+        if not pr.sl_type_banned(config, forexsai_sym, family, direction):
+            return False
+        block = bool(pr.flag(config, "SL_TYPE_BAN_BLOCK"))
+        tick = mt5.symbol_info_tick(mt5_symbol)
+        price = (tick.ask if direction == "BUY" else tick.bid) if tick else 0.0
+        log.info("%s — SL TİPİ YASAĞI%s: %s %s %s → %s", scope_key, "" if block else " [GÖLGE]",
+                 forexsai_sym, family, direction, "açılmadı" if block else "yine de devam (ölçüm)")
+        log_gate_skip(scope_key, mt5_symbol, forexsai_sym, direction, price, "sl_type_ban",
+                      extra={"family": family, "shadow": not block})
+        return block
+    except Exception as exc:
+        log.debug("SL tipi yasağı fail-open: %s", exc)
+        return False
+
+
 def _weekly_open_blocks(scope_key: str, forexsai_sym: str, mt5_symbol: str,
                         direction: str) -> bool:
     """True → hafta sonu açılışının ilk WEEKLY_OPEN_BLOCK_MIN dakikası, giriş yok.
@@ -1974,6 +1994,10 @@ def _route_open(scope_key: str, forexsai_sym: str, mt5_symbol: str,
       - Aksi (normal momentum)         → S/R pullback (pending limit).
     """
     _ENTRY_CTX.clear()                                       # parmak izi bağlamı (taze)
+
+    # SL tipi yasağı (2026-11-28, SY-01) — NDX MOMSR BUY.
+    if _sl_type_ban_blocks(scope_key, "MOMSR", forexsai_sym, mt5_symbol, direction):
+        return
 
     # Haftalık açılış kapısı (2026-10-20, kullanıcı kararı) — ilk 60 dk giriş yok.
     if _weekly_open_blocks(scope_key, forexsai_sym, mt5_symbol, direction):
@@ -2286,6 +2310,8 @@ def check_channel_reversion(forexsai_sym: str, cfg: dict) -> None:
     # ile gerçekten bloklar.
     if _entry_score_blocks(scope_key, forexsai_sym, mt5_symbol, direction,
                            shadow=not getattr(config, "ENTRY_SCORE_GATE_CHREV", False)):
+        return
+    if _sl_type_ban_blocks(scope_key, "CHREV", forexsai_sym, mt5_symbol, direction):
         return
     log.info("%s — MEAN-REVERSION [%s] z=%.2f ✓ → market giriş", scope_key, source, z)
     open_trade(scope_key, forexsai_sym, mt5_symbol, direction, cfg, [model], magic=cr_magic)
@@ -2601,6 +2627,8 @@ def check_vix_regime() -> None:
         log.info("%s — VIX=%.1f favored=%s ama model sinyali yok → açılmadı",
                  scope_key, vix, favored)
         return
+    if _sl_type_ban_blocks(scope_key, "VIXREG", forexsai_sym, mt5_symbol, favored):
+        return
     # Giriş skoru + mikro-yapı kapıları (otopsi §6/§9.2 — VIXREG kanıt kapsamında)
     if _entry_score_blocks(scope_key, forexsai_sym, mt5_symbol, favored):
         return
@@ -2702,7 +2730,8 @@ def main():
                "USOIL_SESSION_START_UTC", "SHADOW_LOCK_ENABLED",
                "SHADOW_LOCK_SYMBOLS", "SHADOW_LOCK_L_R", "SHADOW_LOCK_P",
                "SHADOW_LOCK_FRAC", "DECIDER_EARLY_CUT_ENABLED",
-               "DECIDER_EARLY_CUT_LIVE"):
+               "DECIDER_EARLY_CUT_LIVE", "SL_TYPE_BAN_ENABLED", "SL_TYPE_BAN_BLOCK",
+               "SL_TYPE_BAN"):
         _from = "config" if hasattr(config, _n) else "varsayılan(faz)"
         log.info("  ayar %-30s = %-8s (%s)", _n, pr.flag(config, _n), _from)
     log.info("=" * 64)
